@@ -1,0 +1,99 @@
+<!-- DTD for FERS XML simulation script files. Script files must conform to this DTD or simulation results are likely to be unreliable. -->
+<!-- Marc Brooker mbrooker@rrsg.ee.uct.ac.za -->
+<!ELEMENT simulation (parameters,pulse*,waveform*,antenna+,platform+)>
+<!ATTLIST simulation name CDATA #REQUIRED>
+
+<!-- Simulation Parameters -->
+<!ELEMENT parameters (starttime,endtime,export?,c?,interprate?,rate?,rangegate?)>
+<!ELEMENT starttime (#PCDATA)> <!-- Start time of simulation -->
+<!ELEMENT endtime (#PCDATA)> <!-- End time of simulation -->
+<!ELEMENT c (#PCDATA)> <!-- Propagation speed -->
+<!ELEMENT interprate (#PCDATA)> <!-- Position interpolation rate for CW -->
+<!ELEMENT rate (#PCDATA)> <!-- Override the rendering sample rate with the specified one (Hz) -->
+<!ELEMENT randomseed (#PCDATA)> <!-- Random seed for noise and jitter (positive integer). If this is not specified, time() is used -->
+<!ELEMENT rangegate (#PCDATA)> <!-- Range gate length for receiving pulsed waveforms (s) -->
+<!ELEMENT export EMPTY> <!-- Formats to export -->
+<!ATTLIST export xml (true|false) "true"
+csv (true|false) "true" 
+binary (true|false) "false"
+csvbinary (true|false) "false"> 
+
+<!-- Pulsed Radar Pulse -->
+<!ELEMENT pulse (length,rate,power,carrier)>
+<!ATTLIST pulse name CDATA #REQUIRED
+type CDATA #REQUIRED>
+<!ELEMENT length (#PCDATA)> <!-- Length of pulse (seconds) -->
+<!ELEMENT power (#PCDATA)> <!-- Pulse power (Watts) -->
+<!ELEMENT rate (#PCDATA)> <!-- Sample rate for rendering (Hz) -->
+<!ELEMENT carrier (#PCDATA)> <!-- Frequency (Hz) -->
+
+<!-- CW Radar Waveform -->
+<!ELEMENT waveform (power,carrier)>
+<!ATTLIST waveform name CDATA #REQUIRED
+type CDATA #REQUIRED>
+
+<!-- Antenna -->
+<!ELEMENT antenna (alpha?,beta?,gamma?,diameter?)>
+<!ATTLIST antenna name CDATA #REQUIRED
+pattern CDATA #REQUIRED>
+<!ELEMENT alpha (#PCDATA)> <!-- Parameters of antenna model (see doc/equations.tex) -->
+<!ELEMENT beta (#PCDATA)>
+<!ELEMENT gamma (#PCDATA)>
+<!ELEMENT diameter (#PCDATA)>
+<!ELEMENT efficiency (#PCDATA)> <!-- The antenna efficiency factor (will be < 1 in all real-world cases) -->
+
+<!-- Platform -->
+<!ELEMENT platform (motionpath,(rotationpath|fixedrotation),(monostatic|transmitter|receiver)*,target*)>
+<!ATTLIST platform name CDATA #REQUIRED>
+
+<!-- Motionpaths and Position Waypoints -->
+<!ELEMENT motionpath (positionwaypoint+)>
+<!ATTLIST motionpath interpolation (static|linear|cubic) "static">
+<!ELEMENT positionwaypoint (x,y,altitude,time)>
+<!ELEMENT x (#PCDATA)>
+<!ELEMENT y (#PCDATA)>
+<!ELEMENT altitude (#PCDATA)>
+<!ELEMENT time (#PCDATA)>
+
+<!-- Constant Rate Rotation -->
+<!ELEMENT fixedrotation (startazimuth,startelevation,azimuthrate,elevationrate)>
+<!ELEMENT startazimuth (#PCDATA)> <!-- Azimuth at time 0 -->
+<!ELEMENT startelevation (#PCDATA)> <!-- Elevation at time 0 -->
+<!ELEMENT azimuthrate (#PCDATA)> <!-- Rate of change of azimuth -->
+<!ELEMENT elevationrate (#PCDATA)> <!-- Rate of change of elevation -->
+
+<!-- Rotation Paths and Waypoints -->
+<!ELEMENT rotationpath (rotationwaypoint+)>
+<!ATTLIST rotationpath interpolation (linear|cubic) #REQUIRED>
+<!ELEMENT rotationwaypoint (azimuth,elevation,time)>
+<!ELEMENT azimuth (#PCDATA)>
+<!ELEMENT elevation (#PCDATA)>
+
+<!-- Monostatic radar installations -->
+<!ELEMENT monostatic (prf?,jitter?)>
+<!ATTLIST monostatic name CDATA #REQUIRED
+type (pulsed|continuous) #REQUIRED
+antenna CDATA #REQUIRED
+pulse CDATA #REQUIRED>
+<!ELEMENT prf (#PCDATA)> <!-- PRF required for pulse transmitters only -->
+<!ELEMENT jitter (#PCDATA)> <!-- Standard deviation of timing jitter in seconds -->
+
+<!-- Standalone Transmitter -->
+<!ELEMENT transmitter (prf?,jitter?)>
+<!ATTLIST transmitter name CDATA #REQUIRED
+type (pulsed|continuous) #REQUIRED
+pulse CDATA #REQUIRED
+antenna CDATA #REQUIRED>
+
+<!-- Standalone Receiver -->
+<!ELEMENT receiver (noise_temp?,jitter?)>
+<!ATTLIST receiver name CDATA #REQUIRED 
+antenna CDATA #REQUIRED>
+<!ELEMENT noise_temp (#PCDATA)> <!-- Noise temperature contributed by receiver -->
+
+<!-- Target -->
+<!ELEMENT target (rcs)>
+<!ATTLIST target name CDATA #REQUIRED>
+<!ELEMENT rcs (value)> <!-- Target RCS -->
+<!ATTLIST rcs type CDATA #REQUIRED>
+<!ELEMENT value (#PCDATA)>

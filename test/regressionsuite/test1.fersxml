@@ -1,0 +1,79 @@
+<!-- Test for bistatic. One transmitter, one receiver, one static target -->
+<?xml version="1.0" ?>
+<!DOCTYPE simulation SYSTEM "../../fers-xml.dtd">
+<simulation name="sim1">
+  <parameters>
+    <starttime>0</starttime>
+    <endtime>0.005</endtime>
+    <export binary="true" />	
+  </parameters>
+
+  <pulse name="pulse1" type="rect">
+    <length>0.0005</length>
+    <rate>50000</rate>
+    <power>1</power>
+    <carrier>1e6</carrier>
+  </pulse>
+
+  <antenna name="ant1" pattern="isotropic">
+  </antenna>
+
+  <platform name="earth">
+    <motionpath>
+      <positionwaypoint>
+	<x>0.0</x>
+	<y>0.0</y>
+	<altitude>0.0</altitude>
+	<time>0</time>
+      </positionwaypoint>
+    </motionpath>
+    <fixedrotation>
+      <startazimuth>0.0</startazimuth>
+      <startelevation>0.0</startelevation>                   
+      <azimuthrate>0</azimuthrate>
+      <elevationrate>0</elevationrate>
+    </fixedrotation>
+    <transmitter name="trans1" type="pulsed" pulse="pulse1" antenna="ant1">
+      <prf>1000</prf>
+    </transmitter>
+  </platform>
+
+  <platform name="site1">
+    <motionpath>
+      <positionwaypoint>
+	<x>50.0</x>
+	<y>0.0</y>
+	<altitude>0.0</altitude>
+	<time>0</time>
+      </positionwaypoint>
+    </motionpath>
+    <fixedrotation>
+      <startazimuth>0.0</startazimuth>
+      <startelevation>0.0</startelevation>
+      <azimuthrate>0</azimuthrate>
+      <elevationrate>0</elevationrate>
+    </fixedrotation>
+    <receiver name="recv2" antenna="ant1"/>
+  </platform>
+
+  <platform name="aeroplane">
+    <motionpath>
+      <positionwaypoint>
+	<x>25.0</x>
+	<y>100.0</y>
+	<altitude>0</altitude>
+	<time>0</time>
+      </positionwaypoint>
+    </motionpath>
+    <fixedrotation>
+      <startazimuth>0.0</startazimuth>
+      <startelevation>0.0</startelevation>
+      <azimuthrate>0</azimuthrate>
+      <elevationrate>0</elevationrate>
+    </fixedrotation>
+    <target name="wings">
+      <rcs type="isotropic">1</rcs>
+    </target>
+  </platform>
+
+</simulation>

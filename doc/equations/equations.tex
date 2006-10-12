@@ -1,0 +1,140 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage{amsmath}
+
+%opening
+\title{FERS: Equations Reference}
+\author{Marc Brooker}
+
+\begin{document}
+
+\maketitle
+
+\section{rssim.cpp}
+\subsection{Bistatic Narrowband Radar Equation}
+$$P_r=\frac{P_t G_t G_r \sigma_b \lambda^2 L_t L_r}{(4 \pi)^3 R_t^2 R_r^2}$$
+\begin{description}
+\item[$P_r$ and $P_t$] Received and Transmitted Power ($W$)
+\item[$G_r$ and $G_t$] Gain of the receive and transmit antennas
+\item[$\sigma_b$] Bistatic Radar Cross Section of the target ($m^2$)
+\item[$\lambda$] Center wavelength of the pulse ($m$)
+\item[$L_r$ and $L_t$] Loss factors for receive and transmit systems
+\item[$R_r$ and $R_t$] Range of the receive and transmit antennas from the target ($m$)
+ \end{description}
+From page 275 of \cite{kings} and 36-3 of \cite{skolnik70}.
+
+
+\subsection{One Way Narrowband Radar Equation}
+$$P_r=\frac{P_t G_t G_r \lambda^2 L_t L_r}{(4 \pi)^2 R^2}$$
+\begin{description}
+\item[$R$] One-way range ($m$)
+\end{description}
+
+
+\subsection{Delay Equation}
+$$T_d = \frac{R_t + R_r}{c}$$
+\begin{description}
+\item[$T_d$] Time delay of the arrival of the pulse due to propagation speed ($s$)
+\item[$c$] Propagation speed in medium ($ms^{-1}$). Typically 299 792 458 $ms^{-1}$
+\end{description}
+
+\subsection{Phase Delay Equation}
+The phase shift introduced by the delay in a wave of frequency $f$ is:
+$$\phi_d = (2\pi f T_d)~{mod}~2\pi$$
+or
+$$\phi_d = (2\pi f T_d) - 2\pi \lfloor f T_d \rfloor $$
+
+\subsection{Bistatic Doppler Equation}
+$$v = \frac{d(R_t+R_r)}{dt}$$
+$$f' = f_0 \frac{1}{1+\frac{v}{c}}$$
+\begin{description}
+ \item[$f'$] Frequency of return pulse
+\item[$f_0$] Center frequency of transmitted pulse
+\item[$R_t \quad R_r$] Transmitter-target and Receiver-target ranges
+\item[$c$] Propagation speed in medium ($ms^{-1}$)
+\end{description}
+
+\subsection{Monostatic Doppler Equation}
+$$v = \frac{dR_t}{dt}$$
+$$f' = f_0 \frac{1}{1+\frac{v}{c}}$$
+
+
+\section {rsnoise.cpp}
+
+\subsection{Noise Power Equation}
+From page 2-29 of \cite{skolnik70}:
+$$V_n=\sqrt{4k T_s RB}$$
+$$P_n=k T_s B$$
+\begin{description}
+ \item[k] Boltzmann's constant
+\item[$T_s$] System noise temperature (for the simulated part of the system)
+\item[R] R is the resistance, in ohms. In FERS, the resistance used is 1ohm.
+\item[B] B is the system bandwidth
+\end{description}
+
+\par
+In addition, receiver noise temperature is added to the antenna noise temperature to obtain the system noise temperature. For a demonstration that this is valid see pages 190-203 of \cite{stremler}.
+$$T_s = T_a + T_r$$ so
+$$P_n = k (T_a+T_r) B$$
+
+
+\section{rsantenna.cpp}
+
+\subsection{Sinc Pattern}
+The sinc radiation pattern is based on the equation
+$$G(\theta)=\alpha\left(\frac{sin~(\beta\theta)}{\beta\theta}\right)^\gamma$$
+Three parameters, $\alpha$, $\beta$ and $\gamma$ are included to tweak the model
+\begin{description}
+ \item[$\theta$] Angle off boresight
+\end{description}
+
+\subsection{Square Horn Pattern}
+Radiation pattern from a square horn antenna (from page 89 of \cite{gagli86})
+$$G_e=\frac{4\pi d^2}{\lambda^2}$$
+$$x = \left(\frac{\pi d}{\lambda}\right)sin~\theta$$
+$$G(\theta) = G_e\left(\frac{sin~x}{x}\right)^2$$
+\begin{description}
+ \item[$\theta$] Angle off boresight
+\item[$\lambda$] Wavelength
+\item[$d$] Dimension of Horn
+\end{description}
+
+\subsection{Parabolic Dish Pattern}
+Radiation Pattern from a uniformly illuminated parabolic reflector (from page 91 of \cite{gagli86})
+$$G_e=\left(\frac{\pi d}{\lambda}\right)^2$$
+$$x = \left(\frac{\pi d}{\lambda}\right)sin~\theta$$
+$$G(\theta) = G_e\left(\frac{2 J_1(x)}{x}\right)^2$$
+\begin{description}
+ \item[$J_1(x)$] The Bessel function of the first kind of order one of x
+\end{description}
+
+\section {rssignal.cpp}
+
+\subsection{Time Domain Frequency Shift}
+\nocite{parker} \nocite{oppenheim}
+The time domain frequency shift is an operation to shift frequency domain signal $X$ (of length $N$ samples and with sampling frequency $F_s$ Hz) in frequency and produce frequency domain signal $Y$.
+$$x=H\left[IFFT\left[X\right]\right]$$
+where $H[x]$ computes the discrete time analytic signal of time domain signal $x$ and $IFFT[x]$ is the inverse FFT.
+$$n=\frac{\phi N}{F_s}$$
+$$\theta = \frac{F_s}{N}\left(n-\lfloor n \rfloor \right)$$
+$$y[k] = x[k] e^{j 2 \pi \left(\frac{n k}{N}-\theta \right)}$$
+The frequency domain result $Y$ is then calculated by taking the FFT of the real part of $y$.
+
+\subsection{Frequency Domain Time Shift}
+The frequency domain time shift is an operation to shift the frequency domain signal $X$ (of length $N$ samples and with a sampling frequency of $F_s$) $n$ samples in time and produce a frequency domain signal $Y$.
+
+In order to work with non-integer $n$, a minimal-slope interpolation algorithm is used:
+\begin{equation*}
+E[k]=\begin{cases}
+	e^{-j 2 \pi n \frac{k}{N} } & k < N-k \\
+	cos(\pi n) & k = N \\
+	e^{-j 2 \pi n \frac{k-N}{N} } & k > N-k \\
+       \end{cases}
+\end{equation*}
+$$Y[k]=X[k]E[k]$$
+
+To get the number of samples $n$ from a time offset $t$ the equation $n = t F_s$.
+
+
+\bibliographystyle{ieeetr}
+\bibliography{equations}
+\end{document}

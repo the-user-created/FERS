@@ -1,0 +1,80 @@
+FERS - The Flexible Extensible Radar Simulator
+
+FERS is a simulator for simulating the performance and output of a variety of radar systems. It is designed to support a wide range of traditional and modern radar system designs. FERS is currently under heavy development, and is likely to change fairly quickly.
+
+FERS is not currently mature enough to be used in a production environment. Please report any bugs you find, and we will get to fixing them as soon as possible. Documentation is currently very sparse - it will be improved very soon.
+
+The features which are currently (at least partially implemented are):
+
+* Creation of returns from arbitrary pulse shapes
+* Simple propagation, doppler and phase model
+* Modelling of Multistatic and Monostatic radar systems
+* Modelling of CW and Pulsed radars
+
+Features not implemented:
+
+* Proper range-gate and timing for pulsed radars (coming very soon)
+* Complex propagation model including fading and multipath
+* Modelling of propagation of clock and time signals between stations
+* Effects of Jitter and phase noise on timing sources
+
+AUTHORS
+
+FERS is currently under development by the following people:
+
+Marc Brooker mbrooker@rrsg.ee.uct.ac.za
+
+BUILDING FERS
+
+FERS depends on a number of external libraries, which you need to install before attempting to build FERS. The libraries you need to have installed are:
+
+* Boost (at least boost::threads and the boost/cstdint.hpp header) which is available freely from http://www.boost.org
+* FFTW3 which is available freely from http://www.fftw3.org
+* Libsamplerate which is available freely from http://www.mega-nerd.com/SRC/
+
+On a Debian or Ubuntu system (or pretty much any other decent GNU/Linux distribution) these libraries should be available pre-packaged for your installing pleasure.
+
+Once you have these libraries installed, type:
+
+./configure
+
+followed by
+
+make
+
+FERS is written in standard C++ and should compile and run on many architectures and operating systems. Please report successes and failures of running this software on non-Linux and non-x86 platforms to the authors, so we can improve the software and make it more portable.
+
+DOCUMENTATION
+
+Documentation is available in the doc/ directory. Highlights include:
+
+doc/equations/equations.tex - All equations used by FERS in convenient LaTeX form
+fersxml.dtd - Document Type Definition for the XML script file format
+
+THANKS
+
+The authors of tinyXml, FFTW, Boost and Secret Rabbit Code for making excellent software freely available.
+
+COPYRIGHT NOTICE
+
+FERS is covered by the following copyright notice. Should you wish to acquire a copy of FERS not covered by these terms, please contact the Department of Electrical Engineering at the University of Cape Town.
+
+Please note that this copyright only covers the source code, program binaries and build system of FERS. Any input files you create and results created by the simulator are not covered by this notice and remain copyright of their original author.
+
+This copyright notice does not cover the source code of tinyxml (found in the tinyxml directory). Please see the file readme.txt in that directory for a copyright notice for that code. TinyXML can, however, be freely distributed along with the code of FERS.
+
+FERS - The Flexible Extensible Radar Simulator
+Copyright (C) 2006 Marc Brooker and Michael Inggs
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of version 2 of the GNU General Public License as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
