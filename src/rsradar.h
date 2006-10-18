@@ -25,6 +25,9 @@ namespace rs {
   class SVec3;
   class Vec3;
 
+  //Forward declaration of Timing (see rstiming.h)
+  class Timing;
+
   /// A pulse sent out by a transmitter
   struct TransmitterPulse
   {
@@ -52,14 +55,13 @@ namespace rs {
       const Radar* GetAttached() const;
       /// Return whether the radar has an attached receiver/transmitter
       bool IsMonostatic() const;
-      /// Set the timing jitter (value is standard deviation of jitter, in seconds)
-      void SetTimingJitter(rsFloat jitter);
-      /// Get the current timing jitter value (standard deviation of jitter)
-      rsFloat GetTimingJitter() const;
+      /// Attach a timing object to the radar
+      void SetTiming(Timing* tim);
+    protected:
+      const Timing *timing; //!< The radar's timing source
     private:      
       const Antenna *antenna; //!< The radar's antenna
       const Radar *attached; //!< Other radar which shares antenna (0 if not monostatic)
-      rsFloat timing_jitter; //!< Jitter in the clock of this transmitter/receiver (standard deviation, in seconds)
     };
 
   //Forward declaration of Receiver
@@ -81,8 +83,6 @@ namespace rs {
       virtual TransmitterType GetType() const = 0;
       /// Set the transmitter's pulse waveform
       void SetWave(RadarWaveform *pulse);
-      /// Clip a response to simulate the T-R switch
-      virtual bool ClipResponse(ResponseBase *resp, const Receiver *recv) const = 0;
     protected:
       rs::RadarWaveform* pulseWave; //!< Waveform of transmitted pulses
     };
@@ -103,8 +103,6 @@ namespace rs {
       void SetPRF(rsFloat mprf);
       /// Get the type of the transmitter (pulsed or CW)
       Transmitter::TransmitterType GetType() const;
-      /// Clip a response to simulate the T-R switch
-      bool ClipResponse(ResponseBase *resp, const Receiver *recv) const;
     private:
       rsFloat pulseLength; //!< Length of the pulses sent out by the transmitter
       rsFloat prf; //!< Transmitter pulse repetition frequency (PRF)
@@ -122,8 +120,6 @@ namespace rs {
     rs::RadarWaveform* GetWave() const;
     /// Get the type of the transmitter (pulsed or CW)
     Transmitter::TransmitterType GetType() const;
-    /// Clip a response to simulate the T-R switch
-    bool ClipResponse(ResponseBase *resp, const Receiver *recv) const;
   };
 
 
@@ -145,15 +141,28 @@ namespace rs {
       void Render();
       /// Get the noise temperature (including antenna noise temperature)
       rsFloat GetNoiseTemperature(const SVec3 &angle) const;
+      /// Get the receiver noise temperature
+      rsFloat Receiver::GetNoiseTemperature() const;
       /// Set the noise temperature of the receiver
       void SetNoiseTemperature(rsFloat temp);
+      /// Set the length of the receive window
+      void SetWindowProperties(rsFloat length, rsFloat prf, rsFloat skip);
       /// Return the number of responses
       int CountResponses() const;
+      /// Get the number of receive windows in the simulation time
+      int GetWindowCount() const;
+      /// Get the start time of the next window
+      rsFloat GetWindowStart(int window) const;
+      /// Get the length of the receive window
+      rsFloat GetWindowLength() const;
     private:
       /// Vector to hold all the system responses
       std::vector<ResponseBase *> responses;
       boost::try_mutex responses_mutex; //!< Mutex to serialize access to responses
       rsFloat noise_temperature; //!< Noise temperature of the reciever
+      rsFloat window_length; //!< Length of the receive window (seconds)
+      rsFloat window_prf; //!< Window repetition frequency
+      rsFloat window_skip; //!< The amount of time at the beginning of an interval to skip before capturing response
     };
 
 }

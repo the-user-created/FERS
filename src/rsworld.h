@@ -27,6 +27,8 @@ class Antenna;
 class Target;
 //Forward declaration of Platform (rsplatform.h)
 class Platform;
+//Forward declaration of Timing (rstiming.h)
+class Timing;
 
   /// World contains describes the parameters of the simulation, including objects.
   class World {
@@ -53,13 +55,17 @@ class Platform;
     void Add(CWWaveform *wave);
     /// Add an antenna to the world
     void Add(Antenna *antenna);
+    /// Add a timing source to the world
+    void Add(Timing *timing);
 
     /// Find a pulse with the specified name
-    RadarWaveform *FindPulse(std::string name);
+    RadarWaveform* FindPulse(const std::string& name);
     /// Find a CW waveform with the specified name
-    RadarWaveform *FindCWWaveform(std::string name);
+    RadarWaveform* FindCWWaveform(const std::string& name);
     /// Find an antenna with the specified name
-    Antenna* FindAntenna(std::string name);
+    Antenna* FindAntenna(const std::string& name);
+    /// Find a timing source with the specified name
+    Timing* FindTiming(const std::string& name);
     
     friend void RunThreadedSim(int thread_limit, World *world);
     friend void SimulatePairPulse(const PulseTransmitter *trans, Receiver *recv, const World *world);
@@ -71,9 +77,9 @@ class Platform;
     std::vector<Receiver*> receivers; //!< Vector of all receivers in the world
     std::vector<Target*> targets; //!< Vector of all targets in the world
     std::map<std::string, RadarWaveform*> pulses; //!< Vector of all pulses in the world
-    std::map<std::string, CWWaveform*> cwwaves; //!< Map of CW waveforms to names
-    
+    std::map<std::string, CWWaveform*> cwwaves; //!< Map of CW waveforms to names    
     std::map<std::string, Antenna*> antennas; //!< Map of antennas to names
+    std::map<std::string, Timing*> timings; //!< Map of timing sources to names
   };  
 
 }

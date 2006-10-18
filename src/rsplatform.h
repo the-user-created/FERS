@@ -13,27 +13,21 @@
 
 namespace rs {  
   
-  /// Platform objects are the base to which all other objects are attached.
-  /// They control the position and rotation of an object at all times
+/// The Platform class controls the motion and rotation of all objects in the scene
 class Platform: boost::noncopyable {
 public:
   /// Default Constructor
   Platform(std::string name = "DefaultPlatform");
-
   /// Destructor
   ~Platform();
-
   /// Return a pointer to the motion path
   Path *GetMotionPath();
-
   /// Return a pointer to the rotation path
-  RotationPath *GetRotationPath();
- 
+  RotationPath *GetRotationPath(); 
   /// Get the position of the platform at the specified time
   Vec3 GetPosition(rsFloat time) const;
   /// Get the rotation of the platform at the specified time
   SVec3 GetRotation(rsFloat time) const;
-
   /// Get the name of the platform
   std::string GetName() const;
 

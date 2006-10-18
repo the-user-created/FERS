@@ -24,6 +24,7 @@
 #include "rsparameters.h"
 #include "rsantennafactory.h"
 #include "rsantenna.h"
+#include "rstiming.h"
 
 using namespace rs;
 using std::string;
@@ -132,29 +133,14 @@ void ProcessTarget(TiXmlHandle &targXML, Platform *platform, World *world)
   world->Add(target);
 }
 
-/// Process the <jitter> tag for a Transmitter or Reciever
-void ProcessRadarJitter(TiXmlHandle &radXML, Radar *radar)
-{
-  try {
-    rsFloat jitter;
-    jitter = GetChildRsFloat(radXML, "jitter");
-    radar->SetTimingJitter(jitter);
-  }
-  catch (XmlImportException e) {
-  }
-}
-
-
 /// Process a receiver XML entry
 Receiver *ProcessReceiver(TiXmlHandle &recvXML, Platform *platform, World *world)
 {
   DEBUG_PRINT(rsDebug::RS_VERY_VERBOSE, "[VV] Loading Receiver");
-  Receiver *receiver;
-  const char *name = recvXML.Element()->Attribute("name");
-  if (name)
-    receiver = new Receiver(platform, string(name));
-  else
-    receiver = new Receiver(platform);
+
+  //Get the name of the receiver
+  string name = GetAttributeString(recvXML, "name", "Receiver does not specify a name");
+  Receiver *receiver = new Receiver(platform, name);
 
   //Get the name of the antenna
   string ant_name = GetAttributeString(recvXML, "antenna", "Receiver " + string(name) + " does not specify an antenna");
@@ -165,9 +151,6 @@ Receiver *ProcessReceiver(TiXmlHandle &recvXML, Platform *platform, World *world
   //Set the receiver's antenna
   receiver->SetAntenna(antenna);
 
-  //Process the timing jitter tag
-  ProcessRadarJitter(recvXML, receiver);
-
   //Process the noise temperature tag
   try {
     rsFloat temperature;
@@ -176,6 +159,19 @@ Receiver *ProcessReceiver(TiXmlHandle &recvXML, Platform *platform, World *world
   } 
   catch (XmlImportException e) {
   }
+
+  //Process the PRF tag
+  rsFloat prf = GetChildRsFloat(recvXML, "prf");
+  rsFloat skip = GetChildRsFloat(recvXML, "window_skip");
+  rsFloat length = GetChildRsFloat(recvXML, "window_length");
+  receiver->SetWindowProperties(length, prf, skip);
+
+  //Get the name of the timing source
+  string timing_name = GetAttributeString(recvXML, "timing", "Receiver "+name+" does not specify a timing source");
+  Timing *timing = world->FindTiming(timing_name);
+  if (!timing)
+    throw XmlImportException("Timing source " + timing_name + " does not exist when processing receiver "+name);
+  receiver->SetTiming(timing);
 
   rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Loading receiver %s\n", receiver->GetName().c_str());
   //Add the receiver to the world
@@ -243,10 +239,14 @@ Transmitter *ProcessTransmitter(TiXmlHandle &transXML, Platform *platform, World
     throw XmlImportException("Antenna with name " + ant_name + " does not exist when processing Transmitter " + string(name));
   //Set the transmitter's antenna
   transmitter->SetAntenna(antenna);
-  
-  //Get the transmitter's timing jitter
-  ProcessRadarJitter(transXML, transmitter);
 
+  //Get the name of the timing source
+  string timing_name = GetAttributeString(transXML, "timing", "Transmitter "+name+" does not specify a timing source");
+  Timing *timing = world->FindTiming(timing_name);
+  if (!timing)
+    throw XmlImportException("Timing source " + timing_name + " does not exist when processing transmitter "+name);
+  transmitter->SetTiming(timing);
+  
   //Add the transmitter to the world
   world->Add(transmitter);
 
@@ -571,6 +571,23 @@ void ProcessAntenna(TiXmlHandle &antXML, World *world)
   world->Add(antenna);
 }
 
+/// Process a timing source and add it to the world
+void ProcessTiming(TiXmlHandle &antXML, World *world)
+{
+  //Get the name of the antenna
+  string name = GetAttributeString(antXML, "name", "Timing sources must specify a name");
+  rsFloat jitter = GetChildRsFloat(antXML, "jitter");
+  rsFloat rate = GetChildRsFloat(antXML, "frequency");
+
+  Timing *timing = new Timing(name, rate, jitter);
+
+  //Notify the debug log
+  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Loading timing source %s\n", name.c_str());
+
+  //Add it to the world
+  world->Add(timing);
+}
+
 /// Process the <parameters> element
 void ProcessParameters(TiXmlHandle &root)
 {
@@ -647,6 +664,12 @@ void ProcessDocument(TiXmlHandle &root, World *world)
   for (int i = 1; plat.Element() != 0; i++) {
     ProcessAntenna(plat, world);
     plat = root.ChildElement("antenna", i);
+  }
+  //Process all the timing sources
+  plat = root.ChildElement("timing", 0);
+  for (int i = 1; plat.Element() != 0; i++) {
+    ProcessTiming(plat, world);
+    plat = root.ChildElement("timing", i);
   }
   //Process all the platforms
   plat = root.ChildElement("platform", 0);

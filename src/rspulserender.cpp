@@ -10,15 +10,20 @@
 #include <iomanip>
 #include <map>
 #include <cstdio> //The C stdio functions are used for binary export
+#include <boost/scoped_array.hpp>
 
+#include "rsradar.h"
 #include "rspulserender.h"
 #include "rsresponse.h"
 #include "rsdebug.h"
 #include "rsparameters.h"
+#include "rsnoise.h"
 #include "fersbin.h"
 
 #define TIXML_USE_STL
 #include "tinyxml/tinyxml.h"
+
+using namespace rs;
 
 namespace {
 
@@ -34,45 +39,40 @@ namespace {
   }
 
   /// Write the FersBin response header
-  void WriteFersBinResponseHeader(FILE *fp, rs::ResponseBase *resp, int size, rsFloat rate)
+  void WriteFersBinResponseHeader(FILE *fp, rsFloat start, rsFloat rate, int size)
   {
     FersBin::PulseResponseHeader prh;
     prh.magic = 0xFE00;
     prh.count = size;
     prh.rate = static_cast<double>(rate);
-    prh.start = static_cast<double>(resp->GetStart());
+    prh.start = static_cast<double>(start);
     if (fwrite(&prh, sizeof(prh), 1, fp) != 1)
       throw std::runtime_error("[ERROR] Could not write response header to fersbin file");
   }
 
   /// Write the FersCSV file header
-  void WriteFersCSVFileHeader(FILE* out, const std::string& recv, const std::string &trans)
+  void WriteFersCSVFileHeader(FILE* out, const std::string& recv)
   {
     fprintf(out, "# FERS CSV Simulation Results\n");
     fprintf(out, "# Recieved at %s\n", recv.c_str());
-    fprintf(out, "# Transmitted by %s\n", trans.c_str());  
   }
 
   /// Write the FersBin response header
-  void WriteFersCSVResponseHeader(FILE* out, rs::ResponseBase *resp, int size, rsFloat rate)
+  void WriteFersCSVResponseHeader(FILE* out, rsFloat start, rsFloat rate)
   {
     fprintf(out, "\n\n# Start of return pulse \n");
-    fprintf(out, "%f, %f\n", resp->GetStart(), rate);
+    fprintf(out, "%f, %f\n", start, rate);
   }
 
-  /// Export to the FersBin file format
-  void ExportResponseFersBin(const std::vector<rs::ResponseBase*>& responses, const std::string& recv_name, const std::string& filename)
+  ///Open the binary file for response export
+  FILE *OpenBinaryFile(const std::string &recv_name)
   {
-    //Bail if there are no responses to export
-    if (responses.empty())
-      return;
-
-    FILE *out_bin;
+    FILE *out_bin = 0;
     if (rs::rsParameters::export_binary()) {
       //Build the filename for the binary file
       std::ostringstream b_oss;
       b_oss.setf(std::ios::scientific);    
-      b_oss << recv_name << "_" << (*responses.begin())->GetTransmitterName() << ".fersbin";
+      b_oss << recv_name << ".fersbin";
       //Open the binary file for writing
       out_bin = fopen(b_oss.str().c_str(), "wb");
       if (!out_bin)
@@ -80,47 +80,120 @@ namespace {
       // Write the file header into the file
       WriteFersBinFileHeader(out_bin);
     }
-    FILE* out_csv;
+    return out_bin;
+  }
+
+  /// Open the CSV file for response export
+  FILE *OpenCSVFile(const std::string &recv_name)
+  {
+    FILE *out_csv = 0;
     if (rs::rsParameters::export_csvbinary()) {
       //Build the filename for the CSV file
       std::ostringstream oss;
       oss.setf(std::ios::scientific);
-      oss << recv_name << "_" << (*responses.begin())->GetTransmitterName() << ".ferscsv";
+      oss << recv_name << ".ferscsv";
       //Open the file for writing
       out_csv = fopen(oss.str().c_str(), "w");
       if (!out_csv)
 	throw std::runtime_error("[ERROR] Could not open file "+oss.str()+" for writing");
       // Write the file header into the file
-      WriteFersCSVFileHeader(out_csv, recv_name, (*responses.begin())->GetTransmitterName());
+      WriteFersCSVFileHeader(out_csv, recv_name);
     }
+    return out_csv;
+  }
+
+  /// Add noise to the window, to simulate receiver noise
+  void AddNoiseToWindow(rs::rsComplex *data, unsigned int size, rsFloat temperature)
+  {
+    if (temperature == 0)
+      return;  
+    //Calculate the noise power
+    rsFloat power = rsNoise::NoiseTemperatureToPower(temperature, rsParameters::rate()/2);
+    WGNGenerator generator(sqrt(power)/2.0);
+    //Add the noise to the signal
+    for (unsigned int i = 0; i < size; i++)
+      data[i] += rsComplex(generator.GetSample(), generator.GetSample());
+  }
+
+  /// Add a response array to the receive window
+  void AddArrayToWindow(rsFloat wstart, rs::rsComplex *window, unsigned int wsize, rsFloat rate, rsFloat rstart, rs::rsComplex *resp, unsigned int rsize)
+  {
+    int start_sample = static_cast<int>(std::floor(rate*(rstart-wstart)));
+    rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Adding response at %f at sample %d\n", rstart, start_sample);
+    //Get the offset into the response
+    unsigned int roffset = 0;
+    if (start_sample < 0) {
+      roffset = -start_sample;
+      start_sample = 0;
+    }
+    //Loop through the response, adding it to the window
+    for (unsigned int i = roffset; (i < rsize) && ((i+start_sample) < wsize); i++)
+      window[i+start_sample] += resp[i];    
+  }
+
+  /// Export to the FersBin file format
+  void ExportResponseFersBin(const std::vector<rs::ResponseBase*>& responses, const rs::Receiver* recv, const std::string& recv_name)
+  {
+    //Bail if there are no responses to export
+    if (responses.empty())
+      return;
+
+    FILE* out_bin = OpenBinaryFile(recv_name);   
+    FILE* out_csv = OpenCSVFile(recv_name);
 
     // Now loop through the responses and write them to the file
-    std::vector<rs::ResponseBase *>::const_iterator iter;
-    for (iter = responses.begin(); iter != responses.end(); iter++) {
-      rs::ResponseBase* resp = *iter;
-      //Render the pulse into memory
-      unsigned int size;
-      rsFloat rate;
-      boost::shared_array<rs::rsComplex> array = resp->RenderBinary(rate, size);
+
+
+    int window_count = recv->GetWindowCount();
+    for (int i = 0; i < window_count; i++) {
+      rsFloat length = recv->GetWindowLength();
+      rsFloat start = recv->GetWindowStart(i);
+      rsFloat end = start+length;
+      rsFloat rate = rsParameters::rate();
+      unsigned int size = static_cast<unsigned int>(std::ceil(length*rate));
+      // Allocate memory for the entire window
+      boost::scoped_array<rsComplex> window(new rsComplex[size]);
+      //Clear the window in memory
+      memset(window.get(), 0, sizeof(rsComplex)*size);
+      //Add Noise to the window
+      AddNoiseToWindow(window.get(), size, recv->GetNoiseTemperature());
+      //Loop through the responses, adding those in this window
+      std::vector<rs::ResponseBase *>::const_iterator iter;
+      for (iter = responses.begin(); iter != responses.end(); iter++) {	
+	rs::ResponseBase* resp = *iter;
+	if ((resp->GetStart() < end) && ((resp->GetStart() + resp->GetLength()) >= start)) {	  
+	  //Render the pulse into memory
+	  unsigned int psize;
+	  rsFloat prate;
+	  boost::shared_array<rs::rsComplex> array = resp->RenderBinary(prate, psize);
+	  //If the rates differ from the default rate, we can't render for now
+	  if (prate != rate)
+	    throw std::runtime_error("[ERROR] Cannot render results with differing rates");
+	  //Now add the array to the window
+	  AddArrayToWindow(start, window.get(), size, rate, resp->GetStart(), array.get(), psize);
+	}
+      }
+     
       //Export the binary format
       if (rs::rsParameters::export_binary()) {
 	//Write the output header into the file
-	WriteFersBinResponseHeader(out_bin, resp, size, rate);
+	WriteFersBinResponseHeader(out_bin, start, rate, size);
 	//Now write the binary data for the pulse
-	if (fwrite(array.get(), sizeof(rs::rsComplex), size, out_bin) != size)
+	if (fwrite(window.get(), sizeof(rs::rsComplex), size, out_bin) != size)
 	  throw std::runtime_error("[ERROR] Could not complete write to binary file");
       }
       //Export the CSV format
       if (rs::rsParameters::export_csvbinary()) {
 	//Write the output header into the file
-	WriteFersCSVResponseHeader(out_csv, resp, size, rate);
+	WriteFersCSVResponseHeader(out_csv, start, rate);
 	// Now write the binary data for the pulse
 	for (unsigned int i = 0; i < size; i++)
-	  fprintf(out_csv, "%f, %f\n", array[i].real(), array[i].imag());
+	  fprintf(out_csv, "%20.12e, %20.12e\n", window[i].real(), window[i].imag());
       }
-    }
-    fclose(out_bin);
-    fclose(out_csv);
+    } // for (i = 1:windows)
+    // Close the binary and csv files
+    if (out_bin) fclose(out_bin);
+    if (out_csv) fclose(out_csv);
   }
 
 }
@@ -181,8 +254,8 @@ void rs::ExportReceiverCSV(const std::vector<rs::ResponseBase*> &responses, cons
 }
 
 /// Export the receiver pulses to the specified binary file, using the specified quantization
-void rs::ExportReceiverBinary(const std::vector<rs::ResponseBase *> &responses, const std::string recv_name, const std::string filename)
+void rs::ExportReceiverBinary(const std::vector<rs::ResponseBase *> &responses, Receiver* recv, const std::string recv_name, const std::string filename)
 {
-  ExportResponseFersBin(responses, recv_name, filename);
+  ExportResponseFersBin(responses, recv, recv_name);
 }
 

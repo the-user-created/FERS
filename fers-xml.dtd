@@ -1,17 +1,16 @@
 <!-- DTD for FERS XML simulation script files. Script files must conform to this DTD or simulation results are likely to be unreliable. -->
 <!-- Marc Brooker mbrooker@rrsg.ee.uct.ac.za -->
-<!ELEMENT simulation (parameters,pulse*,waveform*,antenna+,platform+)>
+<!ELEMENT simulation (parameters,pulse*,waveform*,timing+,antenna+,platform+)>
 <!ATTLIST simulation name CDATA #REQUIRED>
 
 <!-- Simulation Parameters -->
-<!ELEMENT parameters (starttime,endtime,export?,c?,interprate?,rate?,rangegate?)>
+<!ELEMENT parameters (starttime,endtime,c?,interprate?,rate?,export?)>
 <!ELEMENT starttime (#PCDATA)> <!-- Start time of simulation -->
 <!ELEMENT endtime (#PCDATA)> <!-- End time of simulation -->
 <!ELEMENT c (#PCDATA)> <!-- Propagation speed -->
 <!ELEMENT interprate (#PCDATA)> <!-- Position interpolation rate for CW -->
 <!ELEMENT rate (#PCDATA)> <!-- Override the rendering sample rate with the specified one (Hz) -->
 <!ELEMENT randomseed (#PCDATA)> <!-- Random seed for noise and jitter (positive integer). If this is not specified, time() is used -->
-<!ELEMENT rangegate (#PCDATA)> <!-- Range gate length for receiving pulsed waveforms (s) -->
 <!ELEMENT export EMPTY> <!-- Formats to export -->
 <!ATTLIST export xml (true|false) "true"
 csv (true|false) "true" 
@@ -19,18 +18,25 @@ binary (true|false) "false"
 csvbinary (true|false) "false"> 
 
 <!-- Pulsed Radar Pulse -->
-<!ELEMENT pulse (length,rate,power,carrier)>
+<!ELEMENT pulse (length?,rate?,power,carrier)>
 <!ATTLIST pulse name CDATA #REQUIRED
-type CDATA #REQUIRED>
+type CDATA #REQUIRED
+filename CDATA "def.csv">
 <!ELEMENT length (#PCDATA)> <!-- Length of pulse (seconds) -->
 <!ELEMENT power (#PCDATA)> <!-- Pulse power (Watts) -->
-<!ELEMENT rate (#PCDATA)> <!-- Sample rate for rendering (Hz) -->
+<!-- <!ELEMENT rate (#PCDATA)> --> <!-- Sample rate for rendering (Hz) -->
 <!ELEMENT carrier (#PCDATA)> <!-- Frequency (Hz) -->
 
 <!-- CW Radar Waveform -->
 <!ELEMENT waveform (power,carrier)>
 <!ATTLIST waveform name CDATA #REQUIRED
 type CDATA #REQUIRED>
+
+<!-- Timing Source -->
+<!ELEMENT timing (frequency,jitter)>
+<!ATTLIST timing name CDATA #REQUIRED>
+<!ELEMENT frequency (#PCDATA)> <!-- Frequency of clock source (Hz) -->
+<!ELEMENT jitter (#PCDATA)> <!-- RMS time interval error (seconds) -->
 
 <!-- Antenna -->
 <!ELEMENT antenna (alpha?,beta?,gamma?,diameter?)>
@@ -70,25 +76,29 @@ pattern CDATA #REQUIRED>
 <!ELEMENT elevation (#PCDATA)>
 
 <!-- Monostatic radar installations -->
-<!ELEMENT monostatic (prf?,jitter?)>
+<!ELEMENT monostatic (window_skip?,window_length?,prf?)>
 <!ATTLIST monostatic name CDATA #REQUIRED
 type (pulsed|continuous) #REQUIRED
 antenna CDATA #REQUIRED
-pulse CDATA #REQUIRED>
+pulse CDATA #REQUIRED
+timing CDATA #REQUIRED>
 <!ELEMENT prf (#PCDATA)> <!-- PRF required for pulse transmitters only -->
-<!ELEMENT jitter (#PCDATA)> <!-- Standard deviation of timing jitter in seconds -->
 
 <!-- Standalone Transmitter -->
-<!ELEMENT transmitter (prf?,jitter?)>
+<!ELEMENT transmitter (prf?)>
 <!ATTLIST transmitter name CDATA #REQUIRED
 type (pulsed|continuous) #REQUIRED
 pulse CDATA #REQUIRED
-antenna CDATA #REQUIRED>
+antenna CDATA #REQUIRED
+timing CDATA #REQUIRED>
 
 <!-- Standalone Receiver -->
-<!ELEMENT receiver (noise_temp?,jitter?)>
+<!ELEMENT receiver (window_skip?,window_length?,prf?,noise_temp?)>
 <!ATTLIST receiver name CDATA #REQUIRED 
-antenna CDATA #REQUIRED>
+antenna CDATA #REQUIRED
+timing CDATA #REQUIRED>
+<!ELEMENT window_skip (#PCDATA)> <!-- Time to skip after start of pulse before starting receiving (seconds) -->
+<!ELEMENT window_length (#PCDATA)> <!-- Length of the range gate (seconds) -->
 <!ELEMENT noise_temp (#PCDATA)> <!-- Noise temperature contributed by receiver -->
 
 <!-- Target -->

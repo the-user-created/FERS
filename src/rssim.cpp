@@ -51,8 +51,6 @@ void SolveRE(const Transmitter *trans, const Receiver *recv, const Target *targ,
   //Step 1, calculate the delay (in seconds) experienced by the pulse
   //See "Delay Equation" in doc/equations/equations.tex
   results.delay = (Rt+Rr)/rsParameters::c();
-  //If the receiver experiences timing jitter, add it to the delay
-  results.delay += rsNoise::WGNSample(recv->GetTimingJitter());
   //Get the RCS
   rsFloat RCS = targ->GetRCS(transvec, recvvec);
   //Get the wavelength
@@ -64,7 +62,7 @@ void SolveRE(const Transmitter *trans, const Receiver *recv, const Target *targ,
   //Step 2, calculate the received power using the narrowband bistatic radar equation
   //See "Bistatic Narrowband Radar Equation" in doc/equations/equations.tex  
   results.power = (Gt*Gr*RCS*Wl*Wl)/(pow(4*M_PI, 3)*Rt*Rt*Rr*Rr);
-  //  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Pr: %2.9f Rt: %f Rr: %f Gt: %f Gr: %f RCS: %f Wl %f\n", Pr, Rt, Rr, Gt, Gr, RCS, Wl);
+  //  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Pr: %2.9e Rt: %e Rr: %e Gt: %e Gr: %e RCS: %e Wl %e\n", results.power, Rt, Rr, Gt, Gr, RCS, Wl);
 
   //Step 3, calculate phase shift
   //See "Phase Delay Equation" in doc/equations/equations.tex
@@ -108,14 +106,8 @@ void SimulateTarget(const PulseTransmitter *trans, Receiver *recv, const Target 
   //Create a Response object to contain the results
   Response *response = new Response(pulse->wave, results.delay+pulse->time, results.power, results.phase, results.doppler, results.noise_temperature, trans);  
   rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Adding pulse starting at %f\n", pulse->time);
-  //Clip the response as required by the T-R switch on the receiver
-  if (trans->ClipResponse(response, recv)) {
-    //Add the response to the reciever
-    recv->AddResponse(response);
-  }
-  else {
-    delete response;
-  }
+  //Add the response to the reciever
+  recv->AddResponse(response);
 }
 
 //Perform the first stage of CW simulation calculations for the specified pulse and target
@@ -132,8 +124,6 @@ void SimulateTargetCW(const CWTransmitter *trans, Receiver *recv, const Target *
     //Loop through and add interpolation points
     for (int i = 0; i < point_count; i++) {
       rsFloat stime = i*sample_time; //Time of the start of the sample
-      //Add timing jitter
-      stime += rsNoise::WGNSample(trans->GetTimingJitter());
       REResults results;
       SolveRE(trans, recv, targ, stime, sample_time, trans->GetWave(), results);
       CWInterpPoint point(results.power, start_time+results.delay, results.doppler, results.phase, results.noise_temperature);
@@ -143,14 +133,8 @@ void SimulateTargetCW(const CWTransmitter *trans, Receiver *recv, const Target *
   catch (RangeError re) {
     throw std::runtime_error("Receiver or Transmitter too close to Target for accurate simulation");
   }
-  //Clip the response as required by the T-R switch on the receiver
-  if (trans->ClipResponse(response, recv)) {
-    //Add the response to the reciever
-    recv->AddResponse(response);
-  }
-  else {
-    delete response;
-  }  
+  //Add the response to the reciever
+  recv->AddResponse(response);
 }
 
 /// Solve the Radar Equation and friends (doppler, phase, delay) for direct transmission
@@ -170,8 +154,6 @@ void SolveREDirect(const Transmitter *trans, const Receiver *recv, rsFloat time,
       //Step 1: Calculate the delay
       //See "Delay Equation" in doc/equations/equations.tex
       results.delay = R/rsParameters::c();
-      //Add the receiver's timing jitter to the delay
-      results.delay += rsNoise::WGNSample(recv->GetTimingJitter());
       
       //Calculate the wavelength
       rsFloat Wl = rsParameters::c()/wave->GetCarrier();
@@ -222,14 +204,9 @@ void AddDirectPulse(const PulseTransmitter *trans, Receiver *recv, const World *
   }
   //Complete the response 
   Response *response = new Response(pulse->wave, results.delay+pulse->time, results.power, results.phase, results.doppler, results.noise_temperature, trans);
-  //Clip the response as required by the T-R switch on the receiver
-  if (trans->ClipResponse(response, recv)) {
-    //Add the response to the reciever
-    recv->AddResponse(response);
-  }
-  else {
-    delete response;
-  }
+
+  //Add the response to the reciever
+  recv->AddResponse(response);
 }
 
 /// Model the pulse which is received directly by a reciever from a CW transmitter
@@ -250,8 +227,6 @@ void AddDirectCW(const CWTransmitter *trans, Receiver *recv, const World *world)
     //Loop through and add interpolation points
     for (int i = 0; i < point_count; i++) {
       rsFloat stime = i*sample_time;
-      //Add transmitter clock jitter to the time
-      stime += rsNoise::WGNSample(trans->GetTimingJitter());
       REResults results;
       SolveREDirect(trans, recv, stime, sample_time, trans->GetWave(), results);
       CWInterpPoint point(results.power, start_time+results.delay+i*sample_time, results.doppler, results.phase, results.noise_temperature);
@@ -261,14 +236,8 @@ void AddDirectCW(const CWTransmitter *trans, Receiver *recv, const World *world)
   catch (RangeError re) {
     throw std::runtime_error("Receiver or Transmitter too close to Target for accurate simulation");
   }
-  //Clip the response as required by the T-R switch on the receiver
-  if (trans->ClipResponse(response, recv)) {
-    //Add the response to the reciever
-    recv->AddResponse(response);
-  }
-  else {
-    delete response;
-  }
+  //Add the response to the reciever
+  recv->AddResponse(response);
 }
 
 }

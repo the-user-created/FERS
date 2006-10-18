@@ -139,11 +139,10 @@ boost::shared_array<rs::rsComplex> AnyPulse::Render(rsFloat& rate, const rs::Ren
   // Add the doppler shift to the signal
   data = rsSignal::DopplerShift(data, params.doppler, size);
   // Add noise to the signal
-  rsSignal::AddNoise(data, params.noise_temperature, size, signal->Rate());
+  //  rsSignal::AddNoise(data, params.noise_temperature, size, signal->Rate());
   //Render the signal into I and Q
   boost::shared_array<rs::rsComplex> result = rsSignal::IQDemodulate(data, size, std::sqrt(GetPower()*params.power)/static_cast<double>(size));
   FFTAlignedFree(data);
-  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "PTR: %p\n", result.get());
   return result;
 }
 

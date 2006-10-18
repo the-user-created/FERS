@@ -14,7 +14,7 @@
 #include "rsantenna.h"
 #include "rsparameters.h"
 #include "rspath.h"
-#include "rsnoise.h"
+#include "rstiming.h"
 
 using namespace rs; //Import the rs namespace for clarity
 
@@ -25,9 +25,9 @@ using namespace rs; //Import the rs namespace for clarity
 /// Default Constructor
 Radar::Radar(const Platform *platform, std::string name):
   Object(platform, name),
+  timing(0),
   antenna(0),
-  attached(0),
-  timing_jitter(0)
+  attached(0)
 {
 }
 
@@ -77,18 +77,11 @@ rsFloat Radar::GetNoiseTemperature(const SVec3 &angle) const
   return antenna->GetNoiseTemperature(angle);
 }
 
-/// Set the timing jitter (value is standard deviation of jitter, in seconds)
-void Radar::SetTimingJitter(rsFloat jitter)
-{
-  if (jitter < -std::numeric_limits<rsFloat>::epsilon())
-    throw std::logic_error("[ERROR] Timing jitter must not be less than zero.");
-  timing_jitter = jitter;
-}
-
-/// Get the current timing jitter value (standard deviation of jitter)
-rsFloat Radar::GetTimingJitter() const
-{
-  return timing_jitter;
+/// Attach a timing object to the radar
+void Radar::SetTiming(Timing* tim) {
+  if (!tim)
+    throw std::runtime_error("[BUG] Radar timing source must not be set to NULL");
+  timing = tim;
 }
 
 //
@@ -146,7 +139,9 @@ void PulseTransmitter::GetPulse(TransmitterPulse *pulse, int number) const
   //Calculate start time of pulse
   pulse->time = static_cast<rsFloat>(number)/prf;
   //If there is timing jitter, add it
-  pulse->time += rsNoise::WGNSample(GetTimingJitter());
+  if (!timing)
+    throw std::logic_error("[BUG] Transmitter must be associated with timing source");
+  pulse->time = timing->GetTime(pulse->time, 0);
 }
 
 // Set the PRF of the transmitter
@@ -159,39 +154,6 @@ void PulseTransmitter::SetPRF(rsFloat mprf)
 Transmitter::TransmitterType PulseTransmitter::GetType() const
 {
   return Transmitter::TRANS_PULSED;
-}
-
-/// Clip a response to simulate the T-R switch
-bool PulseTransmitter::ClipResponse(ResponseBase *resp, const Receiver *recv) const
-{
-
-  if (IsMonostatic() && (recv == GetAttached())) {
-    // Monostatic case
-    rsFloat prTime = 1/prf;
-    rsFloat pStart = std::fmod(resp->GetStart(), prTime);
-    rsFloat pEnd = pStart + resp->GetLength();
-    //If the entire pulse is deadtime, discard it
-    if ((pStart < pulseWave->GetLength()) && (pEnd < pulseWave->GetLength())) {
-      DEBUG_PRINT(rsDebug::RS_VERY_VERBOSE, "T-R Switch Discarded entire pulse");
-      return false;
-    }
-    //Deadtime at the start
-    if (pStart < pulseWave->GetLength())
-      resp->AddDeadTime(std::make_pair(0, pulseWave->GetLength()));
-    //Deadtime in the middle and at the end
-    rsFloat count = 0;
-    while (pEnd > prTime) {
-      resp->AddDeadTime(std::make_pair(count*prTime, count*prTime+pulseWave->GetLength()));
-      count++;
-      pEnd -= prTime;
-    }
-    return true;
-  }
-  else {
-    // Multistatic case
-    // TODO: Support T-R switch for receivers with unconnected transmitters
-    return true;
-  }
 }
 
 //
@@ -219,13 +181,6 @@ rs::RadarWaveform* CWTransmitter::GetWave() const
 Transmitter::TransmitterType CWTransmitter::GetType() const
 {
   return Transmitter::TRANS_CONTINUOUS;
-}
-
-/// Clip a response to simulate the T-R switch
-bool CWTransmitter::ClipResponse(ResponseBase *resp, const Receiver *recv) const
-{
-  //TODO: Implement this
-  return true;
 }
 
 //
@@ -281,7 +236,7 @@ void Receiver::Render()
       ExportReceiverXML(responses, GetName() + "_results");
     //Export a binary containing the pulses
     if (rsParameters::export_binary() || rsParameters::export_csvbinary())
-      ExportReceiverBinary(responses, GetName(), GetName()+"_results");
+      ExportReceiverBinary(responses, this, GetName(), GetName()+"_results");
     //Export to CSV format
     if (rsParameters::export_csv())
       ExportReceiverCSV(responses, GetName()+"_results");
@@ -300,6 +255,12 @@ rsFloat Receiver::GetNoiseTemperature(const SVec3 &angle) const
   return noise_temperature+Radar::GetNoiseTemperature(angle);
 }
 
+/// Get the receiver noise temperature
+rsFloat Receiver::GetNoiseTemperature() const
+{
+  return noise_temperature;
+}
+
 /// Set the noise temperature of the receiver
 void Receiver::SetNoiseTemperature(rsFloat temp)
 {
@@ -308,8 +269,42 @@ void Receiver::SetNoiseTemperature(rsFloat temp)
   noise_temperature = temp;
 }
 
+/// Set the length of the receive window
+void Receiver::SetWindowProperties(rsFloat length, rsFloat prf, rsFloat skip)
+{
+  window_length = length;
+  window_prf = prf;
+  window_skip = skip;
+}
+
 /// Return the number of responses
 int Receiver::CountResponses() const
 {
   return responses.size();
+}
+
+/// Get the number of receive windows in the simulation time
+int Receiver::GetWindowCount() const
+{
+  rsFloat time = rsParameters::end_time() - rsParameters::start_time();
+  rsFloat pulses = time*window_prf;
+  return static_cast<int>(std::ceil(pulses));
+}
+
+/// Get the start time of the next window
+rsFloat Receiver::GetWindowStart(int window) const
+{
+  //Calculate start time of pulse
+  rsFloat stime = static_cast<rsFloat>(window)/window_prf+window_skip;
+  //If there is timing jitter, add it
+  if (!timing)
+    throw std::logic_error("[BUG] Receiver must be associated with timing source");
+  stime = timing->GetTime(stime, 0);
+  return stime;
+}
+
+/// Get the length of the receive window
+rsFloat Receiver::GetWindowLength() const
+{
+  return window_length;
 }

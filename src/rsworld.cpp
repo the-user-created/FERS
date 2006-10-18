@@ -11,6 +11,7 @@
 #include "rsradarwaveform.h"
 #include "rsplatform.h"
 #include "rstarget.h"
+#include "rstiming.h"
 
 using namespace rs; //Import the rs namespace for this implementation
 
@@ -90,35 +91,55 @@ void World::Add(Target *targ)
 //Add a pulse to the world
 void World::Add(RadarWaveform *pulse)
 {
+  if (FindPulse(pulse->GetName()))
+    throw std::runtime_error("[ERROR] A pulse with the name "+pulse->GetName()+" already exists. Pulses must have unique names");
   pulses[pulse->GetName()] = pulse;
 }
 
 //Add a CW waveform to the world
 void World::Add(CWWaveform *wave)
 {
+  if (FindCWWaveform(wave->GetName()))
+    throw std::runtime_error("[ERROR] A CW Wavefrom with the name "+wave->GetName()+" already exists. CW Waveforms must have unique names");
   cwwaves[wave->GetName()] = wave;
 }
 
 //Add an antenna to the world
 void World::Add(Antenna *antenna)
 {
+  if (FindAntenna(antenna->GetName()))
+    throw std::runtime_error("[ERROR] An antenna with the name "+antenna->GetName()+" already exists. Antennas must have unique names");
   antennas[antenna->GetName()] = antenna;
 }
 
+//Add a timing source to the world
+void World::Add(Timing *timing)
+{
+  if (FindTiming(timing->GetName()))
+    throw std::runtime_error("[ERROR] A timing source with the name "+timing->GetName()+" already exists. Timing sources must have unique names");
+  timings[timing->GetName()] = timing;
+}
+
 //Get a pulse from the map of pulses
-RadarWaveform* World::FindPulse(std::string name)
+RadarWaveform* World::FindPulse(const std::string& name)
 {
   return pulses[name];
 }
 
 //Get a cw waveform from the map
-RadarWaveform* World::FindCWWaveform(std::string name)
+RadarWaveform* World::FindCWWaveform(const std::string& name)
 {
   return cwwaves[name];
 }
 
 //Get an antenna from the map of antennas
-Antenna* World::FindAntenna(std::string name)
+Antenna* World::FindAntenna(const std::string& name)
 {
     return antennas[name];
+}
+
+/// Find a timing source with the specified name
+Timing* World::FindTiming(const std::string& name)
+{
+  return timings[name];
 }

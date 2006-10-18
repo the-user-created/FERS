@@ -100,14 +100,16 @@ void rsSignal::AddNoise(rsSignal::complex *data, rsFloat temperature, unsigned i
   //The calculation can be canceled if the noise temperature is zero
   if (temperature == 0)
     return;
-
+  
   rsFloat power = rsNoise::NoiseTemperatureToPower(temperature, fs/2);
-  WGNGenerator generator(sqrt(power));
+  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Adding noise of temperature %f power %e voltage %e\n", temperature, power, sqrt(power));
+  WGNGenerator generator(1);
   //Generate noise in the frequency domain
   for (unsigned int i = 1; i < size/2; i++) {
-    complex ns = sqrt(size)*complex(generator.GetSample(), generator.GetSample());
+    complex ns = sqrt(size)*complex(generator.GetSample()*sqrt(power), generator.GetSample()*sqrt(power));
     data[i] += ns;
     data[size-i] += ns;
+    rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Noise %e %e %e %e\n", ns.real(), ns.imag(), data[i].real(), data[i].imag());
   }
 }
 

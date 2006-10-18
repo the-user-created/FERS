@@ -3,9 +3,9 @@
 #---------------------------------------------------------------------------
 # Project related configuration options
 #---------------------------------------------------------------------------
-PROJECT_NAME           = FERS
-PROJECT_NUMBER         = "Revision 41"
-OUTPUT_DIRECTORY       = /home/marc/projects/fers/doc/doxy/
+PROJECT_NAME           = fers
+PROJECT_NUMBER         = 0.1
+OUTPUT_DIRECTORY       = /home/marc/projects/fers/fers/doc/doxy/
 CREATE_SUBDIRS         = NO
 OUTPUT_LANGUAGE        = English
 USE_WINDOWS_ENCODING   = NO
@@ -25,7 +25,7 @@ ABBREVIATE_BRIEF       = "The $name class" \
 ALWAYS_DETAILED_SEC    = NO
 INLINE_INHERITED_MEMB  = NO
 FULL_PATH_NAMES        = YES
-STRIP_FROM_PATH        = /home/marc/projects/fers/
+STRIP_FROM_PATH        = /home/marc/projects/fers/fers/
 STRIP_FROM_INC_PATH    = 
 SHORT_NAMES            = NO
 JAVADOC_AUTOBRIEF      = NO
@@ -82,7 +82,7 @@ WARN_LOGFILE           =
 #---------------------------------------------------------------------------
 # configuration options related to the input files
 #---------------------------------------------------------------------------
-INPUT                  = /home/marc/projects/fers/src/
+INPUT                  = /home/marc/projects/fers/fers/src/
 FILE_PATTERNS          = *.c \
                          *.cc \
                          *.cxx \
@@ -124,7 +124,7 @@ FILE_PATTERNS          = *.c \
                          *.M \
                          *.MM \
                          *.PY
-RECURSIVE              = YES
+RECURSIVE              = NO
 EXCLUDE                = 
 EXCLUDE_SYMLINKS       = NO
 EXCLUDE_PATTERNS       = 

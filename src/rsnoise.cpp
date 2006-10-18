@@ -6,6 +6,7 @@
 #include <limits>
 #include <boost/random.hpp>
 #include "rsnoise.h"
+#include "rsdebug.h"
 #include "rsparameters.h"
 
 
@@ -20,8 +21,8 @@ namespace {
 boost::mt19937* rng;
 
   //Used to generate single noise samples
-  boost::normal_distribution<rsFloat> nd;
-  boost::variate_generator<boost::mt19937&, boost::normal_distribution<rsFloat> > normal_vg(*rng, nd);
+  boost::normal_distribution<rsFloat> nd(0,1);
+  boost::variate_generator<boost::mt19937&, boost::normal_distribution<rsFloat> >* normal_vg;
 }
 
 //
@@ -32,7 +33,9 @@ boost::mt19937* rng;
 void rsNoise::InitializeNoise()
 {
   delete rng;
+  delete normal_vg;
   rng = new boost::mt19937(rsParameters::random_seed());
+  normal_vg = new boost::variate_generator<boost::mt19937&, boost::normal_distribution<rsFloat> >(*rng, nd);
 }
 
 /// Clean up the noise code
@@ -45,7 +48,7 @@ void rsNoise::CleanUpNoise()
 rsFloat rsNoise::WGNSample(rsFloat stddev)
 {
   if (stddev > std::numeric_limits<rsFloat>::epsilon())
-    return normal_vg();
+    return (*normal_vg)()*stddev;
   else
     return 0;
 }
