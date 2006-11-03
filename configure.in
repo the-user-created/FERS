@@ -21,6 +21,8 @@ AC_PROG_MAKE_SET
 AC_CHECK_LIB([boost_thread], [main])
 AC_CHECK_LIB([fftw3], [fftw_execute_dft])
 AC_CHECK_LIB([samplerate], [src_strerror])
+AC_CHECK_LIB([hdf5], [H5Fcreate])
+AC_CHECK_LIB([hdf5_hl], [H5LTmake_dataset_double])
 
 # Checks for header files.
 AC_HEADER_STDC

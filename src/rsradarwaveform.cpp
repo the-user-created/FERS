@@ -132,18 +132,21 @@ boost::shared_array<rs::rsComplex> AnyPulse::Render(rsFloat& rate, const rs::Ren
 {
   size = signal->Size();
   rate = signal->Rate();
-  rs::rsComplex* data = signal->CopyData();
-  // Add the phase shift to the signal
-  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Phase: %f %f\n", params.phase, std::fmod(params.phase, M_PI*2)/M_PI);
-  rsSignal::TimeShift(data, signal->Rate(), size, std::fmod(params.phase, M_PI*2)/M_PI);
-  // Add the doppler shift to the signal
-  data = rsSignal::DopplerShift(data, params.doppler, size);
-  // Add noise to the signal
-  //  rsSignal::AddNoise(data, params.noise_temperature, size, signal->Rate());
+  rs::rsComplex* data = signal->CopyData();  
+  // Get the time shift in number of samples
+  rsFloat sample_shift = params.start*signal->Rate();
+  // The shift in number of samples has is some integer n plus some real part p. Shifting by an integer number of samples is trivial, but the real part is harder, so we do that here.
+  rsFloat real_shift = sample_shift - std::floor(sample_shift); 
+  rsSignal::TimeShift(data, size, real_shift);  
   //Render the signal into I and Q
-  boost::shared_array<rs::rsComplex> result = rsSignal::IQDemodulate(data, size, std::sqrt(GetPower()*params.power)/static_cast<double>(size));
+  rsSignal::complex* iq_result = rsSignal::IQDemodulate(data, size, std::sqrt(GetPower()*params.power)/static_cast<double>(size), params.phase);
   FFTAlignedFree(data);
-  return result;
+  // Add the doppler shift to the signal
+  rsSignal::complex *ds_result = rsSignal::DopplerShift(iq_result, params.doppler, size);
+    
+  FFTAlignedFree(iq_result);
+
+  return boost::shared_array<rs::rsComplex>(ds_result);
 }
 
 /// Get the amount of padding at the beginning of the pulse

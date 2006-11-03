@@ -19,4 +19,4 @@ end;
 
 %Y=X*exp(i*phi);
 
-plot(real(ifft(X)), 'r'); hold on; plot(real(ifft(Y)), 'b'); hold off;
+%plot(real(ifft(X)), 'r'); hold on; plot(real(ifft(Y)), 'b'); hold off;

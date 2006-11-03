@@ -84,8 +84,10 @@ void SolveRE(const Transmitter *trans, const Receiver *recv, const Target *targ,
     throw std::runtime_error("Target is too close to transmitter or receiver for accurate simulation");
   //Doppler shift equation
   //See "Bistatic Doppler Equation" in doc/equations/equations.tex
-  rsFloat vdoppler = (Rt_end-Rt+Rr_end-Rr)/length;
-  results.doppler = (1+vdoppler/rsParameters::c());
+  rsFloat V_r = (Rr_end-Rr)/length;
+  rsFloat V_t = (Rt_end-Rt)/length;
+  results.doppler = (rsParameters::c()+V_r)/(rsParameters::c()-V_t);
+  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Rr_end: %e Rr: %e V_r: %e V_t: %e\n", Rr_end, Rr, V_r, V_t);
 
   //Step 5, calculate system noise temperature
   //We only use the receive antenna noise temperature for now
@@ -172,7 +174,7 @@ void SolveREDirect(const Transmitter *trans, const Receiver *recv, rsFloat time,
       //Calculate the Doppler shift
       //See "Monostatic Doppler Equation" in doc/equations/equations.tex
       rsFloat vdoppler = (R_end-R)/length;
-      results.doppler = (1+vdoppler/rsParameters::c());
+      results.doppler = (rsParameters::c()+vdoppler)/(rsParameters::c()-vdoppler);
 
       //Step 4, calculate phase shift
       //See "Phase Delay Equation" in doc/equations/equations.tex

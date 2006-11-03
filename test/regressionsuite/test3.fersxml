@@ -1,86 +1,68 @@
-<!-- Test case for CW simulation - a moving transmitter and a number of receivers -->
+<!-- Test pulsed radar. One Monostatic radar and one moving target -->
 <?xml version="1.0" ?>
 <!DOCTYPE simulation SYSTEM "../../fers-xml.dtd">
-
 <simulation name="sim1">
   <parameters>
     <starttime>0</starttime>
-    <endtime>3</endtime>
-    <interprate>1000</interprate> <!-- Sample rate of results -->
+    <endtime>0.0021</endtime>
+    <rate>1e8</rate>
+    <export binary="true" csvbinary="true" xml="true"/>
   </parameters>
 
-  <waveform name="pulse1" type="mono">
-    <power>100</power> <!-- Transmitter Power (Watts) -->
-    <carrier>1e6</carrier> <!-- Frequency of mono waveform -->
-  </waveform>
+  <pulse name="pulse1" type="file" filename="pulse.csv">
+    <power>1000</power>
+    <carrier>1e9</carrier>
+  </pulse>
+
+  <timing name="clock">
+    <frequency>10e6</frequency>
+    <jitter>0</jitter>
+  </timing>
 
   <antenna name="ant1" pattern="isotropic">
   </antenna>
 
-  <!-- Each target, receiver and transmitter must be attached to a platform -->
-  <platform name="balloon">
-    <motionpath interpolation="cubic"> <!-- Moving, with cubic interpolation -->
-      <positionwaypoint>
-	<x>50.0</x>
-	<y>50.0</y>
-	<altitude>0.0</altitude>
-	<time>0</time>
-      </positionwaypoint>
-      <positionwaypoint>
-	<x>45.0</x>
-	<y>45.0</y>
-	<altitude>75.0</altitude>
-	<time>1.0</time>
-      </positionwaypoint>
-      <positionwaypoint>
-	<x>40</x>
-	<y>40</y>
-	<altitude>200.0</altitude>
-	<time>2.0</time>
-      </positionwaypoint>
-      <positionwaypoint>
-	<x>35</x>
-	<y>35</y>
-	<altitude>375.0</altitude>
-	<time>3.0</time>
-      </positionwaypoint>
-    </motionpath>
-    <fixedrotation>
-      <startazimuth>0.0</startazimuth>
-      <startelevation>0.0</startelevation>
-      <azimuthrate>0</azimuthrate>
-      <elevationrate>0</elevationrate>
-    </fixedrotation>
-    <transmitter name="mono1" type="continuous" antenna="ant1" pulse="pulse1">
-      <prf>1000</prf>
-    </transmitter>
-  </platform>
-
-  <platform name="site1">
+  <platform name="radarsite">
     <motionpath>
-      <positionwaypoint> <!-- Not moving -->
-	<x>0.0</x>
+      <positionwaypoint>
+	<x>0.00</x>
 	<y>0.0</y>
 	<altitude>0.0</altitude>
 	<time>0</time>
       </positionwaypoint>
-    </motionpath>    
+    </motionpath>
     <fixedrotation>
       <startazimuth>0.0</startazimuth>
-      <startelevation>0.0</startelevation>
+      <startelevation>0</startelevation>
       <azimuthrate>0</azimuthrate>
       <elevationrate>0</elevationrate>
     </fixedrotation>
-    <receiver name="recv_site1" antenna="ant1" />
+    <monostatic name="mono1" type="pulsed" antenna="ant1" pulse="pulse1" timing="clock">      
+      <window_skip>0</window_skip>
+      <window_length>10e-5</window_length> 
+      <prf>5000</prf>
+    </monostatic>
   </platform>
 
-  <platform name="site2">
-    <motionpath>
+  <platform name="aeroplane">
+    <motionpath interpolation="cubic">
       <positionwaypoint>
-	<x>100.0</x>
-	<y>100.0</y>
-	<altitude>0.0</altitude>
+	<x>3400.0</x>
+	<y>0.0</y>
+	<altitude>100.0</altitude>
 	<time>0</time>
+      </positionwaypoint>
+      <positionwaypoint>
+	<x>0.0</x>
+	<y>0.0</y>
+	<altitude>100.0</altitude>
+	<time>0.001</time>
+      </positionwaypoint>
+      <positionwaypoint>
+	<x>-3400.0</x>
+	<y>0.0</y>
+	<altitude>100.0</altitude>
+	<time>0.0021</time>
       </positionwaypoint>
     </motionpath>    
     <fixedrotation>
@@ -89,7 +71,11 @@
       <azimuthrate>0</azimuthrate>
       <elevationrate>0</elevationrate>
     </fixedrotation>
-    <receiver name="recv_site2" antenna="ant1" />
+    <target name="wings">
+      <rcs type="isotropic">
+        <value>10</value>
+      </rcs>
+    </target>
   </platform>
-  
+
 </simulation>

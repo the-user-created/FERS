@@ -12,24 +12,19 @@ using namespace rsSignal;
 using namespace rs;
 
 /// Doppler shift a signal by the given factor
-complex* rsSignal::DopplerShift(complex *data, rsFloat factor, unsigned int& size)
+complex* rsSignal::DopplerShift(complex *td_data, rsFloat factor, unsigned int& size)
 {
-  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Applying doppler shift of %f\n", factor);
-  complex *timesig = FFTAlignedMalloc<complex>(size);
-  //Transform into the time domain
-  FFTComplex* invplan = FFTManager::Instance()->GetComplexPlanInv(size, true, data, timesig);
-  invplan->transform(size, data, timesig);
-  FFTAlignedFree(data);
+  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Applying doppler shift of %f\n", factor);  
   //Call the SRC algorithm to do the real work
-  complex *transtime = SRCDopplerShift(timesig, factor, size);
-  //Transform back into the frequency domain
-  complex *newsig = FFTAlignedMalloc<complex>(size);  
-  //Transform back into the frequency domain
-  FFTComplex *plan = FFTManager::Instance()->GetComplexPlan(size, true, transtime, newsig);
-  plan->transform(size, transtime, newsig);
-  //Clean up the extra memory we used  
-  FFTAlignedFree(transtime);
-  return newsig;
+  complex *transtime = SRCDopplerShift(td_data, factor, size);
+  //If the doppler code didn't do anything, we need to copy the data to an unaligned array
+  if (transtime == td_data) {
+    transtime = new complex[size];
+    for (unsigned int i = 0; i < size; i++)
+      transtime[i] = td_data[i];
+  }
+  //Return the result
+  return transtime;
 }
   
 /// Shift a signal in frequency by shift Hz
@@ -70,17 +65,13 @@ void rsSignal::FrequencyShift(rsSignal::complex* data, rsFloat fs, unsigned int 
   FFTManager::AlignedFree(timesig);
 }
 
-/// Shift a signal in time by shift seconds
-void rsSignal::TimeShift(rsSignal::complex *data, rsFloat fs, unsigned int size, rsFloat shift)
+/// Shift a signal in time by shift samples
+void rsSignal::TimeShift(rsSignal::complex *data, unsigned int size, rsFloat shift)
 {
   //See equations.tex for details of this algorithm
-
   rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Shifting by %f samples\n", shift);
 
   double dsize = static_cast<double>(size);
-
-  //Get the shift in number of samples
-  //shift /= fs;
 
   //Perform the shift
   for (unsigned int i = 0; i < size/2; i++) {
@@ -88,6 +79,7 @@ void rsSignal::TimeShift(rsSignal::complex *data, rsFloat fs, unsigned int size,
     data[i] *= complex(std::cos(f), std::sin(f));
   }
   data[size/2] *= complex(std::cos(M_PI*shift), std::sin(M_PI*shift));
+
   for (unsigned int i = size/2+1; i < size; i++) {
     rsFloat f = 2*M_PI*(i-dsize)/dsize*shift;
     data[i] *= complex(std::cos(f), std::sin(f));
@@ -114,48 +106,30 @@ void rsSignal::AddNoise(rsSignal::complex *data, rsFloat temperature, unsigned i
 }
 
 /// Demodulate a frequency domain signal into time domain I and Q
-boost::shared_array<complex> rsSignal::IQDemodulate(complex *data, unsigned int size, rsFloat scale)
+complex* rsSignal::IQDemodulate(complex *data, unsigned int size, rsFloat scale, rsFloat phase)
 {
-  //TODO: find a more efficient algorithm for this transform
-  
-  //Make a copy of the complex data
-  complex* I = FFTAlignedMalloc<complex>(size);
-  complex* Q = data;
-  
-  //Process the frequency domain data into I and Q
-  for (unsigned int i = 0; i < size; i++) {
-    I[i] = complex(data[i].real(), 0);
-    Q[i] = complex(0, data[i].imag());
-  }
-  
-  //Allocate memory to put the I and Q data in
-  complex* time_q = FFTAlignedMalloc<complex>(size);
-  complex* time_i = FFTAlignedMalloc<complex>(size);
+  //A demonstration that this algorithm is correct can be found in equations.tex
 
-  //Prepare an inverse transform for the I and Q data
-  FFTComplex* invplan = FFTManager::Instance()->GetComplexPlanInv(size, true, data, time_i);
-  invplan->transform(size, Q, time_q);
-  invplan->transform(size, I, time_i);    
+  //Allocate memory for the time domain data
+  complex* time_data = FFTAlignedMalloc<complex>(size);
+  FFTComplex* invplan = FFTManager::Instance()->GetComplexPlanInv(size, true, data, time_data);
 
-  //Free a temporary
-  FFTAlignedFree(I);
-  
-  //Merge the two arrays into one, packing the real part of q into the imag part of the result
-  complex *resi = new complex[size];
-  boost::shared_array<complex> result(resi);
-  for (unsigned int i = 0; i < size; i++) {
-    rsFloat idata = time_i[i].real()*scale;
-    rsFloat qdata = time_q[i].real()*scale;
-    
-    resi[i] = complex(idata, qdata);
-  }
+  //Transform the signal into the time domain
+  invplan->transform(size, data, time_data);
 
-  //Free temporaries
-  FFTAlignedFree(time_q);
-  FFTAlignedFree(time_i);
+  // Temporary scan for the largest imag() value, to validate the method
+  rsFloat max_imag = 0;
+  for (unsigned int i = 0; i < size; i++)
+    if (std::fabs(time_data[i].imag()) > max_imag)
+      max_imag = std::fabs(time_data[i].imag());
+  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Max imaginary value: %e (should be zero)\n", max_imag);
+
+  //Following the transform, data should be (within numerical accuracy) purely real  
+  for (unsigned int i = 0; i < size; i++)
+    time_data[i] = complex(scale*time_data[i].real()*std::cos(phase), scale*time_data[i].real()*std::sin(phase));
 
   //Return the result
-  return result;
+  return time_data;
 }
 
 //

@@ -10,6 +10,7 @@ The features which are currently (at least partially implemented are):
 * Simple propagation, doppler and phase model
 * Modelling of Multistatic and Monostatic radar systems
 * Modelling of CW and Pulsed radars
+* Export to CSV, XML and HDF5 file formats
 
 Features not implemented:
 
@@ -30,7 +31,8 @@ FERS depends on a number of external libraries, which you need to install before
 
 * Boost (at least boost::threads and the boost/cstdint.hpp header) which is available freely from http://www.boost.org
 * FFTW3 which is available freely from http://www.fftw3.org
-* Libsamplerate which is available freely from http://www.mega-nerd.com/SRC/
+* libsamplerate which is available freely from http://www.mega-nerd.com/SRC/
+* libhdf5 (optional, for export to Hierarchical Data Format 5 files)
 
 On a Debian or Ubuntu system (or pretty much any other decent GNU/Linux distribution) these libraries should be available pre-packaged for your installing pleasure.
 

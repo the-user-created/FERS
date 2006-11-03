@@ -142,7 +142,7 @@ namespace rs {
       /// Get the noise temperature (including antenna noise temperature)
       rsFloat GetNoiseTemperature(const SVec3 &angle) const;
       /// Get the receiver noise temperature
-      rsFloat Receiver::GetNoiseTemperature() const;
+      rsFloat GetNoiseTemperature() const;
       /// Set the noise temperature of the receiver
       void SetNoiseTemperature(rsFloat temp);
       /// Set the length of the receive window

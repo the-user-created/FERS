@@ -3,9 +3,9 @@ img_extIsRegExp=false
 img_extensions=.eps .pdf .dvi .ps .fig .gif .jpg .jpeg .png
 kileprversion=1
 kileversion=1.9.2
-lastDocument=equations.tex
+lastDocument=timing.tex
 masterDocument=
-name=equations
+name=timing
 pkg_extIsRegExp=false
 pkg_extensions=.cls .sty .dtx
 src_extIsRegExp=false
@@ -15,26 +15,26 @@ src_extensions=.tex .ltx .bib .mp
 MakeIndex=
 QuickBuild=
 
-[item:equations.bib]
+[item:timing.bib]
 archive=true
-column=65
+column=18
 encoding=ISO 8859-1
 highlight=LaTeX
-line=53
+line=0
 open=true
 
-[item:equations.kilepr]
+[item:timing.kilepr]
 archive=true
-column=0
+column=7798885
 encoding=
 highlight=
 line=0
 open=false
 
-[item:equations.tex]
+[item:timing.tex]
 archive=true
-column=82
+column=180
 encoding=ISO 8859-1
 highlight=LaTeX
-line=132
+line=34
 open=true

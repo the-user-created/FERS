@@ -1,0 +1,6 @@
+2006-11-03  Marc Brooker <mbrooker@rrsg.uct.ac.za>
+	* <fers> Third public release
+	* <fers> Added the ability to export to HDF5 files
+	* <fers> Fixed phase and doppler calculations
+	* <fers> Fixed up some examples to the new XML format. More work needs to be done here
+	

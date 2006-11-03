@@ -18,7 +18,7 @@
 #include "rsdebug.h"
 #include "rsparameters.h"
 #include "rsnoise.h"
-#include "fersbin.h"
+#include "rshdf5.h"
 
 #define TIXML_USE_STL
 #include "tinyxml/tinyxml.h"
@@ -26,29 +26,6 @@
 using namespace rs;
 
 namespace {
-
-  /// Write the FersBin file header
-  void WriteFersBinFileHeader(FILE *fp)
-  {
-    FersBin::FileHeader fh;
-    fh.magic = 0x73726566;
-    fh.version = 1;
-    fh.float_size = sizeof(double);
-    if (fwrite(&fh, sizeof(fh), 1, fp) != 1)
-      throw std::runtime_error("[ERROR] Could not write file header to fersbin file");
-  }
-
-  /// Write the FersBin response header
-  void WriteFersBinResponseHeader(FILE *fp, rsFloat start, rsFloat rate, int size)
-  {
-    FersBin::PulseResponseHeader prh;
-    prh.magic = 0xFE00;
-    prh.count = size;
-    prh.rate = static_cast<double>(rate);
-    prh.start = static_cast<double>(start);
-    if (fwrite(&prh, sizeof(prh), 1, fp) != 1)
-      throw std::runtime_error("[ERROR] Could not write response header to fersbin file");
-  }
 
   /// Write the FersCSV file header
   void WriteFersCSVFileHeader(FILE* out, const std::string& recv)
@@ -65,22 +42,18 @@ namespace {
   }
 
   ///Open the binary file for response export
-  FILE *OpenBinaryFile(const std::string &recv_name)
+  int OpenHDF5File(const std::string &recv_name)
   {
-    FILE *out_bin = 0;
+    int hdf5_file = 0;
     if (rs::rsParameters::export_binary()) {
       //Build the filename for the binary file
       std::ostringstream b_oss;
       b_oss.setf(std::ios::scientific);    
-      b_oss << recv_name << ".fersbin";
+      b_oss << recv_name << ".h5";
       //Open the binary file for writing
-      out_bin = fopen(b_oss.str().c_str(), "wb");
-      if (!out_bin)
-	throw std::runtime_error("[ERROR] Could not open file "+b_oss.str()+" for writing");
-      // Write the file header into the file
-      WriteFersBinFileHeader(out_bin);
+      hdf5_file = rshdf5::CreateFile(b_oss.str().c_str());
     }
-    return out_bin;
+    return hdf5_file;    
   }
 
   /// Open the CSV file for response export
@@ -138,7 +111,7 @@ namespace {
     if (responses.empty())
       return;
 
-    FILE* out_bin = OpenBinaryFile(recv_name);   
+    int out_bin = OpenHDF5File(recv_name);   
     FILE* out_csv = OpenCSVFile(recv_name);
 
     // Now loop through the responses and write them to the file
@@ -176,11 +149,7 @@ namespace {
      
       //Export the binary format
       if (rs::rsParameters::export_binary()) {
-	//Write the output header into the file
-	WriteFersBinResponseHeader(out_bin, start, rate, size);
-	//Now write the binary data for the pulse
-	if (fwrite(window.get(), sizeof(rs::rsComplex), size, out_bin) != size)
-	  throw std::runtime_error("[ERROR] Could not complete write to binary file");
+	rshdf5::AddChunkToFile(out_bin, window.get(), size, start, rate, i);
       }
       //Export the CSV format
       if (rs::rsParameters::export_csvbinary()) {
@@ -192,7 +161,7 @@ namespace {
       }
     } // for (i = 1:windows)
     // Close the binary and csv files
-    if (out_bin) fclose(out_bin);
+    if (out_bin) rshdf5::CloseFile(out_bin);
     if (out_csv) fclose(out_csv);
   }
 

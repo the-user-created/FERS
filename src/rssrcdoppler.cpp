@@ -23,14 +23,13 @@ complex* rsSignal::SRCDopplerShift(complex* data, rsFloat factor, unsigned int& 
   if (size == newsize)
     return data;
   //Convert the double data into float data
-  float* fldata = FFTAlignedMalloc<float>(size*2);
+  float* fldata = new float[size*2];
   for (unsigned int i = 0; i < size; i++) {
     fldata[i*2] = data[i].real();
     fldata[i*2+1] = data[i].imag();
   }
-  FFTAlignedFree(data);  
   //Allocate memory for the transformed data
-  float* newdata = FFTAlignedMalloc<float>(newsize*2);
+  float* newdata = new float[newsize*2];
   //Fill libsamplerate's data structure
   SRC_DATA src;
   src.data_in = fldata;
@@ -44,13 +43,13 @@ complex* rsSignal::SRCDopplerShift(complex* data, rsFloat factor, unsigned int& 
     std::string error(src_strerror(src_return));
     throw std::runtime_error("[ERROR] Libsamplerate failed during doppler calculation. Message:\n"+error);
   }
+  delete fldata;
   //Transform the new data into complex data
-  FFTAlignedFree(fldata);
-  complex *c_data = FFTAlignedMalloc<complex>(newsize);
+  complex *c_data = new complex[newsize];
   for (unsigned int i = 0; i < newsize; i++)
     c_data[i] = complex(static_cast<double>(newdata[i*2]), static_cast<double>(newdata[i*2+1]));
+  delete newdata;
 
-  FFTAlignedFree(newdata);
   //Set the new size
   size = newsize;
   return c_data;

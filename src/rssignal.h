@@ -23,17 +23,17 @@ namespace rsSignal {
   
   // Functions to process frequency domain signals
   /// Shift a signal in frequency by shift Hz
-  void FrequencyShift(rsSignal::complex* data, rsFloat fs, unsigned int size, rsFloat shift);
+  void FrequencyShift(complex* data, rsFloat fs, unsigned int size, rsFloat shift);
   /// Shift a signal in time by shift seconds
-  void TimeShift(rsSignal::complex *data, rsFloat fs, unsigned int size, rsFloat shift);
+  void TimeShift(complex *data, unsigned int size, rsFloat shift);
   /// Add noise to the signal with the given temperature
-  void AddNoise(rsSignal::complex *data, rsFloat temperature, unsigned int size, double fs);
+  void AddNoise(complex *data, rsFloat temperature, unsigned int size, double fs);
   /// Demodulate a frequency domain signal into time domain I and Q
-  boost::shared_array<rsSignal::complex> IQDemodulate(rsSignal::complex *data, unsigned int size, rsFloat scale);
+  complex* IQDemodulate(complex *data, unsigned int size, rsFloat scale, rsFloat phase);
   ///Simulate a doppler shift of the given factor using libsamplerate
-  complex* SRCDopplerShift(rsSignal::complex* data, rsFloat factor, unsigned int& size); //in rssrcdoppler.cpp
+  complex* SRCDopplerShift(complex* data, rsFloat factor, unsigned int& size); //in rssrcdoppler.cpp
   ///Simulate a doppler shift of the given factor
-  rsSignal::complex* DopplerShift(complex *data, rsFloat factor, unsigned int& size);
+  complex* DopplerShift(complex *data, rsFloat factor, unsigned int& size);
 };
 
 namespace rs {
