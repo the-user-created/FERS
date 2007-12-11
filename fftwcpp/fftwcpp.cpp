@@ -23,11 +23,29 @@ void FFTAlignedFree(void *ptr)
   FFTManager::AlignedFree(ptr);
 }
 
+///Initialize FFTW
+void FFTInit(int threads)
+{
+#ifdef FFTW_WITH_THREADS
+  fftw_init_threads();
+  fftw_plan_with_nthreads(threads);
+#endif
+}
+
 ///Clean up the FFTW code, freeing memory
 void FFTCleanUp()
 {
   FFTManager::Instance()->Clean();
+  //Clean up fftw
+#ifdef FFTW_WITH_THREADS
+  fftw_cleanup_threads();
+#else
+  fftw_cleanup();
+#endif
+  delete FFTManager::Instance();  
 }
+
+
 
 //Constructor for FFTManager
 //This constructor is private and is only called once
@@ -77,6 +95,32 @@ FFTComplex *FFTManager::GetComplexPlanInv(int size, bool create, Complex *in, Co
     throw FFTException("Could not create complex plan");
 }
 
+/// Get a reference to a real->complex plan, and create on if it doesn't exist
+FFTRealForward* FFTManager::GetRealForwardPlan(int size, rsFloat* in, Complex* out) {
+  FFTRealForward *plan;
+  plan = real_forward_plans[size];
+  // If the plan does not exist, create it
+  if (plan == 0) {
+    plan = new FFTRealForward(size, in, out);
+    real_forward_plans[size] = plan;
+  }
+  //Return the plan
+  return plan;
+}
+
+/// Get a reference to a complex->real plan, and create on if it doesn't exist
+FFTRealInverse* FFTManager::GetRealInversePlan(int size, Complex* in, rsFloat* out) {
+  FFTRealInverse *plan;
+  plan = real_inverse_plans[size];
+  // If the plan does not exist, create it
+  if (plan == 0) {
+    plan = new FFTRealInverse(size, in, out);
+    real_inverse_plans[size] = plan;
+  }
+  //Return the plan
+  return plan;
+}
+
 //Clean up the manager and destroy all plans
 void FFTManager::Clean() {
   std::map <int, FFTComplex *>::iterator iter;
@@ -85,6 +129,12 @@ void FFTManager::Clean() {
   complex_plans.clear();
   for (iter = complex_inv_plans.begin(); iter != complex_inv_plans.end(); iter++)
     delete (*iter).second;
+  std::map <int, FFTRealInverse *>::iterator ri_iter;
+  for (ri_iter = real_inverse_plans.begin(); ri_iter != real_inverse_plans.end(); ri_iter++)
+    delete (*ri_iter).second;
+  std::map <int, FFTRealForward *>::iterator rf_iter;
+  for (rf_iter = real_forward_plans.begin(); rf_iter != real_forward_plans.end(); rf_iter++)
+    delete (*rf_iter).second;
   complex_inv_plans.clear();
 }
 
@@ -114,6 +164,62 @@ FFTComplex::FFTComplex(int size, Complex *in, Complex *out, FFTComplex::fft_dire
 }
 
 FFTComplex::~FFTComplex() {
+  boost::mutex::scoped_lock lock(plannerMutex); //Lock the planner mutex
+  fftw_destroy_plan(reinterpret_cast<fftw_plan>(plan));
+  //Scoped lock unlocks mutex here
+}
+
+//
+// Implementation of FFTRealForward
+// 
+
+void FFTRealForward::transform(int size, rsFloat *in, Complex *out)
+{
+  if (plan == 0)
+    throw FFTException("[BUG] Can not transform on NULL plan.");
+  fftw_execute_dft_r2c((fftw_plan_s *)plan, in, reinterpret_cast<fftw_complex *>(out));
+}
+
+// Constructor which creates a forward transform
+FFTRealForward::FFTRealForward(int size, rsFloat *in, Complex *out)
+{
+  //Lock the planner Mutex
+  boost::mutex::scoped_lock lock(plannerMutex);
+  plan = fftw_plan_dft_r2c_1d(size, in, reinterpret_cast<fftw_complex *>(out), FFTW_ESTIMATE);  
+  //scoped_lock will unlock planner mutex here
+}
+
+// Destructor
+FFTRealForward::~FFTRealForward()
+{
+  boost::mutex::scoped_lock lock(plannerMutex); //Lock the planner mutex
+  fftw_destroy_plan(reinterpret_cast<fftw_plan>(plan));
+  //Scoped lock unlocks mutex here
+}
+
+//
+// Implementation of FFTRealInverse
+// 
+
+void FFTRealInverse::transform(int size, Complex *in, rsFloat *out)
+{
+  if (plan == 0)
+    throw FFTException("[BUG] Can not transform on NULL plan.");
+  fftw_execute_dft_c2r((fftw_plan_s *)plan, reinterpret_cast<fftw_complex *>(in), out);
+}
+
+// Constructor which creates an inverse transform
+FFTRealInverse::FFTRealInverse(int size, Complex *in, rsFloat *out)
+{
+  //Lock the planner Mutex
+  boost::mutex::scoped_lock lock(plannerMutex);
+  plan = fftw_plan_dft_c2r_1d(size, reinterpret_cast<fftw_complex *>(in), out, FFTW_ESTIMATE);  
+  //scoped_lock will unlock planner mutex here
+}
+
+// Destructor
+FFTRealInverse::~FFTRealInverse()
+{
   boost::mutex::scoped_lock lock(plannerMutex); //Lock the planner mutex
   fftw_destroy_plan(reinterpret_cast<fftw_plan>(plan));
   //Scoped lock unlocks mutex here

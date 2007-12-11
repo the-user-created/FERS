@@ -1,5 +1,6 @@
 //rsparameters.h
 //Singleton class to hold common simulation parameters
+// The parameters system holds all global simulation parameters, magic numbers and other global values
 //No 'magic numbers' (such as values of c) are to be used in the code - store them here instead
 //Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //11 June 2006
@@ -35,6 +36,8 @@ public:
   static rsFloat rate();
   /// Get the current random seed
   static unsigned int random_seed();
+  /// Get the number of ADC bits used for quantization
+  static unsigned int adc_bits();
   /// Get the binary file type
   static rsParms::BinaryFileType binary_file_type();
   /// Do we export in XML format?
@@ -45,6 +48,12 @@ public:
   static bool export_binary();
   /// Do we export in csv binary format?
   static bool export_csvbinary();
+  /// Length to use for the rendering filter
+  static unsigned int render_filter_length();
+  /// Maximum number of threads to use for rendering
+  static unsigned int render_threads();
+  /// Number of times to oversample loaded pulses before simulation
+  static unsigned int oversample_ratio();
   /// Set the value of c
   void SetC(rsFloat c);
   /// Set the start and end times
@@ -59,6 +68,12 @@ public:
   void SetBinaryFileType(rsParms::BinaryFileType type);
   /// Set the enabled exporters
   void SetExporters(bool xml, bool csv, bool binary, bool csv_binary);
+  /// Set the number of bits used for quantization
+  void SetADCBits(unsigned int bits);
+  /// Set the render filter length
+  void SetRenderFilterLength(unsigned int length);
+  /// Set the number of times to oversample loaded pulses before simulation
+  void SetOversampleRatio(unsigned int ratio);
 protected:
   /// The default constructor is private
   rsParameters();

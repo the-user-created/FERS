@@ -11,27 +11,93 @@
 
 namespace rs {
 
+  //Forward declaration of InterpSet from rsinterp.h
+  class InterpSet;
+
+  /// General RCS statistical model class
+  class RCSModel {
+  public:
+    /// Constructor
+    RCSModel();
+    /// Destructor
+    virtual ~RCSModel();
+    /// Get an RCS based on the statistical model and the mean RCS
+    virtual rsFloat GetRCS(rsFloat meanRCS)  = 0;
+  };
+
+  /// RCS Statistical Model class supporting Swerling V
+  class RCSConst {
+  public:
+    /// Constructor
+    RCSConst();
+    /// Destructor
+    virtual ~RCSConst();
+    /// Return a constant RCS
+    virtual rsFloat GetRCS(rsFloat meanRCS);
+  };
+
+  /// RCS statistical model class supporting Swerling II
+  class RCSSwerlingII: public RCSModel {
+  public:
+    /// Constructor
+    RCSSwerlingII();
+    /// Destructor
+    virtual ~RCSSwerlingII();
+    /// Get an RCS based on the Swerling II model and the mean RCS
+    virtual rsFloat GetRCS(rsFloat meanRCS);
+  };
+
   /// Target models a simple point target with a specified RCS pattern
   class Target: public Object {
   public:
-    enum RCSPattern { RCS_ISOTROPIC, RCS_COSINE, RCS_ARBITRARY };
     /// Constructor
-    Target(Platform *platform, std::string name);
+    Target(Platform *platform, const std::string &name);
     /// Destructor
-    ~Target();
-    /// Stores the gain pattern of the target
-    RCSPattern pattern;
+    virtual ~Target();
     /// Returns the Radar Cross Section at a particular angle
-    rsFloat GetRCS(SVec3 &inAngle, SVec3 &outAngle) const;
+    virtual rsFloat GetRCS(SVec3 &inAngle, SVec3 &outAngle) const = 0;
     /// Set the global RCS factor
-    void SetRCS(rsFloat newRCS, RCSPattern newPattern);
-  private:
-    rsFloat rcs; //!< RCS for Isotropic and cosine rcs patterns
-    /// Calculate a cosine RCS pattern
-    rsFloat CalcCosRCS(SVec3 &inAngle, SVec3 &outAngle) const;
-    /// Calculate RCS based on an arbitrary pattern
-    rsFloat CalcPatternRCS(SVec3 &inAngle, SVec3 &outAngle) const;
+    void SetRCS(rsFloat newRCS);
   };
+
+  /// Target with an isotropic (constant with angle) RCS
+  class IsoTarget: public Target {
+  public:
+    /// Constructor
+    IsoTarget(Platform *platform, const std::string &name, rsFloat rcs);
+    /// Destructor
+    virtual ~IsoTarget();
+    /// Return the RCS at the given angle
+    virtual rsFloat GetRCS(SVec3 &inAngle, SVec3 &outAngle) const;
+  private:
+    rsFloat rcs; //!< Constant RCS
+  };
+
+  /// Target with an RCS interpolated from a table of values
+  class FileTarget: public Target {
+  public:
+    /// Constructor
+    FileTarget(Platform *platform, const std::string &name, const std::string &filename);
+    /// Destructor
+    virtual ~FileTarget();
+    /// Return the RCS at the given angle
+    virtual rsFloat GetRCS(SVec3 &inAngle, SVec3 &outAngle) const;
+  private:
+    rs::InterpSet* azi_samples; //!< Samples of RCS in the azimuth plane
+    rs::InterpSet* elev_samples; //!< Samples of RCS in the elevation plane
+    ///Load data from the RCS description file
+    void LoadRCSDescription(const std::string& filename);
+  };
+
+  // Functions for creating objects of various target types
+
+  /// Create an isometric radiator target
+  Target* CreateIsoTarget(Platform *platform, const std::string &name, rsFloat rcs);
+  
+  /// Create a target, loading the RCS pattern from a file
+  Target* CreateFileTarget(Platform *platform, const std::string &name, const std::string &filename);
+
+
 }
 
 #endif

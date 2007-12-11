@@ -11,6 +11,7 @@
 #include <vector>
 #include <complex>
 #include <boost/shared_array.hpp>
+#include <boost/utility.hpp>
 
 namespace rs {
 
@@ -21,33 +22,25 @@ namespace rs {
   typedef std::complex<rsFloat> rsComplex;
 
 /// A continuous wave response interpolation point
-struct CWInterpPoint {
+struct InterpPoint {
   /// Constructor
-  CWInterpPoint(rsFloat power, rsFloat delay, rsFloat doppler, rsFloat phase, rsFloat noise_temperature);
-  rsFloat power;
-  rsFloat time;
-  rsFloat doppler;
-  rsFloat phase;
-  rsFloat noise_temperature;
+  InterpPoint(rsFloat power, rsFloat start, rsFloat delay, rsFloat doppler, rsFloat phase, rsFloat noise_temperature);
+  rsFloat power; //!< Peak power of the pulse (into 1ohm)
+  rsFloat time; //!< Start time (seconds)
+  rsFloat delay; //!< Pulse round trip time (seconds)
+  rsFloat doppler; //!< Doppler shift (radians)
+  rsFloat phase; //!< Phase (radians)
+  rsFloat noise_temperature; //!< Noise temperature (kelvin)
 };
 
-/// Render parameters for pulse rendering
- struct RenderParams {
-   rsFloat power; //Peak power of the pulse (into 1ohm)
-   rsFloat phase; //Phase (radians)
-   rsFloat doppler; //Doppler shift (radians)
-   rsFloat start; //Start time (seconds)
-   rsFloat noise_temperature; //Noise temperature (kelvin)
- };
-
 /// The RadarWaveform class stores information about a pulse shape (or continuous wave wave)
- class RadarWaveform
+ class RadarSignal: public boost::noncopyable
  {
  public:
    /// Default constructor
-   RadarWaveform(std::string name, rsFloat power = 1, rsFloat carrierfreq = 0);
+   RadarSignal(std::string name, rsFloat power, rsFloat carrierfreq, rsFloat length, Signal* signal);
    /// Destructor
-   virtual ~RadarWaveform();
+   ~RadarSignal();
    /// Get the signal power
    rsFloat GetPower() const;
    /// Get the signal carrier frequency (Hz)
@@ -56,107 +49,28 @@ struct CWInterpPoint {
    std::string GetName() const;
    /// Return the native sample rate of the waveform
    rsFloat GetRate() const;
-   /// Return the length of the pulse (default implementation returns zero)
-   virtual rsFloat GetLength() const = 0;
+   /// Return the length of the pulse
+   rsFloat GetLength() const;
+   /// Render the pulse with the given parameters
+   boost::shared_array<rsComplex> Render(const std::vector<InterpPoint> &points, unsigned int &size) const;
  private:   
-   rsFloat power; //!< Power of the signal transmitted (in Watts)
-   rsFloat carrierfreq; //!< Used for the narrowband approximation
    std::string name; //!< The name of the pulse
+   rsFloat power; //!< Power of the signal transmitted (Watts in 1ohm)
+   rsFloat carrierfreq; //!< Carrier frequency (Hz)
+   rsFloat length; //!< Length of the signal (seconds)
+   Signal* signal; //!< Transmitted Signal
    /// Default constructor
-   RadarWaveform();
- };
-
- /// Continuous wave radar waveform
- class CWWaveform: public rs::RadarWaveform
-   {
-   public:
-     /// Constructor
-     CWWaveform(std::string name, rsFloat power, rsFloat carrierfreq);
-     /// Destructor
-     virtual ~CWWaveform();
-     /// Render the waveform to a target buffer
-     virtual boost::shared_array<rsComplex> Render(const std::vector<CWInterpPoint> &points, unsigned int &size) const = 0;
-     /// Length is undefined for CW pulsese
-     rsFloat GetLength() const;
-   private:
-     CWWaveform(); //Default constructor
-   };
-
- /// Pulse radar waveform
- class PulseWaveform: public rs::RadarWaveform
-   {
-   public:
-     /// Constructor
-     PulseWaveform(std::string name, rsFloat length, rsFloat power, rsFloat carrierfreq);
-     /// Destructor
-     virtual ~PulseWaveform();
-     /// Render the waveform to a target buffer
-     virtual boost::shared_array<rsComplex> Render(rsFloat& rate, const RenderParams &params, unsigned int &size) const = 0;
-     /// Get the length of the signal (seconds)
-     rsFloat GetLength() const;
-     /// Get the time padding at the beginning of the pulse
-     virtual rsFloat GetPad() const = 0;
-   protected:
-     ///Set the length of the pulse
-     void SetLength(rsFloat len);
-   private:
-     rsFloat length; //!< The length of the wave, in seconds
-     PulseWaveform(); //!< Default constructor
+   RadarSignal();
  };
 
 }
 
-namespace rsRadarWaveform {
+//Functions for creating radar waveforms
+namespace rsPulseFactory {
+ 
+/// Load a pulse from a file
+rs::RadarSignal* LoadPulseFromFile(const std::string& name, const std::string& filename, rsFloat power, rsFloat carrierfreq);
 
-  /// An arbitrary waveform, loaded from a file
-  class AnyPulse: public rs::PulseWaveform
-  {
-  public:
-    /// Constructor
-    AnyPulse(std::string name, rsFloat length, rsFloat power, rsFloat carrierfreq, rs::Signal* signal);
-    /// Destructor
-    ~AnyPulse();
-    /// Render the waveform to the target buffer
-    boost::shared_array<rs::rsComplex> Render(rsFloat& rate, const rs::RenderParams &params, unsigned int& size) const;
-    /// Get the amount of padding at the beginning of the pulse
-    rsFloat GetPad() const;
-  private:
-    /// Default constructor
-    AnyPulse();
-    /// Data for pulse waveform
-    rs::Signal* signal;
-  };
-  
-  /// A single frequency pulse of the defined length
-  class MonoPulse: public rs::PulseWaveform 
-  {
-  public:
-    /// Constructor
-    MonoPulse(std::string name, rsFloat length, rsFloat power = 1, rsFloat carrierfreq = 0);
-    /// Destructor    
-    ~MonoPulse();
-    /// Render the waveform to the target buffer
-    boost::shared_array<rs::rsComplex> Render(rsFloat& rate, const rs::RenderParams &params, unsigned int &size) const;
-    /// Get the time of padding at the beginning of the pulse
-    rsFloat GetPad() const;
-  private:
-    /// Default constructor
-    MonoPulse();
-  };
-
-  /// A monochromatic CW waveform
-  class CWMonochrome: public rs::CWWaveform
-  {
-  public:
-    /// Constructor
-    CWMonochrome(std::string name, rsFloat power, rsFloat carrierfreq);
-    /// Destructor
-    ~CWMonochrome();
-     boost::shared_array<rs::rsComplex> Render(const std::vector<rs::CWInterpPoint> &points, unsigned int &size) const;
-  private:
-    CWMonochrome();
-    
-  };
 
 }
 

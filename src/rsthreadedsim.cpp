@@ -17,6 +17,7 @@
 #include "rsworld.h"
 #include "rsradar.h"
 #include "rsdebug.h"
+#include "rsthreadedsim.h"
 
 using namespace rs;
 
@@ -117,8 +118,6 @@ static void IncThreads()
   threads++;
 }
 
-
-
 //Run a sim thread for each of the receiver-transmitter pairs, limiting concurrent threads
 void rs::RunThreadedSim(int thread_limit, World *world) {
   std::vector<boost::thread *> running;
@@ -149,7 +148,7 @@ void rs::RunThreadedSim(int thread_limit, World *world) {
   while (threads)
     {
       boost::thread::yield();
-      rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Main Thread Poll, Waiting on %d first pass threads.\n", threads);
+      //      rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Main Thread Poll, Waiting on %d first pass threads.\n", threads);
       if (error)
 	throw std::runtime_error("Thread terminated with error. Aborting simulation");
     }
@@ -183,7 +182,7 @@ void rs::RunThreadedSim(int thread_limit, World *world) {
   while (threads)
     {
       boost::thread::yield();
-      rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Main Thread Poll, Waiting on %d render threads.\n", threads);
+      //rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Main Thread Poll, Waiting on %d render threads.\n", threads);
       if (error)
 	throw std::runtime_error("Thread terminated with error. Aborting simulation");
     }

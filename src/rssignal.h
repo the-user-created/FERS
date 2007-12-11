@@ -11,6 +11,7 @@
 #include <string>
 #include <boost/utility.hpp>
 #include <boost/shared_array.hpp>
+#include "rsradarwaveform.h"
 
 ///Forward declarations
 namespace rs {
@@ -21,20 +22,13 @@ namespace rsSignal {
   /// Type for storing signal
   typedef std::complex<rsFloat> complex;
   
-  // Functions to process frequency domain signals
-  /// Shift a signal in frequency by shift Hz
-  void FrequencyShift(complex* data, rsFloat fs, unsigned int size, rsFloat shift);
-  /// Shift a signal in time by shift seconds
-  void TimeShift(complex *data, unsigned int size, rsFloat shift);
   /// Add noise to the signal with the given temperature
-  void AddNoise(complex *data, rsFloat temperature, unsigned int size, double fs);
+  void AddNoise(rsFloat *data, rsFloat temperature, unsigned int size, rsFloat fs);
   /// Demodulate a frequency domain signal into time domain I and Q
-  complex* IQDemodulate(complex *data, unsigned int size, rsFloat scale, rsFloat phase);
-  ///Simulate a doppler shift of the given factor using libsamplerate
-  complex* SRCDopplerShift(complex* data, rsFloat factor, unsigned int& size); //in rssrcdoppler.cpp
-  ///Simulate a doppler shift of the given factor
-  complex* DopplerShift(complex *data, rsFloat factor, unsigned int& size);
-};
+  complex* IQDemodulate(rsFloat *data, unsigned int size, rsFloat phase);
+  /// Simulate the effect of and ADC converter on the signal
+  void ADCSimulate(complex *data, unsigned int size, int bits, rsFloat fullscale);
+}
 
 namespace rs {
 
@@ -48,22 +42,23 @@ public:
 
   /// Clear deletes the data currently associated with the signal
   void Clear();
+  /// Load data into the signal (time domain, complex)
+  void Load(const rsSignal::complex *indata, unsigned int samples, rsFloat samplerate);
   /// Load data into the signal (time domain, real)
-  void Load(rsFloat *indata, unsigned int samples, rsFloat samplerate);
-  /// Load data into the signal (frequency domain, complex)
-  void Load(rsSignal::complex *indata, unsigned int samples, rsFloat samplerate);
+  void Load(const rsFloat *indata, unsigned int samples, rsFloat samplerate);
+  
   /// Return the sample rate of the signal
   rsFloat Rate() const;
   /// Return the size, in samples of the signal
   unsigned int Size() const;
-  /// Get a copy of the frequency domain data
-  rsSignal::complex* CopyData() const;
+  /// Get a copy of the signal domain data
+  rsFloat* CopyData() const;
   /// Get the number of samples of padding at the beginning of the pulse
   unsigned int Pad() const;
-  /// Set the signal to point at new data
-  void Reset(rsSignal::complex *newdata, unsigned int newsize, rsFloat newrate);
+  /// Render the pulse with the specified doppler, delay and amplitude
+  boost::shared_array<rs::rsComplex> Render(const std::vector<InterpPoint> &points, rsFloat trans_power, unsigned int &size) const;
  private:
-  /// The signal data (in the frequency domain)
+  /// The signal data
   rsSignal::complex* data;
   /// Size of the signal in samples
   unsigned int size;  

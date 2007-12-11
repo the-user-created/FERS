@@ -15,6 +15,19 @@ namespace rs {
 
 class SVec3;
 
+/// 3x3 Matrix, with simple operations
+class Matrix3 {
+ public:
+  rsFloat elements[9];
+  /// Default constructor
+  Matrix3();
+  /// Default destructor
+  ~Matrix3();
+  /// Get a pointer to the element array
+  const rsFloat *GetData() const;
+  rsFloat *GetData();
+};
+
 /// The Vec3 class is a rectangular 3 vector
 class Vec3 {
  public:
@@ -37,6 +50,9 @@ class Vec3 {
   Vec3 &operator*=(const Vec3 &b); //!< Componentwise multiplication
   Vec3 &operator=(const Vec3 &b); //!< Assignment operator
 
+  //Matrix operations
+  Vec3 &operator*=(const Matrix3 &m); //!< Multiplication by a 3x3 matrix
+
   //Scalar operations
   Vec3 &operator*=(const rsFloat b); //!< Multiplication by a scalar
   Vec3 &operator/=(const rsFloat b); //!< Division by a scalar
@@ -45,8 +61,6 @@ class Vec3 {
   /// Return the length of the vector
   rsFloat Length() const;
 };
-
-
 
 //Vector operations
 rsFloat DotProduct(const Vec3 &a, const Vec3 &b); //!< Vector Inner product
@@ -60,7 +74,6 @@ Vec3 operator/(const Vec3 &a, const Vec3 &b); //!< Componentwise divide
 Vec3 operator*(const Vec3 &a, const rsFloat b); //!< Multiply by a scalar
 Vec3 operator/(const Vec3 &a, const rsFloat b); //!< Division by a scalar
 Vec3 operator/(const rsFloat a, const Vec3 &b); //!< Division by a scalar
-
 
 /// The SVec3 class is a vector in R^3, stored in spherical co-ordinates
 class SVec3 {
@@ -84,6 +97,7 @@ class SVec3 {
   SVec3 &operator*=(rsFloat b); //!< multiplication by a scalar
   SVec3 &operator/=(rsFloat b); //!< division by a scalar
 };
+
 
 }
 #endif

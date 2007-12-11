@@ -9,7 +9,9 @@
 #include "rsdebug.h"
 #include "rsthreadedsim.h"
 #include "rsnoise.h"
-#include <fftwcpp/fftwcpp.h>
+#include "fftwcpp.h"
+
+unsigned int processors = 4; //TODO: Get real number of processors
 
 /// FERS main function
 int main(int argc, char *argv[])
@@ -21,22 +23,27 @@ int main(int argc, char *argv[])
   try {
     rs::World *world = new rs::World();
     DEBUG_PRINT(rsDebug::RS_VERBOSE, "[VERBOSE] Loading XML Script File");
+    //Load the script file
     xml::LoadXMLFile(argv[1], world);
+    //Init the FFT code
+    FFTInit(processors);
     //Initialize the RNG code
     rsNoise::InitializeNoise();
-    DEBUG_PRINT(rsDebug::RS_VERBOSE, "[VERBOSE] Running Simulation Phase 1");
-    rs::RunThreadedSim(1, world);
+    //Start the threaded simulation
+    rs::RunThreadedSim(processors, world);
     DEBUG_PRINT(rsDebug::RS_VERBOSE, "[VERBOSE] Cleaning up");
-
+    //Clean up the world model
     delete world;
+    //Clean up singleton objects
+    rsNoise::CleanUpNoise();
+    FFTCleanUp();
+    return 0;
   }
   catch (std::exception &ex)
     {
       rsDebug::printf(rsDebug::RS_CRITICAL, "[ERROR] Simulation encountered unexpected error:\n\t%s\nSimulator will terminate.\n", ex.what());
       return 1;
     }
-  //Clean up singleton objects
-  FFTCleanUp();
-  rsNoise::CleanUpNoise();
   return 0;
+
 }

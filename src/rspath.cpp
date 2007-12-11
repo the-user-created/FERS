@@ -7,6 +7,8 @@
 #include <algorithm>
 #include "rspath.h"
 #include "rsdebug.h"
+#include "rspython.h"
+#include "rsmultipath.h"
 
 using namespace rs;
 
@@ -105,6 +107,7 @@ template <typename T> void finalizeCubic(std::vector <T> &coords, std::vector <T
 Path::Path(Path::InterpType type):
   final(false), type(type)
 {
+  pythonpath = 0; //No python path, until loaded
 }
 
 void Path::AddCoord(Coord& coord) {
@@ -133,6 +136,11 @@ Vec3 Path::GetPosition(rsFloat t) const {
   case RS_INTERP_CUBIC:
     GetPositionCubic<Coord>(t, coord, coords, dd);
     break;
+  case RS_INTERP_PYTHON:
+    if (!pythonpath)
+      throw std::logic_error("Python path GetPosition called before module loaded");
+    return pythonpath->GetPosition(t);
+    break;
   }
   //Return the position part of the result
   return coord.pos;
@@ -149,6 +157,9 @@ void Path::Finalize()
       break;
     case RS_INTERP_CUBIC:
       finalizeCubic<Coord>(coords, dd);
+      break;
+    case RS_INTERP_PYTHON:
+      break;
     }
     final = true;
   }
@@ -169,6 +180,39 @@ SVec3 Compare(const rsFloat time, Path &start, Path &end)
   return result;
 }
 
+/// Load a python path function
+void Path::LoadPythonPath(const std::string& modname, const std::string& pathname)
+{
+  //If we have one already, delete it
+  if (pythonpath)
+    delete pythonpath;
+  //Load the new python path
+  pythonpath = new rsPython::PythonPath(modname, pathname);
+}
+
+/// Create a new path which is a reflection of this one around the given plane
+Path* rs::ReflectPath(const Path *path, const MultipathSurface *surf)
+{
+  //Don't support multipath on python paths for now
+  if (path->pythonpath)
+    throw std::runtime_error("[ERROR] Multipath surfaces are not currently supported for Python paths");
+  //Create a new path object
+  Path* dual = new Path(path->type);
+  //Add all the coords from the current path to the old path, reflecting about the multipath plane
+  std::vector<Coord>::const_iterator iter = path->coords.begin();
+  for (; iter != path->coords.end(); iter++) {
+    Coord refl;
+    refl.t = (*iter).t;
+    //Reflect the point in the plane
+    refl.pos = surf->ReflectPoint((*iter).pos);
+    rsDebug::printf(rsDebug::RS_VERBOSE, "Reflected (%g, %g, %g) to (%g, %g, %g)\n", (*iter).pos.x, (*iter).pos.y, (*iter).pos.z, refl.pos.x, refl.pos.y, refl.pos.z);
+    dual->AddCoord(refl);    
+  }
+  //Finalize the new path
+  dual->Finalize();
+  //Done, return the new path
+  return dual;
+}
 
 //
 // RotationPath Implementation
@@ -386,4 +430,34 @@ RotationCoord rs::operator/ (rsFloat a, RotationCoord b)
   c.elevation = a/b.elevation;
   c.t = b.t;
   return c;
+}
+
+/// Create a new path which is a reflection of this one around the given plane
+RotationPath* rs::ReflectPath(const RotationPath *path, const MultipathSurface *surf)
+{
+  //Create the new RotationPath object
+  RotationPath *dual = new RotationPath(path->type);
+  //Copy constant rotation params
+  dual->start = path->start;
+  dual->rate = path->rate;
+  //Copy the coords, reflecting them in the surface
+  std::vector<RotationCoord>::const_iterator iter = path->coords.begin();
+  for (; iter != path->coords.end(); iter++)
+    {
+      RotationCoord rc;
+      //Time copies directly
+      rc.t = (*iter).t;
+      SVec3 sv(1, (*iter).azimuth, (*iter).elevation);
+      Vec3 v(sv);
+      //Reflect the point in the given plane
+      v = surf->ReflectPoint(v);
+      SVec3 refl(v);
+      rc.azimuth = refl.azimuth;
+      rc.elevation = refl.elevation;
+      dual->AddCoord(rc);
+    }
+  //Finalize the copied path
+  dual->Finalize();
+  //Done, return the created object
+  return dual;
 }

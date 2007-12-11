@@ -1,0 +1,119 @@
+INCLUDE_DIRECTORIES( ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} )
+INCLUDE_DIRECTORIES( ${fers_SOURCE_DIR}/tinyxml )
+INCLUDE_DIRECTORIES( ${fers_SOURCE_DIR}/fftwcpp )
+INCLUDE_DIRECTORIES( ${fers_SOURCE_DIR} )
+
+LINK_DIRECTORIES( ${FERS_SOURCE_DIR}/tinyxml )
+
+########### next target ###############
+
+SET(fers_SRCS
+   rsdebug.cpp
+   rsmain.cpp
+   rsplatform.cpp
+   rsradar.cpp
+   rstarget.cpp
+   rsworld.cpp
+   xmlimport.cpp
+   rsgeometry.cpp
+   rspath.cpp
+   rssim.cpp
+   rsthreadedsim.cpp
+   rspulserender.cpp
+   rsradarwaveform.cpp
+   rsparameters.cpp
+   rsobject.cpp
+   rsantenna.cpp
+   rsportable.cpp
+   rsresponse.cpp
+   rsnoise.cpp
+   rssignal.cpp
+   rstiming.cpp
+   rshdf5.cpp
+   rspython.cpp
+   rsinterp.cpp
+   rsdsp.cpp
+   rsmultipath.cpp
+   rspattern.cpp
+   rsdebug.h
+   rspath.h
+   rsportable.h
+   rsradar.h
+   rssim.h
+   rsworld.h
+   rsgeometry.h
+   rsplatform.h
+   rstarget.h
+   xmlimport.h
+   rsradarwaveform.h
+   rsparameters.h
+   rssignal.h
+   rsthreadedsim.h
+   rsobject.h
+   rsantenna.h
+   rsresponse.h
+   rsnoise.h
+   rstiming.h
+   rshdf5.h
+   rspython.h
+   rsinterp.h
+   rsdsp.h
+   rsmultipath.h
+   rspattern.h
+   )
+
+
+ADD_EXECUTABLE(fers ${fers_SRCS})
+
+#Link to the HDF5 libraries
+FIND_LIBRARY(FERS_LIB_HDF5 NAMES hdf5 )
+
+IF (FERS_LIB_HDF5)
+   TARGET_LINK_LIBRARIES(fers ${FERS_LIB_HDF5})
+   ADD_DEFINITIONS(-DHAVE_LIBHDF5)
+ENDIF (FERS_LIB_HDF5)
+
+FIND_LIBRARY(FERS_LIB_HDF5_HL NAMES hdf5_hl )
+
+IF (FERS_LIB_HDF5_HL)
+   TARGET_LINK_LIBRARIES(fers ${FERS_LIB_HDF5_HL})
+ENDIF (FERS_LIB_HDF5_HL)
+
+#Link to tinyxml libraries
+TARGET_LINK_LIBRARIES(fers tinyxml)
+
+#Link to fftwcpp libraries
+TARGET_LINK_LIBRARIES(fers fftwcpp)
+
+#See if the FFTW3 libraries are available
+FIND_LIBRARY(FERS_LIB_FFTW3 NAMES fftw3)
+
+IF (FERS_LIB_FFTW3)
+   TARGET_LINK_LIBRARIES(fers ${FERS_LIB_FFTW3})
+ENDIF (FERS_LIB_FFTW3) 
+
+#Check if we are building on a multithreaded FFTW
+FIND_LIBRARY(FERS_LIB_FFTW3_THREADS NAMES fftw3_threads)
+
+IF (FERS_LIB_FFTW3_THREADS)
+   TARGET_LINK_LIBRARIES(fers ${FERS_LIB_FFTW3_THREADS})
+ENDIF (FERS_LIB_FFTW3_THREADS)
+
+#Include code to check for python libs
+INCLUDE(FindPythonLibs.cmake)
+
+IF (PYTHONLIBS_FOUND)
+   TARGET_LINK_LIBRARIES(fers ${PYTHON_LIBRARIES})
+   INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_PATH})
+ENDIF (PYTHONLIBS_FOUND)
+
+#Link to Boost Thread
+FIND_LIBRARY(FERS_LIB_BOOST_THREAD NAMES boost_thread boost_thread-mt)
+
+IF (FERS_LIB_BOOST_THREAD)
+   TARGET_LINK_LIBRARIES(fers ${FERS_LIB_BOOST_THREAD} )
+ENDIF (FERS_LIB_BOOST_THREAD)
+
+########### install files ###############
+
+INSTALL( TARGETS fers DESTINATION bin)

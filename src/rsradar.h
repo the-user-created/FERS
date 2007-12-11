@@ -15,8 +15,8 @@
 
 namespace rs {
 
-  //Forward declaration of ResponseBase (see rsresponse.h)
-  class ResponseBase;
+  //Forward declaration of Response (see rsresponse.h)
+  class Response;
 
   //Forward declaration of Antenna (see rsantenna.h)
   class Antenna;
@@ -28,10 +28,17 @@ namespace rs {
   //Forward declaration of Timing (see rstiming.h)
   class Timing;
 
+  //Forward declaration of Receiver and Transmitter (this file)
+  class Receiver;
+  class Transmitter;
+
+  //Forward declaration of MultipathSurface (rsmultipath.h)
+  class MultipathSurface;
+
   /// A pulse sent out by a transmitter
   struct TransmitterPulse
   {
-    rs::RadarWaveform *wave; //!< Base radar waveform
+    rs::RadarSignal *wave; //!< Base radar waveform
     rsFloat time; //!< The start time of the pulse
   };
 
@@ -40,7 +47,7 @@ namespace rs {
     {
     public:
       /// Constructor
-      Radar(const Platform *platform, std::string name);
+      Radar(const Platform *platform, const std::string& name);
       /// Destructor
       virtual ~Radar();
       /// Set the transmitter's antenna
@@ -57,11 +64,24 @@ namespace rs {
       bool IsMonostatic() const;
       /// Attach a timing object to the radar
       void SetTiming(Timing* tim);
+      /// Get a pointer to the radar's timing object
+      Timing* GetTiming() const;
+      /// Is this object a virtual multipath dual?
+      bool IsMultipathDual() const;
+      /// Set this object as a virtual multipath dual
+      void SetMultipathDual(rsFloat reflect);
+      /// Get the reflecting factor
+      rsFloat MultipathDualFactor() const;
     protected:
-      const Timing *timing; //!< The radar's timing source
+      Timing *timing; //!< The radar's timing source
     private:      
       const Antenna *antenna; //!< The radar's antenna
       const Radar *attached; //!< Other radar which shares antenna (0 if not monostatic)
+      bool multipath_dual; //!< This is a virtual radar which exists for multipath simulation
+      rsFloat multipath_reflect; //!< The fraction of signal power which is reflected by the multipath surface
+      /// Functions which create multipath duals
+      friend Receiver* CreateMultipathDual(Receiver *recv, const MultipathSurface *surf);
+      friend Transmitter* CreateMultipathDual(Transmitter *trans, const MultipathSurface *surf);
     };
 
   //Forward declaration of Receiver
@@ -71,57 +91,26 @@ namespace rs {
   class Transmitter: public Radar
     {
     public:
-      /// Supported types of transmitter model
-      enum TransmitterType { TRANS_PULSED, /// Pulsed transmitter which shares an antenna with a receiver
-			     TRANS_CONTINUOUS /// Continuous wave transmitter
-      };  
       /// Constructor
-      Transmitter(const Platform *platform, std::string name = "defTrans");
+      Transmitter(const Platform *platform, const std::string& name, bool pulsed);
       /// Destructor
       virtual ~Transmitter();
-      /// Get the type of the transmitter (pulsed or CW)
-      virtual TransmitterType GetType() const = 0;
       /// Set the transmitter's pulse waveform
-      void SetWave(RadarWaveform *pulse);
-    protected:
-      rs::RadarWaveform* pulseWave; //!< Waveform of transmitted pulses
-    };
-
-  /// A pulsed radar transmitter
-  class PulseTransmitter: public Transmitter
-    {
-    public:
-      /// Constructor
-      PulseTransmitter(const Platform *platform, std::string name);
-      /// Destructor
-      ~PulseTransmitter();
+      void SetWave(RadarSignal *pulse);
       /// Return the number of pulses which will be sent out over the course of the simulation
-      int GetPulseCount(const rsFloat time) const;
+      int GetPulseCount() const;
       /// Fill the pulse structure with the specified pulse
       void GetPulse(TransmitterPulse *pulse, int number) const;
       /// Set the Pulse Repetition Frequency of the transmitter
       void SetPRF(rsFloat mprf);
-      /// Get the type of the transmitter (pulsed or CW)
-      Transmitter::TransmitterType GetType() const;
-    private:
-      rsFloat pulseLength; //!< Length of the pulses sent out by the transmitter
+    protected:
+      rs::RadarSignal *signal; //!< Waveform of transmitted pulses
       rsFloat prf; //!< Transmitter pulse repetition frequency (PRF)
-  };
-
-  /// A CW radar transmitter
-  class CWTransmitter: public Transmitter
-  {
-  public:
-    /// Constructor
-    CWTransmitter(const Platform *platform, std::string name);
-    /// Destructor
-    ~CWTransmitter();
-    /// Return the CW waveform of the pulse
-    rs::RadarWaveform* GetWave() const;
-    /// Get the type of the transmitter (pulsed or CW)
-    Transmitter::TransmitterType GetType() const;
-  };
-
+      bool pulsed; //!< Is this a pulsed transmitter?
+      Transmitter *dual; //!< Multipath dual of this transmitter
+      /// Function to create multipath duals
+      friend Transmitter* CreateMultipathDual(Transmitter *trans, const MultipathSurface *surf);
+    };
 
   //Receiver objects contain receivers - the system that receives pulses
   //Receivers model the effects of their antenna
@@ -134,7 +123,7 @@ namespace rs {
       Receiver(const Platform *platform, std::string name = "defRecv");
       ~Receiver();
       /// Add a response to the list of simulation responses
-      void AddResponse(ResponseBase *response);
+      void AddResponse(Response *response);
       /// Clear the list of simulation responses (deleting responses)
       void ClearResponses();
       /// Export the results of the simulation to file
@@ -157,13 +146,20 @@ namespace rs {
       rsFloat GetWindowLength() const;
     private:
       /// Vector to hold all the system responses
-      std::vector<ResponseBase *> responses;
+      std::vector<Response *> responses;
       boost::try_mutex responses_mutex; //!< Mutex to serialize access to responses
       rsFloat noise_temperature; //!< Noise temperature of the reciever
       rsFloat window_length; //!< Length of the receive window (seconds)
       rsFloat window_prf; //!< Window repetition frequency
       rsFloat window_skip; //!< The amount of time at the beginning of an interval to skip before capturing response
+      Receiver *dual; //!< Multipath dual of this receiver
+      /// Function to create dual
+      friend Receiver* CreateMultipathDual(Receiver *recv, const MultipathSurface *surf);
     };
+
+  // Functions for duplicating receivers and transmitters to create duals for multipath simulation
+  Receiver* CreateMultipathDual(Receiver *recv, const MultipathSurface *surf);
+  Transmitter* CreateMultipathDual(Transmitter *trans, const MultipathSurface *surf);
 
 }
 

@@ -10,7 +10,16 @@
 #include <stdexcept>
 #include "rsgeometry.h"
 
+//Forward declarations
+namespace rsPython {
+class PythonPath; //rspython.h
+}
+
 namespace rs {
+
+  //Forward declaration of MultipathSurface (rsmultipath.h)
+  class MultipathSurface;
+
 
 /// Coord holds a three dimensional spatial co-ordinate and a time value
 struct Coord {
@@ -89,7 +98,7 @@ RotationCoord operator/ (rsFloat a, RotationCoord b);
 /// Defines the movement of an object through space, governed by time
 class Path {
 public:
-  enum InterpType { RS_INTERP_STATIC, RS_INTERP_LINEAR, RS_INTERP_CUBIC };
+  enum InterpType { RS_INTERP_STATIC, RS_INTERP_LINEAR, RS_INTERP_CUBIC, RS_INTERP_PYTHON };
   /// Default constructor
   Path(InterpType type = RS_INTERP_STATIC);
   /// Add a co-ordinate to the path
@@ -100,15 +109,21 @@ public:
   Vec3 GetPosition(rsFloat t) const;
   /// Set the interpolation type of the path
   void SetInterp(InterpType settype);
-protected:
+  /// Load a python path function
+  void LoadPythonPath(const std::string& modname, const std::string& pathname);
+private:
   std::vector<Coord> coords; //!< Vector of time and space coordinates
   std::vector<Coord> dd; //!< Vector of second derivatives at points (used for cubic interpolation)
   bool final; //!< Is the path finalised?
   InterpType type; //!< Type of interpolation
+  rsPython::PythonPath *pythonpath; //!< Pointer to the PythonPath object
+  /// Create a new path which is a reflection of this one around the given plane
+  friend Path* rs::ReflectPath(const Path *path, const MultipathSurface *surf);
 };
 
-//Function which compares two paths and returns a vector between them
-SVec3 Compare(const Path &start, const Path &dest);
+  /// Create a new path which is a reflection of this one around the given plane
+  Path* ReflectPath(const Path *path, const MultipathSurface *surf);
+
 
 /// Defines the rotation of an object in space, governed by time
 class RotationPath {
@@ -135,7 +150,12 @@ protected:
   RotationCoord rate; //!< Rotation rate of constant rotation (rads per sec)
 
   InterpType type; //!< Type of interpolation
+  /// Create a new path which is a reflection of this one around the given plane
+  friend RotationPath* rs::ReflectPath(const RotationPath *path, const MultipathSurface *surf);
 };
+
+  /// Create a new path which is a reflection of this one around the given plane
+  RotationPath* ReflectPath(const RotationPath *path, const MultipathSurface *surf);
 
 /// Exception class for the path code
 class PathException: public std::runtime_error

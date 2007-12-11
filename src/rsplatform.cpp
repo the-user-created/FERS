@@ -4,12 +4,14 @@
 //Started: 26 April 2006
 
 #include "rsplatform.h"
+#include "rsmultipath.h"
 
 using namespace rs;
 
 //Default constructor
-Platform::Platform(std::string name):
-  name(name)
+Platform::Platform(const std::string &name):
+  name(name),
+  dual(0)
 {
   motionPath = new Path();
   rotationPath = new RotationPath();
@@ -50,4 +52,21 @@ RotationPath* Platform::GetRotationPath()
 std::string Platform::GetName() const
 {
   return name;
+}
+
+/// Create a dual of this platform for multipath simulation
+Platform *rs::CreateMultipathDual(const Platform *plat, const MultipathSurface *surf) {
+  //If the dual already exists, just return it
+  if (plat->dual)
+    return plat->dual;
+  //Create the new platform
+  Platform *dual = new Platform(plat->GetName()+"_dual");
+  //Set the platform dual
+  (const_cast<Platform*>(plat))->dual = dual;
+  //Reflect the paths used to guide the platform
+  dual->motionPath = ReflectPath(plat->motionPath, surf);
+  dual->rotationPath = ReflectPath(plat->rotationPath, surf);
+  //Done, return the created object
+  return dual;
+
 }

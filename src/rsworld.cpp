@@ -12,6 +12,7 @@
 #include "rsplatform.h"
 #include "rstarget.h"
 #include "rstiming.h"
+#include "rsmultipath.h"
 
 using namespace rs; //Import the rs namespace for this implementation
 
@@ -26,41 +27,34 @@ using namespace rs; //Import the rs namespace for this implementation
 
 
 //Default constructor
-World::World()
+World::World():
+  multipath_surface(0)
 {
-  antennas.clear();
-  cwwaves.clear();
-  pulses.clear();
+  
 }
 
 //World object destructor
 World::~World()
 {
   //Delete all the objects in the world 
-  std::map<std::string, RadarWaveform*>::iterator iter;
+  std::map<std::string, RadarSignal*>::iterator iter;
   for(iter = pulses.begin(); iter != pulses.end(); iter++)
     delete (*iter).second;
-  pulses.clear();
-
-  std::map<std::string, CWWaveform*>::iterator witer;
-  for(witer = cwwaves.begin(); witer != cwwaves.end(); witer++)
-    delete (*witer).second;
-  cwwaves.clear();
 
   std::map<std::string, Antenna*>::iterator aiter;
   for (aiter = antennas.begin(); aiter != antennas.end(); aiter++)
     delete (*aiter).second;
-  antennas.clear();
+
+  std::map<std::string, PrototypeTiming*>::iterator titer;
+  for (titer = timings.begin(); titer != timings.end(); titer++)
+    delete (*titer).second;  
 
   std::for_each(receivers.begin(), receivers.end(), objDel<Receiver *>());
-  receivers.clear();
   std::for_each(transmitters.begin(), transmitters.end(), objDel<Transmitter *>());
-  transmitters.clear();
   std::for_each(targets.begin(), targets.end(), objDel<Target *>());
-  targets.clear();
+
   //Platforms are deleted last as they are referred to by the other object types
   std::for_each(platforms.begin(), platforms.end(), objDel<Platform *>());
-  platforms.clear();
 
 }
 
@@ -89,19 +83,11 @@ void World::Add(Target *targ)
 }
 
 //Add a pulse to the world
-void World::Add(RadarWaveform *pulse)
+void World::Add(RadarSignal *pulse)
 {
-  if (FindPulse(pulse->GetName()))
+  if (FindSignal(pulse->GetName()))
     throw std::runtime_error("[ERROR] A pulse with the name "+pulse->GetName()+" already exists. Pulses must have unique names");
   pulses[pulse->GetName()] = pulse;
-}
-
-//Add a CW waveform to the world
-void World::Add(CWWaveform *wave)
-{
-  if (FindCWWaveform(wave->GetName()))
-    throw std::runtime_error("[ERROR] A CW Wavefrom with the name "+wave->GetName()+" already exists. CW Waveforms must have unique names");
-  cwwaves[wave->GetName()] = wave;
 }
 
 //Add an antenna to the world
@@ -113,7 +99,7 @@ void World::Add(Antenna *antenna)
 }
 
 //Add a timing source to the world
-void World::Add(Timing *timing)
+void World::Add(PrototypeTiming *timing)
 {
   if (FindTiming(timing->GetName()))
     throw std::runtime_error("[ERROR] A timing source with the name "+timing->GetName()+" already exists. Timing sources must have unique names");
@@ -121,15 +107,9 @@ void World::Add(Timing *timing)
 }
 
 //Get a pulse from the map of pulses
-RadarWaveform* World::FindPulse(const std::string& name)
+RadarSignal* World::FindSignal(const std::string& name)
 {
   return pulses[name];
-}
-
-//Get a cw waveform from the map
-RadarWaveform* World::FindCWWaveform(const std::string& name)
-{
-  return cwwaves[name];
 }
 
 //Get an antenna from the map of antennas
@@ -139,7 +119,42 @@ Antenna* World::FindAntenna(const std::string& name)
 }
 
 /// Find a timing source with the specified name
-Timing* World::FindTiming(const std::string& name)
+PrototypeTiming* World::FindTiming(const std::string& name)
 {
   return timings[name];
+}
+
+///Add a multipath surface to the world
+void World::AddMultipathSurface(MultipathSurface *surface)
+{
+  if (multipath_surface)
+    throw std::runtime_error("[ERROR] Only one multipath surface per simulation is supported");
+   multipath_surface = surface;
+}
+
+///Process the scene to add virtual receivers and transmitters
+void World::ProcessMultipath()
+{
+  // In this function "duals" are added for each transmitter and receiver
+  // a dual has the same properties of the transmitter and receiver, but is reflected in the multipath plane
+  if (multipath_surface) {
+    //Add duals for each plaform
+    std::vector<Platform*>::iterator plat = platforms.begin();
+    std::vector<Platform*>::iterator plat_end = platforms.end();
+    for (; plat != plat_end; plat++)
+      platforms.push_back(CreateMultipathDual(*plat, multipath_surface));
+    //Add duals for each receiver
+    std::vector<Receiver*>::iterator recv = receivers.begin();
+    std::vector<Receiver*>::iterator recv_end = receivers.end();
+    for (; recv != recv_end; recv++)
+      receivers.push_back(CreateMultipathDual(*recv, multipath_surface));
+    //Add duals for each transmitter
+    std::vector<Transmitter*>::iterator trans = transmitters.begin();
+    std::vector<Transmitter*>::iterator trans_end = transmitters.end();
+    for (; trans != trans_end; trans++)
+      transmitters.push_back(CreateMultipathDual(*trans, multipath_surface));
+  }
+  //Clean up the multipath surface
+  delete multipath_surface;
+  multipath_surface = 0;
 }

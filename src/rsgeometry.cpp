@@ -6,6 +6,7 @@
 #include <cmath>
 
 #include "rsgeometry.h"
+#include "rsdebug.h"
 
 using namespace rs;
 
@@ -73,6 +74,17 @@ Vec3& Vec3::operator=(const Vec3 &b)
   y = b.y;
   z = b.z;
   return *this;
+}
+
+// Multiplication by a 3x3 matrix
+Vec3& Vec3::operator*=(const Matrix3 &m)
+{
+  const rsFloat *mat = m.GetData();
+  Vec3 v(x, y, z);
+  x = mat[0]*v.x + mat[1]*v.y + mat[2]*v.z;
+  y = mat[3]*v.x + mat[4]*v.y + mat[5]*v.z;
+  z = mat[6]*v.x + mat[7]*v.y + mat[8]*v.z;
+  return *this;  
 }
 
 //Length division operator
@@ -231,4 +243,31 @@ SVec3 &SVec3::operator/=(rsFloat b)
 {
   length /= b;
   return *this;
+}
+
+//
+// Matrix3 Implementation
+//
+
+/// Default constructor
+Matrix3::Matrix3()
+{
+  for (int i = 0; i < 9; i++)
+    elements[i] = 0;
+}
+
+/// Default destructor
+Matrix3::~Matrix3()
+{
+}
+
+/// Get a pointer to the element array
+const rsFloat* Matrix3::GetData() const
+{
+  return elements;
+}
+
+rsFloat* Matrix3::GetData()
+{
+  return elements;
 }

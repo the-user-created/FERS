@@ -11,13 +11,16 @@
 #include <string>
 #include <boost/utility.hpp>
 
-namespace rs {  
+namespace rs { 
+
+  //Forward definition of MultipathSurface (rsmultipath.h)
+  class MultipathSurface;
   
 /// The Platform class controls the motion and rotation of all objects in the scene
 class Platform: boost::noncopyable {
 public:
   /// Default Constructor
-  Platform(std::string name = "DefaultPlatform");
+  Platform(const std::string &name);
   /// Destructor
   ~Platform();
   /// Return a pointer to the motion path
@@ -35,7 +38,13 @@ private:
   Path *motionPath; //!< Pointer to platform's motion path
   RotationPath *rotationPath; //!< Pointer to platform's rotation path
   std::string name; //!< The name of the platform
+  Platform *dual; //!< Multipath dual of this platform
+  /// Create a dual of this platform for multipath simulation
+  friend Platform* rs::CreateMultipathDual(const Platform *plat, const MultipathSurface *surf);
 };
+
+  /// Create a dual of this platform for multipath simulation
+  Platform *CreateMultipathDual(const Platform *plat, const MultipathSurface *surf);
 
 }
 

@@ -35,3 +35,8 @@ std::string Object::GetName() const
   return name;
 }
 
+/// Get a pointer to the platform this object is attached to
+const Platform* Object::GetPlatform() const
+{
+  return platform;
+}

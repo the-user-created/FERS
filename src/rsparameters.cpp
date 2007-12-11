@@ -3,6 +3,7 @@
 //Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //11 June 2006
 
+#include <stdexcept>
 #include "time.h"
 #include "rsparameters.h"
 #include "rsdebug.h"
@@ -20,11 +21,15 @@ struct SimParameters {
   rsFloat cw_sample_rate; //<! The number of samples per second to take of changes in the CW state
   rsFloat rate; //!< The sample rate to use for rendering
   unsigned int random_seed; //!< The seed used for random number calculations
+  unsigned int adc_bits; //!< The number of bits to use for quantization
+  unsigned int filter_length; //!< The length of the filter for rendering purposes
   rsParms::BinaryFileType filetype; //!< The type of binary files produced by binary rendering
   bool export_xml; //!< Export results in XML format
   bool export_csv; //!< Export results in CSV format
   bool export_binary; //!< Export results in binary format
   bool export_csvbinary; //!< Export results in CSV binary format
+  unsigned int render_threads; //!< Number of threads to use to render each receiver
+  unsigned int oversample_ratio; //!< Ratio of oversampling applied to pulses before rendering
 };
 
 /// Object which contains all the simulation parameters
@@ -43,6 +48,8 @@ rsParameters::rsParameters() {
   sim_parms.cw_sample_rate = 1000;
   // Oversample by default
   sim_parms.rate = 0;
+  // Default filter length is 32
+  sim_parms.filter_length = 32;
   // Binary file type defaults to CSV
   sim_parms.filetype = rsParms::RS_FILE_FERSBIN;
   // Export xml by default
@@ -55,6 +62,12 @@ rsParameters::rsParameters() {
   sim_parms.export_csvbinary = false;
   // The random seed is set the to the current time by default
   sim_parms.random_seed = static_cast<unsigned int>(time(NULL));
+  // The default is not to quantize
+  sim_parms.adc_bits = 0;
+  // Default maximum number of render threads
+  sim_parms.render_threads = 4;
+  // Default is to disable oversampling
+  sim_parms.oversample_ratio = 1;
 }
 
 rsParameters *rsParameters::modify_parms()
@@ -119,6 +132,13 @@ unsigned int rsParameters::random_seed()
   return sim_parms.random_seed;
 }
 
+unsigned int rsParameters::adc_bits()
+{
+  if (!instance)
+    instance = new rsParameters();
+  return sim_parms.adc_bits;
+}
+
 bool rsParameters::export_xml()
 {
   if (!instance)
@@ -147,7 +167,32 @@ bool rsParameters::export_csvbinary()
   return sim_parms.export_csvbinary;
 }
 
-//Setters for settings
+/// Length to use for the rendering filter
+unsigned int rsParameters::render_filter_length()
+{
+  if (!instance)
+    instance = new rsParameters;
+  return sim_parms.filter_length;
+}
+
+/// Maximum number of threads to use for rendering
+unsigned int rsParameters::render_threads() {
+  if (!instance)
+    instance = new rsParameters;
+  return sim_parms.render_threads;
+}
+
+unsigned int rsParameters::oversample_ratio()
+{
+  if (!instance)
+    instance = new rsParameters;
+  return sim_parms.oversample_ratio;
+}
+
+//
+//Setters for global parameters
+//
+
 void rsParameters::SetC(rsFloat c)
 {
   sim_parms.c = c;
@@ -168,7 +213,7 @@ void rsParameters::SetCWSampleRate(rsFloat rate)
 void rsParameters::SetRate(rsFloat factor)
 {
   sim_parms.rate = factor;
-  rsDebug::printf(rsDebug::RS_VERBOSE, "{VERBOSE] System sample rate set to custom value: %8.5f\n", factor);
+  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] System sample rate set to custom value: %8.5f\n", factor);
 }
 
 void rsParameters::SetRandomSeed(unsigned int random_seed)
@@ -187,4 +232,27 @@ void rsParameters::SetExporters(bool xml, bool csv, bool binary, bool csv_binary
   sim_parms.export_csv = csv;
   sim_parms.export_binary = binary;
   sim_parms.export_csvbinary = csv_binary;
+}
+
+void rsParameters::SetADCBits(unsigned int bits)
+{
+  sim_parms.adc_bits = bits;
+}
+
+void rsParameters::SetRenderFilterLength(unsigned int length)
+{
+  //Sanity check the render filter length
+  if (length < 16)
+    throw std::runtime_error("[ERROR] Render filter length must be > 16"); 
+  sim_parms.filter_length = length;
+  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Render filter length set to custom value: %d\n", length);
+}
+
+void rsParameters::SetOversampleRatio(unsigned int ratio)
+{
+  //Sanity check the ratio
+  if (ratio == 0)
+    throw std::runtime_error("[ERROR] Oversample ratio must be >= 1");
+  sim_parms.oversample_ratio = ratio;
+  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Oversampling enabled with ratio %d\n", ratio);
 }

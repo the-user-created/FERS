@@ -3,134 +3,167 @@
 //24 May 2006
 
 #include <cmath>
+#include <limits>
+#include <stdexcept>
 #include "rssignal.h"
 #include "rsdebug.h"
-#include "fftwcpp/fftwcpp.h"
 #include "rsnoise.h"
+#include "rsparameters.h"
+#include "rsdsp.h"
 
 using namespace rsSignal;
 using namespace rs;
 
-/// Doppler shift a signal by the given factor
-complex* rsSignal::DopplerShift(complex *td_data, rsFloat factor, unsigned int& size)
-{
-  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Applying doppler shift of %f\n", factor);  
-  //Call the SRC algorithm to do the real work
-  complex *transtime = SRCDopplerShift(td_data, factor, size);
-  //If the doppler code didn't do anything, we need to copy the data to an unaligned array
-  if (transtime == td_data) {
-    transtime = new complex[size];
-    for (unsigned int i = 0; i < size; i++)
-      transtime[i] = td_data[i];
-  }
-  //Return the result
-  return transtime;
-}
-  
-/// Shift a signal in frequency by shift Hz
-void rsSignal::FrequencyShift(rsSignal::complex* data, rsFloat fs, unsigned int size, rsFloat shift)
-{
-  //We use a timedomain algorithm for this at the moment, a frequency domain one would be better
-  //See equations.tex for details of the algorithm
+namespace {
 
-  //Allocate memory for a time domain version of the signal
-  complex *timesig = FFTAlignedMalloc<complex>(size);
-
-  //Zero the right hand side of the frequency data
-  for (unsigned int i = size/2; i < size; i++)
-    data[i] = 0;
-  data[0] /= 2.0;
-  //Transform the data into the time domain
-  FFTComplex* invplan = FFTManager::Instance()->GetComplexPlanInv(size, true, data, timesig);
-  invplan->transform(size, data, timesig);
-
-  //Calculate the shift and phase factors
-  rsFloat dsize = static_cast<double>(size);
-  shift = shift*(dsize/fs);
-  rsFloat theta = (shift-std::floor(shift))*fs/dsize;
-
-  //Loop through the array adding the shift factor
-  for (unsigned int i = 0; i < size; i++) {
-    rsFloat f = 2*M_PI*(i*shift/dsize-theta);    
-    timesig[i] *= complex(std::cos(f), std::sin(f));
-    timesig[i] *= 2.0/(dsize); //Normalize the results (FFTW does not normalize by default) and correct for energy loss of hilbert transform
-    timesig[i] = complex(timesig[i].real(), 0);
+  /// Compute the zeroth order modified bessel function of the first kind
+  // Use the polynomial approximation from section 9.8 of
+  // "Handbook of Mathematical Functions" by Abramowitz and Stegun
+  rsFloat BesselI0(rsFloat x) {
+    rsFloat I0;
+    rsFloat t = (x/3.75);
+    if (t < 0.0) {
+      throw std::logic_error("Modified Bessel approximation only valid for x > 0");
+    }
+    else if (t <= 1.0) {
+      t *= t;
+      I0 = 1.0 + t*(3.5156229+t*(3.0899424+t*(1.2067492+t*(0.2659732+t*(0.0360768+t*0.0045813)))));
+      //Error bounded to 1.6e-7
+    }
+    else { //t > 1;
+      I0 = 0.39894228+t*(0.01328592+t*(0.00225319+t*(-0.00157565+t*(0.00916281+t*(-0.02057706+t*(0.02635537+t*(-0.01647633+t*0.00392377)))))));
+      I0 *= std::exp(x)/std::sqrt(x);
+      //Error bounded to 1.9e-7
+    }
+    return I0;
   }
   
-  //Transform back into the frequency domain
-  FFTComplex *plan = FFTManager::Instance()->GetComplexPlan(size, true, timesig, data);
-  plan->transform(size, timesig, data);
+  class InterpFilter {
+  public:    
+    /// Compute the sinc function at the specified x
+    inline rsFloat Sinc(rsFloat x) const;
+    /// Compute the value of the interpolation filter at time x
+    inline rsFloat interp_filter_compute(rsFloat x) const;
+    /// Compute the value of a Kaiser Window at the given x
+    inline rsFloat kaiser_win_compute(rsFloat x) const;
+    /// Lookup the value of the interpolation filter at time x
+    inline rsFloat interp_filter(rsFloat x) const;
+    /// Get a pointer to the class instance
+    static InterpFilter* GetInstance() {
+      if (!instance)
+	instance = new InterpFilter();
+      return instance;
+    }
+  private:
+    //// Default constructor
+    InterpFilter();
+    /// Copy Constructor
+    InterpFilter(const InterpFilter& ifilt);
+    /// Assignment operator
+    InterpFilter& operator=(const InterpFilter& ifilt);
+    /// Pointer to a single instance of the class
+    static InterpFilter *instance;
 
-  //Clean up
-  FFTManager::AlignedFree(timesig);
-}
+    rsFloat alpha; //!< 'alpha' parameter
+    rsFloat beta; //!< 'beta' parameter
+    rsFloat bessel_beta; //!< I0(beta)
 
-/// Shift a signal in time by shift samples
-void rsSignal::TimeShift(rsSignal::complex *data, unsigned int size, rsFloat shift)
-{
-  //See equations.tex for details of this algorithm
-  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Shifting by %f samples\n", shift);
+    int table_size; //!< Size of the table used for linear interpolation
+    rsFloat *interp_table; //!< Table of values used for linear interpolation
+    rsFloat table_index_mult; //!< Filter value to table index factor
+  };
 
-  double dsize = static_cast<double>(size);
-
-  //Perform the shift
-  for (unsigned int i = 0; i < size/2; i++) {
-    rsFloat f = 2*M_PI*(i/dsize)*shift;
-    data[i] *= complex(std::cos(f), std::sin(f));
+  /// Interpfilter class constructor
+  InterpFilter::InterpFilter()
+  {
+    //Size of the table to use for interpolation
+    table_size = 30000;
+    //Allocate memory for the table
+    interp_table = new rsFloat[table_size+1];
+    //Alpha is half the filter length
+    alpha = std::floor(rsParameters::render_filter_length()/2.0);
+    //Beta sets the window shape
+    beta = 16;
+    bessel_beta = BesselI0(beta);    
+    //Fill the linear interpolation table
+    for (int i = 0; i < table_size; i++)
+      interp_table[i] = interp_filter_compute((i/(rsFloat)(table_size))*alpha*2-alpha);
+    interp_table[table_size] = 0; //Final element to simplify offset calcs
+    //Calculate the multiplication factor for table index calculation
+    table_index_mult = table_size/(2*alpha);    
   }
-  data[size/2] *= complex(std::cos(M_PI*shift), std::sin(M_PI*shift));
-
-  for (unsigned int i = size/2+1; i < size; i++) {
-    rsFloat f = 2*M_PI*(i-dsize)/dsize*shift;
-    data[i] *= complex(std::cos(f), std::sin(f));
-  }
-}
-
-/// Add noise to the signal with the given temperature
-void rsSignal::AddNoise(rsSignal::complex *data, rsFloat temperature, unsigned int size, double fs)
-{
-  //The calculation can be canceled if the noise temperature is zero
-  if (temperature == 0)
-    return;
   
-  rsFloat power = rsNoise::NoiseTemperatureToPower(temperature, fs/2);
-  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Adding noise of temperature %f power %e voltage %e\n", temperature, power, sqrt(power));
-  WGNGenerator generator(1);
-  //Generate noise in the frequency domain
-  for (unsigned int i = 1; i < size/2; i++) {
-    complex ns = sqrt(size)*complex(generator.GetSample()*sqrt(power), generator.GetSample()*sqrt(power));
-    data[i] += ns;
-    data[size-i] += ns;
-    rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Noise %e %e %e %e\n", ns.real(), ns.imag(), data[i].real(), data[i].imag());
+  /// Lookup the value of the interpolation filter at time x
+  rsFloat InterpFilter::interp_filter(rsFloat x) const {
+    bool lookup = true;
+    if (lookup) {
+      if (x > alpha)
+	return 0.0;
+      rsFloat wx = (x+alpha)*table_index_mult;
+      rsFloat weight = std::fmod(wx, 1);
+      int offset = static_cast<int>(wx);
+      rsFloat interp = (interp_table[offset]*(1-weight)+interp_table[offset+1]*(weight));
+      //rsFloat calc = interp_filter_compute(x)*Sinc(x);
+      //       rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "%f %10.20e %e\n", x, interp, Sinc(x*0.8));
+      return interp;
+    }
+    else {
+      rsFloat calc = interp_filter_compute(x);
+      return calc;
+    }
+
+
   }
+
+  /// Compute the sinc function at the specified x
+  rsFloat InterpFilter::Sinc(rsFloat x) const
+  {
+    if (x == 0)
+      return 1.0;
+    return std::sin(x*M_PI)/(x*M_PI);
+  }
+
+  /// Compute the value of a Kaiser Window at the given x    
+  rsFloat InterpFilter::kaiser_win_compute(rsFloat x) const {
+    if ((x < 0) || (x > (alpha*2)))
+      return 0;
+    else
+      return BesselI0(beta*std::sqrt(1-std::pow((x-alpha)/alpha,2)))/bessel_beta;
+  }
+
+  /// Compute the value of the interpolation filter at time x
+  rsFloat InterpFilter::interp_filter_compute(rsFloat x) const {
+    rsFloat w = kaiser_win_compute(x+alpha);
+    rsFloat s = Sinc(x*0.7); //The filter value
+    rsFloat filt = w*s;
+    //      rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "%g %g\n", t, filt);
+    return filt;
+  }
+
+  //Create an instance of InterpFilter
+  InterpFilter* InterpFilter::instance = 0;
+
 }
 
-/// Demodulate a frequency domain signal into time domain I and Q
-complex* rsSignal::IQDemodulate(complex *data, unsigned int size, rsFloat scale, rsFloat phase)
+/// Simulate the effect of and ADC converter on the signal
+void rsSignal::ADCSimulate(complex *data, unsigned int size, int bits, rsFloat fullscale)
 {
-  //A demonstration that this algorithm is correct can be found in equations.tex
-
-  //Allocate memory for the time domain data
-  complex* time_data = FFTAlignedMalloc<complex>(size);
-  FFTComplex* invplan = FFTManager::Instance()->GetComplexPlanInv(size, true, data, time_data);
-
-  //Transform the signal into the time domain
-  invplan->transform(size, data, time_data);
-
-  // Temporary scan for the largest imag() value, to validate the method
-  rsFloat max_imag = 0;
+  //Get the number of levels associated with the number of bits
+  rsFloat levels = pow(2, bits-1);
   for (unsigned int i = 0; i < size; i++)
-    if (std::fabs(time_data[i].imag()) > max_imag)
-      max_imag = std::fabs(time_data[i].imag());
-  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Max imaginary value: %e (should be zero)\n", max_imag);
-
-  //Following the transform, data should be (within numerical accuracy) purely real  
-  for (unsigned int i = 0; i < size; i++)
-    time_data[i] = complex(scale*time_data[i].real()*std::cos(phase), scale*time_data[i].real()*std::sin(phase));
-
-  //Return the result
-  return time_data;
-}
+    {
+      //Simulate the ADC effect on the I and Q samples
+      rsFloat I = std::floor(levels*data[i].real()/fullscale)/levels;
+      rsFloat Q = std::floor(levels*data[i].imag()/fullscale)/levels;
+      //Clamp I and Q to the range, simulating saturation in the adc
+      if (I > 1) I = 1;
+      else if (I < -1) I = -1;
+      if (Q > 1) Q = 1;
+      else if (Q < -1) Q = -1;
+      //Overwrite data with the results
+      data[i] = complex(I, Q);
+    }
+}     
 
 //
 // Signal Implementation
@@ -147,50 +180,54 @@ Signal::Signal():
 //Default destructor for brutesignal
 Signal::~Signal()
 {
-  FFTManager::AlignedFree(data);
+  delete[] data;
 }
 
 //Clear the data array, emptying the signal and freeing memory
 void Signal::Clear()
 {
-  FFTManager::AlignedFree(data);
+  delete[] data;
   size = 0;
   rate = 0;
   data = 0; //Set data to zero to prevent multiple frees
 }
 
 //Load data into the signal, with the given sample rate and size
-void Signal::Load(rsFloat *indata, unsigned int samples, rsFloat samplerate)
+void Signal::Load(const rsFloat *indata, unsigned int samples, rsFloat samplerate)
 {
+  //Remove the previous data
+  Clear();
+  //Set the size and samples attributes
   size = samples;
-  rate = samplerate;
+  rate = samplerate;  
   //Allocate memory for the signal
-  data = FFTAlignedMalloc<complex>(samples);
-  complex* temp = FFTAlignedMalloc<complex>(samples);
-  
-
-  //Perform the FFT on the signal
-  FFTComplex* plan = FFTManager::Instance()->GetComplexPlan(samples, true, temp, data);
-
-  //Expand the real data into complex data
+  data = new complex[samples];
+  //Copy the data
   for (unsigned int i = 0; i < samples; i++)
-    temp[i] = complex(indata[i], 0);
-
-  //Transform the data into the frequency domain
-  plan->transform(samples, temp, data);
-
-  FFTAlignedFree(temp);
+    data[i] = complex(indata[i], 0.0);
 }
 
-/// Load data into the signal (frequency domain, complex)
-void Signal::Load(rsSignal::complex *indata, unsigned int samples, rsFloat samplerate)
+/// Load data into the signal (time domain, complex)
+void Signal::Load(const complex *indata, unsigned int samples, rsFloat samplerate)
 {
-  size = samples;
-  rate = samplerate;
+  //Remove the previous data
+  Clear();
+  // Get the oversampling ratio
+  unsigned int ratio = rsParameters::oversample_ratio();
   //Allocate memory for the signal
-  data = reinterpret_cast<complex*>(FFTManager::AlignedMalloc(samples*sizeof(complex)));
-  //Copy the data
-  std::memcpy(data, indata, samples*sizeof(complex));  
+  data = new complex[samples*ratio];
+  //Set the size and samples attributes
+  size = samples*ratio;
+  rate = samplerate*ratio;
+  if (ratio == 1) {
+    //Copy the data (using a loop for now, not sure memcpy() will always work on complex)
+    for (unsigned int i = 0; i < samples; i++)
+      data[i] = indata[i];
+  }
+  else {
+    // Upsample the data into the target buffer
+    Upsample(indata, samples, data, ratio);
+  } 
 }
 
 //Return the sample rate of the signal
@@ -205,12 +242,12 @@ unsigned int Signal::Size() const
   return size;
 }
 
-/// Get a copy of the frequency domain data
-complex* Signal::CopyData() const
+/// Get a copy of the signal domain data
+rsFloat* Signal::CopyData() const
 {
-  complex* result = FFTAlignedMalloc<complex>(size);
+  rsFloat* result = new rsFloat[size];
   //Copy the data into result
-  std::memcpy(result, data, sizeof(complex)*size);
+  std::memcpy(result, data, sizeof(rsFloat)*size);
   return result;
 }
 
@@ -220,11 +257,78 @@ unsigned int Signal::Pad() const
   return pad;
 }
 
-/// Set the signal to point at new data
-void Signal::Reset(rsSignal::complex *newdata, unsigned int newsize, rsFloat newrate)
+/// Render the pulse with the specified doppler, delay and amplitude
+boost::shared_array<rsComplex> Signal::Render(const std::vector<InterpPoint> &points, rsFloat trans_power, unsigned int &out_size) const
 {
-  Clear();
-  data = newdata;
-  size = newsize;
-  rate = newrate;
+  //Allocate memory for rendering
+  rsComplex *out = new rsComplex[size];
+  out_size = size;
+  //Get the sample interval
+  rsFloat timestep = 1.0/rate;
+  //Create the rendering window
+  const unsigned int filt_length = rsParameters::render_filter_length();
+  InterpFilter* interp = InterpFilter::GetInstance();
+  //Loop through the interp points, rendering each in time
+  std::vector<rs::InterpPoint>::const_iterator iter = points.begin();
+  std::vector<rs::InterpPoint>::const_iterator next = iter+1;
+  if (next == points.end())
+    next = iter;
+  //Get the delay of the first point
+  rsFloat idelay = std::floor(rate*(*iter).delay);
+  //Variable to keep track of last delay number, to save re-calculating the filter for static targets
+  rsFloat last_delay = 0;
+  //Memory to store the filter in
+  rsFloat *filt = new rsFloat[filt_length];
+  //Loop over the pulse, performing the rendering
+  rsFloat sample_time = (*iter).time;
+  for (unsigned int i = 0; i < size; i++, sample_time+=timestep)
+    {
+      //Check if we should move on to the next set of interp points
+      if ((sample_time > (*next).time)) {
+	iter=next;
+	if ((next+1) != points.end())
+	  next++;
+      }
+      //Get the weightings for the parameters
+      rsFloat aw = 1, bw = 0;
+      if (iter < next) {
+	bw = (sample_time-(*iter).time)/((*next).time-(*iter).time);
+	aw = 1 - bw;
+      }
+      //Now calculate the current sample parameters
+      rsFloat amplitude = std::sqrt((*iter).power)*aw+std::sqrt((*next).power)*bw;
+      rsFloat fdelay = ((*iter).delay*aw+(*next).delay*bw)*rate-idelay;
+      rsFloat phase = std::fmod((*iter).phase*aw+(*next).phase*bw, 2*M_PI);
+      //rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Amp: %g Delay: %g Phase: %g\n", amplitude, fdelay, phase);
+      //Get the start and end times of interpolation      
+      unsigned int start = static_cast<unsigned int>(std::floor(std::max(i-fdelay-filt_length/2.0,0.0)));
+      unsigned int end = static_cast<unsigned int>(std::floor(std::max(i-fdelay+filt_length/2.0,0.0)));
+      //Clamp start and end into the data range
+      start = std::min(size, start);
+      end = std::min(size, end);
+      if ((end-start) > filt_length) {	
+	throw std::logic_error("[BUG] Interpolation length is longer than filter");	
+      }
+      //Re-calculate the delay filter for the given delay
+      if ((fdelay != last_delay) || (i <= (filt_length/2))) { //don't re-calculate the filter if fdelay hasn't changed
+	for (unsigned int j = 0; j < (end-start); j++) {
+	  filt[j] = interp->interp_filter(i-fdelay-j-start);
+	}
+      }
+      //Apply the filter
+      complex accum = 0;      
+      for (unsigned int j = start; j < end; j++) {
+        accum += amplitude*data[j]*filt[j-start];
+      }      
+      //Perform IQ demodulation
+      out[i] = rs::rsComplex(std::cos(phase)*accum.real()+std::sin(phase)*accum.imag(), -std::sin(phase)*accum.real()+std::cos(phase)*accum.imag());
+
+      //Update the last delay value
+      last_delay = fdelay;
+    }
+  //Clean up the filter memory
+  delete[] filt;
+  //Return the result
+  return boost::shared_array<rs::rsComplex>(out);
 }
+

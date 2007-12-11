@@ -1,17 +1,45 @@
-//rstarget.cpp
-//Implements the target class
+//rstarget.cpp - Classes for targets and target RCS
 //Marc Brooker mbrooker@rrsg.ee.uct.ac.za
+//11 June 2007
 
+#define TIXML_USE_STL //Tell tinyxml to use the STL instead of it's own string class
+
+#include <cmath>
 #include "rstarget.h"
 #include "rsdebug.h"
+#include "rsinterp.h"
+#include "rsnoise.h"
+#include "tinyxml/tinyxml.h"
 
 using namespace rs;
 
+//One of the xml utility functions from xmlimport.cpp
+rsFloat GetNodeFloat(TiXmlHandle &node);
+
+//
+// RCSModel Implementation
+//
+
+/// Return a constant RCS
+rsFloat RCSConst::GetRCS(rsFloat meanRCS) 
+{
+  return meanRCS;
+}
+
+/// Return an RCS based on the statistical Swerling II model
+rsFloat RCSSwerlingII::GetRCS(rsFloat meanRCS)
+{
+  rsFloat rnd = rsNoise::UniformSample();
+  return 0;
+}
+
+//
+// Target Implementation
+//
+
 //Default constructor for Target object
-Target::Target(Platform *platform, std::string name):
-  Object(platform, name),
-  pattern(Target::RCS_ISOTROPIC),
-  rcs(0)
+Target::Target(Platform *platform, const std::string &name):
+  Object(platform, name)
 {
 }
 
@@ -20,43 +48,122 @@ Target::~Target()
 {
 }
 
-//Get the radar cross section at a particular angle
-rsFloat Target::GetRCS(SVec3 &inAngle, SVec3 &outAngle) const
+//
+// IsoTarget Implementation
+//
+
+/// Constructor
+IsoTarget::IsoTarget(Platform *platform, const std::string &name, rsFloat rcs):
+  Target(platform, name),
+  rcs(rcs)
 {
-  switch (pattern) {
-  case RCS_ISOTROPIC:
-    return rcs; //Isotropic RCS is the same at all angles
-  case RCS_COSINE:
-    return CalcCosRCS(inAngle, outAngle); //Calculate cosine RCS pattern
-  case RCS_ARBITRARY:
-    return CalcPatternRCS(inAngle, outAngle); //Calculate RCS based on a pattern
+}
+
+/// Destructor
+IsoTarget::~IsoTarget()
+{
+}
+
+/// Return the RCS at the given angle
+rsFloat IsoTarget::GetRCS(SVec3 &inAngle, SVec3 &outAngle) const
+{
+  return rcs;
+}
+
+//
+// FileTarget Implementation
+//
+
+/// Constructor
+FileTarget::FileTarget(Platform *platform, const std::string &name, const std::string &filename):
+  Target(platform, name)
+{
+  //Create the objects for azimuth and elevation interpolation
+  azi_samples = new InterpSet();
+  elev_samples = new InterpSet();
+  //Load the data from the description file into the interpolation objects
+  LoadRCSDescription(filename);
+}
+
+/// Destructor
+FileTarget::~FileTarget()
+{
+  delete azi_samples;
+  delete elev_samples;
+}
+
+
+/// Return the RCS at the given angle
+rsFloat FileTarget::GetRCS(SVec3 &inAngle, SVec3 &outAngle) const
+{
+  //Currently uses a half angle approximation, this needs to be improved
+  SVec3 t_angle = inAngle+outAngle;
+  rsFloat RCS = std::sqrt(azi_samples->Value(t_angle.azimuth/2.0)*elev_samples->Value(t_angle.elevation/2.0));
+  return RCS;
+}
+
+namespace {
+
+//Load samples of gain along an axis (not a member of FileAntenna)
+void LoadTargetGainAxis(InterpSet *set, TiXmlHandle &axisXML)
+{
+  rsFloat angle;
+  rsFloat gain;
+  //Step through the XML file and load all the gain samples
+  TiXmlHandle tmp = axisXML.ChildElement("rcssample", 0);
+  for (int i = 0; tmp.Element() != 0; i++) {
+    //Load the angle of the gain sample
+    TiXmlHandle angleXML = tmp.ChildElement("angle", 0);
+    if (!angleXML.Element())
+      throw std::runtime_error("[ERROR] Misformed XML in target description: No angle in rcssample");
+    angle = GetNodeFloat(angleXML);
+    //Load the gain of the gain sample
+    TiXmlHandle gainXML = tmp.ChildElement("rcs", 0);
+    if (!gainXML.Element())
+      throw std::runtime_error("[ERROR] Misformed XML in target description: No rcs in rcssample");
+    gain = GetNodeFloat(gainXML);
+    //Load the values into the interpolation table
+    set->InsertSample(angle, gain);
+    //Get the next gainsample in the file
+    tmp = axisXML.ChildElement("rcssample", i);
   }
-  DEBUG_PRINT(rsDebug::RS_IMPORTANT, "[BUG] Attempted to use unsupported gain pattern. Simulation results are likely to be incorrect");
-  return 0;
 }
 
-//Set the radar cross section of the target
-void Target::SetRCS(rsFloat newRCS, RCSPattern newPattern)
-{
-  //Set the pattern
-  pattern = newPattern;
+} //End of Anon. namespace
 
-  //Set the rcs value
-  if (newRCS <= 0)
-    DEBUG_PRINT(rsDebug::RS_INFORMATIVE, "Refusing to set negative or zero Radar Cross Section");  else
-    rcs = newRCS;
+///Load data from the RCS description file
+void FileTarget::LoadRCSDescription(const std::string& filename)
+{
+  TiXmlDocument doc(filename.c_str());
+  //Check the document was loaded correctly
+  if (!doc.LoadFile())
+    throw std::runtime_error("[ERROR] Could not load target description from "+filename);
+  //Get the XML root node
+  TiXmlHandle root(doc.RootElement());
+  //Load the gain samples along the elevation axis
+  TiXmlHandle tmp = root.ChildElement("elevation", 0);
+  if (!tmp.Element())
+    throw std::runtime_error("[ERROR] Malformed XML in target description: No elevation pattern definition");
+  LoadTargetGainAxis(elev_samples, tmp);
+  //Load the gain samples along the azimuth axis
+  tmp = root.ChildElement("azimuth", 0);
+  if (!tmp.Element())
+    throw std::runtime_error("[ERROR] Malformed XML in target description: No azimuth pattern definition");
+  LoadTargetGainAxis(azi_samples, tmp);
 }
 
-//Calculate RCS based on the cos RCS pattern
-rsFloat Target::CalcCosRCS(SVec3 &inAngle, SVec3 &outAngle) const
+//
+// Functions for creating objects of various target types
+//
+
+/// Create an isometric radiator target
+Target* rs::CreateIsoTarget(Platform *platform, const std::string &name, rsFloat rcs)
 {
-  DEBUG_PRINT(rsDebug::RS_CRITICAL, "[TODO] Cosine RCS pattern not implemented. Results of simulation are likely to be incorrect");
-  return 0;
+  return new IsoTarget(platform, name, rcs);
 }
 
-//Calculate the RCS based on an arbitrary gain pattern
-rsFloat Target::CalcPatternRCS(SVec3 &inAngle, SVec3 &outAngle) const
+/// Create a target, loading the RCS pattern from a file
+Target* rs::CreateFileTarget(Platform *platform, const std::string &name, const std::string &filename)
 {
-  DEBUG_PRINT(rsDebug::RS_CRITICAL, "[TODO] RCS Pattern not implemented. Results of simulation are likely to be incorrect");
-  return 0;
+  return new FileTarget(platform, name, filename);
 }

@@ -16,19 +16,20 @@ namespace rs {
 //Forward declaration of Receiver and Transmitter (rsradar.h)
 class Receiver;
 class Transmitter;
-class PulseTransmitter;
-class CWTransmitter;
-//Forward declaration of RadarWaveform (rsradarwaveform.h)
-class RadarWaveform;
-class CWWaveform;
+
+//Forward declaration of RadarSignal (rsradarwaveform.h)
+class RadarSignal;
+
 //Forward declaration of Antenna (rsantenna.h)
 class Antenna;
 //Forward declaration of Target (rstarget.h)
 class Target;
 //Forward declaration of Platform (rsplatform.h)
 class Platform;
-//Forward declaration of Timing (rstiming.h)
-class Timing;
+//Forward declaration of PrototypeTiming (rstiming.h)
+class PrototypeTiming;
+//Forward declaration of MultipathSurface (rsmultipath.h)
+class MultipathSurface;
 
   /// World contains describes the parameters of the simulation, including objects.
   class World {
@@ -50,36 +51,37 @@ class Timing;
     /// Add a simple point target to the world
     void Add(Target *target);
     /// Add a pulse type to the world
-    void Add(RadarWaveform *pulse);
-    /// Add a CW waveform to the world
-    void Add(CWWaveform *wave);
+    void Add(RadarSignal *pulse);
     /// Add an antenna to the world
     void Add(Antenna *antenna);
     /// Add a timing source to the world
-    void Add(Timing *timing);
+    void Add(PrototypeTiming *timing);
 
     /// Find a pulse with the specified name
-    RadarWaveform* FindPulse(const std::string& name);
-    /// Find a CW waveform with the specified name
-    RadarWaveform* FindCWWaveform(const std::string& name);
+    RadarSignal* FindSignal(const std::string& name);
     /// Find an antenna with the specified name
     Antenna* FindAntenna(const std::string& name);
     /// Find a timing source with the specified name
-    Timing* FindTiming(const std::string& name);
-    
-    friend void RunThreadedSim(int thread_limit, World *world);
-    friend void SimulatePairPulse(const PulseTransmitter *trans, Receiver *recv, const World *world);
-    friend void SimulatePairCW(const CWTransmitter *trans, Receiver *recv, const World *world);
+    PrototypeTiming* FindTiming(const std::string& name);
 
-  protected:
+    ///Add a multipath surface to the world
+    void AddMultipathSurface(MultipathSurface *surface);
+    ///Process the scene to add virtual receivers and transmitters
+    void ProcessMultipath();
+    
+    friend void rs::RunThreadedSim(int thread_limit, World *world);
+    friend void SimulatePair(const Transmitter *trans, Receiver *recv, const World *world);
+
+  protected:    
     std::vector<Platform*> platforms; //!< Vector of all platforms in the world
     std::vector<Transmitter*> transmitters; //!< Vector of all transmitters in the world
     std::vector<Receiver*> receivers; //!< Vector of all receivers in the world
     std::vector<Target*> targets; //!< Vector of all targets in the world
-    std::map<std::string, RadarWaveform*> pulses; //!< Vector of all pulses in the world
-    std::map<std::string, CWWaveform*> cwwaves; //!< Map of CW waveforms to names    
+    std::map<std::string, RadarSignal*> pulses; //!< Vector of all signals in the world
     std::map<std::string, Antenna*> antennas; //!< Map of antennas to names
-    std::map<std::string, Timing*> timings; //!< Map of timing sources to names
+    std::map<std::string, PrototypeTiming*> timings; //!< Map of timing sources to names
+    //We only support a single multipath surface 
+    MultipathSurface *multipath_surface; //!< Surface to use for multipath propagation
   };  
 
 }

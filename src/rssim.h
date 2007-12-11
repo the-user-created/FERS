@@ -15,11 +15,6 @@ namespace rs {
   //Run a simulation on the specified receiver/transmitter pair
   void SimulatePair(const Transmitter *trans, Receiver *recv, const World *world);
 
-  //Run a simulation on the specified receiver/PulseTransmitter pair
-  void SimulatePairPulse(const PulseTransmitter *trans, Receiver *recv, const World *world);
-  //Run a simulation on the specified receiver/CWTransmitter pair
-  void SimulatePairCW(const CWTransmitter *trans, Receiver *recv, const World *world);
-
   //Functions in rsthreadedsim.cpp
 
   //Run the radar simulation specified by world

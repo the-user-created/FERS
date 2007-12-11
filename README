@@ -1,44 +1,47 @@
 FERS - The Flexible Extensible Radar Simulator
 
-FERS is a simulator for simulating the performance and output of a variety of radar systems. It is designed to support a wide range of traditional and modern radar system designs. FERS is currently under heavy development, and is likely to change fairly quickly.
+FERS is a simulator for simulating the performance and output of a variety of radar systems. It is designed to support a wide range of traditional and modern radar system designs. FERS is currently under active development - this version is likely to contain many bugs, incomplete or missing features, incomplete or missing documentation and major inaccuracies.
 
-FERS is not currently mature enough to be used in a production environment. Please report any bugs you find, and we will get to fixing them as soon as possible. Documentation is currently very sparse - it will be improved very soon.
+FERS is not currently mature enough to be used in a production environment. Please report any bugs you find, and we will get to fixing them as soon as possible. Documentation is currently very sparse - it will be improved soon.
 
-The features which are currently (at least partially implemented are):
+The features which are currently implemented are:
 
 * Creation of returns from arbitrary pulse shapes
 * Simple propagation, doppler and phase model
 * Modelling of Multistatic and Monostatic radar systems
 * Modelling of CW and Pulsed radars
 * Export to CSV, XML and HDF5 file formats
+* Proper range-gate and timing for pulsed radars
+* Modelling of propagation of clock and time signals between stations
+* Effects of multipath propagation
+
+Features in a state of partial implementation:
+* Effects of Jitter and phase noise on timing sources
 
 Features not implemented:
-
-* Proper range-gate and timing for pulsed radars (coming very soon)
-* Complex propagation model including fading and multipath
-* Modelling of propagation of clock and time signals between stations
-* Effects of Jitter and phase noise on timing sources
+* Complete propagation model including fading
 
 AUTHORS
 
 FERS is currently under development by the following people:
 
-Marc Brooker mbrooker@rrsg.ee.uct.ac.za
+Marc Brooker marcbrooker@gmail.com
 
 BUILDING FERS
 
 FERS depends on a number of external libraries, which you need to install before attempting to build FERS. The libraries you need to have installed are:
 
-* Boost (at least boost::threads and the boost/cstdint.hpp header) which is available freely from http://www.boost.org
+* Boost (at least boost::threads and boost::random header) which is available freely from http://www.boost.org
 * FFTW3 which is available freely from http://www.fftw3.org
-* libsamplerate which is available freely from http://www.mega-nerd.com/SRC/
-* libhdf5 (optional, for export to Hierarchical Data Format 5 files)
+* libhdf5
 
 On a Debian or Ubuntu system (or pretty much any other decent GNU/Linux distribution) these libraries should be available pre-packaged for your installing pleasure.
 
-Once you have these libraries installed, type:
+FERS also depends on the cmake system. This system can generate makefiles, VC++ projects, KDevelop projects and more from the FERS sources. Please install cmake before attempting to build FERS.
 
-./configure
+Now type
+
+cmake ./
 
 followed by
 
@@ -55,7 +58,7 @@ fersxml.dtd - Document Type Definition for the XML script file format
 
 THANKS
 
-The authors of tinyXml, FFTW, Boost and Secret Rabbit Code for making excellent software freely available.
+The authors of tinyXml, FFTW and Boost for making excellent software freely available.
 
 COPYRIGHT NOTICE
 

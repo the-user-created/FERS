@@ -4,7 +4,7 @@
 <!ATTLIST simulation name CDATA #REQUIRED>
 
 <!-- Simulation Parameters -->
-<!ELEMENT parameters (starttime,endtime,c?,interprate?,rate?,export?)>
+<!ELEMENT parameters (starttime,endtime,c?,interprate?,rate?,export?,adc_bits?)>
 <!ELEMENT starttime (#PCDATA)> <!-- Start time of simulation -->
 <!ELEMENT endtime (#PCDATA)> <!-- End time of simulation -->
 <!ELEMENT c (#PCDATA)> <!-- Propagation speed -->
@@ -15,7 +15,8 @@
 <!ATTLIST export xml (true|false) "true"
 csv (true|false) "true" 
 binary (true|false) "false"
-csvbinary (true|false) "false"> 
+csvbinary (true|false) "false">
+<!ELEMENT adc_bits (#PCDATA)>
 
 <!-- Pulsed Radar Pulse -->
 <!ELEMENT pulse (length?,rate?,power,carrier)>
@@ -24,7 +25,6 @@ type CDATA #REQUIRED
 filename CDATA "def.csv">
 <!ELEMENT length (#PCDATA)> <!-- Length of pulse (seconds) -->
 <!ELEMENT power (#PCDATA)> <!-- Pulse power (Watts) -->
-<!-- <!ELEMENT rate (#PCDATA)> --> <!-- Sample rate for rendering (Hz) -->
 <!ELEMENT carrier (#PCDATA)> <!-- Frequency (Hz) -->
 
 <!-- CW Radar Waveform -->
@@ -33,10 +33,11 @@ filename CDATA "def.csv">
 type CDATA #REQUIRED>
 
 <!-- Timing Source -->
-<!ELEMENT timing (frequency,jitter)>
-<!ATTLIST timing name CDATA #REQUIRED>
-<!ELEMENT frequency (#PCDATA)> <!-- Frequency of clock source (Hz) -->
-<!ELEMENT jitter (#PCDATA)> <!-- RMS time interval error (seconds) -->
+<!ELEMENT timing (frequency,jitter)> <!-- Timing source. Sets frequency and jitter -->
+<!ATTLIST timing name CDATA #REQUIRED> <!-- Name of the timing source -->
+<!ELEMENT noise_entry (alpha,weight)> 
+<!ELEMENT alpha (#PCDATA)> <!-- Noise category alpha -->
+<!ELEMENT weight (#PCDATA)> <!-- Weighting of noise in the category -->
 
 <!-- Antenna -->
 <!ELEMENT antenna (alpha?,beta?,gamma?,diameter?)>
@@ -71,18 +72,19 @@ pattern CDATA #REQUIRED>
 <!-- Rotation Paths and Waypoints -->
 <!ELEMENT rotationpath (rotationwaypoint+)>
 <!ATTLIST rotationpath interpolation (linear|cubic) #REQUIRED>
-<!ELEMENT rotationwaypoint (azimuth,elevation,time)>
+<!ELEMENT rotationwaypoint (azimuth,elevation,time)> <!-- Waypoint along a rotation path -->
 <!ELEMENT azimuth (#PCDATA)>
 <!ELEMENT elevation (#PCDATA)>
 
 <!-- Monostatic radar installations -->
-<!ELEMENT monostatic (window_skip?,window_length?,prf?)>
+<!ELEMENT monostatic (window_skip?,window_length?,prf?,noise_temp?)>
 <!ATTLIST monostatic name CDATA #REQUIRED
 type (pulsed|continuous) #REQUIRED
 antenna CDATA #REQUIRED
 pulse CDATA #REQUIRED
 timing CDATA #REQUIRED>
 <!ELEMENT prf (#PCDATA)> <!-- PRF required for pulse transmitters only -->
+<!ELEMENT noise_temp (#PCDATA)> <!-- Noise temperature contributed by receiver -->
 
 <!-- Standalone Transmitter -->
 <!ELEMENT transmitter (prf?)>
@@ -99,7 +101,6 @@ antenna CDATA #REQUIRED
 timing CDATA #REQUIRED>
 <!ELEMENT window_skip (#PCDATA)> <!-- Time to skip after start of pulse before starting receiving (seconds) -->
 <!ELEMENT window_length (#PCDATA)> <!-- Length of the range gate (seconds) -->
-<!ELEMENT noise_temp (#PCDATA)> <!-- Noise temperature contributed by receiver -->
 
 <!-- Target -->
 <!ELEMENT target (rcs)>
@@ -107,3 +108,11 @@ timing CDATA #REQUIRED>
 <!ELEMENT rcs (value)> <!-- Target RCS -->
 <!ATTLIST rcs type CDATA #REQUIRED>
 <!ELEMENT value (#PCDATA)>
+
+<!-- Multipath Surface -->
+<!ELEMENT  multipath_surface (factor, nx, ny, nz, d)>
+<!ELEMENT factor (#PCDATA)>
+<!ELEMENT nx (#PCDATA)>
+<!ELEMENT ny (#PCDATA)>
+<!ELEMENT nz (#PCDATA)>
+<!ELEMENT d (#PCDATA)>

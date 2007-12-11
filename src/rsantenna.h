@@ -10,17 +10,20 @@
 #include <string>
 #include "rsgeometry.h"
 #include "boost/utility.hpp"
+#include "rspython.h"
 
 namespace rs {
   //Forward declaration of SVec3 and Vec3 (see rspath.h)
   class SVec3;
   class Vec3;
+  //Forward declaration of InterpSet (see rsinterp.h)
+  class InterpSet;
 
   /// The antenna class defines an antenna, which may be used by one or more transmitters
   class Antenna: public boost::noncopyable { //Antennas are not meant to be copied
   public:
     /// Default constructor
-    Antenna(std::string name);
+    Antenna(const std::string& name);
     /// Destructor
     virtual ~Antenna();
     /// Returns the current gain at a particular angle
@@ -43,6 +46,27 @@ namespace rs {
     std::string name;
   };
 
+  // Functions to create Antenna objects
+
+  /// Create an Isotropic Antenna
+  Antenna* CreateIsotropicAntenna(const std::string &name);
+
+  /// Create an antenna with it's gain pattern stored in an XML file
+  Antenna* CreateFileAntenna(const std::string &name, const std::string &file);
+
+  /// Create an antenna with gain pattern described by a Python program
+  Antenna* CreatePythonAntenna(const std::string &name, const std::string &module, const std::string &function);
+
+  /// Create a Sinc Pattern Antenna
+  // see rsantenna.cpp for meaning of alpha and beta
+  Antenna* CreateSincAntenna(const std::string &name, rsFloat alpha, rsFloat beta, rsFloat gamma);
+
+  /// Create a Square Horn Antenna
+  Antenna* CreateHornAntenna(const std::string &name, rsFloat dimension);
+  
+  /// Create a parabolic reflector dish
+  Antenna* CreateParabolicAntenna(const std::string &name, rsFloat diameter);
+
 }
 
 namespace rsAntenna {
@@ -51,7 +75,7 @@ namespace rsAntenna {
   class Isotropic: public rs::Antenna {
   public:
     /// Default constructor
-    Isotropic(std::string name);
+    Isotropic(const std::string& name);
     /// Default destructor
     ~Isotropic();
     /// Get the gain at an angle
@@ -62,7 +86,7 @@ namespace rsAntenna {
   class Sinc: public rs::Antenna {
   public:
     /// Constructor
-    Sinc(std::string name, rsFloat alpha, rsFloat beta, rsFloat gamma);
+    Sinc(const std::string& name, rsFloat alpha, rsFloat beta, rsFloat gamma);
     /// Default destructor
     ~Sinc();
     /// Get the gain at an angle
@@ -77,7 +101,7 @@ namespace rsAntenna {
   class SquareHorn: public rs::Antenna {
   public:
     /// Constructor
-    SquareHorn(std::string name, rsFloat dimension);
+    SquareHorn(const std::string& name, rsFloat dimension);
     /// Default destructor
     ~SquareHorn();
     /// Get the gain at an angle
@@ -90,7 +114,7 @@ namespace rsAntenna {
   class ParabolicReflector: public rs::Antenna {
   public:
     /// Constructor
-    ParabolicReflector(std::string name, rsFloat diameter);
+    ParabolicReflector(const std::string& name, rsFloat diameter);
     /// Default destructor
     ~ParabolicReflector();
     /// Get the gain at an angle
@@ -98,6 +122,37 @@ namespace rsAntenna {
   private:
     rsFloat diameter;    
   };
+
+  /// Antenna with gain pattern loaded from file
+  class FileAntenna: public rs::Antenna {
+  public:
+    /// Constructor
+    FileAntenna(const std::string& name, const std::string &filename);
+    /// Default destructor
+    ~FileAntenna();
+    /// Get the gain at an angle
+    rsFloat GetGain(const rs::SVec3 &angle, const rs::SVec3 &refangle, rsFloat wavelength) const;
+  private:
+    /// Load data from the antenna description file
+    void LoadAntennaDescription(const std::string& filename);
+
+    rs::InterpSet* azi_samples; //!< Samples in the azimuth direction
+    rs::InterpSet* elev_samples; //!< Samples in the elevation direction
+  };
+
+  /// Antenna with gain pattern calculated by a Python module
+  class PythonAntenna: public rs::Antenna {
+  public:
+    /// Constructor
+    PythonAntenna(const std::string& name, const std::string &module, const std::string& function);
+    /// Default destructor
+    ~PythonAntenna();
+    /// Get the gain at an angle
+    rsFloat GetGain(const rs::SVec3 &angle, const rs::SVec3 &refangle, rsFloat wavelength) const;
+  private:
+    rsPython::PythonAntennaMod py_antenna;
+  };
+
 }
 
 #endif

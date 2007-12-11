@@ -20,16 +20,18 @@
 #include "rstarget.h"
 #include "rsradar.h"
 #include "rsportable.h"
-#include "rspulsefactory.h"
 #include "rsparameters.h"
-#include "rsantennafactory.h"
 #include "rsantenna.h"
 #include "rstiming.h"
+#include "rspython.h"
+#include "rsmultipath.h"
 
 using namespace rs;
 using std::string;
 
-namespace {
+//
+// XML Parsing Utility Functions
+//
 
 /// Exception for reporting an XML parsing error
 class XmlImportException: public std::runtime_error {
@@ -108,12 +110,15 @@ bool GetAttributeBool(TiXmlHandle &handle, std::string name, std::string error, 
   return (str == "true");
 }
 
+
+namespace {
+
 /// Process a target XML entry
 void ProcessTarget(TiXmlHandle &targXML, Platform *platform, World *world)
 {
   DEBUG_PRINT(rsDebug::RS_VERY_VERBOSE, "[VV] Loading Target");
+  Target *target;
   string name = GetAttributeString(targXML, "name", "Target does not specify a name");
-  Target *target = new Target(platform, name);
   //Get the RCS
   TiXmlHandle rcsXML = targXML.ChildElement("rcs", 0);
   if (!rcsXML.Element())
@@ -124,7 +129,11 @@ void ProcessTarget(TiXmlHandle &targXML, Platform *platform, World *world)
     if (!rcsValueXML.Element())
       throw XmlImportException("Target "+name+" does not specify value of isotropic RCS.");
     rsFloat value = GetNodeFloat(rcsValueXML);
-    target->SetRCS(value, Target::RCS_ISOTROPIC);
+    target = CreateIsoTarget(platform, name, value);
+  }
+  else if (rcs_type == "file") {
+    string filename = GetAttributeString(rcsXML, "filename", "RCS attached to target "+name+" does not specify filename.");
+    target = CreateFileTarget(platform, name, filename);
   }
   else {
     throw XmlImportException("RCS type "+rcs_type+" not currently supported.");
@@ -168,9 +177,16 @@ Receiver *ProcessReceiver(TiXmlHandle &recvXML, Platform *platform, World *world
 
   //Get the name of the timing source
   string timing_name = GetAttributeString(recvXML, "timing", "Receiver "+name+" does not specify a timing source");
-  Timing *timing = world->FindTiming(timing_name);
-  if (!timing)
+  int length_samples = static_cast<unsigned int>(std::ceil(rsParameters::rate()*length*rsParameters::oversample_ratio()));
+  int pri_samples = static_cast<unsigned int>(std::ceil(rsParameters::rate()*rsParameters::oversample_ratio()/prf));
+  ClockModelTiming *timing = new ClockModelTiming(timing_name, receiver->GetWindowCount(), length_samples, pri_samples-length_samples);
+  
+  PrototypeTiming *proto = world->FindTiming(timing_name);
+  if (!proto)
     throw XmlImportException("Timing source " + timing_name + " does not exist when processing receiver "+name);
+  //Initialize the new model from the prototype model
+  timing->InitializeModel(proto);
+  //Set the receiver's timing source
   receiver->SetTiming(timing);
 
   rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Loading receiver %s\n", receiver->GetName().c_str());
@@ -183,11 +199,11 @@ Receiver *ProcessReceiver(TiXmlHandle &recvXML, Platform *platform, World *world
 /// Create a PulseTransmitter object and process XML entry
 Transmitter *ProcessPulseTransmitter(TiXmlHandle &transXML, std::string &name, Platform *platform, World *world)
 {
-  PulseTransmitter *transmitter = new PulseTransmitter(platform, string(name));
+  Transmitter *transmitter = new Transmitter(platform, string(name), true);
   //Get the name of the pulse
   string pulse_name = GetAttributeString(transXML, "pulse", "Transmitter " + name + " does not specify a pulse");
   //Get the pulse from the table of pulses
-  RadarWaveform *wave = world->FindPulse(pulse_name);
+  RadarSignal *wave = world->FindSignal(pulse_name);
   if (!wave)
     throw XmlImportException("Pulse with name " + pulse_name + " does not exist");
   //Get the Pulse Repetition Frequency
@@ -201,11 +217,11 @@ Transmitter *ProcessPulseTransmitter(TiXmlHandle &transXML, std::string &name, P
 /// Create a PulseTransmitter object and process XML entry
 Transmitter *ProcessCWTransmitter(TiXmlHandle &transXML, std::string &name, Platform *platform, World *world)
 {
-  CWTransmitter *transmitter = new CWTransmitter(platform, string(name));
+  Transmitter *transmitter = new Transmitter(platform, string(name), false);
   //Get the name of the pulse
   string pulse_name = GetAttributeString(transXML, "pulse", "Transmitter " + name + " does not specify a pulse");
   //Get the pulse from the table of pulses
-  RadarWaveform *wave = world->FindCWWaveform(pulse_name);
+  RadarSignal *wave = world->FindSignal(pulse_name);
   if (!wave)
     throw XmlImportException("Pulse with name " + pulse_name + " does not exist");
   //Attach the CW waveform to the transmitter
@@ -242,9 +258,15 @@ Transmitter *ProcessTransmitter(TiXmlHandle &transXML, Platform *platform, World
 
   //Get the name of the timing source
   string timing_name = GetAttributeString(transXML, "timing", "Transmitter "+name+" does not specify a timing source");
-  Timing *timing = world->FindTiming(timing_name);
-  if (!timing)
-    throw XmlImportException("Timing source " + timing_name + " does not exist when processing transmitter "+name);
+
+  PulseTiming *timing = new PulseTiming(timing_name, transmitter->GetPulseCount());
+  
+  PrototypeTiming *proto = world->FindTiming(timing_name);
+  if (!proto)
+    throw XmlImportException("Timing source " + timing_name + " does not exist when processing receiver "+name);
+  //Initialize the new model from the prototype model
+  timing->InitializeModel(proto);
+  //Set the receiver's timing source
   transmitter->SetTiming(timing);
   
   //Add the transmitter to the world
@@ -281,6 +303,26 @@ void ProcessWaypoint(TiXmlHandle &handXML, Path *path)
   }
 }
 
+/// Process the path's python attributes
+void ProcessPythonPath(TiXmlHandle &pathXML, Path *path)
+{
+  //Initialize python, if it isn't done already
+  rsPython::InitPython();
+  //Get the python path definition
+  try {
+    TiXmlHandle tmp = pathXML.ChildElement("pythonpath", 0);
+    //Get the module and function name attributes
+    std::string modname = GetAttributeString(tmp, "module", "Attribute module missing");
+    std::string funcname = GetAttributeString(tmp, "function", "Attribute function missing");
+    //Load the Path module
+    path->LoadPythonPath(modname, funcname);
+  }
+  catch (XmlImportException e) {
+    rsDebug::printf(rsDebug::RS_VERBOSE, "%s", e.what());
+  }
+
+}
+
 /// Process a MotionPath XML entry
 void ProcessMotionPath(TiXmlHandle &mpXML, Platform *platform)
 {
@@ -296,6 +338,10 @@ void ProcessMotionPath(TiXmlHandle &mpXML, Platform *platform)
       path->SetInterp(Path::RS_INTERP_CUBIC);
     else if (rottype == "static")
       path->SetInterp(Path::RS_INTERP_STATIC);
+    else if (rottype == "python") {
+      path->SetInterp(Path::RS_INTERP_PYTHON);
+      ProcessPythonPath(mpXML, path);
+    }
     else {
       rsDebug::printf(rsDebug::RS_VERBOSE, "[WARNING] Unsupported motion path interpolation type for platform "+platform->GetName()+". Defaulting to static.\n");
       path->SetInterp(Path::RS_INTERP_STATIC);
@@ -398,11 +444,8 @@ void ProcessPlatform(TiXmlHandle &platXML, World *world)
 {
   Platform *platform;
   //Create the platform, using the name from the element
-  const char *name = platXML.Element()->Attribute("name");
-  if (name)
-    platform = new Platform(string(name));
-  else
-    platform = new Platform(); //Use the default name, if one is set
+  std::string name = GetAttributeString(platXML, "name", "[ERROR] Platform must specify a name");
+  platform = new Platform(string(name));
   //Add the platform to the world
   world->Add(platform);
 
@@ -456,25 +499,6 @@ void ProcessPlatform(TiXmlHandle &platXML, World *world)
   }
 }  
 
-/// Process a pulse entry of type rect
-void ProcessRectPulse(TiXmlHandle &pulseXML, World *world, std::string name)
-{
-  rsFloat length = GetChildRsFloat(pulseXML, "length");
-  rsFloat power = GetChildRsFloat(pulseXML, "power");
-  rsFloat carrier = GetChildRsFloat(pulseXML, "carrier");
-  RadarWaveform *wave = rsPulseFactory::GenerateRectPulse(name, length, power, carrier);
-  world->Add(wave);
-}
-
-/// Process a pulse entry of type rect
-void ProcessRectAnyPulse(TiXmlHandle &pulseXML, World *world, std::string name)
-{
-  rsFloat length = GetChildRsFloat(pulseXML, "length");
-  rsFloat power = GetChildRsFloat(pulseXML, "power");
-  rsFloat carrier = GetChildRsFloat(pulseXML, "carrier");
-  RadarWaveform *wave = rsPulseFactory::GenerateRectAnyPulse(name, length, power, carrier);
-  world->Add(wave);
-}
 
 /// Process a pulse entry of type rect
 void ProcessAnyPulseFile(TiXmlHandle &pulseXML, World *world, std::string name)
@@ -482,7 +506,7 @@ void ProcessAnyPulseFile(TiXmlHandle &pulseXML, World *world, std::string name)
   string filename = GetAttributeString(pulseXML, "filename", "Pulse must specify a filename");
   rsFloat carrier = GetChildRsFloat(pulseXML, "carrier");
   rsFloat power = GetChildRsFloat(pulseXML, "power");
-  RadarWaveform *wave = rsPulseFactory::GenerateAnyPulseFromFile(name, filename, power, carrier);
+  RadarSignal *wave = rsPulseFactory::LoadPulseFromFile(name, filename, power, carrier);
   world->Add(wave);
 }
 
@@ -495,41 +519,33 @@ void ProcessPulse(TiXmlHandle &pulseXML, World *world)
   string pulse_type = GetAttributeString(pulseXML, "type", "Pulses must specify a type");
   //Generate the pulse    
   rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Generating Pulse %s of type %s\n", pulse_name.c_str(), pulse_type.c_str());
-  if (pulse_type == "rect")
-    ProcessRectPulse(pulseXML, world, pulse_name);
-  else if (pulse_type == "file")
+  if (pulse_type == "file")
     ProcessAnyPulseFile(pulseXML, world, pulse_name);
-  else if (pulse_type == "rect_fd")
-    ProcessRectAnyPulse(pulseXML, world, pulse_name);
   else
     throw XmlImportException("Unrecognised type in pulse");
 }
 
-/// Process a monochrome CW waveform
-void ProcessCWMonochrome(TiXmlHandle &pulseXML, World *world, std::string name)
+Antenna *ProcessPythonAntenna(TiXmlHandle &antXML, const string &name)
 {
-  rsFloat power = GetChildRsFloat(pulseXML, "power");
-  rsFloat freq = GetChildRsFloat(pulseXML, "carrier");
-  CWWaveform *cww  = rsPulseFactory::GenerateMonoCW(name, power, freq);
-  world->Add(cww);
+  //Initialize python, if it isn't done already
+  rsPython::InitPython();      
+  //Get the module and function name attributes
+  std::string modname = GetAttributeString(antXML, "module", "Attribute module missing");
+  std::string funcname = GetAttributeString(antXML, "function", "Attribute function missing");
+  //Create the antenna
+  return rs::CreatePythonAntenna(name, modname, funcname); 
 }
 
-/// Process a CW waveform entry
-void ProcessCWWaveform(TiXmlHandle &waveXML, World *world)
+
+Antenna *ProcessFileAntenna(TiXmlHandle &antXML, const string &name)
 {
-  //Get the name of the pulse
-  string wave_name = GetAttributeString(waveXML, "name", "CW Waveforms must specify a name");
-  //Get the type of the pulse
-  string wave_type = GetAttributeString(waveXML, "type", "CW Waveforms must specify a type");
-  //Generate the pulse    
-  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Generating CW Waveform %s of type %s\n", wave_name.c_str(), wave_type.c_str());
-  if (wave_type == "mono")
-    ProcessCWMonochrome(waveXML, world, wave_name);
-  else
-    throw XmlImportException("Unrecognised type in CW Waveform");
+  //Get the module and function name attributes
+  std::string filename = GetAttributeString(antXML, "filename", "Antenna definition must specify a filename");
+  //Create the antenna
+  return rs::CreateFileAntenna(name, filename); 
 }
 
-Antenna *ProcessSincAntenna(TiXmlHandle &antXML, string name)
+Antenna *ProcessSincAntenna(TiXmlHandle &antXML, const string &name)
 {
   rsFloat alpha = GetChildRsFloat(antXML, "alpha");
   rsFloat beta = GetChildRsFloat(antXML, "beta");
@@ -537,7 +553,7 @@ Antenna *ProcessSincAntenna(TiXmlHandle &antXML, string name)
   return rs::CreateSincAntenna(name, alpha, beta, gamma);
 }
 
-Antenna *ProcessParabolicAntenna(TiXmlHandle &antXML, string name)
+Antenna *ProcessParabolicAntenna(TiXmlHandle &antXML, const string &name)
 {
   rsFloat diameter = GetChildRsFloat(antXML, "diameter");
   return rs::CreateParabolicAntenna(name, diameter);
@@ -552,6 +568,10 @@ void ProcessAntenna(TiXmlHandle &antXML, World *world)
   Antenna *antenna;
   if (ant_pattern == "isotropic")
     antenna = CreateIsotropicAntenna(ant_name);
+  else if (ant_pattern == "file")
+    antenna = ProcessFileAntenna(antXML, ant_name);
+  else if (ant_pattern == "python")
+    antenna = ProcessPythonAntenna(antXML, ant_name);
   else if (ant_pattern == "sinc")
     antenna = ProcessSincAntenna(antXML, ant_name);
   else if (ant_pattern == "parabolic")
@@ -571,15 +591,37 @@ void ProcessAntenna(TiXmlHandle &antXML, World *world)
   world->Add(antenna);
 }
 
+/// Process a multipath surface and add it to the world
+void ProcessMultipath(TiXmlHandle &mpXML, World *world)
+{
+  //Get the reflecting factor
+  rsFloat factor = GetChildRsFloat(mpXML, "factor");
+  rsFloat nx = GetChildRsFloat(mpXML, "nx");
+  rsFloat ny = GetChildRsFloat(mpXML, "ny");
+  rsFloat nz = GetChildRsFloat(mpXML, "nz");
+  rsFloat d = GetChildRsFloat(mpXML, "d");
+  //Create the multipath object
+  MultipathSurface* mps = new MultipathSurface(nx, ny, nz, d, factor);
+  //Add it to the world
+  world->AddMultipathSurface(mps);
+}
+
 /// Process a timing source and add it to the world
 void ProcessTiming(TiXmlHandle &antXML, World *world)
 {
   //Get the name of the antenna
   string name = GetAttributeString(antXML, "name", "Timing sources must specify a name");
-  rsFloat jitter = GetChildRsFloat(antXML, "jitter");
-  rsFloat rate = GetChildRsFloat(antXML, "frequency");
 
-  Timing *timing = new Timing(name, rate, jitter);
+  PrototypeTiming *timing = new PrototypeTiming(name);
+  
+  //Process all the clock entries
+  TiXmlHandle plat = antXML.ChildElement("noise_entry", 0);
+  for (int i = 1; plat.Element() != 0; i++) {
+    rsFloat alpha = GetChildRsFloat(plat, "alpha");
+    rsFloat weight = GetChildRsFloat(plat, "weight");
+    timing->AddAlpha(alpha, weight);
+    plat = antXML.ChildElement("noise_entry", i);
+  }
 
   //Notify the debug log
   rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Loading timing source %s\n", name.c_str());
@@ -606,7 +648,6 @@ void ProcessParameters(TiXmlHandle &root)
   try {
     rsFloat rate = GetChildRsFloat(root, "rate");
     rsParameters::modify_parms()->SetRate(rate);
-      rsDebug::printf(rsDebug::RS_VERBOSE, "[VERBOSE] Using sampling rate %f\n", rate);
   }
   catch (XmlImportException &xe)
     {
@@ -619,7 +660,7 @@ void ProcessParameters(TiXmlHandle &root)
   }
   catch (XmlImportException &xe)
     {
-      rsDebug::printf(rsDebug::RS_VERBOSE, "[VERBOSE] Using default value of CW position interpolation rate: %d\n", rsParameters::cw_sample_rate());
+      rsDebug::printf(rsDebug::RS_VERBOSE, "[VERBOSE] Using default value of CW position interpolation rate: %g\n", rsParameters::cw_sample_rate());
     }
   //Get the random seed
   try {
@@ -629,6 +670,25 @@ void ProcessParameters(TiXmlHandle &root)
   catch (XmlImportException &xe)
     {
       rsDebug::printf(rsDebug::RS_VERBOSE, "[VERBOSE] Using random seed from clock(): %d\n", rsParameters::random_seed());
+    }
+  //Get the number of ADC bits to simulate
+  try {
+    rsFloat adc_bits  = GetChildRsFloat(root, "adc_bits");
+    rsParameters::modify_parms()->SetADCBits(static_cast<unsigned int>(std::floor(adc_bits)));
+    rsDebug::printf(rsDebug::RS_VERBOSE, "[VERBOSE] Quantizing results to %d bits\n", rsParameters::adc_bits());
+  }
+  catch (XmlImportException &xe)
+    {
+      rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VERBOSE] Using full precision simulation.\n");
+    }
+  // Get the oversampling ratio
+  try {
+    rsFloat ratio  = GetChildRsFloat(root, "oversample");
+    rsParameters::modify_parms()->SetOversampleRatio(static_cast<unsigned int>(std::floor(ratio)));
+  }
+  catch (XmlImportException &xe)
+    {
+      rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Oversampling not in use. Ensure than pulses are correctly sampled.\n");
     }
   //Process the "export" tag
   TiXmlHandle exporttag = root.ChildElement("export", 0);
@@ -653,12 +713,6 @@ void ProcessDocument(TiXmlHandle &root, World *world)
     ProcessPulse(plat, world);
     plat = root.ChildElement("pulse", i);
   }
-  //Process all CW waveforms
-  plat = root.ChildElement("waveform", 0);
-  for (int i = 1; plat.Element() != 0; i++) {
-    ProcessCWWaveform(plat, world);
-    plat = root.ChildElement("waveform", i);
-  }
   //Process all the antennas
   plat = root.ChildElement("antenna", 0);
   for (int i = 1; plat.Element() != 0; i++) {
@@ -670,6 +724,12 @@ void ProcessDocument(TiXmlHandle &root, World *world)
   for (int i = 1; plat.Element() != 0; i++) {
     ProcessTiming(plat, world);
     plat = root.ChildElement("timing", i);
+  }
+  //Process all the multipath surfaces
+  plat = root.ChildElement("multipath", 0);
+  for (int i = 1; plat.Element() != 0; i++) {
+    ProcessMultipath(plat, world);
+    plat = root.ChildElement("multipath", i);
   }
   //Process all the platforms
   plat = root.ChildElement("platform", 0);
@@ -690,5 +750,7 @@ void xml::LoadXMLFile(string filename, World *world)
     throw std::runtime_error("Cannot open script file");
   //Process the XML document
   TiXmlHandle root(doc.RootElement());
-  ::ProcessDocument(root, world);
+  ProcessDocument(root, world);
+  //Create multipath duals of all objects, if a surface was added
+  world->ProcessMultipath();
 }
