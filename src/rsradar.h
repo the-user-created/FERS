@@ -120,8 +120,11 @@ namespace rs {
   class Receiver: public Radar
     {
     public:
+      /// Enum type for the receiver behaviour flags
+      enum RecvFlag { FLAG_NODIRECT = 1, FLAG_NOPROPLOSS = 2 };
+      /// Constructor
       Receiver(const Platform *platform, std::string name = "defRecv");
-      ~Receiver();
+      virtual ~Receiver();
       /// Add a response to the list of simulation responses
       void AddResponse(Response *response);
       /// Clear the list of simulation responses (deleting responses)
@@ -144,6 +147,14 @@ namespace rs {
       rsFloat GetWindowStart(int window) const;
       /// Get the length of the receive window
       rsFloat GetWindowLength() const;
+      /// Get the time skipped before the start of the receive window
+      rsFloat GetWindowSkip() const;
+      /// Get the PRF
+      rsFloat GetPRF() const;
+      /// Set a flag
+      void SetFlag(Receiver::RecvFlag flag);
+      /// Check if a flag is set
+      bool CheckFlag(Receiver::RecvFlag flag) const;
     private:
       /// Vector to hold all the system responses
       std::vector<Response *> responses;
@@ -153,6 +164,7 @@ namespace rs {
       rsFloat window_prf; //!< Window repetition frequency
       rsFloat window_skip; //!< The amount of time at the beginning of an interval to skip before capturing response
       Receiver *dual; //!< Multipath dual of this receiver
+      int flags; //!< Flags which control receiver behaviour
       /// Function to create dual
       friend Receiver* CreateMultipathDual(Receiver *recv, const MultipathSurface *surf);
     };

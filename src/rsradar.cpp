@@ -134,7 +134,7 @@ Transmitter::Transmitter(const Platform *platform, const std::string& name, bool
 //Default destructor for Transmitter
 Transmitter::~Transmitter()
 {
-  delete dynamic_cast<PulseTiming *>(GetTiming());
+  delete GetTiming();
 }
 
 /// Set the transmitter's pulse waveform
@@ -169,14 +169,16 @@ void Transmitter::GetPulse(TransmitterPulse *pulse, int number) const
   //If there is timing jitter, add it
   if (!timing)
     throw std::logic_error("[BUG] Transmitter "+GetName()+" must be associated with timing source");
-  pulse->time = pulse->time+timing->GetPulseTimeError(number);
+  pulse->time = pulse->time;//+timing->GetPulseTimeError();
   
 }
 
 /// Set the Pulse Repetition Frequency of the transmitter
 void Transmitter::SetPRF(rsFloat mprf)
 {
-  prf = mprf;
+  rsFloat rate = rsParameters::rate()*rsParameters::oversample_ratio();
+  // The PRF must be rounded to an even number of samples
+  prf = 1/(std::floor(rate/mprf)/rate);
 }
 
 //
@@ -187,7 +189,8 @@ void Transmitter::SetPRF(rsFloat mprf)
 Receiver::Receiver(const Platform *platform, std::string name):
   Radar(platform, name),
   noise_temperature(0),
-  dual(0)
+  dual(0),
+  flags(0)
 {
 }
 
@@ -232,7 +235,7 @@ void Receiver::Render()
     if (rsParameters::export_xml())
       ExportReceiverXML(responses, GetName() + "_results");
     //Export a binary containing the pulses
-    if (rsParameters::export_binary() || rsParameters::export_csvbinary())
+    if (rsParameters::export_binary())
       ExportReceiverBinary(responses, this, GetName(), GetName()+"_results");
     //Export to CSV format
     if (rsParameters::export_csv())
@@ -269,9 +272,13 @@ void Receiver::SetNoiseTemperature(rsFloat temp)
 /// Set the length of the receive window
 void Receiver::SetWindowProperties(rsFloat length, rsFloat prf, rsFloat skip)
 {
+  rsFloat rate = rsParameters::rate()*rsParameters::oversample_ratio();
   window_length = length;
   window_prf = prf;
   window_skip = skip;
+  // The PRF and skip must be rounded to an even number of samples
+  window_prf = 1/(std::floor(rate/window_prf)/rate);
+  window_skip = std::floor(rate*window_skip)/rate;
 }
 
 /// Return the number of responses
@@ -296,7 +303,7 @@ rsFloat Receiver::GetWindowStart(int window) const
   //If there is timing jitter, add it
   if (!timing)
     throw std::logic_error("[BUG] Receiver must be associated with timing source");
-  stime = stime+timing->GetPulseTimeError(window);
+  stime = stime;//+timing->GetPulseTimeError();
   return stime;
 }
 
@@ -304,6 +311,30 @@ rsFloat Receiver::GetWindowStart(int window) const
 rsFloat Receiver::GetWindowLength() const
 {
   return window_length;
+}
+
+/// Get the time skipped before the start of the receive window
+rsFloat Receiver::GetWindowSkip() const
+{
+  return window_skip;
+}
+
+/// Get the length of the receive window
+rsFloat Receiver::GetPRF() const
+{
+  return window_prf;
+}
+
+/// Set a flag
+void Receiver::SetFlag(RecvFlag flag)
+{
+  flags |= flag;
+}
+
+/// Check if a flag is set
+bool Receiver::CheckFlag(RecvFlag flag) const
+{
+  return flags & flag;
 }
 
 

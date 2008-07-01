@@ -5,6 +5,7 @@
 #include <map>
 #include <utility>
 #include <stdexcept>
+#include <cmath>
 #include "rsinterp.h"
 #include "rsdebug.h"
 
@@ -27,6 +28,10 @@ public:
   void InsertSample(rsFloat x, rsFloat y);
   ///Get the interpolated value at a given point
   rsFloat Value(rsFloat x);
+  /// Get the maximum value in the set
+  rsFloat Max() const;
+  /// Divide the set by a given number
+  void Divide(rsFloat a);
 private:
   std::map<rsFloat, rsFloat> data;
 };
@@ -81,6 +86,27 @@ rsFloat InterpSetData::Value(rsFloat x)
   }
 }
 
+/// Get the maximum value in the set
+rsFloat InterpSetData::Max() const
+{
+  map<rsFloat, rsFloat>::const_iterator iter;
+  rsFloat max = 0;
+  // Scan through the map, updating the maximum
+  for (iter = data.begin(); iter != data.end(); iter++) {
+    if (std::fabs((*iter).second) > max)
+      max = std::fabs((*iter).second);
+  }
+  return max;  
+}
+
+/// Divide the set by a given number
+void InterpSetData::Divide(rsFloat a)
+{
+  map<rsFloat, rsFloat>::iterator iter;
+  for (iter = data.begin(); iter != data.end(); iter++)
+    (*iter).second /= a;
+}
+
 //
 // InterpSet Implementation
 //
@@ -114,4 +140,15 @@ void InterpSet::InsertSample(rsFloat x, rsFloat y)
 rsFloat InterpSet::Value(rsFloat x)
 {
   return data->Value(x);
+}
+
+/// Get the maximum value in the set
+rsFloat InterpSet::Max() const
+{
+  return data->Max();
+}
+
+/// Divide every sample in the set by a given number
+void InterpSet::Divide(rsFloat a) {
+  data->Divide(a);
 }

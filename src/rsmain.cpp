@@ -10,8 +10,8 @@
 #include "rsthreadedsim.h"
 #include "rsnoise.h"
 #include "fftwcpp.h"
-
-unsigned int processors = 4; //TODO: Get real number of processors
+#include "rsparameters.h"
+#include "rsportable.h"
 
 /// FERS main function
 int main(int argc, char *argv[])
@@ -21,22 +21,25 @@ int main(int argc, char *argv[])
     return 2;
   }
   try {
+    // Set the number of threads
+    rs::rsParameters::modify_parms()->SetThreads(rsPortable::CountProcessors());
+    // Create the world container
     rs::World *world = new rs::World();
+    //Initialize the RNG code
+    rsNoise::InitializeNoise();
+    //Init the FFT code
     DEBUG_PRINT(rsDebug::RS_VERBOSE, "[VERBOSE] Loading XML Script File");
     //Load the script file
     xml::LoadXMLFile(argv[1], world);
-    //Init the FFT code
-    FFTInit(processors);
-    //Initialize the RNG code
-    rsNoise::InitializeNoise();
+
     //Start the threaded simulation
-    rs::RunThreadedSim(processors, world);
+    rs::RunThreadedSim(rs::rsParameters::render_threads(), world);
     DEBUG_PRINT(rsDebug::RS_VERBOSE, "[VERBOSE] Cleaning up");
     //Clean up the world model
     delete world;
     //Clean up singleton objects
     rsNoise::CleanUpNoise();
-    FFTCleanUp();
+    //FFTCleanUp();
     return 0;
   }
   catch (std::exception &ex)

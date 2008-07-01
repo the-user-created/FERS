@@ -8,43 +8,45 @@
 #include <config.h>
 #include "rsobject.h"
 #include "rspath.h"
+#include "rspolarize.h"
 
 namespace rs {
 
-  //Forward declaration of InterpSet from rsinterp.h
-  class InterpSet;
+  //Forward declarations 
+  class InterpSet; //from rsinterp.h
+  class GammaGenerator; //from rsnoise.h
+
 
   /// General RCS statistical model class
   class RCSModel {
   public:
-    /// Constructor
-    RCSModel();
     /// Destructor
     virtual ~RCSModel();
     /// Get an RCS based on the statistical model and the mean RCS
-    virtual rsFloat GetRCS(rsFloat meanRCS)  = 0;
+    virtual rsFloat SampleModel()  = 0;
   };
 
   /// RCS Statistical Model class supporting Swerling V
-  class RCSConst {
+  class RCSConst: public RCSModel {
   public:
-    /// Constructor
-    RCSConst();
     /// Destructor
     virtual ~RCSConst();
     /// Return a constant RCS
-    virtual rsFloat GetRCS(rsFloat meanRCS);
+    virtual rsFloat SampleModel();
   };
 
-  /// RCS statistical model class supporting Swerling II
-  class RCSSwerlingII: public RCSModel {
+  /// RCS statistical model following Swerling's Chi-square (actually Gamma) model
+  // See Swerling, "Radar Probability of Detection for Some Additional Target Cases", IEEE Trans. Aer. Elec. Sys., Vol 33, 1997
+  class RCSChiSquare: public RCSModel {
   public:
     /// Constructor
-    RCSSwerlingII();
+    RCSChiSquare(rsFloat k); //k is the shape parameter for the distribution
     /// Destructor
-    virtual ~RCSSwerlingII();
+    virtual ~RCSChiSquare();
     /// Get an RCS based on the Swerling II model and the mean RCS
-    virtual rsFloat GetRCS(rsFloat meanRCS);
+    virtual rsFloat SampleModel();
+  private:
+    GammaGenerator *gen;
   };
 
   /// Target models a simple point target with a specified RCS pattern
@@ -56,8 +58,15 @@ namespace rs {
     virtual ~Target();
     /// Returns the Radar Cross Section at a particular angle
     virtual rsFloat GetRCS(SVec3 &inAngle, SVec3 &outAngle) const = 0;
-    /// Set the global RCS factor
-    void SetRCS(rsFloat newRCS);
+    /// Get the target polarization matrix
+    virtual PSMatrix GetPolarization() const;
+    /// Set the target polarization matrix
+    virtual void SetPolarization(const PSMatrix &in);
+    /// Set the target fluctuation model
+    virtual void SetFluctuationModel(RCSModel *in);
+  protected:
+    PSMatrix psm; //!< Polarization scattering matrix for target interaction
+    RCSModel *model; //!< Statistical model of target RCS fluctuations
   };
 
   /// Target with an isotropic (constant with angle) RCS

@@ -38,7 +38,7 @@ namespace rs {
     /// Render the response to a CSV file
     void RenderCSV(std::ofstream &of);
     /// Render the response to a binary file
-    boost::shared_array<rsComplex> RenderBinary(rsFloat& rate, unsigned int &size);
+    boost::shared_array<rsComplex> RenderBinary(rsFloat& rate, unsigned int &size, rsFloat frac_win_delay);
     /// Get the length of the pulse
     rsFloat GetLength() const;
     /// Get a pointer to the wave

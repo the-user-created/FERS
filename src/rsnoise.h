@@ -8,16 +8,13 @@
 #include <config.h>
 #include <boost/random/variate_generator.hpp>
 #include <boost/random/normal_distribution.hpp>
+#include <boost/random/gamma_distribution.hpp>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/utility.hpp>
 #include <vector>
+#include "rsdsp.h"
 #include "rspython.h"
 
-
-// Forward Definitions
-namespace rs {
-class DSPFilter; //rsdsp.h
-}
 
 namespace rsNoise {
   /// Initialize the random number generator code (must be called once, after the loading of the script)
@@ -53,105 +50,118 @@ public:
   /// Default Constructor
   WGNGenerator();
   /// Destructor
-  ~WGNGenerator();
+  virtual ~WGNGenerator();
   /// Get a single random sample
-  rsFloat GetSample();
+  virtual rsFloat GetSample();
 private:
   boost::normal_distribution<rsFloat> dist; //!< PRNG distribution
   boost::variate_generator<boost::mt19937&, boost::normal_distribution<> > *gen; //!< Variate Generator (see boost::random docs)
   rsFloat temperature; //!< Noise temperature
 };
 
-/// Generator of 1/f noise using the Voss-McCartney algorithm
- class OofGenerator: public NoiseGenerator {
- public:
-   /// Constructor
-   OofGenerator(int needed);
-   /// Destructor
-   ~OofGenerator();
-   /// Get a single noise sample
-   rsFloat GetSample();
- private:
-   int num_rows; //!< The number of 'rows' used in the algorithm
-   long num_samples; //!< The number of samples we have given so far
-   rsFloat *rows; //!< The number in each 'row' of the algorithm
-   rsFloat running_total; //!< Running total, used to improve performance
-   rsFloat scale; //!< The value to scale by to normalize the standard deviation
-   WGNGenerator generator; //!< White noise generator
- };
-
-  /// Generator of 1/f^2 noise
-  class Oof2Generator: public NoiseGenerator {
+  /// Gamma distributed noise generator
+  class GammaGenerator: public NoiseGenerator {
   public:
     /// Constructor
-    Oof2Generator(rsFloat amplitude);
+    GammaGenerator(rsFloat k); //x_bar is the 'scale' parameter and k is the 'shape' parameter
     /// Destructor
-    ~Oof2Generator();
-    /// Get a single noise sample
-    rsFloat GetSample();
+    virtual ~GammaGenerator();
+    /// Get a single random sample
+    virtual rsFloat GetSample();
+    /// Operator to get a random sample
+    rsFloat operator()();
   private:
-    rsFloat filter_state; //!< Current state of the IIR filter
-    rsFloat amplitude; //!< Mean difference in returns
-    WGNGenerator generator; //!< White noise generator
+    boost::gamma_distribution<rsFloat> dist; //!< Gamma distribution function
+    boost::variate_generator<boost::mt19937&, boost::gamma_distribution<> > gen; //!< Variate generator
   };
 
-  /// Generator of 1/f^3 noise
-  class Oof3Generator: public NoiseGenerator {
+
+  /// Single branch of the multirate clock generator model
+  class FAlphaBranch: boost::noncopyable {
   public:
     /// Constructor
-    Oof3Generator(int needed, rsFloat amplitude);
+    FAlphaBranch(rsFloat ffrac, unsigned int fint, FAlphaBranch *pre, bool last);
     /// Destructor
-    ~Oof3Generator();
-    /// Get a single noise sample
+    ~FAlphaBranch();
+    /// Get a sample from the branch
     rsFloat GetSample();
+    /// Flush the buffer, and refull with samples
+    void Flush(rsFloat scale);
   private:
-    rsFloat filter_state; //!< Current state of the IIR filter
-    rsFloat amplitude; //!< Mean difference in returns
-    OofGenerator generator; //!< 1/f noise generator
+    /// Initialize the filters, etc.
+    void Init();
+    /// Clean up the filters
+    void Clean();
+    /// Refill the buffer with samples
+    void Refill();
+    /// Calculate a single sample
+    rsFloat CalcSample();
+
+    IIRFilter *shape_filter; //!< The filter for shaping the noise
+    rsFloat shape_gain; //!< Gain of shaping filter
+    IIRFilter *integ_filter; //!< Integrator filter
+    rsFloat integ_gain;  //!< Gain of integration filter
+
+    rsFloat upsample_scale; //!< Scaling factor for upsampling
+    IIRFilter *highpass; //!< Highpass filter
+    FAlphaBranch *pre; //!< Next lower branch in the structure
+    bool last; //!< If this filter is the top branch, don't upsample
+    DecadeUpsampler *upsampler; //!< Upsampler for this branch
+    rsFloat *buffer; //!< Buffer for storing samples from the upsampler
+    unsigned int buffer_samples; //!< Number of samples available in the buffer
+    rsFloat ffrac; //!< Fractional part of filter curve
+    rsFloat fint; //!< Integer part of filter curve
+    rsFloat offset_sample; //!< Sample from the branch below us
+    bool got_offset; //!< Are we waiting for the offset
+    rsFloat pre_scale; //!< Previous branch scale factor
+    friend class MultirateGenerator;
   };
 
-  class ClockModelGenerator;
 
-  /// Generator for generalized 1/f^alpha noise
-  class FAlphaGenerator: public NoiseGenerator {
+  /// Class to generate 1/f^alpha noise based on multirate approach
+  class MultirateGenerator: public NoiseGenerator {
   public:
     /// Constructor
-    FAlphaGenerator(rsFloat alpha, rsFloat amplitude, int block_size);
+    MultirateGenerator(rsFloat alpha, unsigned int branches);
     /// Destructor
-    ~FAlphaGenerator();
+    ~MultirateGenerator();
     /// Get a single noise sample
     rsFloat GetSample();
+    /// Skip a number of samples, preserving correlations of period longer than the sample count
+    void SkipSamples(long long samples);
+    /// Reset the output to zero
+    void Reset();
   private:
-    /// Fill the sample buffer with filtered samples
-    void FillSampleBuffer();
-    rs::DSPFilter *filter; //!< Filter to shape the noise to the desired spectrum
-    rsFloat amplitude; //!< Amplitude of created noise
-    WGNGenerator generator; //!< White noise generator
-    rsFloat* buffer; //!< Buffer of samples, as generating single samples is inefficient
-    int buffer_size; //!< The size of the sample buffer, in samples
-    int buffer_offset; //!< The offset into the sample buffer
-
-    int total_offset; //!< Offset into the total number of samples
-    int total_size; //!< The size of the total number of samples to be requested
+    rsFloat scale; //!< Scale for normalizing values
+    /// Create the branches of the filter structure tree
+    void CreateTree(rsFloat falpha, int fint, unsigned int branches);
+    /// Get the co-efficients of the shaping filter 
+    FAlphaBranch *topbranch; //!< Top branch of the filter structure tree
   };
 
   /// Class to generate noise based on the weighted sum of 1/f^alpha noise
   class ClockModelGenerator: public NoiseGenerator {
   public:
     /// Constructor
-    ClockModelGenerator(const std::vector<rsFloat> &alpha, const std::vector<rsFloat> &weights, rsFloat offset, rsFloat trend_end, int total_size, bool trend_remove);
+    ClockModelGenerator(const std::vector<rsFloat> &alpha, const std::vector<rsFloat> &in_weights, rsFloat frequency, rsFloat phase_offset, rsFloat freq_offset, int branches);
     /// Destructor
     ~ClockModelGenerator();
     /// Get a single noise sample
     rsFloat GetSample();
+    /// Skip noise samples, calculating only enough to preserve long-term correlations
+    void SkipSamples(long long samples);
+    /// Reset the noise to zero
+    void Reset();
+    /// Is the generator going to produce non-zero samples
+    bool Enabled();
   private:
-    /// Refill the buffer of noise samples
-    rsFloat offset; //!< 'DC' offset of the created sequence
-    rsFloat trend_end; //!< End of the linear trend added to the model
-    std::vector<NoiseGenerator*> generators; //!< Generators for each type of noise
+    std::vector<MultirateGenerator *> generators; // The multirate generators which generate noise in each band
+    std::vector<rsFloat> weights; // Weight of the noise from each generator
+    rsFloat phase_offset; //!< Offset from nominal phase
+    rsFloat freq_offset; //!< Offset from nominal base frequency
+    rsFloat frequency; //!< Nominal base frequency
+    unsigned long count; //!< Number of samples generated by this generator
 
-    int total_offset; //!< Offset into the total number of samples
-    int total_size; //!< The total number of samples to be produced
   };
 
   /// Generator of noise using a python module

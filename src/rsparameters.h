@@ -10,13 +10,10 @@
 #include <config.h>
 
 namespace rsParms {
-
   enum BinaryFileType {RS_FILE_CSV, RS_FILE_FERSBIN, RS_FILE_RAW};
-
 }
 
 namespace rs {
-
 ///'Singleton' class to hold parameters for the simulation
 class rsParameters {
 public:
@@ -46,8 +43,6 @@ public:
   static bool export_csv();
   /// Do we export in binary format?
   static bool export_binary();
-  /// Do we export in csv binary format?
-  static bool export_csvbinary();
   /// Length to use for the rendering filter
   static unsigned int render_filter_length();
   /// Maximum number of threads to use for rendering
@@ -67,13 +62,15 @@ public:
   /// Set the binary file type
   void SetBinaryFileType(rsParms::BinaryFileType type);
   /// Set the enabled exporters
-  void SetExporters(bool xml, bool csv, bool binary, bool csv_binary);
+  void SetExporters(bool xml, bool csv, bool binary);
   /// Set the number of bits used for quantization
   void SetADCBits(unsigned int bits);
   /// Set the render filter length
   void SetRenderFilterLength(unsigned int length);
   /// Set the number of times to oversample loaded pulses before simulation
   void SetOversampleRatio(unsigned int ratio);
+  /// Set the number of threads to use
+  void SetThreads(unsigned int threads);
 protected:
   /// The default constructor is private
   rsParameters();

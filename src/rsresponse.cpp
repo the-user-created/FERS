@@ -183,8 +183,8 @@ void Response::AddInterpPoint(InterpPoint &point)
 }
 
 /// Render the response to an array
-boost::shared_array<rsComplex> Response::RenderBinary(rsFloat& rate, unsigned int &size)
+boost::shared_array<rsComplex> Response::RenderBinary(rsFloat& rate, unsigned int &size, rsFloat frac_win_delay)
 {
   rate = wave->GetRate();
-  return wave->Render(points, size);  
+  return wave->Render(points, size, frac_win_delay);  
 }

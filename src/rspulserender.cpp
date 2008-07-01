@@ -13,6 +13,7 @@
 #include <boost/scoped_array.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
+#include <boost/thread/xtime.hpp>
 
 #include "rsradar.h"
 #include "rspulserender.h"
@@ -24,6 +25,7 @@
 #include "rssignal.h"
 #include "rstiming.h"
 #include "rsdsp.h"
+#include "rsportable.h"
 
 #define TIXML_USE_STL
 #include "tinyxml/tinyxml.h"
@@ -31,20 +33,6 @@
 using namespace rs;
 
 namespace {
-
-  /// Write the FersCSV file header
-  void WriteFersCSVFileHeader(FILE* out, const std::string& recv)
-  {
-    fprintf(out, "# FERS CSV Simulation Results\n");
-    fprintf(out, "# Recieved at %s\n", recv.c_str());
-  }
-
-  /// Write the FersBin response header
-  void WriteFersCSVResponseHeader(FILE* out, rsFloat start, rsFloat rate)
-  {
-    fprintf(out, "\n\n# Start of return pulse \n");
-    fprintf(out, "%f, %f\n", start, rate);
-  }
 
   ///Open the binary file for response export
   int OpenHDF5File(const std::string &recv_name)
@@ -59,25 +47,6 @@ namespace {
       hdf5_file = rshdf5::CreateFile(b_oss.str().c_str());
     }
     return hdf5_file;    
-  }
-
-  /// Open the CSV file for response export
-  FILE *OpenCSVFile(const std::string &recv_name)
-  {
-    FILE *out_csv = 0;
-    if (rs::rsParameters::export_csvbinary()) {
-      //Build the filename for the CSV file
-      std::ostringstream oss;
-      oss.setf(std::ios::scientific);
-      oss << recv_name << ".ferscsv";
-      //Open the file for writing
-      out_csv = fopen(oss.str().c_str(), "w");
-      if (!out_csv)
-	throw std::runtime_error("[ERROR] Could not open file "+oss.str()+" for writing");
-      // Write the file header into the file
-      WriteFersCSVFileHeader(out_csv, recv_name);
-    }
-    return out_csv;
   }
 
   /// Add noise to the window, to simulate receiver noise
@@ -103,6 +72,8 @@ namespace {
         max = std::fabs(data[i].real());
       if (std::fabs(data[i].imag()) > max)
         max = std::fabs(data[i].imag());
+        if (isnan(data[i].real()) || (isnan(data[i].imag())))
+          throw std::runtime_error("NAN in QuantizeWindow -- early");
     }
     if (rsParameters::adc_bits() > 0) {
       //Simulate quantization and normalize
@@ -110,8 +81,13 @@ namespace {
     }
     else {
       //Just normalize
-      for (unsigned int i = 0; i < size; i++)
-        data[i] /= max;
+      if (max != 0) {
+        for (unsigned int i = 0; i < size; i++) {
+          data[i] /= max;
+          if (isnan(data[i].real()) || (isnan(data[i].imag())))
+            throw std::runtime_error("NAN in QuantizeWindow -- late");
+        }
+      }
     }
     //Return the full scale value
     return max;
@@ -120,7 +96,7 @@ namespace {
   /// Add a response array to the receive window
   void AddArrayToWindow(rsFloat wstart, rs::rsComplex *window, unsigned int wsize, rsFloat rate, rsFloat rstart, rs::rsComplex *resp, unsigned int rsize)
   {
-    int start_sample = static_cast<int>(std::floor(rate*(rstart-wstart)));
+    int start_sample = static_cast<int>(rsPortable::rsRound(rate*(rstart-wstart)));
     //Get the offset into the response
     unsigned int roffset = 0;
     if (start_sample < 0) {
@@ -129,25 +105,61 @@ namespace {
     }
     //Loop through the response, adding it to the window
     for (unsigned int i = roffset; (i < rsize) && ((i+start_sample) < wsize); i++)
-      window[i+start_sample] += resp[i];    
+      window[i+start_sample] += resp[i];      
   }
 
-  /// Add clock phase noise to the receive window
-  void AddPhaseNoiseToWindow(const rs::Receiver* recv, rs::rsComplex *window, unsigned int wsize)
+  /// Generate the phase noise samples for the receive window
+  rsFloat* GeneratePhaseNoise(const rs::Receiver *recv, unsigned int wsize, rsFloat rate, rsFloat &carrier, bool &enabled) 
   {
     //Get a pointer to the receiver's timing object
     ClockModelTiming *timing = dynamic_cast<ClockModelTiming *>(recv->GetTiming()); 
     if (!timing)
       throw std::runtime_error("[BUG] Could not cast receiver->GetTiming() to ClockModelTiming");
-    if (timing->Enabled()) {
+    //Allocate memory for the phase noise samples
+    rsFloat *noise = new rsFloat[wsize];
+    enabled = timing->Enabled();
+    if (enabled) {
+      //Generate phase noise if timing is enabled
+      for (unsigned int i = 0; i < wsize; i++) {
+	noise[i] = timing->NextNoiseSample();        
+      }
+      std::printf("%g\n", noise[0]);
+      //Calculate the number of samples to skip
+      if (timing->GetSyncOnPulse()) {
+	timing->Reset();
+	int skip = (int)std::floor(rate*recv->GetWindowSkip());
+	timing->SkipSamples(skip);
+      }
+      else {
+        long skip = std::floor(rate/recv->GetPRF()-rate*recv->GetWindowLength());
+        //for (long i = 0; i < skip; i++)
+        //std::printf("%g\n", timing->NextNoiseSample());
+        timing->SkipSamples(skip);
+      }      
+      carrier = timing->GetFrequency();
+    }
+    else {
+      // Clear samples if not
+      for (unsigned int i = 0; i < wsize; i++)
+	noise[i] = 0;
+      carrier = 1;
+    }
+    return noise;
+  }
+
+  /// Add clock phase noise to the receive window
+  void AddPhaseNoiseToWindow(const rsFloat* noise, rs::rsComplex *window, unsigned int wsize)
+  {    
       for (unsigned int i = 0; i < wsize; i++) {
 	//Modify the phase
-	rsComplex temp = window[i];
-	rsFloat noise = timing->NextNoiseSample();
-	window[i] = rsComplex(temp.real()*std::cos(noise)-temp.imag()*std::sin(noise), temp.real()*std::sin(noise)+temp.imag()*std::cos(noise));
+        if (isnan(noise[i]))
+          throw std::runtime_error("[BUG] Noise is NAN in AddPhaseNoiseToWindow");	
+	//	std::printf("%g\n", noise[i]);
+	rsComplex mn = exp(rsComplex(0.0, 1.0)*noise[i]);
+	window[i] *= mn;
+        if (isnan(window[i].real()) || (isnan(window[i].imag())))
+          throw std::runtime_error("[BUG] NAN encountered in AddPhaseNoiseToWindow");
       }
-      timing->PulseDone();
-    }
   }
 
   /// Export to the FersBin file format
@@ -157,8 +169,7 @@ namespace {
     if (responses.empty())
       return;
 
-    int out_bin = OpenHDF5File(recv_name);   
-    FILE* out_csv = OpenCSVFile(recv_name);
+    int out_bin = OpenHDF5File(recv_name);
 
     // Create a threaded render object, to manage the rendering process
     ThreadedRenderer thr_renderer(&responses, recv, rsParameters::render_threads());
@@ -167,9 +178,21 @@ namespace {
     int window_count = recv->GetWindowCount();
     for (int i = 0; i < window_count; i++) {
       rsFloat length = recv->GetWindowLength();
-      rsFloat start = recv->GetWindowStart(i);
       rsFloat rate = rsParameters::rate()*rsParameters::oversample_ratio();
       unsigned int size = static_cast<unsigned int>(std::ceil(length*rate));
+      //      rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Length: %g Size: %d\n", length, size);
+      //Generate the phase noise samples for the window
+      rsFloat carrier;
+      bool pn_enabled;
+      rsFloat* pnoise = GeneratePhaseNoise(recv, size, rate, carrier, pn_enabled);
+      //      printf("%g\n", pnoise[0]);
+      // Get the window start time, including clock drift effects
+      rsFloat start = recv->GetWindowStart(i)+(pnoise[0]/(2*M_PI*carrier));
+      // Get the fraction of a sample of the window delay
+      rsFloat frac_delay = start*rate-rsPortable::rsRound(start*rate);
+      //      std::printf("frac: %g %g %g\n", frac_delay, start*rate, rsPortable::rsRound(start*rate));
+      start = rsPortable::rsRound(start*rate)/rate;
+      //rsFloat start = recv->GetWindowStart(i);
       // Allocate memory for the entire window
       rsComplex* window = new rsComplex[size];
       //Clear the window in memory
@@ -177,7 +200,8 @@ namespace {
       //Add Noise to the window
       AddNoiseToWindow(window, size, recv->GetNoiseTemperature());
       // Render to the window, using the threaded renderer
-      thr_renderer.RenderWindow(window, length, start);
+      //std::printf("%g\n", start);
+      thr_renderer.RenderWindow(window, length, start, frac_delay);
       //Downsample the contents of the window, if appropriate
       if (rsParameters::oversample_ratio() != 1) {
 	// Calculate the size of the window after downsampling
@@ -192,27 +216,21 @@ namespace {
 	window = tmp;
       }
       //Add Phase noise to the window
-      AddPhaseNoiseToWindow(recv, window, size);
+      if (pn_enabled)
+        AddPhaseNoiseToWindow(pnoise, window, size);
+      //Clean up the phase noise array
+      delete[] pnoise;
       //Normalize and quantize the window
       rsFloat fullscale = QuantizeWindow(window, size);
       //Export the binary format
       if (rs::rsParameters::export_binary()) {
 	rshdf5::AddChunkToFile(out_bin, window, size, start, rsParameters::rate(), fullscale, i);
       }
-      //Export the CSV format
-      if (rs::rsParameters::export_csvbinary()) {
-	//Write the output header into the file
-	WriteFersCSVResponseHeader(out_csv, start, rate);
-	// Now write the binary data for the pulse
-	for (unsigned int i = 0; i < size; i++)
-	  fprintf(out_csv, "%20.12e, %20.12e\n", window[i].real(), window[i].imag());
-      }
       // Clean up memory
       delete[] window;
     } // for (i = 1:windows)
     // Close the binary and csv files
     if (out_bin) rshdf5::CloseFile(out_bin);
-    if (out_csv) fclose(out_csv);
   }
 
 }
@@ -296,7 +314,7 @@ ThreadedRenderer::~ThreadedRenderer()
 }
 
 /// Render all the responses in a single window
-void ThreadedRenderer::RenderWindow(rsComplex *window, rsFloat length, rsFloat start)
+void ThreadedRenderer::RenderWindow(rsComplex *window, rsFloat length, rsFloat start, rsFloat frac_delay)
 {
   rsFloat end = start+length; // End time of the window
   //Put together a list of responses seen by this window
@@ -316,10 +334,15 @@ void ThreadedRenderer::RenderWindow(rsComplex *window, rsFloat length, rsFloat s
   boost::mutex window_mutex;
   //Create the number of threads we are allowed
   std::vector<RenderThread *> threads;
-  for (int i = 0; i < max_threads; i++) {
-    RenderThread *thr = new RenderThread(&window_mutex, window, length, start, &work_list_mutex, &work_list);
-    threads.push_back(thr);
-    group.create_thread(*thr);
+  {
+    boost::mutex::scoped_lock lock(work_list_mutex);
+    //   rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Spawning %d render threads\n", max_threads);
+    for (int i = 0; i < max_threads; i++) {
+      //      rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Spawning %d\n", i);
+      RenderThread *thr = new RenderThread(i, &window_mutex, window, length, start, frac_delay, &work_list_mutex, &work_list);
+      threads.push_back(thr);      
+      group.create_thread(*thr);
+    }
   }
   // Wait until all our threads are complete
   group.join_all();  
@@ -334,11 +357,13 @@ void ThreadedRenderer::RenderWindow(rsComplex *window, rsFloat length, rsFloat s
 //
 
 /// Constructor
-RenderThread::RenderThread(boost::mutex *window_mutex, rsComplex *window, rsFloat length, rsFloat start, boost::mutex *work_list_mutex, std::queue<Response *> *work_list):
+RenderThread::RenderThread(int serial, boost::mutex *window_mutex, rsComplex *window, rsFloat length, rsFloat start, rsFloat frac_delay, boost::mutex *work_list_mutex, std::queue<Response *> *work_list):
+  serial(serial),
   window_mutex(window_mutex),
   window(window),
   length(length),
   start(start),
+  frac_delay(frac_delay),
   work_list_mutex(work_list_mutex),
   work_list(work_list)
 {
@@ -352,18 +377,32 @@ RenderThread::~RenderThread()
 /// Step through the worklist, rendering the required responses
 void RenderThread::operator()()
 {
+  rsFloat rate = rsParameters::rate()*rsParameters::oversample_ratio();
+  unsigned int size = (unsigned int)(std::ceil(length*rate));
+  // Allocate memory for the local window
+  local_window = new rsComplex[size];
+  for (unsigned int i = 0; i < size; i++)
+    local_window[i] = 0;
   // Loop until the work list is empty
   Response *resp = GetWork();
-  while (resp) {
+  while (resp) {      
     unsigned int psize;
     rsFloat prate;
     // Render the pulse into memory
-    boost::shared_array<rs::rsComplex> array = resp->RenderBinary(prate, psize);
+    boost::shared_array<rs::rsComplex> array = resp->RenderBinary(prate, psize, frac_delay);
     // Add the array to the window
     AddWindow(array.get(), resp->StartTime(), psize);
     // Get more work, if it's available
     resp = GetWork();
   }
+  {
+    // Lock the window mutex, to ensure that we are the only thread accessing the window
+    boost::mutex::scoped_lock lock(*window_mutex);
+    // Add local window to the global window
+    for (unsigned int i = 0; i < size; i++)
+      window[i] += local_window[i];
+  }
+  delete[] local_window;
 }
 
 /// Add the array to the window, locking the window lock in advance
@@ -371,24 +410,23 @@ void RenderThread::AddWindow(rsComplex *array, rsFloat start_time, unsigned int 
   //Calculate required window parameters
   rsFloat rate = rsParameters::rate()*rsParameters::oversample_ratio();
   unsigned int size = (unsigned int)(std::ceil(length*rate));
-  // Lock the window mutex, to ensure that we are the only thread accessing the window
-  boost::mutex::scoped_lock lock(*window_mutex);
-  // Add the array to the correct place in the window
-  AddArrayToWindow(start, window, size, rate, start_time, array, array_size);
+  // Add the array to the correct place in the local window
+  AddArrayToWindow(start, local_window, size, rate, start_time, array, array_size);  
 }
 
 /// Get a response from the worklist, returning NULL on failure
 Response *RenderThread::GetWork() {
-  //Lock the work list mutex
-  boost::mutex::scoped_lock lock(*work_list_mutex);
-  
-  if (work_list->empty()) //If the work list is empty, return NULL
-    return 0;
-
-  // Get the response at the front of the queue
-  Response *ret = work_list->front();
-  work_list->pop();
+  // rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Thread %d getting work\n", serial);
+  Response *ret;
+  { //Scope for scoped lock
+    //Lock the work list mutex
+    boost::mutex::scoped_lock lock(*work_list_mutex);    
+    if (work_list->empty()) //If the work list is empty, return NULL
+      return 0;
+    // Get the response at the front of the queue
+    ret = work_list->front();
+    work_list->pop();
+  }
   return ret; 
-
   //scoped_lock unlocks mutex here
 }

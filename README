@@ -2,7 +2,7 @@ FERS - The Flexible Extensible Radar Simulator
 
 FERS is a simulator for simulating the performance and output of a variety of radar systems. It is designed to support a wide range of traditional and modern radar system designs. FERS is currently under active development - this version is likely to contain many bugs, incomplete or missing features, incomplete or missing documentation and major inaccuracies.
 
-FERS is not currently mature enough to be used in a production environment. Please report any bugs you find, and we will get to fixing them as soon as possible. Documentation is currently very sparse - it will be improved soon.
+FERS has been used to generate useful results for real-world projects, so it might be useful for your projects. Documentation is currently very sparse - it will be improved soon.
 
 The features which are currently implemented are:
 
@@ -12,14 +12,8 @@ The features which are currently implemented are:
 * Modelling of CW and Pulsed radars
 * Export to CSV, XML and HDF5 file formats
 * Proper range-gate and timing for pulsed radars
-* Modelling of propagation of clock and time signals between stations
+* Modelling of 1/f noise on local oscillators
 * Effects of multipath propagation
-
-Features in a state of partial implementation:
-* Effects of Jitter and phase noise on timing sources
-
-Features not implemented:
-* Complete propagation model including fading
 
 AUTHORS
 

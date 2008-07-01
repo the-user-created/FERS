@@ -9,6 +9,7 @@
 #include <boost/utility.hpp>
 #include <vector>
 #include <complex>
+#include <map>
 #include "rsradarwaveform.h"
 
 namespace rs {
@@ -41,6 +42,8 @@ namespace rs {
   public:
     /// Constructor
     IIRFilter(const std::vector<rsFloat> &den_coeffs, const std::vector<rsFloat> &num_coeffs);
+    /// Constuctor
+    IIRFilter(const rsFloat *den_coeffs, const rsFloat *num_coeffs, unsigned int order);
     /// Destructor
     virtual ~IIRFilter();
     /// Pass a single sample through the filter
@@ -48,7 +51,8 @@ namespace rs {
     /// Pass an array of samples through the filter, filtering in place
     virtual void Filter(rsFloat *samples, int size);
   private:
-    rsFloat *w; //!< Filter state, same size as filter order
+    rsFloat *w; //!< Past x values
+    //    rsFloat *wy; //!< Past y values
     rsFloat *a; //!< Denominator co-efficients
     rsFloat *b; //!< Numerator co-efficients
     unsigned int order; //!< Filter order
@@ -68,7 +72,7 @@ namespace rs {
     /// Pass an array of samples through the filter, filtering in place
     virtual void Filter(rsFloat *samples, int size);
     /// Pass an array of complex samples through the filter, filtering in place
-    virtual void Filter(std::complex<rsFloat> *samples, int size);
+    void Filter(std::complex<rsFloat> *samples, int size);
   private:
     rsFloat *w; //!< Filter state
     rsFloat *filter; //!< Filter coefficients
@@ -93,22 +97,6 @@ namespace rs {
     unsigned int order; //!< Filter order
   };
 
-  /// f^-alpha filter implemented with the FFT
-  class FAlphaFilter: public DSPFilter {
-  public:
-    /// Constructor
-    FAlphaFilter(rsFloat alpha);
-    /// Destructor
-    ~FAlphaFilter();
-    /// Pass a single sample through the filter
-    virtual rsFloat Filter(rsFloat sample);
-    /// Pass an array of samples through the filter, filtering in place
-    virtual void Filter(rsFloat *samples, int size);
-  private:
-    rsFloat alpha; //!< Rolloff co-efficient
-  };
-
-
   /// Upsamples a signal and applies an anti-imaging filter
   // Implemented using polyphase FIR filter with windowed sinc
   class Upsampler: boost::noncopyable {
@@ -128,8 +116,21 @@ namespace rs {
     inline rsFloat GetSample(rsFloat *samples, int n);
   };
 
-
-
+  /// Upsample a signal by a factor of 10
+  class DecadeUpsampler: boost::noncopyable {
+  public:
+    /// Constructor
+    DecadeUpsampler();
+    /// Destrubtor
+    ~DecadeUpsampler();
+    /// Upsample one sample at a time, out is array of ten samples
+    void Upsample(rsFloat sample, rsFloat *out);
+    /// Upsample a large block, out must be ten times bigger than in
+    void Upsample(rsFloat *in, int count, rsFloat *out);
+  private:
+    /// Anti-imaging filter
+    IIRFilter *filter;
+  };
 };
 
 #endif

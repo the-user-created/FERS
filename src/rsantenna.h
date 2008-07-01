@@ -18,6 +18,8 @@ namespace rs {
   class Vec3;
   //Forward declaration of InterpSet (see rsinterp.h)
   class InterpSet;
+  //Forward declaration of Pattern (see rspattern.h)
+  class Pattern;
 
   /// The antenna class defines an antenna, which may be used by one or more transmitters
   class Antenna: public boost::noncopyable { //Antennas are not meant to be copied
@@ -52,6 +54,9 @@ namespace rs {
   Antenna* CreateIsotropicAntenna(const std::string &name);
 
   /// Create an antenna with it's gain pattern stored in an XML file
+  Antenna* CreateXMLAntenna(const std::string &name, const std::string &file);
+
+  /// Create an antenna with it's gain pattern stored in an HDF5 file
   Antenna* CreateFileAntenna(const std::string &name, const std::string &file);
 
   /// Create an antenna with gain pattern described by a Python program
@@ -60,6 +65,9 @@ namespace rs {
   /// Create a Sinc Pattern Antenna
   // see rsantenna.cpp for meaning of alpha and beta
   Antenna* CreateSincAntenna(const std::string &name, rsFloat alpha, rsFloat beta, rsFloat gamma);
+
+  /// Create a Gaussian Pattern Antenna
+  Antenna* CreateGaussianAntenna(const std::string &name, rsFloat azscale, rsFloat elscale);
 
   /// Create a Square Horn Antenna
   Antenna* CreateHornAntenna(const std::string &name, rsFloat dimension);
@@ -77,9 +85,9 @@ namespace rsAntenna {
     /// Default constructor
     Isotropic(const std::string& name);
     /// Default destructor
-    ~Isotropic();
+    virtual ~Isotropic();
     /// Get the gain at an angle
-    rsFloat GetGain(const rs::SVec3 &angle, const rs::SVec3 &refangle, rsFloat wavelength) const;
+    virtual rsFloat GetGain(const rs::SVec3 &angle, const rs::SVec3 &refangle, rsFloat wavelength) const;
   };
 
   //Antenna with a sinc (sinx/x) radiation pattern
@@ -87,14 +95,28 @@ namespace rsAntenna {
   public:
     /// Constructor
     Sinc(const std::string& name, rsFloat alpha, rsFloat beta, rsFloat gamma);
-    /// Default destructor
-    ~Sinc();
+    /// Destructor
+    virtual ~Sinc();
     /// Get the gain at an angle
-    rsFloat GetGain(const rs::SVec3 &angle, const rs::SVec3 &refangle, rsFloat wavelength) const;
+    virtual rsFloat GetGain(const rs::SVec3 &angle, const rs::SVec3 &refangle, rsFloat wavelength) const;
   private:
     rsFloat alpha; //!< First parameter (see equations.tex)
     rsFloat beta; //!< Second parameter (see equations.tex)
     rsFloat gamma; //!< Third parameter (see equations.tex)
+  };
+
+  //Antenna with a Gaussian radiation pattern
+  class Gaussian: public rs::Antenna {
+  public:
+    /// Constructor
+    Gaussian(const std::string& name, rsFloat azscale, rsFloat elscale);
+    /// Destructor
+    virtual ~Gaussian();
+    /// Get the gain at an angle
+    virtual rsFloat GetGain(const rs::SVec3 &angle, const rs::SVec3 &refangle, rsFloat wavelength) const;
+  private:
+    rsFloat azscale; //!< Azimuth scale parameter 
+    rsFloat elscale; //!< Elevation scale parameter 
   };
 
   /// Square horn antenna
@@ -123,7 +145,24 @@ namespace rsAntenna {
     rsFloat diameter;    
   };
 
-  /// Antenna with gain pattern loaded from file
+  /// Antenna with gain pattern loaded from and XML description file
+  class XMLAntenna: public rs::Antenna {
+  public:
+    /// Constructor
+    XMLAntenna(const std::string& name, const std::string &filename);
+    /// Default destructor
+    ~XMLAntenna();
+    /// Get the gain at an angle
+    rsFloat GetGain(const rs::SVec3 &angle, const rs::SVec3 &refangle, rsFloat wavelength) const;
+  private:
+    /// Load data from the antenna description file
+    void LoadAntennaDescription(const std::string& filename);
+    rsFloat max_gain; //!< Maximum Antenna gain
+    rs::InterpSet* azi_samples; //!< Samples in the azimuth direction
+    rs::InterpSet* elev_samples; //!< Samples in the elevation direction
+  };
+
+  /// Antenna with gain pattern loaded from an HDF5 2D pattern (as made by antennatool)
   class FileAntenna: public rs::Antenna {
   public:
     /// Constructor
@@ -133,11 +172,8 @@ namespace rsAntenna {
     /// Get the gain at an angle
     rsFloat GetGain(const rs::SVec3 &angle, const rs::SVec3 &refangle, rsFloat wavelength) const;
   private:
-    /// Load data from the antenna description file
-    void LoadAntennaDescription(const std::string& filename);
-
-    rs::InterpSet* azi_samples; //!< Samples in the azimuth direction
-    rs::InterpSet* elev_samples; //!< Samples in the elevation direction
+    /// The antenna gain pattern
+    rs::Pattern *pattern;
   };
 
   /// Antenna with gain pattern calculated by a Python module

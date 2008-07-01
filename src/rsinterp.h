@@ -28,6 +28,10 @@ namespace rs {
     void InsertSample(rsFloat x, rsFloat y);
     /// Get the interpolated value at the given point
     rsFloat Value(rsFloat x);
+    /// Get the maximum value in the set
+    rsFloat Max() const;
+    /// Divide every sample in the set by a given number
+    void Divide(rsFloat a);
   private:
     InterpSetData *data; //<! The data is hidden behind a pointer to the implementation
   };

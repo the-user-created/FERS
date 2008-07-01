@@ -90,13 +90,16 @@ template <typename T> void finalizeCubic(std::vector <T> &coords, std::vector <T
     {
       T yrd = coords[i+1]-coords[i], yld=coords[i]-coords[i-1];
       rsFloat xrd = coords[i+1].t-coords[i].t, xld=coords[i].t-coords[i-1].t;
+      T dr = yrd/xrd;
+      T dl = yld/xld;
       rsFloat iw = coords[i+1].t-coords[i-1].t;
-      T p = dd[i-1]*(xld/iw)+2.0;
-      dd[i] = (xld/iw-1)/p;
-      tmp[i] = ((yrd*xrd - yld*xld)*6.0 - tmp[i-1]*xld)/(p*iw);
+      rsFloat si = xld/iw;
+      T p = dd[i-1]*si+2.0;
+      dd[i] = (si-1.0)/p;
+      tmp[i] = ((yrd/xrd - yld/xld)*6.0/iw - tmp[i-1]*si)/p;
     }
   //Second (backward) pass of calculation
-  for (int i = size-2; i > 0; i--)
+  for (int i = size-2; i >= 0; i--)
     dd[i] = dd[i]*dd[i+1]+tmp[i];
 }
 
@@ -325,7 +328,7 @@ Coord rs::operator- (Coord a, Coord b)
 }
 
 //Componentwise division of space coordinates
-Coord rs::operator/ (Coord a, Coord b)
+Coord rs::operator/ (const Coord &a, const Coord &b)
 {
   Coord c;
   c.pos = a.pos / b.pos;
@@ -355,6 +358,14 @@ Coord rs::operator/ (rsFloat a, Coord b)
 {
   Coord c;
   c.pos = a / b.pos;
+  c.t = b.t;
+  return c;
+}
+
+Coord rs::operator/ (const Coord &b, rsFloat a)
+{
+  Coord c;
+  c.pos = b.pos / a;
   c.t = b.t;
   return c;
 }
@@ -428,6 +439,15 @@ RotationCoord rs::operator/ (rsFloat a, RotationCoord b)
   RotationCoord c;
   c.azimuth = a/b.azimuth;
   c.elevation = a/b.elevation;
+  c.t = b.t;
+  return c;
+}
+
+RotationCoord rs::operator/ (RotationCoord b, rsFloat a)
+{
+  RotationCoord c;
+  c.azimuth = b.azimuth/a;
+  c.elevation = b.elevation/a;
   c.t = b.t;
   return c;
 }

@@ -2,16 +2,16 @@
 #include <config.h>
 #include <iostream>
 #include <boost/thread.hpp>
-#include "fftwcpp.h"
 #include "rsnoise.h"
 
 using namespace rs;
+using namespace std;
 
 unsigned int processors = 4;
 
 //test noise generation in threaded code
 
-void NoiseTest() {
+/*void NoiseTest() {
   std::vector<rsFloat> alphas;
   std::vector<rsFloat> weights;
   //Initialize for standard five parameter clock model
@@ -24,31 +24,22 @@ void NoiseTest() {
     rsFloat j = gen->GetSample();
   }
   delete gen;
-}
-
+  }*/
 
 int main()
 {
-  //Initialize fftwcpp
-  FFTInit(processors);
   //Initialize noise generation
   rsNoise::InitializeNoise();
   //Create the generator (for alpha = 2)
-  FAlphaGenerator *gen = new FAlphaGenerator(2, 1, (int)1e4);
-  //Print out 1000 samples for testing spectrum
-  for (int i = 0; i < 1e4; i++) {
-    rsFloat j = gen->GetSample();
-    std::cout << j << std::endl;
-  }
+  MultirateGenerator *gen = new MultirateGenerator(1, 4);
+  for (int i = 0; i < 1e7; i++)
+    /*cout <<*/ gen->GetSample(); /*<< endl;*/
   delete gen;
   // Spawn threads to test thread safety of ClockModelGenerator
-  boost::thread_group man;
-  for (unsigned int i = 0; i < processors; i++) {
-    man.create_thread(NoiseTest);
-  }
-  man.join_all();
+  //  boost::thread_group man;
+  //for (unsigned int i = 0; i < processors; i++) {
+  // man.create_thread(NoiseTest);
+  //}
+  // man.join_all();
 
-  //Clean up
-  rsNoise::CleanUpNoise();
-  FFTCleanUp();
 }

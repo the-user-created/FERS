@@ -36,7 +36,14 @@ std::string Timing::GetName() const
 PrototypeTiming::PrototypeTiming(const std::string &name):
   name(name)
 {
+  freq_offset = 0;
+  phase_offset = 0;
+  random_phase = 0;
+  random_freq = 0;
+  frequency = 0;
+  synconpulse = false;
 }
+
 /// Add an alpha and a weight to the timing prototype
 void PrototypeTiming::AddAlpha(rsFloat alpha, rsFloat weight)
 {
@@ -52,88 +59,101 @@ void PrototypeTiming::GetAlphas(std::vector<rsFloat> &get_alphas, std::vector<rs
   get_weights = weights;
 }
 
+/// Set a constant frequency offset
+void PrototypeTiming::AddFreqOffset(rsFloat offset)
+{
+  if (random_freq)
+    rsDebug::printf(rsDebug::RS_IMPORTANT, "[Important] Random frequency offset and constant frequency offset are set for timing source %s. Only the random offset will be used.", GetName().c_str());
+  freq_offset = offset;
+}
+
+/// Set a constant phase offset
+void PrototypeTiming::AddPhaseOffset(rsFloat offset)
+{
+  if (random_phase)
+    rsDebug::printf(rsDebug::RS_IMPORTANT, "[Important] Random phase offset and constant phase offset are set for timing source %s. Only the random offset will be used.", GetName().c_str());
+  phase_offset = offset;
+}
+
+/// Set a random frequency offset
+void PrototypeTiming::AddRandomFreqOffset(rsFloat stdev)
+{
+  if (freq_offset)
+    rsDebug::printf(rsDebug::RS_IMPORTANT, "[Important] Random frequency offset and constant frequency offset are set for timing source %s. Only the random offset will be used.", GetName().c_str());
+  random_freq = stdev;
+}
+
+/// Set a random phase offset
+void PrototypeTiming::AddRandomPhaseOffset(rsFloat stdev)
+{
+  if (phase_offset)
+    rsDebug::printf(rsDebug::RS_IMPORTANT, "[Important] Random phase offset and constant phase offset are set for timing source %s. Only the random offset will be used.", GetName().c_str());
+  random_phase = stdev;
+}
+
+/// Get the phase offset
+rsFloat PrototypeTiming::GetPhaseOffset() const
+{
+  if (random_phase != 0)
+    return rsNoise::WGNSample(random_phase);
+  else
+    return phase_offset;
+}
+
+/// Get the phase offset
+rsFloat PrototypeTiming::GetFreqOffset() const
+{
+  if (random_freq != 0)
+    return rsNoise::WGNSample(random_freq);
+  else
+    return freq_offset;
+}
+
+/// Get the frequency
+rsFloat PrototypeTiming::GetFrequency() const
+{
+  return frequency;
+}
+
+
 /// Get the name of the prototype
 std::string PrototypeTiming::GetName() const
 {
   return name;
 }
 
+/// Set the base frequency of the clock model
+void PrototypeTiming::SetFrequency(rsFloat freq) {
+  frequency = freq;
+}
+
+/// Set the sync on pulse flag -- timing error resets at the start of the pulse
+void PrototypeTiming::SetSyncOnPulse()
+{
+  synconpulse = true;
+}
+
+/// Get the value of the sync on pulse flag
+bool PrototypeTiming::GetSyncOnPulse() const
+{
+  return synconpulse;
+}
 
 //
 // ClockModelTiming Implementation
 //
 
 /// Constructor
-ClockModelTiming::ClockModelTiming(const std::string &name, int num_pulses, int pulse_length, int pulse_gap):
+ClockModelTiming::ClockModelTiming(const std::string &name):
   Timing(name),
   enabled(false),
-  num_pulses(num_pulses),
-  pulse_length(pulse_length),
-  pulse_gap(pulse_gap)
+  model(0)
 {
-  // These are NULL for now, as initialization is not complete
-  trend_samples = 0;
-  model = 0;
-  current_pulse = 0;
 }
 
 /// Destructor
 ClockModelTiming::~ClockModelTiming() {
-  delete[] trend_samples;
-}
-
-/// Get the real time of a particular pulse
-rsFloat ClockModelTiming::GetPulseTimeError(int pulse) const
-{
-  if (enabled) {
-    if (!trend_samples)
-      throw std::runtime_error("[BUG] ClockModelTiming used before InitializeModel() called");
-    if (pulse >= num_pulses)
-      throw std::runtime_error("[BUG] Time for pulse > num_pulses requested from GetTimePulseError");
-    // Return the time sample at the beginning of the time interval
-    return trend_samples[pulse];
-  }
-  else 
-    return 0.0; // Model is disabled
-}
-
-/// Get the next sample of time error for a particular pulse
-rsFloat ClockModelTiming::NextNoiseSample()
-{
-  if (enabled) {
-    if (current_pulse > num_pulses)
-      throw std::runtime_error("[BUG] NextNoiseSample() called after all pulses are exhausted");
-    if (!model)
-      throw std::runtime_error("[BUG] ClockModelTiming used before InitializeModel() called");
-    return model->GetSample();
-  }
-  else
-    return 0; // Model is disabled
-}
-    
-/// Advance to the next pulse
-void ClockModelTiming::PulseDone() 
-{ 
-  if (enabled) {
-    //Check the pulse number is within range
-    if (current_pulse > num_pulses)
-      throw std::logic_error("[BUG] PulseDone() called too many times");
-    if (current_pulse == num_pulses) {
-      delete model;
-      current_pulse++;
-    }
-    else { //Create a new pulse
-      // Linearly interpolate the trend line end
-      rsFloat pri_length = pulse_length+pulse_gap;
-      rsFloat trend_end = trend_samples[current_pulse+1]*(pulse_length/pri_length)+trend_samples[current_pulse]*((pri_length-pulse_length)/pri_length);
-      //Remove the previous generator
-      delete model;
-      //Create a new generator
-      model = new ClockModelGenerator(alphas, weights, trend_samples[current_pulse], trend_end, pulse_length, true);
-      //Update the used pulse count
-      current_pulse++;
-    }
-  }
+  delete model;
 }
 
 /// Initialize the clock model generator
@@ -143,77 +163,66 @@ void ClockModelTiming::InitializeModel(const PrototypeTiming *timing)
     throw std::logic_error("[BUG] ClockModelTiming::InitializeModel called more than once");
   //Copy the alpha and weight vectors
   timing->GetAlphas(alphas, weights);
-  if (!alphas.empty()) {
-    //Fill the trend samples
-    ClockModelGenerator trend_gen(alphas, weights, 0, 0, num_pulses+1, false);
-    trend_samples = new rsFloat[num_pulses+1];
-    for (int i = 0; i < num_pulses+1; i++)
-      trend_samples[i] = trend_gen.GetSample();
-    //Init the model for the first pulse
-    PulseDone();
-    //Enable the clock model
-    enabled = true;
-  }
+  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "%d\n", alphas.size());
+  //Create the generator
+  model = new ClockModelGenerator(alphas, weights, timing->GetFrequency(), timing->GetPhaseOffset(), timing->GetFreqOffset(), 15);
+  //Warn if frequency is not set
+  if (timing->GetFrequency() == 0.0)
+    rsDebug::printf(rsDebug::RS_IMPORTANT, "[Important] Timing source frequency not set, results could be incorrect.");
+  //Get the carrier frequency
+  frequency = timing->GetFrequency();
+  // Get the sync on pulse flag
+  synconpulse = timing->GetSyncOnPulse();
+  //Enable the model
+  enabled = true;
+   
 }
 
 /// Return the enabled state of the clock model
 bool ClockModelTiming::Enabled()
 {
-  return enabled;
-}
-
-//
-// PulseTiming Implementation
-//
-
-/// Constructor
-PulseTiming::PulseTiming(const std::string &name, int num_pulses):
-  Timing(name),
-  num_pulses(num_pulses)
-{
-  trend_samples = 0;
-}
-
-/// Destructor
-PulseTiming::~PulseTiming()
-{
-  delete[] trend_samples;
+  return enabled && model->Enabled();
 }
 
 /// Get the real time of a particular pulse
-rsFloat PulseTiming::GetPulseTimeError(int pulse) const
+rsFloat ClockModelTiming::GetPulseTimeError() const
 {
- if (!trend_samples)
-    throw std::runtime_error("[BUG] ClockModelTiming used before InitializeModel() called");
-  if (pulse >= num_pulses)
-   throw std::runtime_error("[BUG] Time for pulse > num_pulses requested from GetTimePulseError");
-  // Return the time sample at the beginning of the time interval
-  return trend_samples[pulse];
+  if (enabled)
+    return model->GetSample();
+  else
+    return 0;
+}
+
+/// Skip a sample, computing only enough to preserve long term correlations
+void ClockModelTiming::SkipSamples(long long samples)
+{
+  if (enabled)
+       model->SkipSamples(samples);
+}
+
+/// Get the value of the sync on pulse flag
+bool ClockModelTiming::GetSyncOnPulse() const
+{
+  return synconpulse;
+}
+
+/// Reset the clock phase error to zero
+void ClockModelTiming::Reset()
+{
+  model->Reset();
 }
 
 /// Get the next sample of time error for a particular pulse
-rsFloat PulseTiming::NextNoiseSample()
+rsFloat ClockModelTiming::NextNoiseSample()
 {
-  throw std::logic_error("[BUG] NextNoiseSample should never be called on PulseTiming");
+  if (enabled)
+    return model->GetSample();
+  else
+    return 0;
 }
 
-/// Advance to the next pulse
-void PulseTiming::PulseDone() 
+/// Get the carrier frequency of the modelled clock
+rsFloat ClockModelTiming::GetFrequency() const
 {
-  throw std::logic_error("[BUG] PulseDone should never be called on PulseTiming");
-}
-
-/// Initialize the clock model generator
-void PulseTiming::InitializeModel(const PrototypeTiming *timing)
-{
-  // Get the parameters from the timing prototype
-  std::vector<rsFloat> alphas;
-  std::vector<rsFloat> weights;
-  timing->GetAlphas(alphas, weights);
-  //Fill the trend samples
-  ClockModelGenerator trend_gen(alphas, weights, 0, 0, num_pulses+1, false);
-  trend_samples = new rsFloat[num_pulses+1];
-  for (int i = 0; i < num_pulses+1; i++) {
-    trend_samples[i] = trend_gen.GetSample();
-  }
+  return frequency;
 }

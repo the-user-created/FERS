@@ -47,13 +47,14 @@ Coord operator+ (Coord a, Coord b);
 /// Componentwise subtract
 Coord operator- (Coord a, Coord b);
 /// Componentwise divide
-Coord operator/ (Coord a, Coord b);
+Coord operator/ (const Coord &a, const Coord &b);
 /// Add a scalar to each element
 Coord operator+ (Coord a, rsFloat b);
 /// Componentwise multiplication by scalar
 Coord operator* (Coord a, rsFloat b);
 /// Componentwise division by scalar
 Coord operator/ (rsFloat a, Coord b);
+Coord operator/ (const Coord &b, rsFloat a);
 
 /// Azimuth-Elevation rotation position and time
 //Note that the plane for azimuth is the x-y plane (see Coord)
@@ -94,6 +95,7 @@ RotationCoord operator+ (RotationCoord a, rsFloat b);
 RotationCoord operator* (RotationCoord a, rsFloat b);
 /// Divide each component by a scalar
 RotationCoord operator/ (rsFloat a, RotationCoord b);
+RotationCoord operator/ (RotationCoord b, rsFloat a);
 
 /// Defines the movement of an object through space, governed by time
 class Path {

@@ -35,6 +35,7 @@ SET(fers_SRCS
    rsdsp.cpp
    rsmultipath.cpp
    rspattern.cpp
+   rspolarize.cpp
    rsdebug.h
    rspath.h
    rsportable.h
@@ -60,8 +61,8 @@ SET(fers_SRCS
    rsdsp.h
    rsmultipath.h
    rspattern.h
+   rspolarize.h
    )
-
 
 ADD_EXECUTABLE(fers ${fers_SRCS})
 

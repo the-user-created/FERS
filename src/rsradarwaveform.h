@@ -12,11 +12,13 @@
 #include <complex>
 #include <boost/shared_array.hpp>
 #include <boost/utility.hpp>
+#include "rspolarize.h"
 
 namespace rs {
 
   ///Forward Declarations
   class Signal; //rssignal.h
+  class JonesVector; //rspolarize.h
 
   ///Complex type for rendering operations
   typedef std::complex<rsFloat> rsComplex;
@@ -52,13 +54,18 @@ struct InterpPoint {
    /// Return the length of the pulse
    rsFloat GetLength() const;
    /// Render the pulse with the given parameters
-   boost::shared_array<rsComplex> Render(const std::vector<InterpPoint> &points, unsigned int &size) const;
+   boost::shared_array<rsComplex> Render(const std::vector<InterpPoint> &points, unsigned int &size, rsFloat frac_win_delay) const;
+   /// Get the signal polarization
+   JonesVector GetPolarization();
+   /// Set the signal polarization
+   void SetPolarization(const JonesVector &in);
  private:   
    std::string name; //!< The name of the pulse
    rsFloat power; //!< Power of the signal transmitted (Watts in 1ohm)
    rsFloat carrierfreq; //!< Carrier frequency (Hz)
    rsFloat length; //!< Length of the signal (seconds)
    Signal* signal; //!< Transmitted Signal
+   JonesVector polar; //!< Signal Polarization
    /// Default constructor
    RadarSignal();
  };

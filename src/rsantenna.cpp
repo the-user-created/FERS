@@ -6,12 +6,14 @@
 #define TIXML_USE_STL //Tell tinyxml to use the STL instead of it's own string class
 
 #include <stdexcept>
+#include <algorithm>
 #include "rsantenna.h"
 #include "rsdebug.h"
 #include <cmath>
 #include "rsportable.h"
 #include "rsinterp.h"
 #include "tinyxml/tinyxml.h"
+#include "rspattern.h"
 
 using namespace rs;
 using namespace rsAntenna;
@@ -106,6 +108,35 @@ rsFloat Isotropic::GetGain(const SVec3 &angle, const SVec3 &refangle, rsFloat wa
 }
 
 //
+// Gaussian Implementation
+//
+
+  
+/// Constructor
+Gaussian::Gaussian(const std::string& name, rsFloat azscale, rsFloat elscale):
+  Antenna(name),
+  azscale(azscale),
+  elscale(elscale)
+{
+  
+}
+
+/// Destructor
+Gaussian::~Gaussian()
+{
+}
+
+/// Get the gain at an angle
+rsFloat Gaussian::GetGain(const rs::SVec3 &angle, const rs::SVec3 &refangle, rsFloat wavelength) const
+{
+  SVec3 a = angle - refangle;
+  rsFloat azfactor = std::exp(-a.azimuth*a.azimuth*azscale);
+  rsFloat elfactor = std::exp(-a.elevation*a.elevation*elscale);
+  return azfactor*elfactor;
+}
+
+
+//
 //Sinc Implemetation
 //
 
@@ -188,11 +219,38 @@ rsFloat ParabolicReflector::GetGain(const SVec3 &angle, const SVec3 &refangle, r
 }
 
 //
-// Antenna with pattern loaded from a file
+// FileAntenna implementation
+//
+
+/// Constructor
+FileAntenna::FileAntenna(const std::string& name, const std::string &filename):
+  Antenna(name)
+{
+  pattern = new Pattern(filename);
+}
+
+/// Default destructor
+FileAntenna::~FileAntenna()
+{
+  delete pattern;
+}
+
+/// Get the gain at an angle
+rsFloat FileAntenna::GetGain(const rs::SVec3 &angle, const rs::SVec3 &refangle, rsFloat wavelength) const
+{
+  SVec3 a1 = angle;
+  SVec3 a2 = refangle;
+  SVec3 in_angle = (a1-a2);
+  //  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "az: %g el: %g\t az2: %g el2: %g\t az3: %g el3: %g\n", angle.azimuth, angle.elevation, refangle.azimuth, refangle.elevation, in_angle.azimuth, refangle.elevation);
+  return pattern->GetGain(in_angle)*GetEfficiencyFactor();
+}
+
+//
+// Antenna with pattern loaded from an XML file
 //
 
 // Constructor
-FileAntenna::FileAntenna(const std::string& name, const std::string &filename):
+XMLAntenna::XMLAntenna(const std::string& name, const std::string &filename):
   Antenna(name)
 {
   // Classes to interpolate across elevation and azimuth
@@ -203,7 +261,7 @@ FileAntenna::FileAntenna(const std::string& name, const std::string &filename):
 }
 
 //Destructor
-FileAntenna::~FileAntenna()
+XMLAntenna::~XMLAntenna()
 {
   // Clean up the interpolation classes
   delete azi_samples;
@@ -212,17 +270,17 @@ FileAntenna::~FileAntenna()
 
 //Return the gain of the antenna
 //See doc/equations.tex for details
-rsFloat FileAntenna::GetGain(const SVec3 &angle, const SVec3 &refangle, rsFloat wavelength) const
+rsFloat XMLAntenna::GetGain(const SVec3 &angle, const SVec3 &refangle, rsFloat wavelength) const
 {
   SVec3 t_angle = angle-refangle;
   rsFloat azi_gain = azi_samples->Value(std::fabs(t_angle.azimuth));
   rsFloat elev_gain = elev_samples->Value(std::fabs(t_angle.elevation));
-  return azi_gain*elev_gain*GetEfficiencyFactor();
+  return azi_gain*elev_gain*max_gain*GetEfficiencyFactor();
 }
 
 namespace {
 
-//Load samples of gain along an axis (not a member of FileAntenna)
+//Load samples of gain along an axis (not a member of XMLAntenna)
 void LoadAntennaGainAxis(InterpSet *set, TiXmlHandle &axisXML)
 {
   rsFloat angle;
@@ -250,7 +308,7 @@ void LoadAntennaGainAxis(InterpSet *set, TiXmlHandle &axisXML)
 }
 
 //Load the antenna description file
-void FileAntenna::LoadAntennaDescription(const std::string& filename)
+void XMLAntenna::LoadAntennaDescription(const std::string& filename)
 {
   TiXmlDocument doc(filename.c_str());
   //Check the document was loaded correctly
@@ -268,9 +326,12 @@ void FileAntenna::LoadAntennaDescription(const std::string& filename)
   if (!tmp.Element())
     throw std::runtime_error("[ERROR] Malformed XML in antenna description: No azimuth pattern definition");
   LoadAntennaGainAxis(azi_samples, tmp);
+  // Normalize the antenna patterns and calculate the max gain
+  max_gain = std::max(azi_samples->Max(), elev_samples->Max());
+  elev_samples->Divide(max_gain);
+  azi_samples->Divide(max_gain);
+  
 }
-
-
 
 //
 // Antenna with gain pattern calculated by a Python program
@@ -316,6 +377,13 @@ Antenna* rs::CreateSincAntenna(const std::string &name, rsFloat alpha, rsFloat b
   return sinc;
 }
 
+//Create a Gaussian pattern antenna
+Antenna* rs::CreateGaussianAntenna(const std::string &name, rsFloat azscale, rsFloat elscale)
+{
+  rsAntenna::Gaussian *gau = new rsAntenna::Gaussian(name, azscale, elscale);
+  return gau;
+}
+
 //Create a square horn antenna
 Antenna* rs::CreateHornAntenna(const std::string &name, rsFloat dimension)
 {
@@ -328,6 +396,13 @@ Antenna* rs::CreateParabolicAntenna(const std::string &name, rsFloat diameter)
 {
   rsAntenna::ParabolicReflector *pd = new rsAntenna::ParabolicReflector(name, diameter);
   return pd;
+}
+
+//Create an antenna with it's gain pattern stored in an XML file
+Antenna* rs::CreateXMLAntenna(const std::string &name, const std::string &file)
+{
+  rsAntenna::XMLAntenna *fa = new rsAntenna::XMLAntenna(name, file);
+  return fa;
 }
 
 //Create an antenna with it's gain pattern stored in an XML file

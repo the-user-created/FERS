@@ -56,7 +56,7 @@ public:
   /// Get the number of samples of padding at the beginning of the pulse
   unsigned int Pad() const;
   /// Render the pulse with the specified doppler, delay and amplitude
-  boost::shared_array<rs::rsComplex> Render(const std::vector<InterpPoint> &points, rsFloat trans_power, unsigned int &size) const;
+  boost::shared_array<rs::rsComplex> Render(const std::vector<InterpPoint> &points, rsFloat trans_power, unsigned int &size, rsFloat frac_win_delay) const;
  private:
   /// The signal data
   rsSignal::complex* data;

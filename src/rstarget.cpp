@@ -20,17 +20,44 @@ rsFloat GetNodeFloat(TiXmlHandle &node);
 // RCSModel Implementation
 //
 
-/// Return a constant RCS
-rsFloat RCSConst::GetRCS(rsFloat meanRCS) 
+/// Destructor
+RCSModel::~RCSModel()
 {
-  return meanRCS;
 }
 
-/// Return an RCS based on the statistical Swerling II model
-rsFloat RCSSwerlingII::GetRCS(rsFloat meanRCS)
+//
+// RCSConst Implementation
+//
+
+/// Return a constant RCS
+rsFloat RCSConst::SampleModel() 
 {
-  rsFloat rnd = rsNoise::UniformSample();
-  return 0;
+  return 1.0;
+}
+
+/// Destructor
+RCSConst::~RCSConst()
+{
+}
+
+//
+// RCSChiSquare Implementation
+
+/// Constructor
+RCSChiSquare::RCSChiSquare(rsFloat k)
+{
+  gen = new GammaGenerator(k);
+}
+/// Destructor
+RCSChiSquare::~RCSChiSquare()
+{
+  delete gen;
+}
+
+/// Get an RCS based on the Swerling II model and the mean RCS
+rsFloat RCSChiSquare::SampleModel()
+{
+  return gen->GetSample();
 }
 
 //
@@ -41,11 +68,31 @@ rsFloat RCSSwerlingII::GetRCS(rsFloat meanRCS)
 Target::Target(Platform *platform, const std::string &name):
   Object(platform, name)
 {
+  model = 0;
 }
 
 //Default destructor for Target object
 Target::~Target()
 {
+  delete model;
+}
+
+/// Get the target polarization matrix
+PSMatrix Target::GetPolarization() const
+{
+  return psm;
+}
+
+/// Set the target polarization matrix
+void Target::SetPolarization(const PSMatrix &in)
+{
+  psm = in;
+}
+
+/// Set the target fluctuation model
+void Target::SetFluctuationModel(RCSModel *in)
+{
+  model = in;
 }
 
 //
@@ -67,7 +114,10 @@ IsoTarget::~IsoTarget()
 /// Return the RCS at the given angle
 rsFloat IsoTarget::GetRCS(SVec3 &inAngle, SVec3 &outAngle) const
 {
-  return rcs;
+  if (model)
+    return rcs*model->SampleModel();
+  else
+    return rcs;
 }
 
 //
@@ -99,7 +149,10 @@ rsFloat FileTarget::GetRCS(SVec3 &inAngle, SVec3 &outAngle) const
   //Currently uses a half angle approximation, this needs to be improved
   SVec3 t_angle = inAngle+outAngle;
   rsFloat RCS = std::sqrt(azi_samples->Value(t_angle.azimuth/2.0)*elev_samples->Value(t_angle.elevation/2.0));
-  return RCS;
+  if (model)
+    return RCS*model->SampleModel();
+  else
+    return RCS;
 }
 
 namespace {

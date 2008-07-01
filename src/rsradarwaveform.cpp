@@ -26,7 +26,8 @@ RadarSignal::RadarSignal(std::string name, rsFloat power, rsFloat carrierfreq, r
   power(power), 
   carrierfreq(carrierfreq),   
   length(length),
-  signal(signal)
+  signal(signal),
+  polar(1.0,0) //Default to horiz polarization
 {
   if (!signal)
     throw std::logic_error("RadarSignal cannot be constructed with NULL signal");
@@ -69,11 +70,27 @@ rsFloat RadarSignal::GetLength() const
 }
 
 /// Render the waveform to the target buffer
-boost::shared_array<rsComplex> RadarSignal::Render(const std::vector<InterpPoint> &points, unsigned int &size) const
+boost::shared_array<rsComplex> RadarSignal::Render(const std::vector<InterpPoint> &points, unsigned int &size, rsFloat frac_win_delay) const
 {
   //Render the return pulse
-  boost::shared_array<rsComplex> data = signal->Render(points, power, size);
+  boost::shared_array<rsComplex> data = signal->Render(points, power, size, frac_win_delay);
+  //Scale the return pulse by the signal power
+  rsFloat scale = std::sqrt(power);
+  for (unsigned int i = 0; i < size; i++)
+    data[i] *= scale;
   return data;
+}
+
+/// Get the signal polarization
+JonesVector RadarSignal::GetPolarization()
+{
+  return polar;
+}
+
+/// Set the signal polarization
+void RadarSignal::SetPolarization(const JonesVector &in)
+{
+  polar = in;
 }
 
 //

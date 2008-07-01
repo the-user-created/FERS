@@ -6,7 +6,7 @@ CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_CURRENT_BINARY
 
 #Set compiler flags
 IF (CMAKE_COMPILER_IS_GNUCXX)
-   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall")
+   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -pthread -O2 -ffast-math")
 ENDIF (CMAKE_COMPILER_IS_GNUCXX)
 
 #FERS is multithreaded, boost needs to be informed

@@ -27,7 +27,6 @@ struct SimParameters {
   bool export_xml; //!< Export results in XML format
   bool export_csv; //!< Export results in CSV format
   bool export_binary; //!< Export results in binary format
-  bool export_csvbinary; //!< Export results in CSV binary format
   unsigned int render_threads; //!< Number of threads to use to render each receiver
   unsigned int oversample_ratio; //!< Ratio of oversampling applied to pulses before rendering
 };
@@ -48,8 +47,8 @@ rsParameters::rsParameters() {
   sim_parms.cw_sample_rate = 1000;
   // Oversample by default
   sim_parms.rate = 0;
-  // Default filter length is 32
-  sim_parms.filter_length = 32;
+  // Default filter length is 33
+  sim_parms.filter_length = 33;
   // Binary file type defaults to CSV
   sim_parms.filetype = rsParms::RS_FILE_FERSBIN;
   // Export xml by default
@@ -58,14 +57,12 @@ rsParameters::rsParameters() {
   sim_parms.export_csv = true;
   // Don't export binary by default
   sim_parms.export_binary = false;
-  // Don't export to csvbinary by default
-  sim_parms.export_csvbinary = false;
   // The random seed is set the to the current time by default
   sim_parms.random_seed = static_cast<unsigned int>(time(NULL));
   // The default is not to quantize
   sim_parms.adc_bits = 0;
   // Default maximum number of render threads
-  sim_parms.render_threads = 4;
+  sim_parms.render_threads = 1;
   // Default is to disable oversampling
   sim_parms.oversample_ratio = 1;
 }
@@ -160,13 +157,6 @@ bool rsParameters::export_binary()
   return sim_parms.export_binary;
 }
 
-bool rsParameters::export_csvbinary()
-{
-  if (!instance)
-    instance = new rsParameters;
-  return sim_parms.export_csvbinary;
-}
-
 /// Length to use for the rendering filter
 unsigned int rsParameters::render_filter_length()
 {
@@ -226,12 +216,11 @@ void rsParameters::SetBinaryFileType(rsParms::BinaryFileType type)
   sim_parms.filetype = type;
 }
 
-void rsParameters::SetExporters(bool xml, bool csv, bool binary, bool csv_binary)
+void rsParameters::SetExporters(bool xml, bool csv, bool binary)
 {
   sim_parms.export_xml = xml;
   sim_parms.export_csv = csv;
   sim_parms.export_binary = binary;
-  sim_parms.export_csvbinary = csv_binary;
 }
 
 void rsParameters::SetADCBits(unsigned int bits)
@@ -255,4 +244,9 @@ void rsParameters::SetOversampleRatio(unsigned int ratio)
     throw std::runtime_error("[ERROR] Oversample ratio must be >= 1");
   sim_parms.oversample_ratio = ratio;
   rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Oversampling enabled with ratio %d\n", ratio);
+}
+
+void rsParameters::SetThreads(unsigned int threads)
+{
+  sim_parms.render_threads = threads;
 }

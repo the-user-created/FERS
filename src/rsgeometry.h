@@ -98,6 +98,5 @@ class SVec3 {
   SVec3 &operator/=(rsFloat b); //!< division by a scalar
 };
 
-
 }
 #endif

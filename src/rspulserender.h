@@ -42,7 +42,7 @@ namespace rs {
     /// Destructor
     ~ThreadedRenderer();
     /// Render all the responses in a single window
-    void RenderWindow(rsComplex *window, rsFloat length, rsFloat start);
+    void RenderWindow(rsComplex *window, rsFloat length, rsFloat start, rsFloat frac_delay);
   private:
     const std::vector<rs::Response*> *responses; //!< Vector of target responses seen by this receiver
     const rs::Receiver* recv; //!< Receiver we are rendering for
@@ -53,7 +53,7 @@ namespace rs {
   class RenderThread {
   public:
     /// Constructor
-    RenderThread(boost::mutex *window_mutex, rsComplex *window, rsFloat length, rsFloat start, boost::mutex *work_list_mutex, std::queue<Response *> *work_list);
+    RenderThread(int serial, boost::mutex *window_mutex, rsComplex *window, rsFloat length, rsFloat start, rsFloat frac_delay, boost::mutex *work_list_mutex, std::queue<Response *> *work_list);
     /// Destructor
     ~RenderThread();
     /// Step through the worklist, rendering the required responses
@@ -63,12 +63,15 @@ namespace rs {
     Response *GetWork();
     /// Add the array to the window, locking the window lock in advance
     void AddWindow(rsComplex *array, rsFloat start_time, unsigned int array_size);
+    int serial; //!< Serial number of this thread
     boost::mutex *window_mutex; //!< Mutex to protect window
     rsComplex *window; //!< Pointer to render window
     rsFloat length; //!< Length of render window (seconds)
     rsFloat start; //!< Start time of render window (seconds)
+    rsFloat frac_delay; //!< Fractional window start time (< 1 sample, samples)
     boost::mutex *work_list_mutex; //!< Mutex to protect work list
     std::queue<Response*> *work_list; //!< List of responses to render
+    rsComplex *local_window;
     
   };
     

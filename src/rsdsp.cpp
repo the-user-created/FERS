@@ -10,7 +10,6 @@ using namespace rs;
 #include <cstring>
 #include <string.h>
 #include "rsdebug.h"
-#include "fftwcpp.h"
 #include "rsparameters.h"
 
 //
@@ -96,7 +95,7 @@ void rs::Downsample(const rsComplex *in, int size, rsComplex *out, int ratio)
   //Copy the results to the output buffer
   for (int i = 0; i < size/ratio; i++) {
     out[i] = tmp[i*ratio+filt_length/2]/rsFloat(ratio);
-    printf("%f+%fi\n", out[i].real(), out[i].imag());
+    //    printf("%f+%fi\n", out[i].real(), out[i].imag());
   }
   // Clean up
   delete[] coeffs;
@@ -134,6 +133,21 @@ IIRFilter::IIRFilter(const std::vector<rsFloat> &den_coeffs, const std::vector<r
   b = new rsFloat[order];
   w = new rsFloat[order];
   //Load the co-efficients from the vectors into the arrays  
+  for (unsigned int i = 0; i < order; i++) {
+    a[i] = den_coeffs[i];
+    b[i] = num_coeffs[i];
+    w[i] = 0;
+  }
+}
+
+/// Constructor
+IIRFilter::IIRFilter(const rsFloat *den_coeffs, const rsFloat *num_coeffs, unsigned int order):
+  order(order)
+{
+  a = new rsFloat[order];
+  b = new rsFloat[order];
+  w = new rsFloat[order];
+  // Load the coefficients into the arrays
   for (unsigned int i = 0; i < order; i++) {
     a[i] = den_coeffs[i];
     b[i] = num_coeffs[i];
@@ -339,73 +353,6 @@ void ARFilter::Filter(rsFloat *samples, int size)
 }
 
 //
-// FAlphaFilter Implementation
-//
-
-/// Constructor
-FAlphaFilter::FAlphaFilter(rsFloat alpha):
-  alpha(alpha)
-{
-}
-
-/// Destructor
-FAlphaFilter::~FAlphaFilter()
-{
-}
-
-/// Pass a single sample through the filter
-rsFloat FAlphaFilter::Filter(rsFloat sample) {
-  //This function does not work, so throw if it is called
-  throw std::logic_error("[BUG} FAlphaFilter::Filter(double) was called, it is not implemented");
-  return 0;
-}
-
-
-/// Pass an array of samples through the filter, filtering in place
-void FAlphaFilter::Filter(rsFloat *samples, int size) 
-{
-  //Allocate a buffer to hold the FFT results
-  std::complex<rsFloat> *fft_buffer = FFTAlignedMalloc<std::complex<rsFloat> >(size/2+1);
-  rsFloat *sample_buffer = FFTAlignedMalloc<rsFloat>(size); //Needed for strict compliance with FFTW
-  memcpy(sample_buffer, samples, size*sizeof(rsFloat));
-  //Get a plan to transform to frequency domain
-  FFTRealForward *forward = FFTManager::Instance()->GetRealForwardPlan(size, sample_buffer, fft_buffer);
-  //Perform the FFT
-  forward->transform(size, sample_buffer, fft_buffer);
-  // Sum the magnitudes for normalization
-  rsFloat mag_sum  = 0;
-  //Now filter the samples to the desired rolloff
-  for (int i = 0; i < (size/2+1); i++) {
-    // Get the sample phase
-    rsFloat arg = std::atan2(fft_buffer[i].imag(), fft_buffer[i].real());
-    //Calculate the sample magnitude
-    rsFloat mag;
-    if (i != 0)
-      mag = std::pow((i/(double)size), -alpha/2);
-    else
-      //TODO: Fix the way we deal with the "infrared catastrophe"
-      mag = 2*std::pow((1/(double)size), -alpha/2);
-    mag_sum += mag*mag;
-    // Calculate the new complex value
-    fft_buffer[i] = std::complex<rsFloat>(mag*std::cos(arg), mag*std::sin(arg));
-  }
-  rsFloat norm = 1.0/std::sqrt(2*(rsFloat)mag_sum);
-  for (int i = 0; i < (size/2+1); i++)
-    fft_buffer[i] *= norm;
-  //Get a plan for the reverse transform
-  FFTRealInverse *inverse = FFTManager::Instance()->GetRealInversePlan(size, fft_buffer, sample_buffer);
-  //Perform the inverse FFT
-  inverse->transform(size, fft_buffer, sample_buffer);
-  //Copy out of the aligned buffer
-  std::memcpy(samples, sample_buffer, sizeof(rsFloat)*size);
-
-  //Clean up
-  FFTAlignedFree(fft_buffer);
-  FFTAlignedFree(sample_buffer);
-}
-
-
-//
 // Upsampler implementation
 //
 
@@ -414,7 +361,7 @@ Upsampler::Upsampler(int ratio):
   ratio(ratio)
 {
   //Create the FIR interpolation filter
-  int filter_size = 8*ratio+1; // 8*ratio should give adequate performance
+  filter_size = 8*ratio+1; // 8*ratio should give adequate performance  
   //Allocate memory for the filter bank
   filterbank = new rsFloat[filter_size];
   // Simple windowed sinc filter design procedure
@@ -427,8 +374,8 @@ Upsampler::Upsampler(int ratio):
   //Allocate memory for the sample state
   sample_memory = new rsFloat[filter_size/ratio+1];
   //Clear sample memory to zero
-  for (int i = 0; i < filter_size; i++)
-    sample_memory = 0;
+  for (int i = 0; i < filter_size/ratio+1; i++)
+    sample_memory[i] = 0;
 }
 
 /// Destructor
@@ -442,7 +389,7 @@ Upsampler::~Upsampler()
 //Get a sample, from either the provided pointer or sample memory
 inline rsFloat Upsampler::GetSample(rsFloat *samples, int n)
 {
-  if (n >= 0)
+ if (n >= 0)
     return samples[n];
   else
     return sample_memory[n+filter_size];
@@ -470,7 +417,7 @@ void Upsampler::Upsample(rsFloat *insamples, int in_size, rsFloat *outsamples, i
   //Update the sample history
   int transfer_size = filter_size/ratio+1;
   if (in_size >= transfer_size)
-    memcpy(sample_memory, &(insamples[in_size-transfer_size-1]), transfer_size*sizeof(rsFloat));
+    memcpy(sample_memory, &(insamples[in_size-transfer_size]), transfer_size*sizeof(rsFloat));
   else {
     // Shift existing samples
     for (int i = 0; i < (transfer_size-in_size); i++)
@@ -480,3 +427,71 @@ void Upsampler::Upsample(rsFloat *insamples, int in_size, rsFloat *outsamples, i
       sample_memory[i+transfer_size-in_size] = insamples[i];
   }
 }
+
+//
+// DecadeUpsample Implementation
+//
+
+/// Constructor
+DecadeUpsampler::DecadeUpsampler() {
+
+  /// 11th order elliptic lowpass at 0.1fs
+  rsFloat den_coeffs[12] = {1.0,
+			    -10.301102119865,
+			    48.5214567642597,
+			    -137.934509572412,
+			    262.914952985445,
+			    -352.788381841481,
+			    340.027874008585,
+			    -235.39260470286,
+			    114.698499845697,
+			    -37.4634653062448,
+			    7.38208765922137,
+			    -0.664807695826097};
+
+  rsFloat num_coeffs[12] = {   2.7301694322809e-06,
+			       -1.8508123430239e-05,
+			       5.75739466753894e-05,
+			       -0.000104348734423658,
+			       0.000111949190289715,
+			       -4.9384188225528e-05,
+			       -4.9384188225522e-05,
+			       0.00011194919028971,
+			       -0.000104348734423656,
+			       5.75739466753884e-05,
+			       -1.85081234302388e-05,
+			       2.73016943228086e-06  };
+  //Initialize the anti-imaging filter
+  filter = new IIRFilter(den_coeffs, num_coeffs, 12);
+}
+
+/// Destructor
+DecadeUpsampler::~DecadeUpsampler() {
+  delete filter;
+}
+  
+
+///Upsample a single sample at a time
+void DecadeUpsampler::Upsample(rsFloat sample, rsFloat *out)
+{
+  // Prepare the output array
+  out[0] = sample;
+  for (int i = 1; i < 10; i++)
+    out[i] = 0;
+  // Filter in place
+  filter->Filter(out, 10);
+}
+
+// Upsample a whole batch of samples
+void DecadeUpsampler::Upsample(rsFloat *in, int count, rsFloat *out)
+{
+  /// Prepare the array for filtering
+  for (int i = 0; i < count; i++) {
+    out[i*10] = in[i];
+    for (int j = 1; j < 10; j++)
+      out[i*10+j] = 0;
+  }
+  /// Filter in place
+  filter->Filter(out, count*10);
+}
+

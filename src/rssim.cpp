@@ -45,6 +45,9 @@ void SolveRE(const Transmitter *trans, const Receiver *recv, const Target *targ,
   //Calculate the distances
   rsFloat Rt = transvec.length;
   rsFloat Rr = recvvec.length;
+  // From here on, transvec and recvvec need to be normalized
+  transvec.length = 1;
+  recvvec.length = 1;
   //Sanity check Rt and Rr and throw an exception if they are too small
   if ((Rt <= std::numeric_limits<rsFloat>::epsilon()) || (Rr <= std::numeric_limits<rsFloat>::epsilon()))
     throw RangeError();
@@ -58,10 +61,13 @@ void SolveRE(const Transmitter *trans, const Receiver *recv, const Target *targ,
   //Get the system antenna gains (which include loss factors)
   rsFloat Gt = trans->GetGain(transvec, trans->GetRotation(time), Wl);
   rsFloat Gr = recv->GetGain(recvvec, recv->GetRotation(results.delay+time), Wl);
+    //  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Gt: %e Gr: %e\n", Gt, Gr);
   //Step 2, calculate the received power using the narrowband bistatic radar equation
   //See "Bistatic Narrowband Radar Equation" in doc/equations/equations.tex  
-  results.power = (Gt*Gr*RCS*Wl*Wl)/(pow(4*M_PI, 3)*Rt*Rt*Rr*Rr);
-  //  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Pr: %2.9e Rt: %e Rr: %e Gt: %e Gr: %e RCS: %e Wl %e\n", results.power, Rt, Rr, Gt, Gr, RCS, Wl);
+  results.power = Gt*Gr*RCS/(4*M_PI);
+  if (!recv->CheckFlag(Receiver::FLAG_NOPROPLOSS))
+    results.power *= (Wl*Wl)/(pow(4*M_PI, 2)*Rt*Rt*Rr*Rr);
+  //   rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Pr: %2.9e Rt: %e Rr: %e Gt: %e Gr: %e RCS: %e Wl %e\n", results.power, Rt, Rr, Gt, Gr, RCS, Wl);
   // If the transmitter and/or receiver are multipath duals, multiply by the loss factor
   if (trans->IsMultipathDual())
     results.power *= trans->MultipathDualFactor();
@@ -134,6 +140,9 @@ void SolveREDirect(const Transmitter *trans, const Receiver *recv, rsFloat time,
   SVec3 recvvec = SVec3(rpos-tpos);
   //Calculate the range
   rsFloat R = transvec.length;
+  //Normalize transvec and recvvec for angle calculations
+  transvec.length = 1;
+  recvvec.length = 1;
   //If the two antennas are not in the same position, this can be calculated
   if (R > std::numeric_limits<rsFloat>::epsilon())
     {
@@ -149,7 +158,10 @@ void SolveREDirect(const Transmitter *trans, const Receiver *recv, rsFloat time,
       rsFloat Gr = recv->GetGain(recvvec, recv->GetRotation(time+results.delay), Wl);
       //Step 2: Calculate the received power 
       //See "One Way Radar Equation" in doc/equations/equations.tex
-      results.power = (Gt*Gr*Wl*Wl)/(pow(4*M_PI, 2)*pow(R, 2));
+      results.power = Gt*Gr*Wl*Wl/(4*M_PI);
+      if (!recv->CheckFlag(Receiver::FLAG_NOPROPLOSS))
+        results.power *= 1/(4*M_PI*pow(R, 2));
+      //  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Pr: %2.9e R: %e Gt: %e Gr: %e Wl %e\n", results.power, R, Gt, Gr, Wl);
       //Step 3: Calculate the doppler shift (if one of the antennas is moving)
       Vec3 tpos_end = trans->GetPosition(time+length);
       Vec3 rpos_end = recv->GetPosition(time+length);
@@ -226,14 +238,17 @@ void rs::SimulatePair(const Transmitter *trans, Receiver *recv, const World *wor
   TransmitterPulse* pulse = new TransmitterPulse();
   rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "%d\n", pulses);
   //Loop throught the pulses
-  for (int i = 0; i < pulses; i++)
-    {
+  for (int i = 0; i < pulses; i++) {
       trans->GetPulse(pulse, i);
       for (targ = world->targets.begin(); targ != world->targets.end(); targ++) {
 	SimulateTarget(trans, recv, *targ, world, pulse);
       }
-      //      Add the direct pulses
-      AddDirect(trans, recv, world, pulse);
+
+      // Check if direct pulses are being considered for this receiver
+      if (!recv->CheckFlag(Receiver::FLAG_NODIRECT)) {
+        //Add the direct pulses
+        AddDirect(trans, recv, world, pulse);
+      }
     }
   delete pulse;
 }
