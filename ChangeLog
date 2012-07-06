@@ -1,4 +1,10 @@
-2006-11-03  Marc Brooker <mbrooker@rrsg.uct.ac.za>
+2012-07-06  Version 0.20  Graham Inggs <graham@nerve.org.za>
+	* Various patches from RRSG @ UCT	
+	* Remove debian directory
+	* Fix up CMakeLists to allow both in-source and out-of-source building
+	* Remove src/FindPythonLibs.cmake - use CMake's module instead
+
+2006-11-03  Marc Brooker <marcbrooker@gmail.com>
 	* <fers> Third public release
 	* <fers> Added the ability to export to HDF5 files
 	* <fers> Fixed phase and doppler calculations

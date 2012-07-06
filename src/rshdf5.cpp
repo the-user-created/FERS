@@ -15,7 +15,7 @@ using namespace rshdf5;
 
 extern "C" {
 #include <hdf5.h>
-#include <H5LT.h>
+#include <H5LTpublic.h>
 }
 
 ///Open the HDF5 file for reading

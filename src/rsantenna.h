@@ -11,6 +11,7 @@
 #include "rsgeometry.h"
 #include "boost/utility.hpp"
 #include "rspython.h"
+#include <limits>
 
 namespace rs {
   //Forward declaration of SVec3 and Vec3 (see rspath.h)

@@ -97,7 +97,7 @@ ENDIF (FERS_LIB_FFTW3_THREADS)
 
 #Include code to check for python libs
 
-INCLUDE(FindPythonLibs)
+INCLUDE(${fers_SOURCE_DIR}/src/FindPythonLibs.cmake)
 
 IF (PYTHONLIBS_FOUND)
    TARGET_LINK_LIBRARIES(timing_test ${PYTHON_LIBRARIES})
@@ -196,7 +196,7 @@ ENDIF (FERS_LIB_FFTW3_THREADS)
 
 #Include code to check for python libs
 
-INCLUDE(FindPythonLibs)
+INCLUDE(${fers_SOURCE_DIR}/src/FindPythonLibs.cmake)
 
 IF (PYTHONLIBS_FOUND)
    TARGET_LINK_LIBRARIES(filter_test ${PYTHON_LIBRARIES})
