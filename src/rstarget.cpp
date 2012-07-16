@@ -9,7 +9,7 @@
 #include "rsdebug.h"
 #include "rsinterp.h"
 #include "rsnoise.h"
-#include "tinyxml/tinyxml.h"
+#include <tinyxml.h>
 
 using namespace rs;
 

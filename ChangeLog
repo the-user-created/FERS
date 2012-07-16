@@ -1,3 +1,6 @@
+2012-07-16  Version 0.21  Graham Inggs <graham@nerve.org.za>
+	* Remove included TinyXML - TinyXML is now in Debian and Red Hat
+
 2012-07-06  Version 0.20  Graham Inggs <graham@nerve.org.za>
 	* Various patches from RRSG @ UCT	
 	* Remove debian directory
@@ -9,4 +12,4 @@
 	* <fers> Added the ability to export to HDF5 files
 	* <fers> Fixed phase and doppler calculations
 	* <fers> Fixed up some examples to the new XML format. More work needs to be done here
-	
+

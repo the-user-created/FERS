@@ -13,7 +13,7 @@
 #include <cmath>
 
 #include "xmlimport.h"
-#include "tinyxml/tinyxml.h"
+#include <tinyxml.h>
 #include "rsdebug.h"
 #include "rsworld.h"
 #include "rsplatform.h"
@@ -97,9 +97,9 @@ rsFloat GetNodeFloat(TiXmlHandle &node)
 /// Return the string associated with an attribute or throw an exception on failure
 std::string GetAttributeString(TiXmlHandle &handle, std::string name, std::string error, bool optional=false)
 {
-  const char *text = handle.Element()->Attribute(name);
+  const std::string *text = handle.Element()->Attribute(name);
   if (text)
-    return string(text);
+    return *text;
   else {
     if (!optional)
       throw XmlImportException(error);

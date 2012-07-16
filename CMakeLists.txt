@@ -14,10 +14,9 @@ ENDIF (CMAKE_COMPILER_IS_GNUCXX)
 #FERS is multithreaded, boost needs to be informed
 ADD_DEFINITIONS(-D_REENTRANT)
 
-ADD_SUBDIRECTORY( tinyxml ) 
 ADD_SUBDIRECTORY( fftwcpp )
-ADD_SUBDIRECTORY( src ) 
+ADD_SUBDIRECTORY( src )
 
-ADD_SUBDIRECTORY( utilities ) 
+ADD_SUBDIRECTORY( utilities )
 ADD_SUBDIRECTORY( test )
 

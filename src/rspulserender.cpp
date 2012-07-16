@@ -28,7 +28,7 @@
 #include "rsportable.h"
 
 #define TIXML_USE_STL
-#include "tinyxml/tinyxml.h"
+#include <tinyxml.h>
 
 using namespace rs;
 

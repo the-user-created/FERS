@@ -12,7 +12,7 @@
 #include <cmath>
 #include "rsportable.h"
 #include "rsinterp.h"
-#include "tinyxml/tinyxml.h"
+#include <tinyxml.h>
 #include "rspattern.h"
 
 using namespace rs;

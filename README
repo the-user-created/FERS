@@ -28,6 +28,7 @@ FERS depends on a number of external libraries, which you need to install before
 * Boost (at least boost::threads and boost::random header) which is available freely from http://www.boost.org
 * FFTW3 which is available freely from http://www.fftw3.org
 * libhdf5
+* TinyXML which is available freely from http://sourceforge.net/projects/tinyxml/
 
 On a Debian or Ubuntu system (or pretty much any other decent GNU/Linux distribution) these libraries should be available pre-packaged for your installing pleasure.
 
