@@ -38,11 +38,11 @@ void rshdf5::ReadPulseData(const std::string &name, std::complex<rsFloat> **data
   H5T_class_t class_id;
   hsize_t* dims;
   //Open the / group
-  hid_t slash = H5Gopen(file, "/");
+  hid_t slash = H5Gopen1(file, "/");
   if (slash < 0)
     throw std::runtime_error("[ERROR] HDF5 file "+name+" does not have top level group \"/\"");
   //Open the I group
-  hid_t Igroup = H5Gopen(slash, "I");
+  hid_t Igroup = H5Gopen1(slash, "I");
   if (Igroup < 0)
     throw std::runtime_error("[ERROR] HDF5 file "+name+" does not have group \"I\"");
   // Get the rank of the groups
@@ -63,7 +63,7 @@ void rshdf5::ReadPulseData(const std::string &name, std::complex<rsFloat> **data
   //Close the I group
   H5Gclose(Igroup);
   //Open the Q group
-  hid_t Qgroup = H5Gopen(slash, "Q");
+  hid_t Qgroup = H5Gopen1(slash, "Q");
   if (Qgroup < 0)
     throw std::runtime_error("[ERROR] HDF5 file "+name+" does not have group \"Q\"");
   // Check the Q dataset is the same size

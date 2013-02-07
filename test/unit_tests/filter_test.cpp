@@ -30,7 +30,8 @@ unsigned int processors = 4;
 int main()
 {
   rsNoise::InitializeNoise();
-  rsFloat a[12] = {1.000000000000000e+00,
+  /*
+   *rsFloat a[12] = {1.000000000000000e+00,
 			   -1.009905033992710e+01,
 			   4.667711400358178e+01,
 			   -1.303037481274771e+02,
@@ -54,6 +55,7 @@ int main()
 			       3.530891199610165e-03,
 			       -1.034084955129719e-03,
 			       1.354744024510070e-04};
+                   */
   //  IIRFilter* iir = new IIRFilter(a, b, 12);
   //for (int i = 0; i < 10240; i++)
   // cout << iir->Filter(rsNoise::WGNSample(1)) << endl;

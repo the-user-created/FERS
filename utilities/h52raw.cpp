@@ -33,7 +33,7 @@ void ReadAndDump(hid_t file, FILE *outfile)
   unsigned int i;
   double maxI = 0, maxQ = 0;
   //Open the / group
-  hid_t slash = H5Gopen(file, "/");
+  hid_t slash = H5Gopen1(file, "/");
   if (slash < 0)
     throw std::runtime_error("[ERROR] HDF5 file does not have top level group \"/\"");
   // Count the chunks
