@@ -187,9 +187,9 @@ namespace {
       rsFloat* pnoise = GeneratePhaseNoise(recv, size, rate, carrier, pn_enabled);
       //      printf("%g\n", pnoise[0]);
       // Get the window start time, including clock drift effects
-      rsFloat start = recv->GetWindowStart(i)+(pnoise[0]/(2*M_PI*carrier));
+      rsFloat start = recv->GetWindowStart(i) + (pnoise[0] / (2 * M_PI * carrier));
       // Get the fraction of a sample of the window delay
-      rsFloat frac_delay = start*rate-rsPortable::rsRound(start*rate);
+      rsFloat frac_delay = start * rate - rsPortable::rsRound(start * rate);
       //      std::printf("frac: %g %g %g\n", frac_delay, start*rate, rsPortable::rsRound(start*rate));
       start = rsPortable::rsRound(start*rate)/rate;
       //rsFloat start = recv->GetWindowStart(i);
