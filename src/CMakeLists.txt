@@ -102,6 +102,8 @@ IF (FERS_LIB_FFTW3_THREADS)
 ENDIF (FERS_LIB_FFTW3_THREADS)
 
 #Include code to check for python libs
+#We must use Python2
+SET(Python_ADDITIONAL_VERSIONS 2.7 2.6 2.5)
 INCLUDE(FindPythonLibs)
 
 IF (PYTHONLIBS_FOUND)

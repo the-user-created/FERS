@@ -54,6 +54,7 @@ void SolveRE(const Transmitter *trans, const Receiver *recv, const Target *targ,
   //Step 1, calculate the delay (in seconds) experienced by the pulse
   //See "Delay Equation" in doc/equations/equations.tex
   results.delay = (Rt+Rr)/rsParameters::c();
+  //rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Calculated delay as %fs, %fm\n", results.delay, results.delay * rsParameters::c());
   //Get the RCS
   rsFloat RCS = targ->GetRCS(transvec, recvvec);
   //Get the wavelength
@@ -102,25 +103,27 @@ void SolveRE(const Transmitter *trans, const Receiver *recv, const Target *targ,
 void SimulateTarget(const Transmitter *trans, Receiver *recv, const Target *targ, const World *world, const TransmitterPulse *signal) {
   //Get the simulation start and end time
   rsFloat start_time = signal->time;
-  rsFloat end_time = signal->time+signal->wave->GetLength();
+  rsFloat end_time = signal->time + signal->wave->GetLength();
   //Calculate the number of interpolation points we need to add
-  rsFloat sample_time = 1.0/rsParameters::cw_sample_rate();
-  rsFloat point_count = std::ceil(signal->wave->GetLength()/sample_time);  
+  rsFloat sample_time = 1.0 / rsParameters::cw_sample_rate();
+  rsFloat point_count = std::ceil(signal->wave->GetLength() / sample_time);
   //Create the response
   Response *response = new Response(signal->wave, trans);
   try {
     //Loop through and add interpolation points
     for (int i = 0; i < point_count; i++) {
-      rsFloat stime = i*sample_time+start_time; //Time of the start of the sample
+      rsFloat stime = i * sample_time + start_time; //Time of the start of the sample
       REResults results;
       SolveRE(trans, recv, targ, stime, sample_time, signal->wave, results);
-      InterpPoint point(results.power, stime+results.delay, results.delay, results.doppler, results.phase, results.noise_temperature);
+      InterpPoint point(results.power, stime + results.delay, results.delay, results.doppler, results.phase, results.noise_temperature);
       response->AddInterpPoint(point);
+      //rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Added interpolation point with delay: %gs, %fm\n", results.delay, results.delay * rsParameters::c());
+      //rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "stime + results.delay = : %gs\n", stime + results.delay);
     }
     //Add one more point at the end
     REResults results;
     SolveRE(trans, recv, targ, end_time, sample_time, signal->wave, results);
-    InterpPoint point(results.power, end_time+results.delay, results.delay, results.doppler, results.phase, results.noise_temperature);
+    InterpPoint point(results.power, end_time + results.delay, results.delay, results.doppler, results.phase, results.noise_temperature);
     response->AddInterpPoint(point);
   }
   catch (RangeError re) {
