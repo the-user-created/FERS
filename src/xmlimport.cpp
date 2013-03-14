@@ -176,7 +176,7 @@ void ProcessTarget(TiXmlHandle &targXML, Platform *platform, World *world)
 /// Process a receiver XML entry
 Receiver *ProcessReceiver(TiXmlHandle &recvXML, Platform *platform, World *world)
 {
-  DEBUG_PRINT(rsDebug::RS_VERY_VERBOSE, "[VV] Loading Receiver");
+  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Loading Receiver.\n");
 
   //Get the name of the receiver
   string name = GetAttributeString(recvXML, "name", "Receiver does not specify a name");
@@ -277,7 +277,7 @@ Transmitter *ProcessCWTransmitter(TiXmlHandle &transXML, std::string &name, Plat
 /// Process a transmitter XML entry
 Transmitter *ProcessTransmitter(TiXmlHandle &transXML, Platform *platform, World *world)
 {
-  DEBUG_PRINT(rsDebug::RS_VERY_VERBOSE, "[VV] Loading Transmitter");
+  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Loading Transmitter\n");
 
   //Get the name of the transmitter
   string name = GetAttributeString(transXML, "name", "Transmitter does not specify a name");
@@ -344,7 +344,7 @@ void ProcessWaypoint(TiXmlHandle &handXML, Path *path)
     path->AddCoord(coord);
   }
   catch (XmlImportException &e) {
-    DEBUG_PRINT(rsDebug::RS_VERBOSE, "[WARNING] Parse Error While Importing Waypoint. Discarding Waypoint.");
+    rsDebug::printf(rsDebug::RS_VERBOSE, "[WARNING] Parse Error While Importing Waypoint. Discarding Waypoint.\n");
   }
 }
 
@@ -417,7 +417,7 @@ void ProcessRotationWaypoint(TiXmlHandle &handXML, RotationPath *path)
     path->AddCoord(coord);
   }
   catch (XmlImportException &e) {
-    DEBUG_PRINT(rsDebug::RS_VERBOSE, "[WARNING] Parse Error While Importing Waypoint. Discarding Waypoint.");
+    rsDebug::printf(rsDebug::RS_VERBOSE, "[WARNING] Parse Error While Importing Waypoint. Discarding Waypoint.\n");
   }
 }
 
@@ -447,16 +447,14 @@ void ProcessRotationConstant(TiXmlHandle &mpXML, Platform* platform)
     path->SetConstantRate(start, rate);
   }
   catch (XmlImportException &e) {
-    DEBUG_PRINT(rsDebug::RS_VERBOSE, "[WARNING] Parse Error While Importing Constant Rotation.");
+    rsDebug::printf(rsDebug::RS_VERBOSE, "[WARNING] Parse Error While Importing Constant Rotation.\n");
   }
 }
 
 /// Process a RotationPath XML entry
 void ProcessRotationPath(TiXmlHandle &mpXML, Platform *platform)
 {
-  DEBUG_PRINT(rsDebug::RS_VERY_VERBOSE, "[VV] Loading Rotation Path");
-  
-  
+  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Loading Rotation Path.\n");
   
   //Get a pointer to the rotation path
   RotationPath *path = platform->GetRotationPath();
@@ -648,7 +646,7 @@ void ProcessAntenna(TiXmlHandle &antXML, World *world)
     rsFloat factor = GetChildRsFloat(antXML, "efficiency");
     antenna->SetEfficiencyFactor(factor);
   } catch (XmlImportException &xe) {
-    rsDebug::printf(rsDebug::RS_VERBOSE, "[VERBOSE] Antenna %s does not specify efficiency, assuming unity.", ant_name.c_str());
+    rsDebug::printf(rsDebug::RS_VERBOSE, "[VERBOSE] Antenna %s does not specify efficiency, assuming unity.\n", ant_name.c_str());
   }
   //Add it to the world
   world->Add(antenna);

@@ -28,13 +28,13 @@ int main(int argc, char *argv[])
     //Initialize the RNG code
     rsNoise::InitializeNoise();
     //Init the FFT code
-    DEBUG_PRINT(rsDebug::RS_VERBOSE, "[VERBOSE] Loading XML Script File");
+    rsDebug::printf(rsDebug::RS_VERBOSE, "[VERBOSE] Loading XML Script File.\n");
     //Load the script file
     xml::LoadXMLFile(argv[1], world);
 
     //Start the threaded simulation
     rs::RunThreadedSim(rs::rsParameters::render_threads(), world);
-    DEBUG_PRINT(rsDebug::RS_VERBOSE, "[VERBOSE] Cleaning up");
+    rsDebug::printf(rsDebug::RS_VERBOSE, "[VERBOSE] Cleaning up.\n");
     //Clean up the world model
     delete world;
     //Clean up singleton objects

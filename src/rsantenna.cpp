@@ -53,7 +53,7 @@ Antenna::~Antenna()
 void Antenna::SetEfficiencyFactor(rsFloat loss)
 {
   if (loss > 1)
-    DEBUG_PRINT(rsDebug::RS_IMPORTANT, "Using greater than unity antenna efficiency, results might be inconsistent with reality");
+    rsDebug::printf(rsDebug::RS_IMPORTANT, "Using greater than unity antenna efficiency, results might be inconsistent with reality.\n");
   lossFactor = loss;
 }
 
