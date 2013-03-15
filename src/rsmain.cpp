@@ -12,15 +12,24 @@
 #include "fftwcpp.h"
 #include "rsparameters.h"
 #include "rsportable.h"
+#include <cstring>
 
 /// FERS main function
 int main(int argc, char *argv[])
 {
-  if (argc != 2) {
-    rsDebug::printf(rsDebug::RS_CRITICAL, "Usage: %s <scriptfile>\n", argv[0]);
+  rsDebug::printf(rsDebug::RS_CRITICAL, "/------------------------------------------------\\\n");
+  rsDebug::printf(rsDebug::RS_CRITICAL, "| FERS - The Flexible Extensible Radar Simulator |\n");
+  rsDebug::printf(rsDebug::RS_CRITICAL, "| Version 0.22                                   |\n");
+  rsDebug::printf(rsDebug::RS_CRITICAL, "\\------------------------------------------------/\n\n");
+
+  if (argc != 2 || !strncmp(argv[1], "--help", 6))
+  {
+    rsDebug::printf(rsDebug::RS_CRITICAL, "Usage: %s <scriptfile> (Run simulation specified by script file)\n", argv[0]);
+    rsDebug::printf(rsDebug::RS_CRITICAL, "Usage: %s --help (Show this message)\n\n", argv[0]);
     return 2;
   }
-  try {
+  try
+  {
     // Set the number of threads
     rs::rsParameters::modify_parms()->SetThreads(rsPortable::CountProcessors());
     // Create the world container
@@ -40,13 +49,18 @@ int main(int argc, char *argv[])
     //Clean up singleton objects
     rsNoise::CleanUpNoise();
     //FFTCleanUp();
+
+    rsDebug::printf(rsDebug::RS_CRITICAL, "------------------------------------------------\n");
+    rsDebug::printf(rsDebug::RS_CRITICAL, "Simulation completed successfully...\n\n");
+
     return 0;
   }
   catch (std::exception &ex)
-    {
-      rsDebug::printf(rsDebug::RS_CRITICAL, "[ERROR] Simulation encountered unexpected error:\n\t%s\nSimulator will terminate.\n", ex.what());
-      return 1;
-    }
+  {
+    rsDebug::printf(rsDebug::RS_CRITICAL, "[ERROR] Simulation encountered unexpected error:\n\t%s\nSimulator will terminate.\n", ex.what());
+    return 1;
+  }
+
   return 0;
 
 }

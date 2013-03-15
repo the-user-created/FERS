@@ -186,7 +186,7 @@ unsigned int rsParameters::oversample_ratio()
 void rsParameters::SetC(rsFloat c)
 {
   sim_parms.c = c;
-  rsDebug::printf(rsDebug::RS_CRITICAL, "Propagation speed (c) set to custom value: %8.5f\n", c);
+  rsDebug::printf(rsDebug::RS_CRITICAL, "[CRITICAL] Propagation speed (c) set to custom value: %8.5f\n", c);
 }
 
 void rsParameters::SetTime(rsFloat start, rsFloat end)

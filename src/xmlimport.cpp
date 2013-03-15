@@ -136,7 +136,7 @@ void ProcessTarget(TiXmlHandle &targXML, Platform *platform, World *world)
   TiXmlHandle rcsXML = targXML.ChildElement("rcs", 0);
   if (!rcsXML.Element())
     throw XmlImportException("Target "+name+" does not specify RCS.");
-  string rcs_type = GetAttributeString(rcsXML, "type", "RCS attached to target "+name+" does not specify type.");
+  string rcs_type = GetAttributeString(rcsXML, "type", "RCS attached to target '"+name+"' does not specify type.");
   // Handle the target type (isotropic, file imported, etc.)
   if (rcs_type == "isotropic") {
     TiXmlHandle rcsValueXML = rcsXML.ChildElement("value", 0);
@@ -146,7 +146,7 @@ void ProcessTarget(TiXmlHandle &targXML, Platform *platform, World *world)
     target = CreateIsoTarget(platform, name, value);
   }
   else if (rcs_type == "file") {
-    string filename = GetAttributeString(rcsXML, "filename", "RCS attached to target "+name+" does not specify filename.");
+    string filename = GetAttributeString(rcsXML, "filename", "RCS attached to target '"+name+"' does not specify filename.");
     target = CreateFileTarget(platform, name, filename);
   }
   else {
@@ -156,7 +156,7 @@ void ProcessTarget(TiXmlHandle &targXML, Platform *platform, World *world)
   TiXmlHandle modelXML = targXML.ChildElement("model", 0);
   if (modelXML.Element()) {
     //Get the mode type
-    string model_type = GetAttributeString(modelXML, "type", "Model attached to target "+name+" does not specify type.");
+    string model_type = GetAttributeString(modelXML, "type", "Model attached to target '"+name+"' does not specify type.");
     if (model_type == "constant") {
       RCSConst* model = new RCSConst();
       target->SetFluctuationModel(model);
@@ -166,7 +166,7 @@ void ProcessTarget(TiXmlHandle &targXML, Platform *platform, World *world)
       target->SetFluctuationModel(model);
     }
     else {
-      throw XmlImportException("Target fluctuation model type "+model_type+" not recognised.");
+      throw XmlImportException("Target fluctuation model type '"+model_type+"' not recognised.");
     }
   }
   //Add the target to the world
@@ -176,20 +176,20 @@ void ProcessTarget(TiXmlHandle &targXML, Platform *platform, World *world)
 /// Process a receiver XML entry
 Receiver *ProcessReceiver(TiXmlHandle &recvXML, Platform *platform, World *world)
 {
-  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Loading Receiver.\n");
+  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Loading Receiver: ");
 
   //Get the name of the receiver
   string name = GetAttributeString(recvXML, "name", "Receiver does not specify a name");
   Receiver *receiver = new Receiver(platform, name);
 
   //Get the name of the antenna
-  string ant_name = GetAttributeString(recvXML, "antenna", "Receiver " + string(name) + " does not specify an antenna");
+  string ant_name = GetAttributeString(recvXML, "antenna", "Receiver '" + string(name) + "' does not specify an antenna");
 
-  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Loading receiver %s\n", receiver->GetName().c_str());
+  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "'%s' ", receiver->GetName().c_str());
   
   Antenna *antenna = world->FindAntenna(ant_name);
   if (!antenna)
-    throw XmlImportException("Antenna with name " + ant_name + " does not exist when processing Receiver " + string(name));
+    throw XmlImportException("Antenna with name '" + ant_name + "' does not exist when processing Receiver " + string(name));
   //Set the receiver's antenna
   receiver->SetAntenna(antenna);
 
@@ -199,7 +199,7 @@ Receiver *ProcessReceiver(TiXmlHandle &recvXML, Platform *platform, World *world
     temperature = GetChildRsFloat(recvXML, "noise_temp");
     receiver->SetNoiseTemperature(temperature);
   } 
-  catch (XmlImportException e) {
+  catch (XmlImportException &e) {
   }
 
   //Process the PRF tag
@@ -209,12 +209,12 @@ Receiver *ProcessReceiver(TiXmlHandle &recvXML, Platform *platform, World *world
   receiver->SetWindowProperties(length, prf, skip);
 
   //Get the name of the timing source
-  string timing_name = GetAttributeString(recvXML, "timing", "Receiver "+name+" does not specify a timing source");
+  string timing_name = GetAttributeString(recvXML, "timing", "Receiver '"+name+"' does not specify a timing source");
   ClockModelTiming *timing = new ClockModelTiming(timing_name);
   
   PrototypeTiming *proto = world->FindTiming(timing_name);
   if (!proto)
-    throw XmlImportException("Timing source " + timing_name + " does not exist when processing receiver "+name);
+    throw XmlImportException("Timing source '" + timing_name + "' does not exist when processing receiver '"+name+"'");
   //Initialize the new model from the prototype model
   timing->InitializeModel(proto);
   //Set the receiver's timing source
@@ -224,7 +224,7 @@ Receiver *ProcessReceiver(TiXmlHandle &recvXML, Platform *platform, World *world
   bool nodirect = GetAttributeBool(recvXML, "nodirect", "", false);
   if (nodirect) {
     receiver->SetFlag(rs::Receiver::FLAG_NODIRECT);
-    rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Ignoring direct signals for receiver %s\n", receiver->GetName().c_str());
+    rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Ignoring direct signals for receiver '%s'\n", receiver->GetName().c_str());
   }
 
   // Get the NoPropagationLoss flag, which causes propagation loss to be ignored
@@ -232,7 +232,7 @@ Receiver *ProcessReceiver(TiXmlHandle &recvXML, Platform *platform, World *world
   bool noproploss = GetAttributeBool(recvXML, "nopropagationloss", "", false);
   if (noproploss) {
       receiver->SetFlag(rs::Receiver::FLAG_NOPROPLOSS);
-      rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Ignoring propagation losses for receiver %s\n", receiver->GetName().c_str());
+      rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Ignoring propagation losses for receiver '%s'\n", receiver->GetName().c_str());
   }
 
   //Add the receiver to the world
@@ -246,11 +246,11 @@ Transmitter *ProcessPulseTransmitter(TiXmlHandle &transXML, std::string &name, P
 {
   Transmitter *transmitter = new Transmitter(platform, string(name), true);
   //Get the name of the pulse
-  string pulse_name = GetAttributeString(transXML, "pulse", "Transmitter " + name + " does not specify a pulse");
+  string pulse_name = GetAttributeString(transXML, "pulse", "Transmitter '" + name + "' does not specify a pulse");
   //Get the pulse from the table of pulses
   RadarSignal *wave = world->FindSignal(pulse_name);
   if (!wave)
-    throw XmlImportException("Pulse with name " + pulse_name + " does not exist");
+    throw XmlImportException("Pulse with name '" + pulse_name + "' does not exist");
   //Get the Pulse Repetition Frequency
   rsFloat prf = GetChildRsFloat(transXML, "prf");
   //Attach the pulse to the transmitter
@@ -264,11 +264,11 @@ Transmitter *ProcessCWTransmitter(TiXmlHandle &transXML, std::string &name, Plat
 {
   Transmitter *transmitter = new Transmitter(platform, string(name), false);
   //Get the name of the pulse
-  string pulse_name = GetAttributeString(transXML, "pulse", "Transmitter " + name + " does not specify a pulse");
+  string pulse_name = GetAttributeString(transXML, "pulse", "Transmitter '" + name + "' does not specify a pulse");
   //Get the pulse from the table of pulses
   RadarSignal *wave = world->FindSignal(pulse_name);
   if (!wave)
-    throw XmlImportException("Pulse with name " + pulse_name + " does not exist");
+    throw XmlImportException("Pulse with name '" + pulse_name + "' does not exist");
   //Attach the CW waveform to the transmitter
   transmitter->SetWave(wave);
   return transmitter;
@@ -277,38 +277,38 @@ Transmitter *ProcessCWTransmitter(TiXmlHandle &transXML, std::string &name, Plat
 /// Process a transmitter XML entry
 Transmitter *ProcessTransmitter(TiXmlHandle &transXML, Platform *platform, World *world)
 {
-  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Loading Transmitter\n");
+  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Loading Transmitter: ");
 
   //Get the name of the transmitter
   string name = GetAttributeString(transXML, "name", "Transmitter does not specify a name");
 
 
   //Get the transmitter type
-  string type = GetAttributeString(transXML, "type", "Transmitter "+name+" does not specify type");
+  string type = GetAttributeString(transXML, "type", "Transmitter '"+name+"' does not specify type");
   Transmitter *transmitter;
   if (type == "pulsed")
     transmitter = ProcessPulseTransmitter(transXML, name, platform, world);
   else if (type == "continuous")
     transmitter = ProcessCWTransmitter(transXML, name, platform, world);
   else
-    throw XmlImportException("[ERROR] Invalid transmitter type specifed in transmitter "+name);
+    throw XmlImportException("[ERROR] Invalid transmitter type specified in transmitter "+name);
 
   //Get the name of the antenna
-  string ant_name = GetAttributeString(transXML, "antenna", "Transmitter " + name + " does not specify an antenna");
+  string ant_name = GetAttributeString(transXML, "antenna", "Transmitter '" + name + "' does not specify an antenna");
   Antenna *antenna = world->FindAntenna(ant_name);
   if (!antenna)
-    throw XmlImportException("Antenna with name " + ant_name + " does not exist when processing Transmitter " + string(name));
+    throw XmlImportException("Antenna with name '" + ant_name + "' does not exist when processing Transmitter " + string(name));
   //Set the transmitter's antenna
   transmitter->SetAntenna(antenna);
 
   //Get the name of the timing source
-  string timing_name = GetAttributeString(transXML, "timing", "Transmitter "+name+" does not specify a timing source");
+  string timing_name = GetAttributeString(transXML, "timing", "Transmitter '"+name+"' does not specify a timing source");
 
   ClockModelTiming *timing = new ClockModelTiming(name);
   
   PrototypeTiming *proto = world->FindTiming(timing_name);
   if (!proto)
-    throw XmlImportException("Timing source " + timing_name + " does not exist when processing receiver "+name);
+    throw XmlImportException("Timing source '" + timing_name + "' does not exist when processing receiver "+name);
   //Initialize the new model from the prototype model
   timing->InitializeModel(proto);
   //Set the receiver's timing source
@@ -362,7 +362,7 @@ void ProcessPythonPath(TiXmlHandle &pathXML, Path *path)
     //Load the Path module
     path->LoadPythonPath(modname, funcname);
   }
-  catch (XmlImportException e) {
+  catch (XmlImportException &e) {
     rsDebug::printf(rsDebug::RS_VERBOSE, "%s", e.what());
   }
 
@@ -387,12 +387,12 @@ void ProcessMotionPath(TiXmlHandle &mpXML, Platform *platform)
       ProcessPythonPath(mpXML, path);
     }
     else {
-      rsDebug::printf(rsDebug::RS_VERBOSE, "[WARNING] Unsupported motion path interpolation type for platform "+platform->GetName()+". Defaulting to static.\n");
+      rsDebug::printf(rsDebug::RS_VERBOSE, "[WARNING] Unsupported motion path interpolation type for platform '"+platform->GetName()+"'. Defaulting to static.\n");
       path->SetInterp(Path::RS_INTERP_STATIC);
     }
   }
-  catch (XmlImportException e) {
-    rsDebug::printf(rsDebug::RS_VERBOSE, "[WARNING] Motion path interpolation type not specified for platform "+platform->GetName()+". Defaulting to static.\n");
+  catch (XmlImportException &e) {
+    rsDebug::printf(rsDebug::RS_VERBOSE, "[WARNING] Motion path interpolation type not specified for platform '"+platform->GetName()+"'. Defaulting to static.\n");
     path->SetInterp(Path::RS_INTERP_STATIC);
   } 
 
@@ -469,12 +469,12 @@ void ProcessRotationPath(TiXmlHandle &mpXML, Platform *platform)
     else if (rottype == "static")
       path->SetInterp(RotationPath::RS_INTERP_STATIC);
     else {
-      rsDebug::printf(rsDebug::RS_VERBOSE, "[WARNING] Unsupported rotation path interpolation type for platform "+platform->GetName()+". Defaulting to static.\n");
+      rsDebug::printf(rsDebug::RS_VERBOSE, "[WARNING] Unsupported rotation path interpolation type for platform '"+platform->GetName()+"'. Defaulting to static.\n");
       path->SetInterp(RotationPath::RS_INTERP_STATIC);
     }
   }
-  catch (XmlImportException e) {
-    rsDebug::printf(rsDebug::RS_VERBOSE, "[WARNING] Rotation path interpolation type not specified for platform "+platform->GetName()+". Defaulting to static.\n");
+  catch (XmlImportException &e) {
+    rsDebug::printf(rsDebug::RS_VERBOSE, "[WARNING] Rotation path interpolation type not specified for platform '"+platform->GetName()+"'. Defaulting to static.\n");
     path->SetInterp(RotationPath::RS_INTERP_STATIC);
   }
   // Process the rotation waypoints
@@ -560,7 +560,7 @@ void ProcessPulse(TiXmlHandle &pulseXML, World *world)
   //Get the type of the pulse
   string pulse_type = GetAttributeString(pulseXML, "type", "Pulses must specify a type");
   //Generate the pulse    
-  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Generating Pulse %s of type %s\n", pulse_name.c_str(), pulse_type.c_str());
+  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Generating Pulse %s of type '%s'\n", pulse_name.c_str(), pulse_type.c_str());
   if (pulse_type == "file")
     ProcessAnyPulseFile(pulseXML, world, pulse_name);
   else
@@ -638,15 +638,15 @@ void ProcessAntenna(TiXmlHandle &antXML, World *world)
   else if (ant_pattern == "parabolic")
     antenna = ProcessParabolicAntenna(antXML, ant_name);
   else
-    throw XmlImportException("Antenna specified unrecognised gain pattern " + ant_pattern);
+    throw XmlImportException("Antenna specified unrecognised gain pattern '" + ant_pattern + "'");
   //Notify the debug log
-  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Loading antenna %s of type %s\n", ant_name.c_str(), ant_pattern.c_str());
+  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Loading antenna '%s' of type '%s'\n", ant_name.c_str(), ant_pattern.c_str());
   //Load the efficiency factor
   try {
     rsFloat factor = GetChildRsFloat(antXML, "efficiency");
     antenna->SetEfficiencyFactor(factor);
   } catch (XmlImportException &xe) {
-    rsDebug::printf(rsDebug::RS_VERBOSE, "[VERBOSE] Antenna %s does not specify efficiency, assuming unity.\n", ant_name.c_str());
+    rsDebug::printf(rsDebug::RS_VERBOSE, "[VERBOSE] Antenna '%s' does not specify efficiency, assuming unity.\n", ant_name.c_str());
   }
   //Add it to the world
   world->Add(antenna);
@@ -715,14 +715,14 @@ void ProcessTiming(TiXmlHandle &antXML, World *world)
   catch (XmlImportException &xe) {
     //If there is no frequency, we default to the system sample frequency
     timing->SetFrequency(rsParameters::rate());
-    rsDebug::printf(rsDebug::RS_VERBOSE, "[VERBOSE] Clock section %s does not specify frequency. Assuming %g.\n", name.c_str(), rsParameters::rate());
+    rsDebug::printf(rsDebug::RS_VERBOSE, "[VERBOSE] Clock section '%s' does not specify frequency. Assuming %g.\n", name.c_str(), rsParameters::rate());
   }
   //Process the synconpulse tag
   bool sync = GetAttributeBool(antXML, "synconpulse", "", true);
   if (sync)
       timing->SetSyncOnPulse();  
   //Notify the debug log
-  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Loading timing source %s\n", name.c_str());
+  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Loading timing source '%s'\n", name.c_str());
 
   //Add it to the world
   world->Add(timing);

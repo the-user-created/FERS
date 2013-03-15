@@ -54,7 +54,7 @@ public:
 
   //Operator () is executed when we create the thread
   void operator()() {
-    rsDebug::printf(rsDebug::RS_VERBOSE, "[VERBOSE] Created simulator thread for transmitter %s and receiver %s\n", trans->GetName().c_str(), recv->GetName().c_str());
+    rsDebug::printf(rsDebug::RS_VERBOSE, "[VERBOSE] Created simulator thread for transmitter '%s' and receiver '%s' ", trans->GetName().c_str(), recv->GetName().c_str());
     try {
       SimulatePair(trans, recv, world);
     }
@@ -85,7 +85,7 @@ public:
 
   /// Operator () is executed when we create the thread
   void operator()() {
-    rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Created render thread for receiver %s\n", recv->GetName().c_str());
+    rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Created render thread for receiver '%s'\n", recv->GetName().c_str());
     try {
       recv->Render();
     }
@@ -124,7 +124,7 @@ void rs::RunThreadedSim(int thread_limit, World *world) {
   std::vector<Receiver*>::iterator ri;
   std::vector<Transmitter*>::const_iterator ti;
   boost::thread mainthrd();
-  rsDebug::printf(rsDebug::RS_INFORMATIVE, "Using threaded simulation with %d threads.\n", thread_limit);
+  rsDebug::printf(rsDebug::RS_INFORMATIVE, "[INFO] Using threaded simulation with %d threads.\n", thread_limit);
   //PHASE 1: Do first pass of simulator
   //Loop through the lists for transmitters and receivers
   for (ri = world->receivers.begin(); ri != world->receivers.end(); ri++) {
@@ -159,7 +159,7 @@ void rs::RunThreadedSim(int thread_limit, World *world) {
 
   // Report on the number of responses added to each receiver
   for (ri = world->receivers.begin(); ri != world->receivers.end(); ri++)
-    rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] %d responses added to reciever %s\n", (*ri)->CountResponses(), (*ri)->GetName().c_str());
+    rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] %d responses added to reciever '%s'\n", (*ri)->CountResponses(), (*ri)->GetName().c_str());
 
   //PHASE 2: Do render pass of simulation
   //Loop through the lists of receivers and set each to render

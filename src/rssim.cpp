@@ -126,7 +126,7 @@ void SimulateTarget(const Transmitter *trans, Receiver *recv, const Target *targ
     InterpPoint point(results.power, end_time + results.delay, results.delay, results.doppler, results.phase, results.noise_temperature);
     response->AddInterpPoint(point);
   }
-  catch (RangeError re) {
+  catch (RangeError &re) {
     throw std::runtime_error("Receiver or Transmitter too close to Target for accurate simulation");
   }
   //Add the response to the reciever
@@ -222,7 +222,7 @@ void AddDirect(const Transmitter *trans, Receiver *recv, const World *world, con
     response->AddInterpPoint(point);
 
   }
-  catch (RangeError re) {
+  catch (RangeError &re) {
     throw std::runtime_error("Receiver or Transmitter too close to Target for accurate simulation");
   }
   //Add the response to the reciever

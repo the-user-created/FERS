@@ -273,6 +273,7 @@ void RotationPath::Finalize()
       break;
     case RS_INTERP_CUBIC:
       finalizeCubic<RotationCoord>(coords, dd);
+      break;
     }
     final = true;
   }

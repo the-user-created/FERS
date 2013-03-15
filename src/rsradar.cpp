@@ -169,7 +169,7 @@ void Transmitter::GetPulse(TransmitterPulse *pulse, int number) const
   //If there is timing jitter, add it
   if (!timing)
     throw std::logic_error("[BUG] Transmitter "+GetName()+" must be associated with timing source");
-  pulse->time = pulse->time;//+timing->GetPulseTimeError();
+  //pulse->time = pulse->time;//+timing->GetPulseTimeError();
   
 }
 
@@ -243,7 +243,7 @@ void Receiver::Render()
     //Unlock the mutex
     lock.unlock();
   }
-  catch (boost::lock_error e)
+  catch (boost::lock_error &e)
     {
       throw std::runtime_error("[BUG] Responses lock is locked during Render()");
     }
@@ -303,7 +303,7 @@ rsFloat Receiver::GetWindowStart(int window) const
   //If there is timing jitter, add it
   if (!timing)
     throw std::logic_error("[BUG] Receiver must be associated with timing source");
-  stime = stime;//+timing->GetPulseTimeError();
+  //stime = stime;//+timing->GetPulseTimeError();
   return stime;
 }
 
