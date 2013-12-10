@@ -111,12 +111,15 @@ IF (PYTHONLIBS_FOUND)
    INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_PATH})
 ENDIF (PYTHONLIBS_FOUND)
 
-#Link to Boost Thread
-FIND_LIBRARY(FERS_LIB_BOOST_THREAD NAMES boost_thread boost_thread-mt)
+#Link to Boost Thread and System
+SET(Boost_USE_STATIC_LIBS   ON) ##Link Boost statically
+FIND_PACKAGE(Boost COMPONENTS system thread REQUIRED)
 
-IF (FERS_LIB_BOOST_THREAD)
-   TARGET_LINK_LIBRARIES(fers ${FERS_LIB_BOOST_THREAD} )
-ENDIF (FERS_LIB_BOOST_THREAD)
+MESSAGE(STATUS "Linking libraries for Boost: " ${Boost_LIBRARIES})
+
+IF (Boost_LIBRARIES)
+   TARGET_LINK_LIBRARIES(fers ${Boost_LIBRARIES} )
+ENDIF ()
 
 ########### install files ###############
 

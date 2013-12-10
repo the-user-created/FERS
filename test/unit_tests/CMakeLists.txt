@@ -49,12 +49,16 @@ IF (PYTHONLIBS_FOUND)
    INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_PATH})
 ENDIF (PYTHONLIBS_FOUND)
 
-#Link to Boost Thread
-FIND_LIBRARY(FERS_LIB_BOOST_THREAD NAMES boost_thread boost_thread-mt)
+#Link to Boost Thread and System
+SET(Boost_USE_STATIC_LIBS   ON) ##Link Boost statically
+FIND_PACKAGE(Boost COMPONENTS system thread REQUIRED)
 
-IF (FERS_LIB_BOOST_THREAD)
-   TARGET_LINK_LIBRARIES(noisegen_test ${FERS_LIB_BOOST_THREAD} )
-ENDIF (FERS_LIB_BOOST_THREAD)
+MESSAGE(STATUS "Linking libraries for Boost: " ${Boost_LIBRARIES})
+
+IF (Boost_LIBRARIES)
+   TARGET_LINK_LIBRARIES(noisegen_test ${Boost_LIBRARIES} )
+ENDIF ()
+
 
 ########### timing_test ###############
 
@@ -104,12 +108,10 @@ IF (PYTHONLIBS_FOUND)
    INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_PATH})
 ENDIF (PYTHONLIBS_FOUND)
 
-#Link to Boost Thread
-FIND_LIBRARY(FERS_LIB_BOOST_THREAD NAMES boost_thread boost_thread-mt)
-
-IF (FERS_LIB_BOOST_THREAD)
-   TARGET_LINK_LIBRARIES(timing_test ${FERS_LIB_BOOST_THREAD} )
-ENDIF (FERS_LIB_BOOST_THREAD)
+#Link to Boost Thread and System
+IF (Boost_LIBRARIES)
+   TARGET_LINK_LIBRARIES(timing_test ${Boost_LIBRARIES} )
+ENDIF ()
 
 ########### clock_test ###############
 
@@ -150,11 +152,10 @@ IF (PYTHONLIBS_FOUND)
    TARGET_LINK_LIBRARIES(clock_test ${PYTHON_LIBRARIES})
 ENDIF (PYTHONLIBS_FOUND)
 
-#Link to Boost Thread
-IF (FERS_LIB_BOOST_THREAD)
-   TARGET_LINK_LIBRARIES(clock_test ${FERS_LIB_BOOST_THREAD} )
-ENDIF (FERS_LIB_BOOST_THREAD)
-
+#Link to Boost thread and system
+IF (Boost_LIBRARIES)
+   TARGET_LINK_LIBRARIES(clock_test ${Boost_LIBRARIES} )
+ENDIF ()
 
 
 ########### filter_test ###############
@@ -203,13 +204,11 @@ IF (PYTHONLIBS_FOUND)
    INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_PATH})
 ENDIF (PYTHONLIBS_FOUND)
 
-#Link to Boost Thread
-FIND_LIBRARY(FERS_LIB_BOOST_THREAD NAMES boost_thread boost_thread-mt)
+#Link to Boost Thread and System
 
-IF (FERS_LIB_BOOST_THREAD)
-   TARGET_LINK_LIBRARIES(filter_test ${FERS_LIB_BOOST_THREAD} )
-ENDIF (FERS_LIB_BOOST_THREAD)
-
+IF (Boost_LIBRARIES)
+   TARGET_LINK_LIBRARIES(filter_test ${Boost_LIBRARIES} )
+ENDIF ()
 
 ########### install files ###############
 

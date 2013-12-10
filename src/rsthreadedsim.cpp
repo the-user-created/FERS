@@ -12,6 +12,11 @@
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/xtime.hpp>
+#include <boost/version.hpp>
+
+#if BOOST_VERSION < 105000
+#define TIME_UTC_ TIME_UTC
+#endif
 
 #include "rssim.h"
 #include "rsworld.h"
@@ -106,7 +111,7 @@ static void Sleep(int secs)
 {
   //We sleep for one second here
   boost::xtime xt;
-  boost::xtime_get(&xt, boost::TIME_UTC);
+  boost::xtime_get(&xt, boost::TIME_UTC_);
   xt.sec += secs;
   boost::thread::sleep(xt);
 }
