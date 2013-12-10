@@ -17,15 +17,19 @@ The features which are currently implemented are:
 
 AUTHORS
 
-FERS is currently under development by the following people:
+FERS was written by:
 
-Marc Brooker marcbrooker@gmail.com
+Marc Brooker (marcbrooker@gmail.com)
+
+FERS is currently maintained by the following people:
+
+Craig Tong (craig.tong@uct.ac.za)
 
 BUILDING FERS
 
 FERS depends on a number of external libraries, which you need to install before attempting to build FERS. The libraries you need to have installed are:
 
-* Boost (at least boost::threads and boost::random header) which is available freely from http://www.boost.org
+* Boost (at least boost::threads, boost::system and boost::random header) which is available freely from http://www.boost.org
 * FFTW3 which is available freely from http://www.fftw3.org
 * libhdf5
 * TinyXML which is available freely from http://sourceforge.net/projects/tinyxml/
@@ -34,13 +38,18 @@ On a Debian or Ubuntu system (or pretty much any other decent GNU/Linux distribu
 
 FERS also depends on the cmake system. This system can generate makefiles, VC++ projects, KDevelop projects and more from the FERS sources. Please install cmake before attempting to build FERS.
 
-Now type
+Download and extract the tar ball.
 
-cmake ./
-
-followed by
-
+cd into the extacted directory (by befault: cd fers/)
+mkdir build
+cd build
+cmake ../
 make
+
+A "fers" binary will be then be placed in the "src" directory which can be copied to a location of your choice.
+
+FERS can be build in debug mode by replacing the "cmake ../" with cmake -DCMAKE_BUILD_TYPE=Debug ../
+Note it is advisable use separate build folders for release and debug builds.
 
 FERS is written in standard C++ and should compile and run on many architectures and operating systems. Please report successes and failures of running this software on non-Linux and non-x86 platforms to the authors, so we can improve the software and make it more portable.
 

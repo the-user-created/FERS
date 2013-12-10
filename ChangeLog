@@ -1,3 +1,13 @@
+2013-12-10  Version 0.23 Craig Tong <craig.tong@uct.ac.za>
+	* Fixed for current versions of Boost.
+	* General improvements with the CMake setup.
+	* Build configuration defaults to Release.
+
+2013-03-15  Version 0.22 Craig Tong <craig.tong@uct.ac.za>
+	* Fixed "[BUG] Requested delay filter value out of range" problem caused by outbound arrays indexes. This could still be revised more elegantly.
+	* Tidied up general program output.
+	* Added title banner to program.
+
 2012-07-16  Version 0.21  Graham Inggs <graham@nerve.org.za>
 	* Remove included TinyXML - TinyXML is now in Debian and Red Hat
 
