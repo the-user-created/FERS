@@ -164,7 +164,7 @@ void rs::RunThreadedSim(int thread_limit, World *world) {
 
   // Report on the number of responses added to each receiver
   for (ri = world->receivers.begin(); ri != world->receivers.end(); ri++)
-    rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] %d responses added to reciever '%s'\n", (*ri)->CountResponses(), (*ri)->GetName().c_str());
+    rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] %d responses added to receiver '%s'\n", (*ri)->CountResponses(), (*ri)->GetName().c_str());
 
   //PHASE 2: Do render pass of simulation
   //Loop through the lists of receivers and set each to render

@@ -14,6 +14,7 @@
 #include "rsinterp.h"
 #include <tinyxml.h>
 #include "rspattern.h"
+#include "rsradarwaveform.h"
 
 using namespace rs;
 using namespace rsAntenna;
@@ -159,10 +160,21 @@ rsFloat Sinc::GetGain(const SVec3 &angle, const SVec3 &refangle, rsFloat wavelen
 {
   //Get the angle off boresight
   rsFloat theta = GetAngle(angle, refangle);
-  
+
+  //FIX 2015/02/18 CA Tong:
+  //std::pow<double> returns NaN for negative bases with certain fractional indices as they create an uneven 
+  //root which is, of course, a complex number. Inputs therefore need to be cast to complex numbers before the 
+  //calculation as this will return complex number. Then return the magnitude as the beam gain.
+
+  rs::rsComplex complexSinc(::sinc(beta*theta), 0.0);
+  rs::rsComplex complexGamma(gamma, 0.0);
+ 
   //See "Sinc Pattern" in doc/equations.tex for equation used here
-  rsFloat gain = alpha*std::pow(::sinc(beta*theta), gamma);
-  return gain*GetEfficiencyFactor();
+  rsComplex complexGain = alpha * std::pow(complexSinc, complexGamma) * GetEfficiencyFactor();
+
+  //rsDebug::printf(rsDebug::RS_IMPORTANT, "Theta = %f Gain = %f, %f\n", theta, complexGain.real(), complexGain.imag());
+
+  return std::abs(complexGain);
 }
 
 //

@@ -1,5 +1,5 @@
 //rsradar.h
-/// Defines classes for recievers, transmitters and antennas
+/// Defines classes for receivers, transmitters and antennas
 //Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //Started: 21 April 2006
 #ifndef __RSRADAR_H
@@ -159,7 +159,7 @@ namespace rs {
       /// Vector to hold all the system responses
       std::vector<Response *> responses;
       boost::try_mutex responses_mutex; //!< Mutex to serialize access to responses
-      rsFloat noise_temperature; //!< Noise temperature of the reciever
+      rsFloat noise_temperature; //!< Noise temperature of the receiver
       rsFloat window_length; //!< Length of the receive window (seconds)
       rsFloat window_prf; //!< Window repetition frequency
       rsFloat window_skip; //!< The amount of time at the beginning of an interval to skip before capturing response

@@ -129,7 +129,7 @@ void SimulateTarget(const Transmitter *trans, Receiver *recv, const Target *targ
   catch (RangeError &re) {
     throw std::runtime_error("Receiver or Transmitter too close to Target for accurate simulation");
   }
-  //Add the response to the reciever
+  //Add the response to the receiver
   recv->AddResponse(response);
 }
 
@@ -193,7 +193,7 @@ void SolveREDirect(const Transmitter *trans, const Receiver *recv, rsFloat time,
   }
 }
 
-/// Model the pulse which is received directly by a reciever from a CW transmitter
+/// Model the pulse which is received directly by a receiver from a CW transmitter
 void AddDirect(const Transmitter *trans, Receiver *recv, const World *world, const TransmitterPulse *signal) {
   //If receiver and transmitter share the same antenna - there can't be a direct pulse
   if (trans->IsMonostatic() && (trans->GetAttached() == recv))
@@ -225,7 +225,7 @@ void AddDirect(const Transmitter *trans, Receiver *recv, const World *world, con
   catch (RangeError &re) {
     throw std::runtime_error("Receiver or Transmitter too close to Target for accurate simulation");
   }
-  //Add the response to the reciever
+  //Add the response to the receiver
   recv->AddResponse(response);
 }
 
