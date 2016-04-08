@@ -112,7 +112,11 @@ IF (PYTHONLIBS_FOUND)
 ENDIF (PYTHONLIBS_FOUND)
 
 #Link to Boost Thread and System
-SET(Boost_USE_STATIC_LIBS   ON) ##Link Boost statically
+IF(WIN32)
+   SET(Boost_USE_STATIC_LIBS ON) ##Link Boost statically
+ELSE ()
+   SET(Boost_USE_STATIC_LIBS OFF) ##Link Boost with shared libs
+ENDIF ()
 FIND_PACKAGE(Boost COMPONENTS system thread REQUIRED)
 
 MESSAGE(STATUS "Linking libraries for Boost: " ${Boost_LIBRARIES})
