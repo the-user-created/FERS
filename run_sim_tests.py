@@ -2,7 +2,6 @@ import os
 import subprocess
 import filecmp
 import shutil
-from typing import LiteralString, ByteString
 
 import h5py
 import numpy as np
@@ -25,7 +24,7 @@ def run_simulation(test_path: str) -> bool:
 
     # Run FERS simulation
     input_file = 'input.fersxml'
-    result = subprocess.run(['fers', input_file], capture_output=True, text=True)
+    result = subprocess.run(['../../../build/src/fers', input_file], capture_output=True, text=True)
 
     # Return to the original directory
     os.chdir(original_dir)
@@ -122,6 +121,11 @@ def run_tests() -> None:
             clean_up(test_path)
 
     print(f"Passed {passed_tests} out of {len(os.listdir(TEST_DIR))} tests.")
+
+    if passed_tests == len(os.listdir(TEST_DIR)):
+        exit(0)
+    else:
+        exit(1)
 
 
 if __name__ == '__main__':
