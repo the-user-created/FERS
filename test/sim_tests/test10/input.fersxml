@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Test pulsed radar. Moving bistatic radar and one target with very high prf -->
+<!DOCTYPE simulation SYSTEM "../../xml_schema/fers-xml.dtd">
+<simulation name="High_PRF_Long_Simulation">
+    <!-- Simulation Parameters -->
+    <parameters>
+        <starttime>0.0</starttime>
+        <endtime>1.0</endtime>
+        <c>299792458</c> <!-- Speed of light in m/s -->
+        <rate>1e7</rate> <!-- 10 MHz sampling rate -->
+        <export csv="true" binary="false" xml="false"/> <!-- only export csv to save space -->
+        <adcbits>16</adcbits> <!-- 16-bit ADC resolution -->
+    </parameters>
+
+    <!-- Pulse Definition -->
+    <pulse name="high_prf_pulse" type="file" filename="waveform.csv">
+        <length>1e-6</length> <!-- Pulse length of 50 microseconds -->
+        <power>1000</power> <!-- Pulse power of 1000 watts -->
+        <carrier>1e9</carrier> <!-- Carrier frequency of 1 GHz -->
+    </pulse>
+
+    <!-- Timing Source -->
+    <timing name="timing_source" synconpulse="true">
+        <frequency>1e8</frequency> <!-- 100 MHz clock frequency -->
+        <jitter>0</jitter> <!-- No jitter -->
+    </timing>
+
+    <!-- Antenna Definition -->
+    <antenna name="isotropic_antenna" pattern="isotropic">
+        <efficiency>0.9</efficiency> <!-- 90% antenna efficiency -->
+    </antenna>
+
+    <!-- Transmitter Platform -->
+    <platform name="transmitter_platform">
+        <motionpath interpolation="linear">
+            <positionwaypoint>
+                <x>0</x>
+                <y>0</y>
+                <altitude>10</altitude>
+                <time>0</time>
+            </positionwaypoint>
+            <positionwaypoint>
+                <x>100</x>
+                <y>0</y>
+                <altitude>10</altitude>
+                <time>5</time>
+            </positionwaypoint>
+        </motionpath>
+
+        <fixedrotation>
+            <startazimuth>0</startazimuth>
+            <azimuthrate>0</azimuthrate>
+            <startelevation>0</startelevation>
+            <elevationrate>0</elevationrate>
+        </fixedrotation>
+
+        <transmitter name="transmitter" type="pulsed" pulse="high_prf_pulse" antenna="isotropic_antenna" timing="timing_source">
+            <prf>50000</prf> <!-- High PRF of 50,000 Hz -->
+        </transmitter>
+    </platform>
+
+    <!-- Receiver Platform -->
+    <platform name="receiver_platform">
+        <motionpath interpolation="linear">
+            <positionwaypoint>
+                <x>0</x>
+                <y>50</y>
+                <altitude>10</altitude>
+                <time>0</time>
+            </positionwaypoint>
+            <positionwaypoint>
+                <x>100</x>
+                <y>50</y>
+                <altitude>10</altitude>
+                <time>5</time>
+            </positionwaypoint>
+        </motionpath>
+
+        <fixedrotation>
+            <startazimuth>0</startazimuth>
+            <azimuthrate>0</azimuthrate>
+            <startelevation>0</startelevation>
+            <elevationrate>0</elevationrate>
+        </fixedrotation>
+
+        <receiver name="receiver" antenna="isotropic_antenna" timing="timing_source">
+            <window_skip>1e-6</window_skip> <!-- Skip 1 microsecond before window opens -->
+            <window_length>1e-3</window_length> <!-- 1 millisecond window length -->
+            <prf>50000</prf> <!-- High PRF of 50,000 Hz -->
+        </receiver>
+    </platform>
+
+    <!-- Target Definition -->
+    <platform name="target_platform">
+        <motionpath interpolation="linear">
+            <positionwaypoint>
+                <x>50</x>
+                <y>25</y>
+                <altitude>0</altitude>
+                <time>0</time>
+            </positionwaypoint>
+        </motionpath>
+
+        <target name="stationary_target">
+            <rcs type="isotropic">
+                <value>1</value> <!-- Isotropic RCS of 1 square meter -->
+            </rcs>
+        </target>
+    </platform>
+</simulation>
