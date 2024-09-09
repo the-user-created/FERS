@@ -2,12 +2,11 @@ import os
 import subprocess
 import filecmp
 import shutil
-
 import h5py
 import numpy as np
 
 # Define the base directory
-TEST_DIR = './test/sim_tests/'
+TEST_DIR = os.path.abspath('./test/sim_tests/')
 TOLERANCE = 0  # Use 0 for exact comparison or small value (e.g., 1e-6) for flexibility
 
 
@@ -23,15 +22,15 @@ def run_simulation(test_path: str) -> bool:
     os.chdir(test_path)
 
     # Run FERS simulation
-    input_file = 'input.fersxml'
-    result = subprocess.run(['../../../build/src/fers', input_file], capture_output=True, text=True)
+    input_file = os.path.join(test_path, 'input.fersxml')
+    fers_executable = os.path.abspath('../../../build/src/fers')
+    result = subprocess.run([fers_executable, input_file], capture_output=True, text=True)
 
     # Return to the original directory
     os.chdir(original_dir)
 
     if result.returncode != 0:
-        print(f"Test {test_path} failed during execution: {result.stderr}")
-        return False
+        raise RuntimeError(f"Test {test_path} failed during execution: {result.stderr}")
     return True
 
 
@@ -74,7 +73,7 @@ def compare_output(test_path: str) -> bool:
         print(f"Test {test_path} failed: No expected output files found.")
         return False
 
-    for root, dirs, files in os.walk(expected_dir):
+    for root, _, files in os.walk(expected_dir):
         for file in files:
             expected_file = str(os.path.join(root, file))
             generated_file = os.path.join(test_path, file)
@@ -83,10 +82,9 @@ def compare_output(test_path: str) -> bool:
                 if not compare_hdf5_files(expected_file, generated_file):
                     print(f"Test {test_path} failed: {file} output mismatch")
                     return False
-            else:
-                if not filecmp.cmp(expected_file, generated_file, shallow=False):
-                    print(f"Test {test_path} failed: {file} output mismatch")
-                    return False
+            elif not filecmp.cmp(expected_file, generated_file, shallow=False):
+                print(f"Test {test_path} failed: {file} output mismatch")
+                return False
     return True
 
 
@@ -115,15 +113,19 @@ def run_tests() -> None:
     """
     passed_tests = 0
 
-    for test_name in os.listdir(TEST_DIR):
+    test_cases = [d for d in os.listdir(TEST_DIR) if os.path.isdir(os.path.join(TEST_DIR, d))]
+    if not test_cases:
+        print("No test cases found.")
+        exit(1)
+
+    for test_name in test_cases:
         test_path = os.path.join(TEST_DIR, test_name)
-        if os.path.isdir(test_path):
-            if run_simulation(test_path) and compare_output(test_path):
-                print(f"Test {test_name} passed.")
-                passed_tests += 1
-            else:
-                print(f"Test {test_name} failed.")
-            clean_up(test_path)
+        if run_simulation(test_path) and compare_output(test_path):
+            print(f"Test {test_name} passed.")
+            passed_tests += 1
+        else:
+            print(f"Test {test_name} failed.")
+        clean_up(test_path)
 
     print(f"Passed {passed_tests} out of {len(os.listdir(TEST_DIR))} tests.")
 
