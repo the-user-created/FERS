@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Test pulsed bistatic radar. recv and trans on separate moving platforms, one stationary target -->
+<!DOCTYPE simulation SYSTEM "../../xml_schema/fers-xml.dtd">
+<simulation name="Bistatic Pulsed Radar with Moving Platforms">
+
+    <!-- Simulation Parameters -->
+    <parameters>
+        <starttime>0.0</starttime>
+        <endtime>1.0</endtime>
+        <rate>1e8</rate> <!-- Sampling rate in Hz -->
+        <export csv="true" binary="true" xml="true"/>
+        <adcbits>16</adcbits>
+    </parameters>
+
+    <!-- Pulse Definition -->
+    <pulse name="pulse1" type="file" filename="waveform.csv">
+        <length>1.0e-6</length> <!-- Pulse length in seconds -->
+        <power>1000</power> <!-- Pulse power in Watts -->
+        <carrier>1.0e9</carrier> <!-- Carrier frequency in Hz -->
+    </pulse>
+
+    <!-- Timing Source -->
+    <timing name="tx_timing" synconpulse="true">
+        <frequency>1.0e7</frequency> <!-- Frequency in Hz -->
+        <jitter>0.0</jitter> <!-- No jitter for this test -->
+        <freq_offset>0.0</freq_offset> <!-- No frequency offset -->
+    </timing>
+
+    <timing name="rx_timing" synconpulse="true">
+        <frequency>1.0e7</frequency> <!-- Frequency in Hz -->
+        <jitter>0.0</jitter> <!-- No jitter for this test -->
+        <freq_offset>0.0</freq_offset> <!-- No frequency offset -->
+    </timing>
+
+    <!-- Antenna Definitions -->
+    <antenna name="tx_antenna" pattern="isotropic">
+        <efficiency>0.9</efficiency> <!-- Transmitter antenna efficiency -->
+    </antenna>
+
+    <antenna name="rx_antenna" pattern="isotropic">
+        <efficiency>0.9</efficiency> <!-- Receiver antenna efficiency -->
+    </antenna>
+
+    <!-- Platform: Transmitter -->
+    <platform name="tx_platform">
+        <motionpath interpolation="linear">
+            <positionwaypoint>
+                <x>0.0</x>
+                <y>0.0</y>
+                <altitude>10.0</altitude> <!-- Altitude in meters -->
+                <time>0.0</time>
+            </positionwaypoint>
+            <positionwaypoint>
+                <x>100.0</x>
+                <y>0.0</y>
+                <altitude>10.0</altitude>
+                <time>1.0</time>
+            </positionwaypoint>
+        </motionpath>
+        <fixedrotation>
+            <startazimuth>0.0</startazimuth>
+            <azimuthrate>0.0</azimuthrate>
+            <startelevation>0.0</startelevation>
+            <elevationrate>0.0</elevationrate>
+        </fixedrotation>
+        <transmitter name="tx1" type="pulsed" pulse="pulse1" antenna="tx_antenna" timing="tx_timing">
+            <prf>10</prf> <!-- Pulse Repetition Frequency -->
+        </transmitter>
+    </platform>
+
+    <!-- Platform: Receiver -->
+    <platform name="rx_platform">
+        <motionpath interpolation="linear">
+            <positionwaypoint>
+                <x>0.0</x>
+                <y>50.0</y>
+                <altitude>10.0</altitude>
+                <time>0.0</time>
+            </positionwaypoint>
+            <positionwaypoint>
+                <x>100.0</x>
+                <y>50.0</y>
+                <altitude>10.0</altitude>
+                <time>1.0</time>
+            </positionwaypoint>
+        </motionpath>
+        <fixedrotation>
+            <startazimuth>0.0</startazimuth>
+            <azimuthrate>0.0</azimuthrate>
+            <startelevation>0.0</startelevation>
+            <elevationrate>0.0</elevationrate>
+        </fixedrotation>
+        <receiver name="rx1" antenna="rx_antenna" timing="rx_timing">
+            <window_skip>1.0e-6</window_skip>
+            <window_length>1.0e-3</window_length>
+            <prf>10</prf>
+        </receiver>
+    </platform>
+
+    <!-- Stationary Target -->
+    <platform name="target_platform">
+        <motionpath interpolation="static">
+            <positionwaypoint>
+                <x>50.0</x>
+                <y>25.0</y>
+                <altitude>0.0</altitude>
+                <time>0.0</time>
+            </positionwaypoint>
+        </motionpath>
+        <fixedrotation>
+            <startazimuth>0.0</startazimuth>
+            <azimuthrate>0.0</azimuthrate>
+            <startelevation>0.0</startelevation>
+            <elevationrate>0.0</elevationrate>
+        </fixedrotation>
+        <target name="target1">
+            <rcs type="isotropic">
+                <value>1.0</value> <!-- RCS in square meters -->
+            </rcs>
+        </target>
+    </platform>
+
+</simulation>
