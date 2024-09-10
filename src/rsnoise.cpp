@@ -183,9 +183,9 @@ FAlphaBranch::~FAlphaBranch()
 ///Initialize the branch filters
 void FAlphaBranch::Init()
 {
-	shape_filter = 0;
-	integ_filter = 0;
-	highpass = 0;
+	shape_filter = nullptr;
+	integ_filter = nullptr;
+	highpass = nullptr;
 	//Create the upsampler
 	upsampler = new DecadeUpsampler();
 	if (pre)
@@ -274,7 +274,7 @@ void FAlphaBranch::Init()
 	}
 	else if (ffrac == 0)
 	{
-		shape_filter = 0;
+		shape_filter = nullptr;
 	}
 	else
 	{
@@ -439,7 +439,7 @@ void MultirateGenerator::SkipSamples(long long samples)
 	{
 		std::vector<FAlphaBranch*> flushbranches;
 		FAlphaBranch* branch = topbranch;
-		for (int i = 0; (i < skip_branches) && (branch != 0); i++)
+		for (int i = 0; (i < skip_branches) && (branch != nullptr); i++)
 		{
 			flushbranches.push_back(branch);
 			branch = branch->pre;
@@ -482,11 +482,11 @@ void MultirateGenerator::CreateTree(const rsFloat ffrac, const int fint, const u
 	// If ffrac and fint are both zero, we only need a single branch
 	if ((ffrac == 0) && (fint == 0))
 	{
-		topbranch = new FAlphaBranch(0, 0, 0, true);
+		topbranch = new FAlphaBranch(0, 0, nullptr, true);
 	}
 	else
 	{
-		topbranch = 0;
+		topbranch = nullptr;
 		for (unsigned int i = 0; i < branches - 1; i++)
 		{
 			topbranch = new FAlphaBranch(ffrac, fint, topbranch, false);

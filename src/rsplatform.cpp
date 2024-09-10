@@ -12,7 +12,7 @@ using namespace rs;
 //Default constructor
 Platform::Platform(const std::string& name):
 	name(name),
-	dual(0)
+	dual(nullptr)
 {
 	motionPath = new Path();
 	rotationPath = new RotationPath();
