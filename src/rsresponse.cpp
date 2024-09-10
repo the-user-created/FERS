@@ -37,14 +37,14 @@ namespace
 	//<name>text</name>
 	//</node>
 	void attachRsFloatNode(TiXmlElement* root, const std::string& name, const rsFloat data,
-	                       const bool scientific = true,
-	                       int precision = 10)
+	                       const bool scientific = true)
 	{
 		std::ostringstream oss;
 		if (scientific)
 		{
 			oss.setf(std::ios::scientific);
 		}
+		constexpr int precision = 10;
 		oss << std::setprecision(precision) << data;
 		attachTextNode(root, name, oss.str());
 	}

@@ -94,7 +94,7 @@ rsFloat RsParameters::boltzmannK()
 	return 1.3806503e-23;
 }
 
-rsFloat RsParameters::startTime()
+rsFloat RsParameters::startTime()  // NOLINT
 {
 	if (!_instance)
 	{
@@ -103,7 +103,7 @@ rsFloat RsParameters::startTime()
 	return sim_parms.start;
 }
 
-rsFloat RsParameters::endTime()
+rsFloat RsParameters::endTime()  // NOLINT
 {
 	if (!_instance)
 	{
@@ -130,7 +130,7 @@ rs_parms::BinaryFileType RsParameters::binaryFileType()
 	return sim_parms.filetype;
 }
 
-rsFloat RsParameters::rate()
+rsFloat RsParameters::rate()  // NOLINT
 {
 	if (!_instance)
 	{
@@ -148,7 +148,7 @@ unsigned int RsParameters::randomSeed()
 	return sim_parms.random_seed;
 }
 
-unsigned int RsParameters::adcBits()
+unsigned int RsParameters::adcBits()  // NOLINT
 {
 	if (!_instance)
 	{
@@ -157,7 +157,7 @@ unsigned int RsParameters::adcBits()
 	return sim_parms.adc_bits;
 }
 
-bool RsParameters::exportXml()
+bool RsParameters::exportXml()  // NOLINT
 {
 	if (!_instance)
 	{
@@ -166,7 +166,7 @@ bool RsParameters::exportXml()
 	return sim_parms.export_xml;
 }
 
-bool RsParameters::exportCsv()
+bool RsParameters::exportCsv()  // NOLINT
 {
 	if (!_instance)
 	{

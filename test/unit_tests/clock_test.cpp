@@ -30,16 +30,16 @@ int testClockModelTiming(const PrototypeTiming* proto)
 
 	for (int i = 0; i < pulses; i++)
 	{
-		rsFloat j = timing->getPulseTimeError();
-		//    std::cout << j << std::endl;
+		const rsFloat j = timing->getPulseTimeError();
+		std::cout << j << std::endl;
 	}
 	for (int k = 0; k < pulses; k++)
 	{
 		constexpr int pulse_length = 1000;
 		for (int i = 0; i < pulse_length; i++)
 		{
-			rsFloat j = timing->nextNoiseSample();
-			//      std::cout << j << std::endl;
+			const rsFloat j = timing->nextNoiseSample();
+			std::cout << j << std::endl;
 		}
 	}
 	delete timing;
