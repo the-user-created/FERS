@@ -2,8 +2,6 @@
 
 #include "rstiming.h"
 
-#include <algorithm>
-
 #include "rsdebug.h"
 #include "rsnoise.h"
 

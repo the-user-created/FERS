@@ -2,8 +2,8 @@
 //Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //7 March 2007
 
-#ifndef __RSPYTHON_H
-#define __RSPYTHON_H
+#ifndef RS_PYTHON_H
+#define RS_PYTHON_H
 
 #include <config.h>
 #include <string>

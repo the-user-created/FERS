@@ -2,8 +2,8 @@
 //Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //20 March 2006
 
-#ifndef __RS_DEBUG_H
-#define __RS_DEBUG_H
+#ifndef RS_DEBUG_H
+#define RS_DEBUG_H
 
 #include <string>
 

@@ -5,13 +5,11 @@
 #include "rssignal.h"
 
 #include <cmath>
-#include <limits>
 #include <stdexcept>
 #include <boost/thread/mutex.hpp>
 
 #include "rsdebug.h"
 #include "rsdsp.h"
-#include "rsnoise.h"
 #include "rsparameters.h"
 #include "rsportable.h"
 

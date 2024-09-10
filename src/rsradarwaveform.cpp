@@ -5,15 +5,13 @@
 
 #include "rsradarwaveform.h"
 
+#include <cctype>
 #include <cmath>
-#include <ctype.h>
 #include <fstream>
 #include <stdexcept>
 #include <boost/scoped_array.hpp>
 
-#include "rsdebug.h"
 #include "rshdf5.h"
-#include "rsparameters.h"
 #include "rssignal.h"
 
 using namespace rs;

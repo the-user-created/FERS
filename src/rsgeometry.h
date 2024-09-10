@@ -3,8 +3,8 @@
 //Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //26 May 2006
 
-#ifndef __RSGEOMETRY_H
-#define __RSGEOMETRY_H
+#ifndef RS_GEOMETRY_H
+#define RS_GEOMETRY_H
 
 #include <config.h>
 

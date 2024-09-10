@@ -5,8 +5,8 @@
 //Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //11 June 2006
 
-#ifndef __RS_PARAMETERS_H
-#define __RS_PARAMETERS_H
+#ifndef RS_PARAMETERS_H
+#define RS_PARAMETERS_H
 
 #include <config.h>
 

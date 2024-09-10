@@ -3,13 +3,12 @@
 //Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //Started: 21 April 2006
 
-#ifndef __RSRADAR_H
-#define __RSRADAR_H
+#ifndef RS_RADAR_H
+#define RS_RADAR_H
 
 #include <config.h>
 #include <string>
 #include <vector>
-#include <boost/utility.hpp>
 #include <boost/thread/mutex.hpp>
 
 #include "rsobject.h"

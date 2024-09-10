@@ -10,7 +10,6 @@
 #include <stdexcept>
 #include <string>
 
-#include "rsdebug.h"
 #include "rsparameters.h"
 
 using namespace rshdf5;

@@ -14,7 +14,6 @@
 #include "rsdebug.h"
 #include "rsmultipath.h"
 #include "rsparameters.h"
-#include "rspath.h"
 #include "rsplatform.h"
 #include "rspulserender.h"
 #include "rsresponse.h"

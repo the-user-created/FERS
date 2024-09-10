@@ -2,7 +2,6 @@
 
 #include <config.h>
 #include <iostream>
-#include <boost/thread.hpp>
 
 #include "rsnoise.h"
 

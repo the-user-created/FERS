@@ -3,8 +3,8 @@
 //Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //Started: 21 April 2006
 
-#ifndef __RSPLATFORM_H
-#define __RSPLATFORM_H
+#ifndef RS_PLATFORM_H
+#define RS_PLATFORM_H
 
 #include <config.h>
 #include <string>

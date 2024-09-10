@@ -3,8 +3,8 @@
 //Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //29 May 2006
 
-#ifndef __RSPORTABLE_H
-#define __RSPORTABLE_H
+#ifndef RS_PORTABLE_H
+#define RS_PORTABLE_H
 
 #include <config.h>
 

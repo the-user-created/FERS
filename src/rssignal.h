@@ -3,12 +3,11 @@
 //Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //Started 24 May 2006
 
-#ifndef __SIGNAL_H
-#define __SIGNAL_H
+#ifndef RS_SIGNAL_H
+#define RS_SIGNAL_H
 
 #include <complex>
 #include <config.h>
-#include <string>
 #include <boost/shared_array.hpp>
 #include <boost/utility.hpp>
 

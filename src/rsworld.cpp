@@ -8,7 +8,6 @@
 #include <algorithm>
 
 #include "rsantenna.h"
-#include "rsdebug.h"
 #include "rsmultipath.h"
 #include "rsplatform.h"
 #include "rsradar.h"

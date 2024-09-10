@@ -3,8 +3,8 @@
 // Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 // 3 August 2006
 
-#ifndef __RSRESPONSE_H
-#define __RSRESPONSE_H
+#ifndef RS_RESPONSE_H
+#define RS_RESPONSE_H
 
 #include <config.h>
 #include <iosfwd>

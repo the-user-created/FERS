@@ -3,8 +3,8 @@
 //Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //Started: 21 April 2006
 
-#ifndef __RSPATH_H
-#define __RSPATH_H
+#ifndef RS_PATH_H
+#define RS_PATH_H
 
 #include <config.h>
 #include <stdexcept>

@@ -2,8 +2,8 @@
 //Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //14 August 2006
 
-#ifndef __RSNOISE_H
-#define __RSNOISE_H
+#ifndef RS_NOISE_H
+#define RS_NOISE_H
 
 #include <config.h>
 #include <vector>

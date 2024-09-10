@@ -4,8 +4,8 @@
 //Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //Started: 25 April 2006
 
-#ifndef __RSWORLD_H
-#define __RSWORLD_H
+#ifndef RS_WORLD_H
+#define RS_WORLD_H
 
 #include <config.h>
 #include <map>

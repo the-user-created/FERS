@@ -18,9 +18,7 @@
 #include <boost/scoped_array.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
-#include <boost/thread/xtime.hpp>
 
-#include "rsdebug.h"
 #include "rsdsp.h"
 #include "rshdf5.h"
 #include "rsnoise.h"
