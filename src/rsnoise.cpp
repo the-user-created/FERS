@@ -529,7 +529,7 @@ ClockModelGenerator::ClockModelGenerator(const std::vector<rsFloat>& alpha, cons
 	std::vector<rsFloat>::const_iterator iter = alpha.begin();
 	std::vector<rsFloat>::iterator witer = weights.begin();
 	// Create the generators for each band
-	for (; iter != alpha.end(); iter++, witer++)
+	for (; iter != alpha.end(); ++iter, ++witer)
 	{
 		MultirateGenerator* mgen = new MultirateGenerator(*iter, branches);
 		generators.push_back(mgen);
@@ -561,7 +561,7 @@ ClockModelGenerator::ClockModelGenerator(const std::vector<rsFloat>& alpha, cons
 /// Destructor
 ClockModelGenerator::~ClockModelGenerator()
 {
-	for (std::vector<MultirateGenerator*>::iterator iter = generators.begin(); iter != generators.end(); iter++)
+	for (std::vector<MultirateGenerator*>::iterator iter = generators.begin(); iter != generators.end(); ++iter)
 	{
 		delete *iter;
 	}

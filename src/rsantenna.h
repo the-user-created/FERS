@@ -29,7 +29,7 @@ namespace rs
 		//Antennas are not meant to be copied
 	public:
 		/// Default constructor
-		Antenna(const std::string& name);
+		explicit Antenna(const std::string& name);
 
 		/// Destructor
 		virtual ~Antenna();
@@ -95,7 +95,7 @@ namespace rsAntenna
 	{
 	public:
 		/// Default constructor
-		Isotropic(const std::string& name);
+		explicit Isotropic(const std::string& name);
 
 		/// Default destructor
 		virtual ~Isotropic();

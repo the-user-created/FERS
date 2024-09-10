@@ -37,7 +37,7 @@ using std::string;
 class XmlImportException final : public std::runtime_error
 {
 public:
-	XmlImportException(const std::string& error):
+	explicit XmlImportException(const std::string& error):
 		std::runtime_error("[ERROR] Error while parsing XML file: " + error)
 	{
 	}

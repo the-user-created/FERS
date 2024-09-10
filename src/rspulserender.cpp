@@ -294,7 +294,7 @@ void rs::ExportReceiverXML(const std::vector<rs::Response*>& responses, const st
 	doc.LinkEndChild(root);
 
 	//dump each response in turn
-	for (std::vector<rs::Response*>::const_iterator ri = responses.begin(); ri != responses.end(); ri++)
+	for (std::vector<rs::Response*>::const_iterator ri = responses.begin(); ri != responses.end(); ++ri)
 	{
 		(*ri)->RenderXML(root);
 	}
@@ -307,7 +307,7 @@ void rs::ExportReceiverXML(const std::vector<rs::Response*>& responses, const st
 void rs::ExportReceiverCSV(const std::vector<rs::Response*>& responses, const std::string& filename)
 {
 	std::map<std::string, std::ofstream*> streams; //map of per-transmitter open files
-	for (std::vector<rs::Response*>::const_iterator iter = responses.begin(); iter != responses.end(); iter++)
+	for (std::vector<rs::Response*>::const_iterator iter = responses.begin(); iter != responses.end(); ++iter)
 	{
 		std::ofstream* of;
 		// See if a file is already open for that transmitter
@@ -336,7 +336,7 @@ void rs::ExportReceiverCSV(const std::vector<rs::Response*>& responses, const st
 		(*iter)->RenderCSV(*of);
 	}
 	//Close all the files that we opened
-	for (std::map<std::string, std::ofstream*>::iterator ofi = streams.begin(); ofi != streams.end(); ofi++)
+	for (std::map<std::string, std::ofstream*>::iterator ofi = streams.begin(); ofi != streams.end(); ++ofi)
 	{
 		delete (*ofi).second;
 	}
@@ -373,7 +373,7 @@ void ThreadedRenderer::RenderWindow(rsComplex* window, rsFloat length, rsFloat s
 	rsFloat end = start + length; // End time of the window
 	//Put together a list of responses seen by this window
 	std::queue<Response*> work_list;
-	for (std::vector<Response*>::const_iterator iter = responses->begin(); iter != responses->end(); iter++)
+	for (std::vector<Response*>::const_iterator iter = responses->begin(); iter != responses->end(); ++iter)
 	{
 		rsFloat resp_start = (*iter)->StartTime();
 		if (rsFloat resp_end = (*iter)->EndTime(); (resp_start <= end) && (resp_end >= start))
@@ -404,7 +404,7 @@ void ThreadedRenderer::RenderWindow(rsComplex* window, rsFloat length, rsFloat s
 	// Wait until all our threads are complete
 	group.join_all();
 	//Clean up the thread objects
-	for (std::vector<RenderThread*>::iterator thread_iter = threads.begin(); thread_iter < threads.end(); thread_iter++)
+	for (std::vector<RenderThread*>::iterator thread_iter = threads.begin(); thread_iter < threads.end(); ++thread_iter)
 	{
 		delete *thread_iter;
 	}

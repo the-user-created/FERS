@@ -356,7 +356,7 @@ boost::shared_array<rsComplex> Signal::Render(const std::vector<InterpPoint>& po
 			iter = next;
 			if ((next + 1) != points.end())
 			{
-				next++;
+				++next;
 			}
 		}
 		//Get the weightings for the parameters

@@ -282,7 +282,7 @@ void rs::SimulatePair(const Transmitter* trans, Receiver* recv, const World* wor
 	for (int i = 0; i < pulses; i++)
 	{
 		trans->GetPulse(pulse, i);
-		for (std::vector<Target*>::const_iterator targ = world->targets.begin(); targ != world->targets.end(); targ++)
+		for (std::vector<Target*>::const_iterator targ = world->targets.begin(); targ != world->targets.end(); ++targ)
 		{
 			SimulateTarget(trans, recv, *targ, world, pulse);
 		}

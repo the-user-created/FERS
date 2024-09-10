@@ -22,7 +22,7 @@ namespace rs
 	{
 	public:
 		/// Default Constructor
-		Platform(const std::string& name);
+		explicit Platform(const std::string& name);
 
 		/// Destructor
 		~Platform();

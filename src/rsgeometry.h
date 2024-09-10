@@ -114,6 +114,7 @@ namespace rs
 		//
 		SVec3& operator*=(rsFloat b); //!< multiplication by a scalar
 		SVec3& operator/=(rsFloat b); //!< division by a scalar
+		// TODO: Need to develop a SVec3 overloaded operator for addition
 	};
 }
 #endif

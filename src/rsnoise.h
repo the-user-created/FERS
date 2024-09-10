@@ -56,7 +56,7 @@ namespace rs
 	{
 	public:
 		/// Constructor
-		WGNGenerator(rsFloat stddev);
+		explicit WGNGenerator(rsFloat stddev);
 
 		/// Default Constructor
 		WGNGenerator();
@@ -79,7 +79,7 @@ namespace rs
 	{
 	public:
 		/// Constructor
-		GammaGenerator(rsFloat k); //x_bar is the 'scale' parameter and k is the 'shape' parameter
+		explicit GammaGenerator(rsFloat k); //x_bar is the 'scale' parameter and k is the 'shape' parameter
 		/// Destructor
 		virtual ~GammaGenerator();
 

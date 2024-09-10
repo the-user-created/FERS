@@ -49,7 +49,7 @@ private:
 void InterpSetData::LoadSamples(const vector<rsFloat>& x, const vector<rsFloat>& y)
 {
 	vector<rsFloat>::const_iterator ix = x.begin();
-	for (vector<rsFloat>::const_iterator iy = y.begin(); (ix != x.end()) && (iy != y.end()); ix++, iy++)
+	for (vector<rsFloat>::const_iterator iy = y.begin(); (ix != x.end()) && (iy != y.end()); ++ix, ++iy)
 	{
 		data.insert(pair<rsFloat, rsFloat>(*ix, *iy));
 	}
@@ -79,7 +79,7 @@ rsFloat InterpSetData::Value(const rsFloat x)
 		return (*iter).second;
 	}
 	map<rsFloat, rsFloat>::const_iterator prev = iter;
-	prev--;
+	--prev;
 
 	//If we are over the end, return the last value
 	if (iter == data.end())
@@ -107,7 +107,7 @@ rsFloat InterpSetData::Max() const
 {
 	rsFloat max = 0;
 	// Scan through the map, updating the maximum
-	for (map<rsFloat, rsFloat>::const_iterator iter = data.begin(); iter != data.end(); iter++)
+	for (map<rsFloat, rsFloat>::const_iterator iter = data.begin(); iter != data.end(); ++iter)
 	{
 		if (std::fabs((*iter).second) > max)
 		{
@@ -120,7 +120,7 @@ rsFloat InterpSetData::Max() const
 /// Divide the set by a given number
 void InterpSetData::Divide(const rsFloat a)
 {
-	for (map<rsFloat, rsFloat>::iterator iter = data.begin(); iter != data.end(); iter++)
+	for (map<rsFloat, rsFloat>::iterator iter = data.begin(); iter != data.end(); ++iter)
 	{
 		(*iter).second /= a;
 	}

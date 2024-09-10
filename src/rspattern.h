@@ -17,7 +17,7 @@ namespace rs
 	{
 	public:
 		/// Constructor
-		Pattern(const std::string& filename);
+		explicit Pattern(const std::string& filename);
 
 		/// Destructor
 		~Pattern();

@@ -39,17 +39,17 @@ World::World():
 World::~World()
 {
 	//Delete all the objects in the world
-	for (std::map<std::string, RadarSignal*>::iterator iter = pulses.begin(); iter != pulses.end(); iter++)
+	for (std::map<std::string, RadarSignal*>::iterator iter = pulses.begin(); iter != pulses.end(); ++iter)
 	{
 		delete (*iter).second;
 	}
 
-	for (std::map<std::string, Antenna*>::iterator aiter = antennas.begin(); aiter != antennas.end(); aiter++)
+	for (std::map<std::string, Antenna*>::iterator aiter = antennas.begin(); aiter != antennas.end(); ++aiter)
 	{
 		delete (*aiter).second;
 	}
 
-	for (std::map<std::string, PrototypeTiming*>::iterator titer = timings.begin(); titer != timings.end(); titer++)
+	for (std::map<std::string, PrototypeTiming*>::iterator titer = timings.begin(); titer != timings.end(); ++titer)
 	{
 		delete (*titer).second;
 	}
@@ -158,19 +158,19 @@ void World::ProcessMultipath()
 	{
 		//Add duals for each plaform
 		std::vector<Platform*>::iterator plat = platforms.begin();
-		for (const std::vector<Platform*>::iterator plat_end = platforms.end(); plat != plat_end; plat++)
+		for (const std::vector<Platform*>::iterator plat_end = platforms.end(); plat != plat_end; ++plat)
 		{
 			platforms.push_back(CreateMultipathDual(*plat, multipath_surface));
 		}
 		//Add duals for each receiver
 		std::vector<Receiver*>::iterator recv = receivers.begin();
-		for (const std::vector<Receiver*>::iterator recv_end = receivers.end(); recv != recv_end; recv++)
+		for (const std::vector<Receiver*>::iterator recv_end = receivers.end(); recv != recv_end; ++recv)
 		{
 			receivers.push_back(CreateMultipathDual(*recv, multipath_surface));
 		}
 		//Add duals for each transmitter
 		std::vector<Transmitter*>::iterator trans = transmitters.begin();
-		for (const std::vector<Transmitter*>::iterator trans_end = transmitters.end(); trans != trans_end; trans++)
+		for (const std::vector<Transmitter*>::iterator trans_end = transmitters.end(); trans != trans_end; ++trans)
 		{
 			transmitters.push_back(CreateMultipathDual(*trans, multipath_surface));
 		}

@@ -90,7 +90,7 @@ class RenderThread
 {
 public:
 	/// Constructor
-	RenderThread(Receiver* recv):
+	explicit RenderThread(Receiver* recv):
 		recv(recv)
 	{
 	}
@@ -145,9 +145,9 @@ void rs::RunThreadedSim(const int thread_limit, World* world)
 	rsDebug::printf(rsDebug::RS_INFORMATIVE, "[INFO] Using threaded simulation with %d threads.\n", thread_limit);
 	//PHASE 1: Do first pass of simulator
 	//Loop through the lists for transmitters and receivers
-	for (ri = world->receivers.begin(); ri != world->receivers.end(); ri++)
+	for (ri = world->receivers.begin(); ri != world->receivers.end(); ++ri)
 	{
-		for (std::vector<Transmitter*>::const_iterator ti = world->transmitters.begin(); ti != world->transmitters.end(); ti++)
+		for (std::vector<Transmitter*>::const_iterator ti = world->transmitters.begin(); ti != world->transmitters.end(); ++ti)
 		{
 			IncThreads();
 			SimThread sim(*ti, *ri, world);
@@ -177,14 +177,14 @@ void rs::RunThreadedSim(const int thread_limit, World* world)
 		}
 	}
 	//Clean all the thread pointers
-	for (std::vector<boost::thread*>::iterator i = running.begin(); i != running.end(); i++)
+	for (std::vector<boost::thread*>::iterator i = running.begin(); i != running.end(); ++i)
 	{
 		delete *i;
 	}
 	running.clear();
 
 	// Report on the number of responses added to each receiver
-	for (ri = world->receivers.begin(); ri != world->receivers.end(); ri++)
+	for (ri = world->receivers.begin(); ri != world->receivers.end(); ++ri)
 	{
 		rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] %d responses added to receiver '%s'\n", (*ri)->CountResponses(),
 		                (*ri)->GetName().c_str());
@@ -192,7 +192,7 @@ void rs::RunThreadedSim(const int thread_limit, World* world)
 
 	//PHASE 2: Do render pass of simulation
 	//Loop through the lists of receivers and set each to render
-	for (ri = world->receivers.begin(); ri != world->receivers.end(); ri++)
+	for (ri = world->receivers.begin(); ri != world->receivers.end(); ++ri)
 	{
 		IncThreads();
 		RenderThread sim(*ri);
@@ -222,7 +222,7 @@ void rs::RunThreadedSim(const int thread_limit, World* world)
 		}
 	}
 	//Clean all the thread pointers
-	for (std::vector<boost::thread*>::iterator i = running.begin(); i != running.end(); i++)
+	for (std::vector<boost::thread*>::iterator i = running.begin(); i != running.end(); ++i)
 	{
 		delete *i;
 	}
