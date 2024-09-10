@@ -44,7 +44,7 @@ namespace rs
 		JonesVector& operator=(const JonesVector& iv);
 
 		/// Multiplication operator
-		JonesVector operator*(const PSMatrix& mat);
+		JonesVector operator*(const PSMatrix& mat) const;
 
 		/// The horizontal polarization part
 		std::complex<rsFloat> h;

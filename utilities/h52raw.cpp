@@ -18,7 +18,7 @@ extern "C" {
 ///Open the HDF5 file for reading
 hid_t OpenFile(const std::string& name)
 {
-	hid_t file = H5Fopen(name.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+	const hid_t file = H5Fopen(name.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
 	if (file < 0)
 	{
 		throw std::runtime_error("[ERROR] Could not open HDF5 file " + name + " to read pulse");
@@ -126,14 +126,14 @@ void ReadAndDump(hid_t file, FILE* outfile)
 	delete[] buffer;
 }
 
-int main(int argc, char* argv[])
+int main(const int argc, char* argv[])
 {
 	if (argc != 3)
 	{
 		std::cerr << "Usage: h52raw infile outfile\n";
 		return 1;
 	}
-	hid_t infile = OpenFile(argv[1]);
+	const hid_t infile = OpenFile(argv[1]);
 	if (infile < 0)
 	{
 		std::cerr << "Could not open HDF5 file " << argv[1] << std::endl;

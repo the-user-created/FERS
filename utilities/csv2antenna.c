@@ -30,7 +30,7 @@ void ProcessCSV(FILE* fpin, FILE* fpout, const char* enc_tag, const char* d1_tag
 	}
 }
 
-int main(int argc, char* argv[])
+int main(const int argc, char* argv[])
 {
 	FILE *fpout, *fpin1, *fpin2;
 	if (argc != 4)

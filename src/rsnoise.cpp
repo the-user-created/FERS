@@ -53,7 +53,7 @@ void rsNoise::CleanUpNoise()
 }
 
 /// Return a single sample of white gaussian noise
-rsFloat rsNoise::WGNSample(rsFloat stddev)
+rsFloat rsNoise::WGNSample(const rsFloat stddev)
 {
 	if (stddev > std::numeric_limits<rsFloat>::epsilon())
 	{
@@ -72,7 +72,7 @@ rsFloat rsNoise::UniformSample()
 }
 
 /// Calculate noise amplitude from the temperature
-rsFloat rsNoise::NoiseTemperatureToPower(rsFloat temperature, rsFloat bandwidth)
+rsFloat rsNoise::NoiseTemperatureToPower(const rsFloat temperature, const rsFloat bandwidth)
 {
 	return rsParameters::boltzmann_k() * temperature * bandwidth; //See equations.tex
 }
@@ -96,7 +96,7 @@ NoiseGenerator::~NoiseGenerator()
 //
 
 /// Constructor
-GammaGenerator::GammaGenerator(rsFloat k):
+GammaGenerator::GammaGenerator(const rsFloat k):
 	dist(k),
 	gen(*rng, dist)
 {
@@ -124,7 +124,7 @@ rsFloat GammaGenerator::operator()()
 //
 
 //Constructor
-WGNGenerator::WGNGenerator(rsFloat stddev)
+WGNGenerator::WGNGenerator(const rsFloat stddev)
 {
 	dist = boost::normal_distribution<rsFloat>(0, stddev);
 	gen = new boost::variate_generator<boost::mt19937&, boost::normal_distribution<rsFloat>>(*rng, dist);
@@ -154,7 +154,7 @@ rsFloat WGNGenerator::GetSample()
 //
 
 /// Constructor
-FAlphaBranch::FAlphaBranch(rsFloat ffrac, unsigned int fint, FAlphaBranch* pre, bool last):
+FAlphaBranch::FAlphaBranch(const rsFloat ffrac, const unsigned int fint, FAlphaBranch* pre, const bool last):
 	pre(pre),
 	last(last),
 	ffrac(ffrac),
@@ -191,7 +191,8 @@ void FAlphaBranch::Init()
 	if (pre)
 	{
 		/// Numerator coefficients for elliptical highpass
-		const rsFloat hp_num[12] = {
+		constexpr
+		rsFloat hp_num[12] = {
 			3.817871081981451e-01,
 			-4.093384095523618e+00,
 			2.005300512623078e+01,
@@ -206,7 +207,8 @@ void FAlphaBranch::Init()
 			-3.817871081981776e-01
 		};
 		/// Denominator coefficients for elliptical highpass
-		const rsFloat hp_den[12] = {
+		constexpr
+		rsFloat hp_den[12] = {
 			1.000000000000000e+00,
 			-8.829695665523831e+00,
 			3.583068809011030e+01,
@@ -227,7 +229,8 @@ void FAlphaBranch::Init()
 	if (ffrac == 0.5)
 	{
 		/// Numerator co-efficients for 1/f^0.5 rolloff
-		const rsFloat sf_num[16] = {
+		constexpr
+		rsFloat sf_num[16] = {
 			5.210373977738306e-03,
 			-7.694671394585578e-03,
 			1.635979377907092e-03,
@@ -245,7 +248,8 @@ void FAlphaBranch::Init()
 			6.664936170526832e-05,
 			1.528520559763056e-05
 		};
-		const rsFloat sf_den[16] = {
+		constexpr
+		rsFloat sf_den[16] = {
 			1.000000000000000e+00,
 			-2.065565041154101e+00,
 			1.130909190864681e+00,
@@ -284,14 +288,18 @@ void FAlphaBranch::Init()
 		integ_gain = 1; //2.755923548698047e-05;
 		if (fint == 1)
 		{
-			const rsFloat i_den[2] = {1, -1};
-			const rsFloat i_num[2] = {1, 0};
+			constexpr
+			rsFloat i_den[2] = {1, -1};
+			constexpr
+			rsFloat i_num[2] = {1, 0};
 			integ_filter = new IIRFilter(i_den, i_num, 2);
 		}
 		if (fint == 2)
 		{
-			const rsFloat i_den[3] = {1, -2, 1};
-			const rsFloat i_num[3] = {1, 0, 0};
+			constexpr
+			rsFloat i_den[3] = {1, -2, 1};
+			constexpr
+			rsFloat i_num[3] = {1, 0, 0};
 			integ_filter = new IIRFilter(i_den, i_num, 3);
 		}
 		if (fint > 2)
@@ -316,7 +324,7 @@ rsFloat FAlphaBranch::GetSample()
 {
 	if (!last)
 	{
-		rsFloat ret = buffer[buffer_samples];
+		const rsFloat ret = buffer[buffer_samples];
 		buffer_samples++;
 		if (buffer_samples == 10)
 		{
@@ -373,7 +381,7 @@ rsFloat FAlphaBranch::CalcSample()
 /// Refill the buffer
 void FAlphaBranch::Refill()
 {
-	rsFloat sample = CalcSample();
+	const rsFloat sample = CalcSample();
 	// Pass the sample to the upsampler
 	upsampler->Upsample(sample, buffer);
 	// Scale the buffer
@@ -387,7 +395,7 @@ void FAlphaBranch::Refill()
 }
 
 /// Refill the buffer
-void FAlphaBranch::Flush(rsFloat scale = 1.0)
+void FAlphaBranch::Flush(const rsFloat scale = 1.0)
 {
 	Clean();
 	Init();
@@ -400,12 +408,12 @@ void FAlphaBranch::Flush(rsFloat scale = 1.0)
 //
 
 /// Constructor
-MultirateGenerator::MultirateGenerator(rsFloat alpha, unsigned int branches)
+MultirateGenerator::MultirateGenerator(const rsFloat alpha, const unsigned int branches)
 {
-	rsFloat beta = -(alpha - 2) / 2.0;
+	const rsFloat beta = -(alpha - 2) / 2.0;
 	//Calculate the integer and fractional parts of beta
-	int fint = (int)std::floor(beta);
-	rsFloat ffrac = fmod(beta, 1);
+	const int fint = (int)std::floor(beta);
+	const rsFloat ffrac = fmod(beta, 1);
 	//Build the multirate filter tree
 	CreateTree(ffrac, fint, branches);
 	scale = 1.0 / std::pow(10.0, (-alpha + 2) * 2.0);
@@ -448,7 +456,7 @@ void MultirateGenerator::SkipSamples(long long samples)
 			}
 		}
 		// Flush the buffers of the upper branches
-		int size = flushbranches.size();
+		const int size = flushbranches.size();
 		flushbranches[size - 1]->Flush(std::pow(10.0, skip_branches - 2.0));
 		for (int i = size - 2; i >= 0; i--)
 		{
@@ -466,7 +474,7 @@ void MultirateGenerator::SkipSamples(long long samples)
 
 /// Create the branches of the filter structure tree
 // The tree is stored as a linked list, which each link a branch
-void MultirateGenerator::CreateTree(rsFloat ffrac, int fint, unsigned int branches)
+void MultirateGenerator::CreateTree(const rsFloat ffrac, const int fint, const unsigned int branches)
 {
 	if (branches == 0)
 	{
@@ -500,7 +508,7 @@ void MultirateGenerator::Reset()
 		branch = branch->pre;
 	}
 	// Flush the branch buffers in reverse order
-	int size = flushbranches.size();
+	const int size = flushbranches.size();
 	for (int i = size - 1; i >= 0; i--)
 	{
 		flushbranches[i]->Flush();
@@ -513,7 +521,7 @@ void MultirateGenerator::Reset()
 
 /// Constructor
 ClockModelGenerator::ClockModelGenerator(const std::vector<rsFloat>& alpha, const std::vector<rsFloat>& in_weights,
-                                         rsFloat frequency, rsFloat phase_offset, rsFloat freq_offset, int branches):
+                                         const rsFloat frequency, const rsFloat phase_offset, const rsFloat freq_offset, const int branches):
 	phase_offset(phase_offset),
 	freq_offset(freq_offset),
 	frequency(frequency)
@@ -566,7 +574,7 @@ rsFloat ClockModelGenerator::GetSample()
 {
 	rsFloat sample = 0;
 	// Get noise from the multirate generators for each band
-	int size = generators.size();
+	const int size = generators.size();
 	for (int i = 0; i < size; i++)
 	{
 		sample += generators[i]->GetSample() * weights[i];
@@ -580,9 +588,9 @@ rsFloat ClockModelGenerator::GetSample()
 }
 
 /// Skip some noise samples, calculating only the branches required to preserve correlations
-void ClockModelGenerator::SkipSamples(long long samples)
+void ClockModelGenerator::SkipSamples(const long long samples)
 {
-	int gens = generators.size();
+	const int gens = generators.size();
 	for (int i = 0; i < gens; i++)
 	{
 		generators[i]->SkipSamples(samples);
@@ -593,7 +601,7 @@ void ClockModelGenerator::SkipSamples(long long samples)
 /// Reset the noise to zero
 void ClockModelGenerator::Reset()
 {
-	int gens = generators.size();
+	const int gens = generators.size();
 	for (int i = 0; i < gens; i++)
 	{
 		generators[i]->Reset();

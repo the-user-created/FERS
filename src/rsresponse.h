@@ -30,7 +30,7 @@ namespace rs
 	{
 	public:
 		/// Constructor
-		Response(RadarSignal* wave, const Transmitter* transmitter);
+		Response(const RadarSignal* wave, const Transmitter* transmitter);
 
 		/// Get the start time
 		rsFloat StartTime() const;
@@ -59,7 +59,7 @@ namespace rs
 		std::string GetTransmitterName() const;
 
 		/// Add an interp point to the vector
-		void AddInterpPoint(InterpPoint& point);
+		void AddInterpPoint(const InterpPoint& point);
 
 	protected:
 		const Transmitter* transmitter; //!< The transmitter that caused this response

@@ -23,7 +23,7 @@ using namespace rs;
 //
 
 //Default constructor
-RadarSignal::RadarSignal(std::string name, rsFloat power, rsFloat carrierfreq, rsFloat length, Signal* signal):
+RadarSignal::RadarSignal(const std::string& name, const rsFloat power, const rsFloat carrierfreq, const rsFloat length, Signal* signal):
 	name(name),
 	power(power),
 	carrierfreq(carrierfreq),
@@ -75,12 +75,12 @@ rsFloat RadarSignal::GetLength() const
 
 /// Render the waveform to the target buffer
 boost::shared_array<rsComplex> RadarSignal::Render(const std::vector<InterpPoint>& points, unsigned int& size,
-                                                   rsFloat frac_win_delay) const
+                                                   const rsFloat frac_win_delay) const
 {
 	//Render the return pulse
 	boost::shared_array<rsComplex> data = signal->Render(points, power, size, frac_win_delay);
 	//Scale the return pulse by the signal power
-	rsFloat scale = std::sqrt(power);
+	const rsFloat scale = std::sqrt(power);
 	for (unsigned int i = 0; i < size; i++)
 	{
 		data[i] *= scale;
@@ -105,8 +105,8 @@ void RadarSignal::SetPolarization(const JonesVector& in)
 //
 
 /// Load the pulse from HDF5 file
-RadarSignal* LoadPulseFromHDF5File(const std::string& name, const std::string& filename, rsFloat power,
-                                   rsFloat carrierfreq)
+RadarSignal* LoadPulseFromHDF5File(const std::string& name, const std::string& filename, const rsFloat power,
+                                   const rsFloat carrierfreq)
 {
 	rsFloat rate;
 	unsigned int size;
@@ -124,8 +124,8 @@ RadarSignal* LoadPulseFromHDF5File(const std::string& name, const std::string& f
 }
 
 /// Load the pulse from a CSV file
-RadarSignal* LoadPulseFromCSVFile(const std::string& name, const std::string& filename, rsFloat power,
-                                  rsFloat carrierfreq)
+RadarSignal* LoadPulseFromCSVFile(const std::string& name, const std::string& filename, const rsFloat power,
+                                  const rsFloat carrierfreq)
 {
 	///Open the file
 	std::ifstream ifile(filename.c_str());
@@ -137,9 +137,9 @@ RadarSignal* LoadPulseFromCSVFile(const std::string& name, const std::string& fi
 	rsFloat rlength, rate;
 	ifile >> rlength; //length in samples
 	ifile >> rate; //rate
-	unsigned int length = static_cast<int>(rlength);
+	const unsigned int length = static_cast<int>(rlength);
 	//Allocate memory for the file contents
-	boost::scoped_array<rsComplex> data(new rsComplex[length]);
+	const boost::scoped_array<rsComplex> data(new rsComplex[length]);
 	//Loop through reading the samples in the file
 	unsigned int done = 0;
 	while (!ifile.eof() && (done < length))
@@ -159,8 +159,8 @@ RadarSignal* LoadPulseFromCSVFile(const std::string& name, const std::string& fi
 }
 
 /// Load a pulse from a file and generate an anypulse
-rs::RadarSignal* rsPulseFactory::LoadPulseFromFile(const std::string& name, const std::string& filename, rsFloat power,
-                                                   rsFloat carrierfreq)
+rs::RadarSignal* rsPulseFactory::LoadPulseFromFile(const std::string& name, const std::string& filename, const rsFloat power,
+                                                   const rsFloat carrierfreq)
 {
 	int ln = filename.length() - 1;
 	//Identify file types

@@ -44,7 +44,7 @@ namespace rs
 	{
 	public:
 		/// Default constructor
-		RadarSignal(std::string name, rsFloat power, rsFloat carrierfreq, rsFloat length, Signal* signal);
+		RadarSignal(const std::string& name, rsFloat power, rsFloat carrierfreq, rsFloat length, Signal* signal);
 
 		/// Destructor
 		~RadarSignal();

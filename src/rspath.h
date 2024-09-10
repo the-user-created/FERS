@@ -37,7 +37,7 @@ namespace rs
 		}
 
 		/// Assignment operator
-		Coord& operator=(rsFloat a)
+		Coord& operator=(const rsFloat a)
 		{
 			t = a;
 			pos.x = pos.y = pos.z = a;
@@ -47,25 +47,25 @@ namespace rs
 
 	//Support arithmetic on path coords.
 	/// Componentwise multiply
-	Coord operator*(Coord a, Coord b);
+	Coord operator*(const Coord& a, const Coord& b);
 
 	/// Componentwise add
-	Coord operator+(Coord a, Coord b);
+	Coord operator+(const Coord& a, const Coord& b);
 
 	/// Componentwise subtract
-	Coord operator-(Coord a, Coord b);
+	Coord operator-(const Coord& a, const Coord& b);
 
 	/// Componentwise divide
 	Coord operator/(const Coord& a, const Coord& b);
 
 	/// Add a scalar to each element
-	Coord operator+(Coord a, rsFloat b);
+	Coord operator+(const Coord& a, rsFloat b);
 
 	/// Componentwise multiplication by scalar
-	Coord operator*(Coord a, rsFloat b);
+	Coord operator*(const Coord& a, rsFloat b);
 
 	/// Componentwise division by scalar
-	Coord operator/(rsFloat a, Coord b);
+	Coord operator/(rsFloat a, const Coord& b);
 
 	Coord operator/(const Coord& b, rsFloat a);
 
@@ -84,41 +84,41 @@ namespace rs
 		}
 
 		/// Assignment operator
-		RotationCoord& operator=(rsFloat a)
+		RotationCoord& operator=(const rsFloat a)
 		{
 			azimuth = elevation = t = a;
 			return *this;
 		}
 
 		/// Constructor. Assign scalar to all elements.
-		RotationCoord(rsFloat a = 0):
+		RotationCoord(const rsFloat a = 0):
 			azimuth(a), elevation(a), t(a)
 		{
 		}
 	};
 
 	/// Componentwise Multiply
-	RotationCoord operator*(RotationCoord a, RotationCoord b);
+	RotationCoord operator*(const RotationCoord& a, const RotationCoord& b);
 
 	/// Componentwise Add
-	RotationCoord operator+(RotationCoord a, RotationCoord b);
+	RotationCoord operator+(const RotationCoord& a, const RotationCoord& b);
 
 	/// Componentwise Subtract
-	RotationCoord operator-(RotationCoord a, RotationCoord b);
+	RotationCoord operator-(const RotationCoord& a, const RotationCoord& b);
 
 	/// Componentwise Divide
-	RotationCoord operator/(RotationCoord a, RotationCoord b);
+	RotationCoord operator/(const RotationCoord& a, const RotationCoord& b);
 
 	/// Add a scalare to each component
-	RotationCoord operator+(RotationCoord a, rsFloat b);
+	RotationCoord operator+(const RotationCoord& a, rsFloat b);
 
 	/// Multiply each component by a scalar
-	RotationCoord operator*(RotationCoord a, rsFloat b);
+	RotationCoord operator*(const RotationCoord& a, rsFloat b);
 
 	/// Divide each component by a scalar
-	RotationCoord operator/(rsFloat a, RotationCoord b);
+	RotationCoord operator/(rsFloat a, const RotationCoord& b);
 
-	RotationCoord operator/(RotationCoord b, rsFloat a);
+	RotationCoord operator/(const RotationCoord& b, rsFloat a);
 
 	/// Defines the movement of an object through space, governed by time
 	class Path
@@ -130,7 +130,7 @@ namespace rs
 		Path(InterpType type = RS_INTERP_STATIC);
 
 		/// Add a co-ordinate to the path
-		void AddCoord(Coord& coord);
+		void AddCoord(const Coord& coord);
 
 		/// Finalize the path, so it can be requested with getPosition
 		void Finalize();
@@ -168,7 +168,7 @@ namespace rs
 		RotationPath(InterpType type = RS_INTERP_STATIC);
 
 		/// Method to add a co-ordinate to the path
-		void AddCoord(RotationCoord& coord);
+		void AddCoord(const RotationCoord& coord);
 
 		/// Finalize the path, so it can be requested with getPosition
 		void Finalize();
@@ -180,7 +180,7 @@ namespace rs
 		void SetInterp(InterpType setinterp);
 
 		/// Set properties for fixed rate motion
-		void SetConstantRate(RotationCoord& setstart, RotationCoord& setrate);
+		void SetConstantRate(const RotationCoord& setstart, const RotationCoord& setrate);
 
 	protected:
 		std::vector<RotationCoord> coords; //!< Vector of time and space coordinates
@@ -202,7 +202,7 @@ namespace rs
 	class PathException : public std::runtime_error
 	{
 	public:
-		PathException(std::string description):
+		PathException(const std::string& description):
 			std::runtime_error("Error While Executing Path Code: " + description)
 		{
 		}

@@ -14,7 +14,7 @@ namespace rshdf5
 	long int CreateFile(const std::string& name);
 
 	///Add a dataset to the HDF5 file
-	void AddChunkToFile(long int file, std::complex<rsFloat>* data, unsigned int size, rsFloat time, rsFloat rate,
+	void AddChunkToFile(long int file, const std::complex<rsFloat>* data, unsigned int size, rsFloat time, rsFloat rate,
 	                    rsFloat fullscale, unsigned int count);
 
 	///Close the HDF5 file

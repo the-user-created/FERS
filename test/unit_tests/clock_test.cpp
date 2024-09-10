@@ -25,7 +25,7 @@ PrototypeTiming* MakeProtoTiming()
 // Test the pulsetiming class
 int TestClockModelTiming(const PrototypeTiming* proto)
 {
-	int pulses = 3;
+	constexpr int pulses = 3;
 	int pulse_length = 1000;
 	ClockModelTiming* timing = new ClockModelTiming("test_pulse");
 	timing->InitializeModel(proto);
@@ -51,7 +51,7 @@ int TestClockModelTiming(const PrototypeTiming* proto)
 int main()
 {
 	rsNoise::InitializeNoise();
-	PrototypeTiming* timing = MakeProtoTiming();
+	const PrototypeTiming* timing = MakeProtoTiming();
 
 	//TestPulseTiming(timing);
 	TestClockModelTiming(timing);

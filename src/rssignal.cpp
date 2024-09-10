@@ -26,7 +26,7 @@ namespace
 	// Use the polynomial approximation from section 9.8 of
 	// "Handbook of Mathematical Functions" by Abramowitz and Stegun
 	rsFloat
-	BesselI0(rsFloat x)
+	BesselI0(const rsFloat x)
 	{
 		rsFloat I0;
 		rsFloat t = (x / 3.75);
@@ -122,13 +122,13 @@ namespace
 		//Beta sets the window shape
 		beta = 5;
 		bessel_beta = BesselI0(beta);
-		int hfilt = table_filters / 2;
+		const int hfilt = table_filters / 2;
 		rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Building table of %d filters\n", table_filters);
 		//Fill the table of filters
 		//C Tong: delay appears to be the fraction of time ellapsed between samples
 		for (int i = -hfilt; i < hfilt; i++)
 		{
-			rsFloat delay = i / rsFloat(hfilt);
+			const rsFloat delay = i / rsFloat(hfilt);
 			for (int j = -alpha; j < alpha; j++)
 			{
 				filter_table[int((i + hfilt) * length + j + alpha)] = interp_filter(j - delay);
@@ -139,9 +139,9 @@ namespace
 
 	/// Get a pointer to the filter with approximately the specified delay
 	const rsFloat*
-	InterpFilter::GetFilter(rsFloat delay) const
+	InterpFilter::GetFilter(const rsFloat delay) const
 	{
-		int filt = (delay + 1) * (table_filters / 2);
+		const int filt = (delay + 1) * (table_filters / 2);
 
 		if ((delay <= -1) || (delay >= 1))
 		{
@@ -154,19 +154,17 @@ namespace
 	}
 
 	/// Lookup the value of the interpolation filter at time x
-	rsFloat
-	InterpFilter::interp_filter(rsFloat x) const
+	rsFloat InterpFilter::interp_filter(const rsFloat x) const
 	{
-		rsFloat w = kaiser_win_compute(x + alpha);
-		rsFloat s = Sinc(x); //The filter value
-		rsFloat filt = w * s;
+		const rsFloat w = kaiser_win_compute(x + alpha);
+		const rsFloat s = Sinc(x); //The filter value
+		const rsFloat filt = w * s;
 		//      rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "%g %g\n", t, filt);
 		return filt;
 	}
 
 	/// Compute the sinc function at the specified x
-	rsFloat
-	InterpFilter::Sinc(rsFloat x) const
+	rsFloat InterpFilter::Sinc(const rsFloat x) const
 	{
 		if (x == 0)
 		{
@@ -177,7 +175,7 @@ namespace
 
 	/// Compute the value of a Kaiser Window at the given x
 	rsFloat
-	InterpFilter::kaiser_win_compute(rsFloat x) const
+	InterpFilter::kaiser_win_compute(const rsFloat x) const
 	{
 		if ((x < 0) || (x > (alpha * 2)))
 		{
@@ -194,11 +192,10 @@ namespace
 }
 
 /// Simulate the effect of and ADC converter on the signal
-void
-rsSignal::ADCSimulate(complex* data, unsigned int size, int bits, rsFloat fullscale)
+void rsSignal::ADCSimulate(complex* data, const unsigned int size, const int bits, const rsFloat fullscale)
 {
 	//Get the number of levels associated with the number of bits
-	rsFloat levels = pow(2, bits - 1);
+	const rsFloat levels = pow(2, bits - 1);
 	for (unsigned int i = 0; i < size; i++)
 	{
 		//Simulate the ADC effect on the I and Q samples
@@ -253,8 +250,7 @@ Signal::Clear()
 }
 
 //Load data into the signal, with the given sample rate and size
-void
-Signal::Load(const rsFloat* indata, unsigned int samples, rsFloat samplerate)
+void Signal::Load(const rsFloat* indata, const unsigned int samples, const rsFloat samplerate)
 {
 	//Remove the previous data
 	Clear();
@@ -271,13 +267,12 @@ Signal::Load(const rsFloat* indata, unsigned int samples, rsFloat samplerate)
 }
 
 /// Load data into the signal (time domain, complex)
-void
-Signal::Load(const complex* indata, unsigned int samples, rsFloat samplerate)
+void Signal::Load(const complex* indata, const unsigned int samples, const rsFloat samplerate)
 {
 	//Remove the previous data
 	Clear();
 	// Get the oversampling ratio
-	unsigned int ratio = rsParameters::oversample_ratio();
+	const unsigned int ratio = rsParameters::oversample_ratio();
 	//Allocate memory for the signal
 	data = new complex[samples * ratio];
 	//Set the size and samples attributes
@@ -299,22 +294,19 @@ Signal::Load(const complex* indata, unsigned int samples, rsFloat samplerate)
 }
 
 //Return the sample rate of the signal
-rsFloat
-Signal::Rate() const
+rsFloat Signal::Rate() const
 {
 	return rate;
 }
 
 //Return the size, in samples, of the signal
-unsigned int
-Signal::Size() const
+unsigned int Signal::Size() const
 {
 	return size;
 }
 
 /// Get a copy of the signal domain data
-rsFloat*
-Signal::CopyData() const
+rsFloat* Signal::CopyData() const
 {
 	rsFloat* result = new rsFloat[size];
 	//Copy the data into result
@@ -323,26 +315,25 @@ Signal::CopyData() const
 }
 
 /// Get the number of samples of padding at the beginning of the pulse
-unsigned int
-Signal::Pad() const
+unsigned int Signal::Pad() const
 {
 	return pad;
 }
 
 /// Render the pulse with the specified doppler, delay and amplitude
-boost::shared_array<rsComplex>
-Signal::Render(const std::vector<InterpPoint>& points, rsFloat trans_power, unsigned int& out_size,
-               rsFloat frac_win_delay) const
+boost::shared_array<rsComplex> Signal::Render(const std::vector<InterpPoint>& points, rsFloat trans_power,
+                                              unsigned int& out_size,
+                                              const rsFloat frac_win_delay) const
 {
 	//Allocate memory for rendering
 	rsComplex* out = new rsComplex[size];
 	out_size = size;
 
 	//Get the sample interval
-	rsFloat timestep = 1.0 / rate;
+	const rsFloat timestep = 1.0 / rate;
 	//Create the rendering window
 	const int filt_length = rsParameters::render_filter_length();
-	InterpFilter* interp = InterpFilter::GetInstance();
+	const InterpFilter* interp = InterpFilter::GetInstance();
 	//Loop through the interp points, rendering each in time
 	std::vector<rs::InterpPoint>::const_iterator iter = points.begin();
 	std::vector<rs::InterpPoint>::const_iterator next = iter + 1;
@@ -353,7 +344,7 @@ Signal::Render(const std::vector<InterpPoint>& points, rsFloat trans_power, unsi
 
 	//Get the delay of the first point
 	//C Tong: iDelay is in number of receiver samples (possibly with a fractional part)
-	rsFloat idelay = rsPortable::rsRound(rate * (*iter).delay);
+	const rsFloat idelay = rsPortable::rsRound(rate * (*iter).delay);
 	//rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "idelay = %g\n", idelay);
 
 	//Memory to store the filter in
@@ -406,7 +397,7 @@ Signal::Render(const std::vector<InterpPoint>& points, rsFloat trans_power, unsi
 		//unwrap it by using the previous or next sample from the Tx signal.
 		//This is a hack at best and the program should really be re-designed.
 
-		int iSampleUnwrap = floor(fdelay); //Number of samples to unwrap by.
+		const int iSampleUnwrap = floor(fdelay); //Number of samples to unwrap by.
 		fdelay -= iSampleUnwrap; //Re-calculate the delay filter for the given delay
 
 		filt = interp->GetFilter(fdelay);

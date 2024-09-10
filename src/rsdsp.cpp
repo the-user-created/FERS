@@ -20,7 +20,7 @@ using namespace rs;
 namespace
 {
 	//Calculate sin(pi * x) / (pi*x)
-	rsFloat Sinc(rsFloat x)
+	rsFloat Sinc(const rsFloat x)
 	{
 		if (x == 0)
 		{
@@ -30,18 +30,18 @@ namespace
 	}
 
 	/// Create a FIR filter using the Blackman window
-	rsFloat* BlackmanFIR(rsFloat cutoff, int& length)
+	rsFloat* BlackmanFIR(const rsFloat cutoff, int& length)
 	{
 		// Use double the render filter length, for faster rolloff than the render filter
 		length = rsParameters::render_filter_length() * 2;
 		rsFloat* coeffs = new rsFloat[length];
-		rsFloat N = length / 2.0;
+		const rsFloat N = length / 2.0;
 		for (int i = 0; i < length; i++)
 		{
-			rsFloat filt = Sinc(cutoff * (i - N));
+			const rsFloat filt = Sinc(cutoff * (i - N));
 			// We use the Blackman window, for a suitable tradeoff between rolloff and stopband attenuation
 			// Equivalent Kaiser beta = 7.04 (Oppenhiem and Schaffer, Hamming)
-			rsFloat window = 0.42 - 0.5 * cos(M_PI * i / N) + 0.08 * cos(2 * M_PI * i / N);
+			const rsFloat window = 0.42 - 0.5 * cos(M_PI * i / N) + 0.08 * cos(2 * M_PI * i / N);
 			coeffs[i] = filt * window;
 		}
 		return coeffs;
@@ -52,11 +52,11 @@ namespace
 // TODO: this would be better as a multirate upsampler
 // In fact, the whole scheme is currently sub-optimal - we could use better filters, better windows and a better approach
 // it works ok for now, users seeking higher accuracy can oversample outside FERS until this is fixed
-void rs::Upsample(const rsComplex* in, int size, rsComplex* out, int ratio)
+void rs::Upsample(const rsComplex* in, const int size, rsComplex* out, const int ratio)
 {
 	/// Design the FIR filter for de-imaging
 	int filt_length;
-	rsFloat* coeffs = BlackmanFIR(1 / rsFloat(ratio), filt_length);
+	const rsFloat* coeffs = BlackmanFIR(1 / rsFloat(ratio), filt_length);
 
 	// Temporary buffer for zero padding and results
 	rsComplex* tmp = new rsComplex[size * ratio + filt_length];
@@ -88,11 +88,11 @@ void rs::Upsample(const rsComplex* in, int size, rsComplex* out, int ratio)
 
 /// Upsample size samples stored *in by an integer ratio and store the result in (pre-allocated) out
 // TODO: This would be better (and much faster) as a multirate downsampler
-void rs::Downsample(const rsComplex* in, int size, rsComplex* out, int ratio)
+void rs::Downsample(const rsComplex* in, const int size, rsComplex* out, const int ratio)
 {
 	/// Design the FIR filter for anti-aliasing
 	int filt_length;
-	rsFloat* coeffs = BlackmanFIR(1 / rsFloat(ratio), filt_length);
+	const rsFloat* coeffs = BlackmanFIR(1 / rsFloat(ratio), filt_length);
 	// Temporary buffer for zero padding and results
 	rsComplex* tmp = new rsComplex[size + filt_length];
 	for (int i = size - 1; i < size + filt_length; i++)
@@ -107,7 +107,6 @@ void rs::Downsample(const rsComplex* in, int size, rsComplex* out, int ratio)
 	// Run the anti aliasing filter on the data
 	FIRFilter filt(coeffs, filt_length);
 	filt.Filter(tmp, size + filt_length);
-
 
 	//Copy the results to the output buffer
 	for (int i = 0; i < size / ratio; i++)
@@ -162,7 +161,7 @@ IIRFilter::IIRFilter(const std::vector<rsFloat>& den_coeffs, const std::vector<r
 }
 
 /// Constructor
-IIRFilter::IIRFilter(const rsFloat* den_coeffs, const rsFloat* num_coeffs, unsigned int order):
+IIRFilter::IIRFilter(const rsFloat* den_coeffs, const rsFloat* num_coeffs, const unsigned int order):
 	order(order)
 {
 	a = new rsFloat[order];
@@ -187,7 +186,7 @@ IIRFilter::~IIRFilter()
 }
 
 /// Pass a single sample through the filter
-rsFloat IIRFilter::Filter(rsFloat sample)
+rsFloat IIRFilter::Filter(const rsFloat sample)
 {
 	//Shift the filter state
 	for (unsigned int j = order - 1; j > 0; j--)
@@ -210,7 +209,7 @@ rsFloat IIRFilter::Filter(rsFloat sample)
 }
 
 /// Pass an array of samples through the filter, filtering in place
-void IIRFilter::Filter(rsFloat* samples, int size)
+void IIRFilter::Filter(rsFloat* samples, const int size)
 {
 	for (int i = 0; i < size; i++)
 	{
@@ -255,7 +254,7 @@ FIRFilter::FIRFilter(const std::vector<rsFloat>& coeffs)
 }
 
 /// Constructor from coeffs
-FIRFilter::FIRFilter(const rsFloat* coeffs, int count)
+FIRFilter::FIRFilter(const rsFloat* coeffs, const int count)
 {
 	order = count;
 	// Allocate memory to store co-efficients and state
@@ -286,7 +285,7 @@ inline rsFloat FIRFilter::Filter(rsFloat sample)
 /// Pass an array of samples through the filter, filtering in place
 // See Oppenheim and Scaffer, section 6.5 "Basic Network Structures for FIR Systems"
 // TODO: Implement one of the more efficient FIR filter forms
-inline void FIRFilter::Filter(rsFloat* samples, int size)
+inline void FIRFilter::Filter(rsFloat* samples, const int size)
 {
 	// Allocate memory for a delay line, equal to the filter length
 	rsFloat* line = new rsFloat[order];
@@ -312,7 +311,7 @@ inline void FIRFilter::Filter(rsFloat* samples, int size)
 }
 
 /// Pass an array of complex samples through the filter, filtering in place
-inline void FIRFilter::Filter(std::complex<rsFloat>* samples, int size)
+inline void FIRFilter::Filter(std::complex<rsFloat>* samples, const int size)
 {
 	// Allocate memory for a delay line, equal to the filter length
 	rsComplex* line = new rsComplex[order];
@@ -370,7 +369,7 @@ ARFilter::~ARFilter()
 }
 
 /// Pass a single sample through the filter
-rsFloat ARFilter::Filter(rsFloat sample)
+rsFloat ARFilter::Filter(const rsFloat sample)
 {
 	//Shift the filter state
 	for (unsigned int j = order - 1; j > 0; j--)
@@ -388,7 +387,7 @@ rsFloat ARFilter::Filter(rsFloat sample)
 }
 
 /// Pass an array of samples through the filter, filtering in place
-void ARFilter::Filter(rsFloat* samples, int size)
+void ARFilter::Filter(rsFloat* samples, const int size)
 {
 	for (int i = 0; i < size; i++)
 	{
@@ -413,7 +412,7 @@ void ARFilter::Filter(rsFloat* samples, int size)
 //
 
 /// Constructor
-Upsampler::Upsampler(int ratio):
+Upsampler::Upsampler(const int ratio):
 	ratio(ratio)
 {
 	//Create the FIR interpolation filter
@@ -424,8 +423,8 @@ Upsampler::Upsampler(int ratio):
 	for (int i = 0; i < filter_size; i++)
 	{
 		// The Hamming window provides a solid tradeoff between rolloff and stopband attenuation
-		rsFloat window_value = 0.54 - 0.46 * std::cos(2 * M_PI * i / (rsFloat)(filter_size));
-		rsFloat filter_value = Sinc(1.0 / (rsFloat)(ratio) * (i - filter_size / 2));
+		const rsFloat window_value = 0.54 - 0.46 * std::cos(2 * M_PI * i / (rsFloat)(filter_size));
+		const rsFloat filter_value = Sinc(1.0 / (rsFloat)(ratio) * (i - filter_size / 2));
 		filterbank[i] = filter_value * window_value;
 	}
 	//Allocate memory for the sample state
@@ -446,7 +445,7 @@ Upsampler::~Upsampler()
 }
 
 //Get a sample, from either the provided pointer or sample memory
-inline rsFloat Upsampler::GetSample(rsFloat* samples, int n)
+inline rsFloat Upsampler::GetSample(const rsFloat* samples, const int n)
 {
 	if (n >= 0)
 	{
@@ -459,7 +458,7 @@ inline rsFloat Upsampler::GetSample(rsFloat* samples, int n)
 }
 
 /// Upsamples a signal and applies an anti-imaging filter
-void Upsampler::Upsample(rsFloat* insamples, int in_size, rsFloat* outsamples, int out_size)
+void Upsampler::Upsample(const rsFloat* insamples, const int in_size, rsFloat* outsamples, const int out_size)
 {
 	//Check the target array size
 	if (out_size != (ratio * in_size))
@@ -512,6 +511,7 @@ void Upsampler::Upsample(rsFloat* insamples, int in_size, rsFloat* outsamples, i
 DecadeUpsampler::DecadeUpsampler()
 {
 	/// 11th order elliptic lowpass at 0.1fs
+	constexpr
 	rsFloat den_coeffs[12] = {
 		1.0,
 		-10.301102119865,
@@ -527,6 +527,7 @@ DecadeUpsampler::DecadeUpsampler()
 		-0.664807695826097
 	};
 
+	constexpr
 	rsFloat num_coeffs[12] = {
 		2.7301694322809e-06,
 		-1.8508123430239e-05,
@@ -553,7 +554,7 @@ DecadeUpsampler::~DecadeUpsampler()
 
 
 ///Upsample a single sample at a time
-void DecadeUpsampler::Upsample(rsFloat sample, rsFloat* out)
+void DecadeUpsampler::Upsample(const rsFloat sample, rsFloat* out)
 {
 	// Prepare the output array
 	out[0] = sample;
@@ -566,7 +567,7 @@ void DecadeUpsampler::Upsample(rsFloat sample, rsFloat* out)
 }
 
 // Upsample a whole batch of samples
-void DecadeUpsampler::Upsample(rsFloat* in, int count, rsFloat* out)
+void DecadeUpsampler::Upsample(const rsFloat* in, const int count, rsFloat* out)
 {
 	/// Prepare the array for filtering
 	for (int i = 0; i < count; i++)

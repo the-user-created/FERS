@@ -15,7 +15,7 @@
 #include "xmlimport.h"
 
 /// FERS main function
-int main(int argc, char* argv[])
+int main(const int argc, char* argv[])
 {
 	rsDebug::printf(rsDebug::RS_CRITICAL, "/------------------------------------------------\\\n");
 	rsDebug::printf(rsDebug::RS_CRITICAL, "| FERS - The Flexible Extensible Radar Simulator |\n");

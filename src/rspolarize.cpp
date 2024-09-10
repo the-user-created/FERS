@@ -10,7 +10,7 @@ using namespace rs;
 // JonesVector Implementation
 //
 /// Constructor
-JonesVector::JonesVector(std::complex<rsFloat> h, std::complex<rsFloat> v):
+JonesVector::JonesVector(const std::complex<rsFloat> h, const std::complex<rsFloat> v):
 	h(h),
 	v(v)
 {
@@ -32,7 +32,7 @@ JonesVector& JonesVector::operator=(const JonesVector& iv)
 }
 
 /// Multiplication operator
-JonesVector JonesVector::operator*(const PSMatrix& mat)
+JonesVector JonesVector::operator*(const PSMatrix& mat) const
 {
 	JonesVector j(h * mat.s[0] + v * mat.s[1], h * mat.s[2] + v * mat.s[3]);
 	return j;
@@ -50,7 +50,7 @@ PSMatrix::PSMatrix()
 }
 
 /// Constructor
-PSMatrix::PSMatrix(rsFloat s11, rsFloat s12, rsFloat s21, rsFloat s22)
+PSMatrix::PSMatrix(const rsFloat s11, const rsFloat s12, const rsFloat s21, const rsFloat s22)
 {
 	s[0] = s11;
 	s[1] = s12;

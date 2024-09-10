@@ -87,7 +87,7 @@ void GetPositionCubic(rsFloat t, T& coord, const std::vector<T>& coords, const s
 		//We are at neither endpoint - perform cubic spline interpolation
 		int xri = xrp - coords.begin();
 		int xli = xri - 1;
-		rsFloat xrd = (coords[xri].t - t), xld = (t - coords[xli].t), iw = (coords[xri].t - coords[xli].t), iws = iw *
+		const rsFloat xrd = (coords[xri].t - t), xld = (t - coords[xli].t), iw = (coords[xri].t - coords[xli].t), iws = iw *
 			        iw / 6.0;
 		rsFloat A = xrd / iw, B = xld / iw, C = (A * A * A - A) * iws, D = (B * B * B - B) * iws;
 		coord = coords[xli] * A + coords[xri] * B + dd[xli] * C + dd[xri] * D;
@@ -133,13 +133,13 @@ void finalizeCubic(std::vector<T>& coords, std::vector<T>& dd)
 //
 // Path Implementation
 //
-Path::Path(Path::InterpType type):
+Path::Path(const Path::InterpType type):
 	final(false), type(type)
 {
 	pythonpath = 0; //No python path, until loaded
 }
 
-void Path::AddCoord(Coord& coord)
+void Path::AddCoord(const Coord& coord)
 {
 	std::vector<Coord>::iterator iter;
 	//Find the position to insert the coordinate, preserving sort
@@ -151,7 +151,7 @@ void Path::AddCoord(Coord& coord)
 }
 
 //Get the position of the path object at a specified time
-Vec3 Path::GetPosition(rsFloat t) const
+Vec3 Path::GetPosition(const rsFloat t) const
 {
 	Coord coord;
 	if (!final)
@@ -204,16 +204,16 @@ void Path::Finalize()
 }
 
 //Set the interpolation type of the path
-void Path::SetInterp(InterpType settype)
+void Path::SetInterp(const InterpType settype)
 {
 	final = false;
 	type = settype;
 }
 
 //Compares two paths at the same time and returns a vector with the distance and angle
-SVec3 Compare(const rsFloat time, Path& start, Path& end)
+SVec3 Compare(const rsFloat time, const Path& start, const Path& end)
 {
-	Vec3 difference = end.GetPosition(time) - start.GetPosition(time);
+	const Vec3 difference = end.GetPosition(time) - start.GetPosition(time);
 	SVec3 result(difference); //Get the result in spherical co-ordinates
 	return result;
 }
@@ -261,12 +261,12 @@ Path* rs::ReflectPath(const Path* path, const MultipathSurface* surf)
 //
 // RotationPath Implementation
 //
-RotationPath::RotationPath(RotationPath::InterpType type):
+RotationPath::RotationPath(const RotationPath::InterpType type):
 	final(false), start(0), rate(0), type(type)
 {
 }
 
-void RotationPath::AddCoord(RotationCoord& coord)
+void RotationPath::AddCoord(const RotationCoord& coord)
 {
 	std::vector<RotationCoord>::iterator iter;
 	//Find the position to insert the coordinate, preserving sort
@@ -278,7 +278,7 @@ void RotationPath::AddCoord(RotationCoord& coord)
 }
 
 //Get the position of the path object at a specified time
-SVec3 RotationPath::GetPosition(rsFloat t) const
+SVec3 RotationPath::GetPosition(const rsFloat t) const
 {
 	RotationCoord coord;
 	if (!final)
@@ -328,14 +328,14 @@ void RotationPath::Finalize()
 }
 
 //Set the interpolation type
-void RotationPath::SetInterp(InterpType setinterp)
+void RotationPath::SetInterp(const InterpType setinterp)
 {
 	type = setinterp;
 	final = false;
 }
 
 //Set properties for fixed rate motion
-void RotationPath::SetConstantRate(RotationCoord& setstart, RotationCoord& setrate)
+void RotationPath::SetConstantRate(const RotationCoord& setstart, const RotationCoord& setrate)
 {
 	start = setstart;
 	rate = setrate;
@@ -348,7 +348,7 @@ void RotationPath::SetConstantRate(RotationCoord& setstart, RotationCoord& setra
 //
 
 //Componentwise multiplication of space coordinates
-Coord rs::operator*(Coord a, Coord b)
+Coord rs::operator*(const Coord& a, const Coord& b)
 {
 	Coord c;
 	c.pos = a.pos * b.pos;
@@ -357,7 +357,7 @@ Coord rs::operator*(Coord a, Coord b)
 }
 
 //Componentwise addition of space coordinates
-Coord rs::operator+(Coord a, Coord b)
+Coord rs::operator+(const Coord& a, const Coord& b)
 {
 	Coord c;
 	c.pos = a.pos;
@@ -367,7 +367,7 @@ Coord rs::operator+(Coord a, Coord b)
 }
 
 //Componentwise subtraction of space coordinates
-Coord rs::operator-(Coord a, Coord b)
+Coord rs::operator-(const Coord& a, const Coord& b)
 {
 	Coord c;
 	c.pos = a.pos;
@@ -386,7 +386,7 @@ Coord rs::operator/(const Coord& a, const Coord& b)
 }
 
 //Add a constant to a PathCoord
-Coord rs::operator+(Coord a, rsFloat b)
+Coord rs::operator+(const Coord& a, const rsFloat b)
 {
 	Coord c;
 	c.pos += b;
@@ -395,7 +395,7 @@ Coord rs::operator+(Coord a, rsFloat b)
 }
 
 //Multiply by a rsFloat constant
-Coord rs::operator*(Coord a, rsFloat b)
+Coord rs::operator*(const Coord& a, const rsFloat b)
 {
 	Coord c;
 	c.pos = a.pos * b;
@@ -403,7 +403,7 @@ Coord rs::operator*(Coord a, rsFloat b)
 	return c;
 }
 
-Coord rs::operator/(rsFloat a, Coord b)
+Coord rs::operator/(const rsFloat a, const Coord& b)
 {
 	Coord c;
 	c.pos = a / b.pos;
@@ -411,7 +411,7 @@ Coord rs::operator/(rsFloat a, Coord b)
 	return c;
 }
 
-Coord rs::operator/(const Coord& b, rsFloat a)
+Coord rs::operator/(const Coord& b, const rsFloat a)
 {
 	Coord c;
 	c.pos = b.pos / a;
@@ -424,7 +424,7 @@ Coord rs::operator/(const Coord& b, rsFloat a)
 //
 
 //Componentwise multiplication of space coordinates
-RotationCoord rs::operator*(RotationCoord a, RotationCoord b)
+RotationCoord rs::operator*(const RotationCoord& a, const RotationCoord& b)
 {
 	RotationCoord c;
 	c.azimuth = a.azimuth * b.azimuth;
@@ -434,7 +434,7 @@ RotationCoord rs::operator*(RotationCoord a, RotationCoord b)
 }
 
 //Componentwise addition of space coordinates
-RotationCoord rs::operator+(RotationCoord a, RotationCoord b)
+RotationCoord rs::operator+(const RotationCoord& a, const RotationCoord& b)
 {
 	RotationCoord c;
 	c.azimuth = a.azimuth + b.azimuth;
@@ -444,7 +444,7 @@ RotationCoord rs::operator+(RotationCoord a, RotationCoord b)
 }
 
 //Componentwise subtraction of space coordinates
-RotationCoord rs::operator-(RotationCoord a, RotationCoord b)
+RotationCoord rs::operator-(const RotationCoord& a, const RotationCoord& b)
 {
 	RotationCoord c;
 	c.azimuth = a.azimuth - b.azimuth;
@@ -454,7 +454,7 @@ RotationCoord rs::operator-(RotationCoord a, RotationCoord b)
 }
 
 //Componentwise division of space coordinates
-RotationCoord rs::operator/(RotationCoord a, RotationCoord b)
+RotationCoord rs::operator/(const RotationCoord& a, const RotationCoord& b)
 {
 	RotationCoord c;
 	c.azimuth = a.azimuth / b.azimuth;
@@ -464,7 +464,7 @@ RotationCoord rs::operator/(RotationCoord a, RotationCoord b)
 }
 
 //Add a constant to a PathRotationCoord
-RotationCoord rs::operator+(RotationCoord a, rsFloat b)
+RotationCoord rs::operator+(const RotationCoord& a, const rsFloat b)
 {
 	RotationCoord c;
 	c.azimuth = a.azimuth + b;
@@ -474,7 +474,7 @@ RotationCoord rs::operator+(RotationCoord a, rsFloat b)
 }
 
 //Multiply by a rsFloat constant
-RotationCoord rs::operator*(RotationCoord a, rsFloat b)
+RotationCoord rs::operator*(const RotationCoord& a, const rsFloat b)
 {
 	RotationCoord c;
 	c.azimuth = a.azimuth * b;
@@ -483,7 +483,7 @@ RotationCoord rs::operator*(RotationCoord a, rsFloat b)
 	return c;
 }
 
-RotationCoord rs::operator/(rsFloat a, RotationCoord b)
+RotationCoord rs::operator/(const rsFloat a, const RotationCoord& b)
 {
 	RotationCoord c;
 	c.azimuth = a / b.azimuth;
@@ -492,7 +492,7 @@ RotationCoord rs::operator/(rsFloat a, RotationCoord b)
 	return c;
 }
 
-RotationCoord rs::operator/(RotationCoord b, rsFloat a)
+RotationCoord rs::operator/(const RotationCoord& b, const rsFloat a)
 {
 	RotationCoord c;
 	c.azimuth = b.azimuth / a;
@@ -520,7 +520,7 @@ RotationPath* rs::ReflectPath(const RotationPath* path, const MultipathSurface* 
 		Vec3 v(sv);
 		//Reflect the point in the given plane
 		v = surf->ReflectPoint(v);
-		SVec3 refl(v);
+		const SVec3 refl(v);
 		rc.azimuth = refl.azimuth;
 		rc.elevation = refl.elevation;
 		dual->AddCoord(rc);

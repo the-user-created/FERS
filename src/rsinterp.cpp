@@ -63,7 +63,7 @@ void InterpSetData::InsertSample(rsFloat x, rsFloat y)
 }
 
 ///Get the interpolated value for the given point
-rsFloat InterpSetData::Value(rsFloat x)
+rsFloat InterpSetData::Value(const rsFloat x)
 {
 	//Use linear interpolation, for now
 
@@ -73,7 +73,7 @@ rsFloat InterpSetData::Value(rsFloat x)
 		throw std::logic_error("[BUG] Interpolation on an empty list in InterpSet");
 	}
 	//Get the first element with a key greater than k
-	map<rsFloat, rsFloat>::const_iterator iter = data.lower_bound(x);
+	const map<rsFloat, rsFloat>::const_iterator iter = data.lower_bound(x);
 	//If we are at the beginning of the set, return the value
 	if (iter == data.begin())
 	{
@@ -95,10 +95,10 @@ rsFloat InterpSetData::Value(rsFloat x)
 	//Perform linear interpolation
 	else
 	{
-		rsFloat x1 = (*prev).first;
-		rsFloat x2 = (*iter).first;
-		rsFloat y1 = (*prev).second;
-		rsFloat y2 = (*iter).second;
+		const rsFloat x1 = (*prev).first;
+		const rsFloat x2 = (*iter).first;
+		const rsFloat y1 = (*prev).second;
+		const rsFloat y2 = (*iter).second;
 		return y2 * (x - x1) / (x2 - x1) + y1 * (x2 - x) / (x2 - x1);
 	}
 }
@@ -120,7 +120,7 @@ rsFloat InterpSetData::Max() const
 }
 
 /// Divide the set by a given number
-void InterpSetData::Divide(rsFloat a)
+void InterpSetData::Divide(const rsFloat a)
 {
 	map<rsFloat, rsFloat>::iterator iter;
 	for (iter = data.begin(); iter != data.end(); iter++)
@@ -153,13 +153,13 @@ void InterpSet::LoadSamples(const std::vector<rsFloat>& x, const std::vector<rsF
 }
 
 /// Load a single sample into the set
-void InterpSet::InsertSample(rsFloat x, rsFloat y)
+void InterpSet::InsertSample(const rsFloat x, const rsFloat y)
 {
 	data->InsertSample(x, y);
 }
 
 /// Get the interpolated value at the given point
-rsFloat InterpSet::Value(rsFloat x)
+rsFloat InterpSet::Value(const rsFloat x)
 {
 	return data->Value(x);
 }
@@ -171,7 +171,7 @@ rsFloat InterpSet::Max() const
 }
 
 /// Divide every sample in the set by a given number
-void InterpSet::Divide(rsFloat a)
+void InterpSet::Divide(const rsFloat a)
 {
 	data->Divide(a);
 }

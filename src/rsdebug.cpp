@@ -16,7 +16,7 @@ rsDebug::Level debug_level = rsDebug::RS_VERY_VERBOSE; //The current debug level
 boost::mutex debugMutex;
 
 //Print out a debug message including the line and file name
-void rsDebug::print(const rsDebug::Level level, const std::string& str, const std::string file, const int line)
+void rsDebug::print(const rsDebug::Level level, const std::string& str, const std::string& file, const int line)
 {
 	if (level >= debug_level)
 	{
@@ -60,7 +60,7 @@ void rsDebug::printf(const rsDebug::Level level, const std::string& format, ...)
 }
 
 //Set the current debug level
-void rsDebug::setDebugLevel(rsDebug::Level level)
+void rsDebug::setDebugLevel(const rsDebug::Level level)
 {
 	if (level <= rsDebug::RS_EXTREMELY_CRITICAL)
 	{
