@@ -114,8 +114,6 @@ void finalizeCubic(std::vector<T>& coords, std::vector<T>& dd)
 	{
 		T yrd = coords[i + 1] - coords[i], yld = coords[i] - coords[i - 1];
 		rsFloat xrd = coords[i + 1].t - coords[i].t, xld = coords[i].t - coords[i - 1].t;
-		T dr = yrd / xrd;
-		T dl = yld / xld;
 		rsFloat iw = coords[i + 1].t - coords[i - 1].t;
 		rsFloat si = xld / iw;
 		T p = dd[i - 1] * si + 2.0;

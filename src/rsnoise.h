@@ -72,7 +72,7 @@ namespace rs
 		boost::normal_distribution<rsFloat> _dist; //!< PRNG distribution
 		boost::variate_generator<boost::mt19937&, boost::normal_distribution<>>* _gen;
 		//!< Variate Generator (see boost::random docs)
-		rsFloat _temperature; //!< Noise temperature
+		rsFloat _temperature{}; //!< Noise temperature
 	};
 
 	/// Gamma distributed noise generator

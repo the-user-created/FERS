@@ -122,7 +122,7 @@ namespace rs
 		bool getSyncOnPulse() const;
 
 		/// Initialize the clock model generator
-		virtual void initializeModel(const PrototypeTiming* timing);
+		void initializeModel(const PrototypeTiming* timing);
 
 		/// Get the real time of a particular pulse
 		virtual rsFloat getPulseTimeError() const;
@@ -138,8 +138,8 @@ namespace rs
 		ClockModelGenerator* _model; //!< Clock model for intra-pulse samples
 		std::vector<rsFloat> _alphas; //!< Alpha parameters for 1/f^alpha clock model
 		std::vector<rsFloat> _weights; //!< Weights for 1/f^alpha clock model
-		rsFloat _frequency; //!< Carrier frequency of the modelled clock
-		bool _sync_on_pulse; //!< Reset the timing at the start of each pulse
+		rsFloat _frequency{}; //!< Carrier frequency of the modelled clock
+		bool _sync_on_pulse{}; //!< Reset the timing at the start of each pulse
 	};
 }
 

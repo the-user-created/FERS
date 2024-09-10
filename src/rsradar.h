@@ -126,7 +126,7 @@ namespace rs
 
 	protected:
 		rs::RadarSignal* _signal; //!< Waveform of transmitted pulses
-		rsFloat _prf; //!< Transmitter pulse repetition frequency (PRF)
+		rsFloat _prf{}; //!< Transmitter pulse repetition frequency (PRF)
 		bool _pulsed; //!< Is this a pulsed transmitter?
 		Transmitter* _dual; //!< Multipath dual of this transmitter
 		/// Function to create multipath duals
@@ -199,9 +199,9 @@ namespace rs
 		std::vector<Response*> _responses;
 		boost::try_mutex _responses_mutex; //!< Mutex to serialize access to responses
 		rsFloat _noise_temperature; //!< Noise temperature of the receiver
-		rsFloat _window_length; //!< Length of the receive window (seconds)
-		rsFloat _window_prf; //!< Window repetition frequency
-		rsFloat _window_skip; //!< The amount of time at the beginning of an interval to skip before capturing response
+		rsFloat _window_length{}; //!< Length of the receive window (seconds)
+		rsFloat _window_prf{}; //!< Window repetition frequency
+		rsFloat _window_skip{}; //!< The amount of time at the beginning of an interval to skip before capturing response
 		Receiver* _dual; //!< Multipath dual of this receiver
 		int _flags; //!< Flags which control receiver behaviour
 		/// Function to create dual

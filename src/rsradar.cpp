@@ -121,8 +121,8 @@ void Radar::setMultipathDual(const rsFloat reflect)
 	if (_multipath_reflect > 1)
 	{
 		rs_debug::printf(rs_debug::RS_CRITICAL,
-		                "[CRITICAL] Multipath reflection factor greater than 1 (=%g) for radar %s, results are likely to be incorrect\n",
-		                reflect, getName().c_str());
+		                 "[CRITICAL] Multipath reflection factor greater than 1 (=%g) for radar %s, results are likely to be incorrect\n",
+		                 reflect, getName().c_str());
 	}
 }
 

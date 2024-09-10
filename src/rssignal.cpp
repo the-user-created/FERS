@@ -83,12 +83,6 @@ namespace
 		//// Default constructor
 		InterpFilter();
 
-		/// Copy Constructor
-		InterpFilter(const InterpFilter& ifilt);
-
-		/// Assignment operator
-		InterpFilter& operator=(const InterpFilter& ifilt);
-
 		/// Pointer to a single instance of the class
 		static InterpFilter* _instance;
 

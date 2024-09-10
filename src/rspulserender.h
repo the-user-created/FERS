@@ -85,7 +85,7 @@ namespace rs
 		rsFloat _frac_delay; //!< Fractional window start time (< 1 sample, samples)
 		boost::mutex* _work_list_mutex; //!< Mutex to protect work list
 		std::queue<Response*>* _work_list; //!< List of responses to render
-		RsComplex* _local_window;
+		RsComplex* _local_window{};
 	};
 }
 

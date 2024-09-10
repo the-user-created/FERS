@@ -302,8 +302,11 @@ void rs::exportReceiverXml(const std::vector<rs::Response*>& responses, const st
 		(*ri)->renderXml(root);
 	}
 
-	//write the output to the specified file
-	doc.SaveFile(filename + ".fersxml");
+	// Write the output to the specified file
+	if (!doc.SaveFile(filename + ".fersxml"))
+	{
+		throw std::runtime_error("Failed to save XML file: " + filename + ".fersxml");
+	}
 }
 
 /// Export the responses in CSV format
@@ -401,7 +404,8 @@ void ThreadedRenderer::renderWindow(RsComplex* window, rsFloat length, rsFloat s
 		for (int i = 0; i < _max_threads; i++)
 		{
 			// rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Spawning %d\n", i);
-			std::unique_ptr<RenderThread> thr = std::make_unique<RenderThread>(i, &window_mutex, window, length, start, fracDelay, &work_list_mutex, &work_list);
+			std::unique_ptr<RenderThread> thr = std::make_unique<RenderThread>(
+				i, &window_mutex, window, length, start, fracDelay, &work_list_mutex, &work_list);
 			group.create_thread(*thr);
 			threads.push_back(std::move(thr));
 		}
