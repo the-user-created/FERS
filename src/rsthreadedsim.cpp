@@ -141,14 +141,13 @@ void rs::RunThreadedSim(const int thread_limit, World* world)
 {
 	std::vector<boost::thread*> running;
 	std::vector<Receiver*>::iterator ri;
-	std::vector<Transmitter*>::const_iterator ti;
 	boost::thread mainthrd();
 	rsDebug::printf(rsDebug::RS_INFORMATIVE, "[INFO] Using threaded simulation with %d threads.\n", thread_limit);
 	//PHASE 1: Do first pass of simulator
 	//Loop through the lists for transmitters and receivers
 	for (ri = world->receivers.begin(); ri != world->receivers.end(); ri++)
 	{
-		for (ti = world->transmitters.begin(); ti != world->transmitters.end(); ti++)
+		for (std::vector<Transmitter*>::const_iterator ti = world->transmitters.begin(); ti != world->transmitters.end(); ti++)
 		{
 			IncThreads();
 			SimThread sim(*ti, *ri, world);

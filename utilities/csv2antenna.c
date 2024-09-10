@@ -9,8 +9,7 @@
 void ProcessCSV(FILE* fpin, FILE* fpout, const char* enc_tag, const char* d1_tag, const char* d2_tag)
 {
 	char* buff = malloc(2048);
-	char* line;
-	line = fgets(buff, 2048, fpin);
+	char* line = fgets(buff, 2048, fpin);
 	while (line != NULL)
 	{
 		char* comma = strchr(line, ',');
@@ -32,25 +31,24 @@ void ProcessCSV(FILE* fpin, FILE* fpout, const char* enc_tag, const char* d1_tag
 
 int main(const int argc, char* argv[])
 {
-	FILE *fpout, *fpin1, *fpin2;
 	if (argc != 4)
 	{
 		fprintf(stderr, "Usage: csv2antenna <outfile> <elevation gains> <azimuth gains>\n");
 		exit(2);
 	}
-	fpin1 = fopen(argv[2], "r");
+	FILE* fpin1 = fopen(argv[2], "r");
 	if (!fpin1)
 	{
 		perror("Could not open input file");
 		exit(2);
 	}
-	fpin2 = fopen(argv[3], "r");
+	FILE* fpin2 = fopen(argv[3], "r");
 	if (!fpin2)
 	{
 		perror("Could not open input file");
 		exit(2);
 	}
-	fpout = fopen(argv[1], "w");
+	FILE* fpout = fopen(argv[1], "w");
 	if (!fpout)
 	{
 		perror("Could not open input file");

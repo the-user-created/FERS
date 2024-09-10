@@ -562,8 +562,7 @@ ClockModelGenerator::ClockModelGenerator(const std::vector<rsFloat>& alpha, cons
 /// Destructor
 ClockModelGenerator::~ClockModelGenerator()
 {
-	std::vector<MultirateGenerator*>::iterator iter;
-	for (iter = generators.begin(); iter != generators.end(); iter++)
+	for (std::vector<MultirateGenerator*>::iterator iter = generators.begin(); iter != generators.end(); iter++)
 	{
 		delete *iter;
 	}

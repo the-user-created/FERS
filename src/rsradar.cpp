@@ -232,8 +232,7 @@ void Receiver::AddResponse(Response* response)
 //Clear the list of system responses
 void Receiver::ClearResponses()
 {
-	std::vector<Response*>::iterator i;
-	for (i = responses.begin(); i != responses.end(); i++)
+	for (std::vector<Response*>::iterator i = responses.begin(); i != responses.end(); i++)
 	{
 		delete *i;
 	}

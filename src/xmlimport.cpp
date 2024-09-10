@@ -233,8 +233,7 @@ namespace
 		//Process the noise temperature tag
 		try
 		{
-			rsFloat temperature;
-			temperature = GetChildRsFloat(recvXML, "noise_temp");
+			const rsFloat temperature = GetChildRsFloat(recvXML, "noise_temp");
 			receiver->SetNoiseTemperature(temperature);
 		}
 		catch (XmlImportException& e)
@@ -401,11 +400,10 @@ namespace
 	{
 		try
 		{
-			rsFloat x, y, z, t;
-			x = GetChildRsFloat(handXML, "x");
-			y = GetChildRsFloat(handXML, "y");
-			z = GetChildRsFloat(handXML, "altitude");
-			t = GetChildRsFloat(handXML, "time");
+			const rsFloat x = GetChildRsFloat(handXML, "x");
+			const rsFloat y = GetChildRsFloat(handXML, "y");
+			const rsFloat z = GetChildRsFloat(handXML, "altitude");
+			const rsFloat t = GetChildRsFloat(handXML, "time");
 			Coord coord;
 			coord.t = t;
 			coord.pos = Vec3(x, y, z);
@@ -589,10 +587,9 @@ namespace
 	/// Process a platform, recursively processing all the elements that are attached to it
 	void ProcessPlatform(const TiXmlHandle& platXML, World* world)
 	{
-		Platform* platform;
 		//Create the platform, using the name from the element
 		std::string name = GetAttributeString(platXML, "name", "[ERROR] Platform must specify a name");
-		platform = new Platform(string(name));
+		Platform* platform = new Platform(string(name));
 		//Add the platform to the world
 		world->Add(platform);
 

@@ -275,7 +275,6 @@ void rs::SimulatePair(const Transmitter* trans, Receiver* recv, const World* wor
 {
 	//Get the number of pulses
 	const int pulses = trans->GetPulseCount();
-	std::vector<Target*>::const_iterator targ;
 	//Build a pulse
 	TransmitterPulse* pulse = new TransmitterPulse();
 	rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "%d\n", pulses);
@@ -283,7 +282,7 @@ void rs::SimulatePair(const Transmitter* trans, Receiver* recv, const World* wor
 	for (int i = 0; i < pulses; i++)
 	{
 		trans->GetPulse(pulse, i);
-		for (targ = world->targets.begin(); targ != world->targets.end(); targ++)
+		for (std::vector<Target*>::const_iterator targ = world->targets.begin(); targ != world->targets.end(); targ++)
 		{
 			SimulateTarget(trans, recv, *targ, world, pulse);
 		}

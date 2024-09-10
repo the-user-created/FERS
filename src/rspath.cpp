@@ -141,9 +141,8 @@ Path::Path(const Path::InterpType type):
 
 void Path::AddCoord(const Coord& coord)
 {
-	std::vector<Coord>::iterator iter;
 	//Find the position to insert the coordinate, preserving sort
-	iter = lower_bound(coords.begin(), coords.end(), coord);
+	const std::vector<Coord>::iterator iter = lower_bound(coords.begin(), coords.end(), coord);
 	//Insert the new coordinate
 	coords.insert(iter, coord);
 	//We are not finalized if we have inserted a coord
@@ -268,9 +267,8 @@ RotationPath::RotationPath(const RotationPath::InterpType type):
 
 void RotationPath::AddCoord(const RotationCoord& coord)
 {
-	std::vector<RotationCoord>::iterator iter;
 	//Find the position to insert the coordinate, preserving sort
-	iter = lower_bound(coords.begin(), coords.end(), coord);
+	const std::vector<RotationCoord>::iterator iter = lower_bound(coords.begin(), coords.end(), coord);
 	//Insert the new coordinate
 	coords.insert(iter, coord);
 	//We are not finalized if we have inserted a coord
