@@ -8,8 +8,9 @@
 
 #include "rsworld.h"
 
-namespace rs {
-  void RunThreadedSim(int thread_limit, World *world);
+namespace rs
+{
+	void RunThreadedSim(int thread_limit, World* world);
 }
 
 #endif
