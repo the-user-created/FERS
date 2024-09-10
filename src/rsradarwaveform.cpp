@@ -23,12 +23,12 @@ using namespace rs;
 //Default constructor
 RadarSignal::RadarSignal(const std::string& name, const rsFloat power, const rsFloat carrierfreq, const rsFloat length,
                          Signal* signal):
-	name(name),
-	power(power),
-	carrierfreq(carrierfreq),
-	length(length),
-	signal(signal),
-	polar(std::complex<rsFloat>(1.0, 0.0), std::complex<rsFloat>(0.0, 0.0)) //Default to horiz polarization
+	_name(name),
+	_power(power),
+	_carrierfreq(carrierfreq),
+	_length(length),
+	_signal(signal),
+	_polar(std::complex<rsFloat>(1.0, 0.0), std::complex<rsFloat>(0.0, 0.0)) //Default to horiz polarization
 {
 	if (!signal)
 	{
@@ -39,47 +39,47 @@ RadarSignal::RadarSignal(const std::string& name, const rsFloat power, const rsF
 //Destructor
 RadarSignal::~RadarSignal()
 {
-	delete signal;
+	delete _signal;
 }
 
 //Return the power of the signal
-rsFloat RadarSignal::GetPower() const
+rsFloat RadarSignal::getPower() const
 {
-	return power;
+	return _power;
 }
 
 //Get the carrier frequency
-rsFloat RadarSignal::GetCarrier() const
+rsFloat RadarSignal::getCarrier() const
 {
-	return carrierfreq;
+	return _carrierfreq;
 }
 
 //Get the name of the pulse
-std::string RadarSignal::GetName() const
+std::string RadarSignal::getName() const
 {
-	return name;
+	return _name;
 }
 
 //Get the native sample rate of the pulse
-rsFloat RadarSignal::GetRate() const
+rsFloat RadarSignal::getRate() const
 {
-	return signal->Rate();
+	return _signal->rate();
 }
 
 /// Return the length of the pulse
-rsFloat RadarSignal::GetLength() const
+rsFloat RadarSignal::getLength() const
 {
-	return length;
+	return _length;
 }
 
 /// Render the waveform to the target buffer
-boost::shared_array<rsComplex> RadarSignal::Render(const std::vector<InterpPoint>& points, unsigned int& size,
-                                                   const rsFloat frac_win_delay) const
+boost::shared_array<RsComplex> RadarSignal::render(const std::vector<InterpPoint>& points, unsigned int& size,
+                                                   const rsFloat fracWinDelay) const
 {
 	//Render the return pulse
-	boost::shared_array<rsComplex> data = signal->Render(points, power, size, frac_win_delay);
+	boost::shared_array<RsComplex> data = _signal->render(points, _power, size, fracWinDelay);
 	//Scale the return pulse by the signal power
-	const rsFloat scale = std::sqrt(power);
+	const rsFloat scale = std::sqrt(_power);
 	for (unsigned int i = 0; i < size; i++)
 	{
 		data[i] *= scale;
@@ -88,15 +88,15 @@ boost::shared_array<rsComplex> RadarSignal::Render(const std::vector<InterpPoint
 }
 
 /// Get the signal polarization
-JonesVector RadarSignal::GetPolarization()
+JonesVector RadarSignal::getPolarization()
 {
-	return polar;
+	return _polar;
 }
 
 /// Set the signal polarization
-void RadarSignal::SetPolarization(const JonesVector& in)
+void RadarSignal::setPolarization(const JonesVector& in)
 {
-	polar = in;
+	_polar = in;
 }
 
 //
@@ -104,27 +104,27 @@ void RadarSignal::SetPolarization(const JonesVector& in)
 //
 
 /// Load the pulse from HDF5 file
-RadarSignal* LoadPulseFromHDF5File(const std::string& name, const std::string& filename, const rsFloat power,
-                                   const rsFloat carrierfreq)
+RadarSignal* loadPulseFromHdf5File(const std::string& name, const std::string& filename, const rsFloat power,
+                                   const rsFloat carrierFreq)
 {
 	rsFloat rate;
 	unsigned int size;
-	rsComplex* data;
+	RsComplex* data;
 	// Load the data from the hdf5 file
-	rshdf5::ReadPulseData(filename, &data, size, rate);
+	rshdf5::readPulseData(filename, &data, size, rate);
 	//Create the signal object
 	Signal* signal = new Signal();
 	// Load the pulse into the signal object
-	signal->Load(data, size, rate);
+	signal->load(data, size, rate);
 	delete[] data;
 	// Create the RadarSignal
-	rs::RadarSignal* any = new rs::RadarSignal(name, power, carrierfreq, size / rate, signal);
+	rs::RadarSignal* any = new rs::RadarSignal(name, power, carrierFreq, size / rate, signal);
 	return any;
 }
 
 /// Load the pulse from a CSV file
-RadarSignal* LoadPulseFromCSVFile(const std::string& name, const std::string& filename, const rsFloat power,
-                                  const rsFloat carrierfreq)
+RadarSignal* loadPulseFromCsvFile(const std::string& name, const std::string& filename, const rsFloat power,
+                                  const rsFloat carrierFreq)
 {
 	///Open the file
 	std::ifstream ifile(filename.c_str());
@@ -138,7 +138,7 @@ RadarSignal* LoadPulseFromCSVFile(const std::string& name, const std::string& fi
 	ifile >> rate; //rate
 	const unsigned int length = static_cast<int>(rlength);
 	//Allocate memory for the file contents
-	const boost::scoped_array<rsComplex> data(new rsComplex[length]);
+	const boost::scoped_array<RsComplex> data(new RsComplex[length]);
 	//Loop through reading the samples in the file
 	unsigned int done = 0;
 	while (!ifile.eof() && (done < length))
@@ -151,16 +151,16 @@ RadarSignal* LoadPulseFromCSVFile(const std::string& name, const std::string& fi
 	}
 	//Create the signal object with the data from the file
 	Signal* signal = new Signal();
-	signal->Load(data.get(), length, rate);
+	signal->load(data.get(), length, rate);
 	//Create the pulse
-	rs::RadarSignal* any = new rs::RadarSignal(name, power, carrierfreq, rlength / rate, signal);
+	rs::RadarSignal* any = new rs::RadarSignal(name, power, carrierFreq, rlength / rate, signal);
 	return any;
 }
 
 /// Load a pulse from a file and generate an anypulse
-rs::RadarSignal* rsPulseFactory::LoadPulseFromFile(const std::string& name, const std::string& filename,
+rs::RadarSignal* rs_pulse_factory::loadPulseFromFile(const std::string& name, const std::string& filename,
                                                    const rsFloat power,
-                                                   const rsFloat carrierfreq)
+                                                   const rsFloat carrierFreq)
 {
 	//Identify file types
 
@@ -168,12 +168,12 @@ rs::RadarSignal* rsPulseFactory::LoadPulseFromFile(const std::string& name, cons
 	if (const int ln = filename.length() - 1; (tolower(filename[ln]) == 'v') && (tolower(filename[ln - 1]) == 's') && (
 		tolower(filename[ln - 2]) == 'c'))
 	{
-		return LoadPulseFromCSVFile(name, filename, power, carrierfreq);
+		return loadPulseFromCsvFile(name, filename, power, carrierFreq);
 	}
 	//Check for H5 extension
 	else if ((tolower(filename[ln]) == '5') && (tolower(filename[ln - 1]) == 'h'))
 	{
-		return LoadPulseFromHDF5File(name, filename, power, carrierfreq);
+		return loadPulseFromHdf5File(name, filename, power, carrierFreq);
 	}
 	// If neither of the above, complain
 	else

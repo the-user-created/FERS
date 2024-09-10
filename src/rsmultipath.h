@@ -22,16 +22,16 @@ namespace rs
 		~MultipathSurface();
 
 		/// Reflect a point in the surface
-		Vec3 ReflectPoint(const Vec3& b) const;
+		Vec3 reflectPoint(const Vec3& b) const;
 
 		/// Get the reflectance factor
-		rsFloat GetFactor() const;
+		rsFloat getFactor() const;
 
 	private:
-		rsFloat factor; //!< How energy is reflected from the plane
-		Matrix3 reflection; //!< Matrix defining reflection in this plane
-		rsFloat norm_factor; //!< Factor to normalize length
-		Vec3 translation_vector; //!< Vector to translate position of reflected point
+		rsFloat _factor; //!< How energy is reflected from the plane
+		Matrix3 _reflection; //!< Matrix defining reflection in this plane
+		rsFloat _norm_factor; //!< Factor to normalize length
+		Vec3 _translation_vector; //!< Vector to translate position of reflected point
 	};
 }
 

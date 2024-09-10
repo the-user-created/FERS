@@ -47,61 +47,61 @@ namespace rs
 		control over that objects resources and will delete the object
 		when necessary */
 		/// Add a platform to the world
-		void Add(Platform* plat);
+		void add(Platform* plat);
 
 		/// Add a transmitter to the world
-		void Add(Transmitter* trans);
+		void add(Transmitter* trans);
 
 		/// Add a reciver to the world
-		void Add(Receiver* recv);
+		void add(Receiver* recv);
 
 		/// Add a simple point target to the world
-		void Add(Target* target);
+		void add(Target* target);
 
 		/// Add a pulse type to the world
-		void Add(RadarSignal* pulse);
+		void add(RadarSignal* pulse);
 
 		/// Add an antenna to the world
-		void Add(Antenna* antenna);
+		void add(Antenna* antenna);
 
 		/// Add a timing source to the world
-		void Add(PrototypeTiming* timing);
+		void add(PrototypeTiming* timing);
 
 		/// Find a pulse with the specified name
-		RadarSignal* FindSignal(const std::string& name);
+		RadarSignal* findSignal(const std::string& name);
 
 		/// Find an antenna with the specified name
-		Antenna* FindAntenna(const std::string& name);
+		Antenna* findAntenna(const std::string& name);
 
 		/// Find a timing source with the specified name
-		PrototypeTiming* FindTiming(const std::string& name);
+		PrototypeTiming* findTiming(const std::string& name);
 
 		///Add a multipath surface to the world
-		void AddMultipathSurface(MultipathSurface* surface);
+		void addMultipathSurface(MultipathSurface* surface);
 
 		///Process the scene to add virtual receivers and transmitters
-		void ProcessMultipath();
+		void processMultipath();
 
-		friend void RunThreadedSim(int thread_limit, World* world);
+		friend void runThreadedSim(int threadLimit, World* world);
 
-		friend void SimulatePair(const Transmitter* trans, Receiver* recv, const World* world);
+		friend void simulatePair(const Transmitter* trans, Receiver* recv, const World* world);
 
 	protected:
-		std::vector<Platform*> platforms; //!< Vector of all platforms in the world
-		std::vector<Transmitter*> transmitters; //!< Vector of all transmitters in the world
-		std::vector<Receiver*> receivers; //!< Vector of all receivers in the world
-		std::vector<Target*> targets; //!< Vector of all targets in the world
-		std::map<std::string, RadarSignal*> pulses; //!< Vector of all signals in the world
-		std::map<std::string, Antenna*> antennas; //!< Map of antennas to names
-		std::map<std::string, PrototypeTiming*> timings; //!< Map of timing sources to names
+		std::vector<Platform*> _platforms; //!< Vector of all platforms in the world
+		std::vector<Transmitter*> _transmitters; //!< Vector of all transmitters in the world
+		std::vector<Receiver*> _receivers; //!< Vector of all receivers in the world
+		std::vector<Target*> _targets; //!< Vector of all targets in the world
+		std::map<std::string, RadarSignal*> _pulses; //!< Vector of all signals in the world
+		std::map<std::string, Antenna*> _antennas; //!< Map of antennas to names
+		std::map<std::string, PrototypeTiming*> _timings; //!< Map of timing sources to names
 		//We only support a single multipath surface
-		MultipathSurface* multipath_surface; //!< Surface to use for multipath propagation
+		MultipathSurface* _multipath_surface; //!< Surface to use for multipath propagation
 	};
 }
 
 namespace rs
 {
-	void RunThreadedSim(int thread_limit, World* world);
+	void runThreadedSim(int threadLimit, World* world);
 }
 
 #endif

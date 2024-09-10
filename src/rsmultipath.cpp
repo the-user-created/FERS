@@ -13,9 +13,9 @@ using namespace rs;
 
 /// Constructor
 MultipathSurface::MultipathSurface(const rsFloat a, const rsFloat b, const rsFloat c, const rsFloat d, const rsFloat factor):
-	factor(factor)
+	_factor(factor)
 {
-	rsFloat* mat = reflection.GetData();
+	rsFloat* mat = _reflection.getData();
 	//Fill the reflection matrix
 	mat[0] = -a * a + b * b + c * c;
 	mat[4] = a * a - b * b + c * c;
@@ -24,9 +24,9 @@ MultipathSurface::MultipathSurface(const rsFloat a, const rsFloat b, const rsFlo
 	mat[2] = mat[6] = -2 * a * c;
 	mat[5] = mat[7] = -2 * b * c;
 	//Get the scale factor
-	norm_factor = 1 / (a * a + b * b + c * c);
+	_norm_factor = 1 / (a * a + b * b + c * c);
 	//Get the translation vector
-	translation_vector = Vec3(-2 * a * d, -2 * b * d, -2 * c * d);
+	_translation_vector = Vec3(-2 * a * d, -2 * b * d, -2 * c * d);
 }
 
 /// Default destructor
@@ -35,19 +35,19 @@ MultipathSurface::~MultipathSurface()
 }
 
 /// Return a point reflected in the surface
-Vec3 MultipathSurface::ReflectPoint(const Vec3& b) const
+Vec3 MultipathSurface::reflectPoint(const Vec3& b) const
 {
 	Vec3 ans = b;
 	// Calculate the reflected position of b
 	// Calculation is norm_factor*(reflection*b+translation_vector)
-	ans *= reflection;
-	ans -= translation_vector;
-	ans *= norm_factor;
+	ans *= _reflection;
+	ans -= _translation_vector;
+	ans *= _norm_factor;
 	return ans;
 }
 
 /// Get the reflectance factor
-rsFloat MultipathSurface::GetFactor() const
+rsFloat MultipathSurface::getFactor() const
 {
-	return factor;
+	return _factor;
 }

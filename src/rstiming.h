@@ -26,19 +26,19 @@ namespace rs
 		virtual ~Timing();
 
 		/// Get the real time of a particular pulse
-		virtual rsFloat GetPulseTimeError() const = 0;
+		virtual rsFloat getPulseTimeError() const = 0;
 
 		/// Get the next sample of time error for a particular pulse
-		virtual rsFloat NextNoiseSample() = 0;
+		virtual rsFloat nextNoiseSample() = 0;
 
 		/// Skip a sample, computing only enough to preserve long term correlations
-		virtual void SkipSamples(long long samples) = 0;
+		virtual void skipSamples(long long samples) = 0;
 
 		/// Get the name of the timing source
-		std::string GetName() const;
+		std::string getName() const;
 
 	private:
-		std::string name; //!< The name of the prototype this is based on
+		std::string _name; //!< The name of the prototype this is based on
 	};
 
 	/// Prototypes for timing sources used by system devices
@@ -49,54 +49,54 @@ namespace rs
 		explicit PrototypeTiming(const std::string& name);
 
 		/// Add an alpha and a weight to the timing prototype
-		void AddAlpha(rsFloat alpha, rsFloat weight);
+		void addAlpha(rsFloat alpha, rsFloat weight);
 
 		/// Get the alphas and weights from the prototype
-		void GetAlphas(std::vector<rsFloat>& get_alphas, std::vector<rsFloat>& get_weights) const;
+		void getAlphas(std::vector<rsFloat>& getAlphas, std::vector<rsFloat>& getWeights) const;
 
 		/// Get the phase offset
-		rsFloat GetPhaseOffset() const;
+		rsFloat getPhaseOffset() const;
 
 		/// Get the frequency offset
-		rsFloat GetFreqOffset() const;
+		rsFloat getFreqOffset() const;
 
 		/// Get the frequency
-		rsFloat GetFrequency() const;
+		rsFloat getFrequency() const;
 
 		/// Get the value of the sync on pulse flag
-		bool GetSyncOnPulse() const;
+		bool getSyncOnPulse() const;
 
 		/// Set a constant frequency offset
-		void AddFreqOffset(rsFloat offset);
+		void addFreqOffset(rsFloat offset);
 
 		/// Set a constant phase offset
-		void AddPhaseOffset(rsFloat offset);
+		void addPhaseOffset(rsFloat offset);
 
 		/// Set a random frequency offset
-		void AddRandomFreqOffset(rsFloat stdev);
+		void addRandomFreqOffset(rsFloat stdev);
 
 		/// Set a random phase offset
-		void AddRandomPhaseOffset(rsFloat stdev);
+		void addRandomPhaseOffset(rsFloat stdev);
 
 		/// Set the base frequency of the clock model
-		void SetFrequency(rsFloat freq);
+		void setFrequency(rsFloat freq);
 
 		/// Get the name of the prototype
-		std::string GetName() const;
+		std::string getName() const;
 
 		/// Set the sync on pulse flag -- timing error resets at the start of the pulse
-		void SetSyncOnPulse();
+		void setSyncOnPulse();
 
 	private:
-		std::string name; //!< The name of the prototype timing source
-		std::vector<rsFloat> alphas; //!< Alpha parameters for 1/f^alpha clock model
-		std::vector<rsFloat> weights; //!< Weights for 1/f^alpha clock model
-		rsFloat freq_offset; //!< Constant frequency offset
-		rsFloat phase_offset; //!< Constant phase offset
-		rsFloat random_phase; //!< Standard deviation of random phase offset
-		rsFloat random_freq; //!< Standard deviation of random frequency offset
-		rsFloat frequency; //!< The nominal oscillator frequency
-		bool synconpulse; //!< Reset timing error at the start of each pulse
+		std::string _name; //!< The name of the prototype timing source
+		std::vector<rsFloat> _alphas; //!< Alpha parameters for 1/f^alpha clock model
+		std::vector<rsFloat> _weights; //!< Weights for 1/f^alpha clock model
+		rsFloat _freq_offset; //!< Constant frequency offset
+		rsFloat _phase_offset; //!< Constant phase offset
+		rsFloat _random_phase; //!< Standard deviation of random phase offset
+		rsFloat _random_freq; //!< Standard deviation of random frequency offset
+		rsFloat _frequency; //!< The nominal oscillator frequency
+		bool _sync_on_pulse; //!< Reset timing error at the start of each pulse
 	};
 
 	/// Implementation of clock timing based on the 1/f model with linear interpolation
@@ -110,36 +110,36 @@ namespace rs
 		virtual ~ClockModelTiming();
 
 		/// Get the next sample of time error for a particular pulse
-		virtual rsFloat NextNoiseSample();
+		virtual rsFloat nextNoiseSample();
 
 		/// Skip a sample, computing only enough to preserve long term correlations
-		virtual void SkipSamples(long long samples);
+		virtual void skipSamples(long long samples);
 
 		/// Reset the clock phase error to zero
-		void Reset();
+		void reset() const;
 
 		/// Get the value of the sync on pulse flag
-		bool GetSyncOnPulse() const;
+		bool getSyncOnPulse() const;
 
 		/// Initialize the clock model generator
-		virtual void InitializeModel(const PrototypeTiming* timing);
+		virtual void initializeModel(const PrototypeTiming* timing);
 
 		/// Get the real time of a particular pulse
-		virtual rsFloat GetPulseTimeError() const;
+		virtual rsFloat getPulseTimeError() const;
 
 		/// Get the carrier frequency of the modelled clock
-		rsFloat GetFrequency() const;
+		rsFloat getFrequency() const;
 
 		/// Return the enabled state of the clock model
-		bool Enabled();
+		bool enabled() const;
 
 	private:
-		bool enabled; //!< Is the clock model going to produce non-zero samples?
-		ClockModelGenerator* model; //!< Clock model for intra-pulse samples
-		std::vector<rsFloat> alphas; //!< Alpha parameters for 1/f^alpha clock model
-		std::vector<rsFloat> weights; //!< Weights for 1/f^alpha clock model
-		rsFloat frequency; //!< Carrier frequency of the modelled clock
-		bool synconpulse; //!< Reset the timing at the start of each pulse
+		bool _enabled; //!< Is the clock model going to produce non-zero samples?
+		ClockModelGenerator* _model; //!< Clock model for intra-pulse samples
+		std::vector<rsFloat> _alphas; //!< Alpha parameters for 1/f^alpha clock model
+		std::vector<rsFloat> _weights; //!< Weights for 1/f^alpha clock model
+		rsFloat _frequency; //!< Carrier frequency of the modelled clock
+		bool _sync_on_pulse; //!< Reset the timing at the start of each pulse
 	};
 }
 

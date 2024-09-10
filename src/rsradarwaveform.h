@@ -22,14 +22,14 @@ namespace rs
 	class JonesVector; //rspolarize.h
 
 	///Complex type for rendering operations
-	typedef std::complex<rsFloat> rsComplex;
+	typedef std::complex<rsFloat> RsComplex;
 
 	/// A continuous wave response interpolation point
 	struct InterpPoint
 	{
 		/// Constructor
 		InterpPoint(rsFloat power, rsFloat start, rsFloat delay, rsFloat doppler, rsFloat phase,
-		            rsFloat noise_temperature);
+		            rsFloat noiseTemperature);
 
 		rsFloat power; //!< Peak power of the pulse (into 1ohm)
 		rsFloat time; //!< Start time (seconds)
@@ -50,48 +50,48 @@ namespace rs
 		~RadarSignal();
 
 		/// Get the signal power
-		rsFloat GetPower() const;
+		rsFloat getPower() const;
 
 		/// Get the signal carrier frequency (Hz)
-		rsFloat GetCarrier() const;
+		rsFloat getCarrier() const;
 
 		/// Get the name of the signal
-		std::string GetName() const;
+		std::string getName() const;
 
 		/// Return the native sample rate of the waveform
-		rsFloat GetRate() const;
+		rsFloat getRate() const;
 
 		/// Return the length of the pulse
-		rsFloat GetLength() const;
+		rsFloat getLength() const;
 
 		/// Render the pulse with the given parameters
-		boost::shared_array<rsComplex> Render(const std::vector<InterpPoint>& points, unsigned int& size,
-		                                      rsFloat frac_win_delay) const;
+		boost::shared_array<RsComplex> render(const std::vector<InterpPoint>& points, unsigned int& size,
+		                                      rsFloat fracWinDelay) const;
 
 		/// Get the signal polarization
-		JonesVector GetPolarization();
+		JonesVector getPolarization();
 
 		/// Set the signal polarization
-		void SetPolarization(const JonesVector& in);
+		void setPolarization(const JonesVector& in);
 
 	private:
-		std::string name; //!< The name of the pulse
-		rsFloat power; //!< Power of the signal transmitted (Watts in 1ohm)
-		rsFloat carrierfreq; //!< Carrier frequency (Hz)
-		rsFloat length; //!< Length of the signal (seconds)
-		Signal* signal; //!< Transmitted Signal
-		JonesVector polar; //!< Signal Polarization
+		std::string _name; //!< The name of the pulse
+		rsFloat _power; //!< Power of the signal transmitted (Watts in 1ohm)
+		rsFloat _carrierfreq; //!< Carrier frequency (Hz)
+		rsFloat _length; //!< Length of the signal (seconds)
+		Signal* _signal; //!< Transmitted Signal
+		JonesVector _polar; //!< Signal Polarization
 		/// Default constructor
 		RadarSignal();
 	};
 }
 
 //Functions for creating radar waveforms
-namespace rsPulseFactory
+namespace rs_pulse_factory
 {
 	/// Load a pulse from a file
-	rs::RadarSignal* LoadPulseFromFile(const std::string& name, const std::string& filename, rsFloat power,
-	                                   rsFloat carrierfreq);
+	rs::RadarSignal* loadPulseFromFile(const std::string& name, const std::string& filename, rsFloat power,
+	                                   rsFloat carrierFreq);
 }
 
 

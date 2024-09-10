@@ -15,9 +15,9 @@ namespace xml
 {
 	//Load an XML file containing a simulation description
 	//putting the structure of the world into the world object in the process
-	void LoadXMLFile(const std::string& filename, rs::World* world);
+	void loadXmlFile(const std::string& filename, rs::World* world);
 
-	class XMLException
+	class XmlException
 	{
 	};
 }

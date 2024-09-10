@@ -19,19 +19,19 @@ namespace rs
 	class Signal; //rssignal.h
 }
 
-namespace rsSignal
+namespace rs_signal
 {
 	/// Type for storing signal
-	typedef std::complex<rsFloat> complex;
+	typedef std::complex<rsFloat> Complex;
 
 	/// Add noise to the signal with the given temperature
-	void AddNoise(rsFloat* data, rsFloat temperature, unsigned int size, rsFloat fs);
+	void addNoise(rsFloat* data, rsFloat temperature, unsigned int size, rsFloat fs);
 
 	/// Demodulate a frequency domain signal into time domain I and Q
-	complex* IQDemodulate(rsFloat* data, unsigned int size, rsFloat phase);
+	Complex* iqDemodulate(rsFloat* data, unsigned int size, rsFloat phase);
 
 	/// Simulate the effect of and ADC converter on the signal
-	void ADCSimulate(complex* data, unsigned int size, int bits, rsFloat fullscale);
+	void adcSimulate(Complex* data, unsigned int size, int bits, rsFloat fullscale);
 }
 
 namespace rs
@@ -44,39 +44,39 @@ namespace rs
 		~Signal(); //!< Default destructor
 
 		/// Clear deletes the data currently associated with the signal
-		void Clear();
+		void clear();
 
 		/// Load data into the signal (time domain, complex)
-		void Load(const rsSignal::complex* indata, unsigned int samples, rsFloat samplerate);
+		void load(const rs_signal::Complex* inData, unsigned int samples, rsFloat sampleRate);
 
 		/// Load data into the signal (time domain, real)
-		void Load(const rsFloat* indata, unsigned int samples, rsFloat samplerate);
+		void load(const rsFloat* inData, unsigned int samples, rsFloat sampleRate);
 
 		/// Return the sample rate of the signal
-		rsFloat Rate() const;
+		rsFloat rate() const;
 
 		/// Return the size, in samples of the signal
-		unsigned int Size() const;
+		unsigned int size() const;
 
 		/// Get a copy of the signal domain data
-		rsFloat* CopyData() const;
+		rsFloat* copyData() const;
 
 		/// Get the number of samples of padding at the beginning of the pulse
-		unsigned int Pad() const;
+		unsigned int pad() const;
 
 		/// Render the pulse with the specified doppler, delay and amplitude
-		boost::shared_array<rs::rsComplex> Render(const std::vector<InterpPoint>& points, rsFloat trans_power,
-		                                          unsigned int& size, rsFloat frac_win_delay) const;
+		boost::shared_array<rs::RsComplex> render(const std::vector<InterpPoint>& points, rsFloat transPower,
+		                                          unsigned int& size, rsFloat fracWinDelay) const;
 
 	private:
 		/// The signal data
-		rsSignal::complex* data;
+		rs_signal::Complex* _data;
 		/// Size of the signal in samples
-		unsigned int size;
+		unsigned int _size;
 		/// The sample rate of the signal in the time domain
-		rsFloat rate;
+		rsFloat _rate;
 		/// Number of samples of padding at the beginning of the pulse
-		unsigned int pad;
+		unsigned int _pad;
 	};
 }
 #endif

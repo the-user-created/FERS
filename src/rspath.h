@@ -13,7 +13,7 @@
 #include "rsgeometry.h"
 
 //Forward declarations
-namespace rsPython
+namespace rs_python
 {
 	class PythonPath; //rspython.h
 }
@@ -31,7 +31,7 @@ namespace rs
 		rsFloat t; //!< Time
 
 		/// Less than comparison operator. Operates only on time value.
-		bool operator<(const Coord b) const
+		bool operator<(const Coord& b) const
 		{
 			return t < b.t;
 		}
@@ -130,32 +130,32 @@ namespace rs
 		explicit Path(InterpType type = RS_INTERP_STATIC);
 
 		/// Add a co-ordinate to the path
-		void AddCoord(const Coord& coord);
+		void addCoord(const Coord& coord);
 
 		/// Finalize the path, so it can be requested with getPosition
-		void Finalize();
+		void finalize();
 
 		/// Get the position an object will be at at a specified time
-		Vec3 GetPosition(rsFloat t) const;
+		Vec3 getPosition(rsFloat t) const;
 
 		/// Set the interpolation type of the path
-		void SetInterp(InterpType settype);
+		void setInterp(InterpType settype);
 
 		/// Load a python path function
-		void LoadPythonPath(const std::string& modname, const std::string& pathname);
+		void loadPythonPath(const std::string& modname, const std::string& pathname);
 
 	private:
-		std::vector<Coord> coords; //!< Vector of time and space coordinates
-		std::vector<Coord> dd; //!< Vector of second derivatives at points (used for cubic interpolation)
-		bool final; //!< Is the path finalised?
-		InterpType type; //!< Type of interpolation
-		rsPython::PythonPath* pythonpath; //!< Pointer to the PythonPath object
+		std::vector<Coord> _coords; //!< Vector of time and space coordinates
+		std::vector<Coord> _dd; //!< Vector of second derivatives at points (used for cubic interpolation)
+		bool _final; //!< Is the path finalised?
+		InterpType _type; //!< Type of interpolation
+		rs_python::PythonPath* _pythonpath; //!< Pointer to the PythonPath object
 		/// Create a new path which is a reflection of this one around the given plane
-		friend Path* ReflectPath(const Path* path, const MultipathSurface* surf);
+		friend Path* reflectPath(const Path* path, const MultipathSurface* surf);
 	};
 
 	/// Create a new path which is a reflection of this one around the given plane
-	Path* ReflectPath(const Path* path, const MultipathSurface* surf);
+	Path* reflectPath(const Path* path, const MultipathSurface* surf);
 
 
 	/// Defines the rotation of an object in space, governed by time
@@ -168,35 +168,35 @@ namespace rs
 		explicit RotationPath(InterpType type = RS_INTERP_STATIC);
 
 		/// Method to add a co-ordinate to the path
-		void AddCoord(const RotationCoord& coord);
+		void addCoord(const RotationCoord& coord);
 
 		/// Finalize the path, so it can be requested with getPosition
-		void Finalize();
+		void finalize();
 
 		/// Get the position an object will be at at a specified time
-		SVec3 GetPosition(rsFloat t) const;
+		SVec3 getPosition(rsFloat t) const;
 
 		/// Set the interpolation type
-		void SetInterp(InterpType setinterp);
+		void setInterp(InterpType setinterp);
 
 		/// Set properties for fixed rate motion
-		void SetConstantRate(const RotationCoord& setstart, const RotationCoord& setrate);
+		void setConstantRate(const RotationCoord& setstart, const RotationCoord& setrate);
 
 	protected:
-		std::vector<RotationCoord> coords; //!< Vector of time and space coordinates
-		std::vector<RotationCoord> dd; //!< Vector of second derivatives at points (used for cubic interpolation)
-		bool final; //!< Is the path finalised?
+		std::vector<RotationCoord> _coords; //!< Vector of time and space coordinates
+		std::vector<RotationCoord> _dd; //!< Vector of second derivatives at points (used for cubic interpolation)
+		bool _final; //!< Is the path finalised?
 
-		RotationCoord start; //!< Start point of constant rotation
-		RotationCoord rate; //!< Rotation rate of constant rotation (rads per sec)
+		RotationCoord _start; //!< Start point of constant rotation
+		RotationCoord _rate; //!< Rotation rate of constant rotation (rads per sec)
 
-		InterpType type; //!< Type of interpolation
+		InterpType _type; //!< Type of interpolation
 		/// Create a new path which is a reflection of this one around the given plane
-		friend RotationPath* ReflectPath(const RotationPath* path, const MultipathSurface* surf);
+		friend RotationPath* reflectPath(const RotationPath* path, const MultipathSurface* surf);
 	};
 
 	/// Create a new path which is a reflection of this one around the given plane
-	RotationPath* ReflectPath(const RotationPath* path, const MultipathSurface* surf);
+	RotationPath* reflectPath(const RotationPath* path, const MultipathSurface* surf);
 
 	/// Exception class for the path code
 	class PathException final : public std::runtime_error
@@ -211,9 +211,9 @@ namespace rs
 
 namespace rs
 {
-	Path* ReflectPath(const Path* path, const MultipathSurface* surf);
+	Path* reflectPath(const Path* path, const MultipathSurface* surf);
 
-	RotationPath* ReflectPath(const RotationPath* path, const MultipathSurface* surf);
+	RotationPath* reflectPath(const RotationPath* path, const MultipathSurface* surf);
 }
 
 #endif

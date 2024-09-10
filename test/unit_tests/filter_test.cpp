@@ -30,7 +30,7 @@ unsigned int processors = 4;
 
 int main()
 {
-	rsNoise::InitializeNoise();
+	rs_noise::initializeNoise();
 	/*
 	 *rsFloat a[12] = {1.000000000000000e+00,
 				 -1.009905033992710e+01,
@@ -61,11 +61,11 @@ int main()
 	//for (int i = 0; i < 10240; i++)
 	// cout << iir->Filter(rsNoise::WGNSample(1)) << endl;
 
-	DecadeUpsampler upsample;
 	for (int i = 0; i < 1e4; i++)
 	{
+		DecadeUpsampler upsample;
 		rsFloat buf[10];
-		upsample.Upsample(rsNoise::WGNSample(1), buf);
+		upsample.upsample(rs_noise::wgnSample(1), buf);
 		for (int j = 0; j < 10; j++)
 		{
 			cout << buf[j] << endl;

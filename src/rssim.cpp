@@ -23,7 +23,7 @@ using namespace rs;
 namespace
 {
 	/// Results of solving the bistatic radar equation and friends
-	struct REResults
+	struct ReResults
 	{
 		rsFloat power;
 		rsFloat delay;
@@ -38,94 +38,95 @@ namespace
 	};
 
 	///Solve the radar equation for a given set of parameters
-	void SolveRE(const Transmitter* trans, const Receiver* recv, const Target* targ, const rsFloat time,
-	             const rsFloat length, const RadarSignal* wave, REResults& results)
+	void solveRe(const Transmitter* trans, const Receiver* recv, const Target* targ, const rsFloat time,
+	             const rsFloat length, const RadarSignal* wave, ReResults& results)
 	{
 		//Get the positions in space of the three objects
-		const Vec3 trpos = trans->GetPosition(time);
-		const Vec3 repos = recv->GetPosition(time);
-		const Vec3 tapos = targ->GetPosition(time);
-		SVec3 transvec = SVec3(tapos - trpos);
-		SVec3 recvvec = SVec3(tapos - repos);
+		const Vec3 transmitter_position = trans->getPosition(time);
+		const Vec3 receiver_position = recv->getPosition(time);
+		const Vec3 target_position = targ->getPosition(time);
+		SVec3 transmitter_to_target_vector = SVec3(target_position - transmitter_position);
+		SVec3 receiver_to_target_vector = SVec3(target_position - receiver_position);
 		//Calculate the distances
-		const rsFloat Rt = transvec.length;
-		const rsFloat Rr = recvvec.length;
+		const rsFloat transmitter_to_target_distance = transmitter_to_target_vector.length;
+		const rsFloat receiver_to_target_distance = receiver_to_target_vector.length;
 		// From here on, transvec and recvvec need to be normalized
-		transvec.length = 1;
-		recvvec.length = 1;
+		transmitter_to_target_vector.length = 1;
+		receiver_to_target_vector.length = 1;
 		//Sanity check Rt and Rr and throw an exception if they are too small
-		if ((Rt <= std::numeric_limits<rsFloat>::epsilon()) || (Rr <= std::numeric_limits<rsFloat>::epsilon()))
+		if ((transmitter_to_target_distance <= std::numeric_limits<rsFloat>::epsilon()) || (receiver_to_target_distance <= std::numeric_limits<rsFloat>::epsilon()))
 		{
 			throw RangeError();
 		}
 		//Step 1, calculate the delay (in seconds) experienced by the pulse
 		//See "Delay Equation" in doc/equations/equations.tex
-		results.delay = (Rt + Rr) / rsParameters::c();
+		results.delay = (transmitter_to_target_distance + receiver_to_target_distance) / RsParameters::c();
 		//rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Calculated delay as %fs, %fm\n", results.delay, results.delay * rsParameters::c());
 		//Get the RCS
-		const rsFloat RCS = targ->GetRCS(transvec, recvvec);
+		const rsFloat rcs = targ->getRcs(transmitter_to_target_vector, receiver_to_target_vector);
 		//Get the wavelength
-		const rsFloat Wl = rsParameters::c() / wave->GetCarrier();
+		const rsFloat wavelength = RsParameters::c() / wave->getCarrier();
 		//Get the system antenna gains (which include loss factors)
-		const rsFloat Gt = trans->GetGain(transvec, trans->GetRotation(time), Wl);
-		const rsFloat Gr = recv->GetGain(recvvec, recv->GetRotation(results.delay + time), Wl);
+		const rsFloat transmitter_gain = trans->getGain(transmitter_to_target_vector, trans->getRotation(time), wavelength);
+		const rsFloat receiver_gain = recv->getGain(receiver_to_target_vector, recv->getRotation(results.delay + time), wavelength);
 		//  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Gt: %e Gr: %e\n", Gt, Gr);
 		//Step 2, calculate the received power using the narrowband bistatic radar equation
 		//See "Bistatic Narrowband Radar Equation" in doc/equations/equations.tex
-		results.power = Gt * Gr * RCS / (4 * M_PI);
-		if (!recv->CheckFlag(Receiver::FLAG_NOPROPLOSS))
+		results.power = transmitter_gain * receiver_gain * rcs / (4 * M_PI);
+		if (!recv->checkFlag(Receiver::FLAG_NOPROPLOSS))
 		{
-			results.power *= (Wl * Wl) / (pow(4 * M_PI, 2) * Rt * Rt * Rr * Rr);
+			results.power *= (wavelength * wavelength) / (pow(4 * M_PI, 2) * transmitter_to_target_distance * transmitter_to_target_distance * receiver_to_target_distance * receiver_to_target_distance);
 		}
 		//   rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Pr: %2.9e Rt: %e Rr: %e Gt: %e Gr: %e RCS: %e Wl %e\n", results.power, Rt, Rr, Gt, Gr, RCS, Wl);
 		// If the transmitter and/or receiver are multipath duals, multiply by the loss factor
-		if (trans->IsMultipathDual())
+		if (trans->isMultipathDual())
 		{
-			results.power *= trans->MultipathDualFactor();
+			results.power *= trans->multipathDualFactor();
 		}
-		if (recv->IsMultipathDual())
+		if (recv->isMultipathDual())
 		{
-			results.power *= trans->MultipathDualFactor();
+			results.power *= trans->multipathDualFactor();
 		}
 		//Step 3, calculate phase shift
 		//See "Phase Delay Equation" in doc/equations/equations.tex
 		// results.phase = fmod(results.delay*2*M_PI*wave->GetCarrier(), 2*M_PI);
-		results.phase = -results.delay * 2 * M_PI * wave->GetCarrier();
+		results.phase = -results.delay * 2 * M_PI * wave->getCarrier();
 		//Step 4, calculate doppler shift
 		//Calculate positions at the end of the pulse
-		const Vec3 trpos_end = trans->GetPosition(time + length);
-		const Vec3 repos_end = recv->GetPosition(time + length);
-		const Vec3 tapos_end = targ->GetPosition(time + length);
+		// TODO: These need to be more descriptive
+		const Vec3 trpos_end = trans->getPosition(time + length);
+		const Vec3 repos_end = recv->getPosition(time + length);
+		const Vec3 tapos_end = targ->getPosition(time + length);
 		const SVec3 transvec_end = SVec3(tapos_end - trpos_end);
 		const SVec3 recvvec_end = SVec3(tapos_end - repos_end);
-		const rsFloat Rt_end = transvec_end.length;
-		const rsFloat Rr_end = recvvec_end.length;
+		const rsFloat rt_end = transvec_end.length;
+		const rsFloat rr_end = recvvec_end.length;
 		//Sanity check Rt_end and Rr_end and throw an exception if they are too small
-		if ((Rt_end < std::numeric_limits<rsFloat>::epsilon()) || (Rr_end < std::numeric_limits<rsFloat>::epsilon()))
+		if ((rt_end < std::numeric_limits<rsFloat>::epsilon()) || (rr_end < std::numeric_limits<rsFloat>::epsilon()))
 		{
 			throw std::runtime_error("Target is too close to transmitter or receiver for accurate simulation");
 		}
 		//Doppler shift equation
 		//See "Bistatic Doppler Equation" in doc/equations/equations.tex
-		const rsFloat V_r = (Rr_end - Rr) / length;
-		const rsFloat V_t = (Rt_end - Rt) / length;
-		results.doppler = std::sqrt((1 + V_r / rsParameters::c()) / (1 - V_r / rsParameters::c())) * std::sqrt(
-			(1 + V_t / rsParameters::c()) / (1 - V_t / rsParameters::c()));
+		const rsFloat v_r = (rr_end - receiver_to_target_distance) / length;
+		const rsFloat v_t = (rt_end - transmitter_to_target_distance) / length;
+		results.doppler = std::sqrt((1 + v_r / RsParameters::c()) / (1 - v_r / RsParameters::c())) * std::sqrt(
+			(1 + v_t / RsParameters::c()) / (1 - v_t / RsParameters::c()));
 		//Step 5, calculate system noise temperature
 		//We only use the receive antenna noise temperature for now
-		results.noise_temperature = recv->GetNoiseTemperature(recv->GetRotation(time + results.delay));
+		results.noise_temperature = recv->getNoiseTemperature(recv->getRotation(time + results.delay));
 	}
 
 	//Perform the first stage of CW simulation calculations for the specified pulse and target
-	void SimulateTarget(const Transmitter* trans, Receiver* recv, const Target* targ, const World* world,
+	void simulateTarget(const Transmitter* trans, Receiver* recv, const Target* targ, const World* world,
 	                    const TransmitterPulse* signal)
 	{
 		//Get the simulation start and end time
 		const rsFloat start_time = signal->time;
-		const rsFloat end_time = signal->time + signal->wave->GetLength();
+		const rsFloat end_time = signal->time + signal->wave->getLength();
 		//Calculate the number of interpolation points we need to add
-		const rsFloat sample_time = 1.0 / rsParameters::cw_sample_rate();
-		const rsFloat point_count = std::ceil(signal->wave->GetLength() / sample_time);
+		const rsFloat sample_time = 1.0 / RsParameters::cwSampleRate();
+		const rsFloat point_count = std::ceil(signal->wave->getLength() / sample_time);
 		//Create the response
 		Response* response = new Response(signal->wave, trans);
 		try
@@ -134,89 +135,91 @@ namespace
 			for (int i = 0; i < point_count; i++)
 			{
 				const rsFloat stime = i * sample_time + start_time; //Time of the start of the sample
-				REResults results;
-				SolveRE(trans, recv, targ, stime, sample_time, signal->wave, results);
+				ReResults results;
+				solveRe(trans, recv, targ, stime, sample_time, signal->wave, results);
 				InterpPoint point(results.power, stime + results.delay, results.delay, results.doppler, results.phase,
 				                  results.noise_temperature);
-				response->AddInterpPoint(point);
+				response->addInterpPoint(point);
 				//rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Added interpolation point with delay: %gs, %fm\n", results.delay, results.delay * rsParameters::c());
 				//rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "stime + results.delay = : %gs\n", stime + results.delay);
 			}
 			//Add one more point at the end
-			REResults results;
-			SolveRE(trans, recv, targ, end_time, sample_time, signal->wave, results);
+			ReResults results;
+			solveRe(trans, recv, targ, end_time, sample_time, signal->wave, results);
 			const InterpPoint point(results.power, end_time + results.delay, results.delay, results.doppler,
 			                        results.phase,
 			                        results.noise_temperature);
-			response->AddInterpPoint(point);
+			response->addInterpPoint(point);
 		}
 		catch (RangeError& re)
 		{
 			throw std::runtime_error("Receiver or Transmitter too close to Target for accurate simulation");
 		}
 		//Add the response to the receiver
-		recv->AddResponse(response);
+		recv->addResponse(response);
 	}
 
 	/// Solve the Radar Equation and friends (doppler, phase, delay) for direct transmission
-	void SolveREDirect(const Transmitter* trans, const Receiver* recv, const rsFloat time, const rsFloat length,
-	                   const RadarSignal* wave, REResults& results)
+	void solveReDirect(const Transmitter* trans, const Receiver* recv, const rsFloat time, const rsFloat length,
+	                   const RadarSignal* wave, ReResults& results)
 	{
 		//Calculate the vectors to and from the transmitter
-		const Vec3 tpos = trans->GetPosition(time);
-		const Vec3 rpos = recv->GetPosition(time);
+		// TODO: These need to be more descriptive
+		const Vec3 tpos = trans->getPosition(time);
+		const Vec3 rpos = recv->getPosition(time);
 		SVec3 transvec = SVec3(tpos - rpos);
 		SVec3 recvvec = SVec3(rpos - tpos);
 		//Calculate the range
-		const rsFloat R = transvec.length;
+		const rsFloat r = transvec.length;
 		//Normalize transvec and recvvec for angle calculations
 		transvec.length = 1;
 		recvvec.length = 1;
 		//If the two antennas are not in the same position, this can be calculated
-		if (R > std::numeric_limits<rsFloat>::epsilon())
+		if (r > std::numeric_limits<rsFloat>::epsilon())
 		{
 			//Step 1: Calculate the delay
 			//See "Delay Equation" in doc/equations/equations.tex
-			results.delay = R / rsParameters::c();
+			results.delay = r / RsParameters::c();
 
 			//Calculate the wavelength
-			const rsFloat Wl = rsParameters::c() / wave->GetCarrier();
+			const rsFloat wl = RsParameters::c() / wave->getCarrier();
 			//Get the antenna gains
-			const rsFloat Gt = trans->GetGain(transvec, trans->GetRotation(time), Wl);
-			const rsFloat Gr = recv->GetGain(recvvec, recv->GetRotation(time + results.delay), Wl);
+			const rsFloat gt = trans->getGain(transvec, trans->getRotation(time), wl);
+			const rsFloat gr = recv->getGain(recvvec, recv->getRotation(time + results.delay), wl);
 			//Step 2: Calculate the received power
 			//See "One Way Radar Equation" in doc/equations/equations.tex
-			results.power = Gt * Gr * Wl * Wl / (4 * M_PI);
-			if (!recv->CheckFlag(Receiver::FLAG_NOPROPLOSS))
+			results.power = gt * gr * wl * wl / (4 * M_PI);
+			if (!recv->checkFlag(Receiver::FLAG_NOPROPLOSS))
 			{
-				results.power *= 1 / (4 * M_PI * pow(R, 2));
+				results.power *= 1 / (4 * M_PI * pow(r, 2));
 			}
 			//  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Pr: %2.9e R: %e Gt: %e Gr: %e Wl %e\n", results.power, R, Gt, Gr, Wl);
 			//Step 3: Calculate the doppler shift (if one of the antennas is moving)
-			const Vec3 tpos_end = trans->GetPosition(time + length);
-			const Vec3 rpos_end = recv->GetPosition(time + length);
+			// TODO: These need to be more descriptive
+			const Vec3 tpos_end = trans->getPosition(time + length);
+			const Vec3 rpos_end = recv->getPosition(time + length);
 			const Vec3 trpos_end = tpos_end - rpos_end;
-			const rsFloat R_end = trpos_end.Length();
+			const rsFloat r_end = trpos_end.length();
 			//Calculate the Doppler shift
 			//See "Monostatic Doppler Equation" in doc/equations/equations.tex
-			const rsFloat vdoppler = (R_end - R) / length;
-			results.doppler = (rsParameters::c() + vdoppler) / (rsParameters::c() - vdoppler);
+			const rsFloat vdoppler = (r_end - r) / length;
+			results.doppler = (RsParameters::c() + vdoppler) / (RsParameters::c() - vdoppler);
 			// For the moment, we don't handle direct paths for multipath duals, until we can do it correctly
-			if (trans->IsMultipathDual())
+			if (trans->isMultipathDual())
 			{
 				results.power = 0;
 			}
-			if (recv->IsMultipathDual())
+			if (recv->isMultipathDual())
 			{
 				results.power = 0;
 			}
 
 			//Step 4, calculate phase shift
 			//See "Phase Delay Equation" in doc/equations/equations.tex
-			results.phase = fmod(results.delay * 2 * M_PI * wave->GetCarrier(), 2 * M_PI);
+			results.phase = fmod(results.delay * 2 * M_PI * wave->getCarrier(), 2 * M_PI);
 
 			//Step 5, calculate noise temperature
-			results.noise_temperature = recv->GetNoiseTemperature(recv->GetRotation(time + results.delay));
+			results.noise_temperature = recv->getNoiseTemperature(recv->getRotation(time + results.delay));
 		}
 		else
 		{
@@ -226,19 +229,19 @@ namespace
 	}
 
 	/// Model the pulse which is received directly by a receiver from a CW transmitter
-	void AddDirect(const Transmitter* trans, Receiver* recv, const World* world, const TransmitterPulse* signal)
+	void addDirect(const Transmitter* trans, Receiver* recv, const World* world, const TransmitterPulse* signal)
 	{
 		//If receiver and transmitter share the same antenna - there can't be a direct pulse
-		if (trans->IsMonostatic() && (trans->GetAttached() == recv))
+		if (trans->isMonostatic() && (trans->getAttached() == recv))
 		{
 			return;
 		}
 		//Get the simulation start and end time
 		const rsFloat start_time = signal->time;
-		const rsFloat end_time = signal->time + signal->wave->GetLength();
+		const rsFloat end_time = signal->time + signal->wave->getLength();
 		//Calculate the number of interpolation points we need to add
-		const rsFloat sample_time = 1.0 / rsParameters::cw_sample_rate();
-		const rsFloat point_count = std::ceil(signal->wave->GetLength() / sample_time);
+		const rsFloat sample_time = 1.0 / RsParameters::cwSampleRate();
+		const rsFloat point_count = std::ceil(signal->wave->getLength() / sample_time);
 		//Create the CW response
 		Response* response = new Response(signal->wave, trans);
 		try
@@ -247,51 +250,51 @@ namespace
 			for (int i = 0; i < point_count; i++)
 			{
 				const rsFloat stime = i * sample_time + start_time;
-				REResults results;
-				SolveREDirect(trans, recv, stime, sample_time, signal->wave, results);
+				ReResults results;
+				solveReDirect(trans, recv, stime, sample_time, signal->wave, results);
 				InterpPoint point(results.power, results.delay + stime, results.delay, results.doppler, results.phase,
 				                  results.noise_temperature);
-				response->AddInterpPoint(point);
+				response->addInterpPoint(point);
 			}
 			//Add one more point at the end
-			REResults results;
-			SolveREDirect(trans, recv, end_time, sample_time, signal->wave, results);
+			ReResults results;
+			solveReDirect(trans, recv, end_time, sample_time, signal->wave, results);
 			const InterpPoint point(results.power, results.delay + end_time, results.delay, results.doppler,
 			                        results.phase,
 			                        results.noise_temperature);
-			response->AddInterpPoint(point);
+			response->addInterpPoint(point);
 		}
 		catch (RangeError& re)
 		{
 			throw std::runtime_error("Receiver or Transmitter too close to Target for accurate simulation");
 		}
 		//Add the response to the receiver
-		recv->AddResponse(response);
+		recv->addResponse(response);
 	}
 }
 
 //Simulate a transmitter-receiver pair with a pulsed transmission
-void rs::SimulatePair(const Transmitter* trans, Receiver* recv, const World* world)
+void rs::simulatePair(const Transmitter* trans, Receiver* recv, const World* world)
 {
 	//Get the number of pulses
-	const int pulses = trans->GetPulseCount();
+	const int pulses = trans->getPulseCount();
 	//Build a pulse
 	TransmitterPulse* pulse = new TransmitterPulse();
-	rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "%d\n", pulses);
+	rs_debug::printf(rs_debug::RS_VERY_VERBOSE, "%d\n", pulses);
 	//Loop throught the pulses
 	for (int i = 0; i < pulses; i++)
 	{
-		trans->GetPulse(pulse, i);
-		for (std::vector<Target*>::const_iterator targ = world->targets.begin(); targ != world->targets.end(); ++targ)
+		trans->getPulse(pulse, i);
+		for (std::vector<Target*>::const_iterator targ = world->_targets.begin(); targ != world->_targets.end(); ++targ)
 		{
-			SimulateTarget(trans, recv, *targ, world, pulse);
+			simulateTarget(trans, recv, *targ, world, pulse);
 		}
 
 		// Check if direct pulses are being considered for this receiver
-		if (!recv->CheckFlag(Receiver::FLAG_NODIRECT))
+		if (!recv->checkFlag(Receiver::FLAG_NODIRECT))
 		{
 			//Add the direct pulses
-			AddDirect(trans, recv, world, pulse);
+			addDirect(trans, recv, world, pulse);
 		}
 	}
 	delete pulse;

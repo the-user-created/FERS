@@ -26,20 +26,20 @@ namespace rs
 		~Object();
 
 		/// Get the position of the object in space
-		Vec3 GetPosition(rsFloat time) const;
+		Vec3 getPosition(rsFloat time) const;
 
 		/// Get the rotation of the object in space
-		SVec3 GetRotation(rsFloat time) const;
+		SVec3 getRotation(rsFloat time) const;
 
 		/// Get a pointer to the platform this object is attached to
-		const Platform* GetPlatform() const;
+		const Platform* getPlatform() const;
 
 		/// Get the name of the object
-		std::string GetName() const;
+		std::string getName() const;
 
 	private:
-		const Platform* platform; //<! Platform to which the object is attached
-		std::string name; //<! Name of the object
+		const Platform* _platform; //<! Platform to which the object is attached
+		std::string _name; //<! Name of the object
 	};
 }
 

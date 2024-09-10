@@ -10,8 +10,8 @@
 using namespace rs;
 
 Object::Object(const Platform* platform, const std::string& name):
-	platform(platform),
-	name(name)
+	_platform(platform),
+	_name(name)
 {
 }
 
@@ -20,25 +20,25 @@ Object::~Object()
 }
 
 // Get the position of the object
-Vec3 Object::GetPosition(const rsFloat time) const
+Vec3 Object::getPosition(const rsFloat time) const
 {
-	return platform->GetPosition(time);
+	return _platform->getPosition(time);
 }
 
 // Get the rotation of the object from it's platform
-SVec3 Object::GetRotation(const rsFloat time) const
+SVec3 Object::getRotation(const rsFloat time) const
 {
-	return platform->GetRotation(time);
+	return _platform->getRotation(time);
 }
 
 // Get the object's name
-std::string Object::GetName() const
+std::string Object::getName() const
 {
-	return name;
+	return _name;
 }
 
 /// Get a pointer to the platform this object is attached to
-const Platform* Object::GetPlatform() const
+const Platform* Object::getPlatform() const
 {
-	return platform;
+	return _platform;
 }

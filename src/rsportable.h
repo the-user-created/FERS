@@ -8,19 +8,19 @@
 
 #include <config.h>
 
-namespace rsPortable
+namespace rs_portable
 {
 	/// Compare two strings, ignoring case
 	int stricmp(const char* one, const char* two);
 
 	/// Compute the first order Bessel function of the first kind
-	rsFloat BesselJ1(rsFloat x);
+	rsFloat besselJ1(rsFloat x);
 
 	/// Floating point round
 	rsFloat rsRound(rsFloat x);
 
 	/// Detect the number of CPUs in the machine
-	int CountProcessors();
+	int countProcessors();
 }
 
 #endif

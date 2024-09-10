@@ -11,20 +11,20 @@
 namespace rs
 {
 	///Polarization Scattering Matrix, implements matrices in the Jones calculus
-	class PSMatrix
+	class PsMatrix
 	{
 	public:
 		///Default constructor creates identity PSM
-		PSMatrix();
+		PsMatrix();
 
 		/// Constructor
-		PSMatrix(rsFloat s11, rsFloat s12, rsFloat s21, rsFloat s22);
+		PsMatrix(rsFloat s11, rsFloat s12, rsFloat s21, rsFloat s22);
 
 		/// Copy constructor
-		PSMatrix(const PSMatrix& im);
+		PsMatrix(const PsMatrix& im);
 
 		/// Assignment operator
-		PSMatrix& operator=(const PSMatrix& im);
+		PsMatrix& operator=(const PsMatrix& im);
 
 		/// Matrix values
 		std::complex<rsFloat> s[4];
@@ -44,7 +44,7 @@ namespace rs
 		JonesVector& operator=(const JonesVector& iv);
 
 		/// Multiplication operator
-		JonesVector operator*(const PSMatrix& mat) const;
+		JonesVector operator*(const PsMatrix& mat) const;
 
 		/// The horizontal polarization part
 		std::complex<rsFloat> h;

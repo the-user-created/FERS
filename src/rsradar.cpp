@@ -28,11 +28,11 @@ using namespace rs; //Import the rs namespace for clarity
 /// Default Constructor
 Radar::Radar(const Platform* platform, const std::string& name):
 	Object(platform, name),
-	timing(nullptr),
-	antenna(nullptr),
-	attached(nullptr),
-	multipath_dual(false),
-	multipath_reflect(0)
+	_timing(nullptr),
+	_antenna(nullptr),
+	_attached(nullptr),
+	_multipath_dual(false),
+	_multipath_reflect(0)
 {
 }
 
@@ -42,94 +42,94 @@ Radar::~Radar()
 }
 
 /// Attach a receiver to the transmitter for a monostatic configuration
-void Radar::MakeMonostatic(const Radar* recv)
+void Radar::makeMonostatic(const Radar* recv)
 {
-	if (attached)
+	if (_attached)
 	{
 		throw std::runtime_error("[BUG] Attempted to attach second receiver to transmitter");
 	}
-	attached = recv;
+	_attached = recv;
 }
 
 /// Get the attached receiver
 //Attached is likely to be 0 (NULL) - which means the transmitter does not share it's antenna
-const Radar* Radar::GetAttached() const
+const Radar* Radar::getAttached() const
 {
-	return attached;
+	return _attached;
 }
 
 /// Return whether the radar is monostatic
-bool Radar::IsMonostatic() const
+bool Radar::isMonostatic() const
 {
-	return attached;
+	return _attached;
 }
 
 /// Set the transmitter's antenna
-void Radar::SetAntenna(const Antenna* ant)
+void Radar::setAntenna(const Antenna* ant)
 {
 	if (!ant)
 	{
 		throw std::logic_error("[BUG] Transmitter's antenna set to null");
 	}
-	antenna = ant;
+	_antenna = ant;
 }
 
 /// Return the antenna gain in the specified direction
-rsFloat Radar::GetGain(const SVec3& angle, const SVec3& refangle, const rsFloat wavelength) const
+rsFloat Radar::getGain(const SVec3& angle, const SVec3& refangle, const rsFloat wavelength) const
 {
-	return antenna->GetGain(angle, refangle, wavelength);
+	return _antenna->getGain(angle, refangle, wavelength);
 }
 
 /// Get the noise temperature (including antenna noise temperature)
-rsFloat Radar::GetNoiseTemperature(const SVec3& angle) const
+rsFloat Radar::getNoiseTemperature(const SVec3& angle) const
 {
-	return antenna->GetNoiseTemperature(angle);
+	return _antenna->getNoiseTemperature(angle);
 }
 
 /// Attach a timing object to the radar
-void Radar::SetTiming(Timing* tim)
+void Radar::setTiming(Timing* tim)
 {
 	if (!tim)
 	{
 		throw std::runtime_error("[BUG] Radar timing source must not be set to NULL");
 	}
-	timing = tim;
+	_timing = tim;
 }
 
 /// Get a pointer to the radar's timing object
-Timing* Radar::GetTiming() const
+Timing* Radar::getTiming() const
 {
-	if (!timing)
+	if (!_timing)
 	{
 		throw std::runtime_error("[BUG] Radar::GetTiming called before timing set");
 	}
-	return timing;
+	return _timing;
 }
 
 /// Is this object a virtual multipath dual?
-bool Radar::IsMultipathDual() const
+bool Radar::isMultipathDual() const
 {
-	return multipath_dual;
+	return _multipath_dual;
 }
 
 /// Set this object as a virtual multipath dual
-void Radar::SetMultipathDual(const rsFloat reflect)
+void Radar::setMultipathDual(const rsFloat reflect)
 {
-	multipath_dual = true;
-	multipath_reflect = reflect;
+	_multipath_dual = true;
+	_multipath_reflect = reflect;
 	// Sanity check the reflectance factor
-	if (multipath_reflect > 1)
+	if (_multipath_reflect > 1)
 	{
-		rsDebug::printf(rsDebug::RS_CRITICAL,
+		rs_debug::printf(rs_debug::RS_CRITICAL,
 		                "[CRITICAL] Multipath reflection factor greater than 1 (=%g) for radar %s, results are likely to be incorrect\n",
-		                reflect, GetName().c_str());
+		                reflect, getName().c_str());
 	}
 }
 
 /// Get the reflecting factor
-rsFloat Radar::MultipathDualFactor() const
+rsFloat Radar::multipathDualFactor() const
 {
-	return multipath_reflect;
+	return _multipath_reflect;
 }
 
 //
@@ -139,31 +139,31 @@ rsFloat Radar::MultipathDualFactor() const
 //Default constructor for Transmitter
 Transmitter::Transmitter(const Platform* platform, const std::string& name, const bool pulsed):
 	Radar(platform, name),
-	signal(nullptr),
-	pulsed(pulsed),
-	dual(nullptr)
+	_signal(nullptr),
+	_pulsed(pulsed),
+	_dual(nullptr)
 {
 }
 
 //Default destructor for Transmitter
 Transmitter::~Transmitter()
 {
-	delete GetTiming();
+	delete getTiming();
 }
 
 /// Set the transmitter's pulse waveform
-void Transmitter::SetWave(RadarSignal* wave)
+void Transmitter::setWave(RadarSignal* pulse)
 {
-	signal = wave;
+	_signal = pulse;
 }
 
 // Return the number of pulses this transmitter produces over the simulation lifetime
-int Transmitter::GetPulseCount() const
+int Transmitter::getPulseCount() const
 {
-	const rsFloat time = rsParameters::end_time() - rsParameters::start_time();
-	if (pulsed)
+	const rsFloat time = RsParameters::endTime() - RsParameters::startTime();
+	if (_pulsed)
 	{
-		const rsFloat pulses = time * prf;
+		const rsFloat pulses = time * _prf;
 		return static_cast<int>(std::ceil(pulses));
 	}
 	else
@@ -173,33 +173,33 @@ int Transmitter::GetPulseCount() const
 }
 
 // Fill the structure with the number'th pulse in the transmitter's pulse list
-void Transmitter::GetPulse(TransmitterPulse* pulse, const int number) const
+void Transmitter::getPulse(TransmitterPulse* pulse, const int number) const
 {
 	//Pulse waveform is same as transmitter waveform
-	pulse->wave = signal;
+	pulse->wave = _signal;
 	//Calculate start time of pulse
-	if (pulsed)
+	if (_pulsed)
 	{
-		pulse->time = static_cast<rsFloat>(number) / prf; //Pulse mode start depends on PRF
+		pulse->time = static_cast<rsFloat>(number) / _prf; //Pulse mode start depends on PRF
 	}
 	else
 	{
 		pulse->time = 0; //CW transmitters start at zero for now
 	}
 	//If there is timing jitter, add it
-	if (!timing)
+	if (!_timing)
 	{
-		throw std::logic_error("[BUG] Transmitter " + GetName() + " must be associated with timing source");
+		throw std::logic_error("[BUG] Transmitter " + getName() + " must be associated with timing source");
 	}
 	//pulse->time = pulse->time;//+timing->GetPulseTimeError();
 }
 
 /// Set the Pulse Repetition Frequency of the transmitter
-void Transmitter::SetPRF(const rsFloat mprf)
+void Transmitter::setPrf(const rsFloat mprf)
 {
-	const rsFloat rate = rsParameters::rate() * rsParameters::oversample_ratio();
+	const rsFloat rate = RsParameters::rate() * RsParameters::oversampleRatio();
 	// The PRF must be rounded to an even number of samples
-	prf = 1 / (std::floor(rate / mprf) / rate);
+	_prf = 1 / (std::floor(rate / mprf) / rate);
 }
 
 //
@@ -209,65 +209,65 @@ void Transmitter::SetPRF(const rsFloat mprf)
 //Default constructor for Receiver
 Receiver::Receiver(const Platform* platform, const std::string& name):
 	Radar(platform, name),
-	noise_temperature(0),
-	dual(nullptr),
-	flags(0)
+	_noise_temperature(0),
+	_dual(nullptr),
+	_flags(0)
 {
 }
 
 //Default destructor for Receiver
 Receiver::~Receiver()
 {
-	ClearResponses();
-	delete timing; //The timing is unique to the receiver
+	clearResponses();
+	delete _timing; //The timing is unique to the receiver
 }
 
 //Add a response to the list of responses for this receiver
-void Receiver::AddResponse(Response* response)
+void Receiver::addResponse(Response* response)
 {
-	boost::try_mutex::scoped_lock lock(responses_mutex);
-	responses.push_back(response);
+	boost::try_mutex::scoped_lock lock(_responses_mutex);
+	_responses.push_back(response);
 }
 
 //Clear the list of system responses
-void Receiver::ClearResponses()
+void Receiver::clearResponses()
 {
-	for (std::vector<Response*>::iterator i = responses.begin(); i != responses.end(); ++i)
+	for (std::vector<Response*>::iterator i = _responses.begin(); i != _responses.end(); ++i)
 	{
 		delete *i;
 	}
-	responses.clear();
+	_responses.clear();
 }
 
 /// Comparison function for response*
-inline bool CompareTimes(const Response* a, const Response* b)
+inline bool compareTimes(const Response* a, const Response* b)
 {
-	return (a->StartTime()) < (b->StartTime());
+	return (a->startTime()) < (b->startTime());
 }
 
 /// Render the antenna's responses
-void Receiver::Render()
+void Receiver::render()
 {
 	try
 	{
 		// This mutex should never be locked, enforce that condition
-		boost::try_mutex::scoped_try_lock lock(responses_mutex);
+		boost::try_mutex::scoped_try_lock lock(_responses_mutex);
 		//Sort the returns into time order
-		std::sort(responses.begin(), responses.end(), CompareTimes);
+		std::sort(_responses.begin(), _responses.end(), compareTimes);
 		//Export the pulse descriptions to XML
-		if (rsParameters::export_xml())
+		if (RsParameters::exportXml())
 		{
-			ExportReceiverXML(responses, GetName() + "_results");
+			exportReceiverXml(_responses, getName() + "_results");
 		}
 		//Export a binary containing the pulses
-		if (rsParameters::export_binary())
+		if (RsParameters::exportBinary())
 		{
-			ExportReceiverBinary(responses, this, GetName(), GetName() + "_results");
+			exportReceiverBinary(_responses, this, getName(), getName() + "_results");
 		}
 		//Export to CSV format
-		if (rsParameters::export_csv())
+		if (RsParameters::exportCsv())
 		{
-			ExportReceiverCSV(responses, GetName() + "_results");
+			exportReceiverCsv(_responses, getName() + "_results");
 		}
 		//Unlock the mutex
 		lock.unlock();
@@ -279,60 +279,60 @@ void Receiver::Render()
 }
 
 /// Get the noise temperature (including antenna noise temperature)
-rsFloat Receiver::GetNoiseTemperature(const SVec3& angle) const
+rsFloat Receiver::getNoiseTemperature(const SVec3& angle) const
 {
-	return noise_temperature + Radar::GetNoiseTemperature(angle);
+	return _noise_temperature + Radar::getNoiseTemperature(angle);
 }
 
 /// Get the receiver noise temperature
-rsFloat Receiver::GetNoiseTemperature() const
+rsFloat Receiver::getNoiseTemperature() const
 {
-	return noise_temperature;
+	return _noise_temperature;
 }
 
 /// Set the noise temperature of the receiver
-void Receiver::SetNoiseTemperature(const rsFloat temp)
+void Receiver::setNoiseTemperature(const rsFloat temp)
 {
 	if (temp < -std::numeric_limits<rsFloat>::epsilon())
 	{
 		throw std::runtime_error("Noise temperature set to negative value.");
 	}
-	noise_temperature = temp;
+	_noise_temperature = temp;
 }
 
 /// Set the length of the receive window
-void Receiver::SetWindowProperties(const rsFloat length, const rsFloat prf, const rsFloat skip)
+void Receiver::setWindowProperties(const rsFloat length, const rsFloat prf, const rsFloat skip)
 {
-	const rsFloat rate = rsParameters::rate() * rsParameters::oversample_ratio();
-	window_length = length;
-	window_prf = prf;
-	window_skip = skip;
+	const rsFloat rate = RsParameters::rate() * RsParameters::oversampleRatio();
+	_window_length = length;
+	_window_prf = prf;
+	_window_skip = skip;
 	// The PRF and skip must be rounded to an even number of samples
-	window_prf = 1 / (std::floor(rate / window_prf) / rate);
-	window_skip = std::floor(rate * window_skip) / rate;
+	_window_prf = 1 / (std::floor(rate / _window_prf) / rate);
+	_window_skip = std::floor(rate * _window_skip) / rate;
 }
 
 /// Return the number of responses
-int Receiver::CountResponses() const
+int Receiver::countResponses() const
 {
-	return responses.size();
+	return _responses.size();
 }
 
 /// Get the number of receive windows in the simulation time
-int Receiver::GetWindowCount() const
+int Receiver::getWindowCount() const
 {
-	const rsFloat time = rsParameters::end_time() - rsParameters::start_time();
-	const rsFloat pulses = time * window_prf;
+	const rsFloat time = RsParameters::endTime() - RsParameters::startTime();
+	const rsFloat pulses = time * _window_prf;
 	return static_cast<int>(std::ceil(pulses));
 }
 
 /// Get the start time of the next window
-rsFloat Receiver::GetWindowStart(const int window) const
+rsFloat Receiver::getWindowStart(const int window) const
 {
 	//Calculate start time of pulse
-	const rsFloat stime = static_cast<rsFloat>(window) / window_prf + window_skip;
+	const rsFloat stime = static_cast<rsFloat>(window) / _window_prf + _window_skip;
 	//If there is timing jitter, add it
-	if (!timing)
+	if (!_timing)
 	{
 		throw std::logic_error("[BUG] Receiver must be associated with timing source");
 	}
@@ -341,33 +341,33 @@ rsFloat Receiver::GetWindowStart(const int window) const
 }
 
 /// Get the length of the receive window
-rsFloat Receiver::GetWindowLength() const
+rsFloat Receiver::getWindowLength() const
 {
-	return window_length;
+	return _window_length;
 }
 
 /// Get the time skipped before the start of the receive window
-rsFloat Receiver::GetWindowSkip() const
+rsFloat Receiver::getWindowSkip() const
 {
-	return window_skip;
+	return _window_skip;
 }
 
 /// Get the length of the receive window
-rsFloat Receiver::GetPRF() const
+rsFloat Receiver::getPrf() const
 {
-	return window_prf;
+	return _window_prf;
 }
 
 /// Set a flag
-void Receiver::SetFlag(const RecvFlag flag)
+void Receiver::setFlag(const RecvFlag flag)
 {
-	flags |= flag;
+	_flags |= flag;
 }
 
 /// Check if a flag is set
-bool Receiver::CheckFlag(const RecvFlag flag) const
+bool Receiver::checkFlag(const RecvFlag flag) const
 {
-	return flags & flag;
+	return _flags & flag;
 }
 
 
@@ -376,62 +376,62 @@ bool Receiver::CheckFlag(const RecvFlag flag) const
 //
 
 // Create a multipath dual of the given receiver
-Receiver* rs::CreateMultipathDual(Receiver* recv, const MultipathSurface* surf)
+Receiver* rs::createMultipathDual(Receiver* recv, const MultipathSurface* surf)
 {
 	//If we already have a dual, simply return the pointer to it
-	if (recv->dual)
+	if (recv->_dual)
 	{
-		return recv->dual;
+		return recv->_dual;
 	}
 	//Get the dual platform
-	const Platform* dual_plat = CreateMultipathDual(recv->GetPlatform(), surf);
+	const Platform* dual_plat = createMultipathDual(recv->getPlatform(), surf);
 	//Create a new receiver object
-	Receiver* dual = new Receiver(dual_plat, recv->GetName() + "_dual");
+	Receiver* dual = new Receiver(dual_plat, recv->getName() + "_dual");
 	//Assign the new receiver object to the current object
-	recv->dual = dual;
+	recv->_dual = dual;
 	//Copy data from the Radar object
-	dual->antenna = recv->antenna;
-	if (recv->attached)
+	dual->_antenna = recv->_antenna;
+	if (recv->_attached)
 	{
-		dual->attached = CreateMultipathDual(dynamic_cast<Transmitter*>(const_cast<Radar*>(recv->attached)), surf);
+		dual->_attached = createMultipathDual(dynamic_cast<Transmitter*>(const_cast<Radar*>(recv->_attached)), surf);
 	}
-	dual->SetMultipathDual(surf->GetFactor());
+	dual->setMultipathDual(surf->getFactor());
 	//Copy data from the receiver object
-	dual->noise_temperature = recv->noise_temperature;
-	dual->window_length = recv->window_length;
-	dual->window_prf = recv->window_prf;
-	dual->window_skip = recv->window_skip;
-	dual->timing = recv->timing;
+	dual->_noise_temperature = recv->_noise_temperature;
+	dual->_window_length = recv->_window_length;
+	dual->_window_prf = recv->_window_prf;
+	dual->_window_skip = recv->_window_skip;
+	dual->_timing = recv->_timing;
 	//Done, return the created object
 	return dual;
 }
 
 // Create a multipath dual of the given transmitter
-Transmitter* rs::CreateMultipathDual(Transmitter* trans, const MultipathSurface* surf)
+Transmitter* rs::createMultipathDual(Transmitter* trans, const MultipathSurface* surf)
 {
 	//If we already have a dual, simply return a pointer to it
-	if (trans->dual)
+	if (trans->_dual)
 	{
-		return trans->dual;
+		return trans->_dual;
 	}
 	//Get the dual platform
-	const Platform* dual_plat = CreateMultipathDual(trans->GetPlatform(), surf);
+	const Platform* dual_plat = createMultipathDual(trans->getPlatform(), surf);
 	//Create a new transmitter object
-	Transmitter* dual = new Transmitter(dual_plat, trans->GetName() + "_dual", trans->pulsed);
+	Transmitter* dual = new Transmitter(dual_plat, trans->getName() + "_dual", trans->_pulsed);
 	//Assign the the transmitter object to the current object
-	trans->dual = dual;
+	trans->_dual = dual;
 	//Copy data from the Radar object
-	dual->antenna = trans->antenna;
-	if (trans->attached)
+	dual->_antenna = trans->_antenna;
+	if (trans->_attached)
 	{
-		dual->attached = CreateMultipathDual(dynamic_cast<Receiver*>(const_cast<Radar*>(trans->attached)), surf);
+		dual->_attached = createMultipathDual(dynamic_cast<Receiver*>(const_cast<Radar*>(trans->_attached)), surf);
 	}
-	dual->SetMultipathDual(surf->GetFactor());
+	dual->setMultipathDual(surf->getFactor());
 	//Copy data from the transmitter object
-	dual->prf = trans->prf;
-	dual->pulsed = trans->pulsed;
-	dual->signal = trans->signal;
-	dual->timing = trans->timing;
+	dual->_prf = trans->_prf;
+	dual->_pulsed = trans->_pulsed;
+	dual->_signal = trans->_signal;
+	dual->_timing = trans->_timing;
 	//Done, return the created object
 	return dual;
 }

@@ -50,16 +50,16 @@ int main(int argc, char* argv[])
 		iss3 >> count;
 		cerr << "Alpha: " << alpha << " weight: " << weight << " count: " << count << endl;
 		//Initialize noise generation
-		rsNoise::InitializeNoise();
-		rsParameters::modify_parms()->SetRate(1e3);
+		rs_noise::initializeNoise();
+		RsParameters::modifyParms()->setRate(1e3);
 		PrototypeTiming proto("test");
-		proto.AddAlpha(alpha, weight);
-		proto.SetFrequency(1e6);
+		proto.addAlpha(alpha, weight);
+		proto.setFrequency(1e6);
 		ClockModelTiming timing("test");
-		timing.InitializeModel(&proto);
+		timing.initializeModel(&proto);
 		for (int i = 0; i < count; i++)
 		{
-			cout << timing.NextNoiseSample() << endl;
+			cout << timing.nextNoiseSample() << endl;
 		}
 	}
 }

@@ -28,32 +28,32 @@ namespace rs
 
 
 	/// Export the responses received by a receiver to an XML file
-	void ExportReceiverXML(const std::vector<rs::Response*>& responses, const std::string& filename);
+	void exportReceiverXml(const std::vector<rs::Response*>& responses, const std::string& filename);
 
 	/// Export the receiver pulses to the specified binary file, using the specified quantization
-	void ExportReceiverBinary(const std::vector<rs::Response*>& responses, const rs::Receiver* recv,
-	                          const std::string& recv_name, const std::string& filename);
+	void exportReceiverBinary(const std::vector<rs::Response*>& responses, const rs::Receiver* recv,
+	                          const std::string& recvName, const std::string& filename);
 
 	/// Export the receiver responses to the specified CSV value files
-	void ExportReceiverCSV(const std::vector<rs::Response*>& responses, const std::string& filename);
+	void exportReceiverCsv(const std::vector<rs::Response*>& responses, const std::string& filename);
 
 	/// Management class for threaded rendering
 	class ThreadedRenderer
 	{
 	public:
 		/// Constructor
-		ThreadedRenderer(const std::vector<rs::Response*>* responses, const rs::Receiver* recv, int max_threads);
+		ThreadedRenderer(const std::vector<rs::Response*>* responses, const rs::Receiver* recv, int maxThreads);
 
 		/// Destructor
 		~ThreadedRenderer();
 
 		/// Render all the responses in a single window
-		void RenderWindow(rsComplex* window, rsFloat length, rsFloat start, rsFloat frac_delay);
+		void renderWindow(RsComplex* window, rsFloat length, rsFloat start, rsFloat fracDelay) const;
 
 	private:
-		const std::vector<rs::Response*>* responses; //!< Vector of target responses seen by this receiver
-		const rs::Receiver* recv; //!< Receiver we are rendering for
-		int max_threads; //!< The maximum allowed thread count for rendering
+		const std::vector<rs::Response*>* _responses; //!< Vector of target responses seen by this receiver
+		const rs::Receiver* _recv; //!< Receiver we are rendering for
+		int _max_threads; //!< The maximum allowed thread count for rendering
 	};
 
 	/// Single thread for rendering
@@ -61,8 +61,8 @@ namespace rs
 	{
 	public:
 		/// Constructor
-		RenderThread(int serial, boost::mutex* window_mutex, rsComplex* window, rsFloat length, rsFloat start,
-		             rsFloat frac_delay, boost::mutex* work_list_mutex, std::queue<Response*>* work_list);
+		RenderThread(int serial, boost::mutex* windowMutex, RsComplex* window, rsFloat length, rsFloat start,
+		             rsFloat fracDelay, boost::mutex* workListMutex, std::queue<Response*>* workList);
 
 		/// Destructor
 		~RenderThread();
@@ -72,20 +72,20 @@ namespace rs
 
 	private:
 		/// Get a response from the worklist, returning NULL on failure
-		Response* GetWork();
+		Response* getWork() const;
 
 		/// Add the array to the window, locking the window lock in advance
-		void AddWindow(const rsComplex* array, rsFloat start_time, unsigned int array_size);
+		void addWindow(const RsComplex* array, rsFloat startTime, unsigned int arraySize) const;
 
-		int serial; //!< Serial number of this thread
-		boost::mutex* window_mutex; //!< Mutex to protect window
-		rsComplex* window; //!< Pointer to render window
-		rsFloat length; //!< Length of render window (seconds)
-		rsFloat start; //!< Start time of render window (seconds)
-		rsFloat frac_delay; //!< Fractional window start time (< 1 sample, samples)
-		boost::mutex* work_list_mutex; //!< Mutex to protect work list
-		std::queue<Response*>* work_list; //!< List of responses to render
-		rsComplex* local_window;
+		int _serial; //!< Serial number of this thread
+		boost::mutex* _window_mutex; //!< Mutex to protect window
+		RsComplex* _window; //!< Pointer to render window
+		rsFloat _length; //!< Length of render window (seconds)
+		rsFloat _start; //!< Start time of render window (seconds)
+		rsFloat _frac_delay; //!< Fractional window start time (< 1 sample, samples)
+		boost::mutex* _work_list_mutex; //!< Mutex to protect work list
+		std::queue<Response*>* _work_list; //!< List of responses to render
+		RsComplex* _local_window;
 	};
 }
 

@@ -15,14 +15,14 @@
 using namespace rs;
 
 //One of the xml utility functions from xmlimport.cpp
-rsFloat GetNodeFloat(const TiXmlHandle& node);
+rsFloat getNodeFloat(const TiXmlHandle& node);
 
 //
 // RCSModel Implementation
 //
 
 /// Destructor
-RCSModel::~RCSModel()
+RcsModel::~RcsModel()
 {
 }
 
@@ -31,13 +31,13 @@ RCSModel::~RCSModel()
 //
 
 /// Return a constant RCS
-rsFloat RCSConst::SampleModel()
+rsFloat RcsConst::sampleModel()
 {
 	return 1.0;
 }
 
 /// Destructor
-RCSConst::~RCSConst()
+RcsConst::~RcsConst()
 {
 }
 
@@ -45,21 +45,21 @@ RCSConst::~RCSConst()
 // RCSChiSquare Implementation
 
 /// Constructor
-RCSChiSquare::RCSChiSquare(const rsFloat k)
+RcsChiSquare::RcsChiSquare(const rsFloat k)
 {
-	gen = new GammaGenerator(k);
+	_gen = new GammaGenerator(k);
 }
 
 /// Destructor
-RCSChiSquare::~RCSChiSquare()
+RcsChiSquare::~RcsChiSquare()
 {
-	delete gen;
+	delete _gen;
 }
 
 /// Get an RCS based on the Swerling II model and the mean RCS
-rsFloat RCSChiSquare::SampleModel()
+rsFloat RcsChiSquare::sampleModel()
 {
-	return gen->GetSample();
+	return _gen->getSample();
 }
 
 //
@@ -70,31 +70,31 @@ rsFloat RCSChiSquare::SampleModel()
 Target::Target(const Platform* platform, const std::string& name):
 	Object(platform, name)
 {
-	model = nullptr;
+	_model = nullptr;
 }
 
 //Default destructor for Target object
 Target::~Target()
 {
-	delete model;
+	delete _model;
 }
 
 /// Get the target polarization matrix
-PSMatrix Target::GetPolarization() const
+PsMatrix Target::getPolarization() const
 {
-	return psm;
+	return _psm;
 }
 
 /// Set the target polarization matrix
-void Target::SetPolarization(const PSMatrix& in)
+void Target::setPolarization(const PsMatrix& in)
 {
-	psm = in;
+	_psm = in;
 }
 
 /// Set the target fluctuation model
-void Target::SetFluctuationModel(RCSModel* in)
+void Target::setFluctuationModel(RcsModel* in)
 {
-	model = in;
+	_model = in;
 }
 
 //
@@ -104,7 +104,7 @@ void Target::SetFluctuationModel(RCSModel* in)
 /// Constructor
 IsoTarget::IsoTarget(const Platform* platform, const std::string& name, const rsFloat rcs):
 	Target(platform, name),
-	rcs(rcs)
+	_rcs(rcs)
 {
 }
 
@@ -114,15 +114,15 @@ IsoTarget::~IsoTarget()
 }
 
 /// Return the RCS at the given angle
-rsFloat IsoTarget::GetRCS(SVec3& inAngle, SVec3& outAngle) const
+rsFloat IsoTarget::getRcs(SVec3& inAngle, SVec3& outAngle) const
 {
-	if (model)
+	if (_model)
 	{
-		return rcs * model->SampleModel();
+		return _rcs * _model->sampleModel();
 	}
 	else
 	{
-		return rcs;
+		return _rcs;
 	}
 }
 
@@ -135,70 +135,70 @@ FileTarget::FileTarget(const Platform* platform, const std::string& name, const 
 	Target(platform, name)
 {
 	//Create the objects for azimuth and elevation interpolation
-	azi_samples = new InterpSet();
-	elev_samples = new InterpSet();
+	_azi_samples = new InterpSet();
+	_elev_samples = new InterpSet();
 	//Load the data from the description file into the interpolation objects
-	LoadRCSDescription(filename);
+	loadRcsDescription(filename);
 }
 
 /// Destructor
 FileTarget::~FileTarget()
 {
-	delete azi_samples;
-	delete elev_samples;
+	delete _azi_samples;
+	delete _elev_samples;
 }
 
 
 /// Return the RCS at the given angle
-rsFloat FileTarget::GetRCS(SVec3& inAngle, SVec3& outAngle) const
+rsFloat FileTarget::getRcs(SVec3& inAngle, SVec3& outAngle) const
 {
 	//Currently uses a half angle approximation, this needs to be improved
 	const SVec3 t_angle = inAngle + outAngle;
-	const rsFloat RCS = std::sqrt(
-		azi_samples->Value(t_angle.azimuth / 2.0) * elev_samples->Value(t_angle.elevation / 2.0));
-	if (model)
+	const rsFloat rcs = std::sqrt(
+		_azi_samples->value(t_angle.azimuth / 2.0) * _elev_samples->value(t_angle.elevation / 2.0));
+	if (_model)
 	{
-		return RCS * model->SampleModel();
+		return rcs * _model->sampleModel();
 	}
 	else
 	{
-		return RCS;
+		return rcs;
 	}
 }
 
 namespace
 {
 	//Load samples of gain along an axis (not a member of FileAntenna)
-	void LoadTargetGainAxis(InterpSet* set, const TiXmlHandle& axisXML)
+	void loadTargetGainAxis(const InterpSet* set, const TiXmlHandle& axisXml)
 	{
 		//Step through the XML file and load all the gain samples
-		TiXmlHandle tmp = axisXML.ChildElement("rcssample", 0);
+		TiXmlHandle tmp = axisXml.ChildElement("rcssample", 0);
 		for (int i = 0; tmp.Element() != nullptr; i++)
 		{
 			//Load the angle of the gain sample
-			TiXmlHandle angleXML = tmp.ChildElement("angle", 0);
-			if (!angleXML.Element())
+			TiXmlHandle angle_xml = tmp.ChildElement("angle", 0);
+			if (!angle_xml.Element())
 			{
 				throw std::runtime_error("[ERROR] Misformed XML in target description: No angle in rcssample");
 			}
-			const rsFloat angle = GetNodeFloat(angleXML);
+			const rsFloat angle = getNodeFloat(angle_xml);
 			//Load the gain of the gain sample
-			TiXmlHandle gainXML = tmp.ChildElement("rcs", 0);
-			if (!gainXML.Element())
+			TiXmlHandle gain_xml = tmp.ChildElement("rcs", 0);
+			if (!gain_xml.Element())
 			{
 				throw std::runtime_error("[ERROR] Misformed XML in target description: No rcs in rcssample");
 			}
-			const rsFloat gain = GetNodeFloat(gainXML);
+			const rsFloat gain = getNodeFloat(gain_xml);
 			//Load the values into the interpolation table
-			set->InsertSample(angle, gain);
+			set->insertSample(angle, gain);
 			//Get the next gainsample in the file
-			tmp = axisXML.ChildElement("rcssample", i);
+			tmp = axisXml.ChildElement("rcssample", i);
 		}
 	}
 } //End of Anon. namespace
 
 ///Load data from the RCS description file
-void FileTarget::LoadRCSDescription(const std::string& filename)
+void FileTarget::loadRcsDescription(const std::string& filename) const
 {
 	TiXmlDocument doc(filename.c_str());
 	//Check the document was loaded correctly
@@ -214,14 +214,14 @@ void FileTarget::LoadRCSDescription(const std::string& filename)
 	{
 		throw std::runtime_error("[ERROR] Malformed XML in target description: No elevation pattern definition");
 	}
-	LoadTargetGainAxis(elev_samples, tmp);
+	loadTargetGainAxis(_elev_samples, tmp);
 	//Load the gain samples along the azimuth axis
 	tmp = root.ChildElement("azimuth", 0);
 	if (!tmp.Element())
 	{
 		throw std::runtime_error("[ERROR] Malformed XML in target description: No azimuth pattern definition");
 	}
-	LoadTargetGainAxis(azi_samples, tmp);
+	loadTargetGainAxis(_azi_samples, tmp);
 }
 
 //
@@ -229,13 +229,13 @@ void FileTarget::LoadRCSDescription(const std::string& filename)
 //
 
 /// Create an isometric radiator target
-Target* rs::CreateIsoTarget(const Platform* platform, const std::string& name, const rsFloat rcs)
+Target* rs::createIsoTarget(const Platform* platform, const std::string& name, const rsFloat rcs)
 {
 	return new IsoTarget(platform, name, rcs);
 }
 
 /// Create a target, loading the RCS pattern from a file
-Target* rs::CreateFileTarget(const Platform* platform, const std::string& name, const std::string& filename)
+Target* rs::createFileTarget(const Platform* platform, const std::string& name, const std::string& filename)
 {
 	return new FileTarget(platform, name, filename);
 }
