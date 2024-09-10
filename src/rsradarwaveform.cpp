@@ -21,13 +21,14 @@ using namespace rs;
 //
 
 //Default constructor
-RadarSignal::RadarSignal(const std::string& name, const rsFloat power, const rsFloat carrierfreq, const rsFloat length, Signal* signal):
+RadarSignal::RadarSignal(const std::string& name, const rsFloat power, const rsFloat carrierfreq, const rsFloat length,
+                         Signal* signal):
 	name(name),
 	power(power),
 	carrierfreq(carrierfreq),
 	length(length),
 	signal(signal),
-	polar(1.0, 0) //Default to horiz polarization
+	polar(std::complex<rsFloat>(1.0, 0.0), std::complex<rsFloat>(0.0, 0.0)) //Default to horiz polarization
 {
 	if (!signal)
 	{
@@ -157,13 +158,15 @@ RadarSignal* LoadPulseFromCSVFile(const std::string& name, const std::string& fi
 }
 
 /// Load a pulse from a file and generate an anypulse
-rs::RadarSignal* rsPulseFactory::LoadPulseFromFile(const std::string& name, const std::string& filename, const rsFloat power,
+rs::RadarSignal* rsPulseFactory::LoadPulseFromFile(const std::string& name, const std::string& filename,
+                                                   const rsFloat power,
                                                    const rsFloat carrierfreq)
 {
 	//Identify file types
 
 	//Check for CSV extension
-	if (const int ln = filename.length() - 1; (tolower(filename[ln]) == 'v') && (tolower(filename[ln - 1]) == 's') && (tolower(filename[ln - 2]) == 'c'))
+	if (const int ln = filename.length() - 1; (tolower(filename[ln]) == 'v') && (tolower(filename[ln - 1]) == 's') && (
+		tolower(filename[ln - 2]) == 'c'))
 	{
 		return LoadPulseFromCSVFile(name, filename, power, carrierfreq);
 	}

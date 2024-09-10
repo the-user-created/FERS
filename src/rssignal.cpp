@@ -412,7 +412,7 @@ boost::shared_array<rsComplex> Signal::Render(const std::vector<InterpPoint>& po
 		}
 
 		//Apply the filter
-		complex accum = 0;
+		complex accum(0.0, 0.0);
 
 		for (int j = start; j < end; j++)
 		{

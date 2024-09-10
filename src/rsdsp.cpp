@@ -323,7 +323,7 @@ inline void FIRFilter::Filter(std::complex<rsFloat>* samples, const int size)
 	for (int i = 0; i < size; i++)
 	{
 		line[0] = samples[i];
-		rsComplex res = 0;
+		rsComplex res(0.0, 0.0);
 		for (unsigned int j = 0; j < order; j++)
 		{
 			res += line[order - j - 1] * filter[j];
