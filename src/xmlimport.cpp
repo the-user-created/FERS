@@ -266,7 +266,7 @@ namespace
 		receiver->setTiming(timing);
 
 		// Get the NoDirect flag, which causes direct signals to be ignored
-		if (bool nodirect = getAttributeBool(recvXml, "nodirect", "", false))
+		if (getAttributeBool(recvXml, "nodirect", "", false))
 		{
 			receiver->setFlag(rs::Receiver::FLAG_NODIRECT);
 			rs_debug::printf(rs_debug::RS_VERY_VERBOSE, "[VV] Ignoring direct signals for receiver '%s'\n",
@@ -275,7 +275,7 @@ namespace
 
 		// Get the NoPropagationLoss flag, which causes propagation loss to be ignored
 		// for example, when propagation loss is calculated with AREPS
-		if (bool noproploss = getAttributeBool(recvXml, "nopropagationloss", "", false))
+		if (getAttributeBool(recvXml, "nopropagationloss", "", false))
 		{
 			receiver->setFlag(rs::Receiver::FLAG_NOPROPLOSS);
 			rs_debug::printf(rs_debug::RS_VERY_VERBOSE, "[VV] Ignoring propagation losses for receiver '%s'\n",
@@ -878,7 +878,7 @@ namespace
 			                 RsParameters::rate());
 		}
 		//Process the synconpulse tag
-		if (bool sync = getAttributeBool(antXml, "synconpulse", "", true))
+		if (getAttributeBool(antXml, "synconpulse", "", true))
 		{
 			timing->setSyncOnPulse();
 		}

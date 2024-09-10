@@ -146,4 +146,6 @@ int main(const int argc, char* argv[])
 	//Close the files
 	H5Fclose(infile);
 	fclose(outfile);
+
+	return 0;
 }
