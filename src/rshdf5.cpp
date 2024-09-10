@@ -56,7 +56,7 @@ void rshdf5::readPulseData(const std::string& name, std::complex<RS_FLOAT>** dat
 	H5LTget_dataset_ndims(i_group, "value", &rank);
 	hsize_t* dims = new hsize_t[rank];
 	//Get the data set information
-	herr_t res = H5LTget_dataset_info(i_group, "value", &(dims[0]), &class_id, &type_size);
+	herr_t res = H5LTget_dataset_info(i_group, "value", &dims[0], &class_id, &type_size);
 	if (res < 0)
 	{
 		throw std::runtime_error("[ERROR] HDF5 file " + name + " does not have dataset \"value\" in group \"I\"");
@@ -79,7 +79,7 @@ void rshdf5::readPulseData(const std::string& name, std::complex<RS_FLOAT>** dat
 		throw std::runtime_error("[ERROR] HDF5 file " + name + " does not have group \"Q\"");
 	}
 	// Check the Q dataset is the same size
-	res = H5LTget_dataset_info(q_group, "value", &(dims[0]), &class_id, &type_size);
+	res = H5LTget_dataset_info(q_group, "value", &dims[0], &class_id, &type_size);
 	if (res < 0)
 	{
 		throw std::runtime_error("[ERROR] HDF5 file " + name + " does not have dataset \"Q\"");
@@ -121,7 +121,7 @@ long int rshdf5::createFile(const std::string& name)
 	{
 		throw std::runtime_error("[ERROR] Could not create HDF5 file " + name + " for export");
 	}
-	return static_cast<long int>(file);
+	return file;
 }
 
 ///Add a dataset to the HDF5 file
@@ -145,37 +145,37 @@ void rshdf5::addChunkToFile(const long int file, const std::complex<RS_FLOAT>* d
 		q[it] = data[it].imag();
 	}
 	//Create the dataset, using the HDF5 Lite API
-	if (H5LTmake_dataset_double(static_cast<hid_t>(file), i_chunk_name.c_str(), 1, &datasize, i) < 0)
+	if (H5LTmake_dataset_double(file, i_chunk_name.c_str(), 1, &datasize, i) < 0)
 	{
 		throw std::runtime_error("[ERROR] Error while writing data to HDF5 file");
 	}
-	if (H5LTmake_dataset_double(static_cast<hid_t>(file), q_chunk_name.c_str(), 1, &datasize, q) < 0)
+	if (H5LTmake_dataset_double(file, q_chunk_name.c_str(), 1, &datasize, q) < 0)
 	{
 		throw std::runtime_error("[ERROR] Error while writing data to HDF5 file");
 	}
 
 	//Add attributes to the data set, with the attributes of the response
-	if (H5LTset_attribute_double(static_cast<hid_t>(file), i_chunk_name.c_str(), "time", &time, 1) < 0)
+	if (H5LTset_attribute_double(file, i_chunk_name.c_str(), "time", &time, 1) < 0)
 	{
 		throw std::runtime_error("[ERROR] Error while setting attribute \"time\" on chunk " + i_chunk_name);
 	}
-	if (H5LTset_attribute_double(static_cast<hid_t>(file), i_chunk_name.c_str(), "rate", &rate, 1) < 0)
+	if (H5LTset_attribute_double(file, i_chunk_name.c_str(), "rate", &rate, 1) < 0)
 	{
 		throw std::runtime_error("[ERROR] Error while setting attribute \"rate\" on chunk " + i_chunk_name);
 	}
-	if (H5LTset_attribute_double(static_cast<hid_t>(file), i_chunk_name.c_str(), "fullscale", &fullscale, 1) < 0)
+	if (H5LTset_attribute_double(file, i_chunk_name.c_str(), "fullscale", &fullscale, 1) < 0)
 	{
 		throw std::runtime_error("[ERROR] Error while setting attribute \"fullscale\" on chunk " + i_chunk_name);
 	}
-	if (H5LTset_attribute_double(static_cast<hid_t>(file), q_chunk_name.c_str(), "time", &time, 1) < 0)
+	if (H5LTset_attribute_double(file, q_chunk_name.c_str(), "time", &time, 1) < 0)
 	{
 		throw std::runtime_error("[ERROR] Error while setting attribute \"time\" on chunk " + q_chunk_name);
 	}
-	if (H5LTset_attribute_double(static_cast<hid_t>(file), q_chunk_name.c_str(), "rate", &rate, 1) < 0)
+	if (H5LTset_attribute_double(file, q_chunk_name.c_str(), "rate", &rate, 1) < 0)
 	{
 		throw std::runtime_error("[ERROR] Error while setting attribute \"rate\" on chunk " + q_chunk_name);
 	}
-	if (H5LTset_attribute_double(static_cast<hid_t>(file), q_chunk_name.c_str(), "fullscale", &fullscale, 1) < 0)
+	if (H5LTset_attribute_double(file, q_chunk_name.c_str(), "fullscale", &fullscale, 1) < 0)
 	{
 		throw std::runtime_error("[ERROR] Error while setting attribute \"fullscale\" on chunk " + q_chunk_name);
 	}
@@ -188,7 +188,7 @@ void rshdf5::addChunkToFile(const long int file, const std::complex<RS_FLOAT>* d
 ///Close the HDF5 file
 void rshdf5::closeFile(const long int file)
 {
-	if (H5Fclose(static_cast<hid_t>(file)) < 0)
+	if (H5Fclose(file) < 0)
 	{
 		throw std::runtime_error("[ERROR] Error while closing HDF5 file");
 	}
@@ -214,12 +214,12 @@ RS_FLOAT** rshdf5::readPattern(const std::string& name, const std::string& datas
 	{
 		throw std::runtime_error("[ERROR] Could not get rank of dataset \"" + datasetName + "\" in file " + name);
 	}
-	else if (rank != 2)
+	if (rank != 2)
 	{
 		throw std::runtime_error("[ERROR] Dataset \"" + datasetName + "\" in file " + name + " does not have rank 2");
 	}
 	//Get the dimensions of the file
-	err = H5LTget_dataset_info(file_id, datasetName.c_str(), &(dims[0]), &data_class, &type_size);
+	err = H5LTget_dataset_info(file_id, datasetName.c_str(), &dims[0], &data_class, &type_size);
 	if (err < 0)
 	{
 		throw std::runtime_error(

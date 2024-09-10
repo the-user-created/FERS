@@ -48,18 +48,6 @@ namespace
 		oss << std::setprecision(precision) << data;
 		attachTextNode(root, name, oss.str());
 	}
-
-	/// Attach a text node to an XML element, getting the text by converting an int to a string
-	// For creating structures like this
-	//<node>
-	//<name>text</name>
-	//</node>
-	void attachIntNode(TiXmlElement* root, const std::string& name, const int data)
-	{
-		std::ostringstream oss;
-		oss << data;
-		attachTextNode(root, name, oss.str());
-	}
 }
 
 //
@@ -125,7 +113,7 @@ std::string Response::getTransmitterName() const
 }
 
 /// Return a pointer to the waveform
-const rs::RadarSignal* Response::getWave() const
+const RadarSignal* Response::getWave() const
 {
 	return _wave;
 }
@@ -158,7 +146,7 @@ void Response::renderXml(TiXmlElement* root)
 	element->SetAttribute("transmitter", getTransmitterName());
 
 	// Attach nodes for properties of the response
-	::attachRsFloatNode(element.get(), "start", startTime(), false);
+	attachRsFloatNode(element.get(), "start", startTime(), false);
 	attachTextNode(element.get(), "name", _wave->getName());
 
 	// Render each interpolation point in turn
@@ -192,7 +180,7 @@ void Response::renderCsv(std::ofstream& of)
 void Response::addInterpPoint(const InterpPoint& point)
 {
 	// Check that points are being added in order
-	if ((!_points.empty()) && (point.time < _points.back().time))
+	if (!_points.empty() && point.time < _points.back().time)
 	{
 		throw std::logic_error("[BUG] Interpolation points not being added in order");
 	}

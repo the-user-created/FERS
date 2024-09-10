@@ -54,7 +54,7 @@ namespace
 		transmitter_to_target_vector.length = 1;
 		receiver_to_target_vector.length = 1;
 		//Sanity check Rt and Rr and throw an exception if they are too small
-		if ((transmitter_to_target_distance <= std::numeric_limits<RS_FLOAT>::epsilon()) || (receiver_to_target_distance <= std::numeric_limits<RS_FLOAT>::epsilon()))
+		if (transmitter_to_target_distance <= std::numeric_limits<RS_FLOAT>::epsilon() || receiver_to_target_distance <= std::numeric_limits<RS_FLOAT>::epsilon())
 		{
 			throw RangeError();
 		}
@@ -75,7 +75,7 @@ namespace
 		results.power = transmitter_gain * receiver_gain * rcs / (4 * M_PI);
 		if (!recv->checkFlag(Receiver::FLAG_NOPROPLOSS))
 		{
-			results.power *= (wavelength * wavelength) / (pow(4 * M_PI, 2) * transmitter_to_target_distance * transmitter_to_target_distance * receiver_to_target_distance * receiver_to_target_distance);
+			results.power *= wavelength * wavelength / (pow(4 * M_PI, 2) * transmitter_to_target_distance * transmitter_to_target_distance * receiver_to_target_distance * receiver_to_target_distance);
 		}
 		//   rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Pr: %2.9e Rt: %e Rr: %e Gt: %e Gr: %e RCS: %e Wl %e\n", results.power, Rt, Rr, Gt, Gr, RCS, Wl);
 		// If the transmitter and/or receiver are multipath duals, multiply by the loss factor
@@ -102,7 +102,7 @@ namespace
 		const RS_FLOAT rt_end = transvec_end.length;
 		const RS_FLOAT rr_end = recvvec_end.length;
 		//Sanity check Rt_end and Rr_end and throw an exception if they are too small
-		if ((rt_end < std::numeric_limits<RS_FLOAT>::epsilon()) || (rr_end < std::numeric_limits<RS_FLOAT>::epsilon()))
+		if (rt_end < std::numeric_limits<RS_FLOAT>::epsilon() || rr_end < std::numeric_limits<RS_FLOAT>::epsilon())
 		{
 			throw std::runtime_error("Target is too close to transmitter or receiver for accurate simulation");
 		}
@@ -118,7 +118,7 @@ namespace
 	}
 
 	//Perform the first stage of CW simulation calculations for the specified pulse and target
-	void simulateTarget(const Transmitter* trans, Receiver* recv, const Target* targ, const World* world,
+	void simulateTarget(const Transmitter* trans, Receiver* recv, const Target* targ,
 	                    const TransmitterPulse* signal)
 	{
 		//Get the simulation start and end time
@@ -151,7 +151,7 @@ namespace
 			                        results.noise_temperature);
 			response->addInterpPoint(point);
 		}
-		catch (RangeError& re)
+		catch ([[maybe_unused]] RangeError& re)
 		{
 			throw std::runtime_error("Receiver or Transmitter too close to Target for accurate simulation");
 		}
@@ -229,10 +229,10 @@ namespace
 	}
 
 	/// Model the pulse which is received directly by a receiver from a CW transmitter
-	void addDirect(const Transmitter* trans, Receiver* recv, const World* world, const TransmitterPulse* signal)
+	void addDirect(const Transmitter* trans, Receiver* recv, const TransmitterPulse* signal)
 	{
 		//If receiver and transmitter share the same antenna - there can't be a direct pulse
-		if (trans->isMonostatic() && (trans->getAttached() == recv))
+		if (trans->isMonostatic() && trans->getAttached() == recv)
 		{
 			return;
 		}
@@ -264,7 +264,7 @@ namespace
 			                        results.noise_temperature);
 			response->addInterpPoint(point);
 		}
-		catch (RangeError& re)
+		catch ([[maybe_unused]] RangeError& re)
 		{
 			throw std::runtime_error("Receiver or Transmitter too close to Target for accurate simulation");
 		}
@@ -287,14 +287,14 @@ void rs::simulatePair(const Transmitter* trans, Receiver* recv, const World* wor
 		trans->getPulse(pulse, i);
 		for (std::vector<Target*>::const_iterator targ = world->_targets.begin(); targ != world->_targets.end(); ++targ)
 		{
-			simulateTarget(trans, recv, *targ, world, pulse);
+			simulateTarget(trans, recv, *targ, pulse);
 		}
 
 		// Check if direct pulses are being considered for this receiver
 		if (!recv->checkFlag(Receiver::FLAG_NODIRECT))
 		{
 			//Add the direct pulses
-			addDirect(trans, recv, world, pulse);
+			addDirect(trans, recv, pulse);
 		}
 	}
 	delete pulse;

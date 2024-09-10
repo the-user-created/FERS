@@ -67,7 +67,7 @@ void rs::upsample(const RsComplex* in, const int size, RsComplex* out, const int
 	for (int i = 0; i < size; i++)
 	{
 		tmp[i * ratio] = in[i];
-		for (int j = 1; j < (ratio - 1); j++)
+		for (int j = 1; j < ratio - 1; j++)
 		{
 			tmp[i * ratio + j] = 0;
 		}
@@ -450,17 +450,14 @@ inline RS_FLOAT Upsampler::getSample(const RS_FLOAT* samples, const int n) const
 	{
 		return samples[n];
 	}
-	else
-	{
-		return _sample_memory[n + _filter_size];
-	}
+	return _sample_memory[n + _filter_size];
 }
 
 /// Upsamples a signal and applies an anti-imaging filter
 void Upsampler::upsample(const RS_FLOAT* inSamples, const int inSize, RS_FLOAT* outSamples, const int outSize) const
 {
 	//Check the target array size
-	if (outSize != (_ratio * inSize))
+	if (outSize != _ratio * inSize)
 	{
 		throw std::runtime_error("Target array size is not correct in Upsample");
 	}
@@ -484,12 +481,12 @@ void Upsampler::upsample(const RS_FLOAT* inSamples, const int inSize, RS_FLOAT* 
 	//Update the sample history
 	if (const int transfer_size = _filter_size / _ratio + 1; inSize >= transfer_size)
 	{
-		memcpy(_sample_memory, &(inSamples[inSize - transfer_size]), transfer_size * sizeof(RS_FLOAT));
+		memcpy(_sample_memory, &inSamples[inSize - transfer_size], transfer_size * sizeof(RS_FLOAT));
 	}
 	else
 	{
 		// Shift existing samples
-		for (int i = 0; i < (transfer_size - inSize); i++)
+		for (int i = 0; i < transfer_size - inSize; i++)
 		{
 			_sample_memory[i] = _sample_memory[i + inSize];
 		}

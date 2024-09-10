@@ -69,7 +69,7 @@ namespace rs
 		virtual RS_FLOAT getSample();
 
 	private:
-		boost::normal_distribution<RS_FLOAT> _dist; //!< PRNG distribution
+		boost::normal_distribution<> _dist; //!< PRNG distribution
 		boost::variate_generator<boost::mt19937&, boost::normal_distribution<>>* _gen;
 		//!< Variate Generator (see boost::random docs)
 		RS_FLOAT _temperature{}; //!< Noise temperature
@@ -91,7 +91,7 @@ namespace rs
 		RS_FLOAT operator()();
 
 	private:
-		boost::gamma_distribution<RS_FLOAT> _dist; //!< Gamma distribution function
+		boost::gamma_distribution<> _dist; //!< Gamma distribution function
 		boost::variate_generator<boost::mt19937&, boost::gamma_distribution<>> _gen; //!< Variate generator
 	};
 

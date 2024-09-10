@@ -50,16 +50,16 @@ private:
 void InterpSetData::loadSamples(const vector<RS_FLOAT>& x, const vector<RS_FLOAT>& y)
 {
 	vector<RS_FLOAT>::const_iterator ix = x.begin();
-	for (vector<RS_FLOAT>::const_iterator iy = y.begin(); (ix != x.end()) && (iy != y.end()); ++ix, ++iy)
+	for (vector<RS_FLOAT>::const_iterator iy = y.begin(); ix != x.end() && iy != y.end(); ++ix, ++iy)
 	{
-		_data.insert(pair<RS_FLOAT, RS_FLOAT>(*ix, *iy));
+		_data.insert(pair(*ix, *iy));
 	}
 }
 
 ///Load a single sample into the set
 void InterpSetData::insertSample(RS_FLOAT x, RS_FLOAT y)
 {
-	_data.insert(pair<RS_FLOAT, RS_FLOAT>(x, y));
+	_data.insert(pair(x, y));
 }
 
 ///Get the interpolated value for the given point
@@ -77,7 +77,7 @@ RS_FLOAT InterpSetData::value(const RS_FLOAT x)
 	//If we are at the beginning of the set, return the value
 	if (iter == _data.begin())
 	{
-		return (*iter).second;
+		return iter->second;
 	}
 	map<RS_FLOAT, RS_FLOAT>::const_iterator prev = iter;
 	--prev;
@@ -85,22 +85,19 @@ RS_FLOAT InterpSetData::value(const RS_FLOAT x)
 	//If we are over the end, return the last value
 	if (iter == _data.end())
 	{
-		return (*(prev)).second;
+		return prev->second;
 	}
 		//If we hit a sample exactly, return the value
-	else if ((*iter).first == x)
+	if (iter->first == x)
 	{
-		return (*iter).second;
+		return iter->second;
 	}
 	//Perform linear interpolation
-	else
-	{
-		const RS_FLOAT x1 = (*prev).first;
-		const RS_FLOAT x2 = (*iter).first;
-		const RS_FLOAT y1 = (*prev).second;
-		const RS_FLOAT y2 = (*iter).second;
-		return y2 * (x - x1) / (x2 - x1) + y1 * (x2 - x) / (x2 - x1);
-	}
+	const RS_FLOAT x1 = prev->first;
+	const RS_FLOAT x2 = iter->first;
+	const RS_FLOAT y1 = prev->second;
+	const RS_FLOAT y2 = iter->second;
+	return y2 * (x - x1) / (x2 - x1) + y1 * (x2 - x) / (x2 - x1);
 }
 
 /// Get the maximum value in the set
@@ -110,9 +107,9 @@ RS_FLOAT InterpSetData::max() const
 	// Scan through the map, updating the maximum
 	for (map<RS_FLOAT, RS_FLOAT>::const_iterator iter = _data.begin(); iter != _data.end(); ++iter)
 	{
-		if (std::fabs((*iter).second) > max)
+		if (std::fabs(iter->second) > max)
 		{
-			max = std::fabs((*iter).second);
+			max = std::fabs(iter->second);
 		}
 	}
 	return max;
@@ -123,7 +120,7 @@ void InterpSetData::divide(const RS_FLOAT a)
 {
 	for (map<RS_FLOAT, RS_FLOAT>::iterator iter = _data.begin(); iter != _data.end(); ++iter)
 	{
-		(*iter).second /= a;
+		iter->second /= a;
 	}
 }
 

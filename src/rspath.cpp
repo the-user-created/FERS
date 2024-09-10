@@ -18,7 +18,7 @@ using namespace rs;
 
 //Static "interpolation" function - the path is at the same point all the time
 template <typename T>
-void getPositionStatic(RS_FLOAT t, T& coord, const std::vector<T>& coords)
+void getPositionStatic(T& coord, const std::vector<T>& coords)
 {
 	if (coords.empty())
 	{
@@ -87,7 +87,7 @@ void getPositionCubic(RS_FLOAT t, T& coord, const std::vector<T>& coords, const 
 		//We are at neither endpoint - perform cubic spline interpolation
 		int xri = xrp - coords.begin();
 		int xli = xri - 1;
-		const RS_FLOAT xrd = (coords[xri].t - t), xld = (t - coords[xli].t), iw = (coords[xri].t - coords[xli].t), iws = iw *
+		const RS_FLOAT xrd = coords[xri].t - t, xld = t - coords[xli].t, iw = coords[xri].t - coords[xli].t, iws = iw *
 			        iw / 6.0;
 		RS_FLOAT a = xrd / iw, b = xld / iw, c = (a * a * a - a) * iws, d = (b * b * b - b) * iws;
 		coord = coords[xli] * a + coords[xri] * b + dd[xli] * c + dd[xri] * d;
@@ -131,7 +131,7 @@ void finalizeCubic(std::vector<T>& coords, std::vector<T>& dd)
 //
 // Path Implementation
 //
-Path::Path(const Path::InterpType type):
+Path::Path(const InterpType type):
 	_final(false), _type(type)
 {
 	_pythonpath = nullptr; //No python path, until loaded
@@ -159,7 +159,7 @@ Vec3 Path::getPosition(const RS_FLOAT t) const
 	switch (_type)
 	{
 	case RS_INTERP_STATIC:
-		getPositionStatic<Coord>(t, coord, _coords);
+		getPositionStatic<Coord>(coord, _coords);
 		break;
 	case RS_INTERP_LINEAR:
 		getPositionLinear<Coord>(t, coord, _coords);
@@ -240,11 +240,11 @@ Path* rs::reflectPath(const Path* path, const MultipathSurface* surf)
 	for (std::vector<Coord>::const_iterator iter = path->_coords.begin(); iter != path->_coords.end(); ++iter)
 	{
 		Coord refl;
-		refl.t = (*iter).t;
+		refl.t = iter->t;
 		//Reflect the point in the plane
-		refl.pos = surf->reflectPoint((*iter).pos);
-		rs_debug::printf(rs_debug::RS_VERBOSE, "Reflected (%g, %g, %g) to (%g, %g, %g)\n", (*iter).pos.x, (*iter).pos.y,
-		                (*iter).pos.z, refl.pos.x, refl.pos.y, refl.pos.z);
+		refl.pos = surf->reflectPoint(iter->pos);
+		rs_debug::printf(rs_debug::RS_VERBOSE, "Reflected (%g, %g, %g) to (%g, %g, %g)\n", iter->pos.x, iter->pos.y,
+		                iter->pos.z, refl.pos.x, refl.pos.y, refl.pos.z);
 		dual->addCoord(refl);
 	}
 	//Finalize the new path
@@ -256,7 +256,7 @@ Path* rs::reflectPath(const Path* path, const MultipathSurface* surf)
 //
 // RotationPath Implementation
 //
-RotationPath::RotationPath(const RotationPath::InterpType type):
+RotationPath::RotationPath(const InterpType type):
 	_final(false), _start(0), _rate(0), _type(type)
 {
 }
@@ -283,7 +283,7 @@ SVec3 RotationPath::getPosition(const RS_FLOAT t) const
 	switch (_type)
 	{
 	case RS_INTERP_STATIC:
-		getPositionStatic<RotationCoord>(t, coord, _coords);
+		getPositionStatic<RotationCoord>(coord, _coords);
 		break;
 	case RS_INTERP_LINEAR:
 		getPositionLinear<RotationCoord>(t, coord, _coords);
@@ -293,8 +293,8 @@ SVec3 RotationPath::getPosition(const RS_FLOAT t) const
 		break;
 	case RS_INTERP_CONSTANT:
 		coord.t = t;
-		coord.azimuth = std::fmod(t * _rate.azimuth + _start.azimuth, static_cast<RS_FLOAT>(2 * M_PI));
-		coord.elevation = std::fmod(t * _rate.elevation + _start.elevation, static_cast<RS_FLOAT>(2 * M_PI));
+		coord.azimuth = std::fmod(t * _rate.azimuth + _start.azimuth, 2 * M_PI);
+		coord.elevation = std::fmod(t * _rate.elevation + _start.elevation, 2 * M_PI);
 		break;
 	}
 	return SVec3(1, coord.azimuth, coord.elevation);
@@ -508,8 +508,8 @@ RotationPath* rs::reflectPath(const RotationPath* path, const MultipathSurface* 
 	{
 		RotationCoord rc;
 		//Time copies directly
-		rc.t = (*iter).t;
-		SVec3 sv(1, (*iter).azimuth, (*iter).elevation);
+		rc.t = iter->t;
+		SVec3 sv(1, iter->azimuth, iter->elevation);
 		Vec3 v(sv);
 		//Reflect the point in the given plane
 		v = surf->reflectPoint(v);

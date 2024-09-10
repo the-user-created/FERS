@@ -66,7 +66,7 @@ Platform* rs::createMultipathDual(const Platform* plat, const MultipathSurface* 
 	//Create the new platform
 	Platform* dual = new Platform(plat->getName() + "_dual");
 	//Set the platform dual
-	(const_cast<Platform*>(plat))->_dual = dual;
+	const_cast<Platform*>(plat)->_dual = dual;
 	//Reflect the paths used to guide the platform
 	dual->_motion_path = reflectPath(plat->_motion_path, surf);
 	dual->_rotation_path = reflectPath(plat->_rotation_path, surf);

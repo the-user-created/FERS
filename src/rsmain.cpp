@@ -42,7 +42,7 @@ int main(const int argc, char* argv[])
 		xml::loadXmlFile(argv[1], world);
 
 		//Start the threaded simulation
-		rs::runThreadedSim(rs::RsParameters::renderThreads(), world);
+		runThreadedSim(rs::RsParameters::renderThreads(), world);
 		rs_debug::printf(rs_debug::RS_VERBOSE, "[VERBOSE] Cleaning up.\n");
 		//Clean up the world model
 		delete world;

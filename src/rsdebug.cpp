@@ -16,7 +16,7 @@ rs_debug::Level debug_level = rs_debug::RS_VERY_VERBOSE; //The current debug lev
 boost::mutex debug_mutex;
 
 //Print out a debug message including the line and file name
-void rs_debug::print(const rs_debug::Level level, const std::string& str, const std::string& file, const int line)
+void rs_debug::print(const Level level, const std::string& str, const std::string& file, const int line)
 {
 	if (level >= debug_level)
 	{
@@ -32,7 +32,7 @@ void rs_debug::print(const rs_debug::Level level, const std::string& str, const 
 //Formatted print of the current debug level, doesn't include filename and line
 //Uses the cstdarg variable arguments system and the vfprintf function to handle the arguments
 //If your system does not have the standard vfprintf function in it's library, you will have to make a pla
-void rs_debug::printf(const rs_debug::Level level, const char* format, ...)
+void rs_debug::printf(const Level level, const char* format, ...)
 {
 	if (level >= debug_level)
 	{
@@ -46,7 +46,7 @@ void rs_debug::printf(const rs_debug::Level level, const char* format, ...)
 }
 
 //See comments for printf(Level, char *)
-void rs_debug::printf(const rs_debug::Level level, const std::string& format, ...)
+void rs_debug::printf(const Level level, const std::string& format, ...)
 {
 	if (level >= debug_level)
 	{
@@ -60,9 +60,9 @@ void rs_debug::printf(const rs_debug::Level level, const std::string& format, ..
 }
 
 //Set the current debug level
-void rs_debug::setDebugLevel(const rs_debug::Level level)
+void rs_debug::setDebugLevel(const Level level)
 {
-	if (level <= rs_debug::RS_EXTREMELY_CRITICAL)
+	if (level <= RS_EXTREMELY_CRITICAL)
 	{
 		debug_level = level;
 	}

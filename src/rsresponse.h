@@ -53,7 +53,7 @@ namespace rs
 		RS_FLOAT getLength() const;
 
 		/// Get a pointer to the wave
-		const rs::RadarSignal* getWave() const;
+		const RadarSignal* getWave() const;
 
 		/// Get the name of the transmitter that started this response
 		std::string getTransmitterName() const;
@@ -66,7 +66,7 @@ namespace rs
 		void renderResponseXml(TiXmlElement* root, const InterpPoint& point) const;
 
 		void renderResponseCsv(std::ofstream& of, const InterpPoint& point) const; //!< Render a InterpPoint as CSV
-		const rs::RadarSignal* _wave; //!< The waveform sent out by the transmitter
+		const RadarSignal* _wave; //!< The waveform sent out by the transmitter
 		std::vector<InterpPoint> _points; //!< Waypoints from which the response parameters are interpolated
 	};
 }

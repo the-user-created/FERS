@@ -26,7 +26,6 @@ RS_FLOAT getNodeFloat(const TiXmlHandle& node);
 
 namespace
 {
-	//Return sin(x)/x
 	RS_FLOAT sinc(const RS_FLOAT theta)
 	{
 		return std::sin(theta) / (theta + std::numeric_limits<RS_FLOAT>::epsilon());
@@ -39,7 +38,7 @@ namespace
 		{
 			return 1;
 		}
-		return rs_portable::besselJ1(x) / (x);
+		return rs_portable::besselJ1(x) / x;
 	}
 }
 
@@ -135,7 +134,7 @@ Gaussian::~Gaussian()
 }
 
 /// Get the gain at an angle
-RS_FLOAT Gaussian::getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const
+RS_FLOAT Gaussian::getGain(const SVec3& angle, const SVec3& refangle, RS_FLOAT wavelength) const
 {
 	const SVec3 a = angle - refangle;
 	const RS_FLOAT azfactor = std::exp(-a.azimuth * a.azimuth * _azscale);
@@ -173,8 +172,8 @@ RS_FLOAT Sinc::getGain(const SVec3& angle, const SVec3& refangle, RS_FLOAT wavel
 	//root which is, of course, a complex number. Inputs therefore need to be cast to complex numbers before the
 	//calculation as this will return complex number. Then return the magnitude as the beam gain.
 
-	const rs::RsComplex complex_sinc(::sinc(_beta * theta), 0.0);
-	const rs::RsComplex complex_gamma(_gamma, 0.0);
+	const RsComplex complex_sinc(sinc(_beta * theta), 0.0);
+	const RsComplex complex_gamma(_gamma, 0.0);
 
 	//See "Sinc Pattern" in doc/equations.tex for equation used here
 	const RsComplex complex_gain = _alpha * std::pow(complex_sinc, complex_gamma) * getEfficiencyFactor();
@@ -206,7 +205,7 @@ RS_FLOAT SquareHorn::getGain(const SVec3& angle, const SVec3& refangle, const RS
 {
 	const RS_FLOAT ge = 4 * M_PI * _dimension * _dimension / (wavelength * wavelength);
 	const RS_FLOAT x = M_PI * _dimension * std::sin(getAngle(angle, refangle)) / wavelength;
-	const RS_FLOAT gain = ge * std::pow(::sinc(x), 2);
+	const RS_FLOAT gain = ge * std::pow(sinc(x), 2);
 	return gain * getEfficiencyFactor();
 }
 
@@ -233,7 +232,7 @@ RS_FLOAT ParabolicReflector::getGain(const SVec3& angle, const SVec3& refangle, 
 {
 	const RS_FLOAT ge = std::pow(M_PI * _diameter / wavelength, 2);
 	const RS_FLOAT x = M_PI * _diameter * std::sin(getAngle(angle, refangle)) / wavelength;
-	const RS_FLOAT gain = ge * std::pow(2 * ::j1C(x), 2);
+	const RS_FLOAT gain = ge * std::pow(2 * j1C(x), 2);
 	return gain * getEfficiencyFactor();
 }
 
@@ -255,11 +254,11 @@ FileAntenna::~FileAntenna()
 }
 
 /// Get the gain at an angle
-RS_FLOAT FileAntenna::getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const
+RS_FLOAT FileAntenna::getGain(const SVec3& angle, const SVec3& refangle, RS_FLOAT wavelength) const
 {
 	const SVec3 a1 = angle;
 	const SVec3 a2 = refangle;
-	const SVec3 in_angle = (a1 - a2);
+	const SVec3 in_angle = a1 - a2;
 	//  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "az: %g el: %g\t az2: %g el2: %g\t az3: %g el3: %g\n", angle.azimuth, angle.elevation, refangle.azimuth, refangle.elevation, in_angle.azimuth, refangle.elevation);
 	return _pattern->getGain(in_angle) * getEfficiencyFactor();
 }
@@ -391,55 +390,55 @@ RS_FLOAT PythonAntenna::getGain(const SVec3& angle, const SVec3& refangle, RS_FL
 //Create an isotropic antenna with the specified name
 Antenna* rs::createIsotropicAntenna(const std::string& name)
 {
-	rs_antenna::Isotropic* iso = new rs_antenna::Isotropic(name);
+	Isotropic* iso = new Isotropic(name);
 	return iso;
 }
 
 //Create a Sinc pattern antenna with the specified name, alpha and beta
 Antenna* rs::createSincAntenna(const std::string& name, const RS_FLOAT alpha, const RS_FLOAT beta, const RS_FLOAT gamma)
 {
-	rs_antenna::Sinc* sinc = new rs_antenna::Sinc(name, alpha, beta, gamma);
+	Sinc* sinc = new Sinc(name, alpha, beta, gamma);
 	return sinc;
 }
 
 //Create a Gaussian pattern antenna
 Antenna* rs::createGaussianAntenna(const std::string& name, const RS_FLOAT azscale, const RS_FLOAT elscale)
 {
-	rs_antenna::Gaussian* gau = new rs_antenna::Gaussian(name, azscale, elscale);
+	Gaussian* gau = new Gaussian(name, azscale, elscale);
 	return gau;
 }
 
 //Create a square horn antenna
 Antenna* rs::createHornAntenna(const std::string& name, const RS_FLOAT dimension)
 {
-	rs_antenna::SquareHorn* sq = new rs_antenna::SquareHorn(name, dimension);
+	SquareHorn* sq = new SquareHorn(name, dimension);
 	return sq;
 }
 
 //Create a parabolic reflector antenna
 Antenna* rs::createParabolicAntenna(const std::string& name, const RS_FLOAT diameter)
 {
-	rs_antenna::ParabolicReflector* pd = new rs_antenna::ParabolicReflector(name, diameter);
+	ParabolicReflector* pd = new ParabolicReflector(name, diameter);
 	return pd;
 }
 
 //Create an antenna with it's gain pattern stored in an XML file
 Antenna* rs::createXmlAntenna(const std::string& name, const std::string& file)
 {
-	rs_antenna::XmlAntenna* fa = new rs_antenna::XmlAntenna(name, file);
+	XmlAntenna* fa = new XmlAntenna(name, file);
 	return fa;
 }
 
 //Create an antenna with it's gain pattern stored in an XML file
 Antenna* rs::createFileAntenna(const std::string& name, const std::string& file)
 {
-	rs_antenna::FileAntenna* fa = new rs_antenna::FileAntenna(name, file);
+	FileAntenna* fa = new FileAntenna(name, file);
 	return fa;
 }
 
 //Create an antenna with gain pattern described by a Python program
 Antenna* rs::createPythonAntenna(const std::string& name, const std::string& module, const std::string& function)
 {
-	rs_antenna::PythonAntenna* pa = new rs_antenna::PythonAntenna(name, module, function);
+	PythonAntenna* pa = new PythonAntenna(name, module, function);
 	return pa;
 }

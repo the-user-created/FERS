@@ -75,7 +75,7 @@ void readAndDump(hid_t file, FILE* outfile)
 			// Get the dataset info
 			size_t type_size;
 			H5T_class_t class_id;
-			if (H5LTget_dataset_info(slash, i_chunk_name.c_str(), &(dims[0]), &class_id, &type_size) < 0)
+			if (H5LTget_dataset_info(slash, i_chunk_name.c_str(), &dims[0], &class_id, &type_size) < 0)
 			{
 				std::cerr << "Could not get dataset info for " << i_chunk_name << std::endl;
 				break;

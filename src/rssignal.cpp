@@ -27,7 +27,7 @@ namespace
 	besselI0(const RS_FLOAT x)
 	{
 		RS_FLOAT i0;
-		if (RS_FLOAT t = (x / 3.75); t < 0.0)
+		if (RS_FLOAT t = x / 3.75; t < 0.0)
 		{
 			throw std::logic_error("Modified Bessel approximation only valid for x > 0");
 		}
@@ -56,13 +56,13 @@ namespace
 	{
 	public:
 		/// Compute the sinc function at the specified x
-		static inline RS_FLOAT sinc(RS_FLOAT x);
+		static RS_FLOAT sinc(RS_FLOAT x);
 
 		/// Compute the value of a Kaiser Window at the given x
-		inline RS_FLOAT kaiserWinCompute(RS_FLOAT x) const;
+		RS_FLOAT kaiserWinCompute(RS_FLOAT x) const;
 
 		/// Calculate the value of the interpolation filter at time x
-		inline RS_FLOAT interpFilter(RS_FLOAT x) const;
+		RS_FLOAT interpFilter(RS_FLOAT x) const;
 
 		/// Get a pointer to the filter with approximately the specified delay
 		const RS_FLOAT* getFilter(RS_FLOAT delay) const;
@@ -128,14 +128,14 @@ namespace
 	{
 		const int filt = (delay + 1) * (_table_filters / 2);
 
-		if ((delay <= -1) || (delay >= 1))
+		if (delay <= -1 || delay >= 1)
 		{
 			rs_debug::printf(rs_debug::RS_VERY_VERBOSE, "GetFilter %f %d\n", delay, filt);
 			throw std::runtime_error("[BUG] Requested delay filter value out of range");
 		}
 
 		//rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "GetFilter %f %d\n", delay, filt);
-		return &(_filter_table[filt * _length]);
+		return &_filter_table[filt * _length];
 	}
 
 	/// Lookup the value of the interpolation filter at time x
@@ -159,17 +159,13 @@ namespace
 	}
 
 	/// Compute the value of a Kaiser Window at the given x
-	RS_FLOAT
-	InterpFilter::kaiserWinCompute(const RS_FLOAT x) const
+	RS_FLOAT InterpFilter::kaiserWinCompute(const RS_FLOAT x) const
 	{
-		if ((x < 0) || (x > (_alpha * 2)))
+		if (x < 0 || x > _alpha * 2)
 		{
 			return 0;
 		}
-		else
-		{
-			return besselI0(_beta * std::sqrt(1 - std::pow((x - _alpha) / _alpha, 2))) / _bessel_beta;
-		}
+		return besselI0(_beta * std::sqrt(1 - std::pow((x - _alpha) / _alpha, 2))) / _bessel_beta;
 	}
 
 	//Create an instance of InterpFilter
@@ -300,14 +296,14 @@ RS_FLOAT* Signal::copyData() const
 }
 
 /// Get the number of samples of padding at the beginning of the pulse
-unsigned int Signal::pad() const
+unsigned int Signal::pad() const  // TODO: Unused function
 {
 	return _pad;
 }
 
 /// Render the pulse with the specified doppler, delay and amplitude
-boost::shared_array<RsComplex> Signal::render(const std::vector<InterpPoint>& points, RS_FLOAT transPower,
-                                              unsigned int& size, const RS_FLOAT fracWinDelay) const
+boost::shared_array<RsComplex> Signal::render(const std::vector<InterpPoint>& points,
+                                              unsigned int& size, const double fracWinDelay) const
 {
 	//Allocate memory for rendering
 	RsComplex* out = new RsComplex[_size];
@@ -319,8 +315,8 @@ boost::shared_array<RsComplex> Signal::render(const std::vector<InterpPoint>& po
 	const int filt_length = RsParameters::renderFilterLength();
 	const InterpFilter* interp = InterpFilter::getInstance();
 	//Loop through the interp points, rendering each in time
-	std::vector<rs::InterpPoint>::const_iterator iter = points.begin();
-	std::vector<rs::InterpPoint>::const_iterator next = iter + 1;
+	std::vector<InterpPoint>::const_iterator iter = points.begin();
+	std::vector<InterpPoint>::const_iterator next = iter + 1;
 	if (next == points.end())
 	{
 		next = iter;
@@ -328,20 +324,20 @@ boost::shared_array<RsComplex> Signal::render(const std::vector<InterpPoint>& po
 
 	//Get the delay of the first point
 	//C Tong: iDelay is in number of receiver samples (possibly with a fractional part)
-	const RS_FLOAT idelay = rs_portable::rsRound(_rate * (*iter).delay);
+	const RS_FLOAT idelay = rs_portable::rsRound(_rate * iter->delay);
 	//rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "idelay = %g\n", idelay);
 
 	//Memory to store the filter in
 
 	//Loop over the pulse, performing the rendering
-	RS_FLOAT sample_time = (*iter).time;
+	RS_FLOAT sample_time = iter->time;
 	for (int i = 0; i < static_cast<int>(_size); i++, sample_time += timestep)
 	{
 		//Check if we should move on to the next set of interp points
-		if ((sample_time > (*next).time))
+		if (sample_time > next->time)
 		{
 			iter = next;
-			if ((next + 1) != points.end())
+			if (next + 1 != points.end())
 			{
 				++next;
 			}
@@ -350,7 +346,7 @@ boost::shared_array<RsComplex> Signal::render(const std::vector<InterpPoint>& po
 		RS_FLOAT aw = 1, bw = 0;
 		if (iter < next)
 		{
-			bw = (sample_time - (*iter).time) / ((*next).time - (*iter).time);
+			bw = (sample_time - iter->time) / (next->time - iter->time);
 			aw = 1 - bw;
 
 			//**C Tong:**
@@ -359,16 +355,9 @@ boost::shared_array<RsComplex> Signal::render(const std::vector<InterpPoint>& po
 		}
 
 		//Now calculate the current sample parameters
-		RS_FLOAT amplitude = std::sqrt((*iter).power) * aw + std::sqrt((*next).power) * bw;
-		RS_FLOAT phase = (*iter).phase * aw + (*next).phase * bw;
-		RS_FLOAT fdelay = -(((*iter).delay * aw + (*next).delay * bw) * _rate - idelay + fracWinDelay);
-
-		//if ((*iter).delay * 299792458 != 11000)
-		//{
-		//rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "%g\n", frac_win_delay);
-		//rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "time = %gs, fdelay = %g, range = : %gm\n", (*iter).time, fdelay, (*iter).delay * 299792458);
-		//rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Amp: %g Delay: %g + %g Phase: %g\n", amplitude, (*iter).delay, fdelay, phase);
-		//}
+		RS_FLOAT amplitude = std::sqrt(iter->power) * aw + std::sqrt(next->power) * bw;
+		RS_FLOAT phase = iter->phase * aw + next->phase * bw;
+		RS_FLOAT fdelay = -((iter->delay * aw + next->delay * bw) * _rate - idelay + fracWinDelay);
 
 		//C Tong: Fixing the |fdelay| > 1 problem.
 		//Tx samples and Rx samples are matched 1 to 1 in time pulse the addition of
@@ -387,13 +376,13 @@ boost::shared_array<RsComplex> Signal::render(const std::vector<InterpPoint>& po
 
 		//Get the start and end times of interpolation
 		int start = -filt_length / 2;
-		if ((i + start) < 0)
+		if (i + start < 0)
 		{
 			start = -i;
 		}
 
 		int end = filt_length / 2;
-		if ((i + end) >= _size)
+		if (i + end >= _size)
 		{
 			end = _size - i;
 		}
@@ -427,10 +416,10 @@ boost::shared_array<RsComplex> Signal::render(const std::vector<InterpPoint>& po
 		//rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Out = %g %g\n", accum.real(), accum.imag());
 
 		//Perform IQ demodulation
-		rs::RsComplex ph = exp(rs::RsComplex(0.0, 1.0) * phase);
+		RsComplex ph = exp(RsComplex(0.0, 1.0) * phase);
 		out[i] = ph * accum;
 	}
 	//Return the result
-	return boost::shared_array<rs::RsComplex>(out);
+	return boost::shared_array<RsComplex>(out);
 }
 

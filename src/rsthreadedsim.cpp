@@ -15,7 +15,6 @@
 #include <boost/version.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
-#include <boost/thread/xtime.hpp>
 
 #include "rsdebug.h"
 #include "rsradar.h"
@@ -120,17 +119,6 @@ public:
 protected:
 	Receiver* _recv; //!< The Receiver to render
 };
-
-
-/// Sleep for the specified number of seconds
-static void sleep(const int secs)
-{
-	//We sleep for one second here
-	boost::xtime xt;
-	boost::xtime_get(&xt, boost::TIME_UTC_);
-	xt.sec += secs;
-	boost::thread::sleep(xt);
-}
 
 //Increase the count of running threads
 static void incThreads()
