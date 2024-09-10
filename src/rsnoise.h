@@ -52,7 +52,7 @@ namespace rs
 	};
 
 	/// Generator of Gaussian white noise
-	class WGNGenerator : public NoiseGenerator
+	class WGNGenerator final : public NoiseGenerator
 	{
 	public:
 		/// Constructor
@@ -75,7 +75,7 @@ namespace rs
 	};
 
 	/// Gamma distributed noise generator
-	class GammaGenerator : public NoiseGenerator
+	class GammaGenerator final : public NoiseGenerator
 	{
 	public:
 		/// Constructor
@@ -146,7 +146,7 @@ namespace rs
 
 
 	/// Class to generate 1/f^alpha noise based on multirate approach
-	class MultirateGenerator : public NoiseGenerator
+	class MultirateGenerator final : public NoiseGenerator
 	{
 	public:
 		/// Constructor
@@ -174,7 +174,7 @@ namespace rs
 	};
 
 	/// Class to generate noise based on the weighted sum of 1/f^alpha noise
-	class ClockModelGenerator : public NoiseGenerator
+	class ClockModelGenerator final : public NoiseGenerator
 	{
 	public:
 		/// Constructor
@@ -206,7 +206,7 @@ namespace rs
 	};
 
 	/// Generator of noise using a python module
-	class PythonNoiseGenerator : public NoiseGenerator
+	class PythonNoiseGenerator final : public NoiseGenerator
 	{
 	public:
 		///Constructor

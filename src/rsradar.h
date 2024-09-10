@@ -103,7 +103,7 @@ namespace rs
 	class Receiver;
 
 	/// A single radar transmitter, base class for pulsed and CW transmitters
-	class Transmitter : public Radar
+	class Transmitter final : public Radar
 	{
 	public:
 		/// Constructor
@@ -138,7 +138,7 @@ namespace rs
 	//They also play a role in the simulation by keeping a list of responses (pulses they
 	//recieve) which is built during the first part of the simulation and used to render
 	//the result during the second phase.
-	class Receiver : public Radar
+	class Receiver final : public Radar
 	{
 	public:
 		/// Enum type for the receiver behaviour flags

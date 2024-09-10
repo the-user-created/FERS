@@ -43,7 +43,7 @@ namespace rs
 
 	/// IIR (ARMA) Digital Filter, implemented with Direct Form II
 	// Supports filters of the type A(z)/B(z)
-	class IIRFilter : public DSPFilter
+	class IIRFilter final : public DSPFilter
 	{
 	public:
 		/// Constructor
@@ -71,7 +71,7 @@ namespace rs
 
 	/// FIR (MA) Digital Filter
 	//Supports filters of the type B(z)/1
-	class FIRFilter : public DSPFilter
+	class FIRFilter final : public DSPFilter
 	{
 	public:
 		/// Constructor
@@ -99,7 +99,7 @@ namespace rs
 
 	/// Auto Regressive (AR) Digital Filter
 	//Supports filters of the type 1/A(z)
-	class ARFilter : public DSPFilter
+	class ARFilter final : public DSPFilter
 	{
 	public:
 		/// Constructor

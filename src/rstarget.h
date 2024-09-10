@@ -31,7 +31,7 @@ namespace rs
 	};
 
 	/// RCS Statistical Model class supporting Swerling V
-	class RCSConst : public RCSModel
+	class RCSConst final : public RCSModel
 	{
 	public:
 		/// Destructor
@@ -43,7 +43,7 @@ namespace rs
 
 	/// RCS statistical model following Swerling's Chi-square (actually Gamma) model
 	// See Swerling, "Radar Probability of Detection for Some Additional Target Cases", IEEE Trans. Aer. Elec. Sys., Vol 33, 1997
-	class RCSChiSquare : public RCSModel
+	class RCSChiSquare final : public RCSModel
 	{
 	public:
 		/// Constructor
@@ -86,7 +86,7 @@ namespace rs
 	};
 
 	/// Target with an isotropic (constant with angle) RCS
-	class IsoTarget : public Target
+	class IsoTarget final : public Target
 	{
 	public:
 		/// Constructor
@@ -103,7 +103,7 @@ namespace rs
 	};
 
 	/// Target with an RCS interpolated from a table of values
-	class FileTarget : public Target
+	class FileTarget final : public Target
 	{
 	public:
 		/// Constructor
