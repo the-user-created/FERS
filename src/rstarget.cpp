@@ -120,10 +120,7 @@ RS_FLOAT IsoTarget::getRcs(SVec3& inAngle, SVec3& outAngle) const
 	{
 		return _rcs * _model->sampleModel();
 	}
-	else
-	{
-		return _rcs;
-	}
+	return _rcs;
 }
 
 //
@@ -160,10 +157,7 @@ RS_FLOAT FileTarget::getRcs(SVec3& inAngle, SVec3& outAngle) const
 	{
 		return rcs * _model->sampleModel();
 	}
-	else
-	{
-		return rcs;
-	}
+	return rcs;
 }
 
 namespace

@@ -44,12 +44,12 @@ int main()
 	ofstream fo(filename.c_str());
 	//Create the rng
 	boost::mt19937 rng;
-	boost::uniform_real<double> ud_x(start_range_x, start_range_x + range_x);
-	boost::uniform_real<double> ud_y(start_range_y, start_range_y + range_y);
-	boost::normal_distribution<double> nd(0, spread);
-	boost::variate_generator<boost::mt19937&, boost::uniform_real<double>> gen_x(rng, ud_x);
-	boost::variate_generator<boost::mt19937&, boost::uniform_real<double>> gen_y(rng, ud_y);
-	boost::variate_generator<boost::mt19937&, boost::normal_distribution<double>> sprgen(rng, nd);
+	boost::uniform_real ud_x(start_range_x, start_range_x + range_x);
+	boost::uniform_real ud_y(start_range_y, start_range_y + range_y);
+	boost::normal_distribution<> nd(0, spread);
+	boost::variate_generator<boost::mt19937&, boost::uniform_real<>> gen_x(rng, ud_x);
+	boost::variate_generator<boost::mt19937&, boost::uniform_real<>> gen_y(rng, ud_y);
+	boost::variate_generator<boost::mt19937&, boost::normal_distribution<>> sprgen(rng, nd);
 	fo << "<incblock>";
 	for (int i = 0; i < samples; i++)
 	{

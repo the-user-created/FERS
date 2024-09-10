@@ -115,8 +115,8 @@ namespace rs
 		virtual RS_FLOAT getRcs(SVec3& inAngle, SVec3& outAngle) const;
 
 	private:
-		rs::InterpSet* _azi_samples; //!< Samples of RCS in the azimuth plane
-		rs::InterpSet* _elev_samples; //!< Samples of RCS in the elevation plane
+		InterpSet* _azi_samples; //!< Samples of RCS in the azimuth plane
+		InterpSet* _elev_samples; //!< Samples of RCS in the elevation plane
 		///Load data from the RCS description file
 		void loadRcsDescription(const std::string& filename) const;
 	};

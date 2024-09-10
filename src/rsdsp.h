@@ -163,6 +163,6 @@ namespace rs
 		/// Anti-imaging filter
 		IirFilter* _filter;
 	};
-};
+}
 
 #endif

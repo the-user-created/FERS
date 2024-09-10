@@ -23,7 +23,7 @@ namespace rs
 		~Pattern();
 
 		/// Get the gain at the given angle
-		RS_FLOAT getGain(const rs::SVec3& angle) const;
+		RS_FLOAT getGain(const SVec3& angle) const;
 
 	private:
 		unsigned int _size_elev, _size_azi; //!< Number of samples in elevation and azimuth

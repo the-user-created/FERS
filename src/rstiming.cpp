@@ -114,10 +114,7 @@ RS_FLOAT PrototypeTiming::getPhaseOffset() const
 	{
 		return rs_noise::wgnSample(_random_phase);
 	}
-	else
-	{
-		return _phase_offset;
-	}
+	return _phase_offset;
 }
 
 /// Get the phase offset
@@ -127,10 +124,7 @@ RS_FLOAT PrototypeTiming::getFreqOffset() const
 	{
 		return rs_noise::wgnSample(_random_freq);
 	}
-	else
-	{
-		return _freq_offset;
-	}
+	return _freq_offset;
 }
 
 /// Get the frequency
@@ -222,10 +216,7 @@ RS_FLOAT ClockModelTiming::getPulseTimeError() const
 	{
 		return _model->getSample();
 	}
-	else
-	{
-		return 0;
-	}
+	return 0;
 }
 
 /// Skip a sample, computing only enough to preserve long term correlations
@@ -256,10 +247,7 @@ RS_FLOAT ClockModelTiming::nextNoiseSample()
 	{
 		return _model->getSample();
 	}
-	else
-	{
-		return 0;
-	}
+	return 0;
 }
 
 /// Get the carrier frequency of the modelled clock

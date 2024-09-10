@@ -65,8 +65,8 @@ namespace rs
 		unsigned int pad() const; // TODO: unused
 
 		/// Render the pulse with the specified doppler, delay and amplitude
-		boost::shared_array<rs::RsComplex> render(const std::vector<InterpPoint>& points, RS_FLOAT transPower,
-		                                          unsigned int& size, RS_FLOAT fracWinDelay) const;
+		boost::shared_array<RsComplex> render(const std::vector<InterpPoint>& points,
+		                                          unsigned int& size, double fracWinDelay) const;
 
 	private:
 		/// The signal data

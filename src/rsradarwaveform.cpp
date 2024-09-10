@@ -77,7 +77,7 @@ boost::shared_array<RsComplex> RadarSignal::render(const std::vector<InterpPoint
                                                    const RS_FLOAT fracWinDelay) const
 {
 	//Render the return pulse
-	boost::shared_array<RsComplex> data = _signal->render(points, _power, size, fracWinDelay);
+	boost::shared_array<RsComplex> data = _signal->render(points, size, fracWinDelay);
 	//Scale the return pulse by the signal power
 	const RS_FLOAT scale = std::sqrt(_power);
 	for (unsigned int i = 0; i < size; i++)
@@ -118,7 +118,7 @@ RadarSignal* loadPulseFromHdf5File(const std::string& name, const std::string& f
 	signal->load(data, size, rate);
 	delete[] data;
 	// Create the RadarSignal
-	rs::RadarSignal* any = new rs::RadarSignal(name, power, carrierFreq, size / rate, signal);
+	RadarSignal* any = new RadarSignal(name, power, carrierFreq, size / rate, signal);
 	return any;
 }
 
@@ -138,10 +138,10 @@ RadarSignal* loadPulseFromCsvFile(const std::string& name, const std::string& fi
 	ifile >> rate; //rate
 	const unsigned int length = static_cast<int>(rlength);
 	//Allocate memory for the file contents
-	const boost::scoped_array<RsComplex> data(new RsComplex[length]);
+	const boost::scoped_array data(new RsComplex[length]);
 	//Loop through reading the samples in the file
 	unsigned int done = 0;
-	while (!ifile.eof() && (done < length))
+	while (!ifile.eof() && done < length)
 	{
 		ifile >> data[done++];
 	}
@@ -153,31 +153,30 @@ RadarSignal* loadPulseFromCsvFile(const std::string& name, const std::string& fi
 	Signal* signal = new Signal();
 	signal->load(data.get(), length, rate);
 	//Create the pulse
-	rs::RadarSignal* any = new rs::RadarSignal(name, power, carrierFreq, rlength / rate, signal);
+	RadarSignal* any = new RadarSignal(name, power, carrierFreq, rlength / rate, signal);
 	return any;
 }
 
 /// Load a pulse from a file and generate an anypulse
-rs::RadarSignal* rs_pulse_factory::loadPulseFromFile(const std::string& name, const std::string& filename,
+RadarSignal* rs_pulse_factory::loadPulseFromFile(const std::string& name, const std::string& filename,
                                                    const RS_FLOAT power,
                                                    const RS_FLOAT carrierFreq)
 {
 	//Identify file types
 
 	//Check for CSV extension
-	if (const int ln = filename.length() - 1; (tolower(filename[ln]) == 'v') && (tolower(filename[ln - 1]) == 's') && (
-		tolower(filename[ln - 2]) == 'c'))
+	if (const int ln = filename.length() - 1; tolower(filename[ln]) == 'v' && tolower(filename[ln - 1]) == 's' && tolower(filename[ln - 2]) == 'c')
 	{
 		return loadPulseFromCsvFile(name, filename, power, carrierFreq);
 	}
 	//Check for H5 extension
-	else if ((tolower(filename[ln]) == '5') && (tolower(filename[ln - 1]) == 'h'))
-	{
-		return loadPulseFromHdf5File(name, filename, power, carrierFreq);
-	}
-	// If neither of the above, complain
 	else
 	{
+		if (tolower(filename[ln]) == '5' && tolower(filename[ln - 1]) == 'h')
+		{
+			return loadPulseFromHdf5File(name, filename, power, carrierFreq);
+		}
+		// If neither of the above, complain
 		throw std::runtime_error("[ERROR] Unrecognised extension while trying to load " + filename);
 	}
 }

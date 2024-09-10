@@ -31,8 +31,8 @@ namespace rs
 	void exportReceiverXml(const std::vector<rs::Response*>& responses, const std::string& filename);
 
 	/// Export the receiver pulses to the specified binary file, using the specified quantization
-	void exportReceiverBinary(const std::vector<rs::Response*>& responses, const rs::Receiver* recv,
-	                          const std::string& recvName, const std::string& filename);
+	void exportReceiverBinary(const std::vector<rs::Response*>& responses, const Receiver* recv,
+	                          const std::string& recvName);
 
 	/// Export the receiver responses to the specified CSV value files
 	void exportReceiverCsv(const std::vector<rs::Response*>& responses, const std::string& filename);

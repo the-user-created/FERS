@@ -118,7 +118,7 @@ rs::Vec3 PythonPath::getPosition(const RS_FLOAT t) const
 	PyObject* px = PyTuple_GetItem(result, 0);
 	PyObject* py = PyTuple_GetItem(result, 1);
 	PyObject* pz = PyTuple_GetItem(result, 2);
-	if ((!px) || (!py) || (!pz))
+	if (!px || !py || !pz)
 	{
 		PyErr_Print();
 		throw std::runtime_error("Python function " + _function + " did not return expected tuple");

@@ -25,10 +25,10 @@ namespace
 	boost::mt19937* rng;
 
 	//Used to generate single noise samples
-	boost::normal_distribution<RS_FLOAT> nd(0, 1);
-	boost::uniform_real<RS_FLOAT> ud(0, 1.0);
-	boost::variate_generator<boost::mt19937&, boost::normal_distribution<RS_FLOAT>>* normal_vg;
-	boost::variate_generator<boost::mt19937&, boost::uniform_real<RS_FLOAT>>* uniform_vg;
+	boost::normal_distribution<> nd(0, 1);
+	boost::uniform_real<> ud(0, 1.0);
+	boost::variate_generator<boost::mt19937&, boost::normal_distribution<>>* normal_vg;
+	boost::variate_generator<boost::mt19937&, boost::uniform_real<>>* uniform_vg;
 }
 
 //
@@ -41,8 +41,8 @@ void rs_noise::initializeNoise()
 	delete rng;
 	delete normal_vg;
 	rng = new boost::mt19937(RsParameters::randomSeed());
-	normal_vg = new boost::variate_generator<boost::mt19937&, boost::normal_distribution<RS_FLOAT>>(*rng, nd);
-	uniform_vg = new boost::variate_generator<boost::mt19937&, boost::uniform_real<RS_FLOAT>>(*rng, ud);
+	normal_vg = new boost::variate_generator<boost::mt19937&, boost::normal_distribution<>>(*rng, nd);
+	uniform_vg = new boost::variate_generator<boost::mt19937&, boost::uniform_real<>>(*rng, ud);
 }
 
 /// Clean up the noise code
@@ -60,10 +60,7 @@ RS_FLOAT rs_noise::wgnSample(const RS_FLOAT stddev)
 	{
 		return (*normal_vg)() * stddev;
 	}
-	else
-	{
-		return 0;
-	}
+	return 0;
 }
 
 /// Return a single uniformly distributed sample in [0, 1]
@@ -127,15 +124,15 @@ RS_FLOAT GammaGenerator::operator()()
 //Constructor
 WgnGenerator::WgnGenerator(const RS_FLOAT stddev)
 {
-	_dist = boost::normal_distribution<RS_FLOAT>(0, stddev);
-	_gen = new boost::variate_generator<boost::mt19937&, boost::normal_distribution<RS_FLOAT>>(*rng, _dist);
+	_dist = boost::normal_distribution<>(0, stddev);
+	_gen = new boost::variate_generator<boost::mt19937&, boost::normal_distribution<>>(*rng, _dist);
 }
 
 //Default constructor
 WgnGenerator::WgnGenerator()
 {
-	_dist = boost::normal_distribution<RS_FLOAT>(0, 1);
-	_gen = new boost::variate_generator<boost::mt19937&, boost::normal_distribution<RS_FLOAT>>(*rng, _dist);
+	_dist = boost::normal_distribution<>(0, 1);
+	_gen = new boost::variate_generator<boost::mt19937&, boost::normal_distribution<>>(*rng, _dist);
 }
 
 // Destructor
@@ -333,10 +330,7 @@ RS_FLOAT FAlphaBranch::getSample()
 		}
 		return ret;
 	}
-	else
-	{
-		return calcSample() + _offset_sample * _upsample_scale;
-	}
+	return calcSample() + _offset_sample * _upsample_scale;
 }
 
 ///Clean up the filters, etc
@@ -440,7 +434,7 @@ void MultirateGenerator::skipSamples(long long samples) const
 	{
 		std::vector<FAlphaBranch*> flushbranches;
 		FAlphaBranch* branch = _topbranch;
-		for (int i = 0; (i < skip_branches) && (branch != nullptr); i++)
+		for (int i = 0; i < skip_branches && branch != nullptr; i++)
 		{
 			flushbranches.push_back(branch);
 			branch = branch->_pre;
@@ -481,7 +475,7 @@ void MultirateGenerator::createTree(const RS_FLOAT falpha, const int fint, const
 		throw std::runtime_error("Cannot create multirate noise generator with zero branches");
 	}
 	// If ffrac and fint are both zero, we only need a single branch
-	if ((falpha == 0) && (fint == 0))
+	if (falpha == 0 && fint == 0)
 	{
 		_topbranch = new FAlphaBranch(0, 0, nullptr, true);
 	}
@@ -610,14 +604,11 @@ void ClockModelGenerator::reset()
 /// Is the generator going to produce non-zero samples
 bool ClockModelGenerator::enabled() const
 {
-	if ((!_generators.empty()) || (_freq_offset != 0) || (_phase_offset != 0))
+	if (!_generators.empty() || _freq_offset != 0 || _phase_offset != 0)
 	{
 		return true;
 	}
-	else
-	{
-		return false;
-	}
+	return false;
 }
 
 //

@@ -39,7 +39,7 @@ namespace rs
 	/// A pulse sent out by a transmitter
 	struct TransmitterPulse
 	{
-		rs::RadarSignal* wave; //!< Base radar waveform
+		RadarSignal* wave; //!< Base radar waveform
 		RS_FLOAT time; //!< The start time of the pulse
 	};
 
@@ -125,7 +125,7 @@ namespace rs
 		void setPrf(RS_FLOAT mprf);
 
 	protected:
-		rs::RadarSignal* _signal; //!< Waveform of transmitted pulses
+		RadarSignal* _signal; //!< Waveform of transmitted pulses
 		RS_FLOAT _prf{}; //!< Transmitter pulse repetition frequency (PRF)
 		bool _pulsed; //!< Is this a pulsed transmitter?
 		Transmitter* _dual; //!< Multipath dual of this transmitter
@@ -189,10 +189,10 @@ namespace rs
 		RS_FLOAT getPrf() const;
 
 		/// Set a flag
-		void setFlag(Receiver::RecvFlag flag);
+		void setFlag(RecvFlag flag);
 
 		/// Check if a flag is set
-		bool checkFlag(Receiver::RecvFlag flag) const;
+		bool checkFlag(RecvFlag flag) const;
 
 	private:
 		/// Vector to hold all the system responses

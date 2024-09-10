@@ -113,17 +113,11 @@ std::string getAttributeString(const TiXmlHandle& handle, const std::string& nam
 	{
 		return *text;
 	}
-	else
+	if (!optional)
 	{
-		if (!optional)
-		{
-			throw XmlImportException(error);
-		}
-		else
-		{
-			return string("");
-		}
+		throw XmlImportException(error);
 	}
+	return string("");
 }
 
 /// Return the bool associated with an attribute
@@ -135,7 +129,7 @@ bool getAttributeBool(const TiXmlHandle& handle, const std::string& name, const 
 	{
 		return def;
 	}
-	return ((str == "true") || (str == "yes"));
+	return str == "true" || str == "yes";
 }
 
 
@@ -195,7 +189,7 @@ namespace
 				RcsConst* model = new RcsConst();
 				target->setFluctuationModel(model);
 			}
-			else if ((model_type == "chisquare") || (model_type == "gamma"))
+			else if (model_type == "chisquare" || model_type == "gamma")
 			{
 				RcsModel* model = processGammaModel(model_xml);
 				target->setFluctuationModel(model);
@@ -239,7 +233,7 @@ namespace
 			const RS_FLOAT temperature = getChildRsFloat(recvXml, "noise_temp");
 			receiver->setNoiseTemperature(temperature);
 		}
-		catch (XmlImportException& e)
+		catch ([[maybe_unused]] XmlImportException& e)
 		{
 		}
 
@@ -268,7 +262,7 @@ namespace
 		// Get the NoDirect flag, which causes direct signals to be ignored
 		if (getAttributeBool(recvXml, "nodirect", "", false))
 		{
-			receiver->setFlag(rs::Receiver::FLAG_NODIRECT);
+			receiver->setFlag(Receiver::FLAG_NODIRECT);
 			rs_debug::printf(rs_debug::RS_VERY_VERBOSE, "[VV] Ignoring direct signals for receiver '%s'\n",
 			                 receiver->getName().c_str());
 		}
@@ -277,7 +271,7 @@ namespace
 		// for example, when propagation loss is calculated with AREPS
 		if (getAttributeBool(recvXml, "nopropagationloss", "", false))
 		{
-			receiver->setFlag(rs::Receiver::FLAG_NOPROPLOSS);
+			receiver->setFlag(Receiver::FLAG_NOPROPLOSS);
 			rs_debug::printf(rs_debug::RS_VERY_VERBOSE, "[VV] Ignoring propagation losses for receiver '%s'\n",
 			                 receiver->getName().c_str());
 		}
@@ -421,7 +415,7 @@ namespace
 			coord.pos = Vec3(x, y, z);
 			path->addCoord(coord);
 		}
-		catch (XmlImportException& e)
+		catch ([[maybe_unused]] XmlImportException& e)
 		{
 			rs_debug::printf(rs_debug::RS_VERBOSE,
 			                 "[WARNING] Parse Error While Importing Waypoint. Discarding Waypoint.\n");
@@ -482,7 +476,7 @@ namespace
 				path->setInterp(Path::RS_INTERP_STATIC);
 			}
 		}
-		catch (XmlImportException& e)
+		catch ([[maybe_unused]] XmlImportException& e)
 		{
 			rs_debug::printf(rs_debug::RS_VERBOSE,
 			                 "[WARNING] Motion path interpolation type not specified for platform '" + platform->
@@ -512,7 +506,7 @@ namespace
 			coord.t = getChildRsFloat(handXml, "time");
 			path->addCoord(coord);
 		}
-		catch (XmlImportException& e)
+		catch ([[maybe_unused]] XmlImportException& e)
 		{
 			rs_debug::printf(rs_debug::RS_VERBOSE,
 			                 "[WARNING] Parse Error While Importing Waypoint. Discarding Waypoint.\n");
@@ -546,7 +540,7 @@ namespace
 			rate.elevation = getChildRsFloat(mpXml, "elevationrate");
 			path->setConstantRate(start, rate);
 		}
-		catch (XmlImportException& e)
+		catch ([[maybe_unused]] XmlImportException& e)
 		{
 			rs_debug::printf(rs_debug::RS_VERBOSE, "[WARNING] Parse Error While Importing Constant Rotation.\n");
 		}
@@ -583,7 +577,7 @@ namespace
 				path->setInterp(RotationPath::RS_INTERP_STATIC);
 			}
 		}
-		catch (XmlImportException& e)
+		catch ([[maybe_unused]] XmlImportException& e)
 		{
 			rs_debug::printf(rs_debug::RS_VERBOSE,
 			                 "[WARNING] Rotation path interpolation type not specified for platform '" + platform->
@@ -699,7 +693,7 @@ namespace
 		const std::string modname = getAttributeString(antXml, "module", "Attribute module missing");
 		const std::string funcname = getAttributeString(antXml, "function", "Attribute function missing");
 		//Create the antenna
-		return rs::createPythonAntenna(name, modname, funcname);
+		return createPythonAntenna(name, modname, funcname);
 	}
 
 
@@ -709,7 +703,7 @@ namespace
 		const std::string filename = getAttributeString(antXml, "filename",
 		                                                "Antenna definition must specify a filename");
 		//Create the antenna
-		return rs::createXmlAntenna(name, filename);
+		return createXmlAntenna(name, filename);
 	}
 
 	Antenna* processFileAntenna(const TiXmlHandle& antXml, const string& name)
@@ -718,7 +712,7 @@ namespace
 		const std::string filename = getAttributeString(antXml, "filename",
 		                                                "Antenna definition must specify a filename");
 		//Create the antenna
-		return rs::createFileAntenna(name, filename);
+		return createFileAntenna(name, filename);
 	}
 
 	Antenna* processSincAntenna(const TiXmlHandle& antXml, const string& name)
@@ -726,20 +720,20 @@ namespace
 		const RS_FLOAT alpha = getChildRsFloat(antXml, "alpha");
 		const RS_FLOAT beta = getChildRsFloat(antXml, "beta");
 		const RS_FLOAT gamma = getChildRsFloat(antXml, "gamma");
-		return rs::createSincAntenna(name, alpha, beta, gamma);
+		return createSincAntenna(name, alpha, beta, gamma);
 	}
 
 	Antenna* processGaussianAntenna(const TiXmlHandle& antXml, const string& name)
 	{
 		const RS_FLOAT azscale = getChildRsFloat(antXml, "azscale");
 		const RS_FLOAT elscale = getChildRsFloat(antXml, "elscale");
-		return rs::createGaussianAntenna(name, azscale, elscale);
+		return createGaussianAntenna(name, azscale, elscale);
 	}
 
 	Antenna* processParabolicAntenna(const TiXmlHandle& antXml, const string& name)
 	{
 		const RS_FLOAT diameter = getChildRsFloat(antXml, "diameter");
-		return rs::createParabolicAntenna(name, diameter);
+		return createParabolicAntenna(name, diameter);
 	}
 
 	void processAntenna(const TiXmlHandle& antXml, World* world)
@@ -790,7 +784,7 @@ namespace
 			const RS_FLOAT factor = getChildRsFloat(antXml, "efficiency");
 			antenna->setEfficiencyFactor(factor);
 		}
-		catch (XmlImportException& xe)
+		catch ([[maybe_unused]] XmlImportException& xe)
 		{
 			rs_debug::printf(rs_debug::RS_VERBOSE,
 			                 "[VERBOSE] Antenna '%s' does not specify efficiency, assuming unity.\n", ant_name.c_str());
@@ -835,7 +829,7 @@ namespace
 			const RS_FLOAT offset = getChildRsFloat(antXml, "freq_offset");
 			timing->addFreqOffset(offset);
 		}
-		catch (XmlImportException& xe)
+		catch ([[maybe_unused]] XmlImportException& xe)
 		{
 		}
 		try
@@ -843,7 +837,7 @@ namespace
 			const RS_FLOAT stdev = getChildRsFloat(antXml, "random_freq_offset");
 			timing->addRandomFreqOffset(stdev);
 		}
-		catch (XmlImportException& xe)
+		catch ([[maybe_unused]] XmlImportException& xe)
 		{
 		}
 		// Process the phase offset
@@ -852,7 +846,7 @@ namespace
 			const RS_FLOAT offset = getChildRsFloat(antXml, "phase_offset");
 			timing->addPhaseOffset(offset);
 		}
-		catch (XmlImportException& xe)
+		catch ([[maybe_unused]] XmlImportException& xe)
 		{
 		}
 		try
@@ -860,7 +854,7 @@ namespace
 			const RS_FLOAT stdev = getChildRsFloat(antXml, "random_phase_offset");
 			timing->addRandomPhaseOffset(stdev);
 		}
-		catch (XmlImportException& xe)
+		catch ([[maybe_unused]] XmlImportException& xe)
 		{
 		}
 		// Process the frequency
@@ -869,7 +863,7 @@ namespace
 			const RS_FLOAT freq = getChildRsFloat(antXml, "frequency");
 			timing->setFrequency(freq);
 		}
-		catch (XmlImportException& xe)
+		catch ([[maybe_unused]] XmlImportException& xe)
 		{
 			//If there is no frequency, we default to the system sample frequency
 			timing->setFrequency(RsParameters::rate());
@@ -900,7 +894,7 @@ namespace
 			const RS_FLOAT c = getChildRsFloat(root, "c");
 			RsParameters::modifyParms()->setC(c);
 		}
-		catch (XmlImportException& xe)
+		catch ([[maybe_unused]] XmlImportException& xe)
 		{
 			rs_debug::printf(rs_debug::RS_VERBOSE, "[VERBOSE] Using default value of c: %f(m/s)\n", RsParameters::c());
 		}
@@ -910,7 +904,7 @@ namespace
 			const RS_FLOAT rate = getChildRsFloat(root, "rate");
 			RsParameters::modifyParms()->setRate(rate);
 		}
-		catch (XmlImportException& xe)
+		catch ([[maybe_unused]] XmlImportException& xe)
 		{
 			rs_debug::printf(rs_debug::RS_VERBOSE, "[VERBOSE] Using default sampling rate.\n");
 		}
@@ -920,7 +914,7 @@ namespace
 			const RS_FLOAT rate = getChildRsFloat(root, "interprate");
 			RsParameters::modifyParms()->setCwSampleRate(rate);
 		}
-		catch (XmlImportException& xe)
+		catch ([[maybe_unused]] XmlImportException& xe)
 		{
 			rs_debug::printf(rs_debug::RS_VERBOSE,
 			                 "[VERBOSE] Using default value of CW position interpolation rate: %g\n",
@@ -932,7 +926,7 @@ namespace
 			const RS_FLOAT seed = getChildRsFloat(root, "randomseed");
 			RsParameters::modifyParms()->setRandomSeed(static_cast<unsigned int>(std::fabs(seed)));
 		}
-		catch (XmlImportException& xe)
+		catch ([[maybe_unused]] XmlImportException& xe)
 		{
 			rs_debug::printf(rs_debug::RS_VERBOSE, "[VERBOSE] Using random seed from clock(): %d\n",
 			                 RsParameters::randomSeed());
@@ -945,7 +939,7 @@ namespace
 			rs_debug::printf(rs_debug::RS_VERBOSE, "[VERBOSE] Quantizing results to %d bits\n",
 			                 RsParameters::adcBits());
 		}
-		catch (XmlImportException& xe)
+		catch ([[maybe_unused]] XmlImportException& xe)
 		{
 			rs_debug::printf(rs_debug::RS_VERY_VERBOSE, "[VERBOSE] Using full precision simulation.\n");
 		}
@@ -955,7 +949,7 @@ namespace
 			const RS_FLOAT ratio = getChildRsFloat(root, "oversample");
 			RsParameters::modifyParms()->setOversampleRatio(static_cast<unsigned int>(std::floor(ratio)));
 		}
-		catch (XmlImportException& xe)
+		catch ([[maybe_unused]] XmlImportException& xe)
 		{
 			rs_debug::printf(rs_debug::RS_VERY_VERBOSE,
 			                 "[VV] Oversampling not in use. Ensure than pulses are correctly sampled.\n");

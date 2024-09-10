@@ -166,10 +166,7 @@ int Transmitter::getPulseCount() const
 		const RS_FLOAT pulses = time * _prf;
 		return static_cast<int>(std::ceil(pulses));
 	}
-	else
-	{
-		return 1; //CW systems only have one 'pulse'
-	}
+	return 1; //CW systems only have one 'pulse'
 }
 
 // Fill the structure with the number'th pulse in the transmitter's pulse list
@@ -242,7 +239,7 @@ void Receiver::clearResponses()
 /// Comparison function for response*
 inline bool compareTimes(const Response* a, const Response* b)
 {
-	return (a->startTime()) < (b->startTime());
+	return a->startTime() < b->startTime();
 }
 
 /// Render the antenna's responses
@@ -262,7 +259,7 @@ void Receiver::render()
 		//Export a binary containing the pulses
 		if (RsParameters::exportBinary())
 		{
-			exportReceiverBinary(_responses, this, getName(), getName() + "_results");
+			exportReceiverBinary(_responses, this, getName() + "_results");
 		}
 		//Export to CSV format
 		if (RsParameters::exportCsv())
@@ -272,7 +269,7 @@ void Receiver::render()
 		//Unlock the mutex
 		lock.unlock();
 	}
-	catch (boost::lock_error& e)
+	catch ([[maybe_unused]] boost::lock_error& e)
 	{
 		throw std::runtime_error("[BUG] Responses lock is locked during Render()");
 	}
