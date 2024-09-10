@@ -30,7 +30,6 @@ Marc Brooker (marcbrooker@gmail.com)
 FERS depends on a number of external libraries, which you need to install before attempting to build FERS. The libraries you need to have installed are:
 
 * Boost (at least boost::threads, boost::system and boost::random header) which is available freely from http://www.boost.org
-* FFTW3 which is available freely from http://www.fftw3.org
 * libhdf5
 * TinyXML which is available freely from http://sourceforge.net/projects/tinyxml/
 
@@ -69,7 +68,7 @@ fersxml.dtd - Document Type Definition for the XML script file format
 
 #### THANKS
 
-The authors of tinyXml, FFTW and Boost for making excellent software freely available.
+The authors of tinyXml and Boost for making excellent software freely available.
 
 #### COPYRIGHT NOTICE
 
