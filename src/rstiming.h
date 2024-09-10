@@ -2,8 +2,8 @@
 //Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //16 October 2006
 
-#ifndef __RS_TIMING_H
-#define __RS_TIMING_H
+#ifndef RS_TIMING_H
+#define RS_TIMING_H
 
 #include <config.h>
 #include <string>

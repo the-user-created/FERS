@@ -20,7 +20,6 @@
 #include "rsmultipath.h"
 #include "rsparameters.h"
 #include "rsplatform.h"
-#include "rsportable.h"
 #include "rspython.h"
 #include "rsradar.h"
 #include "rstarget.h"

@@ -3,8 +3,8 @@
 //Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //8 June 2006
 
-#ifndef __RS_RADARWAVEFORM_H
-#define __RS_RADARWAVEFORM_H
+#ifndef RS_RADARWAVEFORM_H
+#define RS_RADARWAVEFORM_H
 
 #include <complex>
 #include <config.h>

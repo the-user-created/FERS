@@ -1,8 +1,8 @@
 //rssim.h
 //Declarations and definitions for rssim.cpp and rsthreadedsim.cpp
 
-#ifndef __RSSIM_H
-#define __RSSIM_H
+#ifndef RS_SIM_H
+#define RS_SIM_H
 
 #include <config.h>
 

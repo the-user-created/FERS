@@ -7,8 +7,6 @@
 
 #include <cmath>
 
-#include "rsdebug.h"
-
 using namespace rs;
 
 //

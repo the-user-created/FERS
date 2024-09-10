@@ -3,7 +3,6 @@
 #include <config.h>
 #include <iostream>
 #include <sstream>
-#include <boost/thread.hpp>
 
 #include "rsnoise.h"
 #include "rsparameters.h"

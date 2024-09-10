@@ -2,8 +2,8 @@
 //Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //11 June 2007
 
-#ifndef __RS_INTERP_H
-#define __RS_INTERP_H
+#ifndef RS_INTERP_H
+#define RS_INTERP_H
 
 #include <config.h>
 #include <vector>

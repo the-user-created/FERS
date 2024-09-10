@@ -3,8 +3,8 @@
 // Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //11 September 2007
 
-#ifndef __RS_PATTERN_H
-#define __RS_PATTERN_H
+#ifndef RS_PATTERN_H
+#define RS_PATTERN_H
 
 #include <string>
 

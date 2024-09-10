@@ -3,8 +3,8 @@
 //Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //7 June 2006
 
-#ifndef __RS_PULSE_RENDER
-#define __RS_PULSE_RENDER
+#ifndef RS_PULSE_RENDER
+#define RS_PULSE_RENDER
 
 #include <config.h>
 #include <queue>

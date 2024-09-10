@@ -3,11 +3,10 @@
 //Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //20 July 2006
 
-#ifndef __RSANTENNA_H
-#define __RSANTENNA_H
+#ifndef RS_ANTENNA_H
+#define RS_ANTENNA_H
 
 #include <config.h>
-#include <limits>
 #include <string>
 
 #include "rsgeometry.h"

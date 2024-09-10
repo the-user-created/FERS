@@ -2,12 +2,11 @@
 //Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //30 July 2007
 
-#ifndef __RS_DSP_H
-#define __RS_DSP_H
+#ifndef RS_DSP_H
+#define RS_DSP_H
 
 #include <complex>
 #include <config.h>
-#include <map>
 #include <vector>
 #include <boost/utility.hpp>
 

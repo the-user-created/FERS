@@ -3,8 +3,8 @@
 //Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //9 September 2007
 
-#ifndef __RS_MULTIPATH_H
-#define __RS_MULTIPATH_H
+#ifndef RS_MULTIPATH_H
+#define RS_MULTIPATH_H
 
 #include "rsgeometry.h"
 

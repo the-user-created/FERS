@@ -2,8 +2,8 @@
 //Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //31 March 2008
 
-#ifndef __RS_POLARIZE_H
-#define __RS_POLARIZE_H
+#ifndef RS_POLARIZE_H
+#define RS_POLARIZE_H
 
 #include <complex>
 #include "config.h"

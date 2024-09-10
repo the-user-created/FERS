@@ -10,7 +10,6 @@
 #include "rsnoise.h"
 #include "rsparameters.h"
 #include "rsportable.h"
-#include "rsthreadedsim.h"
 #include "rsworld.h"
 #include "xmlimport.h"
 

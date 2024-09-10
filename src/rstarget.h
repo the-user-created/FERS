@@ -3,8 +3,8 @@
 //Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //Started: 26 April 2006
 
-#ifndef __RSTARGET_H
-#define __RSTARGET_H
+#ifndef RS_TARGET_H
+#define RS_TARGET_H
 
 #include <config.h>
 

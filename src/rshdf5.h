@@ -2,8 +2,8 @@
 /// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 /// 03 November 2006
 
-#ifndef __RS_HDF5_H
-#define __RS_HDF5_H
+#ifndef RS_HDF5_H
+#define RS_HDF5_H
 
 #include <complex>
 #include <config.h>

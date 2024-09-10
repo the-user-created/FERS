@@ -1,7 +1,6 @@
 // Test clock modeling classes
 
 #include <config.h>
-#include <iostream>
 
 #include "rsnoise.h"
 #include "rstiming.h"

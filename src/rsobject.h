@@ -3,8 +3,8 @@
 //Marc Brooker
 //19 July 2006
 
-#ifndef __RSOBJECT_H
-#define __RSOBJECT_H
+#ifndef RS_OBJECT_H
+#define RS_OBJECT_H
 
 #include <config.h>
 #include <string>

@@ -18,7 +18,6 @@
 
 #include "rsdebug.h"
 #include "rsradar.h"
-#include "rssim.h"
 #include "rsworld.h"
 
 #if BOOST_VERSION < 105000
