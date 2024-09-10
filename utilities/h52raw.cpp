@@ -134,11 +134,7 @@ int main(const int argc, char* argv[])
 		return 1;
 	}
 	const hid_t infile = openFile(argv[1]);
-	if (infile < 0)
-	{
-		std::cerr << "Could not open HDF5 file " << argv[1] << std::endl;
-		return 1;
-	}
+
 	FILE* outfile = fopen(argv[2], "w");
 	if (!outfile)
 	{

@@ -290,8 +290,8 @@ void rs::exportReceiverXml(const std::vector<rs::Response*>& responses, const st
 {
 	//Create the document
 	TiXmlDocument doc;
-	TiXmlDeclaration* decl = new TiXmlDeclaration("1.0", "", "");
-	doc.LinkEndChild(decl);
+	std::unique_ptr<TiXmlDeclaration> decl = std::make_unique<TiXmlDeclaration>("1.0", "", "");
+	doc.LinkEndChild(decl.release());
 	//Create a root node for the document
 	TiXmlElement* root = new TiXmlElement("receiver");
 	doc.LinkEndChild(root);
@@ -393,26 +393,21 @@ void ThreadedRenderer::renderWindow(RsComplex* window, rsFloat length, rsFloat s
 	//Create a mutex to protect the window
 	boost::mutex window_mutex;
 	//Create the number of threads we are allowed
-	std::vector<RenderThread*> threads;
 	{
+		std::vector<std::unique_ptr<RenderThread>> threads;
+		// David Young: Do not put this scoped lock outside the encapsulating braces otherwise a deadlock will occur
 		boost::mutex::scoped_lock lock(work_list_mutex);
-		//   rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Spawning %d render threads\n", max_threads);
+		// rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Spawning %d render threads\n", max_threads);
 		for (int i = 0; i < _max_threads; i++)
 		{
-			//      rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Spawning %d\n", i);
-			RenderThread* thr = new RenderThread(i, &window_mutex, window, length, start, fracDelay, &work_list_mutex,
-			                                     &work_list);
-			threads.push_back(thr);
+			// rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Spawning %d\n", i);
+			std::unique_ptr<RenderThread> thr = std::make_unique<RenderThread>(i, &window_mutex, window, length, start, fracDelay, &work_list_mutex, &work_list);
 			group.create_thread(*thr);
+			threads.push_back(std::move(thr));
 		}
 	}
 	// Wait until all our threads are complete
 	group.join_all();
-	//Clean up the thread objects
-	for (std::vector<RenderThread*>::iterator thread_iter = threads.begin(); thread_iter < threads.end(); ++thread_iter)
-	{
-		delete *thread_iter;
-	}
 }
 
 //

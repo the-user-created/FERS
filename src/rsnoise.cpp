@@ -6,6 +6,7 @@
 
 #include <cmath>
 #include <limits>
+#include <memory>
 #include <boost/random.hpp>
 
 #include "rsdebug.h"
@@ -532,8 +533,10 @@ ClockModelGenerator::ClockModelGenerator(const std::vector<rsFloat>& alpha, cons
 	// Create the generators for each band
 	for (; iter != alpha.end(); ++iter, ++witer)
 	{
-		MultirateGenerator* mgen = new MultirateGenerator(*iter, branches);
-		_generators.push_back(mgen);
+		// MultirateGenerator* mgen = new MultirateGenerator(*iter, branches);
+		// _generators.push_back(mgen);
+		std::unique_ptr<MultirateGenerator> mgen = std::make_unique<MultirateGenerator>(*iter, branches);
+		_generators.push_back(std::move(mgen));
 		//Calibrate the weights using the measured calibration numbers
 		if (*iter == 2)
 		{
@@ -562,10 +565,6 @@ ClockModelGenerator::ClockModelGenerator(const std::vector<rsFloat>& alpha, cons
 /// Destructor
 ClockModelGenerator::~ClockModelGenerator()
 {
-	for (std::vector<MultirateGenerator*>::iterator iter = _generators.begin(); iter != _generators.end(); ++iter)
-	{
-		delete *iter;
-	}
 }
 
 /// Get a single noise sample

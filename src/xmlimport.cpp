@@ -10,6 +10,7 @@
 #include "xmlimport.h"
 
 #include <cmath>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -105,7 +106,8 @@ rsFloat getNodeFloat(const TiXmlHandle& node)
 }
 
 /// Return the string associated with an attribute or throw an exception on failure
-std::string getAttributeString(const TiXmlHandle& handle, const std::string& name, const std::string& error, const bool optional = false)
+std::string getAttributeString(const TiXmlHandle& handle, const std::string& name, const std::string& error,
+                               const bool optional = false)
 {
 	if (const std::string* text = handle.Element()->Attribute(name))
 	{
@@ -125,7 +127,8 @@ std::string getAttributeString(const TiXmlHandle& handle, const std::string& nam
 }
 
 /// Return the bool associated with an attribute
-bool getAttributeBool(const TiXmlHandle& handle, const std::string& name, const std::string& error, const bool def, const bool optional = true)
+bool getAttributeBool(const TiXmlHandle& handle, const std::string& name, const std::string& error, const bool def,
+                      const bool optional = true)
 {
 	const string str = getAttributeString(handle, name, error, optional);
 	if (str == "")
@@ -172,7 +175,8 @@ namespace
 		else if (rcs_type == "file")
 		{
 			const string filename = getAttributeString(rcs_xml, "filename",
-			                                     "RCS attached to target '" + name + "' does not specify filename.");
+			                                           "RCS attached to target '" + name +
+			                                           "' does not specify filename.");
 			target = createFileTarget(platform, name, filename);
 		}
 		else
@@ -184,7 +188,8 @@ namespace
 		{
 			//Get the mode type
 			const string model_type = getAttributeString(model_xml, "type",
-			                                             "Model attached to target '" + name + "' does not specify type.");
+			                                             "Model attached to target '" + name +
+			                                             "' does not specify type.");
 			if (model_type == "constant")
 			{
 				RcsConst* model = new RcsConst();
@@ -215,7 +220,7 @@ namespace
 
 		//Get the name of the antenna
 		const string ant_name = getAttributeString(recvXml, "antenna",
-		                                     "Receiver '" + string(name) + "' does not specify an antenna");
+		                                           "Receiver '" + string(name) + "' does not specify an antenna");
 
 		rs_debug::printf(rs_debug::RS_VERY_VERBOSE, "'%s' ", receiver->getName().c_str());
 
@@ -265,7 +270,7 @@ namespace
 		{
 			receiver->setFlag(rs::Receiver::FLAG_NODIRECT);
 			rs_debug::printf(rs_debug::RS_VERY_VERBOSE, "[VV] Ignoring direct signals for receiver '%s'\n",
-			                receiver->getName().c_str());
+			                 receiver->getName().c_str());
 		}
 
 		// Get the NoPropagationLoss flag, which causes propagation loss to be ignored
@@ -274,7 +279,7 @@ namespace
 		{
 			receiver->setFlag(rs::Receiver::FLAG_NOPROPLOSS);
 			rs_debug::printf(rs_debug::RS_VERY_VERBOSE, "[VV] Ignoring propagation losses for receiver '%s'\n",
-			                receiver->getName().c_str());
+			                 receiver->getName().c_str());
 		}
 
 		//Add the receiver to the world
@@ -284,12 +289,13 @@ namespace
 	}
 
 	/// Create a PulseTransmitter object and process XML entry
-	Transmitter* processPulseTransmitter(const TiXmlHandle& transXml, std::string& name, const Platform* platform, World* world)
+	Transmitter* processPulseTransmitter(const TiXmlHandle& transXml, std::string& name, const Platform* platform,
+	                                     World* world)
 	{
 		Transmitter* transmitter = new Transmitter(platform, string(name), true);
 		//Get the name of the pulse
 		const string pulse_name = getAttributeString(transXml, "pulse",
-		                                       "Transmitter '" + name + "' does not specify a pulse");
+		                                             "Transmitter '" + name + "' does not specify a pulse");
 		//Get the pulse from the table of pulses
 		RadarSignal* wave = world->findSignal(pulse_name);
 		if (!wave)
@@ -305,12 +311,13 @@ namespace
 	}
 
 	/// Create a PulseTransmitter object and process XML entry
-	Transmitter* processCwTransmitter(const TiXmlHandle& transXml, std::string& name, const Platform* platform, World* world)
+	Transmitter* processCwTransmitter(const TiXmlHandle& transXml, std::string& name, const Platform* platform,
+	                                  World* world)
 	{
 		Transmitter* transmitter = new Transmitter(platform, string(name), false);
 		//Get the name of the pulse
 		const string pulse_name = getAttributeString(transXml, "pulse",
-		                                       "Transmitter '" + name + "' does not specify a pulse");
+		                                             "Transmitter '" + name + "' does not specify a pulse");
 		//Get the pulse from the table of pulses
 		RadarSignal* wave = world->findSignal(pulse_name);
 		if (!wave)
@@ -323,13 +330,17 @@ namespace
 	}
 
 	/// Process a transmitter XML entry
-	Transmitter* processTransmitter(const TiXmlHandle& transXml, const Platform* platform, World* world)
+	std::optional<Transmitter*> processTransmitter(const TiXmlHandle& transXml, const Platform* platform, World* world,
+	                                               const bool isMonostatic = false)
 	{
+		// David Young: We use C++17's std::optional to indicate that the function may return a null value.
+		// This allows the World object to manage the deletion of the Transmitter object,
+		// since the return value of this function is ignored in the bistatic case
+		// (as handled by processPlatform).
 		rs_debug::printf(rs_debug::RS_VERY_VERBOSE, "[VV] Loading Transmitter: ");
 
 		//Get the name of the transmitter
 		string name = getAttributeString(transXml, "name", "Transmitter does not specify a name");
-
 
 		//Get the transmitter type
 		const string type = getAttributeString(transXml, "type", "Transmitter '" + name + "' does not specify type");
@@ -349,7 +360,7 @@ namespace
 
 		//Get the name of the antenna
 		const string ant_name = getAttributeString(transXml, "antenna",
-		                                     "Transmitter '" + name + "' does not specify an antenna");
+		                                           "Transmitter '" + name + "' does not specify an antenna");
 		const Antenna* antenna = world->findAntenna(ant_name);
 		if (!antenna)
 		{
@@ -361,7 +372,7 @@ namespace
 
 		//Get the name of the timing source
 		const string timing_name = getAttributeString(transXml, "timing",
-		                                        "Transmitter '" + name + "' does not specify a timing source");
+		                                              "Transmitter '" + name + "' does not specify a timing source");
 
 		ClockModelTiming* timing = new ClockModelTiming(name);
 
@@ -379,13 +390,18 @@ namespace
 		//Add the transmitter to the world
 		world->add(transmitter);
 
-		return transmitter;
+		// If the system is monostatic, return the transmitter
+		if (isMonostatic)
+		{
+			return transmitter;
+		}
+		return std::nullopt;
 	}
 
 	/// Process a monostatic (Receiver and Transmitter sharing an antenna)
 	void processMonostatic(const TiXmlHandle& transXml, const Platform* platform, World* world)
 	{
-		Transmitter* trans = processTransmitter(transXml, platform, world);
+		Transmitter* trans = processTransmitter(transXml, platform, world, true).value();
 		Receiver* recv = processReceiver(transXml, platform, world);
 		trans->makeMonostatic(recv);
 		recv->makeMonostatic(trans);
@@ -408,7 +424,7 @@ namespace
 		catch (XmlImportException& e)
 		{
 			rs_debug::printf(rs_debug::RS_VERBOSE,
-			                "[WARNING] Parse Error While Importing Waypoint. Discarding Waypoint.\n");
+			                 "[WARNING] Parse Error While Importing Waypoint. Discarding Waypoint.\n");
 		}
 	}
 
@@ -461,16 +477,16 @@ namespace
 			else
 			{
 				rs_debug::printf(rs_debug::RS_VERBOSE,
-				                "[WARNING] Unsupported motion path interpolation type for platform '" + platform->
-				                getName() + "'. Defaulting to static.\n");
+				                 "[WARNING] Unsupported motion path interpolation type for platform '" + platform->
+				                 getName() + "'. Defaulting to static.\n");
 				path->setInterp(Path::RS_INTERP_STATIC);
 			}
 		}
 		catch (XmlImportException& e)
 		{
 			rs_debug::printf(rs_debug::RS_VERBOSE,
-			                "[WARNING] Motion path interpolation type not specified for platform '" + platform->
-			                getName() + "'. Defaulting to static.\n");
+			                 "[WARNING] Motion path interpolation type not specified for platform '" + platform->
+			                 getName() + "'. Defaulting to static.\n");
 			path->setInterp(Path::RS_INTERP_STATIC);
 		}
 
@@ -499,7 +515,7 @@ namespace
 		catch (XmlImportException& e)
 		{
 			rs_debug::printf(rs_debug::RS_VERBOSE,
-			                "[WARNING] Parse Error While Importing Waypoint. Discarding Waypoint.\n");
+			                 "[WARNING] Parse Error While Importing Waypoint. Discarding Waypoint.\n");
 		}
 	}
 
@@ -562,16 +578,16 @@ namespace
 			else
 			{
 				rs_debug::printf(rs_debug::RS_VERBOSE,
-				                "[WARNING] Unsupported rotation path interpolation type for platform '" + platform->
-				                getName() + "'. Defaulting to static.\n");
+				                 "[WARNING] Unsupported rotation path interpolation type for platform '" + platform->
+				                 getName() + "'. Defaulting to static.\n");
 				path->setInterp(RotationPath::RS_INTERP_STATIC);
 			}
 		}
 		catch (XmlImportException& e)
 		{
 			rs_debug::printf(rs_debug::RS_VERBOSE,
-			                "[WARNING] Rotation path interpolation type not specified for platform '" + platform->
-			                getName() + "'. Defaulting to static.\n");
+			                 "[WARNING] Rotation path interpolation type not specified for platform '" + platform->
+			                 getName() + "'. Defaulting to static.\n");
 			path->setInterp(RotationPath::RS_INTERP_STATIC);
 		}
 		// Process the rotation waypoints
@@ -664,7 +680,7 @@ namespace
 		const string pulse_type = getAttributeString(pulseXml, "type", "Pulses must specify a type");
 		//Generate the pulse
 		rs_debug::printf(rs_debug::RS_VERY_VERBOSE, "[VV] Generating Pulse %s of type '%s'\n", pulse_name.c_str(),
-		                pulse_type.c_str());
+		                 pulse_type.c_str());
 		if (pulse_type == "file")
 		{
 			processAnyPulseFile(pulseXml, world, pulse_name);
@@ -690,7 +706,8 @@ namespace
 	Antenna* processXmlAntenna(const TiXmlHandle& antXml, const string& name)
 	{
 		//Get the module and function name attributes
-		const std::string filename = getAttributeString(antXml, "filename", "Antenna definition must specify a filename");
+		const std::string filename = getAttributeString(antXml, "filename",
+		                                                "Antenna definition must specify a filename");
 		//Create the antenna
 		return rs::createXmlAntenna(name, filename);
 	}
@@ -698,7 +715,8 @@ namespace
 	Antenna* processFileAntenna(const TiXmlHandle& antXml, const string& name)
 	{
 		//Get the module and function name attributes
-		const std::string filename = getAttributeString(antXml, "filename", "Antenna definition must specify a filename");
+		const std::string filename = getAttributeString(antXml, "filename",
+		                                                "Antenna definition must specify a filename");
 		//Create the antenna
 		return rs::createFileAntenna(name, filename);
 	}
@@ -765,7 +783,7 @@ namespace
 		}
 		//Notify the debug log
 		rs_debug::printf(rs_debug::RS_VERY_VERBOSE, "[VV] Loading antenna '%s' of type '%s'\n", ant_name.c_str(),
-		                ant_pattern.c_str());
+		                 ant_pattern.c_str());
 		//Load the efficiency factor
 		try
 		{
@@ -775,7 +793,7 @@ namespace
 		catch (XmlImportException& xe)
 		{
 			rs_debug::printf(rs_debug::RS_VERBOSE,
-			                "[VERBOSE] Antenna '%s' does not specify efficiency, assuming unity.\n", ant_name.c_str());
+			                 "[VERBOSE] Antenna '%s' does not specify efficiency, assuming unity.\n", ant_name.c_str());
 		}
 		//Add it to the world
 		world->add(antenna);
@@ -856,8 +874,8 @@ namespace
 			//If there is no frequency, we default to the system sample frequency
 			timing->setFrequency(RsParameters::rate());
 			rs_debug::printf(rs_debug::RS_VERBOSE,
-			                "[VERBOSE] Clock section '%s' does not specify frequency. Assuming %g.\n", name.c_str(),
-			                RsParameters::rate());
+			                 "[VERBOSE] Clock section '%s' does not specify frequency. Assuming %g.\n", name.c_str(),
+			                 RsParameters::rate());
 		}
 		//Process the synconpulse tag
 		if (bool sync = getAttributeBool(antXml, "synconpulse", "", true))
@@ -905,8 +923,8 @@ namespace
 		catch (XmlImportException& xe)
 		{
 			rs_debug::printf(rs_debug::RS_VERBOSE,
-			                "[VERBOSE] Using default value of CW position interpolation rate: %g\n",
-			                RsParameters::cwSampleRate());
+			                 "[VERBOSE] Using default value of CW position interpolation rate: %g\n",
+			                 RsParameters::cwSampleRate());
 		}
 		//Get the random seed
 		try
@@ -917,14 +935,15 @@ namespace
 		catch (XmlImportException& xe)
 		{
 			rs_debug::printf(rs_debug::RS_VERBOSE, "[VERBOSE] Using random seed from clock(): %d\n",
-			                RsParameters::randomSeed());
+			                 RsParameters::randomSeed());
 		}
 		//Get the number of ADC bits to simulate
 		try
 		{
 			const rsFloat adc_bits = getChildRsFloat(root, "adc_bits");
 			RsParameters::modifyParms()->setAdcBits(static_cast<unsigned int>(std::floor(adc_bits)));
-			rs_debug::printf(rs_debug::RS_VERBOSE, "[VERBOSE] Quantizing results to %d bits\n", RsParameters::adcBits());
+			rs_debug::printf(rs_debug::RS_VERBOSE, "[VERBOSE] Quantizing results to %d bits\n",
+			                 RsParameters::adcBits());
 		}
 		catch (XmlImportException& xe)
 		{
@@ -939,7 +958,7 @@ namespace
 		catch (XmlImportException& xe)
 		{
 			rs_debug::printf(rs_debug::RS_VERY_VERBOSE,
-			                "[VV] Oversampling not in use. Ensure than pulses are correctly sampled.\n");
+			                 "[VV] Oversampling not in use. Ensure than pulses are correctly sampled.\n");
 		}
 		//Process the "export" tag
 		if (const TiXmlHandle exporttag = root.ChildElement("export", 0); exporttag.Element())
