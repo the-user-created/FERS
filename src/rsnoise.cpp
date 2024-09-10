@@ -412,7 +412,7 @@ MultirateGenerator::MultirateGenerator(const rsFloat alpha, const unsigned int b
 {
 	const rsFloat beta = -(alpha - 2) / 2.0;
 	//Calculate the integer and fractional parts of beta
-	const int fint = (int)std::floor(beta);
+	const int fint = static_cast<int>(std::floor(beta));
 	const rsFloat ffrac = fmod(beta, 1);
 	//Build the multirate filter tree
 	CreateTree(ffrac, fint, branches);
@@ -435,7 +435,7 @@ rsFloat MultirateGenerator::GetSample()
 void MultirateGenerator::SkipSamples(long long samples)
 {
 	std::vector<FAlphaBranch*> flushbranches;
-	int skip_branches = (int)std::floor(std::log10(samples)) - 1;
+	int skip_branches = static_cast<int>(std::floor(std::log10(samples))) - 1;
 	//  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Skip branches %d\n", skip_branches);
 	if (skip_branches > 0)
 	{
@@ -448,7 +448,7 @@ void MultirateGenerator::SkipSamples(long long samples)
 		if (branch)
 		{
 			//Now generate the samples of the lower branches
-			samples = (int)(samples / std::pow(10.0, (double)skip_branches));
+			samples = static_cast<int>(samples / std::pow(10.0, static_cast<double>(skip_branches)));
 			//rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Skipping %ld samples in %ld branches \n", samples, skip_branches);
 			for (int i = 0; i < samples; i++)
 			{

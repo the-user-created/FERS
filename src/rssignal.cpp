@@ -126,10 +126,10 @@ namespace
 		//C Tong: delay appears to be the fraction of time ellapsed between samples
 		for (int i = -hfilt; i < hfilt; i++)
 		{
-			const rsFloat delay = i / rsFloat(hfilt);
+			const rsFloat delay = i / static_cast<rsFloat>(hfilt);
 			for (int j = -alpha; j < alpha; j++)
 			{
-				filter_table[int((i + hfilt) * length + j + alpha)] = interp_filter(j - delay);
+				filter_table[static_cast<int>((i + hfilt) * length + j + alpha)] = interp_filter(j - delay);
 			}
 		}
 		rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Filter table complete.\n");
@@ -350,7 +350,7 @@ boost::shared_array<rsComplex> Signal::Render(const std::vector<InterpPoint>& po
 
 	//Loop over the pulse, performing the rendering
 	rsFloat sample_time = (*iter).time;
-	for (int i = 0; i < (int)size; i++, sample_time += timestep)
+	for (int i = 0; i < static_cast<int>(size); i++, sample_time += timestep)
 	{
 		//Check if we should move on to the next set of interp points
 		if ((sample_time > (*next).time))

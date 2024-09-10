@@ -56,7 +56,7 @@ void rs::Upsample(const rsComplex* in, const int size, rsComplex* out, const int
 {
 	/// Design the FIR filter for de-imaging
 	int filt_length;
-	const rsFloat* coeffs = BlackmanFIR(1 / rsFloat(ratio), filt_length);
+	const rsFloat* coeffs = BlackmanFIR(1 / static_cast<rsFloat>(ratio), filt_length);
 
 	// Temporary buffer for zero padding and results
 	rsComplex* tmp = new rsComplex[size * ratio + filt_length];
@@ -92,7 +92,7 @@ void rs::Downsample(const rsComplex* in, const int size, rsComplex* out, const i
 {
 	/// Design the FIR filter for anti-aliasing
 	int filt_length;
-	const rsFloat* coeffs = BlackmanFIR(1 / rsFloat(ratio), filt_length);
+	const rsFloat* coeffs = BlackmanFIR(1 / static_cast<rsFloat>(ratio), filt_length);
 	// Temporary buffer for zero padding and results
 	rsComplex* tmp = new rsComplex[size + filt_length];
 	for (int i = size - 1; i < size + filt_length; i++)
@@ -111,7 +111,7 @@ void rs::Downsample(const rsComplex* in, const int size, rsComplex* out, const i
 	//Copy the results to the output buffer
 	for (int i = 0; i < size / ratio; i++)
 	{
-		out[i] = tmp[i * ratio + filt_length / 2] / rsFloat(ratio);
+		out[i] = tmp[i * ratio + filt_length / 2] / static_cast<rsFloat>(ratio);
 		//    printf("%f+%fi\n", out[i].real(), out[i].imag());
 	}
 	// Clean up
@@ -423,8 +423,8 @@ Upsampler::Upsampler(const int ratio):
 	for (int i = 0; i < filter_size; i++)
 	{
 		// The Hamming window provides a solid tradeoff between rolloff and stopband attenuation
-		const rsFloat window_value = 0.54 - 0.46 * std::cos(2 * M_PI * i / (rsFloat)(filter_size));
-		const rsFloat filter_value = Sinc(1.0 / (rsFloat)(ratio) * (i - filter_size / 2));
+		const rsFloat window_value = 0.54 - 0.46 * std::cos(2 * M_PI * i / static_cast<rsFloat>(filter_size));
+		const rsFloat filter_value = Sinc(1.0 / static_cast<rsFloat>(ratio) * (i - filter_size / 2));
 		filterbank[i] = filter_value * window_value;
 	}
 	//Allocate memory for the sample state

@@ -38,12 +38,12 @@ Pattern::~Pattern()
 rsFloat Pattern::GetGain(const rs::SVec3& angle) const
 {
 	//Get the nearest points in elevation and azimuth
-	const double x1 = std::floor((angle.azimuth + M_PI) / (2 * M_PI) * (size_azi - 1)) / (double)(size_azi - 1);
+	const double x1 = std::floor((angle.azimuth + M_PI) / (2 * M_PI) * (size_azi - 1)) / static_cast<double>(size_azi - 1);
 	const double ex1 = (angle.azimuth + M_PI) / (2 * M_PI);
-	const double x2 = x1 + 1.0 / (double)(size_azi);
-	const double y1 = std::floor((angle.elevation + M_PI) / (2 * M_PI) * (size_elev - 1)) / (double)(size_elev - 1);
+	const double x2 = x1 + 1.0 / static_cast<double>(size_azi);
+	const double y1 = std::floor((angle.elevation + M_PI) / (2 * M_PI) * (size_elev - 1)) / static_cast<double>(size_elev - 1);
 	const double ey1 = (angle.elevation + M_PI) / (2 * M_PI);
-	const double y2 = y1 + 1.0 / (double)(size_elev);
+	const double y2 = y1 + 1.0 / static_cast<double>(size_elev);
 	//Get the interpolation constants
 	const double t = (ex1 - x1) / (x2 - x1);
 	const double u = (ey1 - y1) / (y2 - y1);
