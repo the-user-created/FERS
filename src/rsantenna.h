@@ -91,7 +91,7 @@ namespace rs
 namespace rsAntenna
 {
 	//Antenna with an Isotropic radiation pattern
-	class Isotropic : public rs::Antenna
+	class Isotropic final : public rs::Antenna
 	{
 	public:
 		/// Default constructor
@@ -105,7 +105,7 @@ namespace rsAntenna
 	};
 
 	//Antenna with a sinc (sinx/x) radiation pattern
-	class Sinc : public rs::Antenna
+	class Sinc final : public rs::Antenna
 	{
 	public:
 		/// Constructor
@@ -124,7 +124,7 @@ namespace rsAntenna
 	};
 
 	//Antenna with a Gaussian radiation pattern
-	class Gaussian : public rs::Antenna
+	class Gaussian final : public rs::Antenna
 	{
 	public:
 		/// Constructor
@@ -142,7 +142,7 @@ namespace rsAntenna
 	};
 
 	/// Square horn antenna
-	class SquareHorn : public rs::Antenna
+	class SquareHorn final : public rs::Antenna
 	{
 	public:
 		/// Constructor
@@ -159,7 +159,7 @@ namespace rsAntenna
 	};
 
 	/// Parabolic dish antenna
-	class ParabolicReflector : public rs::Antenna
+	class ParabolicReflector final : public rs::Antenna
 	{
 	public:
 		/// Constructor
@@ -176,7 +176,7 @@ namespace rsAntenna
 	};
 
 	/// Antenna with gain pattern loaded from and XML description file
-	class XMLAntenna : public rs::Antenna
+	class XMLAntenna final : public rs::Antenna
 	{
 	public:
 		/// Constructor
@@ -198,7 +198,7 @@ namespace rsAntenna
 	};
 
 	/// Antenna with gain pattern loaded from an HDF5 2D pattern (as made by antennatool)
-	class FileAntenna : public rs::Antenna
+	class FileAntenna final : public rs::Antenna
 	{
 	public:
 		/// Constructor
@@ -216,7 +216,7 @@ namespace rsAntenna
 	};
 
 	/// Antenna with gain pattern calculated by a Python module
-	class PythonAntenna : public rs::Antenna
+	class PythonAntenna final : public rs::Antenna
 	{
 	public:
 		/// Constructor

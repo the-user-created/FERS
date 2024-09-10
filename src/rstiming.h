@@ -100,7 +100,7 @@ namespace rs
 	};
 
 	/// Implementation of clock timing based on the 1/f model with linear interpolation
-	class ClockModelTiming : public Timing
+	class ClockModelTiming final : public Timing
 	{
 	public:
 		/// Constructor

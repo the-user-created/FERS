@@ -199,7 +199,7 @@ namespace rs
 	RotationPath* ReflectPath(const RotationPath* path, const MultipathSurface* surf);
 
 	/// Exception class for the path code
-	class PathException : public std::runtime_error
+	class PathException final : public std::runtime_error
 	{
 	public:
 		PathException(const std::string& description):

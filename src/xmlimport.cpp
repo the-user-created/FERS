@@ -34,7 +34,7 @@ using std::string;
 //
 
 /// Exception for reporting an XML parsing error
-class XmlImportException : public std::runtime_error
+class XmlImportException final : public std::runtime_error
 {
 public:
 	XmlImportException(const std::string& error):
