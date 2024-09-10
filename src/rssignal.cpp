@@ -27,8 +27,7 @@ namespace
 	BesselI0(const rsFloat x)
 	{
 		rsFloat I0;
-		rsFloat t = (x / 3.75);
-		if (t < 0.0)
+		if (rsFloat t = (x / 3.75); t < 0.0)
 		{
 			throw std::logic_error("Modified Bessel approximation only valid for x > 0");
 		}

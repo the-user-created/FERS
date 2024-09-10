@@ -160,11 +160,10 @@ RadarSignal* LoadPulseFromCSVFile(const std::string& name, const std::string& fi
 rs::RadarSignal* rsPulseFactory::LoadPulseFromFile(const std::string& name, const std::string& filename, const rsFloat power,
                                                    const rsFloat carrierfreq)
 {
-	int ln = filename.length() - 1;
 	//Identify file types
 
 	//Check for CSV extension
-	if ((tolower(filename[ln]) == 'v') && (tolower(filename[ln - 1]) == 's') && (tolower(filename[ln - 2]) == 'c'))
+	if (const int ln = filename.length() - 1; (tolower(filename[ln]) == 'v') && (tolower(filename[ln - 1]) == 's') && (tolower(filename[ln - 2]) == 'c'))
 	{
 		return LoadPulseFromCSVFile(name, filename, power, carrierfreq);
 	}

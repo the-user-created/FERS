@@ -240,8 +240,7 @@ Path* rs::ReflectPath(const Path* path, const MultipathSurface* surf)
 	//Create a new path object
 	Path* dual = new Path(path->type);
 	//Add all the coords from the current path to the old path, reflecting about the multipath plane
-	std::vector<Coord>::const_iterator iter = path->coords.begin();
-	for (; iter != path->coords.end(); iter++)
+	for (std::vector<Coord>::const_iterator iter = path->coords.begin(); iter != path->coords.end(); iter++)
 	{
 		Coord refl;
 		refl.t = (*iter).t;
@@ -508,8 +507,7 @@ RotationPath* rs::ReflectPath(const RotationPath* path, const MultipathSurface* 
 	dual->start = path->start;
 	dual->rate = path->rate;
 	//Copy the coords, reflecting them in the surface
-	std::vector<RotationCoord>::const_iterator iter = path->coords.begin();
-	for (; iter != path->coords.end(); iter++)
+	for (std::vector<RotationCoord>::const_iterator iter = path->coords.begin(); iter != path->coords.end(); iter++)
 	{
 		RotationCoord rc;
 		//Time copies directly

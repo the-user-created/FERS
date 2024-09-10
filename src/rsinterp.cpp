@@ -49,8 +49,7 @@ private:
 void InterpSetData::LoadSamples(const vector<rsFloat>& x, const vector<rsFloat>& y)
 {
 	vector<rsFloat>::const_iterator ix = x.begin();
-	vector<rsFloat>::const_iterator iy = y.begin();
-	for (; (ix != x.end()) && (iy != y.end()); ix++, iy++)
+	for (vector<rsFloat>::const_iterator iy = y.begin(); (ix != x.end()) && (iy != y.end()); ix++, iy++)
 	{
 		data.insert(pair<rsFloat, rsFloat>(*ix, *iy));
 	}

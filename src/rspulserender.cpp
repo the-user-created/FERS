@@ -311,9 +311,8 @@ void rs::ExportReceiverCSV(const std::vector<rs::Response*>& responses, const st
 	{
 		std::ofstream* of;
 		// See if a file is already open for that transmitter
-		std::map<std::string, std::ofstream*>::iterator ofi = streams.find((*iter)->GetTransmitterName());
 		// If the file for that transmitter does not exist, add it
-		if (ofi == streams.end())
+		if (std::map<std::string, std::ofstream*>::iterator ofi = streams.find((*iter)->GetTransmitterName()); ofi == streams.end())
 		{
 			std::ostringstream oss;
 			oss << filename << "_" << (*iter)->GetTransmitterName() << ".csv";
@@ -374,12 +373,10 @@ void ThreadedRenderer::RenderWindow(rsComplex* window, rsFloat length, rsFloat s
 	rsFloat end = start + length; // End time of the window
 	//Put together a list of responses seen by this window
 	std::queue<Response*> work_list;
-	std::vector<Response*>::const_iterator iter = responses->begin();
-	for (; iter != responses->end(); iter++)
+	for (std::vector<Response*>::const_iterator iter = responses->begin(); iter != responses->end(); iter++)
 	{
 		rsFloat resp_start = (*iter)->StartTime();
-		rsFloat resp_end = (*iter)->EndTime();
-		if ((resp_start <= end) && (resp_end >= start))
+		if (rsFloat resp_end = (*iter)->EndTime(); (resp_start <= end) && (resp_end >= start))
 		{
 			work_list.push(*iter);
 		}
@@ -407,8 +404,7 @@ void ThreadedRenderer::RenderWindow(rsComplex* window, rsFloat length, rsFloat s
 	// Wait until all our threads are complete
 	group.join_all();
 	//Clean up the thread objects
-	std::vector<RenderThread*>::iterator thread_iter = threads.begin();
-	for (; thread_iter < threads.end(); thread_iter++)
+	for (std::vector<RenderThread*>::iterator thread_iter = threads.begin(); thread_iter < threads.end(); thread_iter++)
 	{
 		delete *thread_iter;
 	}

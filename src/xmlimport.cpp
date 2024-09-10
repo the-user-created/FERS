@@ -107,8 +107,7 @@ rsFloat GetNodeFloat(const TiXmlHandle& node)
 /// Return the string associated with an attribute or throw an exception on failure
 std::string GetAttributeString(const TiXmlHandle& handle, const std::string& name, const std::string& error, const bool optional = false)
 {
-	const std::string* text = handle.Element()->Attribute(name);
-	if (text)
+	if (const std::string* text = handle.Element()->Attribute(name))
 	{
 		return *text;
 	}
@@ -181,8 +180,7 @@ namespace
 			throw XmlImportException("RCS type " + rcs_type + " not currently supported.");
 		}
 		//Handle the target statistical model
-		TiXmlHandle modelXML = targXML.ChildElement("model", 0);
-		if (modelXML.Element())
+		if (const TiXmlHandle modelXML = targXML.ChildElement("model", 0); modelXML.Element())
 		{
 			//Get the mode type
 			const string model_type = GetAttributeString(modelXML, "type",
@@ -263,8 +261,7 @@ namespace
 		receiver->SetTiming(timing);
 
 		// Get the NoDirect flag, which causes direct signals to be ignored
-		bool nodirect = GetAttributeBool(recvXML, "nodirect", "", false);
-		if (nodirect)
+		if (bool nodirect = GetAttributeBool(recvXML, "nodirect", "", false))
 		{
 			receiver->SetFlag(rs::Receiver::FLAG_NODIRECT);
 			rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Ignoring direct signals for receiver '%s'\n",
@@ -273,8 +270,7 @@ namespace
 
 		// Get the NoPropagationLoss flag, which causes propagation loss to be ignored
 		// for example, when propagation loss is calculated with AREPS
-		bool noproploss = GetAttributeBool(recvXML, "nopropagationloss", "", false);
-		if (noproploss)
+		if (bool noproploss = GetAttributeBool(recvXML, "nopropagationloss", "", false))
 		{
 			receiver->SetFlag(rs::Receiver::FLAG_NOPROPLOSS);
 			rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Ignoring propagation losses for receiver '%s'\n",
@@ -445,8 +441,7 @@ namespace
 		//Get the interpolation type
 		try
 		{
-			std::string rottype = GetAttributeString(mpXML, "interpolation", "");
-			if (rottype == "linear")
+			if (const std::string rottype = GetAttributeString(mpXML, "interpolation", ""); rottype == "linear")
 			{
 				path->SetInterp(Path::RS_INTERP_LINEAR);
 			}
@@ -552,8 +547,7 @@ namespace
 		//Get the interpolation type
 		try
 		{
-			std::string rottype = GetAttributeString(mpXML, "interpolation", "");
-			if (rottype == "linear")
+			if (const std::string rottype = GetAttributeString(mpXML, "interpolation", ""); rottype == "linear")
 			{
 				path->SetInterp(RotationPath::RS_INTERP_LINEAR);
 			}
@@ -866,8 +860,7 @@ namespace
 			                rsParameters::rate());
 		}
 		//Process the synconpulse tag
-		bool sync = GetAttributeBool(antXML, "synconpulse", "", true);
-		if (sync)
+		if (bool sync = GetAttributeBool(antXML, "synconpulse", "", true))
 		{
 			timing->SetSyncOnPulse();
 		}
@@ -949,8 +942,7 @@ namespace
 			                "[VV] Oversampling not in use. Ensure than pulses are correctly sampled.\n");
 		}
 		//Process the "export" tag
-		TiXmlHandle exporttag = root.ChildElement("export", 0);
-		if (exporttag.Element())
+		if (const TiXmlHandle exporttag = root.ChildElement("export", 0); exporttag.Element())
 		{
 			const bool export_xml = GetAttributeBool(exporttag, "xml", "", rsParameters::export_xml());
 			const bool export_csv = GetAttributeBool(exporttag, "csv", "", rsParameters::export_csv());
