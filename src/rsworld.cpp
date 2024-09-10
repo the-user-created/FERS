@@ -158,22 +158,19 @@ void World::ProcessMultipath()
 	{
 		//Add duals for each plaform
 		std::vector<Platform*>::iterator plat = platforms.begin();
-		std::vector<Platform*>::iterator plat_end = platforms.end();
-		for (; plat != plat_end; plat++)
+		for (const std::vector<Platform*>::iterator plat_end = platforms.end(); plat != plat_end; plat++)
 		{
 			platforms.push_back(CreateMultipathDual(*plat, multipath_surface));
 		}
 		//Add duals for each receiver
 		std::vector<Receiver*>::iterator recv = receivers.begin();
-		std::vector<Receiver*>::iterator recv_end = receivers.end();
-		for (; recv != recv_end; recv++)
+		for (const std::vector<Receiver*>::iterator recv_end = receivers.end(); recv != recv_end; recv++)
 		{
 			receivers.push_back(CreateMultipathDual(*recv, multipath_surface));
 		}
 		//Add duals for each transmitter
 		std::vector<Transmitter*>::iterator trans = transmitters.begin();
-		std::vector<Transmitter*>::iterator trans_end = transmitters.end();
-		for (; trans != trans_end; trans++)
+		for (const std::vector<Transmitter*>::iterator trans_end = transmitters.end(); trans != trans_end; trans++)
 		{
 			transmitters.push_back(CreateMultipathDual(*trans, multipath_surface));
 		}

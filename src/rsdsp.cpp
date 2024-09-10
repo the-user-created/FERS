@@ -483,8 +483,7 @@ void Upsampler::Upsample(const rsFloat* insamples, const int in_size, rsFloat* o
 		}
 	}
 	//Update the sample history
-	int transfer_size = filter_size / ratio + 1;
-	if (in_size >= transfer_size)
+	if (const int transfer_size = filter_size / ratio + 1; in_size >= transfer_size)
 	{
 		memcpy(sample_memory, &(insamples[in_size - transfer_size]), transfer_size * sizeof(rsFloat));
 	}

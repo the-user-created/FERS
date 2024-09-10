@@ -25,7 +25,6 @@ PrototypeTiming* MakeProtoTiming()
 int TestClockModelTiming(const PrototypeTiming* proto)
 {
 	constexpr int pulses = 3;
-	int pulse_length = 1000;
 	ClockModelTiming* timing = new ClockModelTiming("test_pulse");
 	timing->InitializeModel(proto);
 
@@ -36,6 +35,7 @@ int TestClockModelTiming(const PrototypeTiming* proto)
 	}
 	for (int k = 0; k < pulses; k++)
 	{
+		constexpr int pulse_length = 1000;
 		for (int i = 0; i < pulse_length; i++)
 		{
 			rsFloat j = timing->NextNoiseSample();

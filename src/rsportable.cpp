@@ -39,9 +39,7 @@ int rsPortable::CountProcessors()
 {
 	//C Tong: This can now be done with boost:
 
-	int iNHardwareThreads = boost::thread::hardware_concurrency();
-
-	if (!iNHardwareThreads)
+	if (const int iNHardwareThreads = boost::thread::hardware_concurrency(); !iNHardwareThreads)
 	{
 		rsDebug::printf(rsDebug::RS_IMPORTANT, "[IMPORTANT] Unable to get CPU count, assuming 1.\n");
 		return 1;

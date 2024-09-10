@@ -434,11 +434,10 @@ rsFloat MultirateGenerator::GetSample()
 /// Skip a number of samples, preseverving correlations
 void MultirateGenerator::SkipSamples(long long samples)
 {
-	std::vector<FAlphaBranch*> flushbranches;
-	int skip_branches = static_cast<int>(std::floor(std::log10(samples))) - 1;
 	//  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Skip branches %d\n", skip_branches);
-	if (skip_branches > 0)
+	if (const int skip_branches = static_cast<int>(std::floor(std::log10(samples))) - 1; skip_branches > 0)
 	{
+		std::vector<FAlphaBranch*> flushbranches;
 		FAlphaBranch* branch = topbranch;
 		for (int i = 0; (i < skip_branches) && (branch != 0); i++)
 		{
