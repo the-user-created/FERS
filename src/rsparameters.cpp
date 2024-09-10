@@ -61,7 +61,7 @@ rsParameters::rsParameters()
 	// Export binary by default
 	sim_parms.export_binary = true;
 	// The random seed is set the to the current time by default
-	sim_parms.random_seed = static_cast<unsigned int>(time(NULL));
+	sim_parms.random_seed = static_cast<unsigned int>(time(nullptr));
 	// The default is not to quantize
 	sim_parms.adc_bits = 0;
 	// Default maximum number of render threads

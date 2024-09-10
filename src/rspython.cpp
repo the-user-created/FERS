@@ -148,7 +148,7 @@ PythonNoise::~PythonNoise()
 rsFloat PythonNoise::GetSample() const
 {
 	//Call the function
-	PyObject* result = PyObject_CallObject(data->pFunc, 0);
+	PyObject* result = PyObject_CallObject(data->pFunc, nullptr);
 	//Check the call was completed
 	if (!result)
 	{

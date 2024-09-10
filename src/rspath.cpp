@@ -136,7 +136,7 @@ void finalizeCubic(std::vector<T>& coords, std::vector<T>& dd)
 Path::Path(const Path::InterpType type):
 	final(false), type(type)
 {
-	pythonpath = 0; //No python path, until loaded
+	pythonpath = nullptr; //No python path, until loaded
 }
 
 void Path::AddCoord(const Coord& coord)

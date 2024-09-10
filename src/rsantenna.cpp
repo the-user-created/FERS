@@ -304,7 +304,7 @@ namespace
 	{
 		//Step through the XML file and load all the gain samples
 		TiXmlHandle tmp = axisXML.ChildElement("gainsample", 0);
-		for (int i = 0; tmp.Element() != 0; i++)
+		for (int i = 0; tmp.Element() != nullptr; i++)
 		{
 			//Load the angle of the gain sample
 			TiXmlHandle angleXML = tmp.ChildElement("angle", 0);

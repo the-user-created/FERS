@@ -177,6 +177,6 @@ rs::RadarSignal* rsPulseFactory::LoadPulseFromFile(const std::string& name, cons
 	{
 		throw std::runtime_error("[ERROR] Unrecognised extension while trying to load " + filename);
 	}
-	return 0;
+	return nullptr;
 }
 

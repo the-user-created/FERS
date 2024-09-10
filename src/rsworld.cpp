@@ -31,7 +31,7 @@ struct objDel
 
 //Default constructor
 World::World():
-	multipath_surface(0)
+	multipath_surface(nullptr)
 {
 }
 
@@ -177,5 +177,5 @@ void World::ProcessMultipath()
 	}
 	//Clean up the multipath surface
 	delete multipath_surface;
-	multipath_surface = 0;
+	multipath_surface = nullptr;
 }

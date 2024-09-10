@@ -185,7 +185,7 @@ namespace
 	}
 
 	//Create an instance of InterpFilter
-	InterpFilter* InterpFilter::instance = 0;
+	InterpFilter* InterpFilter::instance = nullptr;
 }
 
 /// Simulate the effect of and ADC converter on the signal
@@ -226,7 +226,7 @@ void rsSignal::ADCSimulate(complex* data, const unsigned int size, const int bit
 
 //Default constructor for brute signal
 Signal::Signal() :
-	data(0), size(0), rate(0)
+	data(nullptr), size(0), rate(0)
 {
 }
 
@@ -243,7 +243,7 @@ Signal::Clear()
 	delete[] data;
 	size = 0;
 	rate = 0;
-	data = 0; //Set data to zero to prevent multiple frees
+	data = nullptr; //Set data to zero to prevent multiple frees
 }
 
 //Load data into the signal, with the given sample rate and size

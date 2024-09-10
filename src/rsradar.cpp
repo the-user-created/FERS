@@ -28,9 +28,9 @@ using namespace rs; //Import the rs namespace for clarity
 /// Default Constructor
 Radar::Radar(const Platform* platform, const std::string& name):
 	Object(platform, name),
-	timing(0),
-	antenna(0),
-	attached(0),
+	timing(nullptr),
+	antenna(nullptr),
+	attached(nullptr),
 	multipath_dual(false),
 	multipath_reflect(0)
 {
@@ -139,9 +139,9 @@ rsFloat Radar::MultipathDualFactor() const
 //Default constructor for Transmitter
 Transmitter::Transmitter(const Platform* platform, const std::string& name, const bool pulsed):
 	Radar(platform, name),
-	signal(0),
+	signal(nullptr),
 	pulsed(pulsed),
-	dual(0)
+	dual(nullptr)
 {
 }
 
@@ -210,7 +210,7 @@ void Transmitter::SetPRF(const rsFloat mprf)
 Receiver::Receiver(const Platform* platform, const std::string& name):
 	Radar(platform, name),
 	noise_temperature(0),
-	dual(0),
+	dual(nullptr),
 	flags(0)
 {
 }

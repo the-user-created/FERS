@@ -53,9 +53,9 @@ public:
 const char* GetChildText(const TiXmlHandle& parent, const char* childname)
 {
 	const TiXmlHandle tmp = parent.FirstChildElement(childname);
-	if (tmp.Element() == 0)
+	if (tmp.Element() == nullptr)
 	{
-		return 0; //The element does not exist
+		return nullptr; //The element does not exist
 	}
 	//Return the text
 	return tmp.Element()->GetText();
@@ -476,7 +476,7 @@ namespace
 
 		//Process all the PositionWaypoints
 		TiXmlHandle tmp = mpXML.ChildElement("positionwaypoint", 0);
-		for (int i = 1; tmp.Element() != 0; i++)
+		for (int i = 1; tmp.Element() != nullptr; i++)
 		{
 			ProcessWaypoint(tmp, path);
 			tmp = mpXML.ChildElement("positionwaypoint", i);
@@ -508,7 +508,7 @@ namespace
 	{
 		//Process all the RotationWaypoints
 		TiXmlHandle tmp = mpXML.ChildElement("rotationwaypoint", 0);
-		for (int i = 1; tmp.Element() != 0; i++)
+		for (int i = 1; tmp.Element() != nullptr; i++)
 		{
 			ProcessRotationWaypoint(tmp, path);
 			tmp = mpXML.ChildElement("rotationwaypoint", i);
@@ -589,7 +589,7 @@ namespace
 
 		//Process all the targets attached to the platform
 		TiXmlHandle tmp = platXML.ChildElement("target", 0);
-		for (int i = 1; tmp.Element() != 0; i++)
+		for (int i = 1; tmp.Element() != nullptr; i++)
 		{
 			ProcessTarget(tmp, platform, world);
 			tmp = platXML.ChildElement("target", i);
@@ -597,7 +597,7 @@ namespace
 
 		//Process all the receivers attached to the platform
 		tmp = platXML.ChildElement("receiver", 0);
-		for (int i = 1; tmp.Element() != 0; i++)
+		for (int i = 1; tmp.Element() != nullptr; i++)
 		{
 			ProcessReceiver(tmp, platform, world);
 			tmp = platXML.ChildElement("receiver", i);
@@ -605,7 +605,7 @@ namespace
 
 		//Process all the transmitters attached to the platform
 		tmp = platXML.ChildElement("transmitter", 0);
-		for (int i = 1; tmp.Element() != 0; i++)
+		for (int i = 1; tmp.Element() != nullptr; i++)
 		{
 			ProcessTransmitter(tmp, platform, world);
 			tmp = platXML.ChildElement("transmitter", i);
@@ -613,7 +613,7 @@ namespace
 
 		//Process all the monostatics attached to the platform
 		tmp = platXML.ChildElement("monostatic", 0);
-		for (int i = 1; tmp.Element() != 0; i++)
+		for (int i = 1; tmp.Element() != nullptr; i++)
 		{
 			ProcessMonostatic(tmp, platform, world);
 			tmp = platXML.ChildElement("monostatic", i);
@@ -621,7 +621,7 @@ namespace
 
 		//Process all the motion paths attached to the platform
 		tmp = platXML.ChildElement("motionpath", 0);
-		for (int i = 1; tmp.Element() != 0; i++)
+		for (int i = 1; tmp.Element() != nullptr; i++)
 		{
 			ProcessMotionPath(tmp, platform);
 			tmp = platXML.ChildElement("motionpath", i);
@@ -629,7 +629,7 @@ namespace
 
 		//Process all the rotation paths attached to the platform
 		tmp = platXML.ChildElement("rotationpath", 0);
-		for (int i = 1; tmp.Element() != 0; i++)
+		for (int i = 1; tmp.Element() != nullptr; i++)
 		{
 			ProcessRotationPath(tmp, platform);
 			tmp = platXML.ChildElement("rotationpath", i);
@@ -637,7 +637,7 @@ namespace
 
 		//Process all the rotation paths attached to the platform
 		tmp = platXML.ChildElement("fixedrotation", 0);
-		for (int i = 1; tmp.Element() != 0; i++)
+		for (int i = 1; tmp.Element() != nullptr; i++)
 		{
 			ProcessRotationConstant(tmp, platform);
 			tmp = platXML.ChildElement("fixedrotation", i);
@@ -804,7 +804,7 @@ namespace
 		PrototypeTiming* timing = new PrototypeTiming(name);
 		//Process all the clock entries
 		TiXmlHandle plat = antXML.ChildElement("noise_entry", 0);
-		for (int i = 1; plat.Element() != 0; i++)
+		for (int i = 1; plat.Element() != nullptr; i++)
 		{
 			const rsFloat alpha = GetChildRsFloat(plat, "alpha");
 			const rsFloat weight = GetChildRsFloat(plat, "weight");
@@ -979,49 +979,49 @@ namespace
 		}
 		//Process all the pulses
 		TiXmlHandle plat = root.ChildElement("pulse", 0);
-		for (int i = 1; plat.Element() != 0; i++)
+		for (int i = 1; plat.Element() != nullptr; i++)
 		{
 			ProcessPulse(plat, world);
 			plat = root.ChildElement("pulse", i);
 		}
 		//Process all the antennas
 		plat = root.ChildElement("antenna", 0);
-		for (int i = 1; plat.Element() != 0; i++)
+		for (int i = 1; plat.Element() != nullptr; i++)
 		{
 			ProcessAntenna(plat, world);
 			plat = root.ChildElement("antenna", i);
 		}
 		//Process all the timing sources
 		plat = root.ChildElement("timing", 0);
-		for (int i = 1; plat.Element() != 0; i++)
+		for (int i = 1; plat.Element() != nullptr; i++)
 		{
 			ProcessTiming(plat, world);
 			plat = root.ChildElement("timing", i);
 		}
 		//Process all the multipath surfaces
 		plat = root.ChildElement("multipath", 0);
-		for (int i = 1; plat.Element() != 0; i++)
+		for (int i = 1; plat.Element() != nullptr; i++)
 		{
 			ProcessMultipath(plat, world);
 			plat = root.ChildElement("multipath", i);
 		}
 		//Process all the platforms
 		plat = root.ChildElement("platform", 0);
-		for (int i = 1; plat.Element() != 0; i++)
+		for (int i = 1; plat.Element() != nullptr; i++)
 		{
 			ProcessPlatform(plat, world); //Recursively process the platform
 			plat = root.ChildElement("platform", i);
 		}
 		//Process all the includes
 		plat = root.ChildElement("include", 0);
-		for (int i = 1; plat.Element() != 0; i++)
+		for (int i = 1; plat.Element() != nullptr; i++)
 		{
 			ProcessInclude(plat, world); //Recursively process the platform
 			plat = root.ChildElement("include", i);
 		}
 		//Process all the incblocks
 		plat = root.ChildElement("incblock", 0);
-		for (int i = 1; plat.Element() != 0; i++)
+		for (int i = 1; plat.Element() != nullptr; i++)
 		{
 			ProcessDocument(plat, world, true); //Recursively process the platform
 			plat = root.ChildElement("incblock", i);

@@ -172,7 +172,7 @@ bool PrototypeTiming::GetSyncOnPulse() const
 ClockModelTiming::ClockModelTiming(const std::string& name):
 	Timing(name),
 	enabled(false),
-	model(0)
+	model(nullptr)
 {
 }
 

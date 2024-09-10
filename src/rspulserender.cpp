@@ -490,7 +490,7 @@ Response* RenderThread::GetWork()
 		boost::mutex::scoped_lock lock(*work_list_mutex);
 		if (work_list->empty()) //If the work list is empty, return NULL
 		{
-			return 0;
+			return nullptr;
 		}
 		// Get the response at the front of the queue
 		ret = work_list->front();
