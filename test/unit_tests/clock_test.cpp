@@ -1,7 +1,7 @@
 // Test clock modeling classes
 #include <config.h>
 #include <iostream>
-#include "fftwcpp.h"
+
 #include "rstiming.h"
 #include "rsnoise.h"
 
