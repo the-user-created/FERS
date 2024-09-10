@@ -27,6 +27,8 @@ void processCsv(FILE* fPin, FILE* fPOut, const char* encTag, const char* d1Tag, 
 		        d2Tag, encTag);
 		line = fgets(line, 2048, fPin);
 	}
+
+	free(buff);
 }
 
 int main(const int argc, char* argv[])

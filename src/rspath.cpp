@@ -175,7 +175,6 @@ Vec3 Path::getPosition(const rsFloat t) const
 			throw std::logic_error("Python path GetPosition called before module loaded");
 		}
 		return _pythonpath->getPosition(t);
-		break;
 	}
 	//Return the position part of the result
 	return coord.pos;

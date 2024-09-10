@@ -10,6 +10,7 @@
 
 #include "rsthreadedsim.h"
 
+#include <memory>
 #include <vector>
 #include <boost/version.hpp>
 #include <boost/thread/mutex.hpp>
@@ -141,7 +142,7 @@ static void incThreads()
 //Run a sim thread for each of the receiver-transmitter pairs, limiting concurrent threads
 void rs::runThreadedSim(const int threadLimit, World* world)
 {
-	std::vector<boost::thread*> running;
+	std::vector<std::unique_ptr<boost::thread>> running;
 	std::vector<Receiver*>::iterator ri;
 	boost::thread mainthrd();
 	rs_debug::printf(rs_debug::RS_INFORMATIVE, "[INFO] Using threaded simulation with %d threads.\n", threadLimit);
@@ -153,7 +154,7 @@ void rs::runThreadedSim(const int threadLimit, World* world)
 		{
 			incThreads();
 			SimThread sim(*ti, *ri, world);
-			boost::thread* thrd = new boost::thread(sim);
+			std::unique_ptr<boost::thread> thrd = std::make_unique<boost::thread>(sim);
 			//Delay until a thread is terminated, if we have reached the limit
 			while (threads >= threadLimit)
 			{
@@ -165,7 +166,7 @@ void rs::runThreadedSim(const int threadLimit, World* world)
 				throw std::runtime_error("Thread terminated with error. Aborting simulation");
 			}
 			//Add the thread pointers to a vector to be freed later
-			running.push_back(thrd);
+			running.push_back(std::move(thrd));
 		}
 	}
 	//Wait for all the first pass threads to finish before continuing
@@ -178,11 +179,7 @@ void rs::runThreadedSim(const int threadLimit, World* world)
 			throw std::runtime_error("Thread terminated with error. Aborting simulation");
 		}
 	}
-	//Clean all the thread pointers
-	for (std::vector<boost::thread*>::iterator i = running.begin(); i != running.end(); ++i)
-	{
-		delete *i;
-	}
+	// Clean all the thread pointers
 	running.clear();
 
 	// Report on the number of responses added to each receiver
@@ -198,7 +195,7 @@ void rs::runThreadedSim(const int threadLimit, World* world)
 	{
 		incThreads();
 		RenderThread sim(*ri);
-		boost::thread* thrd = new boost::thread(sim);
+		std::unique_ptr<boost::thread> thrd = std::make_unique<boost::thread>(sim);
 		//Delay until a thread is terminated, if we have reached the limit
 		while (threads >= threadLimit)
 		{
@@ -210,7 +207,7 @@ void rs::runThreadedSim(const int threadLimit, World* world)
 			throw std::runtime_error("Thread terminated with error. Aborting simulation");
 		}
 		//Add the thread pointers to a vector to be freed later
-		running.push_back(thrd);
+		running.push_back(std::move(thrd));
 	}
 
 	//Wait for all the render threads to finish
@@ -224,9 +221,5 @@ void rs::runThreadedSim(const int threadLimit, World* world)
 		}
 	}
 	//Clean all the thread pointers
-	for (std::vector<boost::thread*>::iterator i = running.begin(); i != running.end(); ++i)
-	{
-		delete *i;
-	}
 	running.clear();
 }

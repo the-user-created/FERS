@@ -61,6 +61,4 @@ int main(const int argc, char* argv[])
 		                ex.what());
 		return 1;
 	}
-
-	return 0;
 }

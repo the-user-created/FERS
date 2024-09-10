@@ -6,6 +6,7 @@
 #define RS_NOISE_H
 
 #include <config.h>
+#include <memory>
 #include <vector>
 #include <boost/utility.hpp>
 #include <boost/random/gamma_distribution.hpp>
@@ -197,7 +198,7 @@ namespace rs
 		bool enabled() const;
 
 	private:
-		std::vector<MultirateGenerator*> _generators; // The multirate generators which generate noise in each band
+		std::vector<std::unique_ptr<MultirateGenerator>> _generators; // The multirate generators which generate noise in each band
 		std::vector<rsFloat> _weights; // Weight of the noise from each generator
 		rsFloat _phase_offset; //!< Offset from nominal phase
 		rsFloat _freq_offset; //!< Offset from nominal base frequency
