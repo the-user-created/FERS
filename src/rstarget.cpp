@@ -4,12 +4,14 @@
 
 #define TIXML_USE_STL //Tell tinyxml to use the STL instead of it's own string class
 
-#include <cmath>
 #include "rstarget.h"
+
+#include <cmath>
+#include <tinyxml.h>
+
 #include "rsdebug.h"
 #include "rsinterp.h"
 #include "rsnoise.h"
-#include <tinyxml.h>
 
 using namespace rs;
 
@@ -30,7 +32,7 @@ RCSModel::~RCSModel()
 //
 
 /// Return a constant RCS
-rsFloat RCSConst::SampleModel() 
+rsFloat RCSConst::SampleModel()
 {
   return 1.0;
 }
@@ -115,9 +117,13 @@ IsoTarget::~IsoTarget()
 rsFloat IsoTarget::GetRCS(SVec3 &inAngle, SVec3 &outAngle) const
 {
   if (model)
-    return rcs*model->SampleModel();
+  {
+	  return rcs*model->SampleModel();
+  }
   else
-    return rcs;
+  {
+	  return rcs;
+  }
 }
 
 //
@@ -150,9 +156,13 @@ rsFloat FileTarget::GetRCS(SVec3 &inAngle, SVec3 &outAngle) const
   SVec3 t_angle = inAngle+outAngle;
   rsFloat RCS = std::sqrt(azi_samples->Value(t_angle.azimuth/2.0)*elev_samples->Value(t_angle.elevation/2.0));
   if (model)
-    return RCS*model->SampleModel();
+  {
+	  return RCS*model->SampleModel();
+  }
   else
-    return RCS;
+  {
+	  return RCS;
+  }
 }
 
 namespace {
@@ -168,12 +178,16 @@ void LoadTargetGainAxis(InterpSet *set, TiXmlHandle &axisXML)
     //Load the angle of the gain sample
     TiXmlHandle angleXML = tmp.ChildElement("angle", 0);
     if (!angleXML.Element())
-      throw std::runtime_error("[ERROR] Misformed XML in target description: No angle in rcssample");
+    {
+	    throw std::runtime_error("[ERROR] Misformed XML in target description: No angle in rcssample");
+    }
     angle = GetNodeFloat(angleXML);
     //Load the gain of the gain sample
     TiXmlHandle gainXML = tmp.ChildElement("rcs", 0);
     if (!gainXML.Element())
-      throw std::runtime_error("[ERROR] Misformed XML in target description: No rcs in rcssample");
+    {
+	    throw std::runtime_error("[ERROR] Misformed XML in target description: No rcs in rcssample");
+    }
     gain = GetNodeFloat(gainXML);
     //Load the values into the interpolation table
     set->InsertSample(angle, gain);
@@ -190,18 +204,24 @@ void FileTarget::LoadRCSDescription(const std::string& filename)
   TiXmlDocument doc(filename.c_str());
   //Check the document was loaded correctly
   if (!doc.LoadFile())
-    throw std::runtime_error("[ERROR] Could not load target description from "+filename);
+  {
+	  throw std::runtime_error("[ERROR] Could not load target description from "+filename);
+  }
   //Get the XML root node
   TiXmlHandle root(doc.RootElement());
   //Load the gain samples along the elevation axis
   TiXmlHandle tmp = root.ChildElement("elevation", 0);
   if (!tmp.Element())
-    throw std::runtime_error("[ERROR] Malformed XML in target description: No elevation pattern definition");
+  {
+	  throw std::runtime_error("[ERROR] Malformed XML in target description: No elevation pattern definition");
+  }
   LoadTargetGainAxis(elev_samples, tmp);
   //Load the gain samples along the azimuth axis
   tmp = root.ChildElement("azimuth", 0);
   if (!tmp.Element())
-    throw std::runtime_error("[ERROR] Malformed XML in target description: No azimuth pattern definition");
+  {
+	  throw std::runtime_error("[ERROR] Malformed XML in target description: No azimuth pattern definition");
+  }
   LoadTargetGainAxis(azi_samples, tmp);
 }
 

@@ -6,24 +6,26 @@
 #define __RS_HDF5_H
 
 #include <complex>
+#include <config.h>
 
-namespace rshdf5 {
+namespace rshdf5
+{
+	///Open the HDF5 file for writing
+	long int CreateFile(const std::string& name);
 
-///Open the HDF5 file for writing
-long int CreateFile(const std::string& name);
+	///Add a dataset to the HDF5 file
+	void AddChunkToFile(long int file, std::complex<rsFloat>* data, unsigned int size, rsFloat time, rsFloat rate,
+	                    rsFloat fullscale, unsigned int count);
 
-///Add a dataset to the HDF5 file
-void AddChunkToFile(long int file, std::complex<rsFloat> *data, unsigned int size, rsFloat time, rsFloat rate, rsFloat fullscale, unsigned int count);
+	///Close the HDF5 file
+	void CloseFile(long int file);
 
-///Close the HDF5 file
- void CloseFile(long int file);
+	/// Read the pulse data from the specified file
+	void ReadPulseData(const std::string& name, std::complex<rsFloat>** data, unsigned int& size, rsFloat& rate);
 
-/// Read the pulse data from the specified file
- void ReadPulseData(const std::string &name, std::complex<rsFloat> **data, unsigned int &size, rsFloat &rate);
-
- /// Read an antenna gain pattern or RCS pattern from a file
- rsFloat **ReadPattern(const std::string &name, const std::string &dataset_name, unsigned int &azi_size, unsigned int &elev_size);
-
+	/// Read an antenna gain pattern or RCS pattern from a file
+	rsFloat** ReadPattern(const std::string& name, const std::string& dataset_name, unsigned int& azi_size,
+	                      unsigned int& elev_size);
 }
 
 #endif
