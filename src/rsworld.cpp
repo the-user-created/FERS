@@ -39,20 +39,17 @@ World::World():
 World::~World()
 {
 	//Delete all the objects in the world
-	std::map<std::string, RadarSignal*>::iterator iter;
-	for (iter = pulses.begin(); iter != pulses.end(); iter++)
+	for (std::map<std::string, RadarSignal*>::iterator iter = pulses.begin(); iter != pulses.end(); iter++)
 	{
 		delete (*iter).second;
 	}
 
-	std::map<std::string, Antenna*>::iterator aiter;
-	for (aiter = antennas.begin(); aiter != antennas.end(); aiter++)
+	for (std::map<std::string, Antenna*>::iterator aiter = antennas.begin(); aiter != antennas.end(); aiter++)
 	{
 		delete (*aiter).second;
 	}
 
-	std::map<std::string, PrototypeTiming*>::iterator titer;
-	for (titer = timings.begin(); titer != timings.end(); titer++)
+	for (std::map<std::string, PrototypeTiming*>::iterator titer = timings.begin(); titer != timings.end(); titer++)
 	{
 		delete (*titer).second;
 	}

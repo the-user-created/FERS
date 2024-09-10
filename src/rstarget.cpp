@@ -171,8 +171,6 @@ namespace
 	//Load samples of gain along an axis (not a member of FileAntenna)
 	void LoadTargetGainAxis(InterpSet* set, const TiXmlHandle& axisXML)
 	{
-		rsFloat angle;
-		rsFloat gain;
 		//Step through the XML file and load all the gain samples
 		TiXmlHandle tmp = axisXML.ChildElement("rcssample", 0);
 		for (int i = 0; tmp.Element() != 0; i++)
@@ -183,14 +181,14 @@ namespace
 			{
 				throw std::runtime_error("[ERROR] Misformed XML in target description: No angle in rcssample");
 			}
-			angle = GetNodeFloat(angleXML);
+			const rsFloat angle = GetNodeFloat(angleXML);
 			//Load the gain of the gain sample
 			TiXmlHandle gainXML = tmp.ChildElement("rcs", 0);
 			if (!gainXML.Element())
 			{
 				throw std::runtime_error("[ERROR] Misformed XML in target description: No rcs in rcssample");
 			}
-			gain = GetNodeFloat(gainXML);
+			const rsFloat gain = GetNodeFloat(gainXML);
 			//Load the values into the interpolation table
 			set->InsertSample(angle, gain);
 			//Get the next gainsample in the file

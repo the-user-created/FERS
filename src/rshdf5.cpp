@@ -39,7 +39,6 @@ void rshdf5::ReadPulseData(const std::string& name, std::complex<rsFloat>** data
 	//Get the size of the dataset "pulse"
 	size_t type_size;
 	H5T_class_t class_id;
-	hsize_t* dims;
 	//Open the / group
 	const hid_t slash = H5Gopen1(file, "/");
 	if (slash < 0)
@@ -55,7 +54,7 @@ void rshdf5::ReadPulseData(const std::string& name, std::complex<rsFloat>** data
 	// Get the rank of the groups
 	int rank;
 	H5LTget_dataset_ndims(Igroup, "value", &rank);
-	dims = new hsize_t[rank];
+	hsize_t* dims = new hsize_t[rank];
 	//Get the data set information
 	herr_t res = H5LTget_dataset_info(Igroup, "value", &(dims[0]), &class_id, &type_size);
 	if (res < 0)
@@ -199,13 +198,12 @@ void rshdf5::CloseFile(const long int file)
 rsFloat** rshdf5::ReadPattern(const std::string& name, const std::string& dataset_name, unsigned int& azi_size,
                               unsigned int& elev_size)
 {
-	hid_t file_id;
 	int rank;
 	hsize_t dims[2];
 	size_t type_size;
 	H5T_class_t data_class;
 	//Load the HDF5 file
-	file_id = H5Fopen(name.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+	const hid_t file_id = H5Fopen(name.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
 	if (file_id < 0)
 	{
 		throw std::runtime_error("[ERROR] Cannot open HDF5 file " + name + " to read antenna data");

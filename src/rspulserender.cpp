@@ -294,8 +294,7 @@ void rs::ExportReceiverXML(const std::vector<rs::Response*>& responses, const st
 	doc.LinkEndChild(root);
 
 	//dump each response in turn
-	std::vector<rs::Response*>::const_iterator ri;
-	for (ri = responses.begin(); ri != responses.end(); ri++)
+	for (std::vector<rs::Response*>::const_iterator ri = responses.begin(); ri != responses.end(); ri++)
 	{
 		(*ri)->RenderXML(root);
 	}
@@ -308,8 +307,7 @@ void rs::ExportReceiverXML(const std::vector<rs::Response*>& responses, const st
 void rs::ExportReceiverCSV(const std::vector<rs::Response*>& responses, const std::string& filename)
 {
 	std::map<std::string, std::ofstream*> streams; //map of per-transmitter open files
-	std::vector<rs::Response*>::const_iterator iter;
-	for (iter = responses.begin(); iter != responses.end(); iter++)
+	for (std::vector<rs::Response*>::const_iterator iter = responses.begin(); iter != responses.end(); iter++)
 	{
 		std::ofstream* of;
 		// See if a file is already open for that transmitter
@@ -339,8 +337,7 @@ void rs::ExportReceiverCSV(const std::vector<rs::Response*>& responses, const st
 		(*iter)->RenderCSV(*of);
 	}
 	//Close all the files that we opened
-	std::map<std::string, std::ofstream*>::iterator ofi;
-	for (ofi = streams.begin(); ofi != streams.end(); ofi++)
+	for (std::map<std::string, std::ofstream*>::iterator ofi = streams.begin(); ofi != streams.end(); ofi++)
 	{
 		delete (*ofi).second;
 	}

@@ -346,7 +346,6 @@ boost::shared_array<rsComplex> Signal::Render(const std::vector<InterpPoint>& po
 	//rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "idelay = %g\n", idelay);
 
 	//Memory to store the filter in
-	const rsFloat* filt;
 
 	//Loop over the pulse, performing the rendering
 	rsFloat sample_time = (*iter).time;
@@ -398,7 +397,7 @@ boost::shared_array<rsComplex> Signal::Render(const std::vector<InterpPoint>& po
 		const int iSampleUnwrap = floor(fdelay); //Number of samples to unwrap by.
 		fdelay -= iSampleUnwrap; //Re-calculate the delay filter for the given delay
 
-		filt = interp->GetFilter(fdelay);
+		const rsFloat* filt = interp->GetFilter(fdelay);
 
 		//Get the start and end times of interpolation
 		int start = -filt_length / 2;
