@@ -6,10 +6,10 @@
 #ifndef RS_PLATFORM_H
 #define RS_PLATFORM_H
 
-#include <config.h>
 #include <string>
 #include <boost/utility.hpp>
 
+#include "config.h"
 #include "rspath.h"
 
 namespace rs
@@ -34,10 +34,10 @@ namespace rs
 		RotationPath* getRotationPath() const;
 
 		/// Get the position of the platform at the specified time
-		Vec3 getPosition(rsFloat time) const;
+		Vec3 getPosition(RS_FLOAT time) const;
 
 		/// Get the rotation of the platform at the specified time
-		SVec3 getRotation(rsFloat time) const;
+		SVec3 getRotation(RS_FLOAT time) const;
 
 		/// Get the name of the platform
 		std::string getName() const;

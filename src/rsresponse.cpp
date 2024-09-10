@@ -36,7 +36,7 @@ namespace
 	//<node>
 	//<name>text</name>
 	//</node>
-	void attachRsFloatNode(TiXmlElement* root, const std::string& name, const rsFloat data,
+	void attachRsFloatNode(TiXmlElement* root, const std::string& name, const RS_FLOAT data,
 	                       const bool scientific = true)
 	{
 		std::ostringstream oss;
@@ -66,8 +66,8 @@ namespace
 // Interppoint Implementation
 //
 /// InterpPoint Constructor
-InterpPoint::InterpPoint(const rsFloat power, const rsFloat start, const rsFloat delay, const rsFloat doppler,
-                         const rsFloat phase, const rsFloat noiseTemperature):
+InterpPoint::InterpPoint(const RS_FLOAT power, const RS_FLOAT start, const RS_FLOAT delay, const RS_FLOAT doppler,
+                         const RS_FLOAT phase, const RS_FLOAT noiseTemperature):
 	power(power),
 	time(start),
 	delay(delay),
@@ -93,7 +93,7 @@ Response::~Response()
 
 
 /// Return the time the pulse's energy starts
-rsFloat Response::startTime() const
+RS_FLOAT Response::startTime() const
 {
 	if (_points.empty())
 	{
@@ -103,7 +103,7 @@ rsFloat Response::startTime() const
 }
 
 /// Return the time the pulse's energy ends
-rsFloat Response::endTime() const
+RS_FLOAT Response::endTime() const
 {
 	if (_points.empty())
 	{
@@ -113,7 +113,7 @@ rsFloat Response::endTime() const
 }
 
 /// Return the length of the pulse
-rsFloat Response::getLength() const
+RS_FLOAT Response::getLength() const
 {
 	return endTime() - startTime();
 }
@@ -201,8 +201,8 @@ void Response::addInterpPoint(const InterpPoint& point)
 }
 
 /// Render the response to an array
-boost::shared_array<RsComplex> Response::renderBinary(rsFloat& rate, unsigned int& size,
-                                                      const rsFloat fracWinDelay) const
+boost::shared_array<RsComplex> Response::renderBinary(RS_FLOAT& rate, unsigned int& size,
+                                                      const RS_FLOAT fracWinDelay) const
 {
 	rate = _wave->getRate();
 	return _wave->render(_points, size, fracWinDelay);

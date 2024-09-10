@@ -4,12 +4,12 @@
 
 #include "rshdf5.h"
 
-#include <config.h>
 #include <iomanip>
 #include <sstream>
 #include <stdexcept>
 #include <string>
 
+#include "config.h"
 #include "rsparameters.h"
 
 using namespace rshdf5;
@@ -31,7 +31,7 @@ hid_t openFile(const std::string& name)
 }
 
 /// Read the pulse data from the specified file
-void rshdf5::readPulseData(const std::string& name, std::complex<rsFloat>** data, unsigned int& size, rsFloat& rate)
+void rshdf5::readPulseData(const std::string& name, std::complex<RS_FLOAT>** data, unsigned int& size, RS_FLOAT& rate)
 {
 	rate = rs::RsParameters::rate();
 	//Open the HDF5 file
@@ -102,10 +102,10 @@ void rshdf5::readPulseData(const std::string& name, std::complex<rsFloat>** data
 	//Close the HDF5 file
 	H5Fclose(file);
 	//Copy the data to the target array
-	*data = new std::complex<rsFloat>[size];
+	*data = new std::complex<RS_FLOAT>[size];
 	for (unsigned int i = 0; i < size; i++)
 	{
-		(*data)[i] = std::complex<rsFloat>(buffer_i[i], buffer_q[i]);
+		(*data)[i] = std::complex<RS_FLOAT>(buffer_i[i], buffer_q[i]);
 	}
 	// Clean up memory
 	delete[] buffer_i;
@@ -125,8 +125,8 @@ long int rshdf5::createFile(const std::string& name)
 }
 
 ///Add a dataset to the HDF5 file
-void rshdf5::addChunkToFile(const long int file, const std::complex<rsFloat>* data, const unsigned int size, const rsFloat time, const rsFloat rate,
-                            const rsFloat fullscale, const unsigned int count)
+void rshdf5::addChunkToFile(const long int file, const std::complex<RS_FLOAT>* data, const unsigned int size, const RS_FLOAT time, const RS_FLOAT rate,
+                            const RS_FLOAT fullscale, const unsigned int count)
 {
 	//Create the name of the dataset
 	std::ostringstream oss;
@@ -195,7 +195,7 @@ void rshdf5::closeFile(const long int file)
 }
 
 /// Read an antenna gain pattern or RCS pattern from a file
-rsFloat** rshdf5::readPattern(const std::string& name, const std::string& datasetName, unsigned int& aziSize,
+RS_FLOAT** rshdf5::readPattern(const std::string& name, const std::string& datasetName, unsigned int& aziSize,
                               unsigned int& elevSize)
 {
 	int rank;
@@ -247,10 +247,10 @@ rsFloat** rshdf5::readPattern(const std::string& name, const std::string& datase
 	/// Break the data down into a 2D array
 	aziSize = dims[0];
 	elevSize = dims[1];
-	rsFloat** ret = new rsFloat*[aziSize];
+	RS_FLOAT** ret = new RS_FLOAT*[aziSize];
 	for (unsigned int i = 0; i < aziSize; i++)
 	{
-		ret[i] = new rsFloat[elevSize];
+		ret[i] = new RS_FLOAT[elevSize];
 		for (unsigned int j = 0; j < elevSize; j++)
 		{
 			ret[i][j] = data[i * aziSize + j];

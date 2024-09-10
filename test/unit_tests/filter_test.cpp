@@ -1,8 +1,8 @@
 //Test the noise generation code from fers
 
-#include <config.h>
 #include <iostream>
 
+#include "config.h"
 #include "rsdsp.h"
 #include "rsnoise.h"
 
@@ -64,7 +64,7 @@ int main()
 	for (int i = 0; i < 1e4; i++)
 	{
 		DecadeUpsampler upsample;
-		rsFloat buf[10];
+		RS_FLOAT buf[10];
 		upsample.upsample(rs_noise::wgnSample(1), buf);
 		for (int j = 0; j < 10; j++)
 		{

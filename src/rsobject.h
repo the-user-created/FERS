@@ -6,10 +6,10 @@
 #ifndef RS_OBJECT_H
 #define RS_OBJECT_H
 
-#include <config.h>
 #include <string>
 #include <boost/utility.hpp>
 
+#include "config.h"
 #include "rspath.h"
 
 namespace rs
@@ -26,10 +26,10 @@ namespace rs
 		virtual ~Object();
 
 		/// Get the position of the object in space
-		Vec3 getPosition(rsFloat time) const;
+		Vec3 getPosition(RS_FLOAT time) const;
 
 		/// Get the rotation of the object in space
-		SVec3 getRotation(rsFloat time) const;
+		SVec3 getRotation(RS_FLOAT time) const;
 
 		/// Get a pointer to the platform this object is attached to
 		const Platform* getPlatform() const;

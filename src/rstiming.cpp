@@ -45,14 +45,14 @@ PrototypeTiming::PrototypeTiming(const std::string& name):
 }
 
 /// Add an alpha and a weight to the timing prototype
-void PrototypeTiming::addAlpha(const rsFloat alpha, const rsFloat weight)
+void PrototypeTiming::addAlpha(const RS_FLOAT alpha, const RS_FLOAT weight)
 {
 	_alphas.push_back(alpha);
 	_weights.push_back(weight);
 }
 
 /// Get the alphas and weights from the prototype
-void PrototypeTiming::getAlphas(std::vector<rsFloat>& getAlphas, std::vector<rsFloat>& getWeights) const
+void PrototypeTiming::getAlphas(std::vector<RS_FLOAT>& getAlphas, std::vector<RS_FLOAT>& getWeights) const
 {
 	//Copy the alpha and weight vectors
 	getAlphas = _alphas;
@@ -60,7 +60,7 @@ void PrototypeTiming::getAlphas(std::vector<rsFloat>& getAlphas, std::vector<rsF
 }
 
 /// Set a constant frequency offset
-void PrototypeTiming::addFreqOffset(const rsFloat offset)
+void PrototypeTiming::addFreqOffset(const RS_FLOAT offset)
 {
 	if (_random_freq)
 	{
@@ -72,7 +72,7 @@ void PrototypeTiming::addFreqOffset(const rsFloat offset)
 }
 
 /// Set a constant phase offset
-void PrototypeTiming::addPhaseOffset(const rsFloat offset)
+void PrototypeTiming::addPhaseOffset(const RS_FLOAT offset)
 {
 	if (_random_phase)
 	{
@@ -84,7 +84,7 @@ void PrototypeTiming::addPhaseOffset(const rsFloat offset)
 }
 
 /// Set a random frequency offset
-void PrototypeTiming::addRandomFreqOffset(const rsFloat stdev)
+void PrototypeTiming::addRandomFreqOffset(const RS_FLOAT stdev)
 {
 	if (_freq_offset)
 	{
@@ -96,7 +96,7 @@ void PrototypeTiming::addRandomFreqOffset(const rsFloat stdev)
 }
 
 /// Set a random phase offset
-void PrototypeTiming::addRandomPhaseOffset(const rsFloat stdev)
+void PrototypeTiming::addRandomPhaseOffset(const RS_FLOAT stdev)
 {
 	if (_phase_offset)
 	{
@@ -108,7 +108,7 @@ void PrototypeTiming::addRandomPhaseOffset(const rsFloat stdev)
 }
 
 /// Get the phase offset
-rsFloat PrototypeTiming::getPhaseOffset() const
+RS_FLOAT PrototypeTiming::getPhaseOffset() const
 {
 	if (_random_phase != 0)
 	{
@@ -121,7 +121,7 @@ rsFloat PrototypeTiming::getPhaseOffset() const
 }
 
 /// Get the phase offset
-rsFloat PrototypeTiming::getFreqOffset() const
+RS_FLOAT PrototypeTiming::getFreqOffset() const
 {
 	if (_random_freq != 0)
 	{
@@ -134,7 +134,7 @@ rsFloat PrototypeTiming::getFreqOffset() const
 }
 
 /// Get the frequency
-rsFloat PrototypeTiming::getFrequency() const
+RS_FLOAT PrototypeTiming::getFrequency() const
 {
 	return _frequency;
 }
@@ -147,7 +147,7 @@ std::string PrototypeTiming::getName() const
 }
 
 /// Set the base frequency of the clock model
-void PrototypeTiming::setFrequency(const rsFloat freq)
+void PrototypeTiming::setFrequency(const RS_FLOAT freq)
 {
 	_frequency = freq;
 }
@@ -216,7 +216,7 @@ bool ClockModelTiming::enabled() const
 }
 
 /// Get the real time of a particular pulse
-rsFloat ClockModelTiming::getPulseTimeError() const
+RS_FLOAT ClockModelTiming::getPulseTimeError() const
 {
 	if (_enabled)
 	{
@@ -250,7 +250,7 @@ void ClockModelTiming::reset() const
 }
 
 /// Get the next sample of time error for a particular pulse
-rsFloat ClockModelTiming::nextNoiseSample()
+RS_FLOAT ClockModelTiming::nextNoiseSample()
 {
 	if (_enabled)
 	{
@@ -263,7 +263,7 @@ rsFloat ClockModelTiming::nextNoiseSample()
 }
 
 /// Get the carrier frequency of the modelled clock
-rsFloat ClockModelTiming::getFrequency() const
+RS_FLOAT ClockModelTiming::getFrequency() const
 {
 	return _frequency;
 }

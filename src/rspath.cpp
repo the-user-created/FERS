@@ -18,7 +18,7 @@ using namespace rs;
 
 //Static "interpolation" function - the path is at the same point all the time
 template <typename T>
-void getPositionStatic(rsFloat t, T& coord, const std::vector<T>& coords)
+void getPositionStatic(RS_FLOAT t, T& coord, const std::vector<T>& coords)
 {
 	if (coords.empty())
 	{
@@ -29,7 +29,7 @@ void getPositionStatic(rsFloat t, T& coord, const std::vector<T>& coords)
 
 //Linear interpolation function
 template <typename T>
-void getPositionLinear(rsFloat t, T& coord, const std::vector<T>& coords)
+void getPositionLinear(RS_FLOAT t, T& coord, const std::vector<T>& coords)
 {
 	T s_key;
 	s_key = 0;
@@ -51,9 +51,9 @@ void getPositionLinear(rsFloat t, T& coord, const std::vector<T>& coords)
 		int xri = xrp - coords.begin();
 		int xli = xri - 1;
 
-		rsFloat iw = coords[xri].t - coords[xli].t;
-		rsFloat rw = (coords[xri].t - t) / iw;
-		rsFloat lw = 1 - rw;
+		RS_FLOAT iw = coords[xri].t - coords[xli].t;
+		RS_FLOAT rw = (coords[xri].t - t) / iw;
+		RS_FLOAT lw = 1 - rw;
 		//Insert the interpolated values in coord
 		coord = coords[xri] * lw + coords[xli] * rw;
 	}
@@ -65,7 +65,7 @@ void getPositionLinear(rsFloat t, T& coord, const std::vector<T>& coords)
 //The method used (but not the code) is from
 //Numerical Recipes in C, Second Edition by Press, et al. pages 114-116
 template <typename T>
-void getPositionCubic(rsFloat t, T& coord, const std::vector<T>& coords, const std::vector<T>& dd)
+void getPositionCubic(RS_FLOAT t, T& coord, const std::vector<T>& coords, const std::vector<T>& dd)
 {
 	T s_key;
 	s_key = 0;
@@ -87,9 +87,9 @@ void getPositionCubic(rsFloat t, T& coord, const std::vector<T>& coords, const s
 		//We are at neither endpoint - perform cubic spline interpolation
 		int xri = xrp - coords.begin();
 		int xli = xri - 1;
-		const rsFloat xrd = (coords[xri].t - t), xld = (t - coords[xli].t), iw = (coords[xri].t - coords[xli].t), iws = iw *
+		const RS_FLOAT xrd = (coords[xri].t - t), xld = (t - coords[xli].t), iw = (coords[xri].t - coords[xli].t), iws = iw *
 			        iw / 6.0;
-		rsFloat a = xrd / iw, b = xld / iw, c = (a * a * a - a) * iws, d = (b * b * b - b) * iws;
+		RS_FLOAT a = xrd / iw, b = xld / iw, c = (a * a * a - a) * iws, d = (b * b * b - b) * iws;
 		coord = coords[xli] * a + coords[xri] * b + dd[xli] * c + dd[xri] * d;
 	}
 	//Set the time part of the coordinate
@@ -113,9 +113,9 @@ void finalizeCubic(std::vector<T>& coords, std::vector<T>& dd)
 	for (int i = 1; i < size - 1; i++)
 	{
 		T yrd = coords[i + 1] - coords[i], yld = coords[i] - coords[i - 1];
-		rsFloat xrd = coords[i + 1].t - coords[i].t, xld = coords[i].t - coords[i - 1].t;
-		rsFloat iw = coords[i + 1].t - coords[i - 1].t;
-		rsFloat si = xld / iw;
+		RS_FLOAT xrd = coords[i + 1].t - coords[i].t, xld = coords[i].t - coords[i - 1].t;
+		RS_FLOAT iw = coords[i + 1].t - coords[i - 1].t;
+		RS_FLOAT si = xld / iw;
 		T p = dd[i - 1] * si + 2.0;
 		dd[i] = (si - 1.0) / p;
 		tmp[i] = ((yrd / xrd - yld / xld) * 6.0 / iw - tmp[i - 1] * si) / p;
@@ -148,7 +148,7 @@ void Path::addCoord(const Coord& coord)
 }
 
 //Get the position of the path object at a specified time
-Vec3 Path::getPosition(const rsFloat t) const
+Vec3 Path::getPosition(const RS_FLOAT t) const
 {
 	Coord coord;
 	if (!_final)
@@ -207,7 +207,7 @@ void Path::setInterp(const InterpType settype)
 }
 
 //Compares two paths at the same time and returns a vector with the distance and angle
-SVec3 compare(const rsFloat time, const Path& start, const Path& end)
+SVec3 compare(const RS_FLOAT time, const Path& start, const Path& end)
 {
 	const Vec3 difference = end.getPosition(time) - start.getPosition(time);
 	SVec3 result(difference); //Get the result in spherical co-ordinates
@@ -272,7 +272,7 @@ void RotationPath::addCoord(const RotationCoord& coord)
 }
 
 //Get the position of the path object at a specified time
-SVec3 RotationPath::getPosition(const rsFloat t) const
+SVec3 RotationPath::getPosition(const RS_FLOAT t) const
 {
 	RotationCoord coord;
 	if (!_final)
@@ -293,8 +293,8 @@ SVec3 RotationPath::getPosition(const rsFloat t) const
 		break;
 	case RS_INTERP_CONSTANT:
 		coord.t = t;
-		coord.azimuth = std::fmod(t * _rate.azimuth + _start.azimuth, static_cast<rsFloat>(2 * M_PI));
-		coord.elevation = std::fmod(t * _rate.elevation + _start.elevation, static_cast<rsFloat>(2 * M_PI));
+		coord.azimuth = std::fmod(t * _rate.azimuth + _start.azimuth, static_cast<RS_FLOAT>(2 * M_PI));
+		coord.elevation = std::fmod(t * _rate.elevation + _start.elevation, static_cast<RS_FLOAT>(2 * M_PI));
 		break;
 	}
 	return SVec3(1, coord.azimuth, coord.elevation);
@@ -380,7 +380,7 @@ Coord rs::operator/(const Coord& a, const Coord& b)
 }
 
 //Add a constant to a PathCoord
-Coord rs::operator+(const Coord& a, const rsFloat b)
+Coord rs::operator+(const Coord& a, const RS_FLOAT b)
 {
 	Coord c;
 	c.pos += b;
@@ -389,7 +389,7 @@ Coord rs::operator+(const Coord& a, const rsFloat b)
 }
 
 //Multiply by a rsFloat constant
-Coord rs::operator*(const Coord& a, const rsFloat b)
+Coord rs::operator*(const Coord& a, const RS_FLOAT b)
 {
 	Coord c;
 	c.pos = a.pos * b;
@@ -397,7 +397,7 @@ Coord rs::operator*(const Coord& a, const rsFloat b)
 	return c;
 }
 
-Coord rs::operator/(const rsFloat a, const Coord& b)
+Coord rs::operator/(const RS_FLOAT a, const Coord& b)
 {
 	Coord c;
 	c.pos = a / b.pos;
@@ -405,7 +405,7 @@ Coord rs::operator/(const rsFloat a, const Coord& b)
 	return c;
 }
 
-Coord rs::operator/(const Coord& b, const rsFloat a)
+Coord rs::operator/(const Coord& b, const RS_FLOAT a)
 {
 	Coord c;
 	c.pos = b.pos / a;
@@ -458,7 +458,7 @@ RotationCoord rs::operator/(const RotationCoord& a, const RotationCoord& b)
 }
 
 //Add a constant to a PathRotationCoord
-RotationCoord rs::operator+(const RotationCoord& a, const rsFloat b)
+RotationCoord rs::operator+(const RotationCoord& a, const RS_FLOAT b)
 {
 	RotationCoord c;
 	c.azimuth = a.azimuth + b;
@@ -468,7 +468,7 @@ RotationCoord rs::operator+(const RotationCoord& a, const rsFloat b)
 }
 
 //Multiply by a rsFloat constant
-RotationCoord rs::operator*(const RotationCoord& a, const rsFloat b)
+RotationCoord rs::operator*(const RotationCoord& a, const RS_FLOAT b)
 {
 	RotationCoord c;
 	c.azimuth = a.azimuth * b;
@@ -477,7 +477,7 @@ RotationCoord rs::operator*(const RotationCoord& a, const rsFloat b)
 	return c;
 }
 
-RotationCoord rs::operator/(const rsFloat a, const RotationCoord& b)
+RotationCoord rs::operator/(const RS_FLOAT a, const RotationCoord& b)
 {
 	RotationCoord c;
 	c.azimuth = a / b.azimuth;
@@ -486,7 +486,7 @@ RotationCoord rs::operator/(const rsFloat a, const RotationCoord& b)
 	return c;
 }
 
-RotationCoord rs::operator/(const RotationCoord& b, const rsFloat a)
+RotationCoord rs::operator/(const RotationCoord& b, const RS_FLOAT a)
 {
 	RotationCoord c;
 	c.azimuth = b.azimuth / a;

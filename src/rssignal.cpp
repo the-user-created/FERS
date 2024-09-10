@@ -23,11 +23,11 @@ namespace
 	/// Compute the zeroth order modified bessel function of the first kind
 	// Use the polynomial approximation from section 9.8 of
 	// "Handbook of Mathematical Functions" by Abramowitz and Stegun
-	rsFloat
-	besselI0(const rsFloat x)
+	RS_FLOAT
+	besselI0(const RS_FLOAT x)
 	{
-		rsFloat i0;
-		if (rsFloat t = (x / 3.75); t < 0.0)
+		RS_FLOAT i0;
+		if (RS_FLOAT t = (x / 3.75); t < 0.0)
 		{
 			throw std::logic_error("Modified Bessel approximation only valid for x > 0");
 		}
@@ -56,16 +56,16 @@ namespace
 	{
 	public:
 		/// Compute the sinc function at the specified x
-		static inline rsFloat sinc(rsFloat x);
+		static inline RS_FLOAT sinc(RS_FLOAT x);
 
 		/// Compute the value of a Kaiser Window at the given x
-		inline rsFloat kaiserWinCompute(rsFloat x) const;
+		inline RS_FLOAT kaiserWinCompute(RS_FLOAT x) const;
 
 		/// Calculate the value of the interpolation filter at time x
-		inline rsFloat interpFilter(rsFloat x) const;
+		inline RS_FLOAT interpFilter(RS_FLOAT x) const;
 
 		/// Get a pointer to the filter with approximately the specified delay
-		const rsFloat* getFilter(rsFloat delay) const;
+		const RS_FLOAT* getFilter(RS_FLOAT delay) const;
 
 		/// Get a pointer to the class instance
 		static InterpFilter* getInstance()
@@ -86,12 +86,12 @@ namespace
 		/// Pointer to a single instance of the class
 		static InterpFilter* _instance;
 
-		rsFloat _alpha; //!< 'alpha' parameter
-		rsFloat _beta; //!< 'beta' parameter
-		rsFloat _bessel_beta; //!< I0(beta)
+		RS_FLOAT _alpha; //!< 'alpha' parameter
+		RS_FLOAT _beta; //!< 'beta' parameter
+		RS_FLOAT _bessel_beta; //!< I0(beta)
 		int _length;
 		int _table_filters; //!< Number of filters in the filter table
-		rsFloat* _filter_table; //!< Table of precalculated filters
+		RS_FLOAT* _filter_table; //!< Table of precalculated filters
 	};
 
 	/// Interpfilter class constructor
@@ -101,7 +101,7 @@ namespace
 		//Size of the table to use for interpolation
 		_table_filters = 1000;
 		//Allocate memory for the table
-		_filter_table = new rsFloat[_table_filters * _length];
+		_filter_table = new RS_FLOAT[_table_filters * _length];
 		//Alpha is half the filter length
 		_alpha = std::floor(RsParameters::renderFilterLength() / 2.0);
 		//Beta sets the window shape
@@ -113,7 +113,7 @@ namespace
 		//C Tong: delay appears to be the fraction of time ellapsed between samples
 		for (int i = -hfilt; i < hfilt; i++)
 		{
-			const rsFloat delay = i / static_cast<rsFloat>(hfilt);
+			const RS_FLOAT delay = i / static_cast<RS_FLOAT>(hfilt);
 			for (int j = -_alpha; j < _alpha; j++)
 			{
 				_filter_table[static_cast<int>((i + hfilt) * _length + j + _alpha)] = interpFilter(j - delay);
@@ -123,8 +123,8 @@ namespace
 	}
 
 	/// Get a pointer to the filter with approximately the specified delay
-	const rsFloat*
-	InterpFilter::getFilter(const rsFloat delay) const
+	const RS_FLOAT*
+	InterpFilter::getFilter(const RS_FLOAT delay) const
 	{
 		const int filt = (delay + 1) * (_table_filters / 2);
 
@@ -139,17 +139,17 @@ namespace
 	}
 
 	/// Lookup the value of the interpolation filter at time x
-	rsFloat InterpFilter::interpFilter(const rsFloat x) const
+	RS_FLOAT InterpFilter::interpFilter(const RS_FLOAT x) const
 	{
-		const rsFloat w = kaiserWinCompute(x + _alpha);
-		const rsFloat s = sinc(x); //The filter value
-		const rsFloat filt = w * s;
+		const RS_FLOAT w = kaiserWinCompute(x + _alpha);
+		const RS_FLOAT s = sinc(x); //The filter value
+		const RS_FLOAT filt = w * s;
 		//      rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "%g %g\n", t, filt);
 		return filt;
 	}
 
 	/// Compute the sinc function at the specified x
-	rsFloat InterpFilter::sinc(const rsFloat x)
+	RS_FLOAT InterpFilter::sinc(const RS_FLOAT x)
 	{
 		if (x == 0)
 		{
@@ -159,8 +159,8 @@ namespace
 	}
 
 	/// Compute the value of a Kaiser Window at the given x
-	rsFloat
-	InterpFilter::kaiserWinCompute(const rsFloat x) const
+	RS_FLOAT
+	InterpFilter::kaiserWinCompute(const RS_FLOAT x) const
 	{
 		if ((x < 0) || (x > (_alpha * 2)))
 		{
@@ -177,15 +177,15 @@ namespace
 }
 
 /// Simulate the effect of and ADC converter on the signal
-void rs_signal::adcSimulate(Complex* data, const unsigned int size, const int bits, const rsFloat fullscale)
+void rs_signal::adcSimulate(Complex* data, const unsigned int size, const int bits, const RS_FLOAT fullscale)
 {
 	//Get the number of levels associated with the number of bits
-	const rsFloat levels = pow(2, bits - 1);
+	const RS_FLOAT levels = pow(2, bits - 1);
 	for (unsigned int it = 0; it < size; it++)
 	{
 		//Simulate the ADC effect on the I and Q samples
-		rsFloat i = std::floor(levels * data[it].real() / fullscale) / levels;
-		rsFloat q = std::floor(levels * data[it].imag() / fullscale) / levels;
+		RS_FLOAT i = std::floor(levels * data[it].real() / fullscale) / levels;
+		RS_FLOAT q = std::floor(levels * data[it].imag() / fullscale) / levels;
 		//Clamp I and Q to the range, simulating saturation in the adc
 		if (i > 1)
 		{
@@ -235,7 +235,7 @@ Signal::clear()
 }
 
 //Load data into the signal, with the given sample rate and size
-void Signal::load(const rsFloat* inData, const unsigned int samples, const rsFloat sampleRate)
+void Signal::load(const RS_FLOAT* inData, const unsigned int samples, const RS_FLOAT sampleRate)
 {
 	//Remove the previous data
 	clear();
@@ -252,7 +252,7 @@ void Signal::load(const rsFloat* inData, const unsigned int samples, const rsFlo
 }
 
 /// Load data into the signal (time domain, complex)
-void Signal::load(const Complex* inData, const unsigned int samples, const rsFloat sampleRate)
+void Signal::load(const Complex* inData, const unsigned int samples, const RS_FLOAT sampleRate)
 {
 	//Remove the previous data
 	clear();
@@ -279,7 +279,7 @@ void Signal::load(const Complex* inData, const unsigned int samples, const rsFlo
 }
 
 //Return the sample rate of the signal
-rsFloat Signal::rate() const
+RS_FLOAT Signal::rate() const
 {
 	return _rate;
 }
@@ -291,11 +291,11 @@ unsigned int Signal::size() const
 }
 
 /// Get a copy of the signal domain data
-rsFloat* Signal::copyData() const
+RS_FLOAT* Signal::copyData() const
 {
-	rsFloat* result = new rsFloat[_size];
+	RS_FLOAT* result = new RS_FLOAT[_size];
 	//Copy the data into result
-	std::memcpy(result, _data, sizeof(rsFloat) * _size);
+	std::memcpy(result, _data, sizeof(RS_FLOAT) * _size);
 	return result;
 }
 
@@ -306,15 +306,15 @@ unsigned int Signal::pad() const
 }
 
 /// Render the pulse with the specified doppler, delay and amplitude
-boost::shared_array<RsComplex> Signal::render(const std::vector<InterpPoint>& points, rsFloat transPower,
-                                              unsigned int& size, const rsFloat fracWinDelay) const
+boost::shared_array<RsComplex> Signal::render(const std::vector<InterpPoint>& points, RS_FLOAT transPower,
+                                              unsigned int& size, const RS_FLOAT fracWinDelay) const
 {
 	//Allocate memory for rendering
 	RsComplex* out = new RsComplex[_size];
 	size = _size;
 
 	//Get the sample interval
-	const rsFloat timestep = 1.0 / _rate;
+	const RS_FLOAT timestep = 1.0 / _rate;
 	//Create the rendering window
 	const int filt_length = RsParameters::renderFilterLength();
 	const InterpFilter* interp = InterpFilter::getInstance();
@@ -328,13 +328,13 @@ boost::shared_array<RsComplex> Signal::render(const std::vector<InterpPoint>& po
 
 	//Get the delay of the first point
 	//C Tong: iDelay is in number of receiver samples (possibly with a fractional part)
-	const rsFloat idelay = rs_portable::rsRound(_rate * (*iter).delay);
+	const RS_FLOAT idelay = rs_portable::rsRound(_rate * (*iter).delay);
 	//rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "idelay = %g\n", idelay);
 
 	//Memory to store the filter in
 
 	//Loop over the pulse, performing the rendering
-	rsFloat sample_time = (*iter).time;
+	RS_FLOAT sample_time = (*iter).time;
 	for (int i = 0; i < static_cast<int>(_size); i++, sample_time += timestep)
 	{
 		//Check if we should move on to the next set of interp points
@@ -347,7 +347,7 @@ boost::shared_array<RsComplex> Signal::render(const std::vector<InterpPoint>& po
 			}
 		}
 		//Get the weightings for the parameters
-		rsFloat aw = 1, bw = 0;
+		RS_FLOAT aw = 1, bw = 0;
 		if (iter < next)
 		{
 			bw = (sample_time - (*iter).time) / ((*next).time - (*iter).time);
@@ -359,9 +359,9 @@ boost::shared_array<RsComplex> Signal::render(const std::vector<InterpPoint>& po
 		}
 
 		//Now calculate the current sample parameters
-		rsFloat amplitude = std::sqrt((*iter).power) * aw + std::sqrt((*next).power) * bw;
-		rsFloat phase = (*iter).phase * aw + (*next).phase * bw;
-		rsFloat fdelay = -(((*iter).delay * aw + (*next).delay * bw) * _rate - idelay + fracWinDelay);
+		RS_FLOAT amplitude = std::sqrt((*iter).power) * aw + std::sqrt((*next).power) * bw;
+		RS_FLOAT phase = (*iter).phase * aw + (*next).phase * bw;
+		RS_FLOAT fdelay = -(((*iter).delay * aw + (*next).delay * bw) * _rate - idelay + fracWinDelay);
 
 		//if ((*iter).delay * 299792458 != 11000)
 		//{
@@ -383,7 +383,7 @@ boost::shared_array<RsComplex> Signal::render(const std::vector<InterpPoint>& po
 		const int i_sample_unwrap = floor(fdelay); //Number of samples to unwrap by.
 		fdelay -= i_sample_unwrap; //Re-calculate the delay filter for the given delay
 
-		const rsFloat* filt = interp->getFilter(fdelay);
+		const RS_FLOAT* filt = interp->getFilter(fdelay);
 
 		//Get the start and end times of interpolation
 		int start = -filt_length / 2;

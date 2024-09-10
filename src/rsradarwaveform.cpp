@@ -21,14 +21,14 @@ using namespace rs;
 //
 
 //Default constructor
-RadarSignal::RadarSignal(const std::string& name, const rsFloat power, const rsFloat carrierfreq, const rsFloat length,
+RadarSignal::RadarSignal(const std::string& name, const RS_FLOAT power, const RS_FLOAT carrierfreq, const RS_FLOAT length,
                          Signal* signal):
 	_name(name),
 	_power(power),
 	_carrierfreq(carrierfreq),
 	_length(length),
 	_signal(signal),
-	_polar(std::complex<rsFloat>(1.0, 0.0), std::complex<rsFloat>(0.0, 0.0)) //Default to horiz polarization
+	_polar(std::complex<RS_FLOAT>(1.0, 0.0), std::complex<RS_FLOAT>(0.0, 0.0)) //Default to horiz polarization
 {
 	if (!signal)
 	{
@@ -43,13 +43,13 @@ RadarSignal::~RadarSignal()
 }
 
 //Return the power of the signal
-rsFloat RadarSignal::getPower() const
+RS_FLOAT RadarSignal::getPower() const
 {
 	return _power;
 }
 
 //Get the carrier frequency
-rsFloat RadarSignal::getCarrier() const
+RS_FLOAT RadarSignal::getCarrier() const
 {
 	return _carrierfreq;
 }
@@ -61,25 +61,25 @@ std::string RadarSignal::getName() const
 }
 
 //Get the native sample rate of the pulse
-rsFloat RadarSignal::getRate() const
+RS_FLOAT RadarSignal::getRate() const
 {
 	return _signal->rate();
 }
 
 /// Return the length of the pulse
-rsFloat RadarSignal::getLength() const
+RS_FLOAT RadarSignal::getLength() const
 {
 	return _length;
 }
 
 /// Render the waveform to the target buffer
 boost::shared_array<RsComplex> RadarSignal::render(const std::vector<InterpPoint>& points, unsigned int& size,
-                                                   const rsFloat fracWinDelay) const
+                                                   const RS_FLOAT fracWinDelay) const
 {
 	//Render the return pulse
 	boost::shared_array<RsComplex> data = _signal->render(points, _power, size, fracWinDelay);
 	//Scale the return pulse by the signal power
-	const rsFloat scale = std::sqrt(_power);
+	const RS_FLOAT scale = std::sqrt(_power);
 	for (unsigned int i = 0; i < size; i++)
 	{
 		data[i] *= scale;
@@ -104,10 +104,10 @@ void RadarSignal::setPolarization(const JonesVector& in)
 //
 
 /// Load the pulse from HDF5 file
-RadarSignal* loadPulseFromHdf5File(const std::string& name, const std::string& filename, const rsFloat power,
-                                   const rsFloat carrierFreq)
+RadarSignal* loadPulseFromHdf5File(const std::string& name, const std::string& filename, const RS_FLOAT power,
+                                   const RS_FLOAT carrierFreq)
 {
-	rsFloat rate;
+	RS_FLOAT rate;
 	unsigned int size;
 	RsComplex* data;
 	// Load the data from the hdf5 file
@@ -123,8 +123,8 @@ RadarSignal* loadPulseFromHdf5File(const std::string& name, const std::string& f
 }
 
 /// Load the pulse from a CSV file
-RadarSignal* loadPulseFromCsvFile(const std::string& name, const std::string& filename, const rsFloat power,
-                                  const rsFloat carrierFreq)
+RadarSignal* loadPulseFromCsvFile(const std::string& name, const std::string& filename, const RS_FLOAT power,
+                                  const RS_FLOAT carrierFreq)
 {
 	///Open the file
 	std::ifstream ifile(filename.c_str());
@@ -133,7 +133,7 @@ RadarSignal* loadPulseFromCsvFile(const std::string& name, const std::string& fi
 		throw std::runtime_error("Could not open " + filename + " to read pulse waveform");
 	}
 	/// Read the length and sample rate
-	rsFloat rlength, rate;
+	RS_FLOAT rlength, rate;
 	ifile >> rlength; //length in samples
 	ifile >> rate; //rate
 	const unsigned int length = static_cast<int>(rlength);
@@ -159,8 +159,8 @@ RadarSignal* loadPulseFromCsvFile(const std::string& name, const std::string& fi
 
 /// Load a pulse from a file and generate an anypulse
 rs::RadarSignal* rs_pulse_factory::loadPulseFromFile(const std::string& name, const std::string& filename,
-                                                   const rsFloat power,
-                                                   const rsFloat carrierFreq)
+                                                   const RS_FLOAT power,
+                                                   const RS_FLOAT carrierFreq)
 {
 	//Identify file types
 

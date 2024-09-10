@@ -6,11 +6,11 @@
 #ifndef RS_PULSE_RENDER
 #define RS_PULSE_RENDER
 
-#include <config.h>
 #include <queue>
 #include <string>
 #include <vector>
 
+#include "config.h"
 #include "rsradarwaveform.h"
 
 //Forward definition of boost threads classes (see boost threads)
@@ -48,7 +48,7 @@ namespace rs
 		~ThreadedRenderer();
 
 		/// Render all the responses in a single window
-		void renderWindow(RsComplex* window, rsFloat length, rsFloat start, rsFloat fracDelay) const;
+		void renderWindow(RsComplex* window, RS_FLOAT length, RS_FLOAT start, RS_FLOAT fracDelay) const;
 
 	private:
 		const std::vector<rs::Response*>* _responses; //!< Vector of target responses seen by this receiver
@@ -61,8 +61,8 @@ namespace rs
 	{
 	public:
 		/// Constructor
-		RenderThread(int serial, boost::mutex* windowMutex, RsComplex* window, rsFloat length, rsFloat start,
-		             rsFloat fracDelay, boost::mutex* workListMutex, std::queue<Response*>* workList);
+		RenderThread(int serial, boost::mutex* windowMutex, RsComplex* window, RS_FLOAT length, RS_FLOAT start,
+		             RS_FLOAT fracDelay, boost::mutex* workListMutex, std::queue<Response*>* workList);
 
 		/// Destructor
 		~RenderThread();
@@ -75,14 +75,14 @@ namespace rs
 		Response* getWork() const;
 
 		/// Add the array to the window, locking the window lock in advance
-		void addWindow(const RsComplex* array, rsFloat startTime, unsigned int arraySize) const;
+		void addWindow(const RsComplex* array, RS_FLOAT startTime, unsigned int arraySize) const;
 
 		int _serial; //!< Serial number of this thread
 		boost::mutex* _window_mutex; //!< Mutex to protect window
 		RsComplex* _window; //!< Pointer to render window
-		rsFloat _length; //!< Length of render window (seconds)
-		rsFloat _start; //!< Start time of render window (seconds)
-		rsFloat _frac_delay; //!< Fractional window start time (< 1 sample, samples)
+		RS_FLOAT _length; //!< Length of render window (seconds)
+		RS_FLOAT _start; //!< Start time of render window (seconds)
+		RS_FLOAT _frac_delay; //!< Fractional window start time (< 1 sample, samples)
 		boost::mutex* _work_list_mutex; //!< Mutex to protect work list
 		std::queue<Response*>* _work_list; //!< List of responses to render
 		RsComplex* _local_window{};

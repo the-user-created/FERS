@@ -6,7 +6,6 @@
 #ifndef XML_IMPORT_H
 #define XML_IMPORT_H
 
-#include <config.h>
 #include <string>
 
 #include "rsworld.h"

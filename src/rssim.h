@@ -4,8 +4,6 @@
 #ifndef RS_SIM_H
 #define RS_SIM_H
 
-#include <config.h>
-
 #include "rsradar.h"
 #include "rsworld.h"
 

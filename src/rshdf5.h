@@ -6,7 +6,8 @@
 #define RS_HDF5_H
 
 #include <complex>
-#include <config.h>
+
+#include "config.h"
 
 namespace rshdf5
 {
@@ -14,17 +15,17 @@ namespace rshdf5
 	long int createFile(const std::string& name);
 
 	///Add a dataset to the HDF5 file
-	void addChunkToFile(long int file, const std::complex<rsFloat>* data, unsigned int size, rsFloat time, rsFloat rate,
-	                    rsFloat fullscale, unsigned int count);
+	void addChunkToFile(long int file, const std::complex<RS_FLOAT>* data, unsigned int size, RS_FLOAT time, RS_FLOAT rate,
+	                    RS_FLOAT fullscale, unsigned int count);
 
 	///Close the HDF5 file
 	void closeFile(long int file);
 
 	/// Read the pulse data from the specified file
-	void readPulseData(const std::string& name, std::complex<rsFloat>** data, unsigned int& size, rsFloat& rate);
+	void readPulseData(const std::string& name, std::complex<RS_FLOAT>** data, unsigned int& size, RS_FLOAT& rate);
 
 	/// Read an antenna gain pattern or RCS pattern from a file
-	rsFloat** readPattern(const std::string& name, const std::string& datasetName, unsigned int& aziSize,
+	RS_FLOAT** readPattern(const std::string& name, const std::string& datasetName, unsigned int& aziSize,
 	                      unsigned int& elevSize);
 }
 

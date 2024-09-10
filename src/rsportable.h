@@ -6,7 +6,7 @@
 #ifndef RS_PORTABLE_H
 #define RS_PORTABLE_H
 
-#include <config.h>
+#include "config.h"
 
 namespace rs_portable
 {
@@ -14,10 +14,10 @@ namespace rs_portable
 	int stricmp(const char* one, const char* two);
 
 	/// Compute the first order Bessel function of the first kind
-	rsFloat besselJ1(rsFloat x);
+	RS_FLOAT besselJ1(RS_FLOAT x);
 
 	/// Floating point round
-	rsFloat rsRound(rsFloat x);
+	RS_FLOAT rsRound(RS_FLOAT x);
 
 	/// Detect the number of CPUs in the machine
 	int countProcessors();

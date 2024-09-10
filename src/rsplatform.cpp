@@ -26,13 +26,13 @@ Platform::~Platform()
 }
 
 //Get the current position of the platform
-Vec3 Platform::getPosition(const rsFloat time) const
+Vec3 Platform::getPosition(const RS_FLOAT time) const
 {
 	return _motion_path->getPosition(time);
 }
 
 //Get the current rotation of the platform
-SVec3 Platform::getRotation(const rsFloat time) const
+SVec3 Platform::getRotation(const RS_FLOAT time) const
 {
 	return _rotation_path->getPosition(time);
 }

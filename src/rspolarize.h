@@ -18,7 +18,7 @@ namespace rs
 		PsMatrix();
 
 		/// Constructor
-		PsMatrix(rsFloat s11, rsFloat s12, rsFloat s21, rsFloat s22);
+		PsMatrix(RS_FLOAT s11, RS_FLOAT s12, RS_FLOAT s21, RS_FLOAT s22);
 
 		/// Copy constructor
 		PsMatrix(const PsMatrix& im);
@@ -27,7 +27,7 @@ namespace rs
 		PsMatrix& operator=(const PsMatrix& im);
 
 		/// Matrix values
-		std::complex<rsFloat> s[4];
+		std::complex<RS_FLOAT> s[4];
 	};
 
 	//Jones vector class
@@ -35,7 +35,7 @@ namespace rs
 	{
 	public:
 		/// Constructor
-		JonesVector(std::complex<rsFloat> h, std::complex<rsFloat> v);
+		JonesVector(std::complex<RS_FLOAT> h, std::complex<RS_FLOAT> v);
 
 		/// Copy constructor
 		JonesVector(const JonesVector& iv);
@@ -47,15 +47,15 @@ namespace rs
 		JonesVector operator*(const PsMatrix& mat) const;
 
 		/// The horizontal polarization part
-		std::complex<rsFloat> h;
+		std::complex<RS_FLOAT> h;
 		/// The vertical polarization part
-		std::complex<rsFloat> v;
+		std::complex<RS_FLOAT> v;
 	};
 
 	//Support functions
 
 	/// Dot product of two Jones vectors
-	std::complex<rsFloat> dot(const JonesVector& a, const JonesVector& b);
+	std::complex<RS_FLOAT> dot(const JonesVector& a, const JonesVector& b);
 }
 
 #endif

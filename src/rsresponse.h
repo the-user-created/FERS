@@ -6,13 +6,13 @@
 #ifndef RS_RESPONSE_H
 #define RS_RESPONSE_H
 
-#include <config.h>
 #include <iosfwd>
 #include <string>
 #include <vector>
 #include <boost/shared_array.hpp>
 #include <boost/utility.hpp>
 
+#include "config.h"
 #include "rsradarwaveform.h"
 
 //Forward declaration of TiXmlElement (see tinyxml.h)
@@ -33,9 +33,9 @@ namespace rs
 		Response(const RadarSignal* wave, const Transmitter* transmitter);
 
 		/// Get the start time
-		rsFloat startTime() const;
+		RS_FLOAT startTime() const;
 
-		rsFloat endTime() const;
+		RS_FLOAT endTime() const;
 
 		/// Destructor
 		~Response();
@@ -47,10 +47,10 @@ namespace rs
 		void renderCsv(std::ofstream& of);
 
 		/// Render the response to a binary file
-		boost::shared_array<RsComplex> renderBinary(rsFloat& rate, unsigned int& size, rsFloat fracWinDelay) const;
+		boost::shared_array<RsComplex> renderBinary(RS_FLOAT& rate, unsigned int& size, RS_FLOAT fracWinDelay) const;
 
 		/// Get the length of the pulse
-		rsFloat getLength() const;
+		RS_FLOAT getLength() const;
 
 		/// Get a pointer to the wave
 		const rs::RadarSignal* getWave() const;

@@ -7,7 +7,6 @@
 #ifndef RS_WORLD_H
 #define RS_WORLD_H
 
-#include <config.h>
 #include <map>
 #include <string>
 #include <vector>

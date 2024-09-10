@@ -20,14 +20,14 @@ int rs_portable::stricmp(const char* one, const char* two)
 }
 
 /// Compute the first order Bessel function of the first kind
-rsFloat rs_portable::besselJ1(const rsFloat x)
+RS_FLOAT rs_portable::besselJ1(const RS_FLOAT x)
 {
 	return j1(x); //j1 is non standard, but found on many platforms
 }
 
 /// Round off a floating point number
 //This function isn't in C++03, but is in C++0x and TR1 and C99, so should work on most machines
-rsFloat rs_portable::rsRound(const rsFloat x)
+RS_FLOAT rs_portable::rsRound(const RS_FLOAT x)
 {
 	return round(x);
 }

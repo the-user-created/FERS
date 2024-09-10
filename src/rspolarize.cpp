@@ -10,7 +10,7 @@ using namespace rs;
 // JonesVector Implementation
 //
 /// Constructor
-JonesVector::JonesVector(const std::complex<rsFloat> h, const std::complex<rsFloat> v):
+JonesVector::JonesVector(const std::complex<RS_FLOAT> h, const std::complex<RS_FLOAT> v):
 	h(h),
 	v(v)
 {
@@ -50,7 +50,7 @@ PsMatrix::PsMatrix()
 }
 
 /// Constructor
-PsMatrix::PsMatrix(const rsFloat s11, const rsFloat s12, const rsFloat s21, const rsFloat s22)
+PsMatrix::PsMatrix(const RS_FLOAT s11, const RS_FLOAT s12, const RS_FLOAT s21, const RS_FLOAT s22)
 {
 	s[0] = s11;
 	s[1] = s12;
@@ -78,7 +78,7 @@ PsMatrix& PsMatrix::operator=(const PsMatrix& im)
 }
 
 /// Dot product of two Jones vectors
-std::complex<rsFloat> dot(const JonesVector& a, const JonesVector& b)
+std::complex<RS_FLOAT> dot(const JonesVector& a, const JonesVector& b)
 {
 	return a.v * b.v + a.h * b.h;
 }

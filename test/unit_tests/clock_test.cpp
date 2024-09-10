@@ -1,7 +1,6 @@
 // Test clock modeling classes
 
-#include <config.h>
-
+#include "config.h"
 #include "rsnoise.h"
 #include "rstiming.h"
 
@@ -30,7 +29,7 @@ int testClockModelTiming(const PrototypeTiming* proto)
 
 	for (int i = 0; i < pulses; i++)
 	{
-		const rsFloat j = timing->getPulseTimeError();
+		const RS_FLOAT j = timing->getPulseTimeError();
 		std::cout << j << std::endl;
 	}
 	for (int k = 0; k < pulses; k++)
@@ -38,7 +37,7 @@ int testClockModelTiming(const PrototypeTiming* proto)
 		constexpr int pulse_length = 1000;
 		for (int i = 0; i < pulse_length; i++)
 		{
-			const rsFloat j = timing->nextNoiseSample();
+			const RS_FLOAT j = timing->nextNoiseSample();
 			std::cout << j << std::endl;
 		}
 	}

@@ -75,13 +75,13 @@ void Radar::setAntenna(const Antenna* ant)
 }
 
 /// Return the antenna gain in the specified direction
-rsFloat Radar::getGain(const SVec3& angle, const SVec3& refangle, const rsFloat wavelength) const
+RS_FLOAT Radar::getGain(const SVec3& angle, const SVec3& refangle, const RS_FLOAT wavelength) const
 {
 	return _antenna->getGain(angle, refangle, wavelength);
 }
 
 /// Get the noise temperature (including antenna noise temperature)
-rsFloat Radar::getNoiseTemperature(const SVec3& angle) const
+RS_FLOAT Radar::getNoiseTemperature(const SVec3& angle) const
 {
 	return _antenna->getNoiseTemperature(angle);
 }
@@ -113,7 +113,7 @@ bool Radar::isMultipathDual() const
 }
 
 /// Set this object as a virtual multipath dual
-void Radar::setMultipathDual(const rsFloat reflect)
+void Radar::setMultipathDual(const RS_FLOAT reflect)
 {
 	_multipath_dual = true;
 	_multipath_reflect = reflect;
@@ -127,7 +127,7 @@ void Radar::setMultipathDual(const rsFloat reflect)
 }
 
 /// Get the reflecting factor
-rsFloat Radar::multipathDualFactor() const
+RS_FLOAT Radar::multipathDualFactor() const
 {
 	return _multipath_reflect;
 }
@@ -160,10 +160,10 @@ void Transmitter::setWave(RadarSignal* pulse)
 // Return the number of pulses this transmitter produces over the simulation lifetime
 int Transmitter::getPulseCount() const
 {
-	const rsFloat time = RsParameters::endTime() - RsParameters::startTime();
+	const RS_FLOAT time = RsParameters::endTime() - RsParameters::startTime();
 	if (_pulsed)
 	{
-		const rsFloat pulses = time * _prf;
+		const RS_FLOAT pulses = time * _prf;
 		return static_cast<int>(std::ceil(pulses));
 	}
 	else
@@ -180,7 +180,7 @@ void Transmitter::getPulse(TransmitterPulse* pulse, const int number) const
 	//Calculate start time of pulse
 	if (_pulsed)
 	{
-		pulse->time = static_cast<rsFloat>(number) / _prf; //Pulse mode start depends on PRF
+		pulse->time = static_cast<RS_FLOAT>(number) / _prf; //Pulse mode start depends on PRF
 	}
 	else
 	{
@@ -195,9 +195,9 @@ void Transmitter::getPulse(TransmitterPulse* pulse, const int number) const
 }
 
 /// Set the Pulse Repetition Frequency of the transmitter
-void Transmitter::setPrf(const rsFloat mprf)
+void Transmitter::setPrf(const RS_FLOAT mprf)
 {
-	const rsFloat rate = RsParameters::rate() * RsParameters::oversampleRatio();
+	const RS_FLOAT rate = RsParameters::rate() * RsParameters::oversampleRatio();
 	// The PRF must be rounded to an even number of samples
 	_prf = 1 / (std::floor(rate / mprf) / rate);
 }
@@ -279,21 +279,21 @@ void Receiver::render()
 }
 
 /// Get the noise temperature (including antenna noise temperature)
-rsFloat Receiver::getNoiseTemperature(const SVec3& angle) const
+RS_FLOAT Receiver::getNoiseTemperature(const SVec3& angle) const
 {
 	return _noise_temperature + Radar::getNoiseTemperature(angle);
 }
 
 /// Get the receiver noise temperature
-rsFloat Receiver::getNoiseTemperature() const
+RS_FLOAT Receiver::getNoiseTemperature() const
 {
 	return _noise_temperature;
 }
 
 /// Set the noise temperature of the receiver
-void Receiver::setNoiseTemperature(const rsFloat temp)
+void Receiver::setNoiseTemperature(const RS_FLOAT temp)
 {
-	if (temp < -std::numeric_limits<rsFloat>::epsilon())
+	if (temp < -std::numeric_limits<RS_FLOAT>::epsilon())
 	{
 		throw std::runtime_error("Noise temperature set to negative value.");
 	}
@@ -301,9 +301,9 @@ void Receiver::setNoiseTemperature(const rsFloat temp)
 }
 
 /// Set the length of the receive window
-void Receiver::setWindowProperties(const rsFloat length, const rsFloat prf, const rsFloat skip)
+void Receiver::setWindowProperties(const RS_FLOAT length, const RS_FLOAT prf, const RS_FLOAT skip)
 {
-	const rsFloat rate = RsParameters::rate() * RsParameters::oversampleRatio();
+	const RS_FLOAT rate = RsParameters::rate() * RsParameters::oversampleRatio();
 	_window_length = length;
 	_window_prf = prf;
 	_window_skip = skip;
@@ -321,16 +321,16 @@ int Receiver::countResponses() const
 /// Get the number of receive windows in the simulation time
 int Receiver::getWindowCount() const
 {
-	const rsFloat time = RsParameters::endTime() - RsParameters::startTime();
-	const rsFloat pulses = time * _window_prf;
+	const RS_FLOAT time = RsParameters::endTime() - RsParameters::startTime();
+	const RS_FLOAT pulses = time * _window_prf;
 	return static_cast<int>(std::ceil(pulses));
 }
 
 /// Get the start time of the next window
-rsFloat Receiver::getWindowStart(const int window) const
+RS_FLOAT Receiver::getWindowStart(const int window) const
 {
 	//Calculate start time of pulse
-	const rsFloat stime = static_cast<rsFloat>(window) / _window_prf + _window_skip;
+	const RS_FLOAT stime = static_cast<RS_FLOAT>(window) / _window_prf + _window_skip;
 	//If there is timing jitter, add it
 	if (!_timing)
 	{
@@ -341,19 +341,19 @@ rsFloat Receiver::getWindowStart(const int window) const
 }
 
 /// Get the length of the receive window
-rsFloat Receiver::getWindowLength() const
+RS_FLOAT Receiver::getWindowLength() const
 {
 	return _window_length;
 }
 
 /// Get the time skipped before the start of the receive window
-rsFloat Receiver::getWindowSkip() const
+RS_FLOAT Receiver::getWindowSkip() const
 {
 	return _window_skip;
 }
 
 /// Get the length of the receive window
-rsFloat Receiver::getPrf() const
+RS_FLOAT Receiver::getPrf() const
 {
 	return _window_prf;
 }

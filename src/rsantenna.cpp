@@ -22,18 +22,18 @@ using namespace rs;
 using namespace rs_antenna;
 
 //One of the xml utility functions from xmlimport.cpp
-rsFloat getNodeFloat(const TiXmlHandle& node);
+RS_FLOAT getNodeFloat(const TiXmlHandle& node);
 
 namespace
 {
 	//Return sin(x)/x
-	rsFloat sinc(const rsFloat theta)
+	RS_FLOAT sinc(const RS_FLOAT theta)
 	{
-		return std::sin(theta) / (theta + std::numeric_limits<rsFloat>::epsilon());
+		return std::sin(theta) / (theta + std::numeric_limits<RS_FLOAT>::epsilon());
 	}
 
 	//Return the first order, first kind bessel function of x, divided by x
-	rsFloat j1C(const rsFloat x)
+	RS_FLOAT j1C(const RS_FLOAT x)
 	{
 		if (x == 0)
 		{
@@ -56,7 +56,7 @@ Antenna::~Antenna()
 }
 
 //Set the efficiency factor of the antenna
-void Antenna::setEfficiencyFactor(const rsFloat loss)
+void Antenna::setEfficiencyFactor(const RS_FLOAT loss)
 {
 	if (loss > 1)
 	{
@@ -67,7 +67,7 @@ void Antenna::setEfficiencyFactor(const rsFloat loss)
 }
 
 //Get the efficiency factor
-rsFloat Antenna::getEfficiencyFactor() const
+RS_FLOAT Antenna::getEfficiencyFactor() const
 {
 	return _loss_factor;
 }
@@ -79,7 +79,7 @@ std::string Antenna::getName() const
 }
 
 // Get the angle (in radians) off boresight
-rsFloat Antenna::getAngle(const SVec3& angle, const SVec3& refangle)
+RS_FLOAT Antenna::getAngle(const SVec3& angle, const SVec3& refangle)
 {
 	//Get the angle off boresight
 	SVec3 normangle(angle);
@@ -90,7 +90,7 @@ rsFloat Antenna::getAngle(const SVec3& angle, const SVec3& refangle)
 }
 
 /// Get the noise temperature of the antenna in a particular direction
-rsFloat Antenna::getNoiseTemperature(const SVec3& angle) const
+RS_FLOAT Antenna::getNoiseTemperature(const SVec3& angle) const
 {
 	return 0; //TODO: Antenna noise temperature calculation
 }
@@ -111,7 +111,7 @@ Isotropic::~Isotropic()
 }
 
 //Return the gain of the antenna
-rsFloat Isotropic::getGain(const SVec3& angle, const SVec3& refangle, rsFloat wavelength) const
+RS_FLOAT Isotropic::getGain(const SVec3& angle, const SVec3& refangle, RS_FLOAT wavelength) const
 {
 	return getEfficiencyFactor();
 }
@@ -122,7 +122,7 @@ rsFloat Isotropic::getGain(const SVec3& angle, const SVec3& refangle, rsFloat wa
 
 
 /// Constructor
-Gaussian::Gaussian(const std::string& name, const rsFloat azscale, const rsFloat elscale):
+Gaussian::Gaussian(const std::string& name, const RS_FLOAT azscale, const RS_FLOAT elscale):
 	Antenna(name),
 	_azscale(azscale),
 	_elscale(elscale)
@@ -135,11 +135,11 @@ Gaussian::~Gaussian()
 }
 
 /// Get the gain at an angle
-rsFloat Gaussian::getGain(const rs::SVec3& angle, const rs::SVec3& refangle, rsFloat wavelength) const
+RS_FLOAT Gaussian::getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const
 {
 	const SVec3 a = angle - refangle;
-	const rsFloat azfactor = std::exp(-a.azimuth * a.azimuth * _azscale);
-	const rsFloat elfactor = std::exp(-a.elevation * a.elevation * _elscale);
+	const RS_FLOAT azfactor = std::exp(-a.azimuth * a.azimuth * _azscale);
+	const RS_FLOAT elfactor = std::exp(-a.elevation * a.elevation * _elscale);
 	return azfactor * elfactor;
 }
 
@@ -149,7 +149,7 @@ rsFloat Gaussian::getGain(const rs::SVec3& angle, const rs::SVec3& refangle, rsF
 //
 
 //Constructor
-Sinc::Sinc(const std::string& name, const rsFloat alpha, const rsFloat beta, const rsFloat gamma):
+Sinc::Sinc(const std::string& name, const RS_FLOAT alpha, const RS_FLOAT beta, const RS_FLOAT gamma):
 	Antenna(name),
 	_alpha(alpha),
 	_beta(beta),
@@ -163,10 +163,10 @@ Sinc::~Sinc()
 }
 
 // Return the gain of the antenna at an angle
-rsFloat Sinc::getGain(const SVec3& angle, const SVec3& refangle, rsFloat wavelength) const
+RS_FLOAT Sinc::getGain(const SVec3& angle, const SVec3& refangle, RS_FLOAT wavelength) const
 {
 	//Get the angle off boresight
-	const rsFloat theta = getAngle(angle, refangle);
+	const RS_FLOAT theta = getAngle(angle, refangle);
 
 	//FIX 2015/02/18 CA Tong:
 	//std::pow<double> returns NaN for negative bases with certain fractional indices as they create an uneven
@@ -189,7 +189,7 @@ rsFloat Sinc::getGain(const SVec3& angle, const SVec3& refangle, rsFloat wavelen
 //
 
 //Constructor
-SquareHorn::SquareHorn(const std::string& name, const rsFloat dimension):
+SquareHorn::SquareHorn(const std::string& name, const RS_FLOAT dimension):
 	Antenna(name),
 	_dimension(dimension)
 {
@@ -202,11 +202,11 @@ SquareHorn::~SquareHorn()
 
 //Return the gain of the antenna
 //See doc/equations.tex for details
-rsFloat SquareHorn::getGain(const SVec3& angle, const SVec3& refangle, const rsFloat wavelength) const
+RS_FLOAT SquareHorn::getGain(const SVec3& angle, const SVec3& refangle, const RS_FLOAT wavelength) const
 {
-	const rsFloat ge = 4 * M_PI * _dimension * _dimension / (wavelength * wavelength);
-	const rsFloat x = M_PI * _dimension * std::sin(getAngle(angle, refangle)) / wavelength;
-	const rsFloat gain = ge * std::pow(::sinc(x), 2);
+	const RS_FLOAT ge = 4 * M_PI * _dimension * _dimension / (wavelength * wavelength);
+	const RS_FLOAT x = M_PI * _dimension * std::sin(getAngle(angle, refangle)) / wavelength;
+	const RS_FLOAT gain = ge * std::pow(::sinc(x), 2);
 	return gain * getEfficiencyFactor();
 }
 
@@ -216,7 +216,7 @@ rsFloat SquareHorn::getGain(const SVec3& angle, const SVec3& refangle, const rsF
 //
 
 // Constructor
-ParabolicReflector::ParabolicReflector(const std::string& name, const rsFloat diameter):
+ParabolicReflector::ParabolicReflector(const std::string& name, const RS_FLOAT diameter):
 	Antenna(name),
 	_diameter(diameter)
 {
@@ -229,11 +229,11 @@ ParabolicReflector::~ParabolicReflector()
 
 //Return the gain of the antenna
 //See doc/equations.tex for details
-rsFloat ParabolicReflector::getGain(const SVec3& angle, const SVec3& refangle, const rsFloat wavelength) const
+RS_FLOAT ParabolicReflector::getGain(const SVec3& angle, const SVec3& refangle, const RS_FLOAT wavelength) const
 {
-	const rsFloat ge = std::pow(M_PI * _diameter / wavelength, 2);
-	const rsFloat x = M_PI * _diameter * std::sin(getAngle(angle, refangle)) / wavelength;
-	const rsFloat gain = ge * std::pow(2 * ::j1C(x), 2);
+	const RS_FLOAT ge = std::pow(M_PI * _diameter / wavelength, 2);
+	const RS_FLOAT x = M_PI * _diameter * std::sin(getAngle(angle, refangle)) / wavelength;
+	const RS_FLOAT gain = ge * std::pow(2 * ::j1C(x), 2);
 	return gain * getEfficiencyFactor();
 }
 
@@ -255,7 +255,7 @@ FileAntenna::~FileAntenna()
 }
 
 /// Get the gain at an angle
-rsFloat FileAntenna::getGain(const rs::SVec3& angle, const rs::SVec3& refangle, rsFloat wavelength) const
+RS_FLOAT FileAntenna::getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const
 {
 	const SVec3 a1 = angle;
 	const SVec3 a2 = refangle;
@@ -289,11 +289,11 @@ XmlAntenna::~XmlAntenna()
 
 //Return the gain of the antenna
 //See doc/equations.tex for details
-rsFloat XmlAntenna::getGain(const SVec3& angle, const SVec3& refangle, rsFloat wavelength) const
+RS_FLOAT XmlAntenna::getGain(const SVec3& angle, const SVec3& refangle, RS_FLOAT wavelength) const
 {
 	const SVec3 t_angle = angle - refangle;
-	const rsFloat azi_gain = _azi_samples->value(std::fabs(t_angle.azimuth));
-	const rsFloat elev_gain = _elev_samples->value(std::fabs(t_angle.elevation));
+	const RS_FLOAT azi_gain = _azi_samples->value(std::fabs(t_angle.azimuth));
+	const RS_FLOAT elev_gain = _elev_samples->value(std::fabs(t_angle.elevation));
 	return azi_gain * elev_gain * _max_gain * getEfficiencyFactor();
 }
 
@@ -312,14 +312,14 @@ namespace
 			{
 				throw std::runtime_error("[ERROR] Misformed XML in antenna description: No angle in gainsample");
 			}
-			const rsFloat angle = getNodeFloat(angle_xml);
+			const RS_FLOAT angle = getNodeFloat(angle_xml);
 			//Load the gain of the gain sample
 			TiXmlHandle gain_xml = tmp.ChildElement("gain", 0);
 			if (!gain_xml.Element())
 			{
 				throw std::runtime_error("[ERROR] Misformed XML in antenna description: No gain in gainsample");
 			}
-			const rsFloat gain = getNodeFloat(gain_xml);
+			const RS_FLOAT gain = getNodeFloat(gain_xml);
 			//Load the values into the interpolation table
 			set->insertSample(angle, gain);
 			//Get the next gainsample in the file
@@ -376,10 +376,10 @@ PythonAntenna::~PythonAntenna()
 }
 
 //Return the gain of the antenna
-rsFloat PythonAntenna::getGain(const SVec3& angle, const SVec3& refangle, rsFloat wavelength) const
+RS_FLOAT PythonAntenna::getGain(const SVec3& angle, const SVec3& refangle, RS_FLOAT wavelength) const
 {
 	const SVec3 angle_bore = angle - refangle; //Calculate the angle off boresight
-	const rsFloat gain = _py_antenna.getGain(angle_bore);
+	const RS_FLOAT gain = _py_antenna.getGain(angle_bore);
 	return gain * getEfficiencyFactor();
 }
 
@@ -396,28 +396,28 @@ Antenna* rs::createIsotropicAntenna(const std::string& name)
 }
 
 //Create a Sinc pattern antenna with the specified name, alpha and beta
-Antenna* rs::createSincAntenna(const std::string& name, const rsFloat alpha, const rsFloat beta, const rsFloat gamma)
+Antenna* rs::createSincAntenna(const std::string& name, const RS_FLOAT alpha, const RS_FLOAT beta, const RS_FLOAT gamma)
 {
 	rs_antenna::Sinc* sinc = new rs_antenna::Sinc(name, alpha, beta, gamma);
 	return sinc;
 }
 
 //Create a Gaussian pattern antenna
-Antenna* rs::createGaussianAntenna(const std::string& name, const rsFloat azscale, const rsFloat elscale)
+Antenna* rs::createGaussianAntenna(const std::string& name, const RS_FLOAT azscale, const RS_FLOAT elscale)
 {
 	rs_antenna::Gaussian* gau = new rs_antenna::Gaussian(name, azscale, elscale);
 	return gau;
 }
 
 //Create a square horn antenna
-Antenna* rs::createHornAntenna(const std::string& name, const rsFloat dimension)
+Antenna* rs::createHornAntenna(const std::string& name, const RS_FLOAT dimension)
 {
 	rs_antenna::SquareHorn* sq = new rs_antenna::SquareHorn(name, dimension);
 	return sq;
 }
 
 //Create a parabolic reflector antenna
-Antenna* rs::createParabolicAntenna(const std::string& name, const rsFloat diameter)
+Antenna* rs::createParabolicAntenna(const std::string& name, const RS_FLOAT diameter)
 {
 	rs_antenna::ParabolicReflector* pd = new rs_antenna::ParabolicReflector(name, diameter);
 	return pd;

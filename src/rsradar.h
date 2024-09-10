@@ -6,11 +6,11 @@
 #ifndef RS_RADAR_H
 #define RS_RADAR_H
 
-#include <config.h>
 #include <string>
 #include <vector>
 #include <boost/thread/mutex.hpp>
 
+#include "config.h"
 #include "rsobject.h"
 #include "rsradarwaveform.h"
 
@@ -40,7 +40,7 @@ namespace rs
 	struct TransmitterPulse
 	{
 		rs::RadarSignal* wave; //!< Base radar waveform
-		rsFloat time; //!< The start time of the pulse
+		RS_FLOAT time; //!< The start time of the pulse
 	};
 
 	/// Base class for transmitter and receiver
@@ -57,10 +57,10 @@ namespace rs
 		void setAntenna(const Antenna* ant);
 
 		/// Return the antenna gain in the specified direction
-		rsFloat getGain(const SVec3& angle, const SVec3& refangle, rsFloat wavelength) const;
+		RS_FLOAT getGain(const SVec3& angle, const SVec3& refangle, RS_FLOAT wavelength) const;
 
 		/// Get the noise temperature (including antenna noise temperature)
-		virtual rsFloat getNoiseTemperature(const SVec3& angle) const;
+		virtual RS_FLOAT getNoiseTemperature(const SVec3& angle) const;
 
 		/// Make the radar monostatic
 		void makeMonostatic(const Radar* recv);
@@ -81,10 +81,10 @@ namespace rs
 		bool isMultipathDual() const;
 
 		/// Set this object as a virtual multipath dual
-		void setMultipathDual(rsFloat reflect);
+		void setMultipathDual(RS_FLOAT reflect);
 
 		/// Get the reflecting factor
-		rsFloat multipathDualFactor() const;
+		RS_FLOAT multipathDualFactor() const;
 
 	protected:
 		Timing* _timing; //!< The radar's timing source
@@ -92,7 +92,7 @@ namespace rs
 		const Antenna* _antenna; //!< The radar's antenna
 		const Radar* _attached; //!< Other radar which shares antenna (0 if not monostatic)
 		bool _multipath_dual; //!< This is a virtual radar which exists for multipath simulation
-		rsFloat _multipath_reflect; //!< The fraction of signal power which is reflected by the multipath surface
+		RS_FLOAT _multipath_reflect; //!< The fraction of signal power which is reflected by the multipath surface
 		/// Functions which create multipath duals
 		friend Receiver* createMultipathDual(Receiver* recv, const MultipathSurface* surf);
 
@@ -122,11 +122,11 @@ namespace rs
 		void getPulse(TransmitterPulse* pulse, int number) const;
 
 		/// Set the Pulse Repetition Frequency of the transmitter
-		void setPrf(rsFloat mprf);
+		void setPrf(RS_FLOAT mprf);
 
 	protected:
 		rs::RadarSignal* _signal; //!< Waveform of transmitted pulses
-		rsFloat _prf{}; //!< Transmitter pulse repetition frequency (PRF)
+		RS_FLOAT _prf{}; //!< Transmitter pulse repetition frequency (PRF)
 		bool _pulsed; //!< Is this a pulsed transmitter?
 		Transmitter* _dual; //!< Multipath dual of this transmitter
 		/// Function to create multipath duals
@@ -159,16 +159,16 @@ namespace rs
 		void render();
 
 		/// Get the noise temperature (including antenna noise temperature)
-		rsFloat getNoiseTemperature(const SVec3& angle) const;
+		RS_FLOAT getNoiseTemperature(const SVec3& angle) const;
 
 		/// Get the receiver noise temperature
-		rsFloat getNoiseTemperature() const;
+		RS_FLOAT getNoiseTemperature() const;
 
 		/// Set the noise temperature of the receiver
-		void setNoiseTemperature(rsFloat temp);
+		void setNoiseTemperature(RS_FLOAT temp);
 
 		/// Set the length of the receive window
-		void setWindowProperties(rsFloat length, rsFloat prf, rsFloat skip);
+		void setWindowProperties(RS_FLOAT length, RS_FLOAT prf, RS_FLOAT skip);
 
 		/// Return the number of responses
 		int countResponses() const;
@@ -177,16 +177,16 @@ namespace rs
 		int getWindowCount() const;
 
 		/// Get the start time of the next window
-		rsFloat getWindowStart(int window) const;
+		RS_FLOAT getWindowStart(int window) const;
 
 		/// Get the length of the receive window
-		rsFloat getWindowLength() const;
+		RS_FLOAT getWindowLength() const;
 
 		/// Get the time skipped before the start of the receive window
-		rsFloat getWindowSkip() const;
+		RS_FLOAT getWindowSkip() const;
 
 		/// Get the PRF
-		rsFloat getPrf() const;
+		RS_FLOAT getPrf() const;
 
 		/// Set a flag
 		void setFlag(Receiver::RecvFlag flag);
@@ -198,10 +198,10 @@ namespace rs
 		/// Vector to hold all the system responses
 		std::vector<Response*> _responses;
 		boost::try_mutex _responses_mutex; //!< Mutex to serialize access to responses
-		rsFloat _noise_temperature; //!< Noise temperature of the receiver
-		rsFloat _window_length{}; //!< Length of the receive window (seconds)
-		rsFloat _window_prf{}; //!< Window repetition frequency
-		rsFloat _window_skip{}; //!< The amount of time at the beginning of an interval to skip before capturing response
+		RS_FLOAT _noise_temperature; //!< Noise temperature of the receiver
+		RS_FLOAT _window_length{}; //!< Length of the receive window (seconds)
+		RS_FLOAT _window_prf{}; //!< Window repetition frequency
+		RS_FLOAT _window_skip{}; //!< The amount of time at the beginning of an interval to skip before capturing response
 		Receiver* _dual; //!< Multipath dual of this receiver
 		int _flags; //!< Flags which control receiver behaviour
 		/// Function to create dual

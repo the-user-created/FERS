@@ -50,14 +50,14 @@ namespace
 	}
 
 	/// Add noise to the window, to simulate receiver noise
-	void addNoiseToWindow(rs::RsComplex* data, const unsigned int size, const rsFloat temperature)
+	void addNoiseToWindow(rs::RsComplex* data, const unsigned int size, const RS_FLOAT temperature)
 	{
 		if (temperature == 0)
 		{
 			return;
 		}
 		//Calculate the noise power
-		const rsFloat power = rs_noise::noiseTemperatureToPower(temperature,
+		const RS_FLOAT power = rs_noise::noiseTemperatureToPower(temperature,
 		                                                        RsParameters::rate() * RsParameters::oversampleRatio() /
 		                                                        2);
 		WgnGenerator generator(sqrt(power) / 2.0);
@@ -69,9 +69,9 @@ namespace
 	}
 
 	/// Normalize a window, and quantize the signal as required
-	rsFloat quantizeWindow(rs::RsComplex* data, const unsigned int size)
+	RS_FLOAT quantizeWindow(rs::RsComplex* data, const unsigned int size)
 	{
-		rsFloat max = 0;
+		RS_FLOAT max = 0;
 		//Get the full scale amplitude of the pulse
 		for (unsigned int i = 0; i < size; i++)
 		{
@@ -113,8 +113,8 @@ namespace
 	}
 
 	/// Add a response array to the receive window
-	void addArrayToWindow(const rsFloat wStart, rs::RsComplex* window, const unsigned int wSize, const rsFloat rate,
-	                      const rsFloat rStart,
+	void addArrayToWindow(const RS_FLOAT wStart, rs::RsComplex* window, const unsigned int wSize, const RS_FLOAT rate,
+	                      const RS_FLOAT rStart,
 	                      const rs::RsComplex* resp, const unsigned int rSize)
 	{
 		int start_sample = static_cast<int>(rs_portable::rsRound(rate * (rStart - wStart)));
@@ -133,8 +133,8 @@ namespace
 	}
 
 	/// Generate the phase noise samples for the receive window
-	rsFloat* generatePhaseNoise(const rs::Receiver* recv, const unsigned int wSize, const rsFloat rate,
-	                            rsFloat& carrier,
+	RS_FLOAT* generatePhaseNoise(const rs::Receiver* recv, const unsigned int wSize, const RS_FLOAT rate,
+	                            RS_FLOAT& carrier,
 	                            bool& enabled)
 	{
 		//Get a pointer to the receiver's timing object
@@ -144,7 +144,7 @@ namespace
 			throw std::runtime_error("[BUG] Could not cast receiver->GetTiming() to ClockModelTiming");
 		}
 		//Allocate memory for the phase noise samples
-		rsFloat* noise = new rsFloat[wSize];
+		RS_FLOAT* noise = new RS_FLOAT[wSize];
 		enabled = timing->enabled();
 		if (enabled)
 		{
@@ -183,7 +183,7 @@ namespace
 	}
 
 	/// Add clock phase noise to the receive window
-	void addPhaseNoiseToWindow(const rsFloat* noise, rs::RsComplex* window, const unsigned int wSize)
+	void addPhaseNoiseToWindow(const RS_FLOAT* noise, rs::RsComplex* window, const unsigned int wSize)
 	{
 		for (unsigned int i = 0; i < wSize; i++)
 		{
@@ -221,19 +221,19 @@ namespace
 		const int window_count = recv->getWindowCount();
 		for (int i = 0; i < window_count; i++)
 		{
-			const rsFloat length = recv->getWindowLength();
-			const rsFloat rate = RsParameters::rate() * RsParameters::oversampleRatio();
+			const RS_FLOAT length = recv->getWindowLength();
+			const RS_FLOAT rate = RsParameters::rate() * RsParameters::oversampleRatio();
 			unsigned int size = static_cast<unsigned int>(std::ceil(length * rate));
 			//      rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Length: %g Size: %d\n", length, size);
 			//Generate the phase noise samples for the window
-			rsFloat carrier;
+			RS_FLOAT carrier;
 			bool pn_enabled;
-			const rsFloat* pnoise = generatePhaseNoise(recv, size, rate, carrier, pn_enabled);
+			const RS_FLOAT* pnoise = generatePhaseNoise(recv, size, rate, carrier, pn_enabled);
 			//      printf("%g\n", pnoise[0]);
 			// Get the window start time, including clock drift effects
-			rsFloat start = recv->getWindowStart(i) + (pnoise[0] / (2 * M_PI * carrier));
+			RS_FLOAT start = recv->getWindowStart(i) + (pnoise[0] / (2 * M_PI * carrier));
 			// Get the fraction of a sample of the window delay
-			const rsFloat frac_delay = start * rate - rs_portable::rsRound(start * rate);
+			const RS_FLOAT frac_delay = start * rate - rs_portable::rsRound(start * rate);
 			//      std::printf("frac: %g %g %g\n", frac_delay, start*rate, rsPortable::rsRound(start*rate));
 			start = rs_portable::rsRound(start * rate) / rate;
 			//rsFloat start = recv->GetWindowStart(i);
@@ -268,7 +268,7 @@ namespace
 			//Clean up the phase noise array
 			delete[] pnoise;
 			//Normalize and quantize the window
-			const rsFloat fullscale = quantizeWindow(window, size);
+			const RS_FLOAT fullscale = quantizeWindow(window, size);
 			//Export the binary format
 			if (rs::RsParameters::exportBinary())
 			{
@@ -376,15 +376,15 @@ ThreadedRenderer::~ThreadedRenderer()
 }
 
 /// Render all the responses in a single window
-void ThreadedRenderer::renderWindow(RsComplex* window, rsFloat length, rsFloat start, rsFloat fracDelay) const
+void ThreadedRenderer::renderWindow(RsComplex* window, RS_FLOAT length, RS_FLOAT start, RS_FLOAT fracDelay) const
 {
-	rsFloat end = start + length; // End time of the window
+	RS_FLOAT end = start + length; // End time of the window
 	//Put together a list of responses seen by this window
 	std::queue<Response*> work_list;
 	for (std::vector<Response*>::const_iterator iter = _responses->begin(); iter != _responses->end(); ++iter)
 	{
-		rsFloat resp_start = (*iter)->startTime();
-		if (rsFloat resp_end = (*iter)->endTime(); (resp_start <= end) && (resp_end >= start))
+		RS_FLOAT resp_start = (*iter)->startTime();
+		if (RS_FLOAT resp_end = (*iter)->endTime(); (resp_start <= end) && (resp_end >= start))
 		{
 			work_list.push(*iter);
 		}
@@ -419,9 +419,9 @@ void ThreadedRenderer::renderWindow(RsComplex* window, rsFloat length, rsFloat s
 //
 
 /// Constructor
-RenderThread::RenderThread(const int serial, boost::mutex* windowMutex, RsComplex* window, const rsFloat length,
-                           const rsFloat start,
-                           const rsFloat fracDelay, boost::mutex* workListMutex, std::queue<Response*>* workList):
+RenderThread::RenderThread(const int serial, boost::mutex* windowMutex, RsComplex* window, const RS_FLOAT length,
+                           const RS_FLOAT start,
+                           const RS_FLOAT fracDelay, boost::mutex* workListMutex, std::queue<Response*>* workList):
 	_serial(serial),
 	_window_mutex(windowMutex),
 	_window(window),
@@ -441,7 +441,7 @@ RenderThread::~RenderThread()
 /// Step through the worklist, rendering the required responses
 void RenderThread::operator()()
 {
-	const rsFloat rate = RsParameters::rate() * RsParameters::oversampleRatio();
+	const RS_FLOAT rate = RsParameters::rate() * RsParameters::oversampleRatio();
 	const unsigned int size = static_cast<unsigned int>(std::ceil(_length * rate));
 	// Allocate memory for the local window
 	_local_window = new RsComplex[size];
@@ -454,7 +454,7 @@ void RenderThread::operator()()
 	while (resp)
 	{
 		unsigned int psize;
-		rsFloat prate;
+		RS_FLOAT prate;
 		// Render the pulse into memory
 		boost::shared_array<rs::RsComplex> array = resp->renderBinary(prate, psize, _frac_delay);
 		// Add the array to the window
@@ -475,10 +475,10 @@ void RenderThread::operator()()
 }
 
 /// Add the array to the window, locking the window lock in advance
-void RenderThread::addWindow(const RsComplex* array, const rsFloat startTime, const unsigned int arraySize) const
+void RenderThread::addWindow(const RsComplex* array, const RS_FLOAT startTime, const unsigned int arraySize) const
 {
 	//Calculate required window parameters
-	const rsFloat rate = RsParameters::rate() * RsParameters::oversampleRatio();
+	const RS_FLOAT rate = RsParameters::rate() * RsParameters::oversampleRatio();
 	const unsigned int size = static_cast<unsigned int>(std::ceil(_length * rate));
 	// Add the array to the correct place in the local window
 	addArrayToWindow(_start, _local_window, size, rate, startTime, array, arraySize);

@@ -25,10 +25,10 @@ namespace
 	boost::mt19937* rng;
 
 	//Used to generate single noise samples
-	boost::normal_distribution<rsFloat> nd(0, 1);
-	boost::uniform_real<rsFloat> ud(0, 1.0);
-	boost::variate_generator<boost::mt19937&, boost::normal_distribution<rsFloat>>* normal_vg;
-	boost::variate_generator<boost::mt19937&, boost::uniform_real<rsFloat>>* uniform_vg;
+	boost::normal_distribution<RS_FLOAT> nd(0, 1);
+	boost::uniform_real<RS_FLOAT> ud(0, 1.0);
+	boost::variate_generator<boost::mt19937&, boost::normal_distribution<RS_FLOAT>>* normal_vg;
+	boost::variate_generator<boost::mt19937&, boost::uniform_real<RS_FLOAT>>* uniform_vg;
 }
 
 //
@@ -41,8 +41,8 @@ void rs_noise::initializeNoise()
 	delete rng;
 	delete normal_vg;
 	rng = new boost::mt19937(RsParameters::randomSeed());
-	normal_vg = new boost::variate_generator<boost::mt19937&, boost::normal_distribution<rsFloat>>(*rng, nd);
-	uniform_vg = new boost::variate_generator<boost::mt19937&, boost::uniform_real<rsFloat>>(*rng, ud);
+	normal_vg = new boost::variate_generator<boost::mt19937&, boost::normal_distribution<RS_FLOAT>>(*rng, nd);
+	uniform_vg = new boost::variate_generator<boost::mt19937&, boost::uniform_real<RS_FLOAT>>(*rng, ud);
 }
 
 /// Clean up the noise code
@@ -54,9 +54,9 @@ void rs_noise::cleanUpNoise()
 }
 
 /// Return a single sample of white gaussian noise
-rsFloat rs_noise::wgnSample(const rsFloat stddev)
+RS_FLOAT rs_noise::wgnSample(const RS_FLOAT stddev)
 {
-	if (stddev > std::numeric_limits<rsFloat>::epsilon())
+	if (stddev > std::numeric_limits<RS_FLOAT>::epsilon())
 	{
 		return (*normal_vg)() * stddev;
 	}
@@ -67,13 +67,13 @@ rsFloat rs_noise::wgnSample(const rsFloat stddev)
 }
 
 /// Return a single uniformly distributed sample in [0, 1]
-rsFloat rs_noise::uniformSample()
+RS_FLOAT rs_noise::uniformSample()
 {
 	return (*uniform_vg)();
 }
 
 /// Calculate noise amplitude from the temperature
-rsFloat rs_noise::noiseTemperatureToPower(const rsFloat temperature, const rsFloat bandwidth)
+RS_FLOAT rs_noise::noiseTemperatureToPower(const RS_FLOAT temperature, const RS_FLOAT bandwidth)
 {
 	return RsParameters::boltzmannK() * temperature * bandwidth; //See equations.tex
 }
@@ -97,7 +97,7 @@ NoiseGenerator::~NoiseGenerator()
 //
 
 /// Constructor
-GammaGenerator::GammaGenerator(const rsFloat k):
+GammaGenerator::GammaGenerator(const RS_FLOAT k):
 	_dist(k),
 	_gen(*rng, _dist)
 {
@@ -109,13 +109,13 @@ GammaGenerator::~GammaGenerator()
 }
 
 /// Get a single random sample
-rsFloat GammaGenerator::getSample()
+RS_FLOAT GammaGenerator::getSample()
 {
 	return _gen();
 }
 
 /// Operator to get a random sample
-rsFloat GammaGenerator::operator()()
+RS_FLOAT GammaGenerator::operator()()
 {
 	return _gen();
 }
@@ -125,17 +125,17 @@ rsFloat GammaGenerator::operator()()
 //
 
 //Constructor
-WgnGenerator::WgnGenerator(const rsFloat stddev)
+WgnGenerator::WgnGenerator(const RS_FLOAT stddev)
 {
-	_dist = boost::normal_distribution<rsFloat>(0, stddev);
-	_gen = new boost::variate_generator<boost::mt19937&, boost::normal_distribution<rsFloat>>(*rng, _dist);
+	_dist = boost::normal_distribution<RS_FLOAT>(0, stddev);
+	_gen = new boost::variate_generator<boost::mt19937&, boost::normal_distribution<RS_FLOAT>>(*rng, _dist);
 }
 
 //Default constructor
 WgnGenerator::WgnGenerator()
 {
-	_dist = boost::normal_distribution<rsFloat>(0, 1);
-	_gen = new boost::variate_generator<boost::mt19937&, boost::normal_distribution<rsFloat>>(*rng, _dist);
+	_dist = boost::normal_distribution<RS_FLOAT>(0, 1);
+	_gen = new boost::variate_generator<boost::mt19937&, boost::normal_distribution<RS_FLOAT>>(*rng, _dist);
 }
 
 // Destructor
@@ -145,7 +145,7 @@ WgnGenerator::~WgnGenerator()
 }
 
 // Get a sample from the rng
-rsFloat WgnGenerator::getSample()
+RS_FLOAT WgnGenerator::getSample()
 {
 	return (*_gen)();
 }
@@ -155,7 +155,7 @@ rsFloat WgnGenerator::getSample()
 //
 
 /// Constructor
-FAlphaBranch::FAlphaBranch(const rsFloat ffrac, const unsigned int fint, FAlphaBranch* pre, const bool last):
+FAlphaBranch::FAlphaBranch(const RS_FLOAT ffrac, const unsigned int fint, FAlphaBranch* pre, const bool last):
 	_pre(pre),
 	_last(last),
 	_ffrac(ffrac),
@@ -167,7 +167,7 @@ FAlphaBranch::FAlphaBranch(const rsFloat ffrac, const unsigned int fint, FAlphaB
 	//Initialize the filters for shaping, highpass and upsampling
 	init();
 	// Create a buffer for ten samples
-	_buffer = new rsFloat[10];
+	_buffer = new RS_FLOAT[10];
 	if (!last)
 	{
 		refill();
@@ -193,7 +193,7 @@ void FAlphaBranch::init()
 	{
 		/// Numerator coefficients for elliptical highpass
 		constexpr
-			rsFloat hp_num[12] = {
+			RS_FLOAT hp_num[12] = {
 				3.817871081981451e-01,
 				-4.093384095523618e+00,
 				2.005300512623078e+01,
@@ -209,7 +209,7 @@ void FAlphaBranch::init()
 			};
 		/// Denominator coefficients for elliptical highpass
 		constexpr
-			rsFloat hp_den[12] = {
+			RS_FLOAT hp_den[12] = {
 				1.000000000000000e+00,
 				-8.829695665523831e+00,
 				3.583068809011030e+01,
@@ -231,7 +231,7 @@ void FAlphaBranch::init()
 	{
 		/// Numerator co-efficients for 1/f^0.5 rolloff
 		constexpr
-			rsFloat sf_num[16] = {
+			RS_FLOAT sf_num[16] = {
 				5.210373977738306e-03,
 				-7.694671394585578e-03,
 				1.635979377907092e-03,
@@ -250,7 +250,7 @@ void FAlphaBranch::init()
 				1.528520559763056e-05
 			};
 		constexpr
-			rsFloat sf_den[16] = {
+			RS_FLOAT sf_den[16] = {
 				1.000000000000000e+00,
 				-2.065565041154101e+00,
 				1.130909190864681e+00,
@@ -290,17 +290,17 @@ void FAlphaBranch::init()
 		if (_fint == 1)
 		{
 			constexpr
-				rsFloat i_den[2] = {1, -1};
+				RS_FLOAT i_den[2] = {1, -1};
 			constexpr
-				rsFloat i_num[2] = {1, 0};
+				RS_FLOAT i_num[2] = {1, 0};
 			_integ_filter = new IirFilter(i_den, i_num, 2);
 		}
 		if (_fint == 2)
 		{
 			constexpr
-				rsFloat i_den[3] = {1, -2, 1};
+				RS_FLOAT i_den[3] = {1, -2, 1};
 			constexpr
-				rsFloat i_num[3] = {1, 0, 0};
+				RS_FLOAT i_num[3] = {1, 0, 0};
 			_integ_filter = new IirFilter(i_den, i_num, 3);
 		}
 		if (_fint > 2)
@@ -312,7 +312,7 @@ void FAlphaBranch::init()
 	_offset_sample = 0;
 	_got_offset = false;
 	// Create a buffer for ten samples
-	_buffer = new rsFloat[10];
+	_buffer = new RS_FLOAT[10];
 	if (!_last)
 	{
 		refill();
@@ -321,11 +321,11 @@ void FAlphaBranch::init()
 }
 
 /// Get a sample from the branch
-rsFloat FAlphaBranch::getSample()
+RS_FLOAT FAlphaBranch::getSample()
 {
 	if (!_last)
 	{
-		const rsFloat ret = _buffer[_buffer_samples];
+		const RS_FLOAT ret = _buffer[_buffer_samples];
 		_buffer_samples++;
 		if (_buffer_samples == 10)
 		{
@@ -350,9 +350,9 @@ void FAlphaBranch::clean() const
 }
 
 /// Calculate a single sample
-rsFloat FAlphaBranch::calcSample()
+RS_FLOAT FAlphaBranch::calcSample()
 {
-	rsFloat sample = rs_noise::wgnSample(1);
+	RS_FLOAT sample = rs_noise::wgnSample(1);
 	if (_shape_filter)
 	{
 		sample = _shape_filter->filter(sample) / _shape_gain;
@@ -382,7 +382,7 @@ rsFloat FAlphaBranch::calcSample()
 /// Refill the buffer
 void FAlphaBranch::refill()
 {
-	const rsFloat sample = calcSample();
+	const RS_FLOAT sample = calcSample();
 	// Pass the sample to the upsampler
 	_upsampler->upsample(sample, _buffer);
 	// Scale the buffer
@@ -396,7 +396,7 @@ void FAlphaBranch::refill()
 }
 
 /// Refill the buffer
-void FAlphaBranch::flush(const rsFloat scale = 1.0)
+void FAlphaBranch::flush(const RS_FLOAT scale = 1.0)
 {
 	clean();
 	init();
@@ -409,12 +409,12 @@ void FAlphaBranch::flush(const rsFloat scale = 1.0)
 //
 
 /// Constructor
-MultirateGenerator::MultirateGenerator(const rsFloat alpha, const unsigned int branches)
+MultirateGenerator::MultirateGenerator(const RS_FLOAT alpha, const unsigned int branches)
 {
-	const rsFloat beta = -(alpha - 2) / 2.0;
+	const RS_FLOAT beta = -(alpha - 2) / 2.0;
 	//Calculate the integer and fractional parts of beta
 	const int fint = static_cast<int>(std::floor(beta));
-	const rsFloat ffrac = fmod(beta, 1);
+	const RS_FLOAT ffrac = fmod(beta, 1);
 	//Build the multirate filter tree
 	createTree(ffrac, fint, branches);
 	_scale = 1.0 / std::pow(10.0, (-alpha + 2) * 2.0);
@@ -427,7 +427,7 @@ MultirateGenerator::~MultirateGenerator()
 }
 
 /// Get a single noise sample
-rsFloat MultirateGenerator::getSample()
+RS_FLOAT MultirateGenerator::getSample()
 {
 	return _topbranch->getSample() * _scale;
 }
@@ -474,7 +474,7 @@ void MultirateGenerator::skipSamples(long long samples) const
 
 /// Create the branches of the filter structure tree
 // The tree is stored as a linked list, which each link a branch
-void MultirateGenerator::createTree(const rsFloat falpha, const int fint, const unsigned int branches)
+void MultirateGenerator::createTree(const RS_FLOAT falpha, const int fint, const unsigned int branches)
 {
 	if (branches == 0)
 	{
@@ -520,16 +520,16 @@ void MultirateGenerator::reset() const
 //
 
 /// Constructor
-ClockModelGenerator::ClockModelGenerator(const std::vector<rsFloat>& alpha, const std::vector<rsFloat>& inWeights,
-                                         const rsFloat frequency, const rsFloat phaseOffset, const rsFloat freqOffset,
+ClockModelGenerator::ClockModelGenerator(const std::vector<RS_FLOAT>& alpha, const std::vector<RS_FLOAT>& inWeights,
+                                         const RS_FLOAT frequency, const RS_FLOAT phaseOffset, const RS_FLOAT freqOffset,
                                          const int branches):
 	_phase_offset(phaseOffset),
 	_freq_offset(freqOffset),
 	_frequency(frequency)
 {
 	_weights = inWeights;
-	std::vector<rsFloat>::const_iterator iter = alpha.begin();
-	std::vector<rsFloat>::iterator witer = _weights.begin();
+	std::vector<RS_FLOAT>::const_iterator iter = alpha.begin();
+	std::vector<RS_FLOAT>::iterator witer = _weights.begin();
 	// Create the generators for each band
 	for (; iter != alpha.end(); ++iter, ++witer)
 	{
@@ -568,9 +568,9 @@ ClockModelGenerator::~ClockModelGenerator()
 }
 
 /// Get a single noise sample
-rsFloat ClockModelGenerator::getSample()
+RS_FLOAT ClockModelGenerator::getSample()
 {
-	rsFloat sample = 0;
+	RS_FLOAT sample = 0;
 	// Get noise from the multirate generators for each band
 	const int size = _generators.size();
 	for (int i = 0; i < size; i++)
@@ -636,7 +636,7 @@ PythonNoiseGenerator::~PythonNoiseGenerator()
 }
 
 ///Get a single noise sample
-rsFloat PythonNoiseGenerator::getSample()
+RS_FLOAT PythonNoiseGenerator::getSample()
 {
 	return _generator.getSample();
 }
