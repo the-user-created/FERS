@@ -62,7 +62,7 @@ namespace rs
 		rsFloat* copyData() const;
 
 		/// Get the number of samples of padding at the beginning of the pulse
-		unsigned int pad() const;
+		unsigned int pad() const; // TODO: unused
 
 		/// Render the pulse with the specified doppler, delay and amplitude
 		boost::shared_array<rs::RsComplex> render(const std::vector<InterpPoint>& points, rsFloat transPower,
@@ -76,7 +76,7 @@ namespace rs
 		/// The sample rate of the signal in the time domain
 		rsFloat _rate;
 		/// Number of samples of padding at the beginning of the pulse
-		unsigned int _pad;
+		unsigned int _pad{};
 	};
 }
 #endif

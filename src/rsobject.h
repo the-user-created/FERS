@@ -23,7 +23,7 @@ namespace rs
 	public:
 		Object(const Platform* platform, const std::string& name);
 
-		~Object();
+		virtual ~Object();
 
 		/// Get the position of the object in space
 		Vec3 getPosition(rsFloat time) const;

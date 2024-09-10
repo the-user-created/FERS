@@ -81,8 +81,6 @@ namespace rs
 		rsFloat _length; //!< Length of the signal (seconds)
 		Signal* _signal; //!< Transmitted Signal
 		JonesVector _polar; //!< Signal Polarization
-		/// Default constructor
-		RadarSignal();
 	};
 }
 

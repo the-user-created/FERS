@@ -106,12 +106,6 @@ namespace rs
 		/// The default constructor is private
 		RsParameters();
 
-		/// The copy constructor is private
-		RsParameters(const RsParameters& rs);
-
-		/// The assignment operator is private
-		RsParameters& operator=(const RsParameters& rs);
-
 		/// Pointer to a single instance of the class
 		static RsParameters* _instance;
 	};
