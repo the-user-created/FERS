@@ -5,8 +5,9 @@
 #ifndef RS_INTERP_H
 #define RS_INTERP_H
 
-#include <config.h>
 #include <vector>
+
+#include "config.h"
 
 namespace rs
 {
@@ -26,19 +27,19 @@ namespace rs
 		~InterpSet();
 
 		/// Load a number of samples into the set
-		void loadSamples(const std::vector<rsFloat>& x, const std::vector<rsFloat>& y) const;
+		void loadSamples(const std::vector<RS_FLOAT>& x, const std::vector<RS_FLOAT>& y) const;
 
 		/// Load a single sample into the set
-		void insertSample(rsFloat x, rsFloat y) const;
+		void insertSample(RS_FLOAT x, RS_FLOAT y) const;
 
 		/// Get the interpolated value at the given point
-		rsFloat value(rsFloat x) const;
+		RS_FLOAT value(RS_FLOAT x) const;
 
 		/// Get the maximum value in the set
-		rsFloat max() const;
+		RS_FLOAT max() const;
 
 		/// Divide every sample in the set by a given number
-		void divide(rsFloat a) const;
+		void divide(RS_FLOAT a) const;
 
 	private:
 		InterpSetData* _data; //<! The data is hidden behind a pointer to the implementation

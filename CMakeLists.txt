@@ -3,7 +3,8 @@ project(fers)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_BINARY_DIR}/config.h)
+# Add the directory where config.h is located to the include path
+include_directories(${CMAKE_SOURCE_DIR})
 
 if (NOT CMAKE_BUILD_TYPE)
 	message(STATUS "No build type specified, defaulting to Release")

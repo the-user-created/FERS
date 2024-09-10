@@ -6,10 +6,10 @@
 #ifndef RS_PATH_H
 #define RS_PATH_H
 
-#include <config.h>
 #include <stdexcept>
 #include <vector>
 
+#include "config.h"
 #include "rsgeometry.h"
 
 //Forward declarations
@@ -28,7 +28,7 @@ namespace rs
 	struct Coord
 	{
 		Vec3 pos; //!< Position in space
-		rsFloat t; //!< Time
+		RS_FLOAT t; //!< Time
 
 		/// Less than comparison operator. Operates only on time value.
 		bool operator<(const Coord& b) const
@@ -37,7 +37,7 @@ namespace rs
 		}
 
 		/// Assignment operator
-		Coord& operator=(const rsFloat a)
+		Coord& operator=(const RS_FLOAT a)
 		{
 			t = a;
 			pos.x = pos.y = pos.z = a;
@@ -59,23 +59,23 @@ namespace rs
 	Coord operator/(const Coord& a, const Coord& b);
 
 	/// Add a scalar to each element
-	Coord operator+(const Coord& a, rsFloat b);
+	Coord operator+(const Coord& a, RS_FLOAT b);
 
 	/// Componentwise multiplication by scalar
-	Coord operator*(const Coord& a, rsFloat b);
+	Coord operator*(const Coord& a, RS_FLOAT b);
 
 	/// Componentwise division by scalar
-	Coord operator/(rsFloat a, const Coord& b);
+	Coord operator/(RS_FLOAT a, const Coord& b);
 
-	Coord operator/(const Coord& b, rsFloat a);
+	Coord operator/(const Coord& b, RS_FLOAT a);
 
 	/// Azimuth-Elevation rotation position and time
 	//Note that the plane for azimuth is the x-y plane (see Coord)
 	struct RotationCoord
 	{
-		rsFloat azimuth; //!< Angle in X-Y plane (radians)
-		rsFloat elevation; //!< Elevation above X-Y plane (radians)
-		rsFloat t; //!< Time
+		RS_FLOAT azimuth; //!< Angle in X-Y plane (radians)
+		RS_FLOAT elevation; //!< Elevation above X-Y plane (radians)
+		RS_FLOAT t; //!< Time
 
 		/// Less than comparison operator. Operates only on time value.
 		bool operator<(const RotationCoord b) const
@@ -84,14 +84,14 @@ namespace rs
 		}
 
 		/// Assignment operator
-		RotationCoord& operator=(const rsFloat a)
+		RotationCoord& operator=(const RS_FLOAT a)
 		{
 			azimuth = elevation = t = a;
 			return *this;
 		}
 
 		/// Constructor. Assign scalar to all elements.
-		explicit RotationCoord(const rsFloat a = 0):
+		explicit RotationCoord(const RS_FLOAT a = 0):
 			azimuth(a), elevation(a), t(a)
 		{
 		}
@@ -110,15 +110,15 @@ namespace rs
 	RotationCoord operator/(const RotationCoord& a, const RotationCoord& b);
 
 	/// Add a scalare to each component
-	RotationCoord operator+(const RotationCoord& a, rsFloat b);
+	RotationCoord operator+(const RotationCoord& a, RS_FLOAT b);
 
 	/// Multiply each component by a scalar
-	RotationCoord operator*(const RotationCoord& a, rsFloat b);
+	RotationCoord operator*(const RotationCoord& a, RS_FLOAT b);
 
 	/// Divide each component by a scalar
-	RotationCoord operator/(rsFloat a, const RotationCoord& b);
+	RotationCoord operator/(RS_FLOAT a, const RotationCoord& b);
 
-	RotationCoord operator/(const RotationCoord& b, rsFloat a);
+	RotationCoord operator/(const RotationCoord& b, RS_FLOAT a);
 
 	/// Defines the movement of an object through space, governed by time
 	class Path
@@ -136,7 +136,7 @@ namespace rs
 		void finalize();
 
 		/// Get the position an object will be at at a specified time
-		Vec3 getPosition(rsFloat t) const;
+		Vec3 getPosition(RS_FLOAT t) const;
 
 		/// Set the interpolation type of the path
 		void setInterp(InterpType settype);
@@ -174,7 +174,7 @@ namespace rs
 		void finalize();
 
 		/// Get the position an object will be at at a specified time
-		SVec3 getPosition(rsFloat t) const;
+		SVec3 getPosition(RS_FLOAT t) const;
 
 		/// Set the interpolation type
 		void setInterp(InterpType setinterp);

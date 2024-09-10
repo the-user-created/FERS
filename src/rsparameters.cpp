@@ -18,11 +18,11 @@ namespace
 {
 	struct SimParameters
 	{
-		rsFloat c{}; //!< Propagation speed of the wave in the medium
-		rsFloat start{}; //!< The start time of the simulation
-		rsFloat end{}; //!< The end time of the simulation
-		rsFloat cw_sample_rate{}; //<! The number of samples per second to take of changes in the CW state
-		rsFloat rate{}; //!< The sample rate to use for rendering
+		RS_FLOAT c{}; //!< Propagation speed of the wave in the medium
+		RS_FLOAT start{}; //!< The start time of the simulation
+		RS_FLOAT end{}; //!< The end time of the simulation
+		RS_FLOAT cw_sample_rate{}; //<! The number of samples per second to take of changes in the CW state
+		RS_FLOAT rate{}; //!< The sample rate to use for rendering
 		unsigned int random_seed{}; //!< The seed used for random number calculations
 		unsigned int adc_bits{}; //!< The number of bits to use for quantization
 		unsigned int filter_length{}; //!< The length of the filter for rendering purposes
@@ -80,7 +80,7 @@ RsParameters* RsParameters::modifyParms()
 }
 
 //Getters for settings
-rsFloat RsParameters::c()
+RS_FLOAT RsParameters::c()
 {
 	if (!_instance)
 	{
@@ -89,12 +89,12 @@ rsFloat RsParameters::c()
 	return sim_parms.c;
 }
 
-rsFloat RsParameters::boltzmannK()
+RS_FLOAT RsParameters::boltzmannK()
 {
 	return 1.3806503e-23;
 }
 
-rsFloat RsParameters::startTime()  // NOLINT
+RS_FLOAT RsParameters::startTime()  // NOLINT
 {
 	if (!_instance)
 	{
@@ -103,7 +103,7 @@ rsFloat RsParameters::startTime()  // NOLINT
 	return sim_parms.start;
 }
 
-rsFloat RsParameters::endTime()  // NOLINT
+RS_FLOAT RsParameters::endTime()  // NOLINT
 {
 	if (!_instance)
 	{
@@ -112,7 +112,7 @@ rsFloat RsParameters::endTime()  // NOLINT
 	return sim_parms.end;
 }
 
-rsFloat RsParameters::cwSampleRate()
+RS_FLOAT RsParameters::cwSampleRate()
 {
 	if (!_instance)
 	{
@@ -130,7 +130,7 @@ rs_parms::BinaryFileType RsParameters::binaryFileType()
 	return sim_parms.filetype;
 }
 
-rsFloat RsParameters::rate()  // NOLINT
+RS_FLOAT RsParameters::rate()  // NOLINT
 {
 	if (!_instance)
 	{
@@ -217,24 +217,24 @@ unsigned int RsParameters::oversampleRatio()
 //Setters for global parameters
 //
 
-void RsParameters::setC(const rsFloat c)
+void RsParameters::setC(const RS_FLOAT c)
 {
 	sim_parms.c = c;
 	rs_debug::printf(rs_debug::RS_CRITICAL, "[CRITICAL] Propagation speed (c) set to custom value: %8.5f\n", c);
 }
 
-void RsParameters::setTime(const rsFloat start, const rsFloat end)
+void RsParameters::setTime(const RS_FLOAT start, const RS_FLOAT end)
 {
 	sim_parms.start = start;
 	sim_parms.end = end;
 }
 
-void RsParameters::setCwSampleRate(const rsFloat rate)
+void RsParameters::setCwSampleRate(const RS_FLOAT rate)
 {
 	sim_parms.cw_sample_rate = rate;
 }
 
-void RsParameters::setRate(const rsFloat factor)
+void RsParameters::setRate(const RS_FLOAT factor)
 {
 	sim_parms.rate = factor;
 	rs_debug::printf(rs_debug::RS_VERY_VERBOSE, "[VV] System sample rate set to custom value: %8.5f\n", factor);

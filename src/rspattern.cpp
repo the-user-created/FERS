@@ -6,8 +6,8 @@
 #include "rspattern.h"
 
 #include <cmath>
-#include <config.h>
 
+#include "config.h"
 #include "rshdf5.h"
 
 using namespace rs;
@@ -35,7 +35,7 @@ Pattern::~Pattern()
 }
 
 /// Get the gain at the given angle
-rsFloat Pattern::getGain(const rs::SVec3& angle) const
+RS_FLOAT Pattern::getGain(const rs::SVec3& angle) const
 {
 	//Get the nearest points in elevation and azimuth
 	const double x1 = std::floor((angle.azimuth + M_PI) / (2 * M_PI) * (_size_azi - 1)) / static_cast<double>(_size_azi - 1);

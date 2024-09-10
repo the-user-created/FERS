@@ -6,8 +6,7 @@
 #ifndef RS_TARGET_H
 #define RS_TARGET_H
 
-#include <config.h>
-
+#include "config.h"
 #include "rsobject.h"
 #include "rspath.h"
 #include "rspolarize.h"
@@ -27,7 +26,7 @@ namespace rs
 		virtual ~RcsModel();
 
 		/// Get an RCS based on the statistical model and the mean RCS
-		virtual rsFloat sampleModel() = 0;
+		virtual RS_FLOAT sampleModel() = 0;
 	};
 
 	/// RCS Statistical Model class supporting Swerling V
@@ -38,7 +37,7 @@ namespace rs
 		virtual ~RcsConst();
 
 		/// Return a constant RCS
-		virtual rsFloat sampleModel();
+		virtual RS_FLOAT sampleModel();
 	};
 
 	/// RCS statistical model following Swerling's Chi-square (actually Gamma) model
@@ -47,12 +46,12 @@ namespace rs
 	{
 	public:
 		/// Constructor
-		explicit RcsChiSquare(rsFloat k); //k is the shape parameter for the distribution
+		explicit RcsChiSquare(RS_FLOAT k); //k is the shape parameter for the distribution
 		/// Destructor
 		virtual ~RcsChiSquare();
 
 		/// Get an RCS based on the Swerling II model and the mean RCS
-		virtual rsFloat sampleModel();
+		virtual RS_FLOAT sampleModel();
 
 	private:
 		GammaGenerator* _gen;
@@ -69,7 +68,7 @@ namespace rs
 		virtual ~Target();
 
 		/// Returns the Radar Cross Section at a particular angle
-		virtual rsFloat getRcs(SVec3& inAngle, SVec3& outAngle) const = 0;
+		virtual RS_FLOAT getRcs(SVec3& inAngle, SVec3& outAngle) const = 0;
 
 		/// Get the target polarization matrix
 		virtual PsMatrix getPolarization() const;
@@ -90,16 +89,16 @@ namespace rs
 	{
 	public:
 		/// Constructor
-		IsoTarget(const Platform* platform, const std::string& name, rsFloat rcs);
+		IsoTarget(const Platform* platform, const std::string& name, RS_FLOAT rcs);
 
 		/// Destructor
 		virtual ~IsoTarget();
 
 		/// Return the RCS at the given angle
-		virtual rsFloat getRcs(SVec3& inAngle, SVec3& outAngle) const;
+		virtual RS_FLOAT getRcs(SVec3& inAngle, SVec3& outAngle) const;
 
 	private:
-		rsFloat _rcs; //!< Constant RCS
+		RS_FLOAT _rcs; //!< Constant RCS
 	};
 
 	/// Target with an RCS interpolated from a table of values
@@ -113,7 +112,7 @@ namespace rs
 		virtual ~FileTarget();
 
 		/// Return the RCS at the given angle
-		virtual rsFloat getRcs(SVec3& inAngle, SVec3& outAngle) const;
+		virtual RS_FLOAT getRcs(SVec3& inAngle, SVec3& outAngle) const;
 
 	private:
 		rs::InterpSet* _azi_samples; //!< Samples of RCS in the azimuth plane
@@ -125,7 +124,7 @@ namespace rs
 	// Functions for creating objects of various target types
 
 	/// Create an isometric radiator target
-	Target* createIsoTarget(const Platform* platform, const std::string& name, rsFloat rcs);
+	Target* createIsoTarget(const Platform* platform, const std::string& name, RS_FLOAT rcs);
 
 	/// Create a target, loading the RCS pattern from a file
 	Target* createFileTarget(const Platform* platform, const std::string& name, const std::string& filename);

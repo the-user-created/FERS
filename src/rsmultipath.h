@@ -16,7 +16,7 @@ namespace rs
 	public:
 		// These parameters define a plane of the form a*x+b*y+c*z+d=0
 		/// Constructor
-		MultipathSurface(rsFloat a, rsFloat b, rsFloat c, rsFloat d, rsFloat factor);
+		MultipathSurface(RS_FLOAT a, RS_FLOAT b, RS_FLOAT c, RS_FLOAT d, RS_FLOAT factor);
 
 		/// Default destructor
 		~MultipathSurface();
@@ -25,12 +25,12 @@ namespace rs
 		Vec3 reflectPoint(const Vec3& b) const;
 
 		/// Get the reflectance factor
-		rsFloat getFactor() const;
+		RS_FLOAT getFactor() const;
 
 	private:
-		rsFloat _factor; //!< How energy is reflected from the plane
+		RS_FLOAT _factor; //!< How energy is reflected from the plane
 		Matrix3 _reflection; //!< Matrix defining reflection in this plane
-		rsFloat _norm_factor; //!< Factor to normalize length
+		RS_FLOAT _norm_factor; //!< Factor to normalize length
 		Vec3 _translation_vector; //!< Vector to translate position of reflected point
 	};
 }

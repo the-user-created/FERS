@@ -6,10 +6,10 @@
 #define RS_DSP_H
 
 #include <complex>
-#include <config.h>
 #include <vector>
 #include <boost/utility.hpp>
 
+#include "config.h"
 #include "rsradarwaveform.h"
 
 namespace rs
@@ -35,10 +35,10 @@ namespace rs
 		virtual ~DspFilter();
 
 		/// Pass a single sample through the filter
-		virtual rsFloat filter(rsFloat sample) = 0;
+		virtual RS_FLOAT filter(RS_FLOAT sample) = 0;
 
 		/// Pass an array of samples through the filter, filtering in place
-		virtual void filter(rsFloat* samples, int size) = 0;
+		virtual void filter(RS_FLOAT* samples, int size) = 0;
 	};
 
 	/// IIR (ARMA) Digital Filter, implemented with Direct Form II
@@ -47,25 +47,25 @@ namespace rs
 	{
 	public:
 		/// Constructor
-		IirFilter(const std::vector<rsFloat>& denCoeffs, const std::vector<rsFloat>& numCoeffs);
+		IirFilter(const std::vector<RS_FLOAT>& denCoeffs, const std::vector<RS_FLOAT>& numCoeffs);
 
 		/// Constuctor
-		IirFilter(const rsFloat* denCoeffs, const rsFloat* numCoeffs, unsigned int order);
+		IirFilter(const RS_FLOAT* denCoeffs, const RS_FLOAT* numCoeffs, unsigned int order);
 
 		/// Destructor
 		virtual ~IirFilter();
 
 		/// Pass a single sample through the filter
-		virtual rsFloat filter(rsFloat sample);
+		virtual RS_FLOAT filter(RS_FLOAT sample);
 
 		/// Pass an array of samples through the filter, filtering in place
-		virtual void filter(rsFloat* samples, int size);
+		virtual void filter(RS_FLOAT* samples, int size);
 
 	private:
-		rsFloat* _w; //!< Past x values
+		RS_FLOAT* _w; //!< Past x values
 		// rsFloat *wy; //!< Past y values
-		rsFloat* _a; //!< Denominator co-efficients
-		rsFloat* _b; //!< Numerator co-efficients
+		RS_FLOAT* _a; //!< Denominator co-efficients
+		RS_FLOAT* _b; //!< Numerator co-efficients
 		unsigned int _order; //!< Filter order
 	};
 
@@ -75,25 +75,25 @@ namespace rs
 	{
 	public:
 		/// Constructor
-		explicit FirFilter(const std::vector<rsFloat>& coeffs);
+		explicit FirFilter(const std::vector<RS_FLOAT>& coeffs);
 
-		FirFilter(const rsFloat* coeffs, int count);
+		FirFilter(const RS_FLOAT* coeffs, int count);
 
 		/// Destructor
 		virtual ~FirFilter();
 
 		/// Pass a single sample through the filter
-		virtual rsFloat filter(rsFloat sample);
+		virtual RS_FLOAT filter(RS_FLOAT sample);
 
 		/// Pass an array of samples through the filter, filtering in place
-		virtual void filter(rsFloat* samples, int size);
+		virtual void filter(RS_FLOAT* samples, int size);
 
 		/// Pass an array of complex samples through the filter, filtering in place
-		void filter(std::complex<rsFloat>* samples, int size) const;
+		void filter(std::complex<RS_FLOAT>* samples, int size) const;
 
 	private:
-		rsFloat* _w; //!< Filter state
-		rsFloat* _filter; //!< Filter coefficients
+		RS_FLOAT* _w; //!< Filter state
+		RS_FLOAT* _filter; //!< Filter coefficients
 		unsigned int _order; //!< Filter order
 	};
 
@@ -103,20 +103,20 @@ namespace rs
 	{
 	public:
 		/// Constructor
-		explicit ArFilter(const std::vector<rsFloat>& coeffs);
+		explicit ArFilter(const std::vector<RS_FLOAT>& coeffs);
 
 		/// Destructor
 		~ArFilter();
 
 		/// Pass a single sample through the filter
-		virtual rsFloat filter(rsFloat sample);
+		virtual RS_FLOAT filter(RS_FLOAT sample);
 
 		/// Pass an array of samples through the filter, filtering in place
-		virtual void filter(rsFloat* samples, int size);
+		virtual void filter(RS_FLOAT* samples, int size);
 
 	private:
-		rsFloat* _w; //!< Filter state
-		rsFloat* _filter; //!< Filter coefficients
+		RS_FLOAT* _w; //!< Filter state
+		RS_FLOAT* _filter; //!< Filter coefficients
 		unsigned int _order; //!< Filter order
 	};
 
@@ -132,15 +132,15 @@ namespace rs
 		~Upsampler();
 
 		/// Upsample the given sample to a pre-allocated target
-		void upsample(const rsFloat* inSamples, int inSize, rsFloat* outSamples, int outSize) const;
+		void upsample(const RS_FLOAT* inSamples, int inSize, RS_FLOAT* outSamples, int outSize) const;
 
 	private:
 		int _ratio; //!< Upsampling ratio
-		rsFloat* _filterbank; //!< FIR polyphase filter bank
-		rsFloat* _sample_memory; //!< Last samples used, to allow seamless upsampling in blocks
+		RS_FLOAT* _filterbank; //!< FIR polyphase filter bank
+		RS_FLOAT* _sample_memory; //!< Last samples used, to allow seamless upsampling in blocks
 		int _filter_size; //!< Length of the interpolation filter
 		//Get a sample, from either the provided pointer or sample memory
-		inline rsFloat getSample(const rsFloat* samples, int n) const;
+		inline RS_FLOAT getSample(const RS_FLOAT* samples, int n) const;
 	};
 
 	/// Upsample a signal by a factor of 10
@@ -154,10 +154,10 @@ namespace rs
 		~DecadeUpsampler();
 
 		/// Upsample one sample at a time, out is array of ten samples
-		void upsample(rsFloat sample, rsFloat* out) const;
+		void upsample(RS_FLOAT sample, RS_FLOAT* out) const;
 
 		/// Upsample a large block, out must be ten times bigger than in
-		void upsample(const rsFloat* in, int count, rsFloat* out) const;
+		void upsample(const RS_FLOAT* in, int count, RS_FLOAT* out) const;
 
 	private:
 		/// Anti-imaging filter

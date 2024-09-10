@@ -63,7 +63,7 @@ const char* getChildText(const TiXmlHandle& parent, const char* childname)
 }
 
 /// Gets child text as a rsFloat. See GetChildText for usage description
-rsFloat getChildRsFloat(const TiXmlHandle& parent, const char* childname)
+RS_FLOAT getChildRsFloat(const TiXmlHandle& parent, const char* childname)
 {
 	const char* data = getChildText(parent, childname);
 	//If there is no data, flag failure and return
@@ -72,7 +72,7 @@ rsFloat getChildRsFloat(const TiXmlHandle& parent, const char* childname)
 		throw XmlImportException("No data in child element " + string(childname) + " during GetChildRsFloat.");
 	}
 	//Parse the first rsFloat from the data
-	rsFloat result;
+	RS_FLOAT result;
 	std::istringstream iss(data);
 	iss >> result;
 	return result;
@@ -88,7 +88,7 @@ const char* getNodeText(const TiXmlHandle& parent)
 /// Gets the text content of a node as an rsFloat.
 //For XML like this:
 //<rcs>10</rcs>
-rsFloat getNodeFloat(const TiXmlHandle& node)
+RS_FLOAT getNodeFloat(const TiXmlHandle& node)
 {
 	if (!node.Element())
 	{
@@ -99,7 +99,7 @@ rsFloat getNodeFloat(const TiXmlHandle& node)
 	{
 		throw XmlImportException("Node does not contain text during GetNodeFloat");
 	}
-	rsFloat result;
+	RS_FLOAT result;
 	std::istringstream iss(data);
 	iss >> result;
 	return result;
@@ -144,7 +144,7 @@ namespace
 	///Process a Gamma target model entry
 	RcsModel* processGammaModel(const TiXmlHandle& modelXml)
 	{
-		const rsFloat k = getChildRsFloat(modelXml, "k");
+		const RS_FLOAT k = getChildRsFloat(modelXml, "k");
 		return new RcsChiSquare(k);
 	}
 
@@ -169,7 +169,7 @@ namespace
 			{
 				throw XmlImportException("Target " + name + " does not specify value of isotropic RCS.");
 			}
-			const rsFloat value = getNodeFloat(rcs_value_xml);
+			const RS_FLOAT value = getNodeFloat(rcs_value_xml);
 			target = createIsoTarget(platform, name, value);
 		}
 		else if (rcs_type == "file")
@@ -236,7 +236,7 @@ namespace
 		//Process the noise temperature tag
 		try
 		{
-			const rsFloat temperature = getChildRsFloat(recvXml, "noise_temp");
+			const RS_FLOAT temperature = getChildRsFloat(recvXml, "noise_temp");
 			receiver->setNoiseTemperature(temperature);
 		}
 		catch (XmlImportException& e)
@@ -244,9 +244,9 @@ namespace
 		}
 
 		//Process the PRF tag
-		const rsFloat prf = getChildRsFloat(recvXml, "prf");
-		const rsFloat skip = getChildRsFloat(recvXml, "window_skip");
-		const rsFloat length = getChildRsFloat(recvXml, "window_length");
+		const RS_FLOAT prf = getChildRsFloat(recvXml, "prf");
+		const RS_FLOAT skip = getChildRsFloat(recvXml, "window_skip");
+		const RS_FLOAT length = getChildRsFloat(recvXml, "window_length");
 		receiver->setWindowProperties(length, prf, skip);
 
 		//Get the name of the timing source
@@ -303,7 +303,7 @@ namespace
 			throw XmlImportException("Pulse with name '" + pulse_name + "' does not exist");
 		}
 		//Get the Pulse Repetition Frequency
-		const rsFloat prf = getChildRsFloat(transXml, "prf");
+		const RS_FLOAT prf = getChildRsFloat(transXml, "prf");
 		//Attach the pulse to the transmitter
 		transmitter->setWave(wave);
 		transmitter->setPrf(prf);
@@ -412,10 +412,10 @@ namespace
 	{
 		try
 		{
-			const rsFloat x = getChildRsFloat(handXml, "x");
-			const rsFloat y = getChildRsFloat(handXml, "y");
-			const rsFloat z = getChildRsFloat(handXml, "altitude");
-			const rsFloat t = getChildRsFloat(handXml, "time");
+			const RS_FLOAT x = getChildRsFloat(handXml, "x");
+			const RS_FLOAT y = getChildRsFloat(handXml, "y");
+			const RS_FLOAT z = getChildRsFloat(handXml, "altitude");
+			const RS_FLOAT t = getChildRsFloat(handXml, "time");
 			Coord coord;
 			coord.t = t;
 			coord.pos = Vec3(x, y, z);
@@ -665,8 +665,8 @@ namespace
 	void processAnyPulseFile(const TiXmlHandle& pulseXml, World* world, const std::string& name)
 	{
 		const string filename = getAttributeString(pulseXml, "filename", "Pulse must specify a filename");
-		const rsFloat carrier = getChildRsFloat(pulseXml, "carrier");
-		const rsFloat power = getChildRsFloat(pulseXml, "power");
+		const RS_FLOAT carrier = getChildRsFloat(pulseXml, "carrier");
+		const RS_FLOAT power = getChildRsFloat(pulseXml, "power");
 		RadarSignal* wave = rs_pulse_factory::loadPulseFromFile(name, filename, power, carrier);
 		world->add(wave);
 	}
@@ -723,22 +723,22 @@ namespace
 
 	Antenna* processSincAntenna(const TiXmlHandle& antXml, const string& name)
 	{
-		const rsFloat alpha = getChildRsFloat(antXml, "alpha");
-		const rsFloat beta = getChildRsFloat(antXml, "beta");
-		const rsFloat gamma = getChildRsFloat(antXml, "gamma");
+		const RS_FLOAT alpha = getChildRsFloat(antXml, "alpha");
+		const RS_FLOAT beta = getChildRsFloat(antXml, "beta");
+		const RS_FLOAT gamma = getChildRsFloat(antXml, "gamma");
 		return rs::createSincAntenna(name, alpha, beta, gamma);
 	}
 
 	Antenna* processGaussianAntenna(const TiXmlHandle& antXml, const string& name)
 	{
-		const rsFloat azscale = getChildRsFloat(antXml, "azscale");
-		const rsFloat elscale = getChildRsFloat(antXml, "elscale");
+		const RS_FLOAT azscale = getChildRsFloat(antXml, "azscale");
+		const RS_FLOAT elscale = getChildRsFloat(antXml, "elscale");
 		return rs::createGaussianAntenna(name, azscale, elscale);
 	}
 
 	Antenna* processParabolicAntenna(const TiXmlHandle& antXml, const string& name)
 	{
-		const rsFloat diameter = getChildRsFloat(antXml, "diameter");
+		const RS_FLOAT diameter = getChildRsFloat(antXml, "diameter");
 		return rs::createParabolicAntenna(name, diameter);
 	}
 
@@ -787,7 +787,7 @@ namespace
 		//Load the efficiency factor
 		try
 		{
-			const rsFloat factor = getChildRsFloat(antXml, "efficiency");
+			const RS_FLOAT factor = getChildRsFloat(antXml, "efficiency");
 			antenna->setEfficiencyFactor(factor);
 		}
 		catch (XmlImportException& xe)
@@ -803,11 +803,11 @@ namespace
 	void processMultipath(const TiXmlHandle& mpXml, World* world)
 	{
 		//Get the reflecting factor
-		const rsFloat factor = getChildRsFloat(mpXml, "factor");
-		const rsFloat nx = getChildRsFloat(mpXml, "nx");
-		const rsFloat ny = getChildRsFloat(mpXml, "ny");
-		const rsFloat nz = getChildRsFloat(mpXml, "nz");
-		const rsFloat d = getChildRsFloat(mpXml, "d");
+		const RS_FLOAT factor = getChildRsFloat(mpXml, "factor");
+		const RS_FLOAT nx = getChildRsFloat(mpXml, "nx");
+		const RS_FLOAT ny = getChildRsFloat(mpXml, "ny");
+		const RS_FLOAT nz = getChildRsFloat(mpXml, "nz");
+		const RS_FLOAT d = getChildRsFloat(mpXml, "d");
 		//Create the multipath object
 		MultipathSurface* mps = new MultipathSurface(nx, ny, nz, d, factor);
 		//Add it to the world
@@ -824,15 +824,15 @@ namespace
 		TiXmlHandle plat = antXml.ChildElement("noise_entry", 0);
 		for (int i = 1; plat.Element() != nullptr; i++)
 		{
-			const rsFloat alpha = getChildRsFloat(plat, "alpha");
-			const rsFloat weight = getChildRsFloat(plat, "weight");
+			const RS_FLOAT alpha = getChildRsFloat(plat, "alpha");
+			const RS_FLOAT weight = getChildRsFloat(plat, "weight");
 			timing->addAlpha(alpha, weight);
 			plat = antXml.ChildElement("noise_entry", i);
 		}
 		// Process the frequency offset
 		try
 		{
-			const rsFloat offset = getChildRsFloat(antXml, "freq_offset");
+			const RS_FLOAT offset = getChildRsFloat(antXml, "freq_offset");
 			timing->addFreqOffset(offset);
 		}
 		catch (XmlImportException& xe)
@@ -840,7 +840,7 @@ namespace
 		}
 		try
 		{
-			const rsFloat stdev = getChildRsFloat(antXml, "random_freq_offset");
+			const RS_FLOAT stdev = getChildRsFloat(antXml, "random_freq_offset");
 			timing->addRandomFreqOffset(stdev);
 		}
 		catch (XmlImportException& xe)
@@ -849,7 +849,7 @@ namespace
 		// Process the phase offset
 		try
 		{
-			const rsFloat offset = getChildRsFloat(antXml, "phase_offset");
+			const RS_FLOAT offset = getChildRsFloat(antXml, "phase_offset");
 			timing->addPhaseOffset(offset);
 		}
 		catch (XmlImportException& xe)
@@ -857,7 +857,7 @@ namespace
 		}
 		try
 		{
-			const rsFloat stdev = getChildRsFloat(antXml, "random_phase_offset");
+			const RS_FLOAT stdev = getChildRsFloat(antXml, "random_phase_offset");
 			timing->addRandomPhaseOffset(stdev);
 		}
 		catch (XmlImportException& xe)
@@ -866,7 +866,7 @@ namespace
 		// Process the frequency
 		try
 		{
-			const rsFloat freq = getChildRsFloat(antXml, "frequency");
+			const RS_FLOAT freq = getChildRsFloat(antXml, "frequency");
 			timing->setFrequency(freq);
 		}
 		catch (XmlImportException& xe)
@@ -897,7 +897,7 @@ namespace
 		//Get the propagation speed in air
 		try
 		{
-			const rsFloat c = getChildRsFloat(root, "c");
+			const RS_FLOAT c = getChildRsFloat(root, "c");
 			RsParameters::modifyParms()->setC(c);
 		}
 		catch (XmlImportException& xe)
@@ -907,7 +907,7 @@ namespace
 		//Get the export sampling rate
 		try
 		{
-			const rsFloat rate = getChildRsFloat(root, "rate");
+			const RS_FLOAT rate = getChildRsFloat(root, "rate");
 			RsParameters::modifyParms()->setRate(rate);
 		}
 		catch (XmlImportException& xe)
@@ -917,7 +917,7 @@ namespace
 		//Get the cw Interpolation rate
 		try
 		{
-			const rsFloat rate = getChildRsFloat(root, "interprate");
+			const RS_FLOAT rate = getChildRsFloat(root, "interprate");
 			RsParameters::modifyParms()->setCwSampleRate(rate);
 		}
 		catch (XmlImportException& xe)
@@ -929,7 +929,7 @@ namespace
 		//Get the random seed
 		try
 		{
-			const rsFloat seed = getChildRsFloat(root, "randomseed");
+			const RS_FLOAT seed = getChildRsFloat(root, "randomseed");
 			RsParameters::modifyParms()->setRandomSeed(static_cast<unsigned int>(std::fabs(seed)));
 		}
 		catch (XmlImportException& xe)
@@ -940,7 +940,7 @@ namespace
 		//Get the number of ADC bits to simulate
 		try
 		{
-			const rsFloat adc_bits = getChildRsFloat(root, "adc_bits");
+			const RS_FLOAT adc_bits = getChildRsFloat(root, "adc_bits");
 			RsParameters::modifyParms()->setAdcBits(static_cast<unsigned int>(std::floor(adc_bits)));
 			rs_debug::printf(rs_debug::RS_VERBOSE, "[VERBOSE] Quantizing results to %d bits\n",
 			                 RsParameters::adcBits());
@@ -952,7 +952,7 @@ namespace
 		// Get the oversampling ratio
 		try
 		{
-			const rsFloat ratio = getChildRsFloat(root, "oversample");
+			const RS_FLOAT ratio = getChildRsFloat(root, "oversample");
 			RsParameters::modifyParms()->setOversampleRatio(static_cast<unsigned int>(std::floor(ratio)));
 		}
 		catch (XmlImportException& xe)

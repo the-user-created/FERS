@@ -1,6 +1,5 @@
 //Test the noise generation code from fers
 
-#include <config.h>
 #include <iostream>
 
 #include "rsnoise.h"

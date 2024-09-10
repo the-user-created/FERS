@@ -20,13 +20,13 @@ Object::~Object()
 }
 
 // Get the position of the object
-Vec3 Object::getPosition(const rsFloat time) const
+Vec3 Object::getPosition(const RS_FLOAT time) const
 {
 	return _platform->getPosition(time);
 }
 
 // Get the rotation of the object from it's platform
-SVec3 Object::getRotation(const rsFloat time) const
+SVec3 Object::getRotation(const RS_FLOAT time) const
 {
 	return _platform->getRotation(time);
 }

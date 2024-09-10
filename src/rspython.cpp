@@ -95,7 +95,7 @@ PythonPath::~PythonPath()
 }
 
 /// Get the position at a given time
-rs::Vec3 PythonPath::getPosition(const rsFloat t) const
+rs::Vec3 PythonPath::getPosition(const RS_FLOAT t) const
 {
 	//Insert t into a tuple for passing to the function
 	PyObject* pargs = PyTuple_Pack(1, PyFloat_FromDouble(t));
@@ -145,7 +145,7 @@ PythonNoise::~PythonNoise()
 }
 
 /// Get a noise sample
-rsFloat PythonNoise::getSample() const
+RS_FLOAT PythonNoise::getSample() const
 {
 	//Call the function
 	PyObject* result = PyObject_CallObject(_data->p_func, nullptr);
@@ -156,7 +156,7 @@ rsFloat PythonNoise::getSample() const
 		throw std::runtime_error("Call of function " + _function + " from module " + _module + " failed");
 	}
 	//Unpack the results
-	const rsFloat sample = PyFloat_AsDouble(result);
+	const RS_FLOAT sample = PyFloat_AsDouble(result);
 	Py_DECREF(result);
 	return sample;
 }
@@ -177,7 +177,7 @@ PythonAntennaMod::~PythonAntennaMod()
 }
 
 /// Get the antenna gain in the specified direction
-rsFloat PythonAntennaMod::getGain(const rs::SVec3& direction) const
+RS_FLOAT PythonAntennaMod::getGain(const rs::SVec3& direction) const
 {
 	//Insert t into a tuple for passing to the function
 	PyObject* pargs = PyTuple_Pack(2, PyFloat_FromDouble(direction.azimuth), PyFloat_FromDouble(direction.elevation));
@@ -197,7 +197,7 @@ rsFloat PythonAntennaMod::getGain(const rs::SVec3& direction) const
 		throw std::runtime_error("Call of function " + _function + " from module " + _module + " failed");
 	}
 	//Translate the result
-	const rsFloat sample = PyFloat_AsDouble(result);
+	const RS_FLOAT sample = PyFloat_AsDouble(result);
 	Py_DECREF(result);
 	return sample;
 }

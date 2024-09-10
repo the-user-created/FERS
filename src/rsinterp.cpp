@@ -27,43 +27,43 @@ class rs::InterpSetData
 {
 public:
 	///Load samples into the set
-	void loadSamples(const vector<rsFloat>& x, const vector<rsFloat>& y);
+	void loadSamples(const vector<RS_FLOAT>& x, const vector<RS_FLOAT>& y);
 
 	///Load a single sample into the set
-	void insertSample(rsFloat x, rsFloat y);
+	void insertSample(RS_FLOAT x, RS_FLOAT y);
 
 	///Get the interpolated value at a given point
-	rsFloat value(rsFloat x);
+	RS_FLOAT value(RS_FLOAT x);
 
 	/// Get the maximum value in the set
-	rsFloat max() const;
+	RS_FLOAT max() const;
 
 	/// Divide the set by a given number
-	void divide(rsFloat a);
+	void divide(RS_FLOAT a);
 
 private:
-	std::map<rsFloat, rsFloat> _data;
+	std::map<RS_FLOAT, RS_FLOAT> _data;
 };
 
 
 ///Load samples into the set
-void InterpSetData::loadSamples(const vector<rsFloat>& x, const vector<rsFloat>& y)
+void InterpSetData::loadSamples(const vector<RS_FLOAT>& x, const vector<RS_FLOAT>& y)
 {
-	vector<rsFloat>::const_iterator ix = x.begin();
-	for (vector<rsFloat>::const_iterator iy = y.begin(); (ix != x.end()) && (iy != y.end()); ++ix, ++iy)
+	vector<RS_FLOAT>::const_iterator ix = x.begin();
+	for (vector<RS_FLOAT>::const_iterator iy = y.begin(); (ix != x.end()) && (iy != y.end()); ++ix, ++iy)
 	{
-		_data.insert(pair<rsFloat, rsFloat>(*ix, *iy));
+		_data.insert(pair<RS_FLOAT, RS_FLOAT>(*ix, *iy));
 	}
 }
 
 ///Load a single sample into the set
-void InterpSetData::insertSample(rsFloat x, rsFloat y)
+void InterpSetData::insertSample(RS_FLOAT x, RS_FLOAT y)
 {
-	_data.insert(pair<rsFloat, rsFloat>(x, y));
+	_data.insert(pair<RS_FLOAT, RS_FLOAT>(x, y));
 }
 
 ///Get the interpolated value for the given point
-rsFloat InterpSetData::value(const rsFloat x)
+RS_FLOAT InterpSetData::value(const RS_FLOAT x)
 {
 	//Use linear interpolation, for now
 
@@ -73,13 +73,13 @@ rsFloat InterpSetData::value(const rsFloat x)
 		throw std::logic_error("[BUG] Interpolation on an empty list in InterpSet");
 	}
 	//Get the first element with a key greater than k
-	const map<rsFloat, rsFloat>::const_iterator iter = _data.lower_bound(x);
+	const map<RS_FLOAT, RS_FLOAT>::const_iterator iter = _data.lower_bound(x);
 	//If we are at the beginning of the set, return the value
 	if (iter == _data.begin())
 	{
 		return (*iter).second;
 	}
-	map<rsFloat, rsFloat>::const_iterator prev = iter;
+	map<RS_FLOAT, RS_FLOAT>::const_iterator prev = iter;
 	--prev;
 
 	//If we are over the end, return the last value
@@ -95,20 +95,20 @@ rsFloat InterpSetData::value(const rsFloat x)
 	//Perform linear interpolation
 	else
 	{
-		const rsFloat x1 = (*prev).first;
-		const rsFloat x2 = (*iter).first;
-		const rsFloat y1 = (*prev).second;
-		const rsFloat y2 = (*iter).second;
+		const RS_FLOAT x1 = (*prev).first;
+		const RS_FLOAT x2 = (*iter).first;
+		const RS_FLOAT y1 = (*prev).second;
+		const RS_FLOAT y2 = (*iter).second;
 		return y2 * (x - x1) / (x2 - x1) + y1 * (x2 - x) / (x2 - x1);
 	}
 }
 
 /// Get the maximum value in the set
-rsFloat InterpSetData::max() const
+RS_FLOAT InterpSetData::max() const
 {
-	rsFloat max = 0;
+	RS_FLOAT max = 0;
 	// Scan through the map, updating the maximum
-	for (map<rsFloat, rsFloat>::const_iterator iter = _data.begin(); iter != _data.end(); ++iter)
+	for (map<RS_FLOAT, RS_FLOAT>::const_iterator iter = _data.begin(); iter != _data.end(); ++iter)
 	{
 		if (std::fabs((*iter).second) > max)
 		{
@@ -119,9 +119,9 @@ rsFloat InterpSetData::max() const
 }
 
 /// Divide the set by a given number
-void InterpSetData::divide(const rsFloat a)
+void InterpSetData::divide(const RS_FLOAT a)
 {
-	for (map<rsFloat, rsFloat>::iterator iter = _data.begin(); iter != _data.end(); ++iter)
+	for (map<RS_FLOAT, RS_FLOAT>::iterator iter = _data.begin(); iter != _data.end(); ++iter)
 	{
 		(*iter).second /= a;
 	}
@@ -145,31 +145,31 @@ InterpSet::~InterpSet()
 }
 
 /// Load a number of samples into the set
-void InterpSet::loadSamples(const std::vector<rsFloat>& x, const std::vector<rsFloat>& y) const
+void InterpSet::loadSamples(const std::vector<RS_FLOAT>& x, const std::vector<RS_FLOAT>& y) const
 {
 	_data->loadSamples(x, y);
 }
 
 /// Load a single sample into the set
-void InterpSet::insertSample(const rsFloat x, const rsFloat y) const
+void InterpSet::insertSample(const RS_FLOAT x, const RS_FLOAT y) const
 {
 	_data->insertSample(x, y);
 }
 
 /// Get the interpolated value at the given point
-rsFloat InterpSet::value(const rsFloat x) const
+RS_FLOAT InterpSet::value(const RS_FLOAT x) const
 {
 	return _data->value(x);
 }
 
 /// Get the maximum value in the set
-rsFloat InterpSet::max() const
+RS_FLOAT InterpSet::max() const
 {
 	return _data->max();
 }
 
 /// Divide every sample in the set by a given number
-void InterpSet::divide(const rsFloat a) const
+void InterpSet::divide(const RS_FLOAT a) const
 {
 	_data->divide(a);
 }

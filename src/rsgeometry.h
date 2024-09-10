@@ -6,7 +6,7 @@
 #ifndef RS_GEOMETRY_H
 #define RS_GEOMETRY_H
 
-#include <config.h>
+#include "config.h"
 
 namespace rs_geometry
 {
@@ -20,7 +20,7 @@ namespace rs
 	class Matrix3
 	{
 	public:
-		rsFloat elements[9];
+		RS_FLOAT elements[9];
 
 		/// Default constructor
 		Matrix3();
@@ -29,22 +29,22 @@ namespace rs
 		~Matrix3();
 
 		/// Get a pointer to the element array
-		const rsFloat* getData() const;
+		const RS_FLOAT* getData() const;
 
-		rsFloat* getData();
+		RS_FLOAT* getData();
 	};
 
 	/// The Vec3 class is a rectangular 3 vector
 	class Vec3
 	{
 	public:
-		rsFloat x, y, z;
+		RS_FLOAT x, y, z;
 
 		/// Default constructor
 		Vec3();
 
 		/// Constructor which sets co-ordinates
-		Vec3(rsFloat x, rsFloat y, rsFloat z);
+		Vec3(RS_FLOAT x, RS_FLOAT y, RS_FLOAT z);
 
 		/// Constructor with a spherical vector
 		Vec3(const SVec3& svec);
@@ -66,16 +66,16 @@ namespace rs
 		Vec3& operator*=(const Matrix3& m); //!< Multiplication by a 3x3 matrix
 
 		//Scalar operations
-		Vec3& operator*=(const rsFloat b); //!< Multiplication by a scalar
-		Vec3& operator/=(const rsFloat b); //!< Division by a scalar
-		Vec3& operator+=(const rsFloat b); //!< Addition of a scalar
+		Vec3& operator*=(const RS_FLOAT b); //!< Multiplication by a scalar
+		Vec3& operator/=(const RS_FLOAT b); //!< Division by a scalar
+		Vec3& operator+=(const RS_FLOAT b); //!< Addition of a scalar
 
 		/// Return the length of the vector
-		rsFloat length() const;
+		RS_FLOAT length() const;
 	};
 
 	//Vector operations
-	rsFloat dotProduct(const Vec3& a, const Vec3& b); //!< Vector Inner product
+	RS_FLOAT dotProduct(const Vec3& a, const Vec3& b); //!< Vector Inner product
 	Vec3 crossProduct(const Vec3& a, const Vec3& b); //!< Vector Cross product
 	//Componentwise vector operations
 	Vec3 operator*(const Vec3& a, const Vec3& b); //!< Componentwise product
@@ -83,22 +83,22 @@ namespace rs
 	Vec3 operator-(const Vec3& a, const Vec3& b); //!< Componentwise subtract
 	Vec3 operator/(const Vec3& a, const Vec3& b); //!< Componentwise divide
 	//Scalar operations
-	Vec3 operator*(const Vec3& a, const rsFloat b); //!< Multiply by a scalar
-	Vec3 operator/(const Vec3& a, const rsFloat b); //!< Division by a scalar
-	Vec3 operator/(const rsFloat a, const Vec3& b); //!< Division by a scalar
+	Vec3 operator*(const Vec3& a, const RS_FLOAT b); //!< Multiply by a scalar
+	Vec3 operator/(const Vec3& a, const RS_FLOAT b); //!< Division by a scalar
+	Vec3 operator/(const RS_FLOAT a, const Vec3& b); //!< Division by a scalar
 
 	/// The SVec3 class is a vector in R^3, stored in spherical co-ordinates
 	class SVec3
 	{
 	public:
-		rsFloat length; //!< The length of the vector
-		rsFloat azimuth; //!< Angle in the x-y plane (radians)
-		rsFloat elevation; //!< Elevation angle above x-y plane (radians)
+		RS_FLOAT length; //!< The length of the vector
+		RS_FLOAT azimuth; //!< Angle in the x-y plane (radians)
+		RS_FLOAT elevation; //!< Elevation angle above x-y plane (radians)
 		/// Default constructor
 		SVec3();
 
 		/// Constructor with initializers
-		SVec3(rsFloat length, rsFloat azimuth, rsFloat elevation);
+		SVec3(RS_FLOAT length, RS_FLOAT azimuth, RS_FLOAT elevation);
 
 		/// Copy constructor
 		SVec3(const SVec3& svec);
@@ -112,8 +112,8 @@ namespace rs
 		//
 		//operators
 		//
-		SVec3& operator*=(rsFloat b); //!< multiplication by a scalar
-		SVec3& operator/=(rsFloat b); //!< division by a scalar
+		SVec3& operator*=(RS_FLOAT b); //!< multiplication by a scalar
+		SVec3& operator/=(RS_FLOAT b); //!< division by a scalar
 		// TODO: Need to develop a SVec3 overloaded operator for addition
 	};
 }

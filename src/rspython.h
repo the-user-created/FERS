@@ -5,9 +5,9 @@
 #ifndef RS_PYTHON_H
 #define RS_PYTHON_H
 
-#include <config.h>
 #include <string>
 
+#include "config.h"
 #include "rsgeometry.h"
 
 namespace rs_python
@@ -45,7 +45,7 @@ namespace rs_python
 		~PythonPath();
 
 		/// Get the position at the given time
-		rs::Vec3 getPosition(rsFloat t) const;
+		rs::Vec3 getPosition(RS_FLOAT t) const;
 	};
 
 	/// Python extension for generating noise
@@ -59,7 +59,7 @@ namespace rs_python
 		~PythonNoise();
 
 		/// Get a noise sample
-		rsFloat getSample() const;
+		RS_FLOAT getSample() const;
 	};
 
 	/// Python extension for generating noise
@@ -73,7 +73,7 @@ namespace rs_python
 		~PythonAntennaMod();
 
 		/// Get a noise sample
-		rsFloat getGain(const rs::SVec3& direction) const;
+		RS_FLOAT getGain(const rs::SVec3& direction) const;
 	};
 }
 

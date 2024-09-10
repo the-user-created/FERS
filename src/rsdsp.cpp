@@ -19,7 +19,7 @@ using namespace rs;
 namespace
 {
 	//Calculate sin(pi * x) / (pi*x)
-	rsFloat sinc(const rsFloat x)
+	RS_FLOAT sinc(const RS_FLOAT x)
 	{
 		if (x == 0)
 		{
@@ -29,18 +29,18 @@ namespace
 	}
 
 	/// Create a FIR filter using the Blackman window
-	rsFloat* blackmanFir(const rsFloat cutoff, int& length)
+	RS_FLOAT* blackmanFir(const RS_FLOAT cutoff, int& length)
 	{
 		// Use double the render filter length, for faster rolloff than the render filter
 		length = RsParameters::renderFilterLength() * 2;
-		rsFloat* coeffs = new rsFloat[length];
-		const rsFloat n = length / 2.0;
+		RS_FLOAT* coeffs = new RS_FLOAT[length];
+		const RS_FLOAT n = length / 2.0;
 		for (int i = 0; i < length; i++)
 		{
-			const rsFloat filt = sinc(cutoff * (i - n));
+			const RS_FLOAT filt = sinc(cutoff * (i - n));
 			// We use the Blackman window, for a suitable tradeoff between rolloff and stopband attenuation
 			// Equivalent Kaiser beta = 7.04 (Oppenhiem and Schaffer, Hamming)
-			const rsFloat window = 0.42 - 0.5 * cos(M_PI * i / n) + 0.08 * cos(2 * M_PI * i / n);
+			const RS_FLOAT window = 0.42 - 0.5 * cos(M_PI * i / n) + 0.08 * cos(2 * M_PI * i / n);
 			coeffs[i] = filt * window;
 		}
 		return coeffs;
@@ -55,7 +55,7 @@ void rs::upsample(const RsComplex* in, const int size, RsComplex* out, const int
 {
 	/// Design the FIR filter for de-imaging
 	int filt_length;
-	const rsFloat* coeffs = blackmanFir(1 / static_cast<rsFloat>(ratio), filt_length);
+	const RS_FLOAT* coeffs = blackmanFir(1 / static_cast<RS_FLOAT>(ratio), filt_length);
 
 	// Temporary buffer for zero padding and results
 	RsComplex* tmp = new RsComplex[size * ratio + filt_length];
@@ -91,7 +91,7 @@ void rs::downsample(const RsComplex* in, const int size, RsComplex* out, const i
 {
 	/// Design the FIR filter for anti-aliasing
 	int filt_length;
-	const rsFloat* coeffs = blackmanFir(1 / static_cast<rsFloat>(ratio), filt_length);
+	const RS_FLOAT* coeffs = blackmanFir(1 / static_cast<RS_FLOAT>(ratio), filt_length);
 	// Temporary buffer for zero padding and results
 	RsComplex* tmp = new RsComplex[size + filt_length];
 	for (int i = size - 1; i < size + filt_length; i++)
@@ -110,7 +110,7 @@ void rs::downsample(const RsComplex* in, const int size, RsComplex* out, const i
 	//Copy the results to the output buffer
 	for (int i = 0; i < size / ratio; i++)
 	{
-		out[i] = tmp[i * ratio + filt_length / 2] / static_cast<rsFloat>(ratio);
+		out[i] = tmp[i * ratio + filt_length / 2] / static_cast<RS_FLOAT>(ratio);
 		//    printf("%f+%fi\n", out[i].real(), out[i].imag());
 	}
 	// Clean up
@@ -137,7 +137,7 @@ DspFilter::~DspFilter()
 //
 
 /// Constructor
-IirFilter::IirFilter(const std::vector<rsFloat>& denCoeffs, const std::vector<rsFloat>& numCoeffs)
+IirFilter::IirFilter(const std::vector<RS_FLOAT>& denCoeffs, const std::vector<RS_FLOAT>& numCoeffs)
 {
 	//Get the filter order
 	_order = denCoeffs.size();
@@ -147,9 +147,9 @@ IirFilter::IirFilter(const std::vector<rsFloat>& denCoeffs, const std::vector<rs
 		throw std::logic_error("IIRFilter does not currently support mixed order filters");
 	}
 	//Allocate memory to store co-efficients and state
-	_a = new rsFloat[_order];
-	_b = new rsFloat[_order];
-	_w = new rsFloat[_order];
+	_a = new RS_FLOAT[_order];
+	_b = new RS_FLOAT[_order];
+	_w = new RS_FLOAT[_order];
 	//Load the co-efficients from the vectors into the arrays
 	for (unsigned int i = 0; i < _order; i++)
 	{
@@ -160,12 +160,12 @@ IirFilter::IirFilter(const std::vector<rsFloat>& denCoeffs, const std::vector<rs
 }
 
 /// Constructor
-IirFilter::IirFilter(const rsFloat* denCoeffs, const rsFloat* numCoeffs, const unsigned int order):
+IirFilter::IirFilter(const RS_FLOAT* denCoeffs, const RS_FLOAT* numCoeffs, const unsigned int order):
 	_order(order)
 {
-	_a = new rsFloat[order];
-	_b = new rsFloat[order];
-	_w = new rsFloat[order];
+	_a = new RS_FLOAT[order];
+	_b = new RS_FLOAT[order];
+	_w = new RS_FLOAT[order];
 	// Load the coefficients into the arrays
 	for (unsigned int i = 0; i < order; i++)
 	{
@@ -185,7 +185,7 @@ IirFilter::~IirFilter()
 }
 
 /// Pass a single sample through the filter
-rsFloat IirFilter::filter(const rsFloat sample)
+RS_FLOAT IirFilter::filter(const RS_FLOAT sample)
 {
 	//Shift the filter state
 	for (unsigned int j = _order - 1; j > 0; j--)
@@ -199,7 +199,7 @@ rsFloat IirFilter::filter(const rsFloat sample)
 		_w[0] -= _a[j] * _w[j];
 	}
 	//Calculate y[n]
-	rsFloat out = 0;
+	RS_FLOAT out = 0;
 	for (unsigned int j = 0; j < _order; j++)
 	{
 		out += _b[j] * _w[j];
@@ -208,7 +208,7 @@ rsFloat IirFilter::filter(const rsFloat sample)
 }
 
 /// Pass an array of samples through the filter, filtering in place
-void IirFilter::filter(rsFloat* samples, const int size)
+void IirFilter::filter(RS_FLOAT* samples, const int size)
 {
 	for (int i = 0; i < size; i++)
 	{
@@ -237,13 +237,13 @@ void IirFilter::filter(rsFloat* samples, const int size)
 //
 
 /// Constructor
-FirFilter::FirFilter(const std::vector<rsFloat>& coeffs)
+FirFilter::FirFilter(const std::vector<RS_FLOAT>& coeffs)
 {
 	//Get the filter order
 	_order = coeffs.size();
 	//Allocate memory to store co-efficients and state
-	_filter = new rsFloat[_order];
-	_w = new rsFloat[_order];
+	_filter = new RS_FLOAT[_order];
+	_w = new RS_FLOAT[_order];
 	//Load the co-efficients from the vectors into the arrays
 	for (unsigned int i = 0; i < _order; i++)
 	{
@@ -253,12 +253,12 @@ FirFilter::FirFilter(const std::vector<rsFloat>& coeffs)
 }
 
 /// Constructor from coeffs
-FirFilter::FirFilter(const rsFloat* coeffs, const int count)
+FirFilter::FirFilter(const RS_FLOAT* coeffs, const int count)
 {
 	_order = count;
 	// Allocate memory to store co-efficients and state
-	_filter = new rsFloat[_order];
-	_w = new rsFloat[_order];
+	_filter = new RS_FLOAT[_order];
+	_w = new RS_FLOAT[_order];
 	// Load the co-efficients
 	for (unsigned int i = 0; i < _order; i++)
 	{
@@ -276,7 +276,7 @@ FirFilter::~FirFilter()
 }
 
 /// Pass a single sample through the filter
-inline rsFloat FirFilter::filter(rsFloat sample)
+inline RS_FLOAT FirFilter::filter(RS_FLOAT sample)
 {
 	return 0;
 }
@@ -284,16 +284,16 @@ inline rsFloat FirFilter::filter(rsFloat sample)
 /// Pass an array of samples through the filter, filtering in place
 // See Oppenheim and Scaffer, section 6.5 "Basic Network Structures for FIR Systems"
 // TODO: Implement one of the more efficient FIR filter forms
-inline void FirFilter::filter(rsFloat* samples, const int size)
+inline void FirFilter::filter(RS_FLOAT* samples, const int size)
 {
 	// Allocate memory for a delay line, equal to the filter length
-	rsFloat* line = new rsFloat[_order];
-	std::memset(line, 0, sizeof(rsFloat) * _order);
+	RS_FLOAT* line = new RS_FLOAT[_order];
+	std::memset(line, 0, sizeof(RS_FLOAT) * _order);
 	// Perform the inplace convolution with the pulse
 	for (int i = 0; i < size; i++)
 	{
 		line[0] = samples[i];
-		rsFloat res = 0;
+		RS_FLOAT res = 0;
 		for (unsigned int j = 0; j < _order; j++)
 		{
 			res += line[_order - j - 1] * _filter[j];
@@ -310,7 +310,7 @@ inline void FirFilter::filter(rsFloat* samples, const int size)
 }
 
 /// Pass an array of complex samples through the filter, filtering in place
-inline void FirFilter::filter(std::complex<rsFloat>* samples, const int size) const
+inline void FirFilter::filter(std::complex<RS_FLOAT>* samples, const int size) const
 {
 	// Allocate memory for a delay line, equal to the filter length
 	RsComplex* line = new RsComplex[_order];
@@ -344,13 +344,13 @@ inline void FirFilter::filter(std::complex<rsFloat>* samples, const int size) co
 
 
 /// Constructor
-ArFilter::ArFilter(const std::vector<rsFloat>& coeffs)
+ArFilter::ArFilter(const std::vector<RS_FLOAT>& coeffs)
 {
 	//Get the filter order
 	_order = coeffs.size();
 	//Allocate memory to store co-efficients and state
-	_filter = new rsFloat[_order];
-	_w = new rsFloat[_order];
+	_filter = new RS_FLOAT[_order];
+	_w = new RS_FLOAT[_order];
 	//Load the co-efficients from the vectors into the arrays
 	for (unsigned int i = 0; i < _order; i++)
 	{
@@ -368,7 +368,7 @@ ArFilter::~ArFilter()
 }
 
 /// Pass a single sample through the filter
-rsFloat ArFilter::filter(const rsFloat sample)
+RS_FLOAT ArFilter::filter(const RS_FLOAT sample)
 {
 	//Shift the filter state
 	for (unsigned int j = _order - 1; j > 0; j--)
@@ -386,7 +386,7 @@ rsFloat ArFilter::filter(const rsFloat sample)
 }
 
 /// Pass an array of samples through the filter, filtering in place
-void ArFilter::filter(rsFloat* samples, const int size)
+void ArFilter::filter(RS_FLOAT* samples, const int size)
 {
 	for (int i = 0; i < size; i++)
 	{
@@ -417,17 +417,17 @@ Upsampler::Upsampler(const int ratio):
 	//Create the FIR interpolation filter
 	_filter_size = 8 * ratio + 1; // 8*ratio should give adequate performance
 	//Allocate memory for the filter bank
-	_filterbank = new rsFloat[_filter_size];
+	_filterbank = new RS_FLOAT[_filter_size];
 	// Simple windowed sinc filter design procedure
 	for (int i = 0; i < _filter_size; i++)
 	{
 		// The Hamming window provides a solid tradeoff between rolloff and stopband attenuation
-		const rsFloat window_value = 0.54 - 0.46 * std::cos(2 * M_PI * i / static_cast<rsFloat>(_filter_size));
-		const rsFloat filter_value = sinc(1.0 / static_cast<rsFloat>(ratio) * (i - _filter_size / 2));
+		const RS_FLOAT window_value = 0.54 - 0.46 * std::cos(2 * M_PI * i / static_cast<RS_FLOAT>(_filter_size));
+		const RS_FLOAT filter_value = sinc(1.0 / static_cast<RS_FLOAT>(ratio) * (i - _filter_size / 2));
 		_filterbank[i] = filter_value * window_value;
 	}
 	//Allocate memory for the sample state
-	_sample_memory = new rsFloat[_filter_size / ratio + 1];
+	_sample_memory = new RS_FLOAT[_filter_size / ratio + 1];
 	//Clear sample memory to zero
 	for (int i = 0; i < _filter_size / ratio + 1; i++)
 	{
@@ -444,7 +444,7 @@ Upsampler::~Upsampler()
 }
 
 //Get a sample, from either the provided pointer or sample memory
-inline rsFloat Upsampler::getSample(const rsFloat* samples, const int n) const
+inline RS_FLOAT Upsampler::getSample(const RS_FLOAT* samples, const int n) const
 {
 	if (n >= 0)
 	{
@@ -457,7 +457,7 @@ inline rsFloat Upsampler::getSample(const rsFloat* samples, const int n) const
 }
 
 /// Upsamples a signal and applies an anti-imaging filter
-void Upsampler::upsample(const rsFloat* inSamples, const int inSize, rsFloat* outSamples, const int outSize) const
+void Upsampler::upsample(const RS_FLOAT* inSamples, const int inSize, RS_FLOAT* outSamples, const int outSize) const
 {
 	//Check the target array size
 	if (outSize != (_ratio * inSize))
@@ -484,7 +484,7 @@ void Upsampler::upsample(const rsFloat* inSamples, const int inSize, rsFloat* ou
 	//Update the sample history
 	if (const int transfer_size = _filter_size / _ratio + 1; inSize >= transfer_size)
 	{
-		memcpy(_sample_memory, &(inSamples[inSize - transfer_size]), transfer_size * sizeof(rsFloat));
+		memcpy(_sample_memory, &(inSamples[inSize - transfer_size]), transfer_size * sizeof(RS_FLOAT));
 	}
 	else
 	{
@@ -510,7 +510,7 @@ DecadeUpsampler::DecadeUpsampler()
 {
 	/// 11th order elliptic lowpass at 0.1fs
 	constexpr
-	rsFloat den_coeffs[12] = {
+	RS_FLOAT den_coeffs[12] = {
 		1.0,
 		-10.301102119865,
 		48.5214567642597,
@@ -526,7 +526,7 @@ DecadeUpsampler::DecadeUpsampler()
 	};
 
 	constexpr
-	rsFloat num_coeffs[12] = {
+	RS_FLOAT num_coeffs[12] = {
 		2.7301694322809e-06,
 		-1.8508123430239e-05,
 		5.75739466753894e-05,
@@ -552,7 +552,7 @@ DecadeUpsampler::~DecadeUpsampler()
 
 
 ///Upsample a single sample at a time
-void DecadeUpsampler::upsample(const rsFloat sample, rsFloat* out) const
+void DecadeUpsampler::upsample(const RS_FLOAT sample, RS_FLOAT* out) const
 {
 	// Prepare the output array
 	out[0] = sample;
@@ -565,7 +565,7 @@ void DecadeUpsampler::upsample(const rsFloat sample, rsFloat* out) const
 }
 
 // Upsample a whole batch of samples
-void DecadeUpsampler::upsample(const rsFloat* in, const int count, rsFloat* out) const
+void DecadeUpsampler::upsample(const RS_FLOAT* in, const int count, RS_FLOAT* out) const
 {
 	/// Prepare the array for filtering
 	for (int i = 0; i < count; i++)

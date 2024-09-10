@@ -15,7 +15,7 @@
 using namespace rs;
 
 //One of the xml utility functions from xmlimport.cpp
-rsFloat getNodeFloat(const TiXmlHandle& node);
+RS_FLOAT getNodeFloat(const TiXmlHandle& node);
 
 //
 // RCSModel Implementation
@@ -31,7 +31,7 @@ RcsModel::~RcsModel()
 //
 
 /// Return a constant RCS
-rsFloat RcsConst::sampleModel()
+RS_FLOAT RcsConst::sampleModel()
 {
 	return 1.0;
 }
@@ -45,7 +45,7 @@ RcsConst::~RcsConst()
 // RCSChiSquare Implementation
 
 /// Constructor
-RcsChiSquare::RcsChiSquare(const rsFloat k)
+RcsChiSquare::RcsChiSquare(const RS_FLOAT k)
 {
 	_gen = new GammaGenerator(k);
 }
@@ -57,7 +57,7 @@ RcsChiSquare::~RcsChiSquare()
 }
 
 /// Get an RCS based on the Swerling II model and the mean RCS
-rsFloat RcsChiSquare::sampleModel()
+RS_FLOAT RcsChiSquare::sampleModel()
 {
 	return _gen->getSample();
 }
@@ -102,7 +102,7 @@ void Target::setFluctuationModel(RcsModel* in)
 //
 
 /// Constructor
-IsoTarget::IsoTarget(const Platform* platform, const std::string& name, const rsFloat rcs):
+IsoTarget::IsoTarget(const Platform* platform, const std::string& name, const RS_FLOAT rcs):
 	Target(platform, name),
 	_rcs(rcs)
 {
@@ -114,7 +114,7 @@ IsoTarget::~IsoTarget()
 }
 
 /// Return the RCS at the given angle
-rsFloat IsoTarget::getRcs(SVec3& inAngle, SVec3& outAngle) const
+RS_FLOAT IsoTarget::getRcs(SVec3& inAngle, SVec3& outAngle) const
 {
 	if (_model)
 	{
@@ -150,11 +150,11 @@ FileTarget::~FileTarget()
 
 
 /// Return the RCS at the given angle
-rsFloat FileTarget::getRcs(SVec3& inAngle, SVec3& outAngle) const
+RS_FLOAT FileTarget::getRcs(SVec3& inAngle, SVec3& outAngle) const
 {
 	//Currently uses a half angle approximation, this needs to be improved
 	const SVec3 t_angle = inAngle + outAngle;
-	const rsFloat rcs = std::sqrt(
+	const RS_FLOAT rcs = std::sqrt(
 		_azi_samples->value(t_angle.azimuth / 2.0) * _elev_samples->value(t_angle.elevation / 2.0));
 	if (_model)
 	{
@@ -181,14 +181,14 @@ namespace
 			{
 				throw std::runtime_error("[ERROR] Misformed XML in target description: No angle in rcssample");
 			}
-			const rsFloat angle = getNodeFloat(angle_xml);
+			const RS_FLOAT angle = getNodeFloat(angle_xml);
 			//Load the gain of the gain sample
 			TiXmlHandle gain_xml = tmp.ChildElement("rcs", 0);
 			if (!gain_xml.Element())
 			{
 				throw std::runtime_error("[ERROR] Misformed XML in target description: No rcs in rcssample");
 			}
-			const rsFloat gain = getNodeFloat(gain_xml);
+			const RS_FLOAT gain = getNodeFloat(gain_xml);
 			//Load the values into the interpolation table
 			set->insertSample(angle, gain);
 			//Get the next gainsample in the file
@@ -229,7 +229,7 @@ void FileTarget::loadRcsDescription(const std::string& filename) const
 //
 
 /// Create an isometric radiator target
-Target* rs::createIsoTarget(const Platform* platform, const std::string& name, const rsFloat rcs)
+Target* rs::createIsoTarget(const Platform* platform, const std::string& name, const RS_FLOAT rcs)
 {
 	return new IsoTarget(platform, name, rcs);
 }

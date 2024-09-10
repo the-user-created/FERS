@@ -1,6 +1,5 @@
 //Test the clock model code from fers
 
-#include <config.h>
 #include <iostream>
 #include <sstream>
 

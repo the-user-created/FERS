@@ -12,10 +12,10 @@ using namespace rs;
 //
 
 /// Constructor
-MultipathSurface::MultipathSurface(const rsFloat a, const rsFloat b, const rsFloat c, const rsFloat d, const rsFloat factor):
+MultipathSurface::MultipathSurface(const RS_FLOAT a, const RS_FLOAT b, const RS_FLOAT c, const RS_FLOAT d, const RS_FLOAT factor):
 	_factor(factor)
 {
-	rsFloat* mat = _reflection.getData();
+	RS_FLOAT* mat = _reflection.getData();
 	//Fill the reflection matrix
 	mat[0] = -a * a + b * b + c * c;
 	mat[4] = a * a - b * b + c * c;
@@ -47,7 +47,7 @@ Vec3 MultipathSurface::reflectPoint(const Vec3& b) const
 }
 
 /// Get the reflectance factor
-rsFloat MultipathSurface::getFactor() const
+RS_FLOAT MultipathSurface::getFactor() const
 {
 	return _factor;
 }

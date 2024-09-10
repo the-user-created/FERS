@@ -8,7 +8,7 @@
 #ifndef RS_PARAMETERS_H
 #define RS_PARAMETERS_H
 
-#include <config.h>
+#include "config.h"
 
 namespace rs_parms
 {
@@ -25,22 +25,22 @@ namespace rs
 		static RsParameters* modifyParms();
 
 		/// Get the value of c (propagation speed in the medium)
-		static rsFloat c();
+		static RS_FLOAT c();
 
 		/// Get the value of boltzmann's constant
-		static rsFloat boltzmannK();
+		static RS_FLOAT boltzmannK();
 
 		/// Get the value of start (start time of the simulation)
-		static rsFloat startTime();
+		static RS_FLOAT startTime();
 
 		/// Get the value of end (end time of the simulation)
-		static rsFloat endTime();
+		static RS_FLOAT endTime();
 
 		/// Get the CW interpolation sample rate
-		static rsFloat cwSampleRate();
+		static RS_FLOAT cwSampleRate();
 
 		/// Get the oversample factor
-		static rsFloat rate();
+		static RS_FLOAT rate();
 
 		/// Get the current random seed
 		static unsigned int randomSeed();
@@ -70,16 +70,16 @@ namespace rs
 		static unsigned int oversampleRatio();
 
 		/// Set the value of c
-		static void setC(rsFloat c);
+		static void setC(RS_FLOAT c);
 
 		/// Set the start and end times
-		static void setTime(rsFloat start, rsFloat end);
+		static void setTime(RS_FLOAT start, RS_FLOAT end);
 
 		/// Set the CW sample rate
-		static void setCwSampleRate(rsFloat rate);
+		static void setCwSampleRate(RS_FLOAT rate);
 
 		/// Set the export sample rate
-		static void setRate(rsFloat factor);
+		static void setRate(RS_FLOAT factor);
 
 		/// Set the random seed
 		static void setRandomSeed(unsigned int randomSeed);

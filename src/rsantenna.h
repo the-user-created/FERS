@@ -6,9 +6,9 @@
 #ifndef RS_ANTENNA_H
 #define RS_ANTENNA_H
 
-#include <config.h>
 #include <string>
 
+#include "config.h"
 #include "rsgeometry.h"
 #include "rspython.h"
 #include "boost/utility.hpp"
@@ -35,27 +35,27 @@ namespace rs
 		virtual ~Antenna();
 
 		/// Returns the current gain at a particular angle
-		virtual rsFloat getGain(const SVec3& angle, const SVec3& refangle, rsFloat wavelength) const = 0;
+		virtual RS_FLOAT getGain(const SVec3& angle, const SVec3& refangle, RS_FLOAT wavelength) const = 0;
 
 		/// Returns the noise temperature at a particular angle
-		virtual rsFloat getNoiseTemperature(const SVec3& angle) const;
+		virtual RS_FLOAT getNoiseTemperature(const SVec3& angle) const;
 
 		/// Set the antenna's loss factor (values > 1 are physically impossible)
-		void setEfficiencyFactor(rsFloat loss);
+		void setEfficiencyFactor(RS_FLOAT loss);
 
 		/// Gets the Loss Factor
-		rsFloat getEfficiencyFactor() const;
+		RS_FLOAT getEfficiencyFactor() const;
 
 		/// Return the name of the antenna
 		std::string getName() const;
 
 	protected:
 		/// Get the angle off boresight
-		static rsFloat getAngle(const SVec3& angle, const SVec3& refangle);
+		static RS_FLOAT getAngle(const SVec3& angle, const SVec3& refangle);
 
 	private:
 		/// The loss factor for this antenna
-		rsFloat _loss_factor; //!< Loss factor
+		RS_FLOAT _loss_factor; //!< Loss factor
 		/// The name of the antenna
 		std::string _name;
 	};
@@ -76,16 +76,16 @@ namespace rs
 
 	/// Create a Sinc Pattern Antenna
 	// see rsantenna.cpp for meaning of alpha and beta
-	Antenna* createSincAntenna(const std::string& name, rsFloat alpha, rsFloat beta, rsFloat gamma);
+	Antenna* createSincAntenna(const std::string& name, RS_FLOAT alpha, RS_FLOAT beta, RS_FLOAT gamma);
 
 	/// Create a Gaussian Pattern Antenna
-	Antenna* createGaussianAntenna(const std::string& name, rsFloat azscale, rsFloat elscale);
+	Antenna* createGaussianAntenna(const std::string& name, RS_FLOAT azscale, RS_FLOAT elscale);
 
 	/// Create a Square Horn Antenna
-	Antenna* createHornAntenna(const std::string& name, rsFloat dimension);
+	Antenna* createHornAntenna(const std::string& name, RS_FLOAT dimension);
 
 	/// Create a parabolic reflector dish
-	Antenna* createParabolicAntenna(const std::string& name, rsFloat diameter);
+	Antenna* createParabolicAntenna(const std::string& name, RS_FLOAT diameter);
 }
 
 namespace rs_antenna
@@ -101,7 +101,7 @@ namespace rs_antenna
 		virtual ~Isotropic();
 
 		/// Get the gain at an angle
-		virtual rsFloat getGain(const rs::SVec3& angle, const rs::SVec3& refangle, rsFloat wavelength) const;
+		virtual RS_FLOAT getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const;
 	};
 
 	//Antenna with a sinc (sinx/x) radiation pattern
@@ -109,18 +109,18 @@ namespace rs_antenna
 	{
 	public:
 		/// Constructor
-		Sinc(const std::string& name, rsFloat alpha, rsFloat beta, rsFloat gamma);
+		Sinc(const std::string& name, RS_FLOAT alpha, RS_FLOAT beta, RS_FLOAT gamma);
 
 		/// Destructor
 		virtual ~Sinc();
 
 		/// Get the gain at an angle
-		virtual rsFloat getGain(const rs::SVec3& angle, const rs::SVec3& refangle, rsFloat wavelength) const;
+		virtual RS_FLOAT getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const;
 
 	private:
-		rsFloat _alpha; //!< First parameter (see equations.tex)
-		rsFloat _beta; //!< Second parameter (see equations.tex)
-		rsFloat _gamma; //!< Third parameter (see equations.tex)
+		RS_FLOAT _alpha; //!< First parameter (see equations.tex)
+		RS_FLOAT _beta; //!< Second parameter (see equations.tex)
+		RS_FLOAT _gamma; //!< Third parameter (see equations.tex)
 	};
 
 	//Antenna with a Gaussian radiation pattern
@@ -128,17 +128,17 @@ namespace rs_antenna
 	{
 	public:
 		/// Constructor
-		Gaussian(const std::string& name, rsFloat azscale, rsFloat elscale);
+		Gaussian(const std::string& name, RS_FLOAT azscale, RS_FLOAT elscale);
 
 		/// Destructor
 		virtual ~Gaussian();
 
 		/// Get the gain at an angle
-		virtual rsFloat getGain(const rs::SVec3& angle, const rs::SVec3& refangle, rsFloat wavelength) const;
+		virtual RS_FLOAT getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const;
 
 	private:
-		rsFloat _azscale; //!< Azimuth scale parameter
-		rsFloat _elscale; //!< Elevation scale parameter
+		RS_FLOAT _azscale; //!< Azimuth scale parameter
+		RS_FLOAT _elscale; //!< Elevation scale parameter
 	};
 
 	/// Square horn antenna
@@ -146,16 +146,16 @@ namespace rs_antenna
 	{
 	public:
 		/// Constructor
-		SquareHorn(const std::string& name, rsFloat dimension);
+		SquareHorn(const std::string& name, RS_FLOAT dimension);
 
 		/// Default destructor
 		~SquareHorn();
 
 		/// Get the gain at an angle
-		rsFloat getGain(const rs::SVec3& angle, const rs::SVec3& refangle, rsFloat wavelength) const;
+		RS_FLOAT getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const;
 
 	private:
-		rsFloat _dimension; //!< The linear size of the horn
+		RS_FLOAT _dimension; //!< The linear size of the horn
 	};
 
 	/// Parabolic dish antenna
@@ -163,16 +163,16 @@ namespace rs_antenna
 	{
 	public:
 		/// Constructor
-		ParabolicReflector(const std::string& name, rsFloat diameter);
+		ParabolicReflector(const std::string& name, RS_FLOAT diameter);
 
 		/// Default destructor
 		~ParabolicReflector();
 
 		/// Get the gain at an angle
-		rsFloat getGain(const rs::SVec3& angle, const rs::SVec3& refangle, rsFloat wavelength) const;
+		RS_FLOAT getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const;
 
 	private:
-		rsFloat _diameter;
+		RS_FLOAT _diameter;
 	};
 
 	/// Antenna with gain pattern loaded from and XML description file
@@ -186,13 +186,13 @@ namespace rs_antenna
 		~XmlAntenna();
 
 		/// Get the gain at an angle
-		rsFloat getGain(const rs::SVec3& angle, const rs::SVec3& refangle, rsFloat wavelength) const;
+		RS_FLOAT getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const;
 
 	private:
 		/// Load data from the antenna description file
 		void loadAntennaDescription(const std::string& filename);
 
-		rsFloat _max_gain; //!< Maximum Antenna gain
+		RS_FLOAT _max_gain; //!< Maximum Antenna gain
 		rs::InterpSet* _azi_samples; //!< Samples in the azimuth direction
 		rs::InterpSet* _elev_samples; //!< Samples in the elevation direction
 	};
@@ -208,7 +208,7 @@ namespace rs_antenna
 		~FileAntenna();
 
 		/// Get the gain at an angle
-		rsFloat getGain(const rs::SVec3& angle, const rs::SVec3& refangle, rsFloat wavelength) const;
+		RS_FLOAT getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const;
 
 	private:
 		/// The antenna gain pattern
@@ -226,7 +226,7 @@ namespace rs_antenna
 		~PythonAntenna();
 
 		/// Get the gain at an angle
-		rsFloat getGain(const rs::SVec3& angle, const rs::SVec3& refangle, rsFloat wavelength) const;
+		RS_FLOAT getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const;
 
 	private:
 		rs_python::PythonAntennaMod _py_antenna;
