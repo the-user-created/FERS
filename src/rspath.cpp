@@ -18,7 +18,7 @@ using namespace rs;
 
 //Static "interpolation" function - the path is at the same point all the time
 template <typename T>
-void GetPositionStatic(rsFloat t, T& coord, const std::vector<T>& coords)
+void getPositionStatic(rsFloat t, T& coord, const std::vector<T>& coords)
 {
 	if (coords.empty())
 	{
@@ -29,13 +29,13 @@ void GetPositionStatic(rsFloat t, T& coord, const std::vector<T>& coords)
 
 //Linear interpolation function
 template <typename T>
-void GetPositionLinear(rsFloat t, T& coord, const std::vector<T>& coords)
+void getPositionLinear(rsFloat t, T& coord, const std::vector<T>& coords)
 {
-	T sKey;
-	sKey = 0;
-	sKey.t = t;
+	T s_key;
+	s_key = 0;
+	s_key.t = t;
 	typename std::vector<T>::const_iterator xrp;
-	xrp = upper_bound(coords.begin(), coords.end(), sKey);
+	xrp = upper_bound(coords.begin(), coords.end(), s_key);
 	//Check if we are over one of the end points
 	if (xrp == coords.begin())
 	{
@@ -65,14 +65,14 @@ void GetPositionLinear(rsFloat t, T& coord, const std::vector<T>& coords)
 //The method used (but not the code) is from
 //Numerical Recipes in C, Second Edition by Press, et al. pages 114-116
 template <typename T>
-void GetPositionCubic(rsFloat t, T& coord, const std::vector<T>& coords, const std::vector<T>& dd)
+void getPositionCubic(rsFloat t, T& coord, const std::vector<T>& coords, const std::vector<T>& dd)
 {
-	T sKey;
-	sKey = 0;
-	sKey.t = t;
+	T s_key;
+	s_key = 0;
+	s_key.t = t;
 	typename std::vector<T>::const_iterator xrp;
 	//Check that we are finalized, if not, complain
-	xrp = upper_bound(coords.begin(), coords.end(), sKey);
+	xrp = upper_bound(coords.begin(), coords.end(), s_key);
 	//Check if we are over one of the end points
 	if (xrp == coords.begin())
 	{
@@ -89,8 +89,8 @@ void GetPositionCubic(rsFloat t, T& coord, const std::vector<T>& coords, const s
 		int xli = xri - 1;
 		const rsFloat xrd = (coords[xri].t - t), xld = (t - coords[xli].t), iw = (coords[xri].t - coords[xli].t), iws = iw *
 			        iw / 6.0;
-		rsFloat A = xrd / iw, B = xld / iw, C = (A * A * A - A) * iws, D = (B * B * B - B) * iws;
-		coord = coords[xli] * A + coords[xri] * B + dd[xli] * C + dd[xri] * D;
+		rsFloat a = xrd / iw, b = xld / iw, c = (a * a * a - a) * iws, d = (b * b * b - b) * iws;
+		coord = coords[xli] * a + coords[xri] * b + dd[xli] * c + dd[xri] * d;
 	}
 	//Set the time part of the coordinate
 	coord.t = t;
@@ -134,47 +134,47 @@ void finalizeCubic(std::vector<T>& coords, std::vector<T>& dd)
 // Path Implementation
 //
 Path::Path(const Path::InterpType type):
-	final(false), type(type)
+	_final(false), _type(type)
 {
-	pythonpath = nullptr; //No python path, until loaded
+	_pythonpath = nullptr; //No python path, until loaded
 }
 
-void Path::AddCoord(const Coord& coord)
+void Path::addCoord(const Coord& coord)
 {
 	//Find the position to insert the coordinate, preserving sort
-	const std::vector<Coord>::iterator iter = lower_bound(coords.begin(), coords.end(), coord);
+	const std::vector<Coord>::iterator iter = lower_bound(_coords.begin(), _coords.end(), coord);
 	//Insert the new coordinate
-	coords.insert(iter, coord);
+	_coords.insert(iter, coord);
 	//We are not finalized if we have inserted a coord
-	final = false;
+	_final = false;
 }
 
 //Get the position of the path object at a specified time
-Vec3 Path::GetPosition(const rsFloat t) const
+Vec3 Path::getPosition(const rsFloat t) const
 {
 	Coord coord;
-	if (!final)
+	if (!_final)
 	{
 		throw PathException("Finalize not called before GetPosition");
 	}
 	//Call the interpolation function relevent to the type
-	switch (type)
+	switch (_type)
 	{
 	case RS_INTERP_STATIC:
-		GetPositionStatic<Coord>(t, coord, coords);
+		getPositionStatic<Coord>(t, coord, _coords);
 		break;
 	case RS_INTERP_LINEAR:
-		GetPositionLinear<Coord>(t, coord, coords);
+		getPositionLinear<Coord>(t, coord, _coords);
 		break;
 	case RS_INTERP_CUBIC:
-		GetPositionCubic<Coord>(t, coord, coords, dd);
+		getPositionCubic<Coord>(t, coord, _coords, _dd);
 		break;
 	case RS_INTERP_PYTHON:
-		if (!pythonpath)
+		if (!_pythonpath)
 		{
 			throw std::logic_error("Python path GetPosition called before module loaded");
 		}
-		return pythonpath->GetPosition(t);
+		return _pythonpath->getPosition(t);
 		break;
 	}
 	//Return the position part of the result
@@ -182,76 +182,76 @@ Vec3 Path::GetPosition(const rsFloat t) const
 }
 
 //Finalize the path - doing some once-per-path calculations if necessary
-void Path::Finalize()
+void Path::finalize()
 {
-	if (!final)
+	if (!_final)
 	{
-		switch (type)
+		switch (_type)
 		{
 		case RS_INTERP_STATIC:
 			break;
 		case RS_INTERP_LINEAR:
 			break;
 		case RS_INTERP_CUBIC:
-			finalizeCubic<Coord>(coords, dd);
+			finalizeCubic<Coord>(_coords, _dd);
 			break;
 		case RS_INTERP_PYTHON:
 			break;
 		}
-		final = true;
+		_final = true;
 	}
 }
 
 //Set the interpolation type of the path
-void Path::SetInterp(const InterpType settype)
+void Path::setInterp(const InterpType settype)
 {
-	final = false;
-	type = settype;
+	_final = false;
+	_type = settype;
 }
 
 //Compares two paths at the same time and returns a vector with the distance and angle
-SVec3 Compare(const rsFloat time, const Path& start, const Path& end)
+SVec3 compare(const rsFloat time, const Path& start, const Path& end)
 {
-	const Vec3 difference = end.GetPosition(time) - start.GetPosition(time);
+	const Vec3 difference = end.getPosition(time) - start.getPosition(time);
 	SVec3 result(difference); //Get the result in spherical co-ordinates
 	return result;
 }
 
 /// Load a python path function
-void Path::LoadPythonPath(const std::string& modname, const std::string& pathname)
+void Path::loadPythonPath(const std::string& modname, const std::string& pathname)
 {
 	//If we have one already, delete it
-	if (pythonpath)
+	if (_pythonpath)
 	{
-		delete pythonpath;
+		delete _pythonpath;
 	}
 	//Load the new python path
-	pythonpath = new rsPython::PythonPath(modname, pathname);
+	_pythonpath = new rs_python::PythonPath(modname, pathname);
 }
 
 /// Create a new path which is a reflection of this one around the given plane
-Path* rs::ReflectPath(const Path* path, const MultipathSurface* surf)
+Path* rs::reflectPath(const Path* path, const MultipathSurface* surf)
 {
 	//Don't support multipath on python paths for now
-	if (path->pythonpath)
+	if (path->_pythonpath)
 	{
 		throw std::runtime_error("[ERROR] Multipath surfaces are not currently supported for Python paths");
 	}
 	//Create a new path object
-	Path* dual = new Path(path->type);
+	Path* dual = new Path(path->_type);
 	//Add all the coords from the current path to the old path, reflecting about the multipath plane
-	for (std::vector<Coord>::const_iterator iter = path->coords.begin(); iter != path->coords.end(); ++iter)
+	for (std::vector<Coord>::const_iterator iter = path->_coords.begin(); iter != path->_coords.end(); ++iter)
 	{
 		Coord refl;
 		refl.t = (*iter).t;
 		//Reflect the point in the plane
-		refl.pos = surf->ReflectPoint((*iter).pos);
-		rsDebug::printf(rsDebug::RS_VERBOSE, "Reflected (%g, %g, %g) to (%g, %g, %g)\n", (*iter).pos.x, (*iter).pos.y,
+		refl.pos = surf->reflectPoint((*iter).pos);
+		rs_debug::printf(rs_debug::RS_VERBOSE, "Reflected (%g, %g, %g) to (%g, %g, %g)\n", (*iter).pos.x, (*iter).pos.y,
 		                (*iter).pos.z, refl.pos.x, refl.pos.y, refl.pos.z);
-		dual->AddCoord(refl);
+		dual->addCoord(refl);
 	}
 	//Finalize the new path
-	dual->Finalize();
+	dual->finalize();
 	//Done, return the new path
 	return dual;
 }
@@ -260,55 +260,55 @@ Path* rs::ReflectPath(const Path* path, const MultipathSurface* surf)
 // RotationPath Implementation
 //
 RotationPath::RotationPath(const RotationPath::InterpType type):
-	final(false), start(0), rate(0), type(type)
+	_final(false), _start(0), _rate(0), _type(type)
 {
 }
 
-void RotationPath::AddCoord(const RotationCoord& coord)
+void RotationPath::addCoord(const RotationCoord& coord)
 {
 	//Find the position to insert the coordinate, preserving sort
-	const std::vector<RotationCoord>::iterator iter = lower_bound(coords.begin(), coords.end(), coord);
+	const std::vector<RotationCoord>::iterator iter = lower_bound(_coords.begin(), _coords.end(), coord);
 	//Insert the new coordinate
-	coords.insert(iter, coord);
+	_coords.insert(iter, coord);
 	//We are not finalized if we have inserted a coord
-	final = false;
+	_final = false;
 }
 
 //Get the position of the path object at a specified time
-SVec3 RotationPath::GetPosition(const rsFloat t) const
+SVec3 RotationPath::getPosition(const rsFloat t) const
 {
 	RotationCoord coord;
-	if (!final)
+	if (!_final)
 	{
 		throw PathException("Finalize not called before GetPosition in Rotation");
 	}
 	//Call the interpolation function relevent to the type
-	switch (type)
+	switch (_type)
 	{
 	case RS_INTERP_STATIC:
-		GetPositionStatic<RotationCoord>(t, coord, coords);
+		getPositionStatic<RotationCoord>(t, coord, _coords);
 		break;
 	case RS_INTERP_LINEAR:
-		GetPositionLinear<RotationCoord>(t, coord, coords);
+		getPositionLinear<RotationCoord>(t, coord, _coords);
 		break;
 	case RS_INTERP_CUBIC:
-		GetPositionCubic<RotationCoord>(t, coord, coords, dd);
+		getPositionCubic<RotationCoord>(t, coord, _coords, _dd);
 		break;
 	case RS_INTERP_CONSTANT:
 		coord.t = t;
-		coord.azimuth = std::fmod(t * rate.azimuth + start.azimuth, static_cast<rsFloat>(2 * M_PI));
-		coord.elevation = std::fmod(t * rate.elevation + start.elevation, static_cast<rsFloat>(2 * M_PI));
+		coord.azimuth = std::fmod(t * _rate.azimuth + _start.azimuth, static_cast<rsFloat>(2 * M_PI));
+		coord.elevation = std::fmod(t * _rate.elevation + _start.elevation, static_cast<rsFloat>(2 * M_PI));
 		break;
 	}
 	return SVec3(1, coord.azimuth, coord.elevation);
 }
 
 //Finalize the path - doing some once-per-path calculations if necessary
-void RotationPath::Finalize()
+void RotationPath::finalize()
 {
-	if (!final)
+	if (!_final)
 	{
-		switch (type)
+		switch (_type)
 		{
 		case RS_INTERP_STATIC:
 			break;
@@ -317,27 +317,27 @@ void RotationPath::Finalize()
 		case RS_INTERP_CONSTANT:
 			break;
 		case RS_INTERP_CUBIC:
-			finalizeCubic<RotationCoord>(coords, dd);
+			finalizeCubic<RotationCoord>(_coords, _dd);
 			break;
 		}
-		final = true;
+		_final = true;
 	}
 }
 
 //Set the interpolation type
-void RotationPath::SetInterp(const InterpType setinterp)
+void RotationPath::setInterp(const InterpType setinterp)
 {
-	type = setinterp;
-	final = false;
+	_type = setinterp;
+	_final = false;
 }
 
 //Set properties for fixed rate motion
-void RotationPath::SetConstantRate(const RotationCoord& setstart, const RotationCoord& setrate)
+void RotationPath::setConstantRate(const RotationCoord& setstart, const RotationCoord& setrate)
 {
-	start = setstart;
-	rate = setrate;
-	type = RS_INTERP_CONSTANT;
-	final = true;
+	_start = setstart;
+	_rate = setrate;
+	_type = RS_INTERP_CONSTANT;
+	_final = true;
 }
 
 //
@@ -499,15 +499,15 @@ RotationCoord rs::operator/(const RotationCoord& b, const rsFloat a)
 }
 
 /// Create a new path which is a reflection of this one around the given plane
-RotationPath* rs::ReflectPath(const RotationPath* path, const MultipathSurface* surf)
+RotationPath* rs::reflectPath(const RotationPath* path, const MultipathSurface* surf)
 {
 	//Create the new RotationPath object
-	RotationPath* dual = new RotationPath(path->type);
+	RotationPath* dual = new RotationPath(path->_type);
 	//Copy constant rotation params
-	dual->start = path->start;
-	dual->rate = path->rate;
+	dual->_start = path->_start;
+	dual->_rate = path->_rate;
 	//Copy the coords, reflecting them in the surface
-	for (std::vector<RotationCoord>::const_iterator iter = path->coords.begin(); iter != path->coords.end(); ++iter)
+	for (std::vector<RotationCoord>::const_iterator iter = path->_coords.begin(); iter != path->_coords.end(); ++iter)
 	{
 		RotationCoord rc;
 		//Time copies directly
@@ -515,14 +515,14 @@ RotationPath* rs::ReflectPath(const RotationPath* path, const MultipathSurface* 
 		SVec3 sv(1, (*iter).azimuth, (*iter).elevation);
 		Vec3 v(sv);
 		//Reflect the point in the given plane
-		v = surf->ReflectPoint(v);
+		v = surf->reflectPoint(v);
 		const SVec3 refl(v);
 		rc.azimuth = refl.azimuth;
 		rc.elevation = refl.elevation;
-		dual->AddCoord(rc);
+		dual->addCoord(rc);
 	}
 	//Finalize the copied path
-	dual->Finalize();
+	dual->finalize();
 	//Done, return the created object
 	return dual;
 }

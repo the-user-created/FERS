@@ -6,10 +6,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-void ProcessCSV(FILE* fpin, FILE* fpout, const char* enc_tag, const char* d1_tag, const char* d2_tag)
+void processCsv(FILE* fPin, FILE* fPOut, const char* encTag, const char* d1Tag, const char* d2Tag)
 {
 	char* buff = malloc(2048);
-	char* line = fgets(buff, 2048, fpin);
+	char* line = fgets(buff, 2048, fPin);
 	while (line != NULL)
 	{
 		char* comma = strchr(line, ',');
@@ -23,9 +23,9 @@ void ProcessCSV(FILE* fpin, FILE* fpout, const char* enc_tag, const char* d1_tag
 		comma[strlen(comma) - 1] = 0;
 		fprintf(stderr, "%s\n", line);
 		fprintf(stderr, "%s\n", comma + 1);
-		fprintf(fpout, "\t<%s>\n\t\t<%s>%s</%s><%s>%s</%s>\n\t</%s>\n", enc_tag, d1_tag, line, d1_tag, d2_tag, comma,
-		        d2_tag, enc_tag);
-		line = fgets(line, 2048, fpin);
+		fprintf(fPOut, "\t<%s>\n\t\t<%s>%s</%s><%s>%s</%s>\n\t</%s>\n", encTag, d1Tag, line, d1Tag, d2Tag, comma,
+		        d2Tag, encTag);
+		line = fgets(line, 2048, fPin);
 	}
 }
 
@@ -36,30 +36,30 @@ int main(const int argc, char* argv[])
 		fprintf(stderr, "Usage: csv2antenna <outfile> <elevation gains> <azimuth gains>\n");
 		exit(2);
 	}
-	FILE* fpin1 = fopen(argv[2], "r");
-	if (!fpin1)
+	FILE* f_pin1 = fopen(argv[2], "r");
+	if (!f_pin1)
 	{
 		perror("Could not open input file");
 		exit(2);
 	}
-	FILE* fpin2 = fopen(argv[3], "r");
-	if (!fpin2)
+	FILE* f_pin2 = fopen(argv[3], "r");
+	if (!f_pin2)
 	{
 		perror("Could not open input file");
 		exit(2);
 	}
-	FILE* fpout = fopen(argv[1], "w");
-	if (!fpout)
+	FILE* f_p_out = fopen(argv[1], "w");
+	if (!f_p_out)
 	{
 		perror("Could not open input file");
 		exit(2);
 	}
-	fprintf(fpout, "<antenna>\n<elevation>\n");
-	ProcessCSV(fpin1, fpout, "gainsample", "angle", "gain");
-	fprintf(fpout, "</elevation>\n<azimuth>\n");
-	ProcessCSV(fpin2, fpout, "gainsample", "angle", "gain");
-	fprintf(fpout, "</azimuth>\n</antenna>\n");
-	fclose(fpin1);
-	fclose(fpin2);
-	fclose(fpout);
+	fprintf(f_p_out, "<antenna>\n<elevation>\n");
+	processCsv(f_pin1, f_p_out, "gainsample", "angle", "gain");
+	fprintf(f_p_out, "</elevation>\n<azimuth>\n");
+	processCsv(f_pin2, f_p_out, "gainsample", "angle", "gain");
+	fprintf(f_p_out, "</azimuth>\n</antenna>\n");
+	fclose(f_pin1);
+	fclose(f_pin2);
+	fclose(f_p_out);
 }

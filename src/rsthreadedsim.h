@@ -10,7 +10,7 @@
 
 namespace rs
 {
-	void RunThreadedSim(int thread_limit, World* world);
+	void runThreadedSim(int threadLimit, World* world);
 }
 
 #endif

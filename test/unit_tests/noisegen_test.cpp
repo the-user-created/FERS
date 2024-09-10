@@ -30,13 +30,13 @@ unsigned int processors = 4;
 int main()
 {
 	//Initialize noise generation
-	rsNoise::InitializeNoise();
+	rs_noise::initializeNoise();
 	//Create the generator (for alpha = 2)
 	MultirateGenerator* gen = new MultirateGenerator(1, 4);
 	for (int i = 0; i < 1e7; i++)
 	{
 		/*cout <<*/
-		gen->GetSample(); /*<< endl;*/
+		gen->getSample(); /*<< endl;*/
 	}
 	delete gen;
 	// Spawn threads to test thread safety of ClockModelGenerator

@@ -13,7 +13,7 @@ using namespace rs;
 
 /// Default constructor
 Timing::Timing(const std::string& name):
-	name(name)
+	_name(name)
 {
 }
 
@@ -23,9 +23,9 @@ Timing::~Timing()
 }
 
 /// Get the name of the timing source
-std::string Timing::GetName() const
+std::string Timing::getName() const
 {
-	return name;
+	return _name;
 }
 
 //
@@ -34,134 +34,134 @@ std::string Timing::GetName() const
 
 /// Constructor
 PrototypeTiming::PrototypeTiming(const std::string& name):
-	name(name)
+	_name(name)
 {
-	freq_offset = 0;
-	phase_offset = 0;
-	random_phase = 0;
-	random_freq = 0;
-	frequency = 0;
-	synconpulse = false;
+	_freq_offset = 0;
+	_phase_offset = 0;
+	_random_phase = 0;
+	_random_freq = 0;
+	_frequency = 0;
+	_sync_on_pulse = false;
 }
 
 /// Add an alpha and a weight to the timing prototype
-void PrototypeTiming::AddAlpha(const rsFloat alpha, const rsFloat weight)
+void PrototypeTiming::addAlpha(const rsFloat alpha, const rsFloat weight)
 {
-	alphas.push_back(alpha);
-	weights.push_back(weight);
+	_alphas.push_back(alpha);
+	_weights.push_back(weight);
 }
 
 /// Get the alphas and weights from the prototype
-void PrototypeTiming::GetAlphas(std::vector<rsFloat>& get_alphas, std::vector<rsFloat>& get_weights) const
+void PrototypeTiming::getAlphas(std::vector<rsFloat>& getAlphas, std::vector<rsFloat>& getWeights) const
 {
 	//Copy the alpha and weight vectors
-	get_alphas = alphas;
-	get_weights = weights;
+	getAlphas = _alphas;
+	getWeights = _weights;
 }
 
 /// Set a constant frequency offset
-void PrototypeTiming::AddFreqOffset(const rsFloat offset)
+void PrototypeTiming::addFreqOffset(const rsFloat offset)
 {
-	if (random_freq)
+	if (_random_freq)
 	{
-		rsDebug::printf(rsDebug::RS_IMPORTANT,
+		rs_debug::printf(rs_debug::RS_IMPORTANT,
 		                "[Important] Random frequency offset and constant frequency offset are set for timing source %s. Only the random offset will be used.",
-		                GetName().c_str());
+		                getName().c_str());
 	}
-	freq_offset = offset;
+	_freq_offset = offset;
 }
 
 /// Set a constant phase offset
-void PrototypeTiming::AddPhaseOffset(const rsFloat offset)
+void PrototypeTiming::addPhaseOffset(const rsFloat offset)
 {
-	if (random_phase)
+	if (_random_phase)
 	{
-		rsDebug::printf(rsDebug::RS_IMPORTANT,
+		rs_debug::printf(rs_debug::RS_IMPORTANT,
 		                "[Important] Random phase offset and constant phase offset are set for timing source %s. Only the random offset will be used.",
-		                GetName().c_str());
+		                getName().c_str());
 	}
-	phase_offset = offset;
+	_phase_offset = offset;
 }
 
 /// Set a random frequency offset
-void PrototypeTiming::AddRandomFreqOffset(const rsFloat stdev)
+void PrototypeTiming::addRandomFreqOffset(const rsFloat stdev)
 {
-	if (freq_offset)
+	if (_freq_offset)
 	{
-		rsDebug::printf(rsDebug::RS_IMPORTANT,
+		rs_debug::printf(rs_debug::RS_IMPORTANT,
 		                "[Important] Random frequency offset and constant frequency offset are set for timing source %s. Only the random offset will be used.",
-		                GetName().c_str());
+		                getName().c_str());
 	}
-	random_freq = stdev;
+	_random_freq = stdev;
 }
 
 /// Set a random phase offset
-void PrototypeTiming::AddRandomPhaseOffset(const rsFloat stdev)
+void PrototypeTiming::addRandomPhaseOffset(const rsFloat stdev)
 {
-	if (phase_offset)
+	if (_phase_offset)
 	{
-		rsDebug::printf(rsDebug::RS_IMPORTANT,
+		rs_debug::printf(rs_debug::RS_IMPORTANT,
 		                "[Important] Random phase offset and constant phase offset are set for timing source %s. Only the random offset will be used.",
-		                GetName().c_str());
+		                getName().c_str());
 	}
-	random_phase = stdev;
+	_random_phase = stdev;
 }
 
 /// Get the phase offset
-rsFloat PrototypeTiming::GetPhaseOffset() const
+rsFloat PrototypeTiming::getPhaseOffset() const
 {
-	if (random_phase != 0)
+	if (_random_phase != 0)
 	{
-		return rsNoise::WGNSample(random_phase);
+		return rs_noise::wgnSample(_random_phase);
 	}
 	else
 	{
-		return phase_offset;
+		return _phase_offset;
 	}
 }
 
 /// Get the phase offset
-rsFloat PrototypeTiming::GetFreqOffset() const
+rsFloat PrototypeTiming::getFreqOffset() const
 {
-	if (random_freq != 0)
+	if (_random_freq != 0)
 	{
-		return rsNoise::WGNSample(random_freq);
+		return rs_noise::wgnSample(_random_freq);
 	}
 	else
 	{
-		return freq_offset;
+		return _freq_offset;
 	}
 }
 
 /// Get the frequency
-rsFloat PrototypeTiming::GetFrequency() const
+rsFloat PrototypeTiming::getFrequency() const
 {
-	return frequency;
+	return _frequency;
 }
 
 
 /// Get the name of the prototype
-std::string PrototypeTiming::GetName() const
+std::string PrototypeTiming::getName() const
 {
-	return name;
+	return _name;
 }
 
 /// Set the base frequency of the clock model
-void PrototypeTiming::SetFrequency(const rsFloat freq)
+void PrototypeTiming::setFrequency(const rsFloat freq)
 {
-	frequency = freq;
+	_frequency = freq;
 }
 
 /// Set the sync on pulse flag -- timing error resets at the start of the pulse
-void PrototypeTiming::SetSyncOnPulse()
+void PrototypeTiming::setSyncOnPulse()
 {
-	synconpulse = true;
+	_sync_on_pulse = true;
 }
 
 /// Get the value of the sync on pulse flag
-bool PrototypeTiming::GetSyncOnPulse() const
+bool PrototypeTiming::getSyncOnPulse() const
 {
-	return synconpulse;
+	return _sync_on_pulse;
 }
 
 //
@@ -171,56 +171,56 @@ bool PrototypeTiming::GetSyncOnPulse() const
 /// Constructor
 ClockModelTiming::ClockModelTiming(const std::string& name):
 	Timing(name),
-	enabled(false),
-	model(nullptr)
+	_enabled(false),
+	_model(nullptr)
 {
 }
 
 /// Destructor
 ClockModelTiming::~ClockModelTiming()
 {
-	delete model;
+	delete _model;
 }
 
 /// Initialize the clock model generator
-void ClockModelTiming::InitializeModel(const PrototypeTiming* timing)
+void ClockModelTiming::initializeModel(const PrototypeTiming* timing)
 {
-	if (!alphas.empty())
+	if (!_alphas.empty())
 	{
 		throw std::logic_error("[BUG] ClockModelTiming::InitializeModel called more than once");
 	}
 	//Copy the alpha and weight vectors
-	timing->GetAlphas(alphas, weights);
-	rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "%d\n", alphas.size());
+	timing->getAlphas(_alphas, _weights);
+	rs_debug::printf(rs_debug::RS_VERY_VERBOSE, "%d\n", _alphas.size());
 	//Create the generator
-	model = new ClockModelGenerator(alphas, weights, timing->GetFrequency(), timing->GetPhaseOffset(),
-	                                timing->GetFreqOffset(), 15);
+	_model = new ClockModelGenerator(_alphas, _weights, timing->getFrequency(), timing->getPhaseOffset(),
+	                                timing->getFreqOffset(), 15);
 	//Warn if frequency is not set
-	if (timing->GetFrequency() == 0.0)
+	if (timing->getFrequency() == 0.0)
 	{
-		rsDebug::printf(rsDebug::RS_IMPORTANT,
+		rs_debug::printf(rs_debug::RS_IMPORTANT,
 		                "[Important] Timing source frequency not set, results could be incorrect.");
 	}
 	//Get the carrier frequency
-	frequency = timing->GetFrequency();
+	_frequency = timing->getFrequency();
 	// Get the sync on pulse flag
-	synconpulse = timing->GetSyncOnPulse();
+	_sync_on_pulse = timing->getSyncOnPulse();
 	//Enable the model
-	enabled = true;
+	_enabled = true;
 }
 
 /// Return the enabled state of the clock model
-bool ClockModelTiming::Enabled()
+bool ClockModelTiming::enabled() const
 {
-	return enabled && model->Enabled();
+	return _enabled && _model->enabled();
 }
 
 /// Get the real time of a particular pulse
-rsFloat ClockModelTiming::GetPulseTimeError() const
+rsFloat ClockModelTiming::getPulseTimeError() const
 {
-	if (enabled)
+	if (_enabled)
 	{
-		return model->GetSample();
+		return _model->getSample();
 	}
 	else
 	{
@@ -229,32 +229,32 @@ rsFloat ClockModelTiming::GetPulseTimeError() const
 }
 
 /// Skip a sample, computing only enough to preserve long term correlations
-void ClockModelTiming::SkipSamples(const long long samples)
+void ClockModelTiming::skipSamples(const long long samples)
 {
-	if (enabled)
+	if (_enabled)
 	{
-		model->SkipSamples(samples);
+		_model->skipSamples(samples);
 	}
 }
 
 /// Get the value of the sync on pulse flag
-bool ClockModelTiming::GetSyncOnPulse() const
+bool ClockModelTiming::getSyncOnPulse() const
 {
-	return synconpulse;
+	return _sync_on_pulse;
 }
 
 /// Reset the clock phase error to zero
-void ClockModelTiming::Reset()
+void ClockModelTiming::reset() const
 {
-	model->Reset();
+	_model->reset();
 }
 
 /// Get the next sample of time error for a particular pulse
-rsFloat ClockModelTiming::NextNoiseSample()
+rsFloat ClockModelTiming::nextNoiseSample()
 {
-	if (enabled)
+	if (_enabled)
 	{
-		return model->GetSample();
+		return _model->getSample();
 	}
 	else
 	{
@@ -263,7 +263,7 @@ rsFloat ClockModelTiming::NextNoiseSample()
 }
 
 /// Get the carrier frequency of the modelled clock
-rsFloat ClockModelTiming::GetFrequency() const
+rsFloat ClockModelTiming::getFrequency() const
 {
-	return frequency;
+	return _frequency;
 }

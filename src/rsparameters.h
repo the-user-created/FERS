@@ -10,7 +10,7 @@
 
 #include <config.h>
 
-namespace rsParms
+namespace rs_parms
 {
 	enum BinaryFileType { RS_FILE_CSV, RS_FILE_FERSBIN, RS_FILE_RAW };
 }
@@ -18,102 +18,102 @@ namespace rsParms
 namespace rs
 {
 	///'Singleton' class to hold parameters for the simulation
-	class rsParameters
+	class RsParameters
 	{
 	public:
 		/// Method to return a pointer to the single instance of the class that can be used to modify parameters
-		static rsParameters* modify_parms();
+		static RsParameters* modifyParms();
 
 		/// Get the value of c (propagation speed in the medium)
 		static rsFloat c();
 
 		/// Get the value of boltzmann's constant
-		static rsFloat boltzmann_k();
+		static rsFloat boltzmannK();
 
 		/// Get the value of start (start time of the simulation)
-		static rsFloat start_time();
+		static rsFloat startTime();
 
 		/// Get the value of end (end time of the simulation)
-		static rsFloat end_time();
+		static rsFloat endTime();
 
 		/// Get the CW interpolation sample rate
-		static rsFloat cw_sample_rate();
+		static rsFloat cwSampleRate();
 
 		/// Get the oversample factor
 		static rsFloat rate();
 
 		/// Get the current random seed
-		static unsigned int random_seed();
+		static unsigned int randomSeed();
 
 		/// Get the number of ADC bits used for quantization
-		static unsigned int adc_bits();
+		static unsigned int adcBits();
 
 		/// Get the binary file type
-		static rsParms::BinaryFileType binary_file_type();
+		static rs_parms::BinaryFileType binaryFileType();
 
 		/// Do we export in XML format?
-		static bool export_xml();
+		static bool exportXml();
 
 		/// Do we export in CSV format?
-		static bool export_csv();
+		static bool exportCsv();
 
 		/// Do we export in binary format?
-		static bool export_binary();
+		static bool exportBinary();
 
 		/// Length to use for the rendering filter
-		static unsigned int render_filter_length();
+		static unsigned int renderFilterLength();
 
 		/// Maximum number of threads to use for rendering
-		static unsigned int render_threads();
+		static unsigned int renderThreads();
 
 		/// Number of times to oversample loaded pulses before simulation
-		static unsigned int oversample_ratio();
+		static unsigned int oversampleRatio();
 
 		/// Set the value of c
-		void SetC(rsFloat c);
+		static void setC(rsFloat c);
 
 		/// Set the start and end times
-		void SetTime(rsFloat start, rsFloat end);
+		static void setTime(rsFloat start, rsFloat end);
 
 		/// Set the CW sample rate
-		void SetCWSampleRate(rsFloat rate);
+		static void setCwSampleRate(rsFloat rate);
 
 		/// Set the export sample rate
-		void SetRate(rsFloat factor);
+		static void setRate(rsFloat factor);
 
 		/// Set the random seed
-		void SetRandomSeed(unsigned int random_seed);
+		static void setRandomSeed(unsigned int randomSeed);
 
 		/// Set the binary file type
-		void SetBinaryFileType(rsParms::BinaryFileType type);
+		static void setBinaryFileType(rs_parms::BinaryFileType type);
 
 		/// Set the enabled exporters
-		void SetExporters(bool xml, bool csv, bool binary);
+		static void setExporters(bool xml, bool csv, bool binary);
 
 		/// Set the number of bits used for quantization
-		void SetADCBits(unsigned int bits);
+		static void setAdcBits(unsigned int bits);
 
 		/// Set the render filter length
-		void SetRenderFilterLength(unsigned int length);
+		static void setRenderFilterLength(unsigned int length);
 
 		/// Set the number of times to oversample loaded pulses before simulation
-		void SetOversampleRatio(unsigned int ratio);
+		static void setOversampleRatio(unsigned int ratio);
 
 		/// Set the number of threads to use
-		void SetThreads(unsigned int threads);
+		static void setThreads(unsigned int threads);
 
 	protected:
 		/// The default constructor is private
-		rsParameters();
+		RsParameters();
 
 		/// The copy constructor is private
-		rsParameters(const rsParameters& rs);
+		RsParameters(const RsParameters& rs);
 
 		/// The assignment operator is private
-		rsParameters& operator=(const rsParameters& rs);
+		RsParameters& operator=(const RsParameters& rs);
 
 		/// Pointer to a single instance of the class
-		static rsParameters* instance;
+		static RsParameters* _instance;
 	};
 }
 #endif

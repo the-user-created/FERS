@@ -10,10 +10,10 @@
 
 #include "rsgeometry.h"
 
-namespace rsPython
+namespace rs_python
 {
 	///Function which initializes python
-	void InitPython();
+	void initPython();
 
 	///Class which implements Python functionality
 	struct PythonExtensionData;
@@ -29,9 +29,9 @@ namespace rsPython
 		~PythonExtension();
 
 	protected:
-		PythonExtensionData* data; //!< Pointer to python specific data
-		std::string module; //!< Name of the module
-		std::string function; //!< Name of the function
+		PythonExtensionData* _data; //!< Pointer to python specific data
+		std::string _module; //!< Name of the module
+		std::string _function; //!< Name of the function
 	};
 
 	///Python extension for calculating paths
@@ -45,7 +45,7 @@ namespace rsPython
 		~PythonPath();
 
 		/// Get the position at the given time
-		rs::Vec3 GetPosition(rsFloat t) const;
+		rs::Vec3 getPosition(rsFloat t) const;
 	};
 
 	/// Python extension for generating noise
@@ -59,7 +59,7 @@ namespace rsPython
 		~PythonNoise();
 
 		/// Get a noise sample
-		rsFloat GetSample() const;
+		rsFloat getSample() const;
 	};
 
 	/// Python extension for generating noise
@@ -73,7 +73,7 @@ namespace rsPython
 		~PythonAntennaMod();
 
 		/// Get a noise sample
-		rsFloat GetGain(const rs::SVec3& direction) const;
+		rsFloat getGain(const rs::SVec3& direction) const;
 	};
 }
 

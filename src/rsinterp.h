@@ -26,22 +26,22 @@ namespace rs
 		~InterpSet();
 
 		/// Load a number of samples into the set
-		void LoadSamples(const std::vector<rsFloat>& x, const std::vector<rsFloat>& y);
+		void loadSamples(const std::vector<rsFloat>& x, const std::vector<rsFloat>& y) const;
 
 		/// Load a single sample into the set
-		void InsertSample(rsFloat x, rsFloat y);
+		void insertSample(rsFloat x, rsFloat y) const;
 
 		/// Get the interpolated value at the given point
-		rsFloat Value(rsFloat x);
+		rsFloat value(rsFloat x) const;
 
 		/// Get the maximum value in the set
-		rsFloat Max() const;
+		rsFloat max() const;
 
 		/// Divide every sample in the set by a given number
-		void Divide(rsFloat a);
+		void divide(rsFloat a) const;
 
 	private:
-		InterpSetData* data; //<! The data is hidden behind a pointer to the implementation
+		InterpSetData* _data; //<! The data is hidden behind a pointer to the implementation
 	};
 }
 

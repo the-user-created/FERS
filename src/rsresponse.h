@@ -33,41 +33,41 @@ namespace rs
 		Response(const RadarSignal* wave, const Transmitter* transmitter);
 
 		/// Get the start time
-		rsFloat StartTime() const;
+		rsFloat startTime() const;
 
-		rsFloat EndTime() const;
+		rsFloat endTime() const;
 
 		/// Destructor
 		~Response();
 
 		/// Render the response to an XML file
-		void RenderXML(TiXmlElement* root);
+		void renderXml(TiXmlElement* root);
 
 		/// Render the response to a CSV file
-		void RenderCSV(std::ofstream& of);
+		void renderCsv(std::ofstream& of);
 
 		/// Render the response to a binary file
-		boost::shared_array<rsComplex> RenderBinary(rsFloat& rate, unsigned int& size, rsFloat frac_win_delay);
+		boost::shared_array<RsComplex> renderBinary(rsFloat& rate, unsigned int& size, rsFloat fracWinDelay) const;
 
 		/// Get the length of the pulse
-		rsFloat GetLength() const;
+		rsFloat getLength() const;
 
 		/// Get a pointer to the wave
-		const rs::RadarSignal* GetWave() const;
+		const rs::RadarSignal* getWave() const;
 
 		/// Get the name of the transmitter that started this response
-		std::string GetTransmitterName() const;
+		std::string getTransmitterName() const;
 
 		/// Add an interp point to the vector
-		void AddInterpPoint(const InterpPoint& point);
+		void addInterpPoint(const InterpPoint& point);
 
 	protected:
-		const Transmitter* transmitter; //!< The transmitter that caused this response
-		void RenderResponseXML(TiXmlElement* root, const InterpPoint& point);
+		const Transmitter* _transmitter; //!< The transmitter that caused this response
+		void renderResponseXml(TiXmlElement* root, const InterpPoint& point) const;
 
-		void RenderResponseCSV(std::ofstream& of, const InterpPoint& point); //!< Render a InterpPoint as CSV
-		const rs::RadarSignal* wave; //!< The waveform sent out by the transmitter
-		std::vector<InterpPoint> points; //!< Waypoints from which the response parameters are interpolated
+		void renderResponseCsv(std::ofstream& of, const InterpPoint& point) const; //!< Render a InterpPoint as CSV
+		const rs::RadarSignal* _wave; //!< The waveform sent out by the transmitter
+		std::vector<InterpPoint> _points; //!< Waypoints from which the response parameters are interpolated
 	};
 }
 

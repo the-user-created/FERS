@@ -8,7 +8,7 @@
 
 #include <config.h>
 
-namespace rsGeometry
+namespace rs_geometry
 {
 }
 
@@ -29,9 +29,9 @@ namespace rs
 		~Matrix3();
 
 		/// Get a pointer to the element array
-		const rsFloat* GetData() const;
+		const rsFloat* getData() const;
 
-		rsFloat* GetData();
+		rsFloat* getData();
 	};
 
 	/// The Vec3 class is a rectangular 3 vector
@@ -71,12 +71,12 @@ namespace rs
 		Vec3& operator+=(const rsFloat b); //!< Addition of a scalar
 
 		/// Return the length of the vector
-		rsFloat Length() const;
+		rsFloat length() const;
 	};
 
 	//Vector operations
-	rsFloat DotProduct(const Vec3& a, const Vec3& b); //!< Vector Inner product
-	Vec3 CrossProduct(const Vec3& a, const Vec3& b); //!< Vector Cross product
+	rsFloat dotProduct(const Vec3& a, const Vec3& b); //!< Vector Inner product
+	Vec3 crossProduct(const Vec3& a, const Vec3& b); //!< Vector Cross product
 	//Componentwise vector operations
 	Vec3 operator*(const Vec3& a, const Vec3& b); //!< Componentwise product
 	Vec3 operator+(const Vec3& a, const Vec3& b); //!< Componentwise add

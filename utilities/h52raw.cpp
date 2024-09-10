@@ -3,11 +3,11 @@
 // Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 // 18 April 2008
 
+#include <cstdio>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
-#include <stdio.h>
 #include <string>
 
 extern "C" {
@@ -16,7 +16,7 @@ extern "C" {
 }
 
 ///Open the HDF5 file for reading
-hid_t OpenFile(const std::string& name)
+hid_t openFile(const std::string& name)
 {
 	const hid_t file = H5Fopen(name.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
 	if (file < 0)
@@ -28,11 +28,11 @@ hid_t OpenFile(const std::string& name)
 
 
 /// Read the HDF5 datasets and dump them out the the correct format
-void ReadAndDump(hid_t file, FILE* outfile)
+void readAndDump(hid_t file, FILE* outfile)
 {
 	size_t size = 0;
-	unsigned int i;
-	double maxI = 0, maxQ = 0;
+	unsigned int it;
+	double max_i = 0, max_q = 0;
 	//Open the / group
 	hid_t slash = H5Gopen1(file, "/");
 	if (slash < 0)
@@ -41,33 +41,33 @@ void ReadAndDump(hid_t file, FILE* outfile)
 	}
 	// Count the chunks
 	size_t count = 0;
-	for (i = 0; i < 100000; i++)
+	for (it = 0; it < 100000; it++)
 	{
 		std::ostringstream oss;
-		oss << "chunk_" << std::setw(6) << std::setfill('0') << i;
-		std::string I_chunk_name = oss.str() + "_I";
-		std::string Q_chunk_name = oss.str() + "_Q";
-		if (H5LTfind_dataset(slash, I_chunk_name.c_str()) < 1)
+		oss << "chunk_" << std::setw(6) << std::setfill('0') << it;
+		std::string i_chunk_name = oss.str() + "_I";
+		std::string q_chunk_name = oss.str() + "_Q";
+		if (H5LTfind_dataset(slash, i_chunk_name.c_str()) < 1)
 		{
 			break;
 		}
-		double Iscale, Qscale;
-		H5LTget_attribute_double(slash, I_chunk_name.c_str(), "fullscale", &Iscale);
-		H5LTget_attribute_double(slash, Q_chunk_name.c_str(), "fullscale", &Qscale);
-		if (Iscale > maxI)
+		double i_scale, q_scale;
+		H5LTget_attribute_double(slash, i_chunk_name.c_str(), "fullscale", &i_scale);
+		H5LTget_attribute_double(slash, q_chunk_name.c_str(), "fullscale", &q_scale);
+		if (i_scale > max_i)
 		{
-			maxI = Iscale;
+			max_i = i_scale;
 		}
-		if (Qscale > maxQ)
+		if (q_scale > max_q)
 		{
-			maxQ = Qscale;
+			max_q = q_scale;
 		}
-		if (i == 0)
+		if (it == 0)
 		{
 			hsize_t* dims;
 			// Get the dataset ranks
 			int rank;
-			if (H5LTget_dataset_ndims(slash, I_chunk_name.c_str(), &rank) < 0)
+			if (H5LTget_dataset_ndims(slash, i_chunk_name.c_str(), &rank) < 0)
 			{
 				break;
 			}
@@ -75,54 +75,54 @@ void ReadAndDump(hid_t file, FILE* outfile)
 			// Get the dataset info
 			size_t type_size;
 			H5T_class_t class_id;
-			if (H5LTget_dataset_info(slash, I_chunk_name.c_str(), &(dims[0]), &class_id, &type_size) < 0)
+			if (H5LTget_dataset_info(slash, i_chunk_name.c_str(), &(dims[0]), &class_id, &type_size) < 0)
 			{
-				std::cerr << "Could not get dataset info for " << I_chunk_name << std::endl;
+				std::cerr << "Could not get dataset info for " << i_chunk_name << std::endl;
 				break;
 			}
 			// Allocate memory for the I and Q data
 			size = dims[0];
 		}
 	}
-	std::cout << "MaxI " << maxI << " maxQ " << maxQ << std::endl;
-	count = i;
+	std::cout << "MaxI " << max_i << " maxQ " << max_q << std::endl;
+	count = it;
 	// Allocate memory for the reshuffle
 	float* buffer = new float[count * size * 2];
-	for (i = 0; i < count; i++)
+	for (it = 0; it < count; it++)
 	{
 		// Get the dataset names
 		std::ostringstream oss;
-		oss << "chunk_" << std::setw(6) << std::setfill('0') << i;
-		std::string I_chunk_name = oss.str() + "_I";
-		std::string Q_chunk_name = oss.str() + "_Q";
-		if (H5LTfind_dataset(slash, I_chunk_name.c_str()) < 1)
+		oss << "chunk_" << std::setw(6) << std::setfill('0') << it;
+		std::string i_chunk_name = oss.str() + "_I";
+		std::string q_chunk_name = oss.str() + "_Q";
+		if (H5LTfind_dataset(slash, i_chunk_name.c_str()) < 1)
 		{
 			break;
 		}
-		double* buffer_I = new double[size];
-		double* buffer_Q = new double[size];
-		H5LTread_dataset_double(slash, I_chunk_name.c_str(), buffer_I);
-		H5LTread_dataset_double(slash, Q_chunk_name.c_str(), buffer_Q);
+		double* buffer_i = new double[size];
+		double* buffer_q = new double[size];
+		H5LTread_dataset_double(slash, i_chunk_name.c_str(), buffer_i);
+		H5LTread_dataset_double(slash, q_chunk_name.c_str(), buffer_q);
 		// Get the fullscale for I and Q
-		double Iscale, Qscale;
-		H5LTget_attribute_double(slash, I_chunk_name.c_str(), "fullscale", &Iscale);
-		H5LTget_attribute_double(slash, Q_chunk_name.c_str(), "fullscale", &Qscale);
+		double i_scale, q_scale;
+		H5LTget_attribute_double(slash, i_chunk_name.c_str(), "fullscale", &i_scale);
+		H5LTget_attribute_double(slash, q_chunk_name.c_str(), "fullscale", &q_scale);
 		// Write out the data
 		for (unsigned int j = 0; j < size; j++)
 		{
-			float I = buffer_I[j] * Iscale / maxI;
-			float Q = buffer_Q[j] * Qscale / maxQ;
+			float i = buffer_i[j] * i_scale / max_i;
+			float q = buffer_q[j] * q_scale / max_q;
 			//fwrite(&I, 1, 1, outfile);
 			//fwrite(&Q, 1, 1, outfile);
-			buffer[(j + i * size) * 2] = I;
-			buffer[(j + i * size) * 2 + 1] = Q;
+			buffer[(j + it * size) * 2] = i;
+			buffer[(j + it * size) * 2 + 1] = q;
 		}
 		//Clean up
-		delete[] buffer_I;
-		delete[] buffer_Q;
+		delete[] buffer_i;
+		delete[] buffer_q;
 	}
 	fwrite(buffer, count * size * 2, sizeof(float), outfile);
-	std::cout << "Read " << i - 1 << " windows of length " << size << std::endl;
+	std::cout << "Read " << it - 1 << " windows of length " << size << std::endl;
 	delete[] buffer;
 }
 
@@ -133,7 +133,7 @@ int main(const int argc, char* argv[])
 		std::cerr << "Usage: h52raw infile outfile\n";
 		return 1;
 	}
-	const hid_t infile = OpenFile(argv[1]);
+	const hid_t infile = openFile(argv[1]);
 	if (infile < 0)
 	{
 		std::cerr << "Could not open HDF5 file " << argv[1] << std::endl;
@@ -146,7 +146,7 @@ int main(const int argc, char* argv[])
 		return 1;
 	}
 	//Perform the reading and dumping
-	ReadAndDump(infile, outfile);
+	readAndDump(infile, outfile);
 	//Close the files
 	H5Fclose(infile);
 	fclose(outfile);

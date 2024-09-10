@@ -10,17 +10,17 @@
 #include <sstream>
 #include <boost/thread/mutex.hpp> //for boost::mutex
 
-rsDebug::Level debug_level = rsDebug::RS_VERY_VERBOSE; //The current debug level
+rs_debug::Level debug_level = rs_debug::RS_VERY_VERBOSE; //The current debug level
 
 //We use a mutex for log information printing, to stop messages from getting mangled
-boost::mutex debugMutex;
+boost::mutex debug_mutex;
 
 //Print out a debug message including the line and file name
-void rsDebug::print(const rsDebug::Level level, const std::string& str, const std::string& file, const int line)
+void rs_debug::print(const rs_debug::Level level, const std::string& str, const std::string& file, const int line)
 {
 	if (level >= debug_level)
 	{
-		boost::mutex::scoped_lock lock(debugMutex); //Lock the mutex
+		boost::mutex::scoped_lock lock(debug_mutex); //Lock the mutex
 		std::ostringstream oss;
 		oss << "[" << file << " " << line << "] ";
 		oss << str << "\n";
@@ -32,11 +32,11 @@ void rsDebug::print(const rsDebug::Level level, const std::string& str, const st
 //Formatted print of the current debug level, doesn't include filename and line
 //Uses the cstdarg variable arguments system and the vfprintf function to handle the arguments
 //If your system does not have the standard vfprintf function in it's library, you will have to make a pla
-void rsDebug::printf(const rsDebug::Level level, const char* format, ...)
+void rs_debug::printf(const rs_debug::Level level, const char* format, ...)
 {
 	if (level >= debug_level)
 	{
-		boost::mutex::scoped_lock lock(debugMutex); //Lock the mutex
+		boost::mutex::scoped_lock lock(debug_mutex); //Lock the mutex
 		va_list ap;
 		va_start(ap, format);
 		vfprintf(stderr, format, ap);
@@ -46,11 +46,11 @@ void rsDebug::printf(const rsDebug::Level level, const char* format, ...)
 }
 
 //See comments for printf(Level, char *)
-void rsDebug::printf(const rsDebug::Level level, const std::string& format, ...)
+void rs_debug::printf(const rs_debug::Level level, const std::string& format, ...)
 {
 	if (level >= debug_level)
 	{
-		boost::mutex::scoped_lock lock(debugMutex); //Lock the mutex
+		boost::mutex::scoped_lock lock(debug_mutex); //Lock the mutex
 		va_list ap;
 		va_start(ap, format);
 		vfprintf(stderr, format.c_str(), ap);
@@ -60,9 +60,9 @@ void rsDebug::printf(const rsDebug::Level level, const std::string& format, ...)
 }
 
 //Set the current debug level
-void rsDebug::setDebugLevel(const rsDebug::Level level)
+void rs_debug::setDebugLevel(const rs_debug::Level level)
 {
-	if (level <= rsDebug::RS_EXTREMELY_CRITICAL)
+	if (level <= rs_debug::RS_EXTREMELY_CRITICAL)
 	{
 		debug_level = level;
 	}

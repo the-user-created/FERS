@@ -78,7 +78,7 @@ Vec3& Vec3::operator=(const Vec3& b)
 // Multiplication by a 3x3 matrix
 Vec3& Vec3::operator*=(const Matrix3& m)
 {
-	const rsFloat* mat = m.GetData();
+	const rsFloat* mat = m.getData();
 	const Vec3 v(x, y, z);
 	x = mat[0] * v.x + mat[1] * v.y + mat[2] * v.z;
 	y = mat[3] * v.x + mat[4] * v.y + mat[5] * v.z;
@@ -114,7 +114,7 @@ Vec3& Vec3::operator+=(const rsFloat b)
 }
 
 //Return the length of the vector
-rsFloat Vec3::Length() const
+rsFloat Vec3::length() const
 {
 	return sqrt(x * x + y * y + z * z);
 }
@@ -124,13 +124,13 @@ rsFloat Vec3::Length() const
 //
 
 //Inner (dot) product operator
-rsFloat rs::DotProduct(const Vec3& a, const Vec3& b)
+rsFloat rs::dotProduct(const Vec3& a, const Vec3& b)
 {
 	return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
 //Returns a new vector containing the cross (outer) product of two vectors
-Vec3 rs::CrossProduct(const Vec3& a, const Vec3& b)
+Vec3 rs::crossProduct(const Vec3& a, const Vec3& b)
 {
 	Vec3 newvec;
 	newvec.x = a.y * b.z - a.z * b.y;
@@ -228,7 +228,7 @@ SVec3::~SVec3()
 //Constructor with a rectangular vector
 SVec3::SVec3(const Vec3& vec)
 {
-	length = vec.Length();
+	length = vec.length();
 	if (length != 0)
 	{
 		elevation = std::asin(vec.z / length);
@@ -274,12 +274,12 @@ Matrix3::~Matrix3()
 }
 
 /// Get a pointer to the element array
-const rsFloat* Matrix3::GetData() const
+const rsFloat* Matrix3::getData() const
 {
 	return elements;
 }
 
-rsFloat* Matrix3::GetData()
+rsFloat* Matrix3::getData()
 {
 	return elements;
 }

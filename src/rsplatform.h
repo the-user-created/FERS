@@ -28,35 +28,36 @@ namespace rs
 		~Platform();
 
 		/// Return a pointer to the motion path
-		Path* GetMotionPath();
+		Path* getMotionPath() const;
 
 		/// Return a pointer to the rotation path
-		RotationPath* GetRotationPath();
+		RotationPath* getRotationPath() const;
 
 		/// Get the position of the platform at the specified time
-		Vec3 GetPosition(rsFloat time) const;
+		Vec3 getPosition(rsFloat time) const;
 
 		/// Get the rotation of the platform at the specified time
-		SVec3 GetRotation(rsFloat time) const;
+		SVec3 getRotation(rsFloat time) const;
 
 		/// Get the name of the platform
-		std::string GetName() const;
+		std::string getName() const;
 
 	private:
-		Path* motionPath; //!< Pointer to platform's motion path
-		RotationPath* rotationPath; //!< Pointer to platform's rotation path
-		std::string name; //!< The name of the platform
-		Platform* dual; //!< Multipath dual of this platform
+		Path* _motion_path; //!< Pointer to platform's motion path
+		RotationPath* _rotation_path; //!< Pointer to platform's rotation path
+		std::string _name; //!< The name of the platform
+		Platform* _dual; //!< Multipath dual of this platform
 		/// Create a dual of this platform for multipath simulation
-		friend Platform* CreateMultipathDual(const Platform* plat, const MultipathSurface* surf);
+		friend Platform* createMultipathDual(const Platform* plat, const MultipathSurface* surf);
 	};
 
 	/// Create a dual of this platform for multipath simulation
-	Platform* CreateMultipathDual(const Platform* plat, const MultipathSurface* surf);
+	Platform* createMultipathDual(const Platform* plat, const MultipathSurface* surf);
 }
 
 namespace rs
 {
-	Platform* CreateMultipathDual(const Platform* plat, const MultipathSurface* surf);
+	// TODO: Duplicate declaration of createMultipathDual?
+	Platform* createMultipathDual(const Platform* plat, const MultipathSurface* surf);
 }
 #endif

@@ -5,14 +5,14 @@
 
 #include "rsparameters.h"
 
+#include <ctime>
 #include <stdexcept>
 
 #include "rsdebug.h"
-#include "time.h"
 
 using namespace rs;
 
-rsParameters* rsParameters::instance = new rsParameters();
+RsParameters* RsParameters::_instance = new RsParameters();
 
 namespace
 {
@@ -26,7 +26,7 @@ namespace
 		unsigned int random_seed; //!< The seed used for random number calculations
 		unsigned int adc_bits; //!< The number of bits to use for quantization
 		unsigned int filter_length; //!< The length of the filter for rendering purposes
-		rsParms::BinaryFileType filetype; //!< The type of binary files produced by binary rendering
+		rs_parms::BinaryFileType filetype; //!< The type of binary files produced by binary rendering
 		bool export_xml; //!< Export results in XML format
 		bool export_csv; //!< Export results in CSV format
 		bool export_binary; //!< Export results in binary format
@@ -39,7 +39,7 @@ namespace
 }
 
 //Private constructor for rsParameter, should only be called once
-rsParameters::rsParameters()
+RsParameters::RsParameters()
 {
 	//Default value of c, speed of light in a vacuum
 	sim_parms.c = 299792458.0;
@@ -53,7 +53,7 @@ rsParameters::rsParameters()
 	// Default filter length is 33
 	sim_parms.filter_length = 33;
 	// Binary file type defaults to CSV
-	sim_parms.filetype = rsParms::RS_FILE_FERSBIN;
+	sim_parms.filetype = rs_parms::RS_FILE_FERSBIN;
 	// Don't export xml by default
 	sim_parms.export_xml = false;
 	// Don't export csv by default
@@ -70,145 +70,145 @@ rsParameters::rsParameters()
 	sim_parms.oversample_ratio = 1;
 }
 
-rsParameters* rsParameters::modify_parms()
+RsParameters* RsParameters::modifyParms()
 {
-	if (!instance)
+	if (!_instance)
 	{
-		instance = new rsParameters;
+		_instance = new RsParameters;
 	}
-	return instance;
+	return _instance;
 }
 
 //Getters for settings
-rsFloat rsParameters::c()
+rsFloat RsParameters::c()
 {
-	if (!instance)
+	if (!_instance)
 	{
-		instance = new rsParameters;
+		_instance = new RsParameters;
 	}
 	return sim_parms.c;
 }
 
-rsFloat rsParameters::boltzmann_k()
+rsFloat RsParameters::boltzmannK()
 {
 	return 1.3806503e-23;
 }
 
-rsFloat rsParameters::start_time()
+rsFloat RsParameters::startTime()
 {
-	if (!instance)
+	if (!_instance)
 	{
-		instance = new rsParameters;
+		_instance = new RsParameters;
 	}
 	return sim_parms.start;
 }
 
-rsFloat rsParameters::end_time()
+rsFloat RsParameters::endTime()
 {
-	if (!instance)
+	if (!_instance)
 	{
-		instance = new rsParameters;
+		_instance = new RsParameters;
 	}
 	return sim_parms.end;
 }
 
-rsFloat rsParameters::cw_sample_rate()
+rsFloat RsParameters::cwSampleRate()
 {
-	if (!instance)
+	if (!_instance)
 	{
-		instance = new rsParameters;
+		_instance = new RsParameters;
 	}
 	return sim_parms.cw_sample_rate;
 }
 
-rsParms::BinaryFileType rsParameters::binary_file_type()
+rs_parms::BinaryFileType RsParameters::binaryFileType()
 {
-	if (!instance)
+	if (!_instance)
 	{
-		instance = new rsParameters;
+		_instance = new RsParameters;
 	}
 	return sim_parms.filetype;
 }
 
-rsFloat rsParameters::rate()
+rsFloat RsParameters::rate()
 {
-	if (!instance)
+	if (!_instance)
 	{
-		instance = new rsParameters;
+		_instance = new RsParameters;
 	}
 	return sim_parms.rate;
 }
 
-unsigned int rsParameters::random_seed()
+unsigned int RsParameters::randomSeed()
 {
-	if (!instance)
+	if (!_instance)
 	{
-		instance = new rsParameters;
+		_instance = new RsParameters;
 	}
 	return sim_parms.random_seed;
 }
 
-unsigned int rsParameters::adc_bits()
+unsigned int RsParameters::adcBits()
 {
-	if (!instance)
+	if (!_instance)
 	{
-		instance = new rsParameters();
+		_instance = new RsParameters();
 	}
 	return sim_parms.adc_bits;
 }
 
-bool rsParameters::export_xml()
+bool RsParameters::exportXml()
 {
-	if (!instance)
+	if (!_instance)
 	{
-		instance = new rsParameters;
+		_instance = new RsParameters;
 	}
 	return sim_parms.export_xml;
 }
 
-bool rsParameters::export_csv()
+bool RsParameters::exportCsv()
 {
-	if (!instance)
+	if (!_instance)
 	{
-		instance = new rsParameters;
+		_instance = new RsParameters;
 	}
 	return sim_parms.export_csv;
 }
 
-bool rsParameters::export_binary()
+bool RsParameters::exportBinary()
 {
-	if (!instance)
+	if (!_instance)
 	{
-		instance = new rsParameters;
+		_instance = new RsParameters;
 	}
 	return sim_parms.export_binary;
 }
 
 /// Length to use for the rendering filter
-unsigned int rsParameters::render_filter_length()
+unsigned int RsParameters::renderFilterLength()
 {
-	if (!instance)
+	if (!_instance)
 	{
-		instance = new rsParameters;
+		_instance = new RsParameters;
 	}
 	return sim_parms.filter_length;
 }
 
 /// Maximum number of threads to use for rendering
-unsigned int rsParameters::render_threads()
+unsigned int RsParameters::renderThreads()
 {
-	if (!instance)
+	if (!_instance)
 	{
-		instance = new rsParameters;
+		_instance = new RsParameters;
 	}
 	return sim_parms.render_threads;
 }
 
-unsigned int rsParameters::oversample_ratio()
+unsigned int RsParameters::oversampleRatio()
 {
-	if (!instance)
+	if (!_instance)
 	{
-		instance = new rsParameters;
+		_instance = new RsParameters;
 	}
 	return sim_parms.oversample_ratio;
 }
@@ -217,52 +217,52 @@ unsigned int rsParameters::oversample_ratio()
 //Setters for global parameters
 //
 
-void rsParameters::SetC(const rsFloat c)
+void RsParameters::setC(const rsFloat c)
 {
 	sim_parms.c = c;
-	rsDebug::printf(rsDebug::RS_CRITICAL, "[CRITICAL] Propagation speed (c) set to custom value: %8.5f\n", c);
+	rs_debug::printf(rs_debug::RS_CRITICAL, "[CRITICAL] Propagation speed (c) set to custom value: %8.5f\n", c);
 }
 
-void rsParameters::SetTime(const rsFloat start, const rsFloat end)
+void RsParameters::setTime(const rsFloat start, const rsFloat end)
 {
 	sim_parms.start = start;
 	sim_parms.end = end;
 }
 
-void rsParameters::SetCWSampleRate(const rsFloat rate)
+void RsParameters::setCwSampleRate(const rsFloat rate)
 {
 	sim_parms.cw_sample_rate = rate;
 }
 
-void rsParameters::SetRate(const rsFloat factor)
+void RsParameters::setRate(const rsFloat factor)
 {
 	sim_parms.rate = factor;
-	rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] System sample rate set to custom value: %8.5f\n", factor);
+	rs_debug::printf(rs_debug::RS_VERY_VERBOSE, "[VV] System sample rate set to custom value: %8.5f\n", factor);
 }
 
-void rsParameters::SetRandomSeed(const unsigned int random_seed)
+void RsParameters::setRandomSeed(const unsigned int randomSeed)
 {
-	sim_parms.random_seed = random_seed;
+	sim_parms.random_seed = randomSeed;
 }
 
-void rsParameters::SetBinaryFileType(const rsParms::BinaryFileType type)
+void RsParameters::setBinaryFileType(const rs_parms::BinaryFileType type)
 {
 	sim_parms.filetype = type;
 }
 
-void rsParameters::SetExporters(const bool xml, const bool csv, const bool binary)
+void RsParameters::setExporters(const bool xml, const bool csv, const bool binary)
 {
 	sim_parms.export_xml = xml;
 	sim_parms.export_csv = csv;
 	sim_parms.export_binary = binary;
 }
 
-void rsParameters::SetADCBits(const unsigned int bits)
+void RsParameters::setAdcBits(const unsigned int bits)
 {
 	sim_parms.adc_bits = bits;
 }
 
-void rsParameters::SetRenderFilterLength(const unsigned int length)
+void RsParameters::setRenderFilterLength(const unsigned int length)
 {
 	//Sanity check the render filter length
 	if (length < 16)
@@ -270,10 +270,10 @@ void rsParameters::SetRenderFilterLength(const unsigned int length)
 		throw std::runtime_error("[ERROR] Render filter length must be > 16");
 	}
 	sim_parms.filter_length = length;
-	rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Render filter length set to custom value: %d\n", length);
+	rs_debug::printf(rs_debug::RS_VERY_VERBOSE, "[VV] Render filter length set to custom value: %d\n", length);
 }
 
-void rsParameters::SetOversampleRatio(const unsigned int ratio)
+void RsParameters::setOversampleRatio(const unsigned int ratio)
 {
 	//Sanity check the ratio
 	if (ratio == 0)
@@ -281,10 +281,10 @@ void rsParameters::SetOversampleRatio(const unsigned int ratio)
 		throw std::runtime_error("[ERROR] Oversample ratio must be >= 1");
 	}
 	sim_parms.oversample_ratio = ratio;
-	rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Oversampling enabled with ratio %d\n", ratio);
+	rs_debug::printf(rs_debug::RS_VERY_VERBOSE, "[VV] Oversampling enabled with ratio %d\n", ratio);
 }
 
-void rsParameters::SetThreads(const unsigned int threads)
+void RsParameters::setThreads(const unsigned int threads)
 {
 	sim_parms.render_threads = threads;
 }

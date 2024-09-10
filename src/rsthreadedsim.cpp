@@ -28,49 +28,50 @@ using namespace rs;
 
 //Counter of currently running threads
 volatile int threads;
-boost::mutex threadsMutex; //Mutex to protect it
+boost::mutex threads_mutex; //Mutex to protect it
 
 /// Flag to set if a thread encounters an error
 volatile int error;
-boost::mutex errorMutex;
+boost::mutex error_mutex;
 
 /// Method to decrease the running thread count
 static void decThreads()
 {
-	boost::mutex::scoped_lock lock(threadsMutex);
+	boost::mutex::scoped_lock lock(threads_mutex);
 	threads--;
 }
 
 /// Method to flag if a thread experienced an error
 static void setError()
 {
-	boost::mutex::scoped_lock lock(errorMutex);
+	boost::mutex::scoped_lock lock(error_mutex);
 	error = 1;
 }
 
+// TODO: This class should be in the header file
 //SimThread contains a simulator thread
 class SimThread
 {
 public:
 	//Constructor
 	SimThread(const Transmitter* transmitter, Receiver* receiver, const World* world):
-		trans(transmitter), recv(receiver), world(world)
+		_trans(transmitter), _recv(receiver), _world(world)
 	{
 	}
 
 	//Operator () is executed when we create the thread
 	void operator()() const
 	{
-		rsDebug::printf(rsDebug::RS_VERBOSE,
+		rs_debug::printf(rs_debug::RS_VERBOSE,
 		                "[VERBOSE] Created simulator thread for transmitter '%s' and receiver '%s' ",
-		                trans->GetName().c_str(), recv->GetName().c_str());
+		                _trans->getName().c_str(), _recv->getName().c_str());
 		try
 		{
-			SimulatePair(trans, recv, world);
+			simulatePair(_trans, _recv, _world);
 		}
 		catch (std::exception& ex)
 		{
-			rsDebug::printf(rsDebug::RS_CRITICAL,
+			rs_debug::printf(rs_debug::RS_CRITICAL,
 			                "[ERROR] First pass thread terminated with unexpected error:\n\t%s\nSimulator will terminate\n",
 			                ex.what());
 			setError();
@@ -80,33 +81,34 @@ public:
 
 protected:
 	//The transmitter/receiver pair to simulate
-	const Transmitter* trans;
-	Receiver* recv;
-	const World* world;
+	const Transmitter* _trans;
+	Receiver* _recv;
+	const World* _world;
 };
 
-/// RenderThread contains a thread which performs the second phase of the simulation
+// TODO: This class should be in the header file
+// RenderThread contains a thread which performs the second phase of the simulation
 class RenderThread
 {
 public:
 	/// Constructor
 	explicit RenderThread(Receiver* recv):
-		recv(recv)
+		_recv(recv)
 	{
 	}
 
 	/// Operator () is executed when we create the thread
 	void operator()() const
 	{
-		rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Created render thread for receiver '%s'\n",
-		                recv->GetName().c_str());
+		rs_debug::printf(rs_debug::RS_VERY_VERBOSE, "[VV] Created render thread for receiver '%s'\n",
+		                _recv->getName().c_str());
 		try
 		{
-			recv->Render();
+			_recv->render();
 		}
 		catch (std::exception& ex)
 		{
-			rsDebug::printf(rsDebug::RS_CRITICAL,
+			rs_debug::printf(rs_debug::RS_CRITICAL,
 			                "[ERROR] Render thread terminated with unexpected error:\n\t%s\nSimulator will terminate\n",
 			                ex.what());
 			setError();
@@ -115,12 +117,12 @@ public:
 	}
 
 protected:
-	Receiver* recv; //!< The Receiver to render
+	Receiver* _recv; //!< The Receiver to render
 };
 
 
 /// Sleep for the specified number of seconds
-static void Sleep(const int secs)
+static void sleep(const int secs)
 {
 	//We sleep for one second here
 	boost::xtime xt;
@@ -130,30 +132,30 @@ static void Sleep(const int secs)
 }
 
 //Increase the count of running threads
-static void IncThreads()
+static void incThreads()
 {
-	boost::mutex::scoped_lock lock(threadsMutex);
+	boost::mutex::scoped_lock lock(threads_mutex);
 	threads++;
 }
 
 //Run a sim thread for each of the receiver-transmitter pairs, limiting concurrent threads
-void rs::RunThreadedSim(const int thread_limit, World* world)
+void rs::runThreadedSim(const int threadLimit, World* world)
 {
 	std::vector<boost::thread*> running;
 	std::vector<Receiver*>::iterator ri;
 	boost::thread mainthrd();
-	rsDebug::printf(rsDebug::RS_INFORMATIVE, "[INFO] Using threaded simulation with %d threads.\n", thread_limit);
+	rs_debug::printf(rs_debug::RS_INFORMATIVE, "[INFO] Using threaded simulation with %d threads.\n", threadLimit);
 	//PHASE 1: Do first pass of simulator
 	//Loop through the lists for transmitters and receivers
-	for (ri = world->receivers.begin(); ri != world->receivers.end(); ++ri)
+	for (ri = world->_receivers.begin(); ri != world->_receivers.end(); ++ri)
 	{
-		for (std::vector<Transmitter*>::const_iterator ti = world->transmitters.begin(); ti != world->transmitters.end(); ++ti)
+		for (std::vector<Transmitter*>::const_iterator ti = world->_transmitters.begin(); ti != world->_transmitters.end(); ++ti)
 		{
-			IncThreads();
+			incThreads();
 			SimThread sim(*ti, *ri, world);
 			boost::thread* thrd = new boost::thread(sim);
 			//Delay until a thread is terminated, if we have reached the limit
-			while (threads >= thread_limit)
+			while (threads >= threadLimit)
 			{
 				boost::thread::yield();
 			}
@@ -184,21 +186,21 @@ void rs::RunThreadedSim(const int thread_limit, World* world)
 	running.clear();
 
 	// Report on the number of responses added to each receiver
-	for (ri = world->receivers.begin(); ri != world->receivers.end(); ++ri)
+	for (ri = world->_receivers.begin(); ri != world->_receivers.end(); ++ri)
 	{
-		rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] %d responses added to receiver '%s'\n", (*ri)->CountResponses(),
-		                (*ri)->GetName().c_str());
+		rs_debug::printf(rs_debug::RS_VERY_VERBOSE, "[VV] %d responses added to receiver '%s'\n", (*ri)->countResponses(),
+		                (*ri)->getName().c_str());
 	}
 
 	//PHASE 2: Do render pass of simulation
 	//Loop through the lists of receivers and set each to render
-	for (ri = world->receivers.begin(); ri != world->receivers.end(); ++ri)
+	for (ri = world->_receivers.begin(); ri != world->_receivers.end(); ++ri)
 	{
-		IncThreads();
+		incThreads();
 		RenderThread sim(*ri);
 		boost::thread* thrd = new boost::thread(sim);
 		//Delay until a thread is terminated, if we have reached the limit
-		while (threads >= thread_limit)
+		while (threads >= threadLimit)
 		{
 			boost::thread::yield();
 		}

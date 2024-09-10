@@ -10,7 +10,7 @@
 //Macro which calls the debug print function with the current file and line
 #define DEBUG_PRINT(level, str) rsDebug::print(level, str, __FILE__, __LINE__)
 
-namespace rsDebug
+namespace rs_debug
 {
 	//RS_INFORMATIVE - Messages which may be informative to the user
 	//RS_IMPORTANT

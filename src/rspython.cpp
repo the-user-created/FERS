@@ -10,19 +10,19 @@
 
 #include "rsdebug.h"
 
-using namespace rsPython;
+using namespace rs_python;
 
 /// Keep track of whether python has been globally initialized
 bool initialized;
 
 
 ///Initialize the python environment
-void rsPython::InitPython()
+void rs_python::initPython()
 {
 	if (!initialized)
 	{
 		Py_Initialize();
-		rsDebug::printf(rsDebug::RS_VERBOSE, "Using Python version %s\n", Py_GetVersion());
+		rs_debug::printf(rs_debug::RS_VERBOSE, "Using Python version %s\n", Py_GetVersion());
 		PyRun_SimpleString("import sys; sys.path.append('.');");
 		initialized = true;
 	}
@@ -30,9 +30,9 @@ void rsPython::InitPython()
 
 
 // Define the PythonExtensionImpl class
-struct rsPython::PythonExtensionData
+struct rs_python::PythonExtensionData
 {
-	PyObject *pModule, *pFunc;
+	PyObject *p_module, *p_func;
 };
 
 //
@@ -42,30 +42,30 @@ struct rsPython::PythonExtensionData
 
 /// Constructor
 PythonExtension::PythonExtension(const std::string& module, const std::string& function):
-	module(module),
-	function(function)
+	_module(module),
+	_function(function)
 {
-	data = new PythonExtensionData;
+	_data = new PythonExtensionData;
 	//Import the module
 	PyObject* modname = PyUnicode_FromString(module.c_str());
-	data->pModule = PyImport_Import(modname);
+	_data->p_module = PyImport_Import(modname);
 	Py_DECREF(modname);
 
-	if (!data->pModule)
+	if (!_data->p_module)
 	{
 		PyErr_Print();
 		throw std::runtime_error("Could not import Python module " + module);
 	}
 	//Import the function
 	PyObject* funcname = PyUnicode_FromString(function.c_str());
-	data->pFunc = PyObject_GetAttr(data->pModule, funcname);
+	_data->p_func = PyObject_GetAttr(_data->p_module, funcname);
 	Py_DECREF(funcname);
-	if (!data->pFunc)
+	if (!_data->p_func)
 	{
 		PyErr_Print();
 		throw std::runtime_error("Could not import Python function " + function + " from module " + module);
 	}
-	if (!PyCallable_Check(data->pFunc))
+	if (!PyCallable_Check(_data->p_func))
 	{
 		throw std::runtime_error("Python object " + function + " from module " + module + " is not callable");
 	}
@@ -74,9 +74,9 @@ PythonExtension::PythonExtension(const std::string& module, const std::string& f
 /// Destructor
 PythonExtension::~PythonExtension()
 {
-	Py_DECREF(data->pFunc);
-	Py_DECREF(data->pModule);
-	delete data;
+	Py_DECREF(_data->p_func);
+	Py_DECREF(_data->p_module);
+	delete _data;
 }
 
 //
@@ -95,7 +95,7 @@ PythonPath::~PythonPath()
 }
 
 /// Get the position at a given time
-rs::Vec3 PythonPath::GetPosition(const rsFloat t) const
+rs::Vec3 PythonPath::getPosition(const rsFloat t) const
 {
 	//Insert t into a tuple for passing to the function
 	PyObject* pargs = PyTuple_Pack(1, PyFloat_FromDouble(t));
@@ -105,14 +105,14 @@ rs::Vec3 PythonPath::GetPosition(const rsFloat t) const
 		throw std::runtime_error("Could not create new Python Tuple in PythonPath");
 	}
 	//Call the function
-	PyObject* result = PyObject_CallObject(data->pFunc, pargs);
+	PyObject* result = PyObject_CallObject(_data->p_func, pargs);
 	//Release the arguments
 	Py_DECREF(pargs);
 	//Check the call was completed
 	if (!result)
 	{
 		PyErr_Print();
-		throw std::runtime_error("Call of function " + function + " from module " + module + " failed");
+		throw std::runtime_error("Call of function " + _function + " from module " + _module + " failed");
 	}
 	//Unpack the results into Vec3
 	PyObject* px = PyTuple_GetItem(result, 0);
@@ -121,7 +121,7 @@ rs::Vec3 PythonPath::GetPosition(const rsFloat t) const
 	if ((!px) || (!py) || (!pz))
 	{
 		PyErr_Print();
-		throw std::runtime_error("Python function " + function + " did not return expected tuple");
+		throw std::runtime_error("Python function " + _function + " did not return expected tuple");
 	}
 	rs::Vec3 vec(PyFloat_AsDouble(px), PyFloat_AsDouble(py), PyFloat_AsDouble(pz));
 	Py_DECREF(result);
@@ -145,15 +145,15 @@ PythonNoise::~PythonNoise()
 }
 
 /// Get a noise sample
-rsFloat PythonNoise::GetSample() const
+rsFloat PythonNoise::getSample() const
 {
 	//Call the function
-	PyObject* result = PyObject_CallObject(data->pFunc, nullptr);
+	PyObject* result = PyObject_CallObject(_data->p_func, nullptr);
 	//Check the call was completed
 	if (!result)
 	{
 		PyErr_Print();
-		throw std::runtime_error("Call of function " + function + " from module " + module + " failed");
+		throw std::runtime_error("Call of function " + _function + " from module " + _module + " failed");
 	}
 	//Unpack the results
 	const rsFloat sample = PyFloat_AsDouble(result);
@@ -177,7 +177,7 @@ PythonAntennaMod::~PythonAntennaMod()
 }
 
 /// Get the antenna gain in the specified direction
-rsFloat PythonAntennaMod::GetGain(const rs::SVec3& direction) const
+rsFloat PythonAntennaMod::getGain(const rs::SVec3& direction) const
 {
 	//Insert t into a tuple for passing to the function
 	PyObject* pargs = PyTuple_Pack(2, PyFloat_FromDouble(direction.azimuth), PyFloat_FromDouble(direction.elevation));
@@ -187,14 +187,14 @@ rsFloat PythonAntennaMod::GetGain(const rs::SVec3& direction) const
 		throw std::runtime_error("Could not create new Python Tuple in PythonPath");
 	}
 	//Call the function
-	PyObject* result = PyObject_CallObject(data->pFunc, pargs);
+	PyObject* result = PyObject_CallObject(_data->p_func, pargs);
 	//Release the arguments
 	Py_DECREF(pargs);
 	//Check the call was completed
 	if (!result)
 	{
 		PyErr_Print();
-		throw std::runtime_error("Call of function " + function + " from module " + module + " failed");
+		throw std::runtime_error("Call of function " + _function + " from module " + _module + " failed");
 	}
 	//Translate the result
 	const rsFloat sample = PyFloat_AsDouble(result);

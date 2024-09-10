@@ -32,7 +32,7 @@ JonesVector& JonesVector::operator=(const JonesVector& iv)
 }
 
 /// Multiplication operator
-JonesVector JonesVector::operator*(const PSMatrix& mat) const
+JonesVector JonesVector::operator*(const PsMatrix& mat) const
 {
 	JonesVector j(h * mat.s[0] + v * mat.s[1], h * mat.s[2] + v * mat.s[3]);
 	return j;
@@ -43,14 +43,14 @@ JonesVector JonesVector::operator*(const PSMatrix& mat) const
 //
 
 ///Default constructor creates identity PSM
-PSMatrix::PSMatrix()
+PsMatrix::PsMatrix()
 {
 	s[0] = s[3] = 1;
 	s[1] = s[2] = 0;
 }
 
 /// Constructor
-PSMatrix::PSMatrix(const rsFloat s11, const rsFloat s12, const rsFloat s21, const rsFloat s22)
+PsMatrix::PsMatrix(const rsFloat s11, const rsFloat s12, const rsFloat s21, const rsFloat s22)
 {
 	s[0] = s11;
 	s[1] = s12;
@@ -59,7 +59,7 @@ PSMatrix::PSMatrix(const rsFloat s11, const rsFloat s12, const rsFloat s21, cons
 }
 
 /// Copy constructor
-PSMatrix::PSMatrix(const PSMatrix& im)
+PsMatrix::PsMatrix(const PsMatrix& im)
 {
 	for (int i = 0; i < 4; i++)
 	{
@@ -68,7 +68,7 @@ PSMatrix::PSMatrix(const PSMatrix& im)
 }
 
 /// Assignment operator
-PSMatrix& PSMatrix::operator=(const PSMatrix& im)
+PsMatrix& PsMatrix::operator=(const PsMatrix& im)
 {
 	for (int i = 0; i < 4; i++)
 	{

@@ -20,42 +20,42 @@ namespace rs
 
 
 	/// General RCS statistical model class
-	class RCSModel
+	class RcsModel
 	{
 	public:
 		/// Destructor
-		virtual ~RCSModel();
+		virtual ~RcsModel();
 
 		/// Get an RCS based on the statistical model and the mean RCS
-		virtual rsFloat SampleModel() = 0;
+		virtual rsFloat sampleModel() = 0;
 	};
 
 	/// RCS Statistical Model class supporting Swerling V
-	class RCSConst final : public RCSModel
+	class RcsConst final : public RcsModel
 	{
 	public:
 		/// Destructor
-		virtual ~RCSConst();
+		virtual ~RcsConst();
 
 		/// Return a constant RCS
-		virtual rsFloat SampleModel();
+		virtual rsFloat sampleModel();
 	};
 
 	/// RCS statistical model following Swerling's Chi-square (actually Gamma) model
 	// See Swerling, "Radar Probability of Detection for Some Additional Target Cases", IEEE Trans. Aer. Elec. Sys., Vol 33, 1997
-	class RCSChiSquare final : public RCSModel
+	class RcsChiSquare final : public RcsModel
 	{
 	public:
 		/// Constructor
-		explicit RCSChiSquare(rsFloat k); //k is the shape parameter for the distribution
+		explicit RcsChiSquare(rsFloat k); //k is the shape parameter for the distribution
 		/// Destructor
-		virtual ~RCSChiSquare();
+		virtual ~RcsChiSquare();
 
 		/// Get an RCS based on the Swerling II model and the mean RCS
-		virtual rsFloat SampleModel();
+		virtual rsFloat sampleModel();
 
 	private:
-		GammaGenerator* gen;
+		GammaGenerator* _gen;
 	};
 
 	/// Target models a simple point target with a specified RCS pattern
@@ -69,20 +69,20 @@ namespace rs
 		virtual ~Target();
 
 		/// Returns the Radar Cross Section at a particular angle
-		virtual rsFloat GetRCS(SVec3& inAngle, SVec3& outAngle) const = 0;
+		virtual rsFloat getRcs(SVec3& inAngle, SVec3& outAngle) const = 0;
 
 		/// Get the target polarization matrix
-		virtual PSMatrix GetPolarization() const;
+		virtual PsMatrix getPolarization() const;
 
 		/// Set the target polarization matrix
-		virtual void SetPolarization(const PSMatrix& in);
+		virtual void setPolarization(const PsMatrix& in);
 
 		/// Set the target fluctuation model
-		virtual void SetFluctuationModel(RCSModel* in);
+		virtual void setFluctuationModel(RcsModel* in);
 
 	protected:
-		PSMatrix psm; //!< Polarization scattering matrix for target interaction
-		RCSModel* model; //!< Statistical model of target RCS fluctuations
+		PsMatrix _psm; //!< Polarization scattering matrix for target interaction
+		RcsModel* _model; //!< Statistical model of target RCS fluctuations
 	};
 
 	/// Target with an isotropic (constant with angle) RCS
@@ -96,10 +96,10 @@ namespace rs
 		virtual ~IsoTarget();
 
 		/// Return the RCS at the given angle
-		virtual rsFloat GetRCS(SVec3& inAngle, SVec3& outAngle) const;
+		virtual rsFloat getRcs(SVec3& inAngle, SVec3& outAngle) const;
 
 	private:
-		rsFloat rcs; //!< Constant RCS
+		rsFloat _rcs; //!< Constant RCS
 	};
 
 	/// Target with an RCS interpolated from a table of values
@@ -113,22 +113,22 @@ namespace rs
 		virtual ~FileTarget();
 
 		/// Return the RCS at the given angle
-		virtual rsFloat GetRCS(SVec3& inAngle, SVec3& outAngle) const;
+		virtual rsFloat getRcs(SVec3& inAngle, SVec3& outAngle) const;
 
 	private:
-		rs::InterpSet* azi_samples; //!< Samples of RCS in the azimuth plane
-		rs::InterpSet* elev_samples; //!< Samples of RCS in the elevation plane
+		rs::InterpSet* _azi_samples; //!< Samples of RCS in the azimuth plane
+		rs::InterpSet* _elev_samples; //!< Samples of RCS in the elevation plane
 		///Load data from the RCS description file
-		void LoadRCSDescription(const std::string& filename);
+		void loadRcsDescription(const std::string& filename) const;
 	};
 
 	// Functions for creating objects of various target types
 
 	/// Create an isometric radiator target
-	Target* CreateIsoTarget(const Platform* platform, const std::string& name, rsFloat rcs);
+	Target* createIsoTarget(const Platform* platform, const std::string& name, rsFloat rcs);
 
 	/// Create a target, loading the RCS pattern from a file
-	Target* CreateFileTarget(const Platform* platform, const std::string& name, const std::string& filename);
+	Target* createFileTarget(const Platform* platform, const std::string& name, const std::string& filename);
 }
 
 #endif
