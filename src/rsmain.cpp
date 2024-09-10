@@ -9,7 +9,6 @@
 #include "rsdebug.h"
 #include "rsthreadedsim.h"
 #include "rsnoise.h"
-#include "fftwcpp.h"
 #include "rsparameters.h"
 #include "rsportable.h"
 #include <cstring>
@@ -36,7 +35,7 @@ int main(int argc, char *argv[])
     rs::World *world = new rs::World();
     //Initialize the RNG code
     rsNoise::InitializeNoise();
-    //Init the FFT code
+
     rsDebug::printf(rsDebug::RS_VERBOSE, "[VERBOSE] Loading XML Script File.\n");
     //Load the script file
     xml::LoadXMLFile(argv[1], world);
@@ -48,7 +47,6 @@ int main(int argc, char *argv[])
     delete world;
     //Clean up singleton objects
     rsNoise::CleanUpNoise();
-    //FFTCleanUp();
 
     rsDebug::printf(rsDebug::RS_CRITICAL, "------------------------------------------------\n");
     rsDebug::printf(rsDebug::RS_CRITICAL, "Simulation completed successfully...\n\n");

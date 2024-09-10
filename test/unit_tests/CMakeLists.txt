@@ -1,7 +1,6 @@
 INCLUDE_DIRECTORIES( ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} )
 INCLUDE_DIRECTORIES( ${CMAKE_BINARY_DIR} )
 INCLUDE_DIRECTORIES( ${fers_SOURCE_DIR}/src )
-INCLUDE_DIRECTORIES( ${fers_SOURCE_DIR}/fftwcpp )
 
 ########### noisegen_test ###############
 
@@ -22,23 +21,6 @@ SET(noisegen_test_SRCS
    )
 
 ADD_EXECUTABLE(noisegen_test ${noisegen_test_SRCS})
-
-#Link to fftwcpp libraries
-TARGET_LINK_LIBRARIES(noisegen_test fftwcpp)
-
-#See if the FFTW3 libraries are available
-FIND_LIBRARY(FERS_LIB_FFTW3 NAMES fftw3)
-
-IF (FERS_LIB_FFTW3)
-   TARGET_LINK_LIBRARIES(noisegen_test ${FERS_LIB_FFTW3})
-ENDIF (FERS_LIB_FFTW3) 
-
-#Check if we are building on a multithreaded FFTW
-FIND_LIBRARY(FERS_LIB_FFTW3_THREADS NAMES fftw3_threads)
-
-IF (FERS_LIB_FFTW3_THREADS)
-   TARGET_LINK_LIBRARIES(noisegen_test ${FERS_LIB_FFTW3_THREADS})
-ENDIF (FERS_LIB_FFTW3_THREADS)
 
 #Include code to check for python libs
 
@@ -87,23 +69,6 @@ SET(timing_test_SRCS
 
 ADD_EXECUTABLE(timing_test ${timing_test_SRCS})
 
-#Link to fftwcpp libraries
-TARGET_LINK_LIBRARIES(timing_test fftwcpp)
-
-#See if the FFTW3 libraries are available
-FIND_LIBRARY(FERS_LIB_FFTW3 NAMES fftw3)
-
-IF (FERS_LIB_FFTW3)
-   TARGET_LINK_LIBRARIES(timing_test ${FERS_LIB_FFTW3})
-ENDIF (FERS_LIB_FFTW3) 
-
-#Check if we are building on a multithreaded FFTW
-FIND_LIBRARY(FERS_LIB_FFTW3_THREADS NAMES fftw3_threads)
-
-IF (FERS_LIB_FFTW3_THREADS)
-   TARGET_LINK_LIBRARIES(timing_test ${FERS_LIB_FFTW3_THREADS})
-ENDIF (FERS_LIB_FFTW3_THREADS)
-
 #Include code to check for python libs
 
 INCLUDE(FindPythonLibs)
@@ -140,19 +105,6 @@ SET(clock_test_SRCS
 
 ADD_EXECUTABLE(clock_test ${clock_test_SRCS})
 
-#Link to fftwcpp libraries
-TARGET_LINK_LIBRARIES(clock_test fftwcpp)
-
-#See if the FFTW3 libraries are available
-IF (FERS_LIB_FFTW3)
-   TARGET_LINK_LIBRARIES(clock_test ${FERS_LIB_FFTW3})
-ENDIF (FERS_LIB_FFTW3) 
-
-#Check if we are building on a multithreaded FFTW
-IF (FERS_LIB_FFTW3_THREADS)
-   TARGET_LINK_LIBRARIES(clock_test ${FERS_LIB_FFTW3_THREADS})
-ENDIF (FERS_LIB_FFTW3_THREADS)
-
 IF (PYTHONLIBS_FOUND)
    TARGET_LINK_LIBRARIES(clock_test ${PYTHON_LIBRARIES})
 ENDIF (PYTHONLIBS_FOUND)
@@ -182,23 +134,6 @@ SET(filter_test_SRCS
    )
 
 ADD_EXECUTABLE(filter_test ${filter_test_SRCS})
-
-#Link to fftwcpp libraries
-TARGET_LINK_LIBRARIES(filter_test fftwcpp)
-
-#See if the FFTW3 libraries are available
-FIND_LIBRARY(FERS_LIB_FFTW3 NAMES fftw3)
-
-IF (FERS_LIB_FFTW3)
-   TARGET_LINK_LIBRARIES(filter_test ${FERS_LIB_FFTW3})
-ENDIF (FERS_LIB_FFTW3) 
-
-#Check if we are building on a multithreaded FFTW
-FIND_LIBRARY(FERS_LIB_FFTW3_THREADS NAMES fftw3_threads)
-
-IF (FERS_LIB_FFTW3_THREADS)
-   TARGET_LINK_LIBRARIES(filter_test ${FERS_LIB_FFTW3_THREADS})
-ENDIF (FERS_LIB_FFTW3_THREADS)
 
 #Include code to check for python libs
 

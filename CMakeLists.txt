@@ -34,7 +34,6 @@ ENDIF ()
 #FERS is multithreaded, boost needs to be informed
 ADD_DEFINITIONS(-D_REENTRANT)
 
-ADD_SUBDIRECTORY( fftwcpp )
 ADD_SUBDIRECTORY( src )
 
 ADD_SUBDIRECTORY( utilities )
