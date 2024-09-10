@@ -155,7 +155,7 @@ namespace
 			if (timing->GetSyncOnPulse())
 			{
 				timing->Reset();
-				const int skip = (int)std::floor(rate * recv->GetWindowSkip());
+				const int skip = static_cast<int>(std::floor(rate * recv->GetWindowSkip()));
 				timing->SkipSamples(skip);
 			}
 			else
@@ -444,7 +444,7 @@ RenderThread::~RenderThread()
 void RenderThread::operator()()
 {
 	const rsFloat rate = rsParameters::rate() * rsParameters::oversample_ratio();
-	const unsigned int size = (unsigned int)(std::ceil(length * rate));
+	const unsigned int size = static_cast<unsigned int>(std::ceil(length * rate));
 	// Allocate memory for the local window
 	local_window = new rsComplex[size];
 	for (unsigned int i = 0; i < size; i++)
@@ -481,7 +481,7 @@ void RenderThread::AddWindow(const rsComplex* array, const rsFloat start_time, c
 {
 	//Calculate required window parameters
 	const rsFloat rate = rsParameters::rate() * rsParameters::oversample_ratio();
-	const unsigned int size = (unsigned int)(std::ceil(length * rate));
+	const unsigned int size = static_cast<unsigned int>(std::ceil(length * rate));
 	// Add the array to the correct place in the local window
 	AddArrayToWindow(start, local_window, size, rate, start_time, array, array_size);
 }
