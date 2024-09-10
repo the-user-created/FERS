@@ -1,11 +1,32 @@
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
-INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR})
-INCLUDE_DIRECTORIES(${fers_SOURCE_DIR}/src)
+include_directories(
+		${CMAKE_CURRENT_SOURCE_DIR}
+		${CMAKE_CURRENT_BINARY_DIR}
+		${CMAKE_BINARY_DIR}
+		${fers_SOURCE_DIR}/src
+)
 
-########### noisegen_test ###############
+function(add_test_executable TEST_NAME)
+	add_executable(${TEST_NAME} ${ARGN})
+	find_package(PythonLibs REQUIRED)
+	if (PYTHONLIBS_FOUND)
+		target_link_libraries(${TEST_NAME} ${PYTHON_LIBRARIES})
+		include_directories(${PYTHON_INCLUDE_PATH})
+	endif ()
+	if (Boost_LIBRARIES)
+		target_link_libraries(${TEST_NAME} ${Boost_LIBRARIES})
+	endif ()
+endfunction()
 
-SET(noisegen_test_SRCS
-	noisegen_test.cpp
+if (WIN32)
+	set(Boost_USE_STATIC_LIBS ON)
+else ()
+	set(Boost_USE_STATIC_LIBS OFF)
+endif ()
+
+find_package(Boost COMPONENTS system thread REQUIRED)
+message(STATUS "Linking libraries for Boost: ${Boost_LIBRARIES}")
+
+set(COMMON_SRCS
 	${fers_SOURCE_DIR}/src/rsnoise.cpp
 	${fers_SOURCE_DIR}/src/rsnoise.h
 	${fers_SOURCE_DIR}/src/rsdsp.cpp
@@ -20,131 +41,7 @@ SET(noisegen_test_SRCS
 	${fers_SOURCE_DIR}/src/rsdebug.h
 )
 
-ADD_EXECUTABLE(noisegen_test ${noisegen_test_SRCS})
-
-# Include code to check for python libs
-
-INCLUDE(FindPythonLibs)
-
-IF (PYTHONLIBS_FOUND)
-	TARGET_LINK_LIBRARIES(noisegen_test ${PYTHON_LIBRARIES})
-	INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_PATH})
-ENDIF (PYTHONLIBS_FOUND)
-
-# Link to Boost Thread and System
-
-IF (WIN32)
-	SET(Boost_USE_STATIC_LIBS ON)  # Link Boost statically
-ELSE ()
-	SET(Boost_USE_STATIC_LIBS OFF)  # Link Boost with shared libs
-ENDIF ()
-
-FIND_PACKAGE(Boost COMPONENTS system thread REQUIRED)
-
-MESSAGE(STATUS "Linking libraries for Boost: " ${Boost_LIBRARIES})
-
-IF (Boost_LIBRARIES)
-	TARGET_LINK_LIBRARIES(noisegen_test ${Boost_LIBRARIES})
-ENDIF ()
-
-########### timing_test ###############
-
-SET(timing_test_SRCS
-	timing_test.cpp
-	${fers_SOURCE_DIR}/src/rsnoise.cpp
-	${fers_SOURCE_DIR}/src/rsnoise.h
-	${fers_SOURCE_DIR}/src/rsdsp.cpp
-	${fers_SOURCE_DIR}/src/rsdsp.h
-	${fers_SOURCE_DIR}/src/rspython.cpp
-	${fers_SOURCE_DIR}/src/rspython.h
-	${fers_SOURCE_DIR}/src/rsparameters.cpp
-	${fers_SOURCE_DIR}/src/rsparameters.h
-	${fers_SOURCE_DIR}/src/rsgeometry.cpp
-	${fers_SOURCE_DIR}/src/rsgeometry.h
-	${fers_SOURCE_DIR}/src/rsdebug.cpp
-	${fers_SOURCE_DIR}/src/rsdebug.h
-	${fers_SOURCE_DIR}/src/rstiming.cpp
-	${fers_SOURCE_DIR}/src/rstiming.h
-)
-
-ADD_EXECUTABLE(timing_test ${timing_test_SRCS})
-
-# Include code to check for python libs
-
-INCLUDE(FindPythonLibs)
-
-IF (PYTHONLIBS_FOUND)
-	TARGET_LINK_LIBRARIES(timing_test ${PYTHON_LIBRARIES})
-	INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_PATH})
-ENDIF (PYTHONLIBS_FOUND)
-
-# Link to Boost Thread and System
-IF (Boost_LIBRARIES)
-	TARGET_LINK_LIBRARIES(timing_test ${Boost_LIBRARIES})
-ENDIF ()
-
-########### clock_test ###############
-
-SET(clock_test_SRCS
-	clock_test.cpp
-	${fers_SOURCE_DIR}/src/rsnoise.cpp
-	${fers_SOURCE_DIR}/src/rsnoise.h
-	${fers_SOURCE_DIR}/src/rsdsp.cpp
-	${fers_SOURCE_DIR}/src/rsdsp.h
-	${fers_SOURCE_DIR}/src/rspython.cpp
-	${fers_SOURCE_DIR}/src/rspython.h
-	${fers_SOURCE_DIR}/src/rsparameters.cpp
-	${fers_SOURCE_DIR}/src/rsparameters.h
-	${fers_SOURCE_DIR}/src/rsgeometry.cpp
-	${fers_SOURCE_DIR}/src/rsgeometry.h
-	${fers_SOURCE_DIR}/src/rsdebug.cpp
-	${fers_SOURCE_DIR}/src/rsdebug.h
-	${fers_SOURCE_DIR}/src/rstiming.cpp
-	${fers_SOURCE_DIR}/src/rstiming.h
-)
-
-ADD_EXECUTABLE(clock_test ${clock_test_SRCS})
-
-IF (PYTHONLIBS_FOUND)
-	TARGET_LINK_LIBRARIES(clock_test ${PYTHON_LIBRARIES})
-ENDIF (PYTHONLIBS_FOUND)
-
-# Link to Boost thread and system
-IF (Boost_LIBRARIES)
-	TARGET_LINK_LIBRARIES(clock_test ${Boost_LIBRARIES})
-ENDIF ()
-
-########### filter_test ###############
-
-SET(filter_test_SRCS
-	filter_test.cpp
-	${fers_SOURCE_DIR}/src/rsnoise.cpp
-	${fers_SOURCE_DIR}/src/rsnoise.h
-	${fers_SOURCE_DIR}/src/rsdsp.cpp
-	${fers_SOURCE_DIR}/src/rsdsp.h
-	${fers_SOURCE_DIR}/src/rspython.cpp
-	${fers_SOURCE_DIR}/src/rspython.h
-	${fers_SOURCE_DIR}/src/rsparameters.cpp
-	${fers_SOURCE_DIR}/src/rsparameters.h
-	${fers_SOURCE_DIR}/src/rsgeometry.cpp
-	${fers_SOURCE_DIR}/src/rsgeometry.h
-	${fers_SOURCE_DIR}/src/rsdebug.cpp
-	${fers_SOURCE_DIR}/src/rsdebug.h
-)
-
-ADD_EXECUTABLE(filter_test ${filter_test_SRCS})
-
-# Include code to check for python libs
-
-INCLUDE(FindPythonLibs)
-
-IF (PYTHONLIBS_FOUND)
-	TARGET_LINK_LIBRARIES(filter_test ${PYTHON_LIBRARIES})
-	INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_PATH})
-ENDIF (PYTHONLIBS_FOUND)
-
-# Link to Boost Thread and System
-
-IF (Boost_LIBRARIES)
-	TARGET_LINK_LIBRARIES(filter_test ${Boost_LIBRARIES})
-ENDIF ()
+add_test_executable(noisegen_test noisegen_test.cpp ${COMMON_SRCS})
+add_test_executable(timing_test timing_test.cpp ${COMMON_SRCS} ${fers_SOURCE_DIR}/src/rstiming.cpp ${fers_SOURCE_DIR}/src/rstiming.h)
+add_test_executable(clock_test clock_test.cpp ${COMMON_SRCS} ${fers_SOURCE_DIR}/src/rstiming.cpp ${fers_SOURCE_DIR}/src/rstiming.h)
+add_test_executable(filter_test filter_test.cpp ${COMMON_SRCS})

@@ -1,113 +1,57 @@
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
-INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_BINARY_DIR})
 
-########### next target ###############
-
-SET(fers_SRCS
-	rsdebug.cpp
-	rsmain.cpp
-	rsplatform.cpp
-	rsradar.cpp
-	rstarget.cpp
-	rsworld.cpp
-	xmlimport.cpp
-	rsgeometry.cpp
-	rspath.cpp
-	rssim.cpp
-	rsthreadedsim.cpp
-	rspulserender.cpp
-	rsradarwaveform.cpp
-	rsparameters.cpp
-	rsobject.cpp
-	rsantenna.cpp
-	rsportable.cpp
-	rsresponse.cpp
-	rsnoise.cpp
-	rssignal.cpp
-	rstiming.cpp
-	rshdf5.cpp
-	rspython.cpp
-	rsinterp.cpp
-	rsdsp.cpp
-	rsmultipath.cpp
-	rspattern.cpp
-	rspolarize.cpp
-	rsdebug.h
-	rspath.h
-	rsportable.h
-	rsradar.h
-	rssim.h
-	rsworld.h
-	rsgeometry.h
-	rsplatform.h
-	rstarget.h
-	xmlimport.h
-	rsradarwaveform.h
-	rsparameters.h
-	rssignal.h
-	rsthreadedsim.h
-	rsobject.h
-	rsantenna.h
-	rsresponse.h
-	rsnoise.h
-	rstiming.h
-	rshdf5.h
-	rspython.h
-	rsinterp.h
-	rsdsp.h
-	rsmultipath.h
-	rspattern.h
-	rspolarize.h
+set(fers_SRCS
+	rsdebug.cpp rsmain.cpp rsplatform.cpp rsradar.cpp rstarget.cpp rsworld.cpp
+	xmlimport.cpp rsgeometry.cpp rspath.cpp rssim.cpp rsthreadedsim.cpp
+	rspulserender.cpp rsradarwaveform.cpp rsparameters.cpp rsobject.cpp
+	rsantenna.cpp rsportable.cpp rsresponse.cpp rsnoise.cpp rssignal.cpp
+	rstiming.cpp rshdf5.cpp rspython.cpp rsinterp.cpp rsdsp.cpp rsmultipath.cpp
+	rspattern.cpp rspolarize.cpp rsdebug.h rspath.h rsportable.h rsradar.h
+	rssim.h rsworld.h rsgeometry.h rsplatform.h rstarget.h xmlimport.h
+	rsradarwaveform.h rsparameters.h rssignal.h rsthreadedsim.h rsobject.h
+	rsantenna.h rsresponse.h rsnoise.h rstiming.h rshdf5.h rspython.h rsinterp.h
+	rsdsp.h rsmultipath.h rspattern.h rspolarize.h
 )
 
-ADD_EXECUTABLE(fers ${fers_SRCS})
+add_executable(fers ${fers_SRCS})
 
-# Link to the HDF5 libraries
-FIND_LIBRARY(FERS_LIB_HDF5 NAMES hdf5)
+find_library(FERS_LIB_HDF5 NAMES hdf5)
 
-IF (FERS_LIB_HDF5)
-	TARGET_LINK_LIBRARIES(fers ${FERS_LIB_HDF5})
-	ADD_DEFINITIONS(-DHAVE_LIBHDF5)
-ENDIF (FERS_LIB_HDF5)
+if (FERS_LIB_HDF5)
+	target_link_libraries(fers ${FERS_LIB_HDF5})
+	add_definitions(-DHAVE_LIBHDF5)
+endif ()
 
-FIND_LIBRARY(FERS_LIB_HDF5_HL NAMES hdf5_hl)
+find_library(FERS_LIB_HDF5_HL NAMES hdf5_hl)
 
-IF (FERS_LIB_HDF5_HL)
-	TARGET_LINK_LIBRARIES(fers ${FERS_LIB_HDF5_HL})
-ENDIF (FERS_LIB_HDF5_HL)
+if (FERS_LIB_HDF5_HL)
+	target_link_libraries(fers ${FERS_LIB_HDF5_HL})
+endif ()
 
-# Link to tinyxml libraries
-FIND_LIBRARY(FERS_LIB_TINYXML NAMES tinyxml)
+find_library(FERS_LIB_TINYXML NAMES tinyxml)
 
-IF (FERS_LIB_TINYXML)
-	TARGET_LINK_LIBRARIES(fers ${FERS_LIB_TINYXML})
-ENDIF (FERS_LIB_TINYXML)
+if (FERS_LIB_TINYXML)
+	target_link_libraries(fers ${FERS_LIB_TINYXML})
+endif ()
 
-# Include code to check for python libs
-# We must use Python 2
-SET(Python_ADDITIONAL_VERSIONS 2.7 2.6 2.5)
-INCLUDE(FindPythonLibs)
+set(Python_ADDITIONAL_VERSIONS 2.7 2.6 2.5)
+include(FindPythonLibs)
 
-IF (PYTHONLIBS_FOUND)
-	TARGET_LINK_LIBRARIES(fers ${PYTHON_LIBRARIES})
-	INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_PATH})
-ENDIF (PYTHONLIBS_FOUND)
+if (PYTHONLIBS_FOUND)
+	target_link_libraries(fers ${PYTHON_LIBRARIES})
+	include_directories(${PYTHON_INCLUDE_PATH})
+endif ()
 
-# Link to Boost Thread and System
-IF (WIN32)
-	SET(Boost_USE_STATIC_LIBS ON)  # Link Boost statically
-ELSE ()
-	SET(Boost_USE_STATIC_LIBS OFF)  # Link Boost with shared libs
-ENDIF ()
+if (WIN32)
+	set(Boost_USE_STATIC_LIBS ON)
+else ()
+	set(Boost_USE_STATIC_LIBS OFF)
+endif ()
 
-FIND_PACKAGE(Boost COMPONENTS system thread REQUIRED)
+find_package(Boost COMPONENTS system thread REQUIRED)
 
-MESSAGE(STATUS "Linking libraries for Boost: " ${Boost_LIBRARIES})
+if (Boost_LIBRARIES)
+	target_link_libraries(fers ${Boost_LIBRARIES})
+endif ()
 
-IF (Boost_LIBRARIES)
-	TARGET_LINK_LIBRARIES(fers ${Boost_LIBRARIES})
-ENDIF ()
-
-########### install files ###############
-
-INSTALL(TARGETS fers DESTINATION bin)
+install(TARGETS fers DESTINATION bin)
