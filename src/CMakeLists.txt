@@ -34,12 +34,11 @@ if (FERS_LIB_TINYXML)
 	target_link_libraries(fers ${FERS_LIB_TINYXML})
 endif ()
 
-set(Python_ADDITIONAL_VERSIONS 2.7 2.6 2.5)
-include(FindPythonLibs)
+find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
 
-if (PYTHONLIBS_FOUND)
-	target_link_libraries(fers ${PYTHON_LIBRARIES})
-	include_directories(${PYTHON_INCLUDE_PATH})
+if (Python3_FOUND)
+	target_link_libraries(fers Python3::Python)
+	include_directories(${Python3_INCLUDE_DIRS})
 endif ()
 
 if (WIN32)
