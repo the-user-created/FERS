@@ -18,20 +18,20 @@ namespace
 {
 	struct SimParameters
 	{
-		rsFloat c; //!< Propagation speed of the wave in the medium
-		rsFloat start; //!< The start time of the simulation
-		rsFloat end; //!< The end time of the simulation
-		rsFloat cw_sample_rate; //<! The number of samples per second to take of changes in the CW state
-		rsFloat rate; //!< The sample rate to use for rendering
-		unsigned int random_seed; //!< The seed used for random number calculations
-		unsigned int adc_bits; //!< The number of bits to use for quantization
-		unsigned int filter_length; //!< The length of the filter for rendering purposes
-		rs_parms::BinaryFileType filetype; //!< The type of binary files produced by binary rendering
-		bool export_xml; //!< Export results in XML format
-		bool export_csv; //!< Export results in CSV format
-		bool export_binary; //!< Export results in binary format
-		unsigned int render_threads; //!< Number of threads to use to render each receiver
-		unsigned int oversample_ratio; //!< Ratio of oversampling applied to pulses before rendering
+		rsFloat c{}; //!< Propagation speed of the wave in the medium
+		rsFloat start{}; //!< The start time of the simulation
+		rsFloat end{}; //!< The end time of the simulation
+		rsFloat cw_sample_rate{}; //<! The number of samples per second to take of changes in the CW state
+		rsFloat rate{}; //!< The sample rate to use for rendering
+		unsigned int random_seed{}; //!< The seed used for random number calculations
+		unsigned int adc_bits{}; //!< The number of bits to use for quantization
+		unsigned int filter_length{}; //!< The length of the filter for rendering purposes
+		rs_parms::BinaryFileType filetype{}; //!< The type of binary files produced by binary rendering
+		bool export_xml{}; //!< Export results in XML format
+		bool export_csv{}; //!< Export results in CSV format
+		bool export_binary{}; //!< Export results in binary format
+		unsigned int render_threads{}; //!< Number of threads to use to render each receiver
+		unsigned int oversample_ratio{}; //!< Ratio of oversampling applied to pulses before rendering
 	};
 
 	/// Object which contains all the simulation parameters
