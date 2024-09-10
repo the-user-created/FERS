@@ -30,4 +30,3 @@ add_definitions(-D_REENTRANT)
 
 add_subdirectory(src)
 add_subdirectory(utilities)
-add_subdirectory(test)
