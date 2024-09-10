@@ -55,7 +55,7 @@ namespace rs
 		virtual ~Radar();
 
 		/// Set the transmitter's antenna
-		void SetAntenna(Antenna* ant);
+		void SetAntenna(const Antenna* ant);
 
 		/// Return the antenna gain in the specified direction
 		rsFloat GetGain(const SVec3& angle, const SVec3& refangle, rsFloat wavelength) const;
@@ -64,7 +64,7 @@ namespace rs
 		virtual rsFloat GetNoiseTemperature(const SVec3& angle) const;
 
 		/// Make the radar monostatic
-		void MakeMonostatic(Radar* recv);
+		void MakeMonostatic(const Radar* recv);
 
 		/// Get the attached radar, if we are monostatic
 		const Radar* GetAttached() const;
@@ -146,7 +146,7 @@ namespace rs
 		enum RecvFlag { FLAG_NODIRECT = 1, FLAG_NOPROPLOSS = 2 };
 
 		/// Constructor
-		Receiver(const Platform* platform, std::string name = "defRecv");
+		Receiver(const Platform* platform, const std::string& name = "defRecv");
 
 		virtual ~Receiver();
 

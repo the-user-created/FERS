@@ -14,7 +14,7 @@ using namespace rs;
 //
 
 /// Constructor
-MultipathSurface::MultipathSurface(rsFloat a, rsFloat b, rsFloat c, rsFloat d, rsFloat factor):
+MultipathSurface::MultipathSurface(const rsFloat a, const rsFloat b, const rsFloat c, const rsFloat d, const rsFloat factor):
 	factor(factor)
 {
 	rsFloat* mat = reflection.GetData();

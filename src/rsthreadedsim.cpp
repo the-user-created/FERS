@@ -60,7 +60,7 @@ public:
 	}
 
 	//Operator () is executed when we create the thread
-	void operator()()
+	void operator()() const
 	{
 		rsDebug::printf(rsDebug::RS_VERBOSE,
 		                "[VERBOSE] Created simulator thread for transmitter '%s' and receiver '%s' ",
@@ -97,7 +97,7 @@ public:
 	}
 
 	/// Operator () is executed when we create the thread
-	void operator()()
+	void operator()() const
 	{
 		rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Created render thread for receiver '%s'\n",
 		                recv->GetName().c_str());
@@ -121,7 +121,7 @@ protected:
 
 
 /// Sleep for the specified number of seconds
-static void Sleep(int secs)
+static void Sleep(const int secs)
 {
 	//We sleep for one second here
 	boost::xtime xt;
@@ -138,7 +138,7 @@ static void IncThreads()
 }
 
 //Run a sim thread for each of the receiver-transmitter pairs, limiting concurrent threads
-void rs::RunThreadedSim(int thread_limit, World* world)
+void rs::RunThreadedSim(const int thread_limit, World* world)
 {
 	std::vector<boost::thread*> running;
 	std::vector<Receiver*>::iterator ri;

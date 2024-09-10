@@ -43,7 +43,7 @@ Radar::~Radar()
 }
 
 /// Attach a receiver to the transmitter for a monostatic configuration
-void Radar::MakeMonostatic(Radar* recv)
+void Radar::MakeMonostatic(const Radar* recv)
 {
 	if (attached)
 	{
@@ -66,7 +66,7 @@ bool Radar::IsMonostatic() const
 }
 
 /// Set the transmitter's antenna
-void Radar::SetAntenna(Antenna* ant)
+void Radar::SetAntenna(const Antenna* ant)
 {
 	if (!ant)
 	{
@@ -76,7 +76,7 @@ void Radar::SetAntenna(Antenna* ant)
 }
 
 /// Return the antenna gain in the specified direction
-rsFloat Radar::GetGain(const SVec3& angle, const SVec3& refangle, rsFloat wavelength) const
+rsFloat Radar::GetGain(const SVec3& angle, const SVec3& refangle, const rsFloat wavelength) const
 {
 	return antenna->GetGain(angle, refangle, wavelength);
 }
@@ -114,7 +114,7 @@ bool Radar::IsMultipathDual() const
 }
 
 /// Set this object as a virtual multipath dual
-void Radar::SetMultipathDual(rsFloat reflect)
+void Radar::SetMultipathDual(const rsFloat reflect)
 {
 	multipath_dual = true;
 	multipath_reflect = reflect;
@@ -138,7 +138,7 @@ rsFloat Radar::MultipathDualFactor() const
 //
 
 //Default constructor for Transmitter
-Transmitter::Transmitter(const Platform* platform, const std::string& name, bool pulsed):
+Transmitter::Transmitter(const Platform* platform, const std::string& name, const bool pulsed):
 	Radar(platform, name),
 	signal(0),
 	pulsed(pulsed),
@@ -161,10 +161,10 @@ void Transmitter::SetWave(RadarSignal* wave)
 // Return the number of pulses this transmitter produces over the simulation lifetime
 int Transmitter::GetPulseCount() const
 {
-	rsFloat time = rsParameters::end_time() - rsParameters::start_time();
+	const rsFloat time = rsParameters::end_time() - rsParameters::start_time();
 	if (pulsed)
 	{
-		rsFloat pulses = time * prf;
+		const rsFloat pulses = time * prf;
 		return static_cast<int>(std::ceil(pulses));
 	}
 	else
@@ -174,7 +174,7 @@ int Transmitter::GetPulseCount() const
 }
 
 // Fill the structure with the number'th pulse in the transmitter's pulse list
-void Transmitter::GetPulse(TransmitterPulse* pulse, int number) const
+void Transmitter::GetPulse(TransmitterPulse* pulse, const int number) const
 {
 	//Pulse waveform is same as transmitter waveform
 	pulse->wave = signal;
@@ -196,9 +196,9 @@ void Transmitter::GetPulse(TransmitterPulse* pulse, int number) const
 }
 
 /// Set the Pulse Repetition Frequency of the transmitter
-void Transmitter::SetPRF(rsFloat mprf)
+void Transmitter::SetPRF(const rsFloat mprf)
 {
-	rsFloat rate = rsParameters::rate() * rsParameters::oversample_ratio();
+	const rsFloat rate = rsParameters::rate() * rsParameters::oversample_ratio();
 	// The PRF must be rounded to an even number of samples
 	prf = 1 / (std::floor(rate / mprf) / rate);
 }
@@ -208,7 +208,7 @@ void Transmitter::SetPRF(rsFloat mprf)
 //
 
 //Default constructor for Receiver
-Receiver::Receiver(const Platform* platform, std::string name):
+Receiver::Receiver(const Platform* platform, const std::string& name):
 	Radar(platform, name),
 	noise_temperature(0),
 	dual(0),
@@ -293,7 +293,7 @@ rsFloat Receiver::GetNoiseTemperature() const
 }
 
 /// Set the noise temperature of the receiver
-void Receiver::SetNoiseTemperature(rsFloat temp)
+void Receiver::SetNoiseTemperature(const rsFloat temp)
 {
 	if (temp < -std::numeric_limits<rsFloat>::epsilon())
 	{
@@ -303,9 +303,9 @@ void Receiver::SetNoiseTemperature(rsFloat temp)
 }
 
 /// Set the length of the receive window
-void Receiver::SetWindowProperties(rsFloat length, rsFloat prf, rsFloat skip)
+void Receiver::SetWindowProperties(const rsFloat length, const rsFloat prf, const rsFloat skip)
 {
-	rsFloat rate = rsParameters::rate() * rsParameters::oversample_ratio();
+	const rsFloat rate = rsParameters::rate() * rsParameters::oversample_ratio();
 	window_length = length;
 	window_prf = prf;
 	window_skip = skip;
@@ -323,16 +323,16 @@ int Receiver::CountResponses() const
 /// Get the number of receive windows in the simulation time
 int Receiver::GetWindowCount() const
 {
-	rsFloat time = rsParameters::end_time() - rsParameters::start_time();
-	rsFloat pulses = time * window_prf;
+	const rsFloat time = rsParameters::end_time() - rsParameters::start_time();
+	const rsFloat pulses = time * window_prf;
 	return static_cast<int>(std::ceil(pulses));
 }
 
 /// Get the start time of the next window
-rsFloat Receiver::GetWindowStart(int window) const
+rsFloat Receiver::GetWindowStart(const int window) const
 {
 	//Calculate start time of pulse
-	rsFloat stime = static_cast<rsFloat>(window) / window_prf + window_skip;
+	const rsFloat stime = static_cast<rsFloat>(window) / window_prf + window_skip;
 	//If there is timing jitter, add it
 	if (!timing)
 	{
@@ -361,13 +361,13 @@ rsFloat Receiver::GetPRF() const
 }
 
 /// Set a flag
-void Receiver::SetFlag(RecvFlag flag)
+void Receiver::SetFlag(const RecvFlag flag)
 {
 	flags |= flag;
 }
 
 /// Check if a flag is set
-bool Receiver::CheckFlag(RecvFlag flag) const
+bool Receiver::CheckFlag(const RecvFlag flag) const
 {
 	return flags & flag;
 }
@@ -386,7 +386,7 @@ Receiver* rs::CreateMultipathDual(Receiver* recv, const MultipathSurface* surf)
 		return recv->dual;
 	}
 	//Get the dual platform
-	Platform* dual_plat = CreateMultipathDual(recv->GetPlatform(), surf);
+	const Platform* dual_plat = CreateMultipathDual(recv->GetPlatform(), surf);
 	//Create a new receiver object
 	Receiver* dual = new Receiver(dual_plat, recv->GetName() + "_dual");
 	//Assign the new receiver object to the current object
@@ -417,7 +417,7 @@ Transmitter* rs::CreateMultipathDual(Transmitter* trans, const MultipathSurface*
 		return trans->dual;
 	}
 	//Get the dual platform
-	Platform* dual_plat = CreateMultipathDual(trans->GetPlatform(), surf);
+	const Platform* dual_plat = CreateMultipathDual(trans->GetPlatform(), surf);
 	//Create a new transmitter object
 	Transmitter* dual = new Transmitter(dual_plat, trans->GetName() + "_dual", trans->pulsed);
 	//Assign the the transmitter object to the current object

@@ -28,14 +28,14 @@ namespace rs
 
 
 	/// Export the responses received by a receiver to an XML file
-	void ExportReceiverXML(const std::vector<rs::Response*>& responses, const std::string filename);
+	void ExportReceiverXML(const std::vector<rs::Response*>& responses, const std::string& filename);
 
 	/// Export the receiver pulses to the specified binary file, using the specified quantization
-	void ExportReceiverBinary(const std::vector<rs::Response*>& responses, rs::Receiver* recv,
-	                          const std::string recv_name, const std::string filename);
+	void ExportReceiverBinary(const std::vector<rs::Response*>& responses, const rs::Receiver* recv,
+	                          const std::string& recv_name, const std::string& filename);
 
 	/// Export the receiver responses to the specified CSV value files
-	void ExportReceiverCSV(const std::vector<rs::Response*>& responses, const std::string filename);
+	void ExportReceiverCSV(const std::vector<rs::Response*>& responses, const std::string& filename);
 
 	/// Management class for threaded rendering
 	class ThreadedRenderer
@@ -75,7 +75,7 @@ namespace rs
 		Response* GetWork();
 
 		/// Add the array to the window, locking the window lock in advance
-		void AddWindow(rsComplex* array, rsFloat start_time, unsigned int array_size);
+		void AddWindow(const rsComplex* array, rsFloat start_time, unsigned int array_size);
 
 		int serial; //!< Serial number of this thread
 		boost::mutex* window_mutex; //!< Mutex to protect window

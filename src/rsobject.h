@@ -21,7 +21,7 @@ namespace rs
 	class Object : boost::noncopyable
 	{
 	public:
-		Object(const Platform* platform, std::string name);
+		Object(const Platform* platform, const std::string& name);
 
 		~Object();
 

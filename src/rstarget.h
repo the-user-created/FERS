@@ -63,7 +63,7 @@ namespace rs
 	{
 	public:
 		/// Constructor
-		Target(Platform* platform, const std::string& name);
+		Target(const Platform* platform, const std::string& name);
 
 		/// Destructor
 		virtual ~Target();
@@ -90,7 +90,7 @@ namespace rs
 	{
 	public:
 		/// Constructor
-		IsoTarget(Platform* platform, const std::string& name, rsFloat rcs);
+		IsoTarget(const Platform* platform, const std::string& name, rsFloat rcs);
 
 		/// Destructor
 		virtual ~IsoTarget();
@@ -107,7 +107,7 @@ namespace rs
 	{
 	public:
 		/// Constructor
-		FileTarget(Platform* platform, const std::string& name, const std::string& filename);
+		FileTarget(const Platform* platform, const std::string& name, const std::string& filename);
 
 		/// Destructor
 		virtual ~FileTarget();
@@ -125,10 +125,10 @@ namespace rs
 	// Functions for creating objects of various target types
 
 	/// Create an isometric radiator target
-	Target* CreateIsoTarget(Platform* platform, const std::string& name, rsFloat rcs);
+	Target* CreateIsoTarget(const Platform* platform, const std::string& name, rsFloat rcs);
 
 	/// Create a target, loading the RCS pattern from a file
-	Target* CreateFileTarget(Platform* platform, const std::string& name, const std::string& filename);
+	Target* CreateFileTarget(const Platform* platform, const std::string& name, const std::string& filename);
 }
 
 #endif

@@ -23,7 +23,7 @@ namespace
 	//<node>
 	//<name>text</name>
 	//</node>
-	void AttachTextNode(TiXmlElement* root, std::string name, std::string text)
+	void AttachTextNode(TiXmlElement* root, const std::string& name, const std::string& text)
 	{
 		TiXmlElement* element = new TiXmlElement(name);
 		root->LinkEndChild(element);
@@ -36,7 +36,7 @@ namespace
 	//<node>
 	//<name>text</name>
 	//</node>
-	void AttachRsFloatNode(TiXmlElement* root, std::string name, rsFloat data, bool scientific = true,
+	void AttachRsFloatNode(TiXmlElement* root, const std::string& name, const rsFloat data, const bool scientific = true,
 	                       int precision = 10)
 	{
 		std::ostringstream oss;
@@ -53,7 +53,7 @@ namespace
 	//<node>
 	//<name>text</name>
 	//</node>
-	void AttachIntNode(TiXmlElement* root, std::string name, int data)
+	void AttachIntNode(TiXmlElement* root, const std::string& name, const int data)
 	{
 		std::ostringstream oss;
 		oss << data;
@@ -65,8 +65,8 @@ namespace
 // Interppoint Implementation
 //
 /// InterpPoint Constructor
-InterpPoint::InterpPoint(rsFloat power, rsFloat start, rsFloat delay, rsFloat doppler, rsFloat phase,
-                         rsFloat noise_temperature):
+InterpPoint::InterpPoint(const rsFloat power, const rsFloat start, const rsFloat delay, const rsFloat doppler, const rsFloat phase,
+                         const rsFloat noise_temperature):
 	power(power),
 	time(start),
 	delay(delay),
@@ -80,7 +80,7 @@ InterpPoint::InterpPoint(rsFloat power, rsFloat start, rsFloat delay, rsFloat do
 // ResponseBase Implementation
 //
 
-Response::Response(RadarSignal* wave, const Transmitter* transmitter):
+Response::Response(const RadarSignal* wave, const Transmitter* transmitter):
 	transmitter(transmitter),
 	wave(wave)
 {
@@ -186,7 +186,7 @@ void Response::RenderCSV(std::ofstream& of)
 }
 
 /// Add an interp point to the vector
-void Response::AddInterpPoint(InterpPoint& point)
+void Response::AddInterpPoint(const InterpPoint& point)
 {
 	// Check that points are being added in order
 	if ((!points.empty()) && (point.time < points.back().time))
@@ -198,7 +198,7 @@ void Response::AddInterpPoint(InterpPoint& point)
 }
 
 /// Render the response to an array
-boost::shared_array<rsComplex> Response::RenderBinary(rsFloat& rate, unsigned int& size, rsFloat frac_win_delay)
+boost::shared_array<rsComplex> Response::RenderBinary(rsFloat& rate, unsigned int& size, const rsFloat frac_win_delay)
 {
 	rate = wave->GetRate();
 	return wave->Render(points, size, frac_win_delay);

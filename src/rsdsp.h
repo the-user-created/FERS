@@ -133,7 +133,7 @@ namespace rs
 		~Upsampler();
 
 		/// Upsample the given sample to a pre-allocated target
-		void Upsample(rsFloat* insamples, int in_size, rsFloat* outsamples, int out_size);
+		void Upsample(const rsFloat* insamples, int in_size, rsFloat* outsamples, int out_size);
 
 	private:
 		int ratio; //!< Upsampling ratio
@@ -141,7 +141,7 @@ namespace rs
 		rsFloat* sample_memory; //!< Last samples used, to allow seamless upsampling in blocks
 		int filter_size; //!< Length of the interpolation filter
 		//Get a sample, from either the provided pointer or sample memory
-		inline rsFloat GetSample(rsFloat* samples, int n);
+		inline rsFloat GetSample(const rsFloat* samples, int n);
 	};
 
 	/// Upsample a signal by a factor of 10
@@ -158,7 +158,7 @@ namespace rs
 		void Upsample(rsFloat sample, rsFloat* out);
 
 		/// Upsample a large block, out must be ten times bigger than in
-		void Upsample(rsFloat* in, int count, rsFloat* out);
+		void Upsample(const rsFloat* in, int count, rsFloat* out);
 
 	private:
 		/// Anti-imaging filter

@@ -23,7 +23,7 @@ extern "C" {
 ///Open the HDF5 file for reading
 hid_t OpenFile(const std::string& name)
 {
-	hid_t file = H5Fopen(name.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+	const hid_t file = H5Fopen(name.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
 	if (file < 0)
 	{
 		throw std::runtime_error("[ERROR] Could not open HDF5 file " + name + " to read pulse");
@@ -36,19 +36,19 @@ void rshdf5::ReadPulseData(const std::string& name, std::complex<rsFloat>** data
 {
 	rate = rs::rsParameters::rate();
 	//Open the HDF5 file
-	hid_t file = OpenFile(name);
+	const hid_t file = OpenFile(name);
 	//Get the size of the dataset "pulse"
 	size_t type_size;
 	H5T_class_t class_id;
 	hsize_t* dims;
 	//Open the / group
-	hid_t slash = H5Gopen1(file, "/");
+	const hid_t slash = H5Gopen1(file, "/");
 	if (slash < 0)
 	{
 		throw std::runtime_error("[ERROR] HDF5 file " + name + " does not have top level group \"/\"");
 	}
 	//Open the I group
-	hid_t Igroup = H5Gopen1(slash, "I");
+	const hid_t Igroup = H5Gopen1(slash, "I");
 	if (Igroup < 0)
 	{
 		throw std::runtime_error("[ERROR] HDF5 file " + name + " does not have group \"I\"");
@@ -75,7 +75,7 @@ void rshdf5::ReadPulseData(const std::string& name, std::complex<rsFloat>** data
 	//Close the I group
 	H5Gclose(Igroup);
 	//Open the Q group
-	hid_t Qgroup = H5Gopen1(slash, "Q");
+	const hid_t Qgroup = H5Gopen1(slash, "Q");
 	if (Qgroup < 0)
 	{
 		throw std::runtime_error("[ERROR] HDF5 file " + name + " does not have group \"Q\"");
@@ -118,7 +118,7 @@ void rshdf5::ReadPulseData(const std::string& name, std::complex<rsFloat>** data
 ///Open the HDF5 file for writing
 long int rshdf5::CreateFile(const std::string& name)
 {
-	hid_t file = H5Fcreate(name.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+	const hid_t file = H5Fcreate(name.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 	if (file < 0)
 	{
 		throw std::runtime_error("[ERROR] Could not create HDF5 file " + name + " for export");
@@ -127,16 +127,16 @@ long int rshdf5::CreateFile(const std::string& name)
 }
 
 ///Add a dataset to the HDF5 file
-void rshdf5::AddChunkToFile(long int file, std::complex<rsFloat>* data, unsigned int size, rsFloat time, rsFloat rate,
-                            rsFloat fullscale, unsigned int count)
+void rshdf5::AddChunkToFile(const long int file, const std::complex<rsFloat>* data, const unsigned int size, const rsFloat time, const rsFloat rate,
+                            const rsFloat fullscale, const unsigned int count)
 {
 	//Create the name of the dataset
 	std::ostringstream oss;
 	oss << "chunk_" << std::setw(6) << std::setfill('0') << count;
-	std::string I_chunk_name = oss.str() + "_I";
-	std::string Q_chunk_name = oss.str() + "_Q";
+	const std::string I_chunk_name = oss.str() + "_I";
+	const std::string Q_chunk_name = oss.str() + "_Q";
 	//Create the size variable needed by the lite api
-	hsize_t datasize = size;
+	const hsize_t datasize = size;
 	//Write out the I data
 	double* I = new double[size];
 	double* Q = new double[size];
@@ -188,7 +188,7 @@ void rshdf5::AddChunkToFile(long int file, std::complex<rsFloat>* data, unsigned
 }
 
 ///Close the HDF5 file
-void rshdf5::CloseFile(long int file)
+void rshdf5::CloseFile(const long int file)
 {
 	if (H5Fclose(static_cast<hid_t>(file)) < 0)
 	{

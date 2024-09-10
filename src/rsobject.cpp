@@ -9,7 +9,7 @@
 
 using namespace rs;
 
-Object::Object(const Platform* platform, std::string name):
+Object::Object(const Platform* platform, const std::string& name):
 	platform(platform),
 	name(name)
 {
@@ -20,13 +20,13 @@ Object::~Object()
 }
 
 // Get the position of the object
-Vec3 Object::GetPosition(rsFloat time) const
+Vec3 Object::GetPosition(const rsFloat time) const
 {
 	return platform->GetPosition(time);
 }
 
 // Get the rotation of the object from it's platform
-SVec3 Object::GetRotation(rsFloat time) const
+SVec3 Object::GetRotation(const rsFloat time) const
 {
 	return platform->GetRotation(time);
 }

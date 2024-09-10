@@ -22,7 +22,7 @@ Vec3::Vec3():
 }
 
 //Data initialization constructor
-Vec3::Vec3(rsFloat x, rsFloat y, rsFloat z):
+Vec3::Vec3(const rsFloat x, const rsFloat y, const rsFloat z):
 	x(x), y(y), z(z)
 {
 }
@@ -81,7 +81,7 @@ Vec3& Vec3::operator=(const Vec3& b)
 Vec3& Vec3::operator*=(const Matrix3& m)
 {
 	const rsFloat* mat = m.GetData();
-	Vec3 v(x, y, z);
+	const Vec3 v(x, y, z);
 	x = mat[0] * v.x + mat[1] * v.y + mat[2] * v.z;
 	y = mat[3] * v.x + mat[4] * v.y + mat[5] * v.z;
 	z = mat[6] * v.x + mat[7] * v.y + mat[8] * v.z;
@@ -211,7 +211,7 @@ SVec3::SVec3():
 }
 
 //Constructor with initialization
-SVec3::SVec3(rsFloat length, rsFloat azimuth, rsFloat elevation):
+SVec3::SVec3(const rsFloat length, const rsFloat azimuth, const rsFloat elevation):
 	length(length), azimuth(azimuth), elevation(elevation)
 {
 }
@@ -244,14 +244,14 @@ SVec3::SVec3(const Vec3& vec)
 }
 
 //Multiplication by a scalar
-SVec3& SVec3::operator*=(rsFloat b)
+SVec3& SVec3::operator*=(const rsFloat b)
 {
 	length *= b;
 	return *this;
 }
 
 //Division by a scalar
-SVec3& SVec3::operator/=(rsFloat b)
+SVec3& SVec3::operator/=(const rsFloat b)
 {
 	length /= b;
 	return *this;

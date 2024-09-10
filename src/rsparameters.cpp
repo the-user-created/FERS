@@ -217,52 +217,52 @@ unsigned int rsParameters::oversample_ratio()
 //Setters for global parameters
 //
 
-void rsParameters::SetC(rsFloat c)
+void rsParameters::SetC(const rsFloat c)
 {
 	sim_parms.c = c;
 	rsDebug::printf(rsDebug::RS_CRITICAL, "[CRITICAL] Propagation speed (c) set to custom value: %8.5f\n", c);
 }
 
-void rsParameters::SetTime(rsFloat start, rsFloat end)
+void rsParameters::SetTime(const rsFloat start, const rsFloat end)
 {
 	sim_parms.start = start;
 	sim_parms.end = end;
 }
 
-void rsParameters::SetCWSampleRate(rsFloat rate)
+void rsParameters::SetCWSampleRate(const rsFloat rate)
 {
 	sim_parms.cw_sample_rate = rate;
 }
 
-void rsParameters::SetRate(rsFloat factor)
+void rsParameters::SetRate(const rsFloat factor)
 {
 	sim_parms.rate = factor;
 	rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] System sample rate set to custom value: %8.5f\n", factor);
 }
 
-void rsParameters::SetRandomSeed(unsigned int random_seed)
+void rsParameters::SetRandomSeed(const unsigned int random_seed)
 {
 	sim_parms.random_seed = random_seed;
 }
 
-void rsParameters::SetBinaryFileType(rsParms::BinaryFileType type)
+void rsParameters::SetBinaryFileType(const rsParms::BinaryFileType type)
 {
 	sim_parms.filetype = type;
 }
 
-void rsParameters::SetExporters(bool xml, bool csv, bool binary)
+void rsParameters::SetExporters(const bool xml, const bool csv, const bool binary)
 {
 	sim_parms.export_xml = xml;
 	sim_parms.export_csv = csv;
 	sim_parms.export_binary = binary;
 }
 
-void rsParameters::SetADCBits(unsigned int bits)
+void rsParameters::SetADCBits(const unsigned int bits)
 {
 	sim_parms.adc_bits = bits;
 }
 
-void rsParameters::SetRenderFilterLength(unsigned int length)
+void rsParameters::SetRenderFilterLength(const unsigned int length)
 {
 	//Sanity check the render filter length
 	if (length < 16)
@@ -273,7 +273,7 @@ void rsParameters::SetRenderFilterLength(unsigned int length)
 	rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Render filter length set to custom value: %d\n", length);
 }
 
-void rsParameters::SetOversampleRatio(unsigned int ratio)
+void rsParameters::SetOversampleRatio(const unsigned int ratio)
 {
 	//Sanity check the ratio
 	if (ratio == 0)
@@ -284,7 +284,7 @@ void rsParameters::SetOversampleRatio(unsigned int ratio)
 	rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Oversampling enabled with ratio %d\n", ratio);
 }
 
-void rsParameters::SetThreads(unsigned int threads)
+void rsParameters::SetThreads(const unsigned int threads)
 {
 	sim_parms.render_threads = threads;
 }
