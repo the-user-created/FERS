@@ -75,7 +75,7 @@ namespace rs
 	{
 	public:
 		/// Constructor
-		FIRFilter(const std::vector<rsFloat>& coeffs);
+		explicit FIRFilter(const std::vector<rsFloat>& coeffs);
 
 		FIRFilter(const rsFloat* coeffs, int count);
 
@@ -103,7 +103,7 @@ namespace rs
 	{
 	public:
 		/// Constructor
-		ARFilter(const std::vector<rsFloat>& coeffs);
+		explicit ARFilter(const std::vector<rsFloat>& coeffs);
 
 		/// Destructor
 		~ARFilter();
@@ -126,7 +126,7 @@ namespace rs
 	{
 	public:
 		/// Constructor (ratio of upsampling, co-efficients of anti-imaging filter)
-		Upsampler(int ratio);
+		explicit Upsampler(int ratio);
 
 		/// Destructor
 		~Upsampler();

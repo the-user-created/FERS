@@ -91,7 +91,7 @@ namespace rs
 		}
 
 		/// Constructor. Assign scalar to all elements.
-		RotationCoord(const rsFloat a = 0):
+		explicit RotationCoord(const rsFloat a = 0):
 			azimuth(a), elevation(a), t(a)
 		{
 		}
@@ -127,7 +127,7 @@ namespace rs
 		enum InterpType { RS_INTERP_STATIC, RS_INTERP_LINEAR, RS_INTERP_CUBIC, RS_INTERP_PYTHON };
 
 		/// Default constructor
-		Path(InterpType type = RS_INTERP_STATIC);
+		explicit Path(InterpType type = RS_INTERP_STATIC);
 
 		/// Add a co-ordinate to the path
 		void AddCoord(const Coord& coord);
@@ -165,7 +165,7 @@ namespace rs
 		enum InterpType { RS_INTERP_STATIC, RS_INTERP_CONSTANT, RS_INTERP_LINEAR, RS_INTERP_CUBIC };
 
 		/// Default constructor
-		RotationPath(InterpType type = RS_INTERP_STATIC);
+		explicit RotationPath(InterpType type = RS_INTERP_STATIC);
 
 		/// Method to add a co-ordinate to the path
 		void AddCoord(const RotationCoord& coord);
@@ -202,7 +202,7 @@ namespace rs
 	class PathException final : public std::runtime_error
 	{
 	public:
-		PathException(const std::string& description):
+		explicit PathException(const std::string& description):
 			std::runtime_error("Error While Executing Path Code: " + description)
 		{
 		}

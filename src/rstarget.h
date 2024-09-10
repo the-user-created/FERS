@@ -47,7 +47,7 @@ namespace rs
 	{
 	public:
 		/// Constructor
-		RCSChiSquare(rsFloat k); //k is the shape parameter for the distribution
+		explicit RCSChiSquare(rsFloat k); //k is the shape parameter for the distribution
 		/// Destructor
 		virtual ~RCSChiSquare();
 

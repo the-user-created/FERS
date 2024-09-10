@@ -160,7 +160,7 @@ void Response::RenderXML(TiXmlElement* root)
 	AttachTextNode(element, "name", wave->GetName());
 
 	//Render each interpolation point in turn
-	for (std::vector<InterpPoint>::iterator i = points.begin(); i != points.end(); i++)
+	for (std::vector<InterpPoint>::iterator i = points.begin(); i != points.end(); ++i)
 	{
 		RenderResponseXML(element, *i);
 	}
@@ -177,7 +177,7 @@ void Response::RenderResponseCSV(std::ofstream& of, const InterpPoint& point)
 void Response::RenderCSV(std::ofstream& of)
 {
 	//Render each interpolation point
-	for (std::vector<InterpPoint>::const_iterator i = points.begin(); i != points.end(); i++)
+	for (std::vector<InterpPoint>::const_iterator i = points.begin(); i != points.end(); ++i)
 	{
 		RenderResponseCSV(of, *i);
 	}

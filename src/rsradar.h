@@ -145,7 +145,7 @@ namespace rs
 		enum RecvFlag { FLAG_NODIRECT = 1, FLAG_NOPROPLOSS = 2 };
 
 		/// Constructor
-		Receiver(const Platform* platform, const std::string& name = "defRecv");
+		explicit Receiver(const Platform* platform, const std::string& name = "defRecv");
 
 		virtual ~Receiver();
 

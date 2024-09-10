@@ -123,7 +123,7 @@ void finalizeCubic(std::vector<T>& coords, std::vector<T>& dd)
 		tmp[i] = ((yrd / xrd - yld / xld) * 6.0 / iw - tmp[i - 1] * si) / p;
 	}
 	//Second (backward) pass of calculation
-	for (int i = size - 2; i >= 0; i--)
+	for (int i = size - 2; i >= 0; --i)
 	{
 		dd[i] = dd[i] * dd[i + 1] + tmp[i];
 	}
@@ -240,7 +240,7 @@ Path* rs::ReflectPath(const Path* path, const MultipathSurface* surf)
 	//Create a new path object
 	Path* dual = new Path(path->type);
 	//Add all the coords from the current path to the old path, reflecting about the multipath plane
-	for (std::vector<Coord>::const_iterator iter = path->coords.begin(); iter != path->coords.end(); iter++)
+	for (std::vector<Coord>::const_iterator iter = path->coords.begin(); iter != path->coords.end(); ++iter)
 	{
 		Coord refl;
 		refl.t = (*iter).t;
@@ -507,7 +507,7 @@ RotationPath* rs::ReflectPath(const RotationPath* path, const MultipathSurface* 
 	dual->start = path->start;
 	dual->rate = path->rate;
 	//Copy the coords, reflecting them in the surface
-	for (std::vector<RotationCoord>::const_iterator iter = path->coords.begin(); iter != path->coords.end(); iter++)
+	for (std::vector<RotationCoord>::const_iterator iter = path->coords.begin(); iter != path->coords.end(); ++iter)
 	{
 		RotationCoord rc;
 		//Time copies directly

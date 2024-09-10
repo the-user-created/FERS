@@ -20,7 +20,7 @@ namespace rs
 	{
 	public:
 		/// Constructor
-		Timing(const std::string& name);
+		explicit Timing(const std::string& name);
 
 		/// Destructor
 		virtual ~Timing();
@@ -46,7 +46,7 @@ namespace rs
 	{
 	public:
 		/// Constructor
-		PrototypeTiming(const std::string& name);
+		explicit PrototypeTiming(const std::string& name);
 
 		/// Add an alpha and a weight to the timing prototype
 		void AddAlpha(rsFloat alpha, rsFloat weight);
@@ -104,7 +104,7 @@ namespace rs
 	{
 	public:
 		/// Constructor
-		ClockModelTiming(const std::string& name);
+		explicit ClockModelTiming(const std::string& name);
 
 		/// Destructor
 		virtual ~ClockModelTiming();
