@@ -148,9 +148,9 @@ void Response::renderXml(TiXmlElement* root)
 	attachTextNode(element.get(), "name", _wave->getName());
 
 	// Render each interpolation point in turn
-	for (auto i = _points.begin(); i != _points.end(); ++i)
+	for (auto & point : _points)
 	{
-		renderResponseXml(element.get(), *i);
+		renderResponseXml(element.get(), point);
 	}
 
 	// Release ownership to avoid deletion
@@ -168,9 +168,9 @@ void Response::renderResponseCsv(std::ofstream& of, const InterpPoint& point) co
 void Response::renderCsv(std::ofstream& of)
 {
 	//Render each interpolation point
-	for (auto i = _points.begin(); i != _points.end(); ++i)
+	for (auto & point : _points)
 	{
-		renderResponseCsv(of, *i);
+		renderResponseCsv(of, point);
 	}
 }
 

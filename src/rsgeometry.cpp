@@ -249,9 +249,9 @@ SVec3& SVec3::operator/=(const RS_FLOAT b)
 /// Default constructor
 Matrix3::Matrix3()
 {
-	for (int i = 0; i < 9; i++)
+	for (double & element : elements)
 	{
-		elements[i] = 0;
+		element = 0;
 	}
 }
 

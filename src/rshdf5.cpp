@@ -59,7 +59,7 @@ void rshdf5::readPulseData(const std::string& name, std::complex<RS_FLOAT>** dat
 	herr_t res = H5LTget_dataset_info(i_group, "value", &dims[0], &class_id, &type_size);
 	if (res < 0)
 	{
-		throw std::runtime_error("[ERROR] HDF5 file " + name + " does not have dataset \"value\" in group \"I\"");
+		throw std::runtime_error("[ERROR] HDF5 file " + name + R"( does not have dataset "value" in group "I")");
 	}
 	// Allocate memory for the pulse
 	size = dims[0];
@@ -86,7 +86,7 @@ void rshdf5::readPulseData(const std::string& name, std::complex<RS_FLOAT>** dat
 	}
 	if (size != dims[0])
 	{
-		throw std::runtime_error("[ERROR] Dataset \"Q\" is not the same size as dataset \"I\" in file " + name);
+		throw std::runtime_error(R"([ERROR] Dataset "Q" is not the same size as dataset "I" in file )" + name);
 	}
 	//Allocate memory for the Q set
 	auto* buffer_q = new double[size];
