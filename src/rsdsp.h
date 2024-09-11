@@ -19,10 +19,10 @@ namespace rs
 	//
 
 	/// Upsample size samples stored *in by an integer ratio and store the result in (pre-allocated) out
-	void upsample(const RsComplex* in, int size, RsComplex* out, int ratio);
+	void upsample(const RsComplex* in, unsigned int size, RsComplex* out, unsigned int ratio);
 
 	/// Downsample size samples stored *in by an integer ratio and store the result in (pre-allocated) out
-	void downsample(const RsComplex* in, int size, RsComplex* out, int ratio);
+	void downsample(const RsComplex* in, unsigned int size, RsComplex* out, unsigned int ratio);
 
 	/// Filter, parent class for digital filters
 	class DspFilter : boost::noncopyable
@@ -77,7 +77,7 @@ namespace rs
 		/// Constructor
 		explicit FirFilter(const std::vector<RS_FLOAT>& coeffs);
 
-		FirFilter(const RS_FLOAT* coeffs, int count);
+		FirFilter(const RS_FLOAT* coeffs, unsigned int count);
 
 		/// Destructor
 		~FirFilter() override;
@@ -89,7 +89,7 @@ namespace rs
 		void filter(RS_FLOAT* samples, int size) override;
 
 		/// Pass an array of complex samples through the filter, filtering in place
-		void filter(std::complex<RS_FLOAT>* samples, int size) const;
+		void filter(std::complex<RS_FLOAT>* samples, unsigned int size) const;
 
 	private:
 		RS_FLOAT* _w; //!< Filter state

@@ -62,7 +62,7 @@ void PrototypeTiming::getAlphas(std::vector<RS_FLOAT>& getAlphas, std::vector<RS
 /// Set a constant frequency offset
 void PrototypeTiming::addFreqOffset(const RS_FLOAT offset)
 {
-	if (_random_freq)
+	if (_random_freq != 0.0)
 	{
 		rs_debug::printf(rs_debug::RS_IMPORTANT,
 		                "[Important] Random frequency offset and constant frequency offset are set for timing source %s. Only the random offset will be used.",
@@ -74,7 +74,7 @@ void PrototypeTiming::addFreqOffset(const RS_FLOAT offset)
 /// Set a constant phase offset
 void PrototypeTiming::addPhaseOffset(const RS_FLOAT offset)
 {
-	if (_random_phase)
+	if (_random_phase != 0.0)
 	{
 		rs_debug::printf(rs_debug::RS_IMPORTANT,
 		                "[Important] Random phase offset and constant phase offset are set for timing source %s. Only the random offset will be used.",
@@ -86,7 +86,7 @@ void PrototypeTiming::addPhaseOffset(const RS_FLOAT offset)
 /// Set a random frequency offset
 void PrototypeTiming::addRandomFreqOffset(const RS_FLOAT stdev)
 {
-	if (_freq_offset)
+	if (_freq_offset != 0.0)
 	{
 		rs_debug::printf(rs_debug::RS_IMPORTANT,
 		                "[Important] Random frequency offset and constant frequency offset are set for timing source %s. Only the random offset will be used.",
@@ -98,7 +98,7 @@ void PrototypeTiming::addRandomFreqOffset(const RS_FLOAT stdev)
 /// Set a random phase offset
 void PrototypeTiming::addRandomPhaseOffset(const RS_FLOAT stdev)
 {
-	if (_phase_offset)
+	if (_phase_offset != 0.0)
 	{
 		rs_debug::printf(rs_debug::RS_IMPORTANT,
 		                "[Important] Random phase offset and constant phase offset are set for timing source %s. Only the random offset will be used.",

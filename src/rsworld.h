@@ -81,7 +81,7 @@ namespace rs
 		///Process the scene to add virtual receivers and transmitters
 		void processMultipath();
 
-		friend void runThreadedSim(int threadLimit, World* world);
+		friend void runThreadedSim(unsigned int threadLimit, World* world);
 
 		friend void simulatePair(const Transmitter* trans, Receiver* recv, const World* world);
 
@@ -100,7 +100,7 @@ namespace rs
 
 namespace rs
 {
-	void runThreadedSim(int threadLimit, World* world);
+	void runThreadedSim(unsigned int threadLimit, World* world);
 }
 
 #endif

@@ -28,21 +28,21 @@ namespace rs
 
 
 	/// Export the responses received by a receiver to an XML file
-	void exportReceiverXml(const std::vector<rs::Response*>& responses, const std::string& filename);
+	void exportReceiverXml(const std::vector<Response*>& responses, const std::string& filename);
 
 	/// Export the receiver pulses to the specified binary file, using the specified quantization
-	void exportReceiverBinary(const std::vector<rs::Response*>& responses, const Receiver* recv,
+	void exportReceiverBinary(const std::vector<Response*>& responses, const Receiver* recv,
 	                          const std::string& recvName);
 
 	/// Export the receiver responses to the specified CSV value files
-	void exportReceiverCsv(const std::vector<rs::Response*>& responses, const std::string& filename);
+	void exportReceiverCsv(const std::vector<Response*>& responses, const std::string& filename);
 
 	/// Management class for threaded rendering
 	class ThreadedRenderer
 	{
 	public:
 		/// Constructor
-		ThreadedRenderer(const std::vector<rs::Response*>* responses, const rs::Receiver* recv, int maxThreads);
+		ThreadedRenderer(const std::vector<Response*>* responses, const Receiver* recv, unsigned int maxThreads);
 
 		/// Destructor
 		~ThreadedRenderer();
@@ -51,9 +51,9 @@ namespace rs
 		void renderWindow(RsComplex* window, RS_FLOAT length, RS_FLOAT start, RS_FLOAT fracDelay) const;
 
 	private:
-		const std::vector<rs::Response*>* _responses; //!< Vector of target responses seen by this receiver
-		const rs::Receiver* _recv; //!< Receiver we are rendering for
-		int _max_threads; //!< The maximum allowed thread count for rendering
+		const std::vector<Response*>* _responses; //!< Vector of target responses seen by this receiver
+		const Receiver* _recv; //!< Receiver we are rendering for
+		unsigned int _max_threads; //!< The maximum allowed thread count for rendering
 	};
 
 	/// Single thread for rendering
@@ -72,7 +72,7 @@ namespace rs
 
 	private:
 		/// Get a response from the worklist, returning NULL on failure
-		Response* getWork() const;
+		[[nodiscard]] Response* getWork() const;
 
 		/// Add the array to the window, locking the window lock in advance
 		void addWindow(const RsComplex* array, RS_FLOAT startTime, unsigned int arraySize) const;

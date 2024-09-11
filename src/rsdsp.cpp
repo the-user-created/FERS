@@ -6,6 +6,7 @@
 
 #include <cmath>
 #include <cstring>
+#include <iostream>
 #include <stdexcept>
 
 #include "rsdebug.h"
@@ -29,13 +30,13 @@ namespace
 	}
 
 	/// Create a FIR filter using the Blackman window
-	RS_FLOAT* blackmanFir(const RS_FLOAT cutoff, int& length)
+	RS_FLOAT* blackmanFir(const RS_FLOAT cutoff, unsigned int& filtLength)
 	{
 		// Use double the render filter length, for faster rolloff than the render filter
-		length = RsParameters::renderFilterLength() * 2;
-		auto* coeffs = new RS_FLOAT[length];
-		const RS_FLOAT n = length / 2.0;
-		for (int i = 0; i < length; i++)
+		filtLength = RsParameters::renderFilterLength() * 2;
+		auto* coeffs = new RS_FLOAT[filtLength];
+		const RS_FLOAT n = filtLength / 2.0;
+		for (int i = 0; i < filtLength; i++)
 		{
 			const RS_FLOAT filt = sinc(cutoff * (i - n));
 			// We use the Blackman window, for a suitable tradeoff between rolloff and stopband attenuation
@@ -51,11 +52,12 @@ namespace
 // TODO: this would be better as a multirate upsampler
 // In fact, the whole scheme is currently sub-optimal - we could use better filters, better windows and a better approach
 // it works ok for now, users seeking higher accuracy can oversample outside FERS until this is fixed
-void rs::upsample(const RsComplex* in, const int size, RsComplex* out, const int ratio)
+void rs::upsample(const RsComplex* in, const unsigned int size, RsComplex* out, const unsigned int ratio)
 {
 	/// Design the FIR filter for de-imaging
-	int filt_length;
+	unsigned int filt_length;
 	const RS_FLOAT* coeffs = blackmanFir(1 / static_cast<RS_FLOAT>(ratio), filt_length);
+	std::cout << filt_length << std::endl;
 
 	// Temporary buffer for zero padding and results
 	auto* tmp = new RsComplex[size * ratio + filt_length];
@@ -87,14 +89,14 @@ void rs::upsample(const RsComplex* in, const int size, RsComplex* out, const int
 
 /// Upsample size samples stored *in by an integer ratio and store the result in (pre-allocated) out
 // TODO: This would be better (and much faster) as a multirate downsampler
-void rs::downsample(const RsComplex* in, const int size, RsComplex* out, const int ratio)
+void rs::downsample(const RsComplex* in, const unsigned int size, RsComplex* out, const unsigned int ratio)
 {
 	/// Design the FIR filter for anti-aliasing
-	int filt_length;
+	unsigned int filt_length;
 	const RS_FLOAT* coeffs = blackmanFir(1 / static_cast<RS_FLOAT>(ratio), filt_length);
 	// Temporary buffer for zero padding and results
 	auto* tmp = new RsComplex[size + filt_length];
-	for (int i = size - 1; i < size + filt_length; i++)
+	for (unsigned int i = size - 1; i < size + filt_length; i++)
 	{
 		tmp[i] = 0;
 	}
@@ -111,7 +113,6 @@ void rs::downsample(const RsComplex* in, const int size, RsComplex* out, const i
 	for (int i = 0; i < size / ratio; i++)
 	{
 		out[i] = tmp[i * ratio + filt_length / 2] / static_cast<RS_FLOAT>(ratio);
-		//    printf("%f+%fi\n", out[i].real(), out[i].imag());
 	}
 	// Clean up
 	delete[] coeffs;
@@ -249,7 +250,7 @@ FirFilter::FirFilter(const std::vector<RS_FLOAT>& coeffs)
 }
 
 /// Constructor from coeffs
-FirFilter::FirFilter(const RS_FLOAT* coeffs, const int count)
+FirFilter::FirFilter(const RS_FLOAT* coeffs, const unsigned int count)
 {
 	_order = count;
 	// Allocate memory to store co-efficients and state
@@ -296,7 +297,7 @@ inline void FirFilter::filter(RS_FLOAT* samples, const int size)
 		}
 		samples[i] = res;
 		//Move the line over by one sample
-		for (int j = _order; j > 0; j--)
+		for (unsigned int j = _order; j > 0; j--)
 		{
 			line[j] = line[j - 1];
 		}
@@ -306,7 +307,7 @@ inline void FirFilter::filter(RS_FLOAT* samples, const int size)
 }
 
 /// Pass an array of complex samples through the filter, filtering in place
-inline void FirFilter::filter(std::complex<RS_FLOAT>* samples, const int size) const
+inline void FirFilter::filter(std::complex<RS_FLOAT>* samples, const unsigned int size) const
 {
 	// Allocate memory for a delay line, equal to the filter length
 	auto* line = new RsComplex[_order];
@@ -325,7 +326,7 @@ inline void FirFilter::filter(std::complex<RS_FLOAT>* samples, const int size) c
 		}
 		samples[i] = res;
 		//Move the line over by one sample
-		for (int j = _order - 1; j > 0; j--)
+		for (unsigned int j = _order - 1; j > 0; j--)
 		{
 			line[j] = line[j - 1];
 		}

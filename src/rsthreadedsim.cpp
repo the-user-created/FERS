@@ -128,7 +128,7 @@ static void incThreads()
 }
 
 //Run a sim thread for each of the receiver-transmitter pairs, limiting concurrent threads
-void rs::runThreadedSim(const int threadLimit, World* world)
+void rs::runThreadedSim(const unsigned int threadLimit, World* world)
 {
 	std::vector<std::unique_ptr<boost::thread>> running;
 	std::vector<Receiver*>::iterator ri;

@@ -31,7 +31,7 @@ namespace rs_signal
 	Complex* iqDemodulate(RS_FLOAT* data, unsigned int size, RS_FLOAT phase);
 
 	/// Simulate the effect of and ADC converter on the signal
-	void adcSimulate(Complex* data, unsigned int size, int bits, RS_FLOAT fullscale);
+	void adcSimulate(Complex* data, unsigned int size, unsigned int bits, RS_FLOAT fullscale);
 }
 
 namespace rs
