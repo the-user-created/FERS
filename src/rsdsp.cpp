@@ -420,7 +420,7 @@ Upsampler::Upsampler(const int ratio):
 	{
 		// The Hamming window provides a solid tradeoff between rolloff and stopband attenuation
 		const RS_FLOAT window_value = 0.54 - 0.46 * std::cos(2 * M_PI * i / static_cast<RS_FLOAT>(_filter_size));
-		const RS_FLOAT filter_value = sinc(1.0 / static_cast<RS_FLOAT>(ratio) * (i - _filter_size / 2));
+		const RS_FLOAT filter_value = sinc(1.0 / static_cast<RS_FLOAT>(ratio) * (i - _filter_size / 2.0));
 		_filterbank[i] = filter_value * window_value;
 	}
 	//Allocate memory for the sample state

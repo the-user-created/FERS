@@ -125,7 +125,7 @@ namespace
 	/// Get a pointer to the filter with approximately the specified delay
 	const RS_FLOAT* InterpFilter::getFilter(const RS_FLOAT delay) const
 	{
-		const auto filt = static_cast<unsigned int>((delay + 1) * (_table_filters / 2));
+		const auto filt = static_cast<unsigned int>((delay + 1) * (_table_filters / 2.0));
 
 		if (delay <= -1 || delay >= 1)
 		{
@@ -318,11 +318,9 @@ boost::shared_array<RsComplex> Signal::render(const std::vector<InterpPoint>& po
 	const RS_FLOAT idelay = rs_portable::rsRound(_rate * iter->delay);
 	//rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "idelay = %g\n", idelay);
 
-	//Memory to store the filter in
-
 	//Loop over the pulse, performing the rendering
 	RS_FLOAT sample_time = iter->time;
-	for (int i = 0; i < static_cast<int>(_size); i++, sample_time += timestep)
+	for (int i = 0; i < static_cast<int>(_size); i++)
 	{
 		//Check if we should move on to the next set of interp points
 		if (sample_time > next->time)
@@ -409,8 +407,10 @@ boost::shared_array<RsComplex> Signal::render(const std::vector<InterpPoint>& po
 		//Perform IQ demodulation
 		RsComplex ph = exp(RsComplex(0.0, 1.0) * phase);
 		out[i] = ph * accum;
+
+		// Increment the sample time (in a Clang-Tidy compliant way)
+		sample_time += timestep;
 	}
 	//Return the result
 	return boost::shared_array<RsComplex>(out);
 }
-
