@@ -6,6 +6,8 @@
 #ifndef RS_GEOMETRY_H
 #define RS_GEOMETRY_H
 
+#include <cmath>
+
 #include "config.h"
 
 namespace rs_geometry
@@ -34,7 +36,7 @@ namespace rs
 		RS_FLOAT* getData();
 	};
 
-	/// The Vec3 class is a rectangular 3 vector
+	/// The Vec3 class is a rectangular three vector
 	class Vec3
 	{
 	public:
@@ -47,7 +49,7 @@ namespace rs
 		Vec3(RS_FLOAT x, RS_FLOAT y, RS_FLOAT z);
 
 		/// Constructor with a spherical vector
-		Vec3(const SVec3& svec);
+		explicit Vec3(const SVec3& svec);
 
 		/// Default destructor
 		~Vec3();
@@ -104,7 +106,7 @@ namespace rs
 		SVec3(const SVec3& svec);
 
 		/// Constructor with a rectangular vector
-		SVec3(const Vec3& vec);
+		explicit SVec3(const Vec3& vec);
 
 		/// Destructor
 		~SVec3();
@@ -114,7 +116,31 @@ namespace rs
 		//
 		SVec3& operator*=(RS_FLOAT b); //!< multiplication by a scalar
 		SVec3& operator/=(RS_FLOAT b); //!< division by a scalar
-		// TODO: Need to develop a SVec3 overloaded operator for addition
 	};
+
+	inline SVec3 operator+(const SVec3& a, const SVec3& b)
+	{
+		// TODO: verify that this is correct for the FERS use case
+		RS_FLOAT new_azimuth = fmod(a.azimuth + b.azimuth, 2 * M_PI);  // Normalize to [0, 2π)
+		if (new_azimuth < 0)
+		{
+			new_azimuth += 2 * M_PI; // Ensure positive azimuth
+		}
+		RS_FLOAT new_elevation = fmod(a.elevation + b.elevation, M_PI);  // Normalize elevation
+		return {a.length + b.length, new_azimuth, new_elevation};
+	}
+
+	inline SVec3 operator-(const SVec3& a, const SVec3& b)
+	{
+		// TODO: verify that this is correct for the FERS use case
+		RS_FLOAT new_azimuth = fmod(a.azimuth - b.azimuth, 2 * M_PI);  // Normalize to [0, 2π)
+		if (new_azimuth < 0)
+		{
+			new_azimuth += 2 * M_PI; // Ensure positive azimuth
+		}
+		RS_FLOAT new_elevation = fmod(a.elevation - b.elevation, M_PI);  // Normalize elevation
+		return {a.length - b.length, new_azimuth, new_elevation};
+	}
+
 }
 #endif
