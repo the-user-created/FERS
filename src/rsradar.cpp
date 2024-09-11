@@ -371,7 +371,7 @@ bool Receiver::checkFlag(const RecvFlag flag) const
 //
 
 // Create a multipath dual of the given receiver
-Receiver* rs::createMultipathDual(Receiver* recv, const MultipathSurface* surf)
+Receiver* rs::createMultipathDual(Receiver* recv, const MultipathSurface* surf)  // NOLINT(misc-no-recursion)
 {
 	//If we already have a dual, simply return the pointer to it
 	if (recv->_dual)
@@ -402,7 +402,7 @@ Receiver* rs::createMultipathDual(Receiver* recv, const MultipathSurface* surf)
 }
 
 // Create a multipath dual of the given transmitter
-Transmitter* rs::createMultipathDual(Transmitter* trans, const MultipathSurface* surf)
+Transmitter* rs::createMultipathDual(Transmitter* trans, const MultipathSurface* surf)  // NOLINT(misc-no-recursion)
 {
 	//If we already have a dual, simply return a pointer to it
 	if (trans->_dual)

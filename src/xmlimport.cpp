@@ -968,7 +968,7 @@ namespace
 	void processDocument(const TiXmlHandle& root, World* world, bool included);
 
 	/// Process the inclusion of a file
-	void processInclude(const TiXmlHandle& plat, World* world)
+	void processInclude(const TiXmlHandle& plat, World* world)  // NOLINT(misc-no-recursion)
 	{
 		const char* name = getNodeText(plat);
 		TiXmlDocument doc(name);
@@ -982,7 +982,7 @@ namespace
 	}
 
 	/// Process the XML tree, starting at the root
-	void processDocument(const TiXmlHandle& root, World* world, const bool included)
+	void processDocument(const TiXmlHandle& root, World* world, const bool included)  // NOLINT(misc-no-recursion)
 	{
 		if (!included)
 		{

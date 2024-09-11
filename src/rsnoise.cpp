@@ -312,7 +312,7 @@ void FAlphaBranch::init()
 }
 
 /// Get a sample from the branch
-RS_FLOAT FAlphaBranch::getSample()
+RS_FLOAT FAlphaBranch::getSample()  // NOLINT(misc-no-recursion)
 {
 	if (!_last)
 	{
@@ -338,7 +338,7 @@ void FAlphaBranch::clean() const
 }
 
 /// Calculate a single sample
-RS_FLOAT FAlphaBranch::calcSample()
+RS_FLOAT FAlphaBranch::calcSample()  // NOLINT(misc-no-recursion)
 {
 	RS_FLOAT sample = rs_noise::wgnSample(1);
 	if (_shape_filter)
@@ -368,7 +368,7 @@ RS_FLOAT FAlphaBranch::calcSample()
 }
 
 /// Refill the buffer
-void FAlphaBranch::refill()
+void FAlphaBranch::refill()  // NOLINT(misc-no-recursion)
 {
 	const RS_FLOAT sample = calcSample();
 	// Pass the sample to the upsampler
