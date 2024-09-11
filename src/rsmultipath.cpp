@@ -30,9 +30,7 @@ MultipathSurface::MultipathSurface(const RS_FLOAT a, const RS_FLOAT b, const RS_
 }
 
 /// Default destructor
-MultipathSurface::~MultipathSurface()
-{
-}
+MultipathSurface::~MultipathSurface() = default;
 
 /// Return a point reflected in the surface
 Vec3 MultipathSurface::reflectPoint(const Vec3& b) const

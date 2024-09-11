@@ -26,7 +26,7 @@ namespace rs
 		RS_FLOAT getGain(const SVec3& angle) const;
 
 	private:
-		unsigned int _size_elev, _size_azi; //!< Number of samples in elevation and azimuth
+		unsigned int _size_elev{}, _size_azi{}; //!< Number of samples in elevation and azimuth
 		RS_FLOAT** _pattern; //!< 2D Array to store the gain pattern
 	};
 }

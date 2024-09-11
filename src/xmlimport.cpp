@@ -117,7 +117,7 @@ std::string getAttributeString(const TiXmlHandle& handle, const std::string& nam
 	{
 		throw XmlImportException(error);
 	}
-	return string("");
+	return {};
 }
 
 /// Return the bool associated with an attribute

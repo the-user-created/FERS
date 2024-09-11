@@ -20,7 +20,7 @@ namespace rs
 	class Matrix3
 	{
 	public:
-		RS_FLOAT elements[9];
+		RS_FLOAT elements[9]{};
 
 		/// Default constructor
 		Matrix3();

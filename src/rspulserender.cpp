@@ -359,9 +359,7 @@ ThreadedRenderer::ThreadedRenderer(const std::vector<Response*>* responses, cons
 }
 
 /// Destructor
-ThreadedRenderer::~ThreadedRenderer()
-{
-}
+ThreadedRenderer::~ThreadedRenderer() = default;
 
 /// Render all the responses in a single window
 void ThreadedRenderer::renderWindow(RsComplex* window, RS_FLOAT length, RS_FLOAT start, RS_FLOAT fracDelay) const
@@ -421,9 +419,7 @@ RenderThread::RenderThread(const int serial, boost::mutex* windowMutex, RsComple
 }
 
 /// Destructor
-RenderThread::~RenderThread()
-{
-}
+RenderThread::~RenderThread() = default;
 
 /// Step through the worklist, rendering the required responses
 void RenderThread::operator()()

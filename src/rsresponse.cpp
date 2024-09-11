@@ -75,9 +75,7 @@ Response::Response(const RadarSignal* wave, const Transmitter* transmitter):
 {
 }
 
-Response::~Response()
-{
-}
+Response::~Response() = default;
 
 
 /// Return the time the pulse's energy starts

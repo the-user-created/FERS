@@ -17,19 +17,10 @@ JonesVector::JonesVector(const std::complex<RS_FLOAT> h, const std::complex<RS_F
 }
 
 /// Copy constructor
-JonesVector::JonesVector(const JonesVector& iv):
-	h(iv.h),
-	v(iv.v)
-{
-}
+JonesVector::JonesVector(const JonesVector& iv) = default;
 
 /// Assignment operator
-JonesVector& JonesVector::operator=(const JonesVector& iv)
-{
-	v = iv.v;
-	h = iv.h;
-	return *this;
-}
+JonesVector& JonesVector::operator=(const JonesVector& iv) = default;
 
 /// Multiplication operator
 JonesVector JonesVector::operator*(const PsMatrix& mat) const
@@ -70,9 +61,12 @@ PsMatrix::PsMatrix(const PsMatrix& im)
 /// Assignment operator
 PsMatrix& PsMatrix::operator=(const PsMatrix& im)
 {
-	for (int i = 0; i < 4; i++)
+	if (this != &im)
 	{
-		s[i] = im.s[i];
+		for (int i = 0; i < 4; i++)
+		{
+			s[i] = im.s[i];
+		}
 	}
 	return *this;
 }

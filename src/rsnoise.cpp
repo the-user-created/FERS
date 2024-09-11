@@ -80,14 +80,10 @@ RS_FLOAT rs_noise::noiseTemperatureToPower(const RS_FLOAT temperature, const RS_
 //
 
 //Constructor
-NoiseGenerator::NoiseGenerator()
-{
-}
+NoiseGenerator::NoiseGenerator() = default;
 
 //Destructor
-NoiseGenerator::~NoiseGenerator()
-{
-}
+NoiseGenerator::~NoiseGenerator() = default;
 
 //
 // Gamma Generator
@@ -101,9 +97,7 @@ GammaGenerator::GammaGenerator(const RS_FLOAT k):
 }
 
 /// Destructor
-GammaGenerator::~GammaGenerator()
-{
-}
+GammaGenerator::~GammaGenerator() = default;
 
 /// Get a single random sample
 RS_FLOAT GammaGenerator::getSample()
@@ -557,9 +551,7 @@ ClockModelGenerator::ClockModelGenerator(const std::vector<RS_FLOAT>& alpha, con
 }
 
 /// Destructor
-ClockModelGenerator::~ClockModelGenerator()
-{
-}
+ClockModelGenerator::~ClockModelGenerator() = default;
 
 /// Get a single noise sample
 RS_FLOAT ClockModelGenerator::getSample()
@@ -622,9 +614,7 @@ PythonNoiseGenerator::PythonNoiseGenerator(const std::string& module, const std:
 }
 
 ///Destructor
-PythonNoiseGenerator::~PythonNoiseGenerator()
-{
-}
+PythonNoiseGenerator::~PythonNoiseGenerator() = default;
 
 ///Get a single noise sample
 RS_FLOAT PythonNoiseGenerator::getSample()

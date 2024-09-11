@@ -18,9 +18,7 @@ Timing::Timing(const std::string& name):
 }
 
 /// Destructor
-Timing::~Timing()
-{
-}
+Timing::~Timing() = default;
 
 /// Get the name of the timing source
 std::string Timing::getName() const
