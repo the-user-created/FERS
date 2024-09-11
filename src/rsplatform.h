@@ -55,9 +55,4 @@ namespace rs
 	Platform* createMultipathDual(const Platform* plat, const MultipathSurface* surf);
 }
 
-namespace rs
-{
-	// TODO: Duplicate declaration of createMultipathDual?
-	Platform* createMultipathDual(const Platform* plat, const MultipathSurface* surf);
-}
 #endif

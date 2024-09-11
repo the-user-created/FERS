@@ -125,7 +125,7 @@ bool getAttributeBool(const TiXmlHandle& handle, const std::string& name, const 
                       const bool optional = true)
 {
 	const string str = getAttributeString(handle, name, error, optional);
-	if (str == "")
+	if (str.empty())
 	{
 		return def;
 	}
@@ -887,12 +887,12 @@ namespace
 	void processParameters(const TiXmlHandle& root)
 	{
 		//Get the simulation start and end times
-		RsParameters::modifyParms()->setTime(getChildRsFloat(root, "starttime"), getChildRsFloat(root, "endtime"));
+		RsParameters::setTime(getChildRsFloat(root, "starttime"), getChildRsFloat(root, "endtime"));
 		//Get the propagation speed in air
 		try
 		{
 			const RS_FLOAT c = getChildRsFloat(root, "c");
-			RsParameters::modifyParms()->setC(c);
+			RsParameters::setC(c);
 		}
 		catch ([[maybe_unused]] XmlImportException& xe)
 		{
@@ -902,7 +902,7 @@ namespace
 		try
 		{
 			const RS_FLOAT rate = getChildRsFloat(root, "rate");
-			RsParameters::modifyParms()->setRate(rate);
+			RsParameters::setRate(rate);
 		}
 		catch ([[maybe_unused]] XmlImportException& xe)
 		{
@@ -912,7 +912,7 @@ namespace
 		try
 		{
 			const RS_FLOAT rate = getChildRsFloat(root, "interprate");
-			RsParameters::modifyParms()->setCwSampleRate(rate);
+			RsParameters::setCwSampleRate(rate);
 		}
 		catch ([[maybe_unused]] XmlImportException& xe)
 		{
@@ -924,7 +924,7 @@ namespace
 		try
 		{
 			const RS_FLOAT seed = getChildRsFloat(root, "randomseed");
-			RsParameters::modifyParms()->setRandomSeed(static_cast<unsigned int>(std::fabs(seed)));
+			RsParameters::setRandomSeed(static_cast<unsigned int>(std::fabs(seed)));
 		}
 		catch ([[maybe_unused]] XmlImportException& xe)
 		{
@@ -935,7 +935,7 @@ namespace
 		try
 		{
 			const RS_FLOAT adc_bits = getChildRsFloat(root, "adc_bits");
-			RsParameters::modifyParms()->setAdcBits(static_cast<unsigned int>(std::floor(adc_bits)));
+			RsParameters::setAdcBits(static_cast<unsigned int>(std::floor(adc_bits)));
 			rs_debug::printf(rs_debug::RS_VERBOSE, "[VERBOSE] Quantizing results to %d bits\n",
 			                 RsParameters::adcBits());
 		}
@@ -947,7 +947,7 @@ namespace
 		try
 		{
 			const RS_FLOAT ratio = getChildRsFloat(root, "oversample");
-			RsParameters::modifyParms()->setOversampleRatio(static_cast<unsigned int>(std::floor(ratio)));
+			RsParameters::setOversampleRatio(static_cast<unsigned int>(std::floor(ratio)));
 		}
 		catch ([[maybe_unused]] XmlImportException& xe)
 		{
@@ -960,7 +960,7 @@ namespace
 			const bool export_xml = getAttributeBool(exporttag, "xml", "", RsParameters::exportXml());
 			const bool export_csv = getAttributeBool(exporttag, "csv", "", RsParameters::exportCsv());
 			const bool export_binary = getAttributeBool(exporttag, "binary", "", RsParameters::exportBinary());
-			RsParameters::modifyParms()->setExporters(export_xml, export_csv, export_binary);
+			RsParameters::setExporters(export_xml, export_csv, export_binary);
 		}
 	}
 

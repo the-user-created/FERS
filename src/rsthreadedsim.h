@@ -8,9 +8,4 @@
 
 #include "rsworld.h"
 
-namespace rs
-{
-	void runThreadedSim(int threadLimit, World* world);
-}
-
 #endif

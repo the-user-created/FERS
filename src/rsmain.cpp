@@ -31,7 +31,7 @@ int main(const int argc, char* argv[])
 	try
 	{
 		// Set the number of threads
-		rs::RsParameters::modifyParms()->setThreads(rs_portable::countProcessors());
+		rs::RsParameters::setThreads(rs_portable::countProcessors());
 		// Create the world container
 		auto* world = new rs::World();
 		//Initialize the RNG code
