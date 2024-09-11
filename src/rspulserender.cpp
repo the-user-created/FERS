@@ -334,9 +334,9 @@ void rs::exportReceiverCsv(const std::vector<Response*>& responses, const std::s
 		response->renderCsv(*of);
 	}
 	//Close all the files that we opened
-	for (auto & stream : streams)
+	for (auto & [fst, snd] : streams)
 	{
-		delete stream.second;
+		delete snd;
 	}
 }
 

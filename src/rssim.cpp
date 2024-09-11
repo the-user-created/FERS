@@ -9,7 +9,6 @@
 #include <limits>
 #include <stdexcept>
 
-#include "rsantenna.h"
 #include "rsdebug.h"
 #include "rsnoise.h"
 #include "rsparameters.h"
