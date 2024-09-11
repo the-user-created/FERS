@@ -288,7 +288,7 @@ void rs::exportReceiverXml(const std::vector<Response*>& responses, const std::s
 	doc.LinkEndChild(root);
 
 	//dump each response in turn
-	for (auto response : responses)
+	for (const auto response : responses)
 	{
 		response->renderXml(root);
 	}
@@ -304,7 +304,7 @@ void rs::exportReceiverXml(const std::vector<Response*>& responses, const std::s
 void rs::exportReceiverCsv(const std::vector<Response*>& responses, const std::string& filename)
 {
 	std::map<std::string, std::ofstream*> streams; //map of per-transmitter open files
-	for (auto response : responses)
+	for (const auto response : responses)
 	{
 		std::ofstream* of;
 		// See if a file is already open for that transmitter

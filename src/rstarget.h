@@ -71,7 +71,7 @@ namespace rs
 		virtual RS_FLOAT getRcs(SVec3& inAngle, SVec3& outAngle) const = 0;
 
 		/// Get the target polarization matrix
-		virtual PsMatrix getPolarization() const;
+		[[nodiscard]] virtual PsMatrix getPolarization() const;
 
 		/// Set the target polarization matrix
 		virtual void setPolarization(const PsMatrix& in);

@@ -44,25 +44,25 @@ namespace rs
 	{
 	public:
 		/// Default constructor
-		RadarSignal(const std::string& name, RS_FLOAT power, RS_FLOAT carrierfreq, RS_FLOAT length, Signal* signal);
+		RadarSignal(std::string  name, RS_FLOAT power, RS_FLOAT carrierfreq, RS_FLOAT length, Signal* signal);
 
 		/// Destructor
 		~RadarSignal();
 
 		/// Get the signal power
-		RS_FLOAT getPower() const;
+		[[nodiscard]] RS_FLOAT getPower() const;
 
 		/// Get the signal carrier frequency (Hz)
-		RS_FLOAT getCarrier() const;
+		[[nodiscard]] RS_FLOAT getCarrier() const;
 
 		/// Get the name of the signal
-		std::string getName() const;
+		[[nodiscard]] std::string getName() const;
 
 		/// Return the native sample rate of the waveform
-		RS_FLOAT getRate() const;
+		[[nodiscard]] RS_FLOAT getRate() const;
 
 		/// Return the length of the pulse
-		RS_FLOAT getLength() const;
+		[[nodiscard]] RS_FLOAT getLength() const;
 
 		/// Render the pulse with the given parameters
 		boost::shared_array<RsComplex> render(const std::vector<InterpPoint>& points, unsigned int& size,

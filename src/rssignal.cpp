@@ -59,13 +59,13 @@ namespace
 		static RS_FLOAT sinc(RS_FLOAT x);
 
 		/// Compute the value of a Kaiser Window at the given x
-		RS_FLOAT kaiserWinCompute(RS_FLOAT x) const;
+		[[nodiscard]] RS_FLOAT kaiserWinCompute(RS_FLOAT x) const;
 
 		/// Calculate the value of the interpolation filter at time x
-		RS_FLOAT interpFilter(RS_FLOAT x) const;
+		[[nodiscard]] RS_FLOAT interpFilter(RS_FLOAT x) const;
 
 		/// Get a pointer to the filter with approximately the specified delay
-		const RS_FLOAT* getFilter(RS_FLOAT delay) const;
+		[[nodiscard]] const RS_FLOAT* getFilter(RS_FLOAT delay) const;
 
 		/// Get a pointer to the class instance
 		static InterpFilter* getInstance()

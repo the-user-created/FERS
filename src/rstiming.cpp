@@ -2,6 +2,8 @@
 
 #include "rstiming.h"
 
+#include <utility>
+
 #include "rsdebug.h"
 #include "rsnoise.h"
 
@@ -12,8 +14,8 @@ using namespace rs;
 //
 
 /// Default constructor
-Timing::Timing(const std::string& name):
-	_name(name)
+Timing::Timing(std::string  name):
+	_name(std::move(name))
 {
 }
 
@@ -31,8 +33,8 @@ std::string Timing::getName() const
 //
 
 /// Constructor
-PrototypeTiming::PrototypeTiming(const std::string& name):
-	_name(name)
+PrototypeTiming::PrototypeTiming(std::string  name):
+	_name(std::move(name))
 {
 	_freq_offset = 0;
 	_phase_offset = 0;

@@ -5,13 +5,15 @@
 
 #include "rsplatform.h"
 
+#include <utility>
+
 #include "rsmultipath.h"
 
 using namespace rs;
 
 //Default constructor
-Platform::Platform(const std::string& name):
-	_name(name),
+Platform::Platform(std::string  name):
+	_name(std::move(name)),
 	_dual(nullptr)
 {
 	_motion_path = new Path();

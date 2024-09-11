@@ -29,7 +29,7 @@ namespace rs
 		~Matrix3();
 
 		/// Get a pointer to the element array
-		const RS_FLOAT* getData() const;
+		[[nodiscard]] const RS_FLOAT* getData() const;
 
 		RS_FLOAT* getData();
 	};
@@ -66,12 +66,12 @@ namespace rs
 		Vec3& operator*=(const Matrix3& m); //!< Multiplication by a 3x3 matrix
 
 		//Scalar operations
-		Vec3& operator*=(const RS_FLOAT b); //!< Multiplication by a scalar
-		Vec3& operator/=(const RS_FLOAT b); //!< Division by a scalar
-		Vec3& operator+=(const RS_FLOAT b); //!< Addition of a scalar
+		Vec3& operator*=(RS_FLOAT b); //!< Multiplication by a scalar
+		Vec3& operator/=(RS_FLOAT b); //!< Division by a scalar
+		Vec3& operator+=(RS_FLOAT b); //!< Addition of a scalar
 
 		/// Return the length of the vector
-		RS_FLOAT length() const;
+		[[nodiscard]] RS_FLOAT length() const;
 	};
 
 	//Vector operations
@@ -83,9 +83,9 @@ namespace rs
 	Vec3 operator-(const Vec3& a, const Vec3& b); //!< Componentwise subtract
 	Vec3 operator/(const Vec3& a, const Vec3& b); //!< Componentwise divide
 	//Scalar operations
-	Vec3 operator*(const Vec3& a, const RS_FLOAT b); //!< Multiply by a scalar
-	Vec3 operator/(const Vec3& a, const RS_FLOAT b); //!< Division by a scalar
-	Vec3 operator/(const RS_FLOAT a, const Vec3& b); //!< Division by a scalar
+	Vec3 operator*(const Vec3& a, RS_FLOAT b); //!< Multiply by a scalar
+	Vec3 operator/(const Vec3& a, RS_FLOAT b); //!< Division by a scalar
+	Vec3 operator/(RS_FLOAT a, const Vec3& b); //!< Division by a scalar
 
 	/// The SVec3 class is a vector in R^3, stored in spherical co-ordinates
 	class SVec3

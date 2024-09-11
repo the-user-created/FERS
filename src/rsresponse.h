@@ -33,9 +33,9 @@ namespace rs
 		Response(const RadarSignal* wave, const Transmitter* transmitter);
 
 		/// Get the start time
-		RS_FLOAT startTime() const;
+		[[nodiscard]] RS_FLOAT startTime() const;
 
-		RS_FLOAT endTime() const;
+		[[nodiscard]] RS_FLOAT endTime() const;
 
 		/// Destructor
 		~Response();
@@ -50,13 +50,13 @@ namespace rs
 		boost::shared_array<RsComplex> renderBinary(RS_FLOAT& rate, unsigned int& size, RS_FLOAT fracWinDelay) const;
 
 		/// Get the length of the pulse
-		RS_FLOAT getLength() const;
+		[[nodiscard]] RS_FLOAT getLength() const;
 
 		/// Get a pointer to the wave
-		const RadarSignal* getWave() const;
+		[[nodiscard]] const RadarSignal* getWave() const;
 
 		/// Get the name of the transmitter that started this response
-		std::string getTransmitterName() const;
+		[[nodiscard]] std::string getTransmitterName() const;
 
 		/// Add an interp point to the vector
 		void addInterpPoint(const InterpPoint& point);

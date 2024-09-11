@@ -195,7 +195,7 @@ namespace rs
 		void reset();
 
 		/// Is the generator going to produce non-zero samples
-		bool enabled() const;
+		[[nodiscard]] bool enabled() const;
 
 	private:
 		std::vector<std::unique_ptr<MultirateGenerator>> _generators; // The multirate generators which generate noise in each band

@@ -29,25 +29,25 @@ namespace rs
 		//Antennas are not meant to be copied
 	public:
 		/// Default constructor
-		explicit Antenna(const std::string& name);
+		explicit Antenna(std::string  name);
 
 		/// Destructor
 		virtual ~Antenna();
 
 		/// Returns the current gain at a particular angle
-		virtual RS_FLOAT getGain(const SVec3& angle, const SVec3& refangle, RS_FLOAT wavelength) const = 0;
+		[[nodiscard]] virtual RS_FLOAT getGain(const SVec3& angle, const SVec3& refangle, RS_FLOAT wavelength) const = 0;
 
 		/// Returns the noise temperature at a particular angle
-		virtual RS_FLOAT getNoiseTemperature(const SVec3& angle) const;
+		[[nodiscard]] virtual RS_FLOAT getNoiseTemperature(const SVec3& angle) const;
 
 		/// Set the antenna's loss factor (values > 1 are physically impossible)
 		void setEfficiencyFactor(RS_FLOAT loss);
 
 		/// Gets the Loss Factor
-		RS_FLOAT getEfficiencyFactor() const;
+		[[nodiscard]] RS_FLOAT getEfficiencyFactor() const;
 
 		/// Return the name of the antenna
-		std::string getName() const;
+		[[nodiscard]] std::string getName() const;
 
 	protected:
 		/// Get the angle off boresight
@@ -101,7 +101,7 @@ namespace rs_antenna
 		~Isotropic() override;
 
 		/// Get the gain at an angle
-		RS_FLOAT getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const override;
+		[[nodiscard]] RS_FLOAT getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const override;
 	};
 
 	//Antenna with a sinc (sinx/x) radiation pattern
@@ -115,7 +115,7 @@ namespace rs_antenna
 		~Sinc() override;
 
 		/// Get the gain at an angle
-		RS_FLOAT getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const override;
+		[[nodiscard]] RS_FLOAT getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const override;
 
 	private:
 		RS_FLOAT _alpha; //!< First parameter (see equations.tex)
@@ -134,7 +134,7 @@ namespace rs_antenna
 		~Gaussian() override;
 
 		/// Get the gain at an angle
-		RS_FLOAT getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const override;
+		[[nodiscard]] RS_FLOAT getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const override;
 
 	private:
 		RS_FLOAT _azscale; //!< Azimuth scale parameter
@@ -152,7 +152,7 @@ namespace rs_antenna
 		~SquareHorn() override;
 
 		/// Get the gain at an angle
-		RS_FLOAT getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const override;
+		[[nodiscard]] RS_FLOAT getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const override;
 
 	private:
 		RS_FLOAT _dimension; //!< The linear size of the horn
@@ -169,7 +169,7 @@ namespace rs_antenna
 		~ParabolicReflector() override;
 
 		/// Get the gain at an angle
-		RS_FLOAT getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const override;
+		[[nodiscard]] RS_FLOAT getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const override;
 
 	private:
 		RS_FLOAT _diameter;
@@ -186,7 +186,7 @@ namespace rs_antenna
 		~XmlAntenna() override;
 
 		/// Get the gain at an angle
-		RS_FLOAT getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const override;
+		[[nodiscard]] RS_FLOAT getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const override;
 
 	private:
 		/// Load data from the antenna description file
@@ -208,7 +208,7 @@ namespace rs_antenna
 		~FileAntenna() override;
 
 		/// Get the gain at an angle
-		RS_FLOAT getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const override;
+		[[nodiscard]] RS_FLOAT getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const override;
 
 	private:
 		/// The antenna gain pattern
@@ -226,7 +226,7 @@ namespace rs_antenna
 		~PythonAntenna() override;
 
 		/// Get the gain at an angle
-		RS_FLOAT getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const override;
+		[[nodiscard]] RS_FLOAT getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const override;
 
 	private:
 		rs_python::PythonAntennaMod _py_antenna;

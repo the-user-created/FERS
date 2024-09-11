@@ -53,16 +53,16 @@ namespace rs
 		void load(const RS_FLOAT* inData, unsigned int samples, RS_FLOAT sampleRate);
 
 		/// Return the sample rate of the signal
-		RS_FLOAT rate() const;
+		[[nodiscard]] RS_FLOAT rate() const;
 
 		/// Return the size, in samples of the signal
-		unsigned int size() const;
+		[[nodiscard]] unsigned int size() const;
 
 		/// Get a copy of the signal domain data
-		RS_FLOAT* copyData() const;
+		[[nodiscard]] RS_FLOAT* copyData() const;
 
 		/// Get the number of samples of padding at the beginning of the pulse
-		unsigned int pad() const; // TODO: unused
+		[[nodiscard]] unsigned int pad() const; // TODO: unused
 
 		/// Render the pulse with the specified doppler, delay and amplitude
 		boost::shared_array<RsComplex> render(const std::vector<InterpPoint>& points,
