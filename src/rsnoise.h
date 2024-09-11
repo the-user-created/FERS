@@ -125,23 +125,23 @@ namespace rs
 		/// Calculate a single sample
 		RS_FLOAT calcSample();
 
-		IirFilter* _shape_filter; //!< The filter for shaping the noise
-		RS_FLOAT _shape_gain; //!< Gain of shaping filter
-		IirFilter* _integ_filter; //!< Integrator filter
-		RS_FLOAT _integ_gain; //!< Gain of integration filter
+		IirFilter* _shape_filter{}; //!< The filter for shaping the noise
+		RS_FLOAT _shape_gain{}; //!< Gain of shaping filter
+		IirFilter* _integ_filter{}; //!< Integrator filter
+		RS_FLOAT _integ_gain{}; //!< Gain of integration filter
 
 		RS_FLOAT _upsample_scale; //!< Scaling factor for upsampling
-		IirFilter* _highpass; //!< Highpass filter
+		IirFilter* _highpass{}; //!< Highpass filter
 		FAlphaBranch* _pre; //!< Next lower branch in the structure
 		bool _last; //!< If this filter is the top branch, don't upsample
-		DecadeUpsampler* _upsampler; //!< Upsampler for this branch
+		DecadeUpsampler* _upsampler{}; //!< Upsampler for this branch
 		RS_FLOAT* _buffer; //!< Buffer for storing samples from the upsampler
-		unsigned int _buffer_samples; //!< Number of samples available in the buffer
+		unsigned int _buffer_samples{}; //!< Number of samples available in the buffer
 		RS_FLOAT _ffrac; //!< Fractional part of filter curve
 		RS_FLOAT _fint; //!< Integer part of filter curve
-		RS_FLOAT _offset_sample; //!< Sample from the branch below us
-		bool _got_offset; //!< Are we waiting for the offset
-		RS_FLOAT _pre_scale; //!< Previous branch scale factor
+		RS_FLOAT _offset_sample{}; //!< Sample from the branch below us
+		bool _got_offset{}; //!< Are we waiting for the offset
+		RS_FLOAT _pre_scale{}; //!< Previous branch scale factor
 		friend class MultirateGenerator;
 	};
 
@@ -171,7 +171,7 @@ namespace rs
 		void createTree(RS_FLOAT falpha, int fint, unsigned int branches);
 
 		/// Get the co-efficients of the shaping filter
-		FAlphaBranch* _topbranch; //!< Top branch of the filter structure tree
+		FAlphaBranch* _topbranch{}; //!< Top branch of the filter structure tree
 	};
 
 	/// Class to generate noise based on the weighted sum of 1/f^alpha noise

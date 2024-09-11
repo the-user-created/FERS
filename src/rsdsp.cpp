@@ -123,14 +123,10 @@ void rs::downsample(const RsComplex* in, const int size, RsComplex* out, const i
 //
 
 /// Constructor
-DspFilter::DspFilter()
-{
-}
+DspFilter::DspFilter() = default;
 
 /// Destructor
-DspFilter::~DspFilter()
-{
-}
+DspFilter::~DspFilter() = default;
 
 //
 // IIRFilter Implementation

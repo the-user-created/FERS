@@ -297,7 +297,7 @@ SVec3 RotationPath::getPosition(const RS_FLOAT t) const
 		coord.elevation = std::fmod(t * _rate.elevation + _start.elevation, 2 * M_PI);
 		break;
 	}
-	return SVec3(1, coord.azimuth, coord.elevation);
+	return {1, coord.azimuth, coord.elevation};
 }
 
 //Finalize the path - doing some once-per-path calculations if necessary

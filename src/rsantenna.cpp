@@ -50,9 +50,7 @@ Antenna::Antenna(const std::string& name):
 }
 
 //Antenna destructor
-Antenna::~Antenna()
-{
-}
+Antenna::~Antenna() = default;
 
 //Set the efficiency factor of the antenna
 void Antenna::setEfficiencyFactor(const RS_FLOAT loss)
@@ -105,9 +103,7 @@ Isotropic::Isotropic(const std::string& name):
 }
 
 //Default destructor
-Isotropic::~Isotropic()
-{
-}
+Isotropic::~Isotropic() = default;
 
 //Return the gain of the antenna
 RS_FLOAT Isotropic::getGain(const SVec3& angle, const SVec3& refangle, RS_FLOAT wavelength) const
@@ -129,9 +125,7 @@ Gaussian::Gaussian(const std::string& name, const RS_FLOAT azscale, const RS_FLO
 }
 
 /// Destructor
-Gaussian::~Gaussian()
-{
-}
+Gaussian::~Gaussian() = default;
 
 /// Get the gain at an angle
 RS_FLOAT Gaussian::getGain(const SVec3& angle, const SVec3& refangle, RS_FLOAT wavelength) const
@@ -157,9 +151,7 @@ Sinc::Sinc(const std::string& name, const RS_FLOAT alpha, const RS_FLOAT beta, c
 }
 
 //Default destructor
-Sinc::~Sinc()
-{
-}
+Sinc::~Sinc() = default;
 
 // Return the gain of the antenna at an angle
 RS_FLOAT Sinc::getGain(const SVec3& angle, const SVec3& refangle, RS_FLOAT wavelength) const
@@ -195,9 +187,7 @@ SquareHorn::SquareHorn(const std::string& name, const RS_FLOAT dimension):
 }
 
 //Destructor
-SquareHorn::~SquareHorn()
-{
-}
+SquareHorn::~SquareHorn() = default;
 
 //Return the gain of the antenna
 //See doc/equations.tex for details
@@ -222,9 +212,7 @@ ParabolicReflector::ParabolicReflector(const std::string& name, const RS_FLOAT d
 }
 
 //Destructor
-ParabolicReflector::~ParabolicReflector()
-{
-}
+ParabolicReflector::~ParabolicReflector() = default;
 
 //Return the gain of the antenna
 //See doc/equations.tex for details
@@ -370,9 +358,7 @@ PythonAntenna::PythonAntenna(const std::string& name, const std::string& module,
 }
 
 //Destructor
-PythonAntenna::~PythonAntenna()
-{
-}
+PythonAntenna::~PythonAntenna() = default;
 
 //Return the gain of the antenna
 RS_FLOAT PythonAntenna::getGain(const SVec3& angle, const SVec3& refangle, RS_FLOAT wavelength) const

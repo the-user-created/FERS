@@ -15,9 +15,7 @@ Object::Object(const Platform* platform, const std::string& name):
 {
 }
 
-Object::~Object()
-{
-}
+Object::~Object() = default;
 
 // Get the position of the object
 Vec3 Object::getPosition(const RS_FLOAT time) const

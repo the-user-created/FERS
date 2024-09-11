@@ -135,7 +135,7 @@ namespace
 			for (int i = 0; i < point_count; i++)
 			{
 				const RS_FLOAT stime = i * sample_time + start_time; //Time of the start of the sample
-				ReResults results;
+				ReResults results{};
 				solveRe(trans, recv, targ, stime, sample_time, signal->wave, results);
 				InterpPoint point(results.power, stime + results.delay, results.delay, results.doppler, results.phase,
 				                  results.noise_temperature);
@@ -144,7 +144,7 @@ namespace
 				//rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "stime + results.delay = : %gs\n", stime + results.delay);
 			}
 			//Add one more point at the end
-			ReResults results;
+			ReResults results{};
 			solveRe(trans, recv, targ, end_time, sample_time, signal->wave, results);
 			const InterpPoint point(results.power, end_time + results.delay, results.delay, results.doppler,
 			                        results.phase,
@@ -250,14 +250,14 @@ namespace
 			for (int i = 0; i < point_count; i++)
 			{
 				const RS_FLOAT stime = i * sample_time + start_time;
-				ReResults results;
+				ReResults results{};
 				solveReDirect(trans, recv, stime, sample_time, signal->wave, results);
 				InterpPoint point(results.power, results.delay + stime, results.delay, results.doppler, results.phase,
 				                  results.noise_temperature);
 				response->addInterpPoint(point);
 			}
 			//Add one more point at the end
-			ReResults results;
+			ReResults results{};
 			solveReDirect(trans, recv, end_time, sample_time, signal->wave, results);
 			const InterpPoint point(results.power, results.delay + end_time, results.delay, results.doppler,
 			                        results.phase,

@@ -22,9 +22,7 @@ RS_FLOAT getNodeFloat(const TiXmlHandle& node);
 //
 
 /// Destructor
-RcsModel::~RcsModel()
-{
-}
+RcsModel::~RcsModel() = default;
 
 //
 // RCSConst Implementation
@@ -37,9 +35,7 @@ RS_FLOAT RcsConst::sampleModel()
 }
 
 /// Destructor
-RcsConst::~RcsConst()
-{
-}
+RcsConst::~RcsConst() = default;
 
 //
 // RCSChiSquare Implementation
@@ -109,9 +105,7 @@ IsoTarget::IsoTarget(const Platform* platform, const std::string& name, const RS
 }
 
 /// Destructor
-IsoTarget::~IsoTarget()
-{
-}
+IsoTarget::~IsoTarget() = default;
 
 /// Return the RCS at the given angle
 RS_FLOAT IsoTarget::getRcs(SVec3& inAngle, SVec3& outAngle) const

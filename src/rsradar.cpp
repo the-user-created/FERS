@@ -37,9 +37,7 @@ Radar::Radar(const Platform* platform, const std::string& name):
 }
 
 /// Default Destructor
-Radar::~Radar()
-{
-}
+Radar::~Radar() = default;
 
 /// Attach a receiver to the transmitter for a monostatic configuration
 void Radar::makeMonostatic(const Radar* recv)

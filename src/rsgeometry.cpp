@@ -26,9 +26,7 @@ Vec3::Vec3(const RS_FLOAT x, const RS_FLOAT y, const RS_FLOAT z):
 }
 
 //Default destructor
-Vec3::~Vec3()
-{
-}
+Vec3::~Vec3() = default;
 
 //Constructor with a spherical vector
 Vec3::Vec3(const SVec3& svec)
@@ -67,13 +65,7 @@ Vec3& Vec3::operator*=(const Vec3& b)
 }
 
 //Assignment operator
-Vec3& Vec3::operator=(const Vec3& b)
-{
-	x = b.x;
-	y = b.y;
-	z = b.z;
-	return *this;
-}
+Vec3& Vec3::operator=(const Vec3& b) = default;
 
 // Multiplication by a 3x3 matrix
 Vec3& Vec3::operator*=(const Matrix3& m)
@@ -215,15 +207,10 @@ SVec3::SVec3(const RS_FLOAT length, const RS_FLOAT azimuth, const RS_FLOAT eleva
 }
 
 //Copy constructor
-SVec3::SVec3(const SVec3& svec):
-	length(svec.length), azimuth(svec.azimuth), elevation(svec.elevation)
-{
-}
+SVec3::SVec3(const SVec3& svec) = default;
 
 //Destructor
-SVec3::~SVec3()
-{
-}
+SVec3::~SVec3() = default;
 
 //Constructor with a rectangular vector
 SVec3::SVec3(const Vec3& vec)
@@ -269,9 +256,7 @@ Matrix3::Matrix3()
 }
 
 /// Default destructor
-Matrix3::~Matrix3()
-{
-}
+Matrix3::~Matrix3() = default;
 
 /// Get a pointer to the element array
 const RS_FLOAT* Matrix3::getData() const

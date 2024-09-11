@@ -192,7 +192,7 @@ namespace rs_antenna
 		/// Load data from the antenna description file
 		void loadAntennaDescription(const std::string& filename);
 
-		RS_FLOAT _max_gain; //!< Maximum Antenna gain
+		RS_FLOAT _max_gain{}; //!< Maximum Antenna gain
 		rs::InterpSet* _azi_samples; //!< Samples in the azimuth direction
 		rs::InterpSet* _elev_samples; //!< Samples in the elevation direction
 	};

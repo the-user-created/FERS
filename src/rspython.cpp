@@ -90,9 +90,7 @@ PythonPath::PythonPath(const std::string& module, const std::string& function):
 }
 
 /// Destructor
-PythonPath::~PythonPath()
-{
-}
+PythonPath::~PythonPath() = default;
 
 /// Get the position at a given time
 rs::Vec3 PythonPath::getPosition(const RS_FLOAT t) const
@@ -140,9 +138,7 @@ PythonNoise::PythonNoise(const std::string& module, const std::string& function)
 }
 
 ///Destructor
-PythonNoise::~PythonNoise()
-{
-}
+PythonNoise::~PythonNoise() = default;
 
 /// Get a noise sample
 RS_FLOAT PythonNoise::getSample() const
@@ -172,9 +168,7 @@ PythonAntennaMod::PythonAntennaMod(const std::string& module, const std::string&
 }
 
 ///Destructor
-PythonAntennaMod::~PythonAntennaMod()
-{
-}
+PythonAntennaMod::~PythonAntennaMod() = default;
 
 /// Get the antenna gain in the specified direction
 RS_FLOAT PythonAntennaMod::getGain(const rs::SVec3& direction) const
