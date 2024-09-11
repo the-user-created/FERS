@@ -295,12 +295,6 @@ RS_FLOAT* Signal::copyData() const
 	return result;
 }
 
-/// Get the number of samples of padding at the beginning of the pulse
-unsigned int Signal::pad() const  // TODO: Unused function
-{
-	return _pad;
-}
-
 /// Render the pulse with the specified doppler, delay and amplitude
 boost::shared_array<RsComplex> Signal::render(const std::vector<InterpPoint>& points,
                                               unsigned int& size, const double fracWinDelay) const
