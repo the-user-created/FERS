@@ -137,11 +137,11 @@ void rs::runThreadedSim(const int threadLimit, World* world)
 	//Loop through the lists for transmitters and receivers
 	for (ri = world->_receivers.begin(); ri != world->_receivers.end(); ++ri)
 	{
-		for (std::vector<Transmitter*>::const_iterator ti = world->_transmitters.begin(); ti != world->_transmitters.end(); ++ti)
+		for (auto ti = world->_transmitters.begin(); ti != world->_transmitters.end(); ++ti)
 		{
 			incThreads();
 			SimThread sim(*ti, *ri, world);
-			std::unique_ptr<boost::thread> thrd = std::make_unique<boost::thread>(sim);
+			auto thrd = std::make_unique<boost::thread>(sim);
 			//Delay until a thread is terminated, if we have reached the limit
 			while (threads >= threadLimit)
 			{
@@ -182,7 +182,7 @@ void rs::runThreadedSim(const int threadLimit, World* world)
 	{
 		incThreads();
 		RenderThread sim(*ri);
-		std::unique_ptr<boost::thread> thrd = std::make_unique<boost::thread>(sim);
+		auto thrd = std::make_unique<boost::thread>(sim);
 		//Delay until a thread is terminated, if we have reached the limit
 		while (threads >= threadLimit)
 		{

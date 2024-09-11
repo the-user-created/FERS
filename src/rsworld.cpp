@@ -39,17 +39,17 @@ World::World():
 World::~World()
 {
 	//Delete all the objects in the world
-	for (std::map<std::string, RadarSignal*>::iterator iter = _pulses.begin(); iter != _pulses.end(); ++iter)
+	for (auto iter = _pulses.begin(); iter != _pulses.end(); ++iter)
 	{
 		delete iter->second;
 	}
 
-	for (std::map<std::string, Antenna*>::iterator aiter = _antennas.begin(); aiter != _antennas.end(); ++aiter)
+	for (auto aiter = _antennas.begin(); aiter != _antennas.end(); ++aiter)
 	{
 		delete aiter->second;
 	}
 
-	for (std::map<std::string, PrototypeTiming*>::iterator titer = _timings.begin(); titer != _timings.end(); ++titer)
+	for (auto titer = _timings.begin(); titer != _timings.end(); ++titer)
 	{
 		delete titer->second;
 	}
@@ -157,20 +157,20 @@ void World::processMultipath()
 	if (_multipath_surface)
 	{
 		//Add duals for each plaform
-		std::vector<Platform*>::iterator plat = _platforms.begin();
-		for (const std::vector<Platform*>::iterator plat_end = _platforms.end(); plat != plat_end; ++plat)
+		auto plat = _platforms.begin();
+		for (const auto plat_end = _platforms.end(); plat != plat_end; ++plat)
 		{
 			_platforms.push_back(createMultipathDual(*plat, _multipath_surface));
 		}
 		//Add duals for each receiver
-		std::vector<Receiver*>::iterator recv = _receivers.begin();
-		for (const std::vector<Receiver*>::iterator recv_end = _receivers.end(); recv != recv_end; ++recv)
+		auto recv = _receivers.begin();
+		for (const auto recv_end = _receivers.end(); recv != recv_end; ++recv)
 		{
 			_receivers.push_back(createMultipathDual(*recv, _multipath_surface));
 		}
 		//Add duals for each transmitter
-		std::vector<Transmitter*>::iterator trans = _transmitters.begin();
-		for (const std::vector<Transmitter*>::iterator trans_end = _transmitters.end(); trans != trans_end; ++trans)
+		auto trans = _transmitters.begin();
+		for (const auto trans_end = _transmitters.end(); trans != trans_end; ++trans)
 		{
 			_transmitters.push_back(createMultipathDual(*trans, _multipath_surface));
 		}

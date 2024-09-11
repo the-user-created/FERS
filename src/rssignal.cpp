@@ -289,7 +289,7 @@ unsigned int Signal::size() const
 /// Get a copy of the signal domain data
 RS_FLOAT* Signal::copyData() const
 {
-	RS_FLOAT* result = new RS_FLOAT[_size];
+	auto* result = new RS_FLOAT[_size];
 	//Copy the data into result
 	std::memcpy(result, _data, sizeof(RS_FLOAT) * _size);
 	return result;
@@ -306,7 +306,7 @@ boost::shared_array<RsComplex> Signal::render(const std::vector<InterpPoint>& po
                                               unsigned int& size, const double fracWinDelay) const
 {
 	//Allocate memory for rendering
-	RsComplex* out = new RsComplex[_size];
+	auto* out = new RsComplex[_size];
 	size = _size;
 
 	//Get the sample interval
@@ -315,8 +315,8 @@ boost::shared_array<RsComplex> Signal::render(const std::vector<InterpPoint>& po
 	const int filt_length = RsParameters::renderFilterLength();
 	const InterpFilter* interp = InterpFilter::getInstance();
 	//Loop through the interp points, rendering each in time
-	std::vector<InterpPoint>::const_iterator iter = points.begin();
-	std::vector<InterpPoint>::const_iterator next = iter + 1;
+	auto iter = points.begin();
+	auto next = iter + 1;
 	if (next == points.end())
 	{
 		next = iter;

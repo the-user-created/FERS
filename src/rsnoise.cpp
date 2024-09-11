@@ -522,14 +522,14 @@ ClockModelGenerator::ClockModelGenerator(const std::vector<RS_FLOAT>& alpha, con
 	_frequency(frequency)
 {
 	_weights = inWeights;
-	std::vector<RS_FLOAT>::const_iterator iter = alpha.begin();
-	std::vector<RS_FLOAT>::iterator witer = _weights.begin();
+	auto iter = alpha.begin();
+	auto witer = _weights.begin();
 	// Create the generators for each band
 	for (; iter != alpha.end(); ++iter, ++witer)
 	{
 		// MultirateGenerator* mgen = new MultirateGenerator(*iter, branches);
 		// _generators.push_back(mgen);
-		std::unique_ptr<MultirateGenerator> mgen = std::make_unique<MultirateGenerator>(*iter, branches);
+		auto mgen = std::make_unique<MultirateGenerator>(*iter, branches);
 		_generators.push_back(std::move(mgen));
 		//Calibrate the weights using the measured calibration numbers
 		if (*iter == 2)

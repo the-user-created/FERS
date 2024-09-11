@@ -33,7 +33,7 @@ int main(const int argc, char* argv[])
 		// Set the number of threads
 		rs::RsParameters::modifyParms()->setThreads(rs_portable::countProcessors());
 		// Create the world container
-		rs::World* world = new rs::World();
+		auto* world = new rs::World();
 		//Initialize the RNG code
 		rs_noise::initializeNoise();
 

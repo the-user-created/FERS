@@ -186,7 +186,7 @@ namespace
 			                                             "' does not specify type.");
 			if (model_type == "constant")
 			{
-				RcsConst* model = new RcsConst();
+				auto* model = new RcsConst();
 				target->setFluctuationModel(model);
 			}
 			else if (model_type == "chisquare" || model_type == "gamma")
@@ -210,7 +210,7 @@ namespace
 
 		//Get the name of the receiver
 		string name = getAttributeString(recvXml, "name", "Receiver does not specify a name");
-		Receiver* receiver = new Receiver(platform, name);
+		auto* receiver = new Receiver(platform, name);
 
 		//Get the name of the antenna
 		const string ant_name = getAttributeString(recvXml, "antenna",
@@ -246,7 +246,7 @@ namespace
 		//Get the name of the timing source
 		const string timing_name = getAttributeString(recvXml, "timing",
 		                                              "Receiver '" + name + "' does not specify a timing source");
-		ClockModelTiming* timing = new ClockModelTiming(timing_name);
+		auto* timing = new ClockModelTiming(timing_name);
 
 		const PrototypeTiming* proto = world->findTiming(timing_name);
 		if (!proto)
@@ -286,7 +286,7 @@ namespace
 	Transmitter* processPulseTransmitter(const TiXmlHandle& transXml, std::string& name, const Platform* platform,
 	                                     World* world)
 	{
-		Transmitter* transmitter = new Transmitter(platform, string(name), true);
+		auto* transmitter = new Transmitter(platform, string(name), true);
 		//Get the name of the pulse
 		const string pulse_name = getAttributeString(transXml, "pulse",
 		                                             "Transmitter '" + name + "' does not specify a pulse");
@@ -308,7 +308,7 @@ namespace
 	Transmitter* processCwTransmitter(const TiXmlHandle& transXml, std::string& name, const Platform* platform,
 	                                  World* world)
 	{
-		Transmitter* transmitter = new Transmitter(platform, string(name), false);
+		auto* transmitter = new Transmitter(platform, string(name), false);
 		//Get the name of the pulse
 		const string pulse_name = getAttributeString(transXml, "pulse",
 		                                             "Transmitter '" + name + "' does not specify a pulse");
@@ -368,7 +368,7 @@ namespace
 		const string timing_name = getAttributeString(transXml, "timing",
 		                                              "Transmitter '" + name + "' does not specify a timing source");
 
-		ClockModelTiming* timing = new ClockModelTiming(name);
+		auto* timing = new ClockModelTiming(name);
 
 		const PrototypeTiming* proto = world->findTiming(timing_name);
 		if (!proto)
@@ -593,7 +593,7 @@ namespace
 	{
 		//Create the platform, using the name from the element
 		std::string name = getAttributeString(platXml, "name", "[ERROR] Platform must specify a name");
-		Platform* platform = new Platform(string(name));
+		auto* platform = new Platform(string(name));
 		//Add the platform to the world
 		world->add(platform);
 
@@ -803,7 +803,7 @@ namespace
 		const RS_FLOAT nz = getChildRsFloat(mpXml, "nz");
 		const RS_FLOAT d = getChildRsFloat(mpXml, "d");
 		//Create the multipath object
-		MultipathSurface* mps = new MultipathSurface(nx, ny, nz, d, factor);
+		auto* mps = new MultipathSurface(nx, ny, nz, d, factor);
 		//Add it to the world
 		world->addMultipathSurface(mps);
 	}
@@ -813,7 +813,7 @@ namespace
 	{
 		//Get the name of the antenna
 		const string name = getAttributeString(antXml, "name", "Timing sources must specify a name");
-		PrototypeTiming* timing = new PrototypeTiming(name);
+		auto* timing = new PrototypeTiming(name);
 		//Process all the clock entries
 		TiXmlHandle plat = antXml.ChildElement("noise_entry", 0);
 		for (int i = 1; plat.Element() != nullptr; i++)

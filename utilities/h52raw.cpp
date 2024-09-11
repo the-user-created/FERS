@@ -87,7 +87,7 @@ void readAndDump(hid_t file, FILE* outfile)
 	std::cout << "MaxI " << max_i << " maxQ " << max_q << std::endl;
 	count = it;
 	// Allocate memory for the reshuffle
-	float* buffer = new float[count * size * 2];
+	auto* buffer = new float[count * size * 2];
 	for (it = 0; it < count; it++)
 	{
 		// Get the dataset names
@@ -99,8 +99,8 @@ void readAndDump(hid_t file, FILE* outfile)
 		{
 			break;
 		}
-		double* buffer_i = new double[size];
-		double* buffer_q = new double[size];
+		auto* buffer_i = new double[size];
+		auto* buffer_q = new double[size];
 		H5LTread_dataset_double(slash, i_chunk_name.c_str(), buffer_i);
 		H5LTread_dataset_double(slash, q_chunk_name.c_str(), buffer_q);
 		// Get the fullscale for I and Q

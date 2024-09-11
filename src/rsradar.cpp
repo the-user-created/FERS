@@ -229,7 +229,7 @@ void Receiver::addResponse(Response* response)
 //Clear the list of system responses
 void Receiver::clearResponses()
 {
-	for (std::vector<Response*>::iterator i = _responses.begin(); i != _responses.end(); ++i)
+	for (auto i = _responses.begin(); i != _responses.end(); ++i)
 	{
 		delete *i;
 	}
@@ -383,7 +383,7 @@ Receiver* rs::createMultipathDual(Receiver* recv, const MultipathSurface* surf)
 	//Get the dual platform
 	const Platform* dual_plat = createMultipathDual(recv->getPlatform(), surf);
 	//Create a new receiver object
-	Receiver* dual = new Receiver(dual_plat, recv->getName() + "_dual");
+	auto* dual = new Receiver(dual_plat, recv->getName() + "_dual");
 	//Assign the new receiver object to the current object
 	recv->_dual = dual;
 	//Copy data from the Radar object
@@ -414,7 +414,7 @@ Transmitter* rs::createMultipathDual(Transmitter* trans, const MultipathSurface*
 	//Get the dual platform
 	const Platform* dual_plat = createMultipathDual(trans->getPlatform(), surf);
 	//Create a new transmitter object
-	Transmitter* dual = new Transmitter(dual_plat, trans->getName() + "_dual", trans->_pulsed);
+	auto* dual = new Transmitter(dual_plat, trans->getName() + "_dual", trans->_pulsed);
 	//Assign the the transmitter object to the current object
 	trans->_dual = dual;
 	//Copy data from the Radar object
