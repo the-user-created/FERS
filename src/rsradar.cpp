@@ -227,9 +227,9 @@ void Receiver::addResponse(Response* response)
 //Clear the list of system responses
 void Receiver::clearResponses()
 {
-	for (auto i = _responses.begin(); i != _responses.end(); ++i)
+	for (auto & _response : _responses)
 	{
-		delete *i;
+		delete _response;
 	}
 	_responses.clear();
 }

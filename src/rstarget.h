@@ -34,10 +34,10 @@ namespace rs
 	{
 	public:
 		/// Destructor
-		virtual ~RcsConst();
+		~RcsConst() override;
 
 		/// Return a constant RCS
-		virtual RS_FLOAT sampleModel();
+		RS_FLOAT sampleModel() override;
 	};
 
 	/// RCS statistical model following Swerling's Chi-square (actually Gamma) model
@@ -48,10 +48,10 @@ namespace rs
 		/// Constructor
 		explicit RcsChiSquare(RS_FLOAT k); //k is the shape parameter for the distribution
 		/// Destructor
-		virtual ~RcsChiSquare();
+		~RcsChiSquare() override;
 
 		/// Get an RCS based on the Swerling II model and the mean RCS
-		virtual RS_FLOAT sampleModel();
+		RS_FLOAT sampleModel() override;
 
 	private:
 		GammaGenerator* _gen;
@@ -65,7 +65,7 @@ namespace rs
 		Target(const Platform* platform, const std::string& name);
 
 		/// Destructor
-		virtual ~Target();
+		~Target() override;
 
 		/// Returns the Radar Cross Section at a particular angle
 		virtual RS_FLOAT getRcs(SVec3& inAngle, SVec3& outAngle) const = 0;
@@ -92,10 +92,10 @@ namespace rs
 		IsoTarget(const Platform* platform, const std::string& name, RS_FLOAT rcs);
 
 		/// Destructor
-		virtual ~IsoTarget();
+		~IsoTarget() override;
 
 		/// Return the RCS at the given angle
-		virtual RS_FLOAT getRcs(SVec3& inAngle, SVec3& outAngle) const;
+		RS_FLOAT getRcs(SVec3& inAngle, SVec3& outAngle) const override;
 
 	private:
 		RS_FLOAT _rcs; //!< Constant RCS
@@ -109,10 +109,10 @@ namespace rs
 		FileTarget(const Platform* platform, const std::string& name, const std::string& filename);
 
 		/// Destructor
-		virtual ~FileTarget();
+		~FileTarget() override;
 
 		/// Return the RCS at the given angle
-		virtual RS_FLOAT getRcs(SVec3& inAngle, SVec3& outAngle) const;
+		RS_FLOAT getRcs(SVec3& inAngle, SVec3& outAngle) const override;
 
 	private:
 		InterpSet* _azi_samples; //!< Samples of RCS in the azimuth plane

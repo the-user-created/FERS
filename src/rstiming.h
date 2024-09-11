@@ -108,13 +108,13 @@ namespace rs
 		explicit ClockModelTiming(const std::string& name);
 
 		/// Destructor
-		virtual ~ClockModelTiming();
+		~ClockModelTiming() override;
 
 		/// Get the next sample of time error for a particular pulse
-		virtual RS_FLOAT nextNoiseSample();
+		RS_FLOAT nextNoiseSample() override;
 
 		/// Skip a sample, computing only enough to preserve long term correlations
-		virtual void skipSamples(long long samples);
+		void skipSamples(long long samples) override;
 
 		/// Reset the clock phase error to zero
 		void reset() const;
@@ -126,7 +126,7 @@ namespace rs
 		void initializeModel(const PrototypeTiming* timing);
 
 		/// Get the real time of a particular pulse
-		virtual RS_FLOAT getPulseTimeError() const;
+		RS_FLOAT getPulseTimeError() const override;
 
 		/// Get the carrier frequency of the modelled clock
 		RS_FLOAT getFrequency() const;

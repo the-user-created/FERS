@@ -237,14 +237,14 @@ Path* rs::reflectPath(const Path* path, const MultipathSurface* surf)
 	//Create a new path object
 	const auto dual = new Path(path->_type);
 	//Add all the coords from the current path to the old path, reflecting about the multipath plane
-	for (auto iter = path->_coords.begin(); iter != path->_coords.end(); ++iter)
+	for (const auto & _coord : path->_coords)
 	{
 		Coord refl;
-		refl.t = iter->t;
+		refl.t = _coord.t;
 		//Reflect the point in the plane
-		refl.pos = surf->reflectPoint(iter->pos);
-		rs_debug::printf(rs_debug::RS_VERBOSE, "Reflected (%g, %g, %g) to (%g, %g, %g)\n", iter->pos.x, iter->pos.y,
-		                iter->pos.z, refl.pos.x, refl.pos.y, refl.pos.z);
+		refl.pos = surf->reflectPoint(_coord.pos);
+		rs_debug::printf(rs_debug::RS_VERBOSE, "Reflected (%g, %g, %g) to (%g, %g, %g)\n", _coord.pos.x, _coord.pos.y,
+		                _coord.pos.z, refl.pos.x, refl.pos.y, refl.pos.z);
 		dual->addCoord(refl);
 	}
 	//Finalize the new path
@@ -504,12 +504,12 @@ RotationPath* rs::reflectPath(const RotationPath* path, const MultipathSurface* 
 	dual->_start = path->_start;
 	dual->_rate = path->_rate;
 	//Copy the coords, reflecting them in the surface
-	for (auto iter = path->_coords.begin(); iter != path->_coords.end(); ++iter)
+	for (const auto & coord : path->_coords)
 	{
 		RotationCoord rc;
 		//Time copies directly
-		rc.t = iter->t;
-		SVec3 sv(1, iter->azimuth, iter->elevation);
+		rc.t = coord.t;
+		SVec3 sv(1, coord.azimuth, coord.elevation);
 		Vec3 v(sv);
 		//Reflect the point in the given plane
 		v = surf->reflectPoint(v);

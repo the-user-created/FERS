@@ -105,11 +105,11 @@ RS_FLOAT InterpSetData::max() const
 {
 	RS_FLOAT max = 0;
 	// Scan through the map, updating the maximum
-	for (auto iter = _data.begin(); iter != _data.end(); ++iter)
+	for (auto iter : _data)
 	{
-		if (std::fabs(iter->second) > max)
+		if (std::fabs(iter.second) > max)
 		{
-			max = std::fabs(iter->second);
+			max = std::fabs(iter.second);
 		}
 	}
 	return max;
@@ -118,9 +118,9 @@ RS_FLOAT InterpSetData::max() const
 /// Divide the set by a given number
 void InterpSetData::divide(const RS_FLOAT a)
 {
-	for (auto iter = _data.begin(); iter != _data.end(); ++iter)
+	for (auto & iter : _data)
 	{
-		iter->second /= a;
+		iter.second /= a;
 	}
 }
 

@@ -53,13 +53,13 @@ namespace rs
 		IirFilter(const RS_FLOAT* denCoeffs, const RS_FLOAT* numCoeffs, unsigned int order);
 
 		/// Destructor
-		virtual ~IirFilter();
+		~IirFilter() override;
 
 		/// Pass a single sample through the filter
-		virtual RS_FLOAT filter(RS_FLOAT sample);
+		RS_FLOAT filter(RS_FLOAT sample) override;
 
 		/// Pass an array of samples through the filter, filtering in place
-		virtual void filter(RS_FLOAT* samples, int size);
+		void filter(RS_FLOAT* samples, int size) override;
 
 	private:
 		RS_FLOAT* _w; //!< Past x values
@@ -80,13 +80,13 @@ namespace rs
 		FirFilter(const RS_FLOAT* coeffs, int count);
 
 		/// Destructor
-		virtual ~FirFilter();
+		~FirFilter() override;
 
 		/// Pass a single sample through the filter
-		virtual RS_FLOAT filter(RS_FLOAT sample);
+		RS_FLOAT filter(RS_FLOAT sample) override;
 
 		/// Pass an array of samples through the filter, filtering in place
-		virtual void filter(RS_FLOAT* samples, int size);
+		void filter(RS_FLOAT* samples, int size) override;
 
 		/// Pass an array of complex samples through the filter, filtering in place
 		void filter(std::complex<RS_FLOAT>* samples, int size) const;
@@ -106,13 +106,13 @@ namespace rs
 		explicit ArFilter(const std::vector<RS_FLOAT>& coeffs);
 
 		/// Destructor
-		~ArFilter();
+		~ArFilter() override;
 
 		/// Pass a single sample through the filter
-		virtual RS_FLOAT filter(RS_FLOAT sample);
+		RS_FLOAT filter(RS_FLOAT sample) override;
 
 		/// Pass an array of samples through the filter, filtering in place
-		virtual void filter(RS_FLOAT* samples, int size);
+		void filter(RS_FLOAT* samples, int size) override;
 
 	private:
 		RS_FLOAT* _w; //!< Filter state

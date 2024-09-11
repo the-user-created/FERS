@@ -288,9 +288,9 @@ void rs::exportReceiverXml(const std::vector<Response*>& responses, const std::s
 	doc.LinkEndChild(root);
 
 	//dump each response in turn
-	for (auto ri = responses.begin(); ri != responses.end(); ++ri)
+	for (auto response : responses)
 	{
-		(*ri)->renderXml(root);
+		response->renderXml(root);
 	}
 
 	// Write the output to the specified file
@@ -304,16 +304,16 @@ void rs::exportReceiverXml(const std::vector<Response*>& responses, const std::s
 void rs::exportReceiverCsv(const std::vector<Response*>& responses, const std::string& filename)
 {
 	std::map<std::string, std::ofstream*> streams; //map of per-transmitter open files
-	for (auto iter = responses.begin(); iter != responses.end(); ++iter)
+	for (auto response : responses)
 	{
 		std::ofstream* of;
 		// See if a file is already open for that transmitter
 		// If the file for that transmitter does not exist, add it
-		if (auto ofi = streams.find((*iter)->getTransmitterName()); ofi ==
+		if (auto ofi = streams.find(response->getTransmitterName()); ofi ==
 			streams.end())
 		{
 			std::ostringstream oss;
-			oss << filename << "_" << (*iter)->getTransmitterName() << ".csv";
+			oss << filename << "_" << response->getTransmitterName() << ".csv";
 			//Open a new ofstream with that name
 			of = new std::ofstream(oss.str().c_str());
 			of->setf(std::ios::scientific); //Set the stream in scientific notation mode
@@ -323,7 +323,7 @@ void rs::exportReceiverCsv(const std::vector<Response*>& responses, const std::s
 				throw std::runtime_error("[ERROR] Could not open file " + oss.str() + " for writing");
 			}
 			//Add the file to the map
-			streams[(*iter)->getTransmitterName()] = of;
+			streams[response->getTransmitterName()] = of;
 		}
 		else
 		{
@@ -331,12 +331,12 @@ void rs::exportReceiverCsv(const std::vector<Response*>& responses, const std::s
 			of = ofi->second;
 		}
 		// Render the response to the file
-		(*iter)->renderCsv(*of);
+		response->renderCsv(*of);
 	}
 	//Close all the files that we opened
-	for (auto ofi = streams.begin(); ofi != streams.end(); ++ofi)
+	for (auto & stream : streams)
 	{
-		delete ofi->second;
+		delete stream.second;
 	}
 }
 
@@ -367,12 +367,12 @@ void ThreadedRenderer::renderWindow(RsComplex* window, RS_FLOAT length, RS_FLOAT
 	RS_FLOAT end = start + length; // End time of the window
 	//Put together a list of responses seen by this window
 	std::queue<Response*> work_list;
-	for (auto iter = _responses->begin(); iter != _responses->end(); ++iter)
+	for (auto response : *_responses)
 	{
-		RS_FLOAT resp_start = (*iter)->startTime();
-		if (RS_FLOAT resp_end = (*iter)->endTime(); resp_start <= end && resp_end >= start)
+		RS_FLOAT resp_start = response->startTime();
+		if (RS_FLOAT resp_end = response->endTime(); resp_start <= end && resp_end >= start)
 		{
-			work_list.push(*iter);
+			work_list.push(response);
 		}
 	}
 	//Manage threads with boost::thread_group

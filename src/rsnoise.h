@@ -63,10 +63,10 @@ namespace rs
 		WgnGenerator();
 
 		/// Destructor
-		virtual ~WgnGenerator();
+		~WgnGenerator() override;
 
 		/// Get a single random sample
-		virtual RS_FLOAT getSample();
+		RS_FLOAT getSample() override;
 
 	private:
 		boost::normal_distribution<> _dist; //!< PRNG distribution
@@ -82,10 +82,10 @@ namespace rs
 		/// Constructor
 		explicit GammaGenerator(RS_FLOAT k); //x_bar is the 'scale' parameter and k is the 'shape' parameter
 		/// Destructor
-		virtual ~GammaGenerator();
+		~GammaGenerator() override;
 
 		/// Get a single random sample
-		virtual RS_FLOAT getSample();
+		RS_FLOAT getSample() override;
 
 		/// Operator to get a random sample
 		RS_FLOAT operator()();
@@ -154,10 +154,10 @@ namespace rs
 		MultirateGenerator(RS_FLOAT alpha, unsigned int branches);
 
 		/// Destructor
-		~MultirateGenerator();
+		~MultirateGenerator() override;
 
 		/// Get a single noise sample
-		RS_FLOAT getSample();
+		RS_FLOAT getSample() override;
 
 		/// Skip a number of samples, preserving correlations of period longer than the sample count
 		void skipSamples(long long samples) const;
@@ -183,10 +183,10 @@ namespace rs
 		                    RS_FLOAT frequency, RS_FLOAT phaseOffset, RS_FLOAT freqOffset, int branches);
 
 		/// Destructor
-		~ClockModelGenerator();
+		~ClockModelGenerator() override;
 
 		/// Get a single noise sample
-		RS_FLOAT getSample();
+		RS_FLOAT getSample() override;
 
 		/// Skip noise samples, calculating only enough to preserve long-term correlations
 		void skipSamples(long long samples);
@@ -214,10 +214,10 @@ namespace rs
 		PythonNoiseGenerator(const std::string& module, const std::string& function);
 
 		///Destructor
-		~PythonNoiseGenerator();
+		~PythonNoiseGenerator() override;
 
 		///Get a single noise sample
-		RS_FLOAT getSample();
+		RS_FLOAT getSample() override;
 
 	private:
 		rs_python::PythonNoise _generator;

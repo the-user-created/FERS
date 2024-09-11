@@ -51,7 +51,7 @@ namespace rs
 		Radar(const Platform* platform, const std::string& name);
 
 		/// Destructor
-		virtual ~Radar();
+		~Radar() override;
 
 		/// Set the transmitter's antenna
 		void setAntenna(const Antenna* ant);
@@ -110,7 +110,7 @@ namespace rs
 		Transmitter(const Platform* platform, const std::string& name, bool pulsed);
 
 		/// Destructor
-		virtual ~Transmitter();
+		~Transmitter() override;
 
 		/// Set the transmitter's pulse waveform
 		void setWave(RadarSignal* pulse);
@@ -147,7 +147,7 @@ namespace rs
 		/// Constructor
 		explicit Receiver(const Platform* platform, const std::string& name = "defRecv");
 
-		virtual ~Receiver();
+		~Receiver() override;
 
 		/// Add a response to the list of simulation responses
 		void addResponse(Response* response);
@@ -159,7 +159,7 @@ namespace rs
 		void render();
 
 		/// Get the noise temperature (including antenna noise temperature)
-		RS_FLOAT getNoiseTemperature(const SVec3& angle) const;
+		RS_FLOAT getNoiseTemperature(const SVec3& angle) const override;
 
 		/// Get the receiver noise temperature
 		RS_FLOAT getNoiseTemperature() const;
