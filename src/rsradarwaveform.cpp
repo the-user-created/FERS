@@ -9,6 +9,7 @@
 #include <cmath>
 #include <fstream>
 #include <stdexcept>
+#include <utility>
 #include <boost/scoped_array.hpp>
 
 #include "rshdf5.h"
@@ -21,9 +22,9 @@ using namespace rs;
 //
 
 //Default constructor
-RadarSignal::RadarSignal(const std::string& name, const RS_FLOAT power, const RS_FLOAT carrierfreq, const RS_FLOAT length,
+RadarSignal::RadarSignal(std::string name, const RS_FLOAT power, const RS_FLOAT carrierfreq, const RS_FLOAT length,
                          Signal* signal):
-	_name(name),
+	_name(std::move(name)),
 	_power(power),
 	_carrierfreq(carrierfreq),
 	_length(length),

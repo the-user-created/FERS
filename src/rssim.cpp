@@ -285,9 +285,9 @@ void rs::simulatePair(const Transmitter* trans, Receiver* recv, const World* wor
 	for (int i = 0; i < pulses; i++)
 	{
 		trans->getPulse(pulse, i);
-		for (auto _target : world->_targets)
+		for (const auto target : world->_targets)
 		{
-			simulateTarget(trans, recv, _target, pulse);
+			simulateTarget(trans, recv, target, pulse);
 		}
 
 		// Check if direct pulses are being considered for this receiver

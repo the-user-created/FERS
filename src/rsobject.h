@@ -21,21 +21,21 @@ namespace rs
 	class Object : boost::noncopyable
 	{
 	public:
-		Object(const Platform* platform, const std::string& name);
+		Object(const Platform* platform, std::string  name);
 
 		virtual ~Object();
 
 		/// Get the position of the object in space
-		Vec3 getPosition(RS_FLOAT time) const;
+		[[nodiscard]] Vec3 getPosition(RS_FLOAT time) const;
 
 		/// Get the rotation of the object in space
-		SVec3 getRotation(RS_FLOAT time) const;
+		[[nodiscard]] SVec3 getRotation(RS_FLOAT time) const;
 
 		/// Get a pointer to the platform this object is attached to
-		const Platform* getPlatform() const;
+		[[nodiscard]] const Platform* getPlatform() const;
 
 		/// Get the name of the object
-		std::string getName() const;
+		[[nodiscard]] std::string getName() const;
 
 	private:
 		const Platform* _platform; //<! Platform to which the object is attached

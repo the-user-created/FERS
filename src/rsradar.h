@@ -57,34 +57,34 @@ namespace rs
 		void setAntenna(const Antenna* ant);
 
 		/// Return the antenna gain in the specified direction
-		RS_FLOAT getGain(const SVec3& angle, const SVec3& refangle, RS_FLOAT wavelength) const;
+		[[nodiscard]] RS_FLOAT getGain(const SVec3& angle, const SVec3& refangle, RS_FLOAT wavelength) const;
 
 		/// Get the noise temperature (including antenna noise temperature)
-		virtual RS_FLOAT getNoiseTemperature(const SVec3& angle) const;
+		[[nodiscard]] virtual RS_FLOAT getNoiseTemperature(const SVec3& angle) const;
 
 		/// Make the radar monostatic
 		void makeMonostatic(const Radar* recv);
 
 		/// Get the attached radar, if we are monostatic
-		const Radar* getAttached() const;
+		[[nodiscard]] const Radar* getAttached() const;
 
 		/// Return whether the radar has an attached receiver/transmitter
-		bool isMonostatic() const;
+		[[nodiscard]] bool isMonostatic() const;
 
 		/// Attach a timing object to the radar
 		void setTiming(Timing* tim);
 
 		/// Get a pointer to the radar's timing object
-		Timing* getTiming() const;
+		[[nodiscard]] Timing* getTiming() const;
 
 		/// Is this object a virtual multipath dual?
-		bool isMultipathDual() const;
+		[[nodiscard]] bool isMultipathDual() const;
 
 		/// Set this object as a virtual multipath dual
 		void setMultipathDual(RS_FLOAT reflect);
 
 		/// Get the reflecting factor
-		RS_FLOAT multipathDualFactor() const;
+		[[nodiscard]] RS_FLOAT multipathDualFactor() const;
 
 	protected:
 		Timing* _timing; //!< The radar's timing source
@@ -116,7 +116,7 @@ namespace rs
 		void setWave(RadarSignal* pulse);
 
 		/// Return the number of pulses which will be sent out over the course of the simulation
-		int getPulseCount() const;
+		[[nodiscard]] int getPulseCount() const;
 
 		/// Fill the pulse structure with the specified pulse
 		void getPulse(TransmitterPulse* pulse, int number) const;
@@ -159,10 +159,10 @@ namespace rs
 		void render();
 
 		/// Get the noise temperature (including antenna noise temperature)
-		RS_FLOAT getNoiseTemperature(const SVec3& angle) const override;
+		[[nodiscard]] RS_FLOAT getNoiseTemperature(const SVec3& angle) const override;
 
 		/// Get the receiver noise temperature
-		RS_FLOAT getNoiseTemperature() const;
+		[[nodiscard]] RS_FLOAT getNoiseTemperature() const;
 
 		/// Set the noise temperature of the receiver
 		void setNoiseTemperature(RS_FLOAT temp);
@@ -171,28 +171,28 @@ namespace rs
 		void setWindowProperties(RS_FLOAT length, RS_FLOAT prf, RS_FLOAT skip);
 
 		/// Return the number of responses
-		int countResponses() const;
+		[[nodiscard]] int countResponses() const;
 
 		/// Get the number of receive windows in the simulation time
-		int getWindowCount() const;
+		[[nodiscard]] int getWindowCount() const;
 
 		/// Get the start time of the next window
-		RS_FLOAT getWindowStart(int window) const;
+		[[nodiscard]] RS_FLOAT getWindowStart(int window) const;
 
 		/// Get the length of the receive window
-		RS_FLOAT getWindowLength() const;
+		[[nodiscard]] RS_FLOAT getWindowLength() const;
 
 		/// Get the time skipped before the start of the receive window
-		RS_FLOAT getWindowSkip() const;
+		[[nodiscard]] RS_FLOAT getWindowSkip() const;
 
 		/// Get the PRF
-		RS_FLOAT getPrf() const;
+		[[nodiscard]] RS_FLOAT getPrf() const;
 
 		/// Set a flag
 		void setFlag(RecvFlag flag);
 
 		/// Check if a flag is set
-		bool checkFlag(RecvFlag flag) const;
+		[[nodiscard]] bool checkFlag(RecvFlag flag) const;
 
 	private:
 		/// Vector to hold all the system responses

@@ -21,13 +21,13 @@ namespace rs
 	{
 	public:
 		/// Constructor
-		explicit Timing(const std::string& name);
+		explicit Timing(std::string  name);
 
 		/// Destructor
 		virtual ~Timing();
 
 		/// Get the real time of a particular pulse
-		virtual RS_FLOAT getPulseTimeError() const = 0;
+		[[nodiscard]] virtual RS_FLOAT getPulseTimeError() const = 0;
 
 		/// Get the next sample of time error for a particular pulse
 		virtual RS_FLOAT nextNoiseSample() = 0;
@@ -36,7 +36,7 @@ namespace rs
 		virtual void skipSamples(long long samples) = 0;
 
 		/// Get the name of the timing source
-		std::string getName() const;
+		[[nodiscard]] std::string getName() const;
 
 	private:
 		std::string _name; //!< The name of the prototype this is based on
@@ -47,7 +47,7 @@ namespace rs
 	{
 	public:
 		/// Constructor
-		explicit PrototypeTiming(const std::string& name);
+		explicit PrototypeTiming(std::string  name);
 
 		/// Add an alpha and a weight to the timing prototype
 		void addAlpha(RS_FLOAT alpha, RS_FLOAT weight);
@@ -56,16 +56,16 @@ namespace rs
 		void getAlphas(std::vector<RS_FLOAT>& getAlphas, std::vector<RS_FLOAT>& getWeights) const;
 
 		/// Get the phase offset
-		RS_FLOAT getPhaseOffset() const;
+		[[nodiscard]] RS_FLOAT getPhaseOffset() const;
 
 		/// Get the frequency offset
-		RS_FLOAT getFreqOffset() const;
+		[[nodiscard]] RS_FLOAT getFreqOffset() const;
 
 		/// Get the frequency
-		RS_FLOAT getFrequency() const;
+		[[nodiscard]] RS_FLOAT getFrequency() const;
 
 		/// Get the value of the sync on pulse flag
-		bool getSyncOnPulse() const;
+		[[nodiscard]] bool getSyncOnPulse() const;
 
 		/// Set a constant frequency offset
 		void addFreqOffset(RS_FLOAT offset);
@@ -83,7 +83,7 @@ namespace rs
 		void setFrequency(RS_FLOAT freq);
 
 		/// Get the name of the prototype
-		std::string getName() const;
+		[[nodiscard]] std::string getName() const;
 
 		/// Set the sync on pulse flag -- timing error resets at the start of the pulse
 		void setSyncOnPulse();
@@ -120,19 +120,19 @@ namespace rs
 		void reset() const;
 
 		/// Get the value of the sync on pulse flag
-		bool getSyncOnPulse() const;
+		[[nodiscard]] bool getSyncOnPulse() const;
 
 		/// Initialize the clock model generator
 		void initializeModel(const PrototypeTiming* timing);
 
 		/// Get the real time of a particular pulse
-		RS_FLOAT getPulseTimeError() const override;
+		[[nodiscard]] RS_FLOAT getPulseTimeError() const override;
 
 		/// Get the carrier frequency of the modelled clock
-		RS_FLOAT getFrequency() const;
+		[[nodiscard]] RS_FLOAT getFrequency() const;
 
 		/// Return the enabled state of the clock model
-		bool enabled() const;
+		[[nodiscard]] bool enabled() const;
 
 	private:
 		bool _enabled; //!< Is the clock model going to produce non-zero samples?

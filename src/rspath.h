@@ -136,7 +136,7 @@ namespace rs
 		void finalize();
 
 		/// Get the position an object will be at at a specified time
-		Vec3 getPosition(RS_FLOAT t) const;
+		[[nodiscard]] Vec3 getPosition(RS_FLOAT t) const;
 
 		/// Set the interpolation type of the path
 		void setInterp(InterpType settype);
@@ -174,7 +174,7 @@ namespace rs
 		void finalize();
 
 		/// Get the position an object will be at at a specified time
-		SVec3 getPosition(RS_FLOAT t) const;
+		[[nodiscard]] SVec3 getPosition(RS_FLOAT t) const;
 
 		/// Set the interpolation type
 		void setInterp(InterpType setinterp);

@@ -45,7 +45,7 @@ namespace rs_python
 		~PythonPath();
 
 		/// Get the position at the given time
-		rs::Vec3 getPosition(RS_FLOAT t) const;
+		[[nodiscard]] rs::Vec3 getPosition(RS_FLOAT t) const;
 	};
 
 	/// Python extension for generating noise
@@ -59,7 +59,7 @@ namespace rs_python
 		~PythonNoise();
 
 		/// Get a noise sample
-		RS_FLOAT getSample() const;
+		[[nodiscard]] RS_FLOAT getSample() const;
 	};
 
 	/// Python extension for generating noise
@@ -73,7 +73,7 @@ namespace rs_python
 		~PythonAntennaMod();
 
 		/// Get a noise sample
-		RS_FLOAT getGain(const rs::SVec3& direction) const;
+		[[nodiscard]] RS_FLOAT getGain(const rs::SVec3& direction) const;
 	};
 }
 

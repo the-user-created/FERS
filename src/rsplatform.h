@@ -22,25 +22,25 @@ namespace rs
 	{
 	public:
 		/// Default Constructor
-		explicit Platform(const std::string& name);
+		explicit Platform(std::string  name);
 
 		/// Destructor
 		~Platform();
 
 		/// Return a pointer to the motion path
-		Path* getMotionPath() const;
+		[[nodiscard]] Path* getMotionPath() const;
 
 		/// Return a pointer to the rotation path
-		RotationPath* getRotationPath() const;
+		[[nodiscard]] RotationPath* getRotationPath() const;
 
 		/// Get the position of the platform at the specified time
-		Vec3 getPosition(RS_FLOAT time) const;
+		[[nodiscard]] Vec3 getPosition(RS_FLOAT time) const;
 
 		/// Get the rotation of the platform at the specified time
-		SVec3 getRotation(RS_FLOAT time) const;
+		[[nodiscard]] SVec3 getRotation(RS_FLOAT time) const;
 
 		/// Get the name of the platform
-		std::string getName() const;
+		[[nodiscard]] std::string getName() const;
 
 	private:
 		Path* _motion_path; //!< Pointer to platform's motion path

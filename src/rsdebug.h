@@ -27,14 +27,14 @@ namespace rs_debug
 	};
 
 	/// Print the current debug message, file and line, as long as level is greater or equal to the current debug level
-	void print(const Level level, const std::string& str, const std::string& file, const int line);
+	void print(Level level, const std::string& str, const std::string& file, int line);
 
 	/// Print a formatted debug message at the current level
 	//Formatting is as per the C printf function, with all the format specifiers supported
-	void printf(const Level level, const char* format, ...);
+	void printf(Level level, const char* format, ...);
 
 	/// Overloaded printf which takes format string as std::string
-	void printf(const Level level, const std::string& format, ...);
+	void printf(Level level, const std::string& format, ...);
 
 	/// Set the current debug level
 	void setDebugLevel(Level level);

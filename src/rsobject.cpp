@@ -5,13 +5,15 @@
 
 #include "rsobject.h"
 
+#include <utility>
+
 #include "rsplatform.h"
 
 using namespace rs;
 
-Object::Object(const Platform* platform, const std::string& name):
+Object::Object(const Platform* platform, std::string  name):
 	_platform(platform),
-	_name(name)
+	_name(std::move(name))
 {
 }
 

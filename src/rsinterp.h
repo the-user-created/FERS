@@ -33,10 +33,10 @@ namespace rs
 		void insertSample(RS_FLOAT x, RS_FLOAT y) const;
 
 		/// Get the interpolated value at the given point
-		RS_FLOAT value(RS_FLOAT x) const;
+		[[nodiscard]] RS_FLOAT value(RS_FLOAT x) const;
 
 		/// Get the maximum value in the set
-		RS_FLOAT max() const;
+		[[nodiscard]] RS_FLOAT max() const;
 
 		/// Divide every sample in the set by a given number
 		void divide(RS_FLOAT a) const;

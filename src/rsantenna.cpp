@@ -11,6 +11,7 @@
 #include <cmath>
 #include <stdexcept>
 #include <tinyxml.h>
+#include <utility>
 
 #include "rsdebug.h"
 #include "rsinterp.h"
@@ -43,9 +44,9 @@ namespace
 }
 
 //Default constructor for the antenna
-Antenna::Antenna(const std::string& name):
+Antenna::Antenna(std::string  name):
 	_loss_factor(1), //Antenna efficiency default is unity
-	_name(name)
+	_name(std::move(name))
 {
 }
 
@@ -244,8 +245,8 @@ FileAntenna::~FileAntenna()
 /// Get the gain at an angle
 RS_FLOAT FileAntenna::getGain(const SVec3& angle, const SVec3& refangle, RS_FLOAT wavelength) const
 {
-	const SVec3 a1 = angle;
-	const SVec3 a2 = refangle;
+	const SVec3& a1 = angle;
+	const SVec3& a2 = refangle;
 	const SVec3 in_angle = a1 - a2;
 	//  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "az: %g el: %g\t az2: %g el2: %g\t az3: %g el3: %g\n", angle.azimuth, angle.elevation, refangle.azimuth, refangle.elevation, in_angle.azimuth, refangle.elevation);
 	return _pattern->getGain(in_angle) * getEfficiencyFactor();

@@ -36,7 +36,7 @@ public:
 	RS_FLOAT value(RS_FLOAT x);
 
 	/// Get the maximum value in the set
-	RS_FLOAT max() const;
+	[[nodiscard]] RS_FLOAT max() const;
 
 	/// Divide the set by a given number
 	void divide(RS_FLOAT a);

@@ -22,10 +22,10 @@ namespace rs
 		~MultipathSurface();
 
 		/// Reflect a point in the surface
-		Vec3 reflectPoint(const Vec3& b) const;
+		[[nodiscard]] Vec3 reflectPoint(const Vec3& b) const;
 
 		/// Get the reflectance factor
-		RS_FLOAT getFactor() const;
+		[[nodiscard]] RS_FLOAT getFactor() const;
 
 	private:
 		RS_FLOAT _factor; //!< How energy is reflected from the plane
