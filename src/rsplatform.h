@@ -3,52 +3,56 @@
 //Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //Started: 21 April 2006
 
-#ifndef __RSPLATFORM_H
-#define __RSPLATFORM_H
+#ifndef RS_PLATFORM_H
+#define RS_PLATFORM_H
 
-#include <config.h>
-#include "rspath.h"
 #include <string>
 #include <boost/utility.hpp>
 
-namespace rs { 
+#include "config.h"
+#include "rspath.h"
 
-  //Forward definition of MultipathSurface (rsmultipath.h)
-  class MultipathSurface;
-  
-/// The Platform class controls the motion and rotation of all objects in the scene
-class Platform: boost::noncopyable {
-public:
-  /// Default Constructor
-  Platform(const std::string &name);
-  /// Destructor
-  ~Platform();
-  /// Return a pointer to the motion path
-  Path *GetMotionPath();
-  /// Return a pointer to the rotation path
-  RotationPath *GetRotationPath(); 
-  /// Get the position of the platform at the specified time
-  Vec3 GetPosition(rsFloat time) const;
-  /// Get the rotation of the platform at the specified time
-  SVec3 GetRotation(rsFloat time) const;
-  /// Get the name of the platform
-  std::string GetName() const;
+namespace rs
+{
+	//Forward definition of MultipathSurface (rsmultipath.h)
+	class MultipathSurface;
 
-private:
-  Path *motionPath; //!< Pointer to platform's motion path
-  RotationPath *rotationPath; //!< Pointer to platform's rotation path
-  std::string name; //!< The name of the platform
-  Platform *dual; //!< Multipath dual of this platform
-  /// Create a dual of this platform for multipath simulation
-  friend Platform* CreateMultipathDual(const Platform *plat, const MultipathSurface *surf);
-};
+	/// The Platform class controls the motion and rotation of all objects in the scene
+	class Platform : boost::noncopyable
+	{
+	public:
+		/// Default Constructor
+		explicit Platform(std::string  name);
 
-  /// Create a dual of this platform for multipath simulation
-  Platform *CreateMultipathDual(const Platform *plat, const MultipathSurface *surf);
+		/// Destructor
+		~Platform();
 
+		/// Return a pointer to the motion path
+		[[nodiscard]] Path* getMotionPath() const;
+
+		/// Return a pointer to the rotation path
+		[[nodiscard]] RotationPath* getRotationPath() const;
+
+		/// Get the position of the platform at the specified time
+		[[nodiscard]] Vec3 getPosition(RS_FLOAT time) const;
+
+		/// Get the rotation of the platform at the specified time
+		[[nodiscard]] SVec3 getRotation(RS_FLOAT time) const;
+
+		/// Get the name of the platform
+		[[nodiscard]] std::string getName() const;
+
+	private:
+		Path* _motion_path; //!< Pointer to platform's motion path
+		RotationPath* _rotation_path; //!< Pointer to platform's rotation path
+		std::string _name; //!< The name of the platform
+		Platform* _dual; //!< Multipath dual of this platform
+		/// Create a dual of this platform for multipath simulation
+		friend Platform* createMultipathDual(const Platform* plat, const MultipathSurface* surf);
+	};
+
+	/// Create a dual of this platform for multipath simulation
+	Platform* createMultipathDual(const Platform* plat, const MultipathSurface* surf);
 }
 
-namespace rs { 
-  Platform* CreateMultipathDual(const Platform *plat, const MultipathSurface *surf);
-}
 #endif

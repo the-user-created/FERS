@@ -2,182 +2,226 @@
 //Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //14 August 2006
 
-#ifndef __RSNOISE_H
-#define __RSNOISE_H
+#ifndef RS_NOISE_H
+#define RS_NOISE_H
 
-#include <config.h>
-#include <boost/random/variate_generator.hpp>
-#include <boost/random/normal_distribution.hpp>
+#include <memory>
+#include <vector>
+#include <boost/utility.hpp>
 #include <boost/random/gamma_distribution.hpp>
 #include <boost/random/mersenne_twister.hpp>
-#include <boost/utility.hpp>
-#include <vector>
+#include <boost/random/normal_distribution.hpp>
+#include <boost/random/variate_generator.hpp>
+
+#include "config.h"
 #include "rsdsp.h"
 #include "rspython.h"
 
 
-namespace rsNoise {
-  /// Initialize the random number generator code (must be called once, after the loading of the script)
-  void InitializeNoise();
-  /// Clean up the noise code
-  void CleanUpNoise();
-  /// Return a single sample of white gaussian noise
-  rsFloat WGNSample(rsFloat stddev);
-  /// Return a single uniformly distributed sample in [0, 1]
-  rsFloat UniformSample();
-  /// Calculate noise power from the temperature
-  rsFloat NoiseTemperatureToPower(rsFloat temperature, rsFloat bandwidth);
+namespace rs_noise
+{
+	/// Initialize the random number generator code (must be called once, after the loading of the script)
+	void initializeNoise();
+
+	/// Clean up the noise code
+	void cleanUpNoise();
+
+	/// Return a single sample of white gaussian noise
+	RS_FLOAT wgnSample(RS_FLOAT stddev);
+
+	/// Return a single uniformly distributed sample in [0, 1]
+	RS_FLOAT uniformSample();
+
+	/// Calculate noise power from the temperature
+	RS_FLOAT noiseTemperatureToPower(RS_FLOAT temperature, RS_FLOAT bandwidth);
 }
 
-namespace rs {
+namespace rs
+{
+	/// NoiseGenerator - base class for different types of noise generator
+	class NoiseGenerator : boost::noncopyable
+	{
+	public:
+		/// Constructor
+		NoiseGenerator();
 
-/// NoiseGenerator - base class for different types of noise generator
-class NoiseGenerator: boost::noncopyable {
-public:
-  /// Constructor
-  NoiseGenerator();
-  /// Destructor
-  virtual ~NoiseGenerator();
-  /// Get a single random sample
-  virtual rsFloat GetSample() = 0;
-};
+		/// Destructor
+		virtual ~NoiseGenerator();
 
-/// Generator of Gaussian white noise
-class WGNGenerator: public NoiseGenerator {
-public:
-  /// Constructor
-  WGNGenerator(rsFloat stddev);
-  /// Default Constructor
-  WGNGenerator();
-  /// Destructor
-  virtual ~WGNGenerator();
-  /// Get a single random sample
-  virtual rsFloat GetSample();
-private:
-  boost::normal_distribution<rsFloat> dist; //!< PRNG distribution
-  boost::variate_generator<boost::mt19937&, boost::normal_distribution<> > *gen; //!< Variate Generator (see boost::random docs)
-  rsFloat temperature; //!< Noise temperature
-};
+		/// Get a single random sample
+		virtual RS_FLOAT getSample() = 0;
+	};
 
-  /// Gamma distributed noise generator
-  class GammaGenerator: public NoiseGenerator {
-  public:
-    /// Constructor
-    GammaGenerator(rsFloat k); //x_bar is the 'scale' parameter and k is the 'shape' parameter
-    /// Destructor
-    virtual ~GammaGenerator();
-    /// Get a single random sample
-    virtual rsFloat GetSample();
-    /// Operator to get a random sample
-    rsFloat operator()();
-  private:
-    boost::gamma_distribution<rsFloat> dist; //!< Gamma distribution function
-    boost::variate_generator<boost::mt19937&, boost::gamma_distribution<> > gen; //!< Variate generator
-  };
+	/// Generator of Gaussian white noise
+	class WgnGenerator final : public NoiseGenerator
+	{
+	public:
+		/// Constructor
+		explicit WgnGenerator(RS_FLOAT stddev);
 
+		/// Default Constructor
+		WgnGenerator();
 
-  /// Single branch of the multirate clock generator model
-  class FAlphaBranch: boost::noncopyable {
-  public:
-    /// Constructor
-    FAlphaBranch(rsFloat ffrac, unsigned int fint, FAlphaBranch *pre, bool last);
-    /// Destructor
-    ~FAlphaBranch();
-    /// Get a sample from the branch
-    rsFloat GetSample();
-    /// Flush the buffer, and refull with samples
-    void Flush(rsFloat scale);
-  private:
-    /// Initialize the filters, etc.
-    void Init();
-    /// Clean up the filters
-    void Clean();
-    /// Refill the buffer with samples
-    void Refill();
-    /// Calculate a single sample
-    rsFloat CalcSample();
+		/// Destructor
+		~WgnGenerator() override;
 
-    IIRFilter *shape_filter; //!< The filter for shaping the noise
-    rsFloat shape_gain; //!< Gain of shaping filter
-    IIRFilter *integ_filter; //!< Integrator filter
-    rsFloat integ_gain;  //!< Gain of integration filter
+		/// Get a single random sample
+		RS_FLOAT getSample() override;
 
-    rsFloat upsample_scale; //!< Scaling factor for upsampling
-    IIRFilter *highpass; //!< Highpass filter
-    FAlphaBranch *pre; //!< Next lower branch in the structure
-    bool last; //!< If this filter is the top branch, don't upsample
-    DecadeUpsampler *upsampler; //!< Upsampler for this branch
-    rsFloat *buffer; //!< Buffer for storing samples from the upsampler
-    unsigned int buffer_samples; //!< Number of samples available in the buffer
-    rsFloat ffrac; //!< Fractional part of filter curve
-    rsFloat fint; //!< Integer part of filter curve
-    rsFloat offset_sample; //!< Sample from the branch below us
-    bool got_offset; //!< Are we waiting for the offset
-    rsFloat pre_scale; //!< Previous branch scale factor
-    friend class MultirateGenerator;
-  };
+	private:
+		boost::normal_distribution<> _dist; //!< PRNG distribution
+		boost::variate_generator<boost::mt19937&, boost::normal_distribution<>>* _gen;
+		//!< Variate Generator (see boost::random docs)
+		RS_FLOAT _temperature{}; //!< Noise temperature
+	};
+
+	/// Gamma distributed noise generator
+	class GammaGenerator final : public NoiseGenerator
+	{
+	public:
+		/// Constructor
+		explicit GammaGenerator(RS_FLOAT k); //x_bar is the 'scale' parameter and k is the 'shape' parameter
+		/// Destructor
+		~GammaGenerator() override;
+
+		/// Get a single random sample
+		RS_FLOAT getSample() override;
+
+		/// Operator to get a random sample
+		RS_FLOAT operator()();
+
+	private:
+		boost::gamma_distribution<> _dist; //!< Gamma distribution function
+		boost::variate_generator<boost::mt19937&, boost::gamma_distribution<>> _gen; //!< Variate generator
+	};
 
 
-  /// Class to generate 1/f^alpha noise based on multirate approach
-  class MultirateGenerator: public NoiseGenerator {
-  public:
-    /// Constructor
-    MultirateGenerator(rsFloat alpha, unsigned int branches);
-    /// Destructor
-    ~MultirateGenerator();
-    /// Get a single noise sample
-    rsFloat GetSample();
-    /// Skip a number of samples, preserving correlations of period longer than the sample count
-    void SkipSamples(long long samples);
-    /// Reset the output to zero
-    void Reset();
-  private:
-    rsFloat scale; //!< Scale for normalizing values
-    /// Create the branches of the filter structure tree
-    void CreateTree(rsFloat falpha, int fint, unsigned int branches);
-    /// Get the co-efficients of the shaping filter 
-    FAlphaBranch *topbranch; //!< Top branch of the filter structure tree
-  };
+	/// Single branch of the multirate clock generator model
+	class FAlphaBranch : boost::noncopyable
+	{
+	public:
+		/// Constructor
+		FAlphaBranch(RS_FLOAT ffrac, unsigned int fint, FAlphaBranch* pre, bool last);
 
-  /// Class to generate noise based on the weighted sum of 1/f^alpha noise
-  class ClockModelGenerator: public NoiseGenerator {
-  public:
-    /// Constructor
-    ClockModelGenerator(const std::vector<rsFloat> &alpha, const std::vector<rsFloat> &in_weights, rsFloat frequency, rsFloat phase_offset, rsFloat freq_offset, int branches);
-    /// Destructor
-    ~ClockModelGenerator();
-    /// Get a single noise sample
-    rsFloat GetSample();
-    /// Skip noise samples, calculating only enough to preserve long-term correlations
-    void SkipSamples(long long samples);
-    /// Reset the noise to zero
-    void Reset();
-    /// Is the generator going to produce non-zero samples
-    bool Enabled();
-  private:
-    std::vector<MultirateGenerator *> generators; // The multirate generators which generate noise in each band
-    std::vector<rsFloat> weights; // Weight of the noise from each generator
-    rsFloat phase_offset; //!< Offset from nominal phase
-    rsFloat freq_offset; //!< Offset from nominal base frequency
-    rsFloat frequency; //!< Nominal base frequency
-    unsigned long count; //!< Number of samples generated by this generator
+		/// Destructor
+		~FAlphaBranch();
 
-  };
+		/// Get a sample from the branch
+		RS_FLOAT getSample();
 
-  /// Generator of noise using a python module
-  class PythonNoiseGenerator: public NoiseGenerator {
-  public:
-    ///Constructor
-    PythonNoiseGenerator(const std::string& module, const std::string& function);
-    ///Destructor
-    ~PythonNoiseGenerator();
-    ///Get a single noise sample
-    rsFloat GetSample();
-  private:
-    rsPython::PythonNoise generator;
-  };
+		/// Flush the buffer, and refull with samples
+		void flush(RS_FLOAT scale);
+
+	private:
+		/// Initialize the filters, etc.
+		void init();
+
+		/// Clean up the filters
+		void clean() const;
+
+		/// Refill the buffer with samples
+		void refill();
+
+		/// Calculate a single sample
+		RS_FLOAT calcSample();
+
+		IirFilter* _shape_filter{}; //!< The filter for shaping the noise
+		RS_FLOAT _shape_gain{}; //!< Gain of shaping filter
+		IirFilter* _integ_filter{}; //!< Integrator filter
+		RS_FLOAT _integ_gain{}; //!< Gain of integration filter
+
+		RS_FLOAT _upsample_scale; //!< Scaling factor for upsampling
+		IirFilter* _highpass{}; //!< Highpass filter
+		FAlphaBranch* _pre; //!< Next lower branch in the structure
+		bool _last; //!< If this filter is the top branch, don't upsample
+		DecadeUpsampler* _upsampler{}; //!< Upsampler for this branch
+		RS_FLOAT* _buffer; //!< Buffer for storing samples from the upsampler
+		unsigned int _buffer_samples{}; //!< Number of samples available in the buffer
+		RS_FLOAT _ffrac; //!< Fractional part of filter curve
+		RS_FLOAT _fint; //!< Integer part of filter curve
+		RS_FLOAT _offset_sample{}; //!< Sample from the branch below us
+		bool _got_offset{}; //!< Are we waiting for the offset
+		RS_FLOAT _pre_scale{}; //!< Previous branch scale factor
+		friend class MultirateGenerator;
+	};
 
 
+	/// Class to generate 1/f^alpha noise based on multirate approach
+	class MultirateGenerator final : public NoiseGenerator
+	{
+	public:
+		/// Constructor
+		MultirateGenerator(RS_FLOAT alpha, unsigned int branches);
+
+		/// Destructor
+		~MultirateGenerator() override;
+
+		/// Get a single noise sample
+		RS_FLOAT getSample() override;
+
+		/// Skip a number of samples, preserving correlations of period longer than the sample count
+		void skipSamples(long long samples) const;
+
+		/// Reset the output to zero
+		void reset() const;
+
+	private:
+		RS_FLOAT _scale; //!< Scale for normalizing values
+		/// Create the branches of the filter structure tree
+		void createTree(RS_FLOAT falpha, int fint, unsigned int branches);
+
+		/// Get the co-efficients of the shaping filter
+		FAlphaBranch* _topbranch{}; //!< Top branch of the filter structure tree
+	};
+
+	/// Class to generate noise based on the weighted sum of 1/f^alpha noise
+	class ClockModelGenerator final : public NoiseGenerator
+	{
+	public:
+		/// Constructor
+		ClockModelGenerator(const std::vector<RS_FLOAT>& alpha, const std::vector<RS_FLOAT>& inWeights,
+		                    RS_FLOAT frequency, RS_FLOAT phaseOffset, RS_FLOAT freqOffset, int branches);
+
+		/// Destructor
+		~ClockModelGenerator() override;
+
+		/// Get a single noise sample
+		RS_FLOAT getSample() override;
+
+		/// Skip noise samples, calculating only enough to preserve long-term correlations
+		void skipSamples(long long samples);
+
+		/// Reset the noise to zero
+		void reset();
+
+		/// Is the generator going to produce non-zero samples
+		[[nodiscard]] bool enabled() const;
+
+	private:
+		std::vector<std::unique_ptr<MultirateGenerator>> _generators; // The multirate generators which generate noise in each band
+		std::vector<RS_FLOAT> _weights; // Weight of the noise from each generator
+		RS_FLOAT _phase_offset; //!< Offset from nominal phase
+		RS_FLOAT _freq_offset; //!< Offset from nominal base frequency
+		RS_FLOAT _frequency; //!< Nominal base frequency
+		unsigned long _count; //!< Number of samples generated by this generator
+	};
+
+	/// Generator of noise using a python module
+	class PythonNoiseGenerator final : public NoiseGenerator
+	{
+	public:
+		///Constructor
+		PythonNoiseGenerator(const std::string& module, const std::string& function);
+
+		///Destructor
+		~PythonNoiseGenerator() override;
+
+		///Get a single noise sample
+		RS_FLOAT getSample() override;
+
+	private:
+		rs_python::PythonNoise _generator;
+	};
 }
 
 #endif

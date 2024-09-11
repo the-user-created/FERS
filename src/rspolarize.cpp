@@ -9,33 +9,24 @@ using namespace rs;
 //
 // JonesVector Implementation
 //
-  /// Constructor
-JonesVector::JonesVector(std::complex<rsFloat> h, std::complex<rsFloat> v):
-  h(h),
-  v(v)
+/// Constructor
+JonesVector::JonesVector(const std::complex<RS_FLOAT> h, const std::complex<RS_FLOAT> v):
+	h(h),
+	v(v)
 {
 }
 
 /// Copy constructor
-JonesVector::JonesVector(const JonesVector &iv):
-  h(iv.h),
-  v(iv.v)
-{
-}
+JonesVector::JonesVector(const JonesVector& iv) = default;
 
 /// Assignment operator
-JonesVector& JonesVector::operator= (const JonesVector &iv)
-{
-  v = iv.v;
-  h = iv.h;
-  return *this;
-}
+JonesVector& JonesVector::operator=(const JonesVector& iv) = default;
 
 /// Multiplication operator
-JonesVector JonesVector::operator* (const PSMatrix &mat)
+JonesVector JonesVector::operator*(const PsMatrix& mat) const
 {
-  JonesVector j(h*mat.s[0] + v*mat.s[1], h*mat.s[2] + v*mat.s[3]);
-  return j;
+	JonesVector j(h * mat.s[0] + v * mat.s[1], h * mat.s[2] + v * mat.s[3]);
+	return j;
 }
 
 //
@@ -43,38 +34,45 @@ JonesVector JonesVector::operator* (const PSMatrix &mat)
 //
 
 ///Default constructor creates identity PSM
-PSMatrix::PSMatrix()
+PsMatrix::PsMatrix()
 {
-  s[0] = s[3] = 1;
-  s[1] = s[2] = 0;
+	s[0] = s[3] = 1;
+	s[1] = s[2] = 0;
 }
 
-  /// Constructor
-PSMatrix::PSMatrix(rsFloat s11, rsFloat s12, rsFloat s21, rsFloat s22)
+/// Constructor
+PsMatrix::PsMatrix(const RS_FLOAT s11, const RS_FLOAT s12, const RS_FLOAT s21, const RS_FLOAT s22)
 {
-  s[0] = s11;
-  s[1] = s12;
-  s[2] = s21;
-  s[3] = s22;
+	s[0] = s11;
+	s[1] = s12;
+	s[2] = s21;
+	s[3] = s22;
 }
 
 /// Copy constructor
-PSMatrix::PSMatrix(const PSMatrix &im)
+PsMatrix::PsMatrix(const PsMatrix& im)
 {
-  for (int i = 0; i < 4; i++)
-    s[i] = im.s[i];
+	for (int i = 0; i < 4; i++)
+	{
+		s[i] = im.s[i];
+	}
 }
 
 /// Assignment operator
-PSMatrix& PSMatrix::operator= (const PSMatrix &im)
+PsMatrix& PsMatrix::operator=(const PsMatrix& im)
 {
-  for (int i = 0; i < 4; i++)
-    s[i] = im.s[i];
-  return *this;
+	if (this != &im)
+	{
+		for (int i = 0; i < 4; i++)
+		{
+			s[i] = im.s[i];
+		}
+	}
+	return *this;
 }
 
 /// Dot product of two Jones vectors
-std::complex<rsFloat> dot(const JonesVector &a, const JonesVector &b)
+std::complex<RS_FLOAT> dot(const JonesVector& a, const JonesVector& b)
 {
-  return a.v*b.v+a.h*b.h;
+	return a.v * b.v + a.h * b.h;
 }
