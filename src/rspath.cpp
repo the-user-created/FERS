@@ -233,14 +233,14 @@ Path* rs::reflectPath(const Path* path, const MultipathSurface* surf)
 	//Create a new path object
 	const auto dual = new Path(path->_type);
 	//Add all the coords from the current path to the old path, reflecting about the multipath plane
-	for (const auto & _coord : path->_coords)
+	for (const auto & [pos, t] : path->_coords)
 	{
 		Coord refl;
-		refl.t = _coord.t;
+		refl.t = t;
 		//Reflect the point in the plane
-		refl.pos = surf->reflectPoint(_coord.pos);
-		rs_debug::printf(rs_debug::RS_VERBOSE, "Reflected (%g, %g, %g) to (%g, %g, %g)\n", _coord.pos.x, _coord.pos.y,
-		                _coord.pos.z, refl.pos.x, refl.pos.y, refl.pos.z);
+		refl.pos = surf->reflectPoint(pos);
+		rs_debug::printf(rs_debug::RS_VERBOSE, "Reflected (%g, %g, %g) to (%g, %g, %g)\n", pos.x, pos.y,
+		                pos.z, refl.pos.x, refl.pos.y, refl.pos.z);
 		dual->addCoord(refl);
 	}
 	//Finalize the new path

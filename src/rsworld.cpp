@@ -39,19 +39,19 @@ World::World():
 World::~World()
 {
 	//Delete all the objects in the world
-	for (auto & _pulse : _pulses)
+	for (auto & [fst, snd] : _pulses)
 	{
-		delete _pulse.second;
+		delete snd;
 	}
 
-	for (auto & _antenna : _antennas)
+	for (auto & [fst, snd] : _antennas)
 	{
-		delete _antenna.second;
+		delete snd;
 	}
 
-	for (auto & _timing : _timings)
+	for (auto & [fst, snd] : _timings)
 	{
-		delete _timing.second;
+		delete snd;
 	}
 
 	std::for_each(_receivers.begin(), _receivers.end(), ObjDel<Receiver*>());
