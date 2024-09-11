@@ -22,7 +22,7 @@ namespace rs
 namespace rs_signal
 {
 	/// Type for storing signal
-	typedef std::complex<RS_FLOAT> Complex;
+	using Complex = std::complex<RS_FLOAT>;
 
 	/// Add noise to the signal with the given temperature
 	void addNoise(RS_FLOAT* data, RS_FLOAT temperature, unsigned int size, RS_FLOAT fs);
