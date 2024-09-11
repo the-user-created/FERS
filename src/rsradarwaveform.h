@@ -22,7 +22,7 @@ namespace rs
 	class JonesVector; //rspolarize.h
 
 	///Complex type for rendering operations
-	typedef std::complex<RS_FLOAT> RsComplex;
+	using RsComplex = std::complex<RS_FLOAT>;
 
 	/// A continuous wave response interpolation point
 	struct InterpPoint
