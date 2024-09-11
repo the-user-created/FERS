@@ -32,8 +32,13 @@ namespace
 	};
 
 	/// Class for range errors in RE calculations
-	class RangeError
+	class RangeError final : public std::exception
 	{
+	public:
+		[[nodiscard]] const char* what() const noexcept override
+		{
+			return "Range error in RE calculations";
+		}
 	};
 
 	///Solve the radar equation for a given set of parameters
