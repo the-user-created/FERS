@@ -209,11 +209,4 @@ namespace rs
 	};
 }
 
-namespace rs
-{
-	Path* reflectPath(const Path* path, const MultipathSurface* surf);
-
-	RotationPath* reflectPath(const RotationPath* path, const MultipathSurface* surf);
-}
-
 #endif

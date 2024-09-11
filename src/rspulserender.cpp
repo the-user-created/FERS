@@ -44,7 +44,7 @@ namespace
 			b_oss.setf(std::ios::scientific);
 			b_oss << recvName << ".h5";
 			//Open the binary file for writing
-			hdf5_file = rshdf5::createFile(b_oss.str().c_str());
+			hdf5_file = rshdf5::createFile(b_oss.str());
 		}
 		return hdf5_file;
 	}

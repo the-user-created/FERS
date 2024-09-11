@@ -186,13 +186,11 @@ void Path::finalize()
 		switch (_type)
 		{
 		case RS_INTERP_STATIC:
-			break;
 		case RS_INTERP_LINEAR:
+		case RS_INTERP_PYTHON:
 			break;
 		case RS_INTERP_CUBIC:
 			finalizeCubic<Coord>(_coords, _dd);
-			break;
-		case RS_INTERP_PYTHON:
 			break;
 		}
 		_final = true;
@@ -218,10 +216,8 @@ SVec3 compare(const RS_FLOAT time, const Path& start, const Path& end)
 void Path::loadPythonPath(const std::string& modname, const std::string& pathname)
 {
 	//If we have one already, delete it
-	if (_pythonpath)
-	{
-		delete _pythonpath;
-	}
+	delete _pythonpath;
+
 	//Load the new python path
 	_pythonpath = new rs_python::PythonPath(modname, pathname);
 }
@@ -308,9 +304,7 @@ void RotationPath::finalize()
 		switch (_type)
 		{
 		case RS_INTERP_STATIC:
-			break;
 		case RS_INTERP_LINEAR:
-			break;
 		case RS_INTERP_CONSTANT:
 			break;
 		case RS_INTERP_CUBIC:
