@@ -4,39 +4,41 @@
 //19 July 2006
 
 #include "rsobject.h"
+
+#include <utility>
+
 #include "rsplatform.h"
 
 using namespace rs;
 
-Object::Object(const Platform *platform, std::string name):
-  platform(platform),
-  name(name)
+Object::Object(const Platform* platform, std::string  name):
+	_platform(platform),
+	_name(std::move(name))
 {
 }
 
-Object::~Object() {
-}
+Object::~Object() = default;
 
 // Get the position of the object
-Vec3 Object::GetPosition(rsFloat time) const
+Vec3 Object::getPosition(const RS_FLOAT time) const
 {
-  return platform->GetPosition(time);
+	return _platform->getPosition(time);
 }
 
 // Get the rotation of the object from it's platform
-SVec3 Object::GetRotation(rsFloat time) const
+SVec3 Object::getRotation(const RS_FLOAT time) const
 {
-  return platform->GetRotation(time);
+	return _platform->getRotation(time);
 }
 
 // Get the object's name
-std::string Object::GetName() const
+std::string Object::getName() const
 {
-  return name;
+	return _name;
 }
 
 /// Get a pointer to the platform this object is attached to
-const Platform* Object::GetPlatform() const
+const Platform* Object::getPlatform() const
 {
-  return platform;
+	return _platform;
 }

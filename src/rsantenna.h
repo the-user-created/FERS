@@ -3,193 +3,234 @@
 //Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //20 July 2006
 
-#ifndef __RSANTENNA_H
-#define __RSANTENNA_H
+#ifndef RS_ANTENNA_H
+#define RS_ANTENNA_H
 
-#include <config.h>
 #include <string>
+
+#include "config.h"
 #include "rsgeometry.h"
-#include "boost/utility.hpp"
 #include "rspython.h"
-#include <limits>
+#include "boost/utility.hpp"
 
-namespace rs {
-  //Forward declaration of SVec3 and Vec3 (see rspath.h)
-  class SVec3;
-  class Vec3;
-  //Forward declaration of InterpSet (see rsinterp.h)
-  class InterpSet;
-  //Forward declaration of Pattern (see rspattern.h)
-  class Pattern;
+namespace rs
+{
+	//Forward declaration of SVec3 and Vec3 (see rspath.h)
+	class SVec3;
+	class Vec3;
+	//Forward declaration of InterpSet (see rsinterp.h)
+	class InterpSet;
+	//Forward declaration of Pattern (see rspattern.h)
+	class Pattern;
 
-  /// The antenna class defines an antenna, which may be used by one or more transmitters
-  class Antenna: public boost::noncopyable { //Antennas are not meant to be copied
-  public:
-    /// Default constructor
-    Antenna(const std::string& name);
-    /// Destructor
-    virtual ~Antenna();
-    /// Returns the current gain at a particular angle
-    virtual rsFloat GetGain(const SVec3& angle, const SVec3& refangle, rsFloat wavelength) const = 0;
-    /// Returns the noise temperature at a particular angle
-    virtual rsFloat GetNoiseTemperature(const SVec3& angle) const;
-    /// Set the antenna's loss factor (values > 1 are physically impossible)
-    void SetEfficiencyFactor(rsFloat loss);
-    /// Gets the Loss Factor
-    rsFloat GetEfficiencyFactor() const;
-    /// Return the name of the antenna
-    std::string GetName() const;
-  protected:
-    /// Get the angle off boresight
-    rsFloat GetAngle(const SVec3 &angle, const SVec3 &refangle) const;
-  private:
-    /// The loss factor for this antenna
-    rsFloat lossFactor; //!< Loss factor
-    /// The name of the antenna
-    std::string name;
-  };
+	/// The antenna class defines an antenna, which may be used by one or more transmitters
+	class Antenna : public boost::noncopyable
+	{
+		//Antennas are not meant to be copied
+	public:
+		/// Default constructor
+		explicit Antenna(std::string  name);
 
-  // Functions to create Antenna objects
+		/// Destructor
+		virtual ~Antenna();
 
-  /// Create an Isotropic Antenna
-  Antenna* CreateIsotropicAntenna(const std::string &name);
+		/// Returns the current gain at a particular angle
+		[[nodiscard]] virtual RS_FLOAT getGain(const SVec3& angle, const SVec3& refangle, RS_FLOAT wavelength) const = 0;
 
-  /// Create an antenna with it's gain pattern stored in an XML file
-  Antenna* CreateXMLAntenna(const std::string &name, const std::string &file);
+		/// Returns the noise temperature at a particular angle
+		[[nodiscard]] virtual RS_FLOAT getNoiseTemperature(const SVec3& angle) const;
 
-  /// Create an antenna with it's gain pattern stored in an HDF5 file
-  Antenna* CreateFileAntenna(const std::string &name, const std::string &file);
+		/// Set the antenna's loss factor (values > 1 are physically impossible)
+		void setEfficiencyFactor(RS_FLOAT loss);
 
-  /// Create an antenna with gain pattern described by a Python program
-  Antenna* CreatePythonAntenna(const std::string &name, const std::string &module, const std::string &function);
+		/// Gets the Loss Factor
+		[[nodiscard]] RS_FLOAT getEfficiencyFactor() const;
 
-  /// Create a Sinc Pattern Antenna
-  // see rsantenna.cpp for meaning of alpha and beta
-  Antenna* CreateSincAntenna(const std::string &name, rsFloat alpha, rsFloat beta, rsFloat gamma);
+		/// Return the name of the antenna
+		[[nodiscard]] std::string getName() const;
 
-  /// Create a Gaussian Pattern Antenna
-  Antenna* CreateGaussianAntenna(const std::string &name, rsFloat azscale, rsFloat elscale);
+	protected:
+		/// Get the angle off boresight
+		static RS_FLOAT getAngle(const SVec3& angle, const SVec3& refangle);
 
-  /// Create a Square Horn Antenna
-  Antenna* CreateHornAntenna(const std::string &name, rsFloat dimension);
-  
-  /// Create a parabolic reflector dish
-  Antenna* CreateParabolicAntenna(const std::string &name, rsFloat diameter);
+	private:
+		/// The loss factor for this antenna
+		RS_FLOAT _loss_factor; //!< Loss factor
+		/// The name of the antenna
+		std::string _name;
+	};
 
+	// Functions to create Antenna objects
+
+	/// Create an Isotropic Antenna
+	Antenna* createIsotropicAntenna(const std::string& name);
+
+	/// Create an antenna with it's gain pattern stored in an XML file
+	Antenna* createXmlAntenna(const std::string& name, const std::string& file);
+
+	/// Create an antenna with it's gain pattern stored in an HDF5 file
+	Antenna* createFileAntenna(const std::string& name, const std::string& file);
+
+	/// Create an antenna with gain pattern described by a Python program
+	Antenna* createPythonAntenna(const std::string& name, const std::string& module, const std::string& function);
+
+	/// Create a Sinc Pattern Antenna
+	// see rsantenna.cpp for meaning of alpha and beta
+	Antenna* createSincAntenna(const std::string& name, RS_FLOAT alpha, RS_FLOAT beta, RS_FLOAT gamma);
+
+	/// Create a Gaussian Pattern Antenna
+	Antenna* createGaussianAntenna(const std::string& name, RS_FLOAT azscale, RS_FLOAT elscale);
+
+	/// Create a Square Horn Antenna
+	Antenna* createHornAntenna(const std::string& name, RS_FLOAT dimension);
+
+	/// Create a parabolic reflector dish
+	Antenna* createParabolicAntenna(const std::string& name, RS_FLOAT diameter);
 }
 
-namespace rsAntenna {
+namespace rs_antenna
+{
+	//Antenna with an Isotropic radiation pattern
+	class Isotropic final : public rs::Antenna
+	{
+	public:
+		/// Default constructor
+		explicit Isotropic(const std::string& name);
 
-  //Antenna with an Isotropic radiation pattern
-  class Isotropic: public rs::Antenna {
-  public:
-    /// Default constructor
-    Isotropic(const std::string& name);
-    /// Default destructor
-    virtual ~Isotropic();
-    /// Get the gain at an angle
-    virtual rsFloat GetGain(const rs::SVec3 &angle, const rs::SVec3 &refangle, rsFloat wavelength) const;
-  };
+		/// Default destructor
+		~Isotropic() override;
 
-  //Antenna with a sinc (sinx/x) radiation pattern
-  class Sinc: public rs::Antenna {
-  public:
-    /// Constructor
-    Sinc(const std::string& name, rsFloat alpha, rsFloat beta, rsFloat gamma);
-    /// Destructor
-    virtual ~Sinc();
-    /// Get the gain at an angle
-    virtual rsFloat GetGain(const rs::SVec3 &angle, const rs::SVec3 &refangle, rsFloat wavelength) const;
-  private:
-    rsFloat alpha; //!< First parameter (see equations.tex)
-    rsFloat beta; //!< Second parameter (see equations.tex)
-    rsFloat gamma; //!< Third parameter (see equations.tex)
-  };
+		/// Get the gain at an angle
+		[[nodiscard]] RS_FLOAT getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const override;
+	};
 
-  //Antenna with a Gaussian radiation pattern
-  class Gaussian: public rs::Antenna {
-  public:
-    /// Constructor
-    Gaussian(const std::string& name, rsFloat azscale, rsFloat elscale);
-    /// Destructor
-    virtual ~Gaussian();
-    /// Get the gain at an angle
-    virtual rsFloat GetGain(const rs::SVec3 &angle, const rs::SVec3 &refangle, rsFloat wavelength) const;
-  private:
-    rsFloat azscale; //!< Azimuth scale parameter 
-    rsFloat elscale; //!< Elevation scale parameter 
-  };
+	//Antenna with a sinc (sinx/x) radiation pattern
+	class Sinc final : public rs::Antenna
+	{
+	public:
+		/// Constructor
+		Sinc(const std::string& name, RS_FLOAT alpha, RS_FLOAT beta, RS_FLOAT gamma);
 
-  /// Square horn antenna
-  class SquareHorn: public rs::Antenna {
-  public:
-    /// Constructor
-    SquareHorn(const std::string& name, rsFloat dimension);
-    /// Default destructor
-    ~SquareHorn();
-    /// Get the gain at an angle
-    rsFloat GetGain(const rs::SVec3 &angle, const rs::SVec3 &refangle, rsFloat wavelength) const;
-  private:
-    rsFloat dimension; //!< The linear size of the horn
-  };
+		/// Destructor
+		~Sinc() override;
 
-  /// Parabolic dish antenna
-  class ParabolicReflector: public rs::Antenna {
-  public:
-    /// Constructor
-    ParabolicReflector(const std::string& name, rsFloat diameter);
-    /// Default destructor
-    ~ParabolicReflector();
-    /// Get the gain at an angle
-    rsFloat GetGain(const rs::SVec3 &angle, const rs::SVec3 &refangle, rsFloat wavelength) const;
-  private:
-    rsFloat diameter;    
-  };
+		/// Get the gain at an angle
+		[[nodiscard]] RS_FLOAT getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const override;
 
-  /// Antenna with gain pattern loaded from and XML description file
-  class XMLAntenna: public rs::Antenna {
-  public:
-    /// Constructor
-    XMLAntenna(const std::string& name, const std::string &filename);
-    /// Default destructor
-    ~XMLAntenna();
-    /// Get the gain at an angle
-    rsFloat GetGain(const rs::SVec3 &angle, const rs::SVec3 &refangle, rsFloat wavelength) const;
-  private:
-    /// Load data from the antenna description file
-    void LoadAntennaDescription(const std::string& filename);
-    rsFloat max_gain; //!< Maximum Antenna gain
-    rs::InterpSet* azi_samples; //!< Samples in the azimuth direction
-    rs::InterpSet* elev_samples; //!< Samples in the elevation direction
-  };
+	private:
+		RS_FLOAT _alpha; //!< First parameter (see equations.tex)
+		RS_FLOAT _beta; //!< Second parameter (see equations.tex)
+		RS_FLOAT _gamma; //!< Third parameter (see equations.tex)
+	};
 
-  /// Antenna with gain pattern loaded from an HDF5 2D pattern (as made by antennatool)
-  class FileAntenna: public rs::Antenna {
-  public:
-    /// Constructor
-    FileAntenna(const std::string& name, const std::string &filename);
-    /// Default destructor
-    ~FileAntenna();
-    /// Get the gain at an angle
-    rsFloat GetGain(const rs::SVec3 &angle, const rs::SVec3 &refangle, rsFloat wavelength) const;
-  private:
-    /// The antenna gain pattern
-    rs::Pattern *pattern;
-  };
+	//Antenna with a Gaussian radiation pattern
+	class Gaussian final : public rs::Antenna
+	{
+	public:
+		/// Constructor
+		Gaussian(const std::string& name, RS_FLOAT azscale, RS_FLOAT elscale);
 
-  /// Antenna with gain pattern calculated by a Python module
-  class PythonAntenna: public rs::Antenna {
-  public:
-    /// Constructor
-    PythonAntenna(const std::string& name, const std::string &module, const std::string& function);
-    /// Default destructor
-    ~PythonAntenna();
-    /// Get the gain at an angle
-    rsFloat GetGain(const rs::SVec3 &angle, const rs::SVec3 &refangle, rsFloat wavelength) const;
-  private:
-    rsPython::PythonAntennaMod py_antenna;
-  };
+		/// Destructor
+		~Gaussian() override;
 
+		/// Get the gain at an angle
+		[[nodiscard]] RS_FLOAT getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const override;
+
+	private:
+		RS_FLOAT _azscale; //!< Azimuth scale parameter
+		RS_FLOAT _elscale; //!< Elevation scale parameter
+	};
+
+	/// Square horn antenna
+	class SquareHorn final : public rs::Antenna
+	{
+	public:
+		/// Constructor
+		SquareHorn(const std::string& name, RS_FLOAT dimension);
+
+		/// Default destructor
+		~SquareHorn() override;
+
+		/// Get the gain at an angle
+		[[nodiscard]] RS_FLOAT getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const override;
+
+	private:
+		RS_FLOAT _dimension; //!< The linear size of the horn
+	};
+
+	/// Parabolic dish antenna
+	class ParabolicReflector final : public rs::Antenna
+	{
+	public:
+		/// Constructor
+		ParabolicReflector(const std::string& name, RS_FLOAT diameter);
+
+		/// Default destructor
+		~ParabolicReflector() override;
+
+		/// Get the gain at an angle
+		[[nodiscard]] RS_FLOAT getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const override;
+
+	private:
+		RS_FLOAT _diameter;
+	};
+
+	/// Antenna with gain pattern loaded from and XML description file
+	class XmlAntenna final : public rs::Antenna
+	{
+	public:
+		/// Constructor
+		XmlAntenna(const std::string& name, const std::string& filename);
+
+		/// Default destructor
+		~XmlAntenna() override;
+
+		/// Get the gain at an angle
+		[[nodiscard]] RS_FLOAT getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const override;
+
+	private:
+		/// Load data from the antenna description file
+		void loadAntennaDescription(const std::string& filename);
+
+		RS_FLOAT _max_gain{}; //!< Maximum Antenna gain
+		rs::InterpSet* _azi_samples; //!< Samples in the azimuth direction
+		rs::InterpSet* _elev_samples; //!< Samples in the elevation direction
+	};
+
+	/// Antenna with gain pattern loaded from an HDF5 2D pattern (as made by antennatool)
+	class FileAntenna final : public rs::Antenna
+	{
+	public:
+		/// Constructor
+		FileAntenna(const std::string& name, const std::string& filename);
+
+		/// Default destructor
+		~FileAntenna() override;
+
+		/// Get the gain at an angle
+		[[nodiscard]] RS_FLOAT getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const override;
+
+	private:
+		/// The antenna gain pattern
+		rs::Pattern* _pattern;
+	};
+
+	/// Antenna with gain pattern calculated by a Python module
+	class PythonAntenna final : public rs::Antenna
+	{
+	public:
+		/// Constructor
+		PythonAntenna(const std::string& name, const std::string& module, const std::string& function);
+
+		/// Default destructor
+		~PythonAntenna() override;
+
+		/// Get the gain at an angle
+		[[nodiscard]] RS_FLOAT getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const override;
+
+	private:
+		rs_python::PythonAntennaMod _py_antenna;
+	};
 }
 
 #endif

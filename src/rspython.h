@@ -2,68 +2,79 @@
 //Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //7 March 2007
 
-#ifndef __RSPYTHON_H
-#define __RSPYTHON_H
+#ifndef RS_PYTHON_H
+#define RS_PYTHON_H
 
-#include <config.h>
 #include <string>
+
+#include "config.h"
 #include "rsgeometry.h"
 
-namespace rsPython {
+namespace rs_python
+{
+	///Function which initializes python
+	void initPython();
 
-  ///Function which initializes python
-  void InitPython();
+	///Class which implements Python functionality
+	struct PythonExtensionData;
 
-  ///Class which implements Python functionality
-  struct PythonExtensionData;
+	///Parent class for all python calculation classes
+	class PythonExtension
+	{
+	public:
+		/// Constructor
+		PythonExtension(const std::string& module, const std::string& function);
 
-  ///Parent class for all python calculation classes
-  class PythonExtension {
-  public:
-    /// Constructor
-    PythonExtension(const std::string& module, const std::string& function);
-    /// Destructor
-    ~PythonExtension();
-  protected:
-    PythonExtensionData *data; //!< Pointer to python specific data
-    std::string module; //!< Name of the module
-    std::string function; //!< Name of the function
-  };
+		/// Destructor
+		~PythonExtension();
 
-  ///Python extension for calculating paths
-  class PythonPath: public PythonExtension {
-  public:
-    /// Constructor
-    PythonPath(const std::string& module, const std::string& function);
-    /// Destructor
-    ~PythonPath();
-    /// Get the position at the given time
-    rs::Vec3 GetPosition(rsFloat t) const;
-  };
+	protected:
+		PythonExtensionData* _data; //!< Pointer to python specific data
+		std::string _module; //!< Name of the module
+		std::string _function; //!< Name of the function
+	};
 
-  /// Python extension for generating noise
-  class PythonNoise: public PythonExtension {
-  public:
-    ///Constructor
-    PythonNoise(const std::string& module, const std::string& function);
-    ///Destructor
-    ~PythonNoise();
-    /// Get a noise sample
-    rsFloat GetSample() const;
-  };
+	///Python extension for calculating paths
+	class PythonPath : public PythonExtension
+	{
+	public:
+		/// Constructor
+		PythonPath(const std::string& module, const std::string& function);
 
-  /// Python extension for generating noise
-  class PythonAntennaMod: public PythonExtension {
-  public:
-    ///Constructor
-    PythonAntennaMod(const std::string& module, const std::string& function);
-    ///Destructor
-    ~PythonAntennaMod();
-    /// Get a noise sample
-    rsFloat GetGain(const rs::SVec3& direction) const;
-  };
+		/// Destructor
+		~PythonPath();
 
+		/// Get the position at the given time
+		[[nodiscard]] rs::Vec3 getPosition(RS_FLOAT t) const;
+	};
 
+	/// Python extension for generating noise
+	class PythonNoise : public PythonExtension
+	{
+	public:
+		///Constructor
+		PythonNoise(const std::string& module, const std::string& function);
+
+		///Destructor
+		~PythonNoise();
+
+		/// Get a noise sample
+		[[nodiscard]] RS_FLOAT getSample() const;
+	};
+
+	/// Python extension for generating noise
+	class PythonAntennaMod : public PythonExtension
+	{
+	public:
+		///Constructor
+		PythonAntennaMod(const std::string& module, const std::string& function);
+
+		///Destructor
+		~PythonAntennaMod();
+
+		/// Get a noise sample
+		[[nodiscard]] RS_FLOAT getGain(const rs::SVec3& direction) const;
+	};
 }
 
 #endif

@@ -3,16 +3,17 @@
 //Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //Started: 24 May 2006
 
-#include <cmath>
-#include <stdexcept>
-#include <fstream>
-#include <boost/scoped_array.hpp>
-#include <ctype.h>
 #include "rsradarwaveform.h"
-#include "rsparameters.h"
-#include "rsdebug.h"
-#include "rssignal.h"
+
+#include <cctype>
+#include <cmath>
+#include <fstream>
+#include <stdexcept>
+#include <utility>
+#include <boost/scoped_array.hpp>
+
 #include "rshdf5.h"
+#include "rssignal.h"
 
 using namespace rs;
 
@@ -21,76 +22,82 @@ using namespace rs;
 //
 
 //Default constructor
-RadarSignal::RadarSignal(std::string name, rsFloat power, rsFloat carrierfreq, rsFloat length, Signal* signal):
-  name(name),
-  power(power), 
-  carrierfreq(carrierfreq),   
-  length(length),
-  signal(signal),
-  polar(1.0,0) //Default to horiz polarization
+RadarSignal::RadarSignal(std::string name, const RS_FLOAT power, const RS_FLOAT carrierfreq, const RS_FLOAT length,
+                         Signal* signal):
+	_name(std::move(name)),
+	_power(power),
+	_carrierfreq(carrierfreq),
+	_length(length),
+	_signal(signal),
+	_polar(std::complex<RS_FLOAT>(1.0, 0.0), std::complex<RS_FLOAT>(0.0, 0.0)) //Default to horiz polarization
 {
-  if (!signal)
-    throw std::logic_error("RadarSignal cannot be constructed with NULL signal");
+	if (!signal)
+	{
+		throw std::logic_error("RadarSignal cannot be constructed with NULL signal");
+	}
 }
 
 //Destructor
 RadarSignal::~RadarSignal()
 {
-  delete signal;
+	delete _signal;
 }
 
 //Return the power of the signal
-rsFloat RadarSignal::GetPower() const
+RS_FLOAT RadarSignal::getPower() const
 {
-  return power;
+	return _power;
 }
 
 //Get the carrier frequency
-rsFloat RadarSignal::GetCarrier() const
+RS_FLOAT RadarSignal::getCarrier() const
 {
-  return carrierfreq;
+	return _carrierfreq;
 }
 
 //Get the name of the pulse
-std::string RadarSignal::GetName() const
+std::string RadarSignal::getName() const
 {
-  return name;
+	return _name;
 }
 
 //Get the native sample rate of the pulse
-rsFloat RadarSignal::GetRate() const
+RS_FLOAT RadarSignal::getRate() const
 {
-  return signal->Rate();
+	return _signal->rate();
 }
 
 /// Return the length of the pulse
-rsFloat RadarSignal::GetLength() const
+RS_FLOAT RadarSignal::getLength() const
 {
-  return length;
+	return _length;
 }
 
 /// Render the waveform to the target buffer
-boost::shared_array<rsComplex> RadarSignal::Render(const std::vector<InterpPoint> &points, unsigned int &size, rsFloat frac_win_delay) const
+boost::shared_array<RsComplex> RadarSignal::render(const std::vector<InterpPoint>& points, unsigned int& size,
+                                                   const RS_FLOAT fracWinDelay) const
 {
-  //Render the return pulse
-  boost::shared_array<rsComplex> data = signal->Render(points, power, size, frac_win_delay);
-  //Scale the return pulse by the signal power
-  rsFloat scale = std::sqrt(power);
-  for (unsigned int i = 0; i < size; i++)
-    data[i] *= scale;
-  return data;
+	//Render the return pulse
+	boost::shared_array<RsComplex> data = _signal->render(points, size, fracWinDelay);
+	//Scale the return pulse by the signal power
+	const RS_FLOAT scale = std::sqrt(_power);
+	for (unsigned int i = 0; i < size; i++)
+	{
+		data[i] *= scale;
+	}
+	return data;
 }
 
 /// Get the signal polarization
-JonesVector RadarSignal::GetPolarization()
+JonesVector RadarSignal::getPolarization()
 {
-  return polar;
+	return _polar;
 }
 
 /// Set the signal polarization
-void RadarSignal::SetPolarization(const JonesVector &in)
+void RadarSignal::setPolarization(const JonesVector& in)
 {
-  polar = in;
+	_polar = in;
 }
 
 //
@@ -98,67 +105,78 @@ void RadarSignal::SetPolarization(const JonesVector &in)
 //
 
 /// Load the pulse from HDF5 file
-RadarSignal* LoadPulseFromHDF5File(const std::string& name, const std::string &filename, rsFloat power, rsFloat carrierfreq)
+RadarSignal* loadPulseFromHdf5File(const std::string& name, const std::string& filename, const RS_FLOAT power,
+                                   const RS_FLOAT carrierFreq)
 {
-  rsFloat rate;
-  unsigned int size;
-  rsComplex *data;
-  // Load the data from the hdf5 file
-  rshdf5::ReadPulseData(filename, &data, size, rate);
-  //Create the signal object
-  Signal *signal = new Signal();
-  // Load the pulse into the signal object
-  signal->Load(data, size, rate);
-  delete[] data;
-  // Create the RadarSignal
-  rs::RadarSignal *any = new rs::RadarSignal(name, power, carrierfreq, size/rate, signal);
-  return any;
+	RS_FLOAT rate;
+	unsigned int size;
+	RsComplex* data;
+	// Load the data from the hdf5 file
+	rshdf5::readPulseData(filename, &data, size, rate);
+	//Create the signal object
+	auto* signal = new Signal();
+	// Load the pulse into the signal object
+	signal->load(data, size, rate);
+	delete[] data;
+	// Create the RadarSignal
+	auto* any = new RadarSignal(name, power, carrierFreq, size / rate, signal);
+	return any;
 }
 
 /// Load the pulse from a CSV file
-RadarSignal* LoadPulseFromCSVFile(const std::string& name, const std::string& filename, rsFloat power, rsFloat carrierfreq)
+RadarSignal* loadPulseFromCsvFile(const std::string& name, const std::string& filename, const RS_FLOAT power,
+                                  const RS_FLOAT carrierFreq)
 {
-  ///Open the file
-  std::ifstream ifile(filename.c_str());
-  if (!ifile)
-    throw std::runtime_error("Could not open "+filename+" to read pulse waveform");
-  /// Read the length and sample rate
-  rsFloat rlength, rate;
-  ifile >> rlength; //length in samples
-  ifile >> rate; //rate
-  unsigned int length = static_cast<int>(rlength);
-  //Allocate memory for the file contents
-  boost::scoped_array<rsComplex> data(new rsComplex[length]);
-  //Loop through reading the samples in the file
-  unsigned int done = 0;
-  while (!ifile.eof() && (done < length))
-    ifile >> data[done++];
-  if (done != length)
-    throw std::runtime_error("Could not read pulse waveform from file "+filename);
-  //Create the signal object with the data from the file
-  Signal *signal = new Signal();
-  signal->Load(data.get(), length, rate);
-  //Create the pulse
-  rs::RadarSignal *any = new rs::RadarSignal(name, power, carrierfreq, rlength/rate, signal);
-  return any;
+	///Open the file
+	std::ifstream ifile(filename.c_str());
+	if (!ifile)
+	{
+		throw std::runtime_error("Could not open " + filename + " to read pulse waveform");
+	}
+	/// Read the length and sample rate
+	RS_FLOAT rlength, rate;
+	ifile >> rlength; //length in samples
+	ifile >> rate; //rate
+	const unsigned int length = static_cast<int>(rlength);
+	//Allocate memory for the file contents
+	const boost::scoped_array data(new RsComplex[length]);
+	//Loop through reading the samples in the file
+	unsigned int done = 0;
+	while (!ifile.eof() && done < length)
+	{
+		ifile >> data[done++];
+	}
+	if (done != length)
+	{
+		throw std::runtime_error("Could not read pulse waveform from file " + filename);
+	}
+	//Create the signal object with the data from the file
+	auto* signal = new Signal();
+	signal->load(data.get(), length, rate);
+	//Create the pulse
+	auto* any = new RadarSignal(name, power, carrierFreq, rlength / rate, signal);
+	return any;
 }
 
 /// Load a pulse from a file and generate an anypulse
-rs::RadarSignal* rsPulseFactory::LoadPulseFromFile(const std::string& name, const std::string& filename, rsFloat power, rsFloat carrierfreq)
+RadarSignal* rs_pulse_factory::loadPulseFromFile(const std::string& name, const std::string& filename,
+                                                   const RS_FLOAT power,
+                                                   const RS_FLOAT carrierFreq)
 {
-  int ln = filename.length()-1;
-  //Identify file types
-
-  //Check for CSV extension
-  if ((tolower(filename[ln]) == 'v') && (tolower(filename[ln-1]) == 's') && (tolower(filename[ln-2]) == 'c'))
-    return LoadPulseFromCSVFile(name, filename, power, carrierfreq);  
-  //Check for H5 extension
-  else if ((tolower(filename[ln]) == '5') && (tolower(filename[ln-1]) == 'h'))
-    return LoadPulseFromHDF5File(name, filename, power, carrierfreq);    
-  // If neither of the above, complain
-  else
-    throw std::runtime_error("[ERROR] Unrecognised extension while trying to load "+filename);
-  return 0;
-
+	//Check for CSV extension
+	if (const unsigned long ln = filename.length() - 1; tolower(filename[ln]) == 'v' && tolower(filename[ln - 1]) == 's' && tolower(filename[ln - 2]) == 'c')
+	{
+		return loadPulseFromCsvFile(name, filename, power, carrierFreq);
+	}
+	//Check for H5 extension
+	else
+	{
+		if (tolower(filename[ln]) == '5' && tolower(filename[ln - 1]) == 'h')
+		{
+			return loadPulseFromHdf5File(name, filename, power, carrierFreq);
+		}
+		// If neither of the above, complain
+		throw std::runtime_error("[ERROR] Unrecognised extension while trying to load " + filename);
+	}
 }
 

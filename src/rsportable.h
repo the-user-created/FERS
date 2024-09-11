@@ -3,25 +3,24 @@
 //Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //29 May 2006
 
-#ifndef __RSPORTABLE_H
-#define __RSPORTABLE_H
+#ifndef RS_PORTABLE_H
+#define RS_PORTABLE_H
 
-#include <config.h>
+#include "config.h"
 
-namespace rsPortable {
+namespace rs_portable
+{
+	/// Compare two strings, ignoring case
+	int stricmp(const char* one, const char* two);
 
-/// Compare two strings, ignoring case
-int stricmp(const char *one, const char *two);
+	/// Compute the first order Bessel function of the first kind
+	RS_FLOAT besselJ1(RS_FLOAT x);
 
-/// Compute the first order Bessel function of the first kind
-rsFloat BesselJ1(rsFloat x);
+	/// Floating point round
+	RS_FLOAT rsRound(RS_FLOAT x);
 
-/// Floating point round
-rsFloat rsRound(rsFloat x);
-
-/// Detect the number of CPUs in the machine
-int CountProcessors();
-
+	/// Detect the number of CPUs in the machine
+	unsigned int countProcessors();
 }
 
 #endif

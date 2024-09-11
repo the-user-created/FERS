@@ -1,42 +1,32 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 2.4)
+cmake_minimum_required(VERSION 3.10)
+project(fers)
 
-PROJECT(fers)
+set(CMAKE_VERBOSE_MAKEFILE ON)
 
-SET(CMAKE_VERBOSE_MAKEFILE ON)
+# Add the directory where config.h is located to the include path
+include_directories(${CMAKE_SOURCE_DIR})
 
-CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_BINARY_DIR}/config.h )
+if (NOT CMAKE_BUILD_TYPE)
+	message(STATUS "No build type specified, defaulting to Release")
+	set(CMAKE_BUILD_TYPE "Release")
+endif ()
 
-#Check for build configuration 
-IF(NOT CMAKE_BUILD_TYPE)
-    MESSAGE(STATUS "No build configuration specified, defaulting to Release")
-    SET(CMAKE_BUILD_TYPE "Release")
-ENDIF()
+if (CMAKE_COMPILER_IS_GNUCXX)
+	message(STATUS "Setting compiler flags for GNU C++ compiler")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -pthread -ffast-math")
 
+	if (CMAKE_BUILD_TYPE MATCHES "Release")
+		message(STATUS "Setting compiler flags for Release")
+		set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
+		set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -s")
+	endif ()
 
-#Set compiler flags
-IF (CMAKE_COMPILER_IS_GNUCXX)
-   MESSAGE(STATUS "Setting general compiler flags for detected compiler: gnu-g++")	
-   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -pthread -ffast-math")
+	if (CMAKE_BUILD_TYPE MATCHES "Debug")
+		message(STATUS "Setting compiler flags for Debug")
+	endif ()
+endif ()
 
-    IF(CMAKE_BUILD_TYPE MATCHES "Release")
-    
-        MESSAGE(STATUS "Setting g++ flags for Release configuration")
-        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2")   ## Optimize
-        SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s")  ## Strip binary
-    
-        ELSEIF(CMAKE_BUILD_TYPE MATCHES "Debug")
-            MESSAGE(STATUS "Setting g++ flags for Debug configuration")
-    
-    ENDIF()
+add_definitions(-D_REENTRANT)
 
-ENDIF ()
-
-#FERS is multithreaded, boost needs to be informed
-ADD_DEFINITIONS(-D_REENTRANT)
-
-ADD_SUBDIRECTORY( fftwcpp )
-ADD_SUBDIRECTORY( src )
-
-ADD_SUBDIRECTORY( utilities )
-ADD_SUBDIRECTORY( test )
-
+add_subdirectory(src)
+add_subdirectory(utilities)
