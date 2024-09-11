@@ -49,8 +49,8 @@ private:
 ///Load samples into the set
 void InterpSetData::loadSamples(const vector<RS_FLOAT>& x, const vector<RS_FLOAT>& y)
 {
-	vector<RS_FLOAT>::const_iterator ix = x.begin();
-	for (vector<RS_FLOAT>::const_iterator iy = y.begin(); ix != x.end() && iy != y.end(); ++ix, ++iy)
+	auto ix = x.begin();
+	for (auto iy = y.begin(); ix != x.end() && iy != y.end(); ++ix, ++iy)
 	{
 		_data.insert(pair(*ix, *iy));
 	}
@@ -73,13 +73,13 @@ RS_FLOAT InterpSetData::value(const RS_FLOAT x)
 		throw std::logic_error("[BUG] Interpolation on an empty list in InterpSet");
 	}
 	//Get the first element with a key greater than k
-	const map<RS_FLOAT, RS_FLOAT>::const_iterator iter = _data.lower_bound(x);
+	const auto iter = _data.lower_bound(x);
 	//If we are at the beginning of the set, return the value
 	if (iter == _data.begin())
 	{
 		return iter->second;
 	}
-	map<RS_FLOAT, RS_FLOAT>::const_iterator prev = iter;
+	auto prev = iter;
 	--prev;
 
 	//If we are over the end, return the last value
@@ -105,7 +105,7 @@ RS_FLOAT InterpSetData::max() const
 {
 	RS_FLOAT max = 0;
 	// Scan through the map, updating the maximum
-	for (map<RS_FLOAT, RS_FLOAT>::const_iterator iter = _data.begin(); iter != _data.end(); ++iter)
+	for (auto iter = _data.begin(); iter != _data.end(); ++iter)
 	{
 		if (std::fabs(iter->second) > max)
 		{
@@ -118,7 +118,7 @@ RS_FLOAT InterpSetData::max() const
 /// Divide the set by a given number
 void InterpSetData::divide(const RS_FLOAT a)
 {
-	for (map<RS_FLOAT, RS_FLOAT>::iterator iter = _data.begin(); iter != _data.end(); ++iter)
+	for (auto iter = _data.begin(); iter != _data.end(); ++iter)
 	{
 		iter->second /= a;
 	}

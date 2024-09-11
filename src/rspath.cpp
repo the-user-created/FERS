@@ -140,7 +140,7 @@ Path::Path(const InterpType type):
 void Path::addCoord(const Coord& coord)
 {
 	//Find the position to insert the coordinate, preserving sort
-	const std::vector<Coord>::iterator iter = lower_bound(_coords.begin(), _coords.end(), coord);
+	const auto iter = lower_bound(_coords.begin(), _coords.end(), coord);
 	//Insert the new coordinate
 	_coords.insert(iter, coord);
 	//We are not finalized if we have inserted a coord
@@ -235,9 +235,9 @@ Path* rs::reflectPath(const Path* path, const MultipathSurface* surf)
 		throw std::runtime_error("[ERROR] Multipath surfaces are not currently supported for Python paths");
 	}
 	//Create a new path object
-	Path* dual = new Path(path->_type);
+	const auto dual = new Path(path->_type);
 	//Add all the coords from the current path to the old path, reflecting about the multipath plane
-	for (std::vector<Coord>::const_iterator iter = path->_coords.begin(); iter != path->_coords.end(); ++iter)
+	for (auto iter = path->_coords.begin(); iter != path->_coords.end(); ++iter)
 	{
 		Coord refl;
 		refl.t = iter->t;
@@ -264,7 +264,7 @@ RotationPath::RotationPath(const InterpType type):
 void RotationPath::addCoord(const RotationCoord& coord)
 {
 	//Find the position to insert the coordinate, preserving sort
-	const std::vector<RotationCoord>::iterator iter = lower_bound(_coords.begin(), _coords.end(), coord);
+	const auto iter = lower_bound(_coords.begin(), _coords.end(), coord);
 	//Insert the new coordinate
 	_coords.insert(iter, coord);
 	//We are not finalized if we have inserted a coord
@@ -499,12 +499,12 @@ RotationCoord rs::operator/(const RotationCoord& b, const RS_FLOAT a)
 RotationPath* rs::reflectPath(const RotationPath* path, const MultipathSurface* surf)
 {
 	//Create the new RotationPath object
-	RotationPath* dual = new RotationPath(path->_type);
+	auto* dual = new RotationPath(path->_type);
 	//Copy constant rotation params
 	dual->_start = path->_start;
 	dual->_rate = path->_rate;
 	//Copy the coords, reflecting them in the surface
-	for (std::vector<RotationCoord>::const_iterator iter = path->_coords.begin(); iter != path->_coords.end(); ++iter)
+	for (auto iter = path->_coords.begin(); iter != path->_coords.end(); ++iter)
 	{
 		RotationCoord rc;
 		//Time copies directly

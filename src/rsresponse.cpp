@@ -25,8 +25,8 @@ namespace
 	//</node>
 	void attachTextNode(TiXmlElement* root, const std::string& name, const std::string& text)
 	{
-		std::unique_ptr<TiXmlElement> element = std::make_unique<TiXmlElement>(name);
-		std::unique_ptr<TiXmlText> xtext = std::make_unique<TiXmlText>(text);
+		auto element = std::make_unique<TiXmlElement>(name);
+		auto xtext = std::make_unique<TiXmlText>(text);
 		element->LinkEndChild(xtext.release());
 		root->LinkEndChild(element.release());
 	}
@@ -122,7 +122,7 @@ const RadarSignal* Response::getWave() const
 void Response::renderResponseXml(TiXmlElement* root, const InterpPoint& point) const
 {
 	// Create a node for the response
-	std::unique_ptr<TiXmlElement> element = std::make_unique<TiXmlElement>("InterpolationPoint");
+	auto element = std::make_unique<TiXmlElement>("InterpolationPoint");
 	root->LinkEndChild(element.get());
 	// Attach nodes for properties of the response
 	attachRsFloatNode(element.get(), "time", point.time, false);
@@ -141,7 +141,7 @@ void Response::renderResponseXml(TiXmlElement* root, const InterpPoint& point) c
 void Response::renderXml(TiXmlElement* root)
 {
 	// Create a node for the response
-	std::unique_ptr<TiXmlElement> element = std::make_unique<TiXmlElement>("Response");
+	auto element = std::make_unique<TiXmlElement>("Response");
 	root->LinkEndChild(element.get());
 	element->SetAttribute("transmitter", getTransmitterName());
 
@@ -150,7 +150,7 @@ void Response::renderXml(TiXmlElement* root)
 	attachTextNode(element.get(), "name", _wave->getName());
 
 	// Render each interpolation point in turn
-	for (std::vector<InterpPoint>::iterator i = _points.begin(); i != _points.end(); ++i)
+	for (auto i = _points.begin(); i != _points.end(); ++i)
 	{
 		renderResponseXml(element.get(), *i);
 	}
@@ -170,7 +170,7 @@ void Response::renderResponseCsv(std::ofstream& of, const InterpPoint& point) co
 void Response::renderCsv(std::ofstream& of)
 {
 	//Render each interpolation point
-	for (std::vector<InterpPoint>::const_iterator i = _points.begin(); i != _points.end(); ++i)
+	for (auto i = _points.begin(); i != _points.end(); ++i)
 	{
 		renderResponseCsv(of, *i);
 	}

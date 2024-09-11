@@ -33,7 +33,7 @@ namespace
 	{
 		// Use double the render filter length, for faster rolloff than the render filter
 		length = RsParameters::renderFilterLength() * 2;
-		RS_FLOAT* coeffs = new RS_FLOAT[length];
+		auto* coeffs = new RS_FLOAT[length];
 		const RS_FLOAT n = length / 2.0;
 		for (int i = 0; i < length; i++)
 		{
@@ -58,7 +58,7 @@ void rs::upsample(const RsComplex* in, const int size, RsComplex* out, const int
 	const RS_FLOAT* coeffs = blackmanFir(1 / static_cast<RS_FLOAT>(ratio), filt_length);
 
 	// Temporary buffer for zero padding and results
-	RsComplex* tmp = new RsComplex[size * ratio + filt_length];
+	auto* tmp = new RsComplex[size * ratio + filt_length];
 	for (int i = 0; i < size * ratio + filt_length; i++)
 	{
 		tmp[i] = 0;
@@ -93,7 +93,7 @@ void rs::downsample(const RsComplex* in, const int size, RsComplex* out, const i
 	int filt_length;
 	const RS_FLOAT* coeffs = blackmanFir(1 / static_cast<RS_FLOAT>(ratio), filt_length);
 	// Temporary buffer for zero padding and results
-	RsComplex* tmp = new RsComplex[size + filt_length];
+	auto* tmp = new RsComplex[size + filt_length];
 	for (int i = size - 1; i < size + filt_length; i++)
 	{
 		tmp[i] = 0;
@@ -287,7 +287,7 @@ inline RS_FLOAT FirFilter::filter(RS_FLOAT sample)
 inline void FirFilter::filter(RS_FLOAT* samples, const int size)
 {
 	// Allocate memory for a delay line, equal to the filter length
-	RS_FLOAT* line = new RS_FLOAT[_order];
+	auto* line = new RS_FLOAT[_order];
 	std::memset(line, 0, sizeof(RS_FLOAT) * _order);
 	// Perform the inplace convolution with the pulse
 	for (int i = 0; i < size; i++)
@@ -313,7 +313,7 @@ inline void FirFilter::filter(RS_FLOAT* samples, const int size)
 inline void FirFilter::filter(std::complex<RS_FLOAT>* samples, const int size) const
 {
 	// Allocate memory for a delay line, equal to the filter length
-	RsComplex* line = new RsComplex[_order];
+	auto* line = new RsComplex[_order];
 	for (unsigned int i = 0; i < _order; i++)
 	{
 		line[i] = 0;

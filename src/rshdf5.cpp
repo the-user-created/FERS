@@ -54,7 +54,7 @@ void rshdf5::readPulseData(const std::string& name, std::complex<RS_FLOAT>** dat
 	// Get the rank of the groups
 	int rank;
 	H5LTget_dataset_ndims(i_group, "value", &rank);
-	hsize_t* dims = new hsize_t[rank];
+	auto* dims = new hsize_t[rank];
 	//Get the data set information
 	herr_t res = H5LTget_dataset_info(i_group, "value", &dims[0], &class_id, &type_size);
 	if (res < 0)
@@ -63,7 +63,7 @@ void rshdf5::readPulseData(const std::string& name, std::complex<RS_FLOAT>** dat
 	}
 	// Allocate memory for the pulse
 	size = dims[0];
-	double* buffer_i = new double[size];
+	auto* buffer_i = new double[size];
 	// Read in the I dataset
 	res = H5LTread_dataset_double(i_group, "value", buffer_i);
 	if (res < 0)
@@ -89,7 +89,7 @@ void rshdf5::readPulseData(const std::string& name, std::complex<RS_FLOAT>** dat
 		throw std::runtime_error("[ERROR] Dataset \"Q\" is not the same size as dataset \"I\" in file " + name);
 	}
 	//Allocate memory for the Q set
-	double* buffer_q = new double[size];
+	auto* buffer_q = new double[size];
 	//Read in the Q datase
 	res = H5LTread_dataset_double(q_group, "value", buffer_q);
 	if (res < 0)
@@ -136,8 +136,8 @@ void rshdf5::addChunkToFile(const long int file, const std::complex<RS_FLOAT>* d
 	//Create the size variable needed by the lite api
 	const hsize_t datasize = size;
 	//Write out the I data
-	double* i = new double[size];
-	double* q = new double[size];
+	auto* i = new double[size];
+	auto* q = new double[size];
 	//Seperate I and Q
 	for (unsigned int it = 0; it < size; it++)
 	{
@@ -230,7 +230,7 @@ RS_FLOAT** rshdf5::readPattern(const std::string& name, const std::string& datas
 		throw std::runtime_error("[ERROR] Type size incorrect in dataset \"" + datasetName + "\" in file " + name);
 	}
 	// Allocate memory for the pattern
-	float* data = new float[dims[0] * dims[1]];
+	auto* data = new float[dims[0] * dims[1]];
 	/// Load the pattern into memory
 	err = H5LTread_dataset_float(file_id, datasetName.c_str(), data);
 	if (err < 0)
@@ -247,7 +247,7 @@ RS_FLOAT** rshdf5::readPattern(const std::string& name, const std::string& datas
 	/// Break the data down into a 2D array
 	aziSize = dims[0];
 	elevSize = dims[1];
-	RS_FLOAT** ret = new RS_FLOAT*[aziSize];
+	auto** ret = new RS_FLOAT*[aziSize];
 	for (unsigned int i = 0; i < aziSize; i++)
 	{
 		ret[i] = new RS_FLOAT[elevSize];

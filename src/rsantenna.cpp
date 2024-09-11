@@ -390,55 +390,55 @@ RS_FLOAT PythonAntenna::getGain(const SVec3& angle, const SVec3& refangle, RS_FL
 //Create an isotropic antenna with the specified name
 Antenna* rs::createIsotropicAntenna(const std::string& name)
 {
-	Isotropic* iso = new Isotropic(name);
+	auto* iso = new Isotropic(name);
 	return iso;
 }
 
 //Create a Sinc pattern antenna with the specified name, alpha and beta
 Antenna* rs::createSincAntenna(const std::string& name, const RS_FLOAT alpha, const RS_FLOAT beta, const RS_FLOAT gamma)
 {
-	Sinc* sinc = new Sinc(name, alpha, beta, gamma);
+	const auto sinc = new Sinc(name, alpha, beta, gamma);
 	return sinc;
 }
 
 //Create a Gaussian pattern antenna
 Antenna* rs::createGaussianAntenna(const std::string& name, const RS_FLOAT azscale, const RS_FLOAT elscale)
 {
-	Gaussian* gau = new Gaussian(name, azscale, elscale);
+	auto* gau = new Gaussian(name, azscale, elscale);
 	return gau;
 }
 
 //Create a square horn antenna
 Antenna* rs::createHornAntenna(const std::string& name, const RS_FLOAT dimension)
 {
-	SquareHorn* sq = new SquareHorn(name, dimension);
+	auto* sq = new SquareHorn(name, dimension);
 	return sq;
 }
 
 //Create a parabolic reflector antenna
 Antenna* rs::createParabolicAntenna(const std::string& name, const RS_FLOAT diameter)
 {
-	ParabolicReflector* pd = new ParabolicReflector(name, diameter);
+	auto* pd = new ParabolicReflector(name, diameter);
 	return pd;
 }
 
 //Create an antenna with it's gain pattern stored in an XML file
 Antenna* rs::createXmlAntenna(const std::string& name, const std::string& file)
 {
-	XmlAntenna* fa = new XmlAntenna(name, file);
+	auto* fa = new XmlAntenna(name, file);
 	return fa;
 }
 
 //Create an antenna with it's gain pattern stored in an XML file
 Antenna* rs::createFileAntenna(const std::string& name, const std::string& file)
 {
-	FileAntenna* fa = new FileAntenna(name, file);
+	auto* fa = new FileAntenna(name, file);
 	return fa;
 }
 
 //Create an antenna with gain pattern described by a Python program
 Antenna* rs::createPythonAntenna(const std::string& name, const std::string& module, const std::string& function)
 {
-	PythonAntenna* pa = new PythonAntenna(name, module, function);
+	auto* pa = new PythonAntenna(name, module, function);
 	return pa;
 }

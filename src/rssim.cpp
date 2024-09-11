@@ -45,8 +45,8 @@ namespace
 		const Vec3 transmitter_position = trans->getPosition(time);
 		const Vec3 receiver_position = recv->getPosition(time);
 		const Vec3 target_position = targ->getPosition(time);
-		SVec3 transmitter_to_target_vector = SVec3(target_position - transmitter_position);
-		SVec3 receiver_to_target_vector = SVec3(target_position - receiver_position);
+		auto transmitter_to_target_vector = SVec3(target_position - transmitter_position);
+		auto receiver_to_target_vector = SVec3(target_position - receiver_position);
 		//Calculate the distances
 		const RS_FLOAT transmitter_to_target_distance = transmitter_to_target_vector.length;
 		const RS_FLOAT receiver_to_target_distance = receiver_to_target_vector.length;
@@ -97,8 +97,8 @@ namespace
 		const Vec3 trpos_end = trans->getPosition(time + length);
 		const Vec3 repos_end = recv->getPosition(time + length);
 		const Vec3 tapos_end = targ->getPosition(time + length);
-		const SVec3 transvec_end = SVec3(tapos_end - trpos_end);
-		const SVec3 recvvec_end = SVec3(tapos_end - repos_end);
+		const auto transvec_end = SVec3(tapos_end - trpos_end);
+		const auto recvvec_end = SVec3(tapos_end - repos_end);
 		const RS_FLOAT rt_end = transvec_end.length;
 		const RS_FLOAT rr_end = recvvec_end.length;
 		//Sanity check Rt_end and Rr_end and throw an exception if they are too small
@@ -128,7 +128,7 @@ namespace
 		const RS_FLOAT sample_time = 1.0 / RsParameters::cwSampleRate();
 		const RS_FLOAT point_count = std::ceil(signal->wave->getLength() / sample_time);
 		//Create the response
-		Response* response = new Response(signal->wave, trans);
+		auto* response = new Response(signal->wave, trans);
 		try
 		{
 			//Loop through and add interpolation points
@@ -167,8 +167,8 @@ namespace
 		// TODO: These need to be more descriptive
 		const Vec3 tpos = trans->getPosition(time);
 		const Vec3 rpos = recv->getPosition(time);
-		SVec3 transvec = SVec3(tpos - rpos);
-		SVec3 recvvec = SVec3(rpos - tpos);
+		auto transvec = SVec3(tpos - rpos);
+		auto recvvec = SVec3(rpos - tpos);
 		//Calculate the range
 		const RS_FLOAT r = transvec.length;
 		//Normalize transvec and recvvec for angle calculations
@@ -243,7 +243,7 @@ namespace
 		const RS_FLOAT sample_time = 1.0 / RsParameters::cwSampleRate();
 		const RS_FLOAT point_count = std::ceil(signal->wave->getLength() / sample_time);
 		//Create the CW response
-		Response* response = new Response(signal->wave, trans);
+		auto* response = new Response(signal->wave, trans);
 		try
 		{
 			//Loop through and add interpolation points
@@ -279,13 +279,13 @@ void rs::simulatePair(const Transmitter* trans, Receiver* recv, const World* wor
 	//Get the number of pulses
 	const int pulses = trans->getPulseCount();
 	//Build a pulse
-	TransmitterPulse* pulse = new TransmitterPulse();
+	auto* pulse = new TransmitterPulse();
 	rs_debug::printf(rs_debug::RS_VERY_VERBOSE, "%d\n", pulses);
 	//Loop throught the pulses
 	for (int i = 0; i < pulses; i++)
 	{
 		trans->getPulse(pulse, i);
-		for (std::vector<Target*>::const_iterator targ = world->_targets.begin(); targ != world->_targets.end(); ++targ)
+		for (auto targ = world->_targets.begin(); targ != world->_targets.end(); ++targ)
 		{
 			simulateTarget(trans, recv, *targ, pulse);
 		}

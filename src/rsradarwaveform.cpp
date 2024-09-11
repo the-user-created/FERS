@@ -113,12 +113,12 @@ RadarSignal* loadPulseFromHdf5File(const std::string& name, const std::string& f
 	// Load the data from the hdf5 file
 	rshdf5::readPulseData(filename, &data, size, rate);
 	//Create the signal object
-	Signal* signal = new Signal();
+	auto* signal = new Signal();
 	// Load the pulse into the signal object
 	signal->load(data, size, rate);
 	delete[] data;
 	// Create the RadarSignal
-	RadarSignal* any = new RadarSignal(name, power, carrierFreq, size / rate, signal);
+	auto* any = new RadarSignal(name, power, carrierFreq, size / rate, signal);
 	return any;
 }
 
@@ -150,10 +150,10 @@ RadarSignal* loadPulseFromCsvFile(const std::string& name, const std::string& fi
 		throw std::runtime_error("Could not read pulse waveform from file " + filename);
 	}
 	//Create the signal object with the data from the file
-	Signal* signal = new Signal();
+	auto* signal = new Signal();
 	signal->load(data.get(), length, rate);
 	//Create the pulse
-	RadarSignal* any = new RadarSignal(name, power, carrierFreq, rlength / rate, signal);
+	auto* any = new RadarSignal(name, power, carrierFreq, rlength / rate, signal);
 	return any;
 }
 

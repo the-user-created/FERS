@@ -136,13 +136,13 @@ namespace
 	                            RS_FLOAT& carrier, bool& enabled)
 	{
 		//Get a pointer to the receiver's timing object
-		ClockModelTiming* timing = dynamic_cast<ClockModelTiming*>(recv->getTiming());
+		auto* timing = dynamic_cast<ClockModelTiming*>(recv->getTiming());
 		if (!timing)
 		{
 			throw std::runtime_error("[BUG] Could not cast receiver->GetTiming() to ClockModelTiming");
 		}
 		//Allocate memory for the phase noise samples
-		RS_FLOAT* noise = new RS_FLOAT[wSize];
+		auto* noise = new RS_FLOAT[wSize];
 		enabled = timing->enabled();
 		if (enabled)
 		{
@@ -217,7 +217,7 @@ namespace
 		{
 			const RS_FLOAT length = recv->getWindowLength();
 			const RS_FLOAT rate = RsParameters::rate() * RsParameters::oversampleRatio();
-			unsigned int size = static_cast<unsigned int>(std::ceil(length * rate));
+			auto size = static_cast<unsigned int>(std::ceil(length * rate));
 			// rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Length: %g Size: %d\n", length, size);
 			//Generate the phase noise samples for the window
 			RS_FLOAT carrier;
@@ -230,7 +230,7 @@ namespace
 			start = rs_portable::rsRound(start * rate) / rate;
 			// rsFloat start = recv->GetWindowStart(i);
 			// Allocate memory for the entire window
-			RsComplex* window = new RsComplex[size];
+			auto* window = new RsComplex[size];
 			//Clear the window in memory
 			memset(window, 0, sizeof(RsComplex) * size);
 			//Add Noise to the window
@@ -243,7 +243,7 @@ namespace
 				// Calculate the size of the window after downsampling
 				const unsigned int new_size = size / RsParameters::oversampleRatio();
 				// Allocate memory for downsampled window
-				RsComplex* tmp = new RsComplex[new_size];
+				auto* tmp = new RsComplex[new_size];
 				//Downsample the data into tmp
 				downsample(window, size, tmp, RsParameters::oversampleRatio());
 				// Set tmp as the new window
@@ -281,14 +281,14 @@ void rs::exportReceiverXml(const std::vector<Response*>& responses, const std::s
 {
 	//Create the document
 	TiXmlDocument doc;
-	std::unique_ptr<TiXmlDeclaration> decl = std::make_unique<TiXmlDeclaration>("1.0", "", "");
+	auto decl = std::make_unique<TiXmlDeclaration>("1.0", "", "");
 	doc.LinkEndChild(decl.release());
 	//Create a root node for the document
-	TiXmlElement* root = new TiXmlElement("receiver");
+	auto* root = new TiXmlElement("receiver");
 	doc.LinkEndChild(root);
 
 	//dump each response in turn
-	for (std::vector<Response*>::const_iterator ri = responses.begin(); ri != responses.end(); ++ri)
+	for (auto ri = responses.begin(); ri != responses.end(); ++ri)
 	{
 		(*ri)->renderXml(root);
 	}
@@ -304,12 +304,12 @@ void rs::exportReceiverXml(const std::vector<Response*>& responses, const std::s
 void rs::exportReceiverCsv(const std::vector<Response*>& responses, const std::string& filename)
 {
 	std::map<std::string, std::ofstream*> streams; //map of per-transmitter open files
-	for (std::vector<Response*>::const_iterator iter = responses.begin(); iter != responses.end(); ++iter)
+	for (auto iter = responses.begin(); iter != responses.end(); ++iter)
 	{
 		std::ofstream* of;
 		// See if a file is already open for that transmitter
 		// If the file for that transmitter does not exist, add it
-		if (std::map<std::string, std::ofstream*>::iterator ofi = streams.find((*iter)->getTransmitterName()); ofi ==
+		if (auto ofi = streams.find((*iter)->getTransmitterName()); ofi ==
 			streams.end())
 		{
 			std::ostringstream oss;
@@ -334,7 +334,7 @@ void rs::exportReceiverCsv(const std::vector<Response*>& responses, const std::s
 		(*iter)->renderCsv(*of);
 	}
 	//Close all the files that we opened
-	for (std::map<std::string, std::ofstream*>::iterator ofi = streams.begin(); ofi != streams.end(); ++ofi)
+	for (auto ofi = streams.begin(); ofi != streams.end(); ++ofi)
 	{
 		delete ofi->second;
 	}
@@ -369,7 +369,7 @@ void ThreadedRenderer::renderWindow(RsComplex* window, RS_FLOAT length, RS_FLOAT
 	RS_FLOAT end = start + length; // End time of the window
 	//Put together a list of responses seen by this window
 	std::queue<Response*> work_list;
-	for (std::vector<Response*>::const_iterator iter = _responses->begin(); iter != _responses->end(); ++iter)
+	for (auto iter = _responses->begin(); iter != _responses->end(); ++iter)
 	{
 		RS_FLOAT resp_start = (*iter)->startTime();
 		if (RS_FLOAT resp_end = (*iter)->endTime(); resp_start <= end && resp_end >= start)
@@ -392,8 +392,7 @@ void ThreadedRenderer::renderWindow(RsComplex* window, RS_FLOAT length, RS_FLOAT
 		for (int i = 0; i < _max_threads; i++)
 		{
 			// rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Spawning %d\n", i);
-			std::unique_ptr<RenderThread> thr = std::make_unique<RenderThread>(
-				i, &window_mutex, window, length, start, fracDelay, &work_list_mutex, &work_list);
+			auto thr = std::make_unique<RenderThread>(i, &window_mutex, window, length, start, fracDelay, &work_list_mutex, &work_list);
 			group.create_thread(*thr);
 			threads.push_back(std::move(thr));
 		}
@@ -430,7 +429,7 @@ RenderThread::~RenderThread()
 void RenderThread::operator()()
 {
 	const RS_FLOAT rate = RsParameters::rate() * RsParameters::oversampleRatio();
-	const unsigned int size = static_cast<unsigned int>(std::ceil(_length * rate));
+	const auto size = static_cast<unsigned int>(std::ceil(_length * rate));
 	// Allocate memory for the local window
 	_local_window = new RsComplex[size];
 	for (unsigned int i = 0; i < size; i++)
@@ -467,7 +466,7 @@ void RenderThread::addWindow(const RsComplex* array, const RS_FLOAT startTime, c
 {
 	//Calculate required window parameters
 	const RS_FLOAT rate = RsParameters::rate() * RsParameters::oversampleRatio();
-	const unsigned int size = static_cast<unsigned int>(std::ceil(_length * rate));
+	const auto size = static_cast<unsigned int>(std::ceil(_length * rate));
 	// Add the array to the correct place in the local window
 	addArrayToWindow(_start, _local_window, size, rate, startTime, array, arraySize);
 }
