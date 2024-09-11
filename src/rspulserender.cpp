@@ -351,7 +351,7 @@ void rs::exportReceiverBinary(const std::vector<Response*>& responses, const Rec
 //
 
 /// Constructor
-ThreadedRenderer::ThreadedRenderer(const std::vector<Response*>* responses, const Receiver* recv, const int maxThreads):
+ThreadedRenderer::ThreadedRenderer(const std::vector<Response*>* responses, const Receiver* recv, const unsigned int maxThreads):
 	_responses(responses),
 	_recv(recv),
 	_max_threads(maxThreads)

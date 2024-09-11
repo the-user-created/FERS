@@ -310,7 +310,7 @@ void Receiver::setWindowProperties(const RS_FLOAT length, const RS_FLOAT prf, co
 /// Return the number of responses
 int Receiver::countResponses() const
 {
-	return _responses.size();
+	return static_cast<int>(_responses.size());
 }
 
 /// Get the number of receive windows in the simulation time

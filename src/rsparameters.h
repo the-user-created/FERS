@@ -94,7 +94,7 @@ namespace rs
 		static void setAdcBits(unsigned int bits);
 
 		/// Set the render filter length
-		static void setRenderFilterLength(unsigned int length);
+		static void setRenderFilterLength(unsigned int length);  // TODO: unused function
 
 		/// Set the number of times to oversample loaded pulses before simulation
 		static void setOversampleRatio(unsigned int ratio);

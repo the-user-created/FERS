@@ -262,7 +262,7 @@ void RsParameters::setAdcBits(const unsigned int bits)
 	sim_parms.adc_bits = bits;
 }
 
-void RsParameters::setRenderFilterLength(const unsigned int length)
+void RsParameters::setRenderFilterLength(const unsigned int length) // TODO: unused function??
 {
 	//Sanity check the render filter length
 	if (length < 16)

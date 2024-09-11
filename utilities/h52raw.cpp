@@ -87,7 +87,7 @@ void readAndDump(hid_t file, FILE* outfile)
 	std::cout << "MaxI " << max_i << " maxQ " << max_q << std::endl;
 	count = it;
 	// Allocate memory for the reshuffle
-	auto* buffer = new float[count * size * 2];
+	auto* buffer = new double[count * size * 2];
 	for (it = 0; it < count; it++)
 	{
 		// Get the dataset names
@@ -110,10 +110,9 @@ void readAndDump(hid_t file, FILE* outfile)
 		// Write out the data
 		for (unsigned int j = 0; j < size; j++)
 		{
-			float i = buffer_i[j] * i_scale / max_i;
-			float q = buffer_q[j] * q_scale / max_q;
-			//fwrite(&I, 1, 1, outfile);
-			//fwrite(&Q, 1, 1, outfile);
+			double i = buffer_i[j] * i_scale / max_i;
+			double q = buffer_q[j] * q_scale / max_q;
+
 			buffer[(j + it * size) * 2] = i;
 			buffer[(j + it * size) * 2 + 1] = q;
 		}

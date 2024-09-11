@@ -8,6 +8,7 @@
 
 #include <cmath>
 #include <cstdio>
+#include <thread>
 #include <boost/thread.hpp>
 
 #include "rsdebug.h"
@@ -33,12 +34,9 @@ RS_FLOAT rs_portable::rsRound(const RS_FLOAT x)
 }
 
 /// Detect the number of CPUs in the machine
-int rs_portable::countProcessors()
+unsigned int rs_portable::countProcessors()
 {
-	//C Tong: This can now be done with boost:
-	// David Young: This can be done with std::thread::hardware_concurrency() in C++11
-	// TODO: Update to use std::thread::hardware_concurrency()
-	if (const int i_n_hardware_threads = boost::thread::hardware_concurrency(); !i_n_hardware_threads)
+	if (const unsigned int i_n_hardware_threads = std::thread::hardware_concurrency(); !i_n_hardware_threads)
 	{
 		rs_debug::printf(rs_debug::RS_IMPORTANT, "[IMPORTANT] Unable to get CPU count, assuming 1.\n");
 		return 1;

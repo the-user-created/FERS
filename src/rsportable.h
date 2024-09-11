@@ -20,7 +20,7 @@ namespace rs_portable
 	RS_FLOAT rsRound(RS_FLOAT x);
 
 	/// Detect the number of CPUs in the machine
-	int countProcessors();
+	unsigned int countProcessors();
 }
 
 #endif

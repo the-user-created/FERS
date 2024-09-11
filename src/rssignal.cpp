@@ -97,7 +97,7 @@ namespace
 	/// Interpfilter class constructor
 	InterpFilter::InterpFilter()
 	{
-		_length = RsParameters::renderFilterLength();
+		_length = static_cast<int>(RsParameters::renderFilterLength());
 		//Size of the table to use for interpolation
 		_table_filters = 1000;
 		//Allocate memory for the table
@@ -114,7 +114,7 @@ namespace
 		for (int i = -hfilt; i < hfilt; i++)
 		{
 			const RS_FLOAT delay = i / static_cast<RS_FLOAT>(hfilt);
-			for (int j = -_alpha; j < _alpha; j++)
+			for (int j = static_cast<int>(-_alpha); j < _alpha; j++)
 			{
 				_filter_table[static_cast<int>((i + hfilt) * _length + j + _alpha)] = interpFilter(j - delay);
 			}
@@ -123,10 +123,9 @@ namespace
 	}
 
 	/// Get a pointer to the filter with approximately the specified delay
-	const RS_FLOAT*
-	InterpFilter::getFilter(const RS_FLOAT delay) const
+	const RS_FLOAT* InterpFilter::getFilter(const RS_FLOAT delay) const
 	{
-		const int filt = (delay + 1) * (_table_filters / 2);
+		const auto filt = static_cast<unsigned int>((delay + 1) * (_table_filters / 2));
 
 		if (delay <= -1 || delay >= 1)
 		{
@@ -134,7 +133,6 @@ namespace
 			throw std::runtime_error("[BUG] Requested delay filter value out of range");
 		}
 
-		//rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "GetFilter %f %d\n", delay, filt);
 		return &_filter_table[filt * _length];
 	}
 
@@ -144,7 +142,7 @@ namespace
 		const RS_FLOAT w = kaiserWinCompute(x + _alpha);
 		const RS_FLOAT s = sinc(x); //The filter value
 		const RS_FLOAT filt = w * s;
-		//      rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "%g %g\n", t, filt);
+		// rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "%g %g\n", t, filt);
 		return filt;
 	}
 
@@ -173,7 +171,7 @@ namespace
 }
 
 /// Simulate the effect of and ADC converter on the signal
-void rs_signal::adcSimulate(Complex* data, const unsigned int size, const int bits, const RS_FLOAT fullscale)
+void rs_signal::adcSimulate(Complex* data, const unsigned int size, const unsigned int bits, const RS_FLOAT fullscale)
 {
 	//Get the number of levels associated with the number of bits
 	const RS_FLOAT levels = pow(2, bits - 1);
@@ -221,8 +219,7 @@ Signal::~Signal()
 }
 
 //Clear the data array, emptying the signal and freeing memory
-void
-Signal::clear()
+void Signal::clear()
 {
 	delete[] _data;
 	_size = 0;
@@ -306,7 +303,7 @@ boost::shared_array<RsComplex> Signal::render(const std::vector<InterpPoint>& po
 	//Get the sample interval
 	const RS_FLOAT timestep = 1.0 / _rate;
 	//Create the rendering window
-	const int filt_length = RsParameters::renderFilterLength();
+	const int filt_length = static_cast<int>(RsParameters::renderFilterLength());
 	const InterpFilter* interp = InterpFilter::getInstance();
 	//Loop through the interp points, rendering each in time
 	auto iter = points.begin();
@@ -378,7 +375,7 @@ boost::shared_array<RsComplex> Signal::render(const std::vector<InterpPoint>& po
 		int end = filt_length / 2;
 		if (i + end >= _size)
 		{
-			end = _size - i;
+			end = static_cast<int>(_size) - i;
 		}
 
 		//Apply the filter

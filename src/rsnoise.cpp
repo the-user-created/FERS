@@ -423,7 +423,7 @@ RS_FLOAT MultirateGenerator::getSample()
 /// Skip a number of samples, preseverving correlations
 void MultirateGenerator::skipSamples(long long samples) const
 {
-	//  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Skip branches %d\n", skip_branches);
+	// rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Skip branches %d\n", skip_branches);
 	if (const int skip_branches = static_cast<int>(std::floor(std::log10(samples))) - 1; skip_branches > 0)
 	{
 		std::vector<FAlphaBranch*> flushbranches;
@@ -436,15 +436,15 @@ void MultirateGenerator::skipSamples(long long samples) const
 		if (branch)
 		{
 			//Now generate the samples of the lower branches
-			samples = static_cast<int>(samples / std::pow(10.0, static_cast<double>(skip_branches)));
-			//rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Skipping %ld samples in %ld branches \n", samples, skip_branches);
+			samples /= static_cast<long long>(std::pow(10.0, skip_branches));
+			// rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Skipping %ld samples in %ld branches \n", samples, skip_branches);
 			for (int i = 0; i < samples; i++)
 			{
 				branch->getSample();
 			}
 		}
 		// Flush the buffers of the upper branches
-		const int size = flushbranches.size();
+		const int size = static_cast<int>(flushbranches.size());
 		flushbranches[size - 1]->flush(std::pow(10.0, skip_branches - 2.0));
 		for (int i = size - 2; i >= 0; i--)
 		{
@@ -496,7 +496,7 @@ void MultirateGenerator::reset() const
 		branch = branch->_pre;
 	}
 	// Flush the branch buffers in reverse order
-	const int size = flush_branches.size();
+	const int size = static_cast<int>(flush_branches.size());
 	for (int i = size - 1; i >= 0; i--)
 	{
 		flush_branches[i]->flush();
@@ -558,7 +558,7 @@ RS_FLOAT ClockModelGenerator::getSample()
 {
 	RS_FLOAT sample = 0;
 	// Get noise from the multirate generators for each band
-	const int size = _generators.size();
+	const int size = static_cast<int>(_generators.size());
 	for (int i = 0; i < size; i++)
 	{
 		sample += _generators[i]->getSample() * _weights[i];
@@ -566,7 +566,7 @@ RS_FLOAT ClockModelGenerator::getSample()
 	// Add the phase and frequency offsets
 	sample += _phase_offset;
 	//Calculate the count in clock frequencies
-	sample += 2 * M_PI * _freq_offset * _count / RsParameters::rate();
+	sample += 2 * M_PI * _freq_offset * static_cast<double>(_count) / RsParameters::rate();
 	_count++;
 	return sample;
 }
@@ -574,7 +574,7 @@ RS_FLOAT ClockModelGenerator::getSample()
 /// Skip some noise samples, calculating only the branches required to preserve correlations
 void ClockModelGenerator::skipSamples(const long long samples)
 {
-	const int gens = _generators.size();
+	const int gens = static_cast<int>(_generators.size());
 	for (int i = 0; i < gens; i++)
 	{
 		_generators[i]->skipSamples(samples);
@@ -585,7 +585,7 @@ void ClockModelGenerator::skipSamples(const long long samples)
 /// Reset the noise to zero
 void ClockModelGenerator::reset()
 {
-	const int gens = _generators.size();
+	const int gens = static_cast<int>(_generators.size());
 	for (int i = 0; i < gens; i++)
 	{
 		_generators[i]->reset();
