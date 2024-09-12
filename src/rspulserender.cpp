@@ -22,11 +22,10 @@
 #include "dsp_filters.h"
 #include "hdf5_export.h"
 #include "noise_generators.h"
+#include "parameters.h"
 #include "portable_utils.h"
 #include "radar_system.h"
 #include "response.h"
-#include "parameters.h"
-#include "rssignal.h"
 #include "timing.h"
 
 using namespace rs;
