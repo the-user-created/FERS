@@ -6,11 +6,9 @@
 #include <cstring>
 #include <stdexcept>
 
-#include "logging.h"
-#include "noise_generators.h"
 #include "portable_utils.h"
 #include "rsparameters.h"
-#include "world.h"
+#include "sim_threading.h"
 #include "xmlimport.h"
 
 int main(const int argc, char* argv[])
@@ -37,7 +35,7 @@ int main(const int argc, char* argv[])
 		logging::printf(logging::RS_VERBOSE, "[VERBOSE] Loading XML Script File.\n");
 		xml::loadXmlFile(argv[1], world);
 
-		runThreadedSim(rs::RsParameters::renderThreads(), world);
+		rs::threaded_sim::runThreadedSim(rs::RsParameters::renderThreads(), world);
 		logging::printf(logging::RS_VERBOSE, "[VERBOSE] Cleaning up.\n");
 
 		delete world;
