@@ -134,7 +134,7 @@ namespace
 			{
 				noise[i] = timing->nextNoiseSample();
 			}
-			if (timing->getSyncOnPulse())
+			if (timing->getSyncOnPulse())  // TODO: BUG #2 - sync_on_pulse always false
 			{
 				timing->reset();
 				const int skip = static_cast<int>(std::floor(rate * recv->getWindowSkip()));
@@ -145,7 +145,7 @@ namespace
 				const long skip = std::floor(rate / recv->getPrf() - rate * recv->getWindowLength());
 				timing->skipSamples(skip);
 			}
-			carrier = timing->getFrequency();
+			carrier = timing->getFrequency();  // TODO: BUG #1,#3 - carrier has no effect on phase noise?
 		}
 		else
 		{
@@ -154,7 +154,7 @@ namespace
 			{
 				noise[i] = 0;
 			}
-			carrier = 1;
+			carrier = 1;  // TODO: BUG #3 - carrier has no effect on phase noise?
 		}
 		return noise;
 	}
