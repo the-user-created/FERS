@@ -3,19 +3,21 @@
 //Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //30 May 2006
 
+// TODO: This entire file needs to be reworked along with rsthreadedsim.cpp
+
 #include "rssim.h"
 
 #include <cmath>
 #include <limits>
 #include <stdexcept>
 
-#include "rsdebug.h"
-#include "rsnoise.h"
+#include "logging.h"
+#include "noise_generators.h"
+#include "radar_system.h"
+#include "response.h"
 #include "rsparameters.h"
-#include "rsradar.h"
-#include "rsresponse.h"
-#include "rstarget.h"
-#include "rsworld.h"
+#include "target.h"
+#include "world.h"
 
 using namespace rs;
 
@@ -65,7 +67,7 @@ namespace
 		//Step 1, calculate the delay (in seconds) experienced by the pulse
 		//See "Delay Equation" in doc/equations/equations.tex
 		results.delay = (transmitter_to_target_distance + receiver_to_target_distance) / RsParameters::c();
-		//rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Calculated delay as %fs, %fm\n", results.delay, results.delay * rsParameters::c());
+		//logging::printf(logging::RS_VERY_VERBOSE, "Calculated delay as %fs, %fm\n", results.delay, results.delay * rsParameters::c());
 		//Get the RCS
 		const RS_FLOAT rcs = targ->getRcs(transmitter_to_target_vector, receiver_to_target_vector);
 		//Get the wavelength
@@ -73,7 +75,7 @@ namespace
 		//Get the system antenna gains (which include loss factors)
 		const RS_FLOAT transmitter_gain = trans->getGain(transmitter_to_target_vector, trans->getRotation(time), wavelength);
 		const RS_FLOAT receiver_gain = recv->getGain(receiver_to_target_vector, recv->getRotation(results.delay + time), wavelength);
-		//  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Gt: %e Gr: %e\n", Gt, Gr);
+		//  logging::printf(logging::RS_VERY_VERBOSE, "Gt: %e Gr: %e\n", Gt, Gr);
 		//Step 2, calculate the received power using the narrowband bistatic radar equation
 		//See "Bistatic Narrowband Radar Equation" in doc/equations/equations.tex
 		results.power = transmitter_gain * receiver_gain * rcs / (4 * M_PI);
@@ -81,7 +83,7 @@ namespace
 		{
 			results.power *= wavelength * wavelength / (pow(4 * M_PI, 2) * transmitter_to_target_distance * transmitter_to_target_distance * receiver_to_target_distance * receiver_to_target_distance);
 		}
-		//   rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Pr: %2.9e Rt: %e Rr: %e Gt: %e Gr: %e RCS: %e Wl %e\n", results.power, Rt, Rr, Gt, Gr, RCS, Wl);
+		//   logging::printf(logging::RS_VERY_VERBOSE, "Pr: %2.9e Rt: %e Rr: %e Gt: %e Gr: %e RCS: %e Wl %e\n", results.power, Rt, Rr, Gt, Gr, RCS, Wl);
 		// If the transmitter and/or receiver are multipath duals, multiply by the loss factor
 		if (trans->isMultipathDual())
 		{
@@ -144,8 +146,8 @@ namespace
 				InterpPoint point(results.power, stime + results.delay, results.delay, results.doppler, results.phase,
 				                  results.noise_temperature);
 				response->addInterpPoint(point);
-				//rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Added interpolation point with delay: %gs, %fm\n", results.delay, results.delay * rsParameters::c());
-				//rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "stime + results.delay = : %gs\n", stime + results.delay);
+				//logging::printf(logging::RS_VERY_VERBOSE, "Added interpolation point with delay: %gs, %fm\n", results.delay, results.delay * rsParameters::c());
+				//logging::printf(logging::RS_VERY_VERBOSE, "stime + results.delay = : %gs\n", stime + results.delay);
 			}
 			//Add one more point at the end
 			ReResults results{};
@@ -197,7 +199,7 @@ namespace
 			{
 				results.power *= 1 / (4 * M_PI * pow(r, 2));
 			}
-			//  rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "Pr: %2.9e R: %e Gt: %e Gr: %e Wl %e\n", results.power, R, Gt, Gr, Wl);
+			//  logging::printf(logging::RS_VERY_VERBOSE, "Pr: %2.9e R: %e Gt: %e Gr: %e Wl %e\n", results.power, R, Gt, Gr, Wl);
 			//Step 3: Calculate the doppler shift (if one of the antennas is moving)
 			// TODO: These need to be more descriptive
 			const Vec3 tpos_end = trans->getPosition(time + length);
@@ -284,7 +286,7 @@ void rs::simulatePair(const Transmitter* trans, Receiver* recv, const World* wor
 	const int pulses = trans->getPulseCount();
 	//Build a pulse
 	auto* pulse = new TransmitterPulse();
-	rs_debug::printf(rs_debug::RS_VERY_VERBOSE, "%d\n", pulses);
+	logging::printf(logging::RS_VERY_VERBOSE, "%d\n", pulses);
 	//Loop throught the pulses
 	for (int i = 0; i < pulses; i++)
 	{

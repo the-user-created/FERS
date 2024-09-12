@@ -1,7 +1,9 @@
-//rspulserender.h
-//Definitions for pulse rendering functions
-//Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-//7 June 2006
+// rspulserender.h
+// Definitions for pulse rendering functions
+// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
+// 7 June 2006
+
+// TODO: This should be split into multiple files
 
 #ifndef RS_PULSE_RENDER
 #define RS_PULSE_RENDER
@@ -11,81 +13,73 @@
 #include <vector>
 
 #include "config.h"
-#include "rsradarwaveform.h"
+#include "radar_signal.h"
 
-//Forward definition of boost threads classes (see boost threads)
 namespace boost
 {
-	class mutex;
+	class mutex; // NOLINT
 }
 
 namespace rs
 {
-	//Forward declaration of Response (see rsresponse.h)
 	class Response;
-	//Forward declaration of Receiver (see rsradar.h)
 	class Receiver;
 
-
-	/// Export the responses received by a receiver to an XML file
+	// TODO: These export functions should be moved to a separate file
 	void exportReceiverXml(const std::vector<Response*>& responses, const std::string& filename);
 
-	/// Export the receiver pulses to the specified binary file, using the specified quantization
 	void exportReceiverBinary(const std::vector<Response*>& responses, const Receiver* recv,
 	                          const std::string& recvName);
 
-	/// Export the receiver responses to the specified CSV value files
 	void exportReceiverCsv(const std::vector<Response*>& responses, const std::string& filename);
 
-	/// Management class for threaded rendering
 	class ThreadedRenderer
 	{
 	public:
-		/// Constructor
-		ThreadedRenderer(const std::vector<Response*>* responses, const Receiver* recv, unsigned int maxThreads);
+		ThreadedRenderer(const std::vector<Response*>* responses, const Receiver* recv,
+		                 const unsigned maxThreads) : _responses(responses), _recv(recv), _max_threads(maxThreads)
+		{
+		}
 
-		/// Destructor
-		~ThreadedRenderer();
+		~ThreadedRenderer() = default;
 
-		/// Render all the responses in a single window
-		void renderWindow(RsComplex* window, RS_FLOAT length, RS_FLOAT start, RS_FLOAT fracDelay) const;
+		void renderWindow(RS_COMPLEX* window, RS_FLOAT length, RS_FLOAT start, RS_FLOAT fracDelay) const;
 
 	private:
-		const std::vector<Response*>* _responses; //!< Vector of target responses seen by this receiver
-		const Receiver* _recv; //!< Receiver we are rendering for
-		unsigned int _max_threads; //!< The maximum allowed thread count for rendering
+		const std::vector<Response*>* _responses;
+		const Receiver* _recv;
+		unsigned _max_threads;
 	};
 
-	/// Single thread for rendering
 	class RenderThread
 	{
 	public:
-		/// Constructor
-		RenderThread(int serial, boost::mutex* windowMutex, RsComplex* window, RS_FLOAT length, RS_FLOAT start,
-		             RS_FLOAT fracDelay, boost::mutex* workListMutex, std::queue<Response*>* workList);
+		RenderThread(const int serial, boost::mutex* windowMutex, RS_COMPLEX* window, const RS_FLOAT length,
+		             const RS_FLOAT start, const RS_FLOAT fracDelay, boost::mutex* workListMutex,
+		             std::queue<Response*>* workList) :
+			_serial(serial), _window_mutex(windowMutex), _window(window), _length(length), _start(start),
+			_frac_delay(fracDelay), _work_list_mutex(workListMutex), _work_list(workList)
+		{
+		}
 
-		/// Destructor
-		~RenderThread();
+		~RenderThread() = default;
 
-		/// Step through the worklist, rendering the required responses
 		void operator()();
 
 	private:
-		/// Get a response from the worklist, returning NULL on failure
 		[[nodiscard]] Response* getWork() const;
 
-		/// Add the array to the window, locking the window lock in advance
-		void addWindow(const RsComplex* array, RS_FLOAT startTime, unsigned int arraySize) const;
+		void addWindow(const RS_COMPLEX* array, RS_FLOAT startTime, unsigned arraySize) const;
 
-		int _serial; //!< Serial number of this thread
-		boost::mutex* _window_mutex; //!< Mutex to protect window
-		RsComplex* _window; //!< Pointer to render window
-		RS_FLOAT _length; //!< Length of render window (seconds)
-		RS_FLOAT _start; //!< Start time of render window (seconds)
-		RS_FLOAT _frac_delay; //!< Fractional window start time (< 1 sample, samples)
-		boost::mutex* _work_list_mutex; //!< Mutex to protect work list
-		std::queue<Response*>* _work_list; //!< List of responses to render
-		RsComplex* _local_window{};
+		int _serial;
+		boost::mutex* _window_mutex;
+		RS_COMPLEX* _window;
+		RS_FLOAT _length;
+		RS_FLOAT _start;
+		RS_FLOAT _frac_delay;
+		boost::mutex* _work_list_mutex;
+		std::queue<Response*>* _work_list;
+		RS_COMPLEX* _local_window{};
 	};
 }
 

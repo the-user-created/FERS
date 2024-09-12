@@ -1,16 +1,18 @@
-//rspath.cpp
-//Implementation of rotation and position path classes
-//Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-//21 April 2006
+// rspath.cpp
+// Implementation of rotation and position path classes
+// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
+// 21 April 2006
+
+// TODO: This needs to be split up into separate files
 
 #include "rspath.h"
 
 #include <algorithm>
 #include <cmath> //for fmod
 
-#include "rsdebug.h"
-#include "rsmultipath.h"
-#include "rspython.h"
+#include "logging.h"
+#include "multipath_surface.h"
+#include "python_extension.h"
 
 using namespace rs;
 
@@ -208,7 +210,7 @@ void Path::setInterp(const InterpType settype)
 SVec3 compare(const RS_FLOAT time, const Path& start, const Path& end)
 {
 	const Vec3 difference = end.getPosition(time) - start.getPosition(time);
-	SVec3 result(difference); //Get the result in spherical co-ordinates
+	const SVec3 result(difference); //Get the result in spherical co-ordinates
 	return result;
 }
 
@@ -239,7 +241,7 @@ Path* rs::reflectPath(const Path* path, const MultipathSurface* surf)
 		refl.t = t;
 		//Reflect the point in the plane
 		refl.pos = surf->reflectPoint(pos);
-		rs_debug::printf(rs_debug::RS_VERBOSE, "Reflected (%g, %g, %g) to (%g, %g, %g)\n", pos.x, pos.y,
+		logging::printf(logging::RS_VERBOSE, "Reflected (%g, %g, %g) to (%g, %g, %g)\n", pos.x, pos.y,
 		                pos.z, refl.pos.x, refl.pos.y, refl.pos.z);
 		dual->addCoord(refl);
 	}

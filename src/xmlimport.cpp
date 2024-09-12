@@ -1,31 +1,22 @@
-//xmlimport.cpp
-//Import a simulator world and simulation parameters from an XML file
-//Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-//Started 26 April 2006
+// xmlimport.cpp
+// Import a simulator world and simulation parameters from an XML file
+// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
+// Started 26 April 2006
 
 //TODO: Rewrite this code to be less ugly
 
-#define TIXML_USE_STL //Tell tinyxml to use the STL instead of it's own string class
+#define TIXML_USE_STL
 
 #include "xmlimport.h"
 
-#include <cmath>
 #include <optional>
-#include <sstream>
-#include <stdexcept>
-#include <string>
 #include <tinyxml.h>
 
-#include "rsantenna.h"
-#include "rsdebug.h"
-#include "rsmultipath.h"
+#include "logging.h"
+#include "multipath_surface.h"
+#include "radar_system.h"
 #include "rsparameters.h"
-#include "rsplatform.h"
-#include "rspython.h"
-#include "rsradar.h"
-#include "rstarget.h"
-#include "rstiming.h"
-#include "rsworld.h"
+#include "target.h"
 
 using namespace rs;
 using std::string;
@@ -206,7 +197,7 @@ namespace
 	/// Process a receiver XML entry
 	Receiver* processReceiver(const TiXmlHandle& recvXml, const Platform* platform, World* world)
 	{
-		rs_debug::printf(rs_debug::RS_VERY_VERBOSE, "[VV] Loading Receiver: ");
+		logging::printf(logging::RS_VERY_VERBOSE, "[VV] Loading Receiver: ");
 
 		//Get the name of the receiver
 		string name = getAttributeString(recvXml, "name", "Receiver does not specify a name");
@@ -216,7 +207,7 @@ namespace
 		const string ant_name = getAttributeString(recvXml, "antenna",
 		                                           "Receiver '" + string(name) + "' does not specify an antenna");
 
-		rs_debug::printf(rs_debug::RS_VERY_VERBOSE, "'%s' ", receiver->getName().c_str());
+		logging::printf(logging::RS_VERY_VERBOSE, "'%s' ", receiver->getName().c_str());
 
 		const Antenna* antenna = world->findAntenna(ant_name);
 		if (!antenna)
@@ -263,8 +254,8 @@ namespace
 		if (getAttributeBool(recvXml, "nodirect", "", false))
 		{
 			receiver->setFlag(Receiver::FLAG_NODIRECT);
-			rs_debug::printf(rs_debug::RS_VERY_VERBOSE, "[VV] Ignoring direct signals for receiver '%s'\n",
-			                 receiver->getName().c_str());
+			logging::printf(logging::RS_VERY_VERBOSE, "[VV] Ignoring direct signals for receiver '%s'\n",
+			                receiver->getName().c_str());
 		}
 
 		// Get the NoPropagationLoss flag, which causes propagation loss to be ignored
@@ -272,8 +263,8 @@ namespace
 		if (getAttributeBool(recvXml, "nopropagationloss", "", false))
 		{
 			receiver->setFlag(Receiver::FLAG_NOPROPLOSS);
-			rs_debug::printf(rs_debug::RS_VERY_VERBOSE, "[VV] Ignoring propagation losses for receiver '%s'\n",
-			                 receiver->getName().c_str());
+			logging::printf(logging::RS_VERY_VERBOSE, "[VV] Ignoring propagation losses for receiver '%s'\n",
+			                receiver->getName().c_str());
 		}
 
 		//Add the receiver to the world
@@ -331,7 +322,7 @@ namespace
 		// This allows the World object to manage the deletion of the Transmitter object,
 		// since the return value of this function is ignored in the bistatic case
 		// (as handled by processPlatform).
-		rs_debug::printf(rs_debug::RS_VERY_VERBOSE, "[VV] Loading Transmitter: ");
+		logging::printf(logging::RS_VERY_VERBOSE, "[VV] Loading Transmitter: ");
 
 		//Get the name of the transmitter
 		string name = getAttributeString(transXml, "name", "Transmitter does not specify a name");
@@ -417,8 +408,8 @@ namespace
 		}
 		catch ([[maybe_unused]] XmlImportException& e)
 		{
-			rs_debug::printf(rs_debug::RS_VERBOSE,
-			                 "[WARNING] Parse Error While Importing Waypoint. Discarding Waypoint.\n");
+			logging::printf(logging::RS_VERBOSE,
+			                "[WARNING] Parse Error While Importing Waypoint. Discarding Waypoint.\n");
 		}
 	}
 
@@ -439,7 +430,7 @@ namespace
 		}
 		catch (XmlImportException& e)
 		{
-			rs_debug::printf(rs_debug::RS_VERBOSE, "%s", e.what());
+			logging::printf(logging::RS_VERBOSE, "%s", e.what());
 		}
 	}
 
@@ -470,17 +461,17 @@ namespace
 			}
 			else
 			{
-				rs_debug::printf(rs_debug::RS_VERBOSE,
-				                 "[WARNING] Unsupported motion path interpolation type for platform '" + platform->
-				                 getName() + "'. Defaulting to static.\n");
+				logging::printf(logging::RS_VERBOSE,
+				                "[WARNING] Unsupported motion path interpolation type for platform '" + platform->
+				                getName() + "'. Defaulting to static.\n");
 				path->setInterp(Path::RS_INTERP_STATIC);
 			}
 		}
 		catch ([[maybe_unused]] XmlImportException& e)
 		{
-			rs_debug::printf(rs_debug::RS_VERBOSE,
-			                 "[WARNING] Motion path interpolation type not specified for platform '" + platform->
-			                 getName() + "'. Defaulting to static.\n");
+			logging::printf(logging::RS_VERBOSE,
+			                "[WARNING] Motion path interpolation type not specified for platform '" + platform->
+			                getName() + "'. Defaulting to static.\n");
 			path->setInterp(Path::RS_INTERP_STATIC);
 		}
 
@@ -508,8 +499,8 @@ namespace
 		}
 		catch ([[maybe_unused]] XmlImportException& e)
 		{
-			rs_debug::printf(rs_debug::RS_VERBOSE,
-			                 "[WARNING] Parse Error While Importing Waypoint. Discarding Waypoint.\n");
+			logging::printf(logging::RS_VERBOSE,
+			                "[WARNING] Parse Error While Importing Waypoint. Discarding Waypoint.\n");
 		}
 	}
 
@@ -542,14 +533,14 @@ namespace
 		}
 		catch ([[maybe_unused]] XmlImportException& e)
 		{
-			rs_debug::printf(rs_debug::RS_VERBOSE, "[WARNING] Parse Error While Importing Constant Rotation.\n");
+			logging::printf(logging::RS_VERBOSE, "[WARNING] Parse Error While Importing Constant Rotation.\n");
 		}
 	}
 
 	/// Process a RotationPath XML entry
 	void processRotationPath(const TiXmlHandle& mpXml, const Platform* platform)
 	{
-		rs_debug::printf(rs_debug::RS_VERY_VERBOSE, "[VV] Loading Rotation Path.\n");
+		logging::printf(logging::RS_VERY_VERBOSE, "[VV] Loading Rotation Path.\n");
 
 		//Get a pointer to the rotation path
 		RotationPath* path = platform->getRotationPath();
@@ -571,17 +562,17 @@ namespace
 			}
 			else
 			{
-				rs_debug::printf(rs_debug::RS_VERBOSE,
-				                 "[WARNING] Unsupported rotation path interpolation type for platform '" + platform->
-				                 getName() + "'. Defaulting to static.\n");
+				logging::printf(logging::RS_VERBOSE,
+				                "[WARNING] Unsupported rotation path interpolation type for platform '" + platform->
+				                getName() + "'. Defaulting to static.\n");
 				path->setInterp(RotationPath::RS_INTERP_STATIC);
 			}
 		}
 		catch ([[maybe_unused]] XmlImportException& e)
 		{
-			rs_debug::printf(rs_debug::RS_VERBOSE,
-			                 "[WARNING] Rotation path interpolation type not specified for platform '" + platform->
-			                 getName() + "'. Defaulting to static.\n");
+			logging::printf(logging::RS_VERBOSE,
+			                "[WARNING] Rotation path interpolation type not specified for platform '" + platform->
+			                getName() + "'. Defaulting to static.\n");
 			path->setInterp(RotationPath::RS_INTERP_STATIC);
 		}
 		// Process the rotation waypoints
@@ -661,7 +652,7 @@ namespace
 		const string filename = getAttributeString(pulseXml, "filename", "Pulse must specify a filename");
 		const RS_FLOAT carrier = getChildRsFloat(pulseXml, "carrier");
 		const RS_FLOAT power = getChildRsFloat(pulseXml, "power");
-		RadarSignal* wave = rs_pulse_factory::loadPulseFromFile(name, filename, power, carrier);
+		RadarSignal* wave = pulse_factory::loadPulseFromFile(name, filename, power, carrier);
 		world->add(wave);
 	}
 
@@ -673,8 +664,8 @@ namespace
 		//Get the type of the pulse
 		const string pulse_type = getAttributeString(pulseXml, "type", "Pulses must specify a type");
 		//Generate the pulse
-		rs_debug::printf(rs_debug::RS_VERY_VERBOSE, "[VV] Generating Pulse %s of type '%s'\n", pulse_name.c_str(),
-		                 pulse_type.c_str());
+		logging::printf(logging::RS_VERY_VERBOSE, "[VV] Generating Pulse %s of type '%s'\n", pulse_name.c_str(),
+		                pulse_type.c_str());
 		if (pulse_type == "file")
 		{
 			processAnyPulseFile(pulseXml, world, pulse_name);
@@ -776,8 +767,8 @@ namespace
 			throw XmlImportException("Antenna specified unrecognised gain pattern '" + ant_pattern + "'");
 		}
 		//Notify the debug log
-		rs_debug::printf(rs_debug::RS_VERY_VERBOSE, "[VV] Loading antenna '%s' of type '%s'\n", ant_name.c_str(),
-		                 ant_pattern.c_str());
+		logging::printf(logging::RS_VERY_VERBOSE, "[VV] Loading antenna '%s' of type '%s'\n", ant_name.c_str(),
+		                ant_pattern.c_str());
 		//Load the efficiency factor
 		try
 		{
@@ -786,8 +777,8 @@ namespace
 		}
 		catch ([[maybe_unused]] XmlImportException& xe)
 		{
-			rs_debug::printf(rs_debug::RS_VERBOSE,
-			                 "[VERBOSE] Antenna '%s' does not specify efficiency, assuming unity.\n", ant_name.c_str());
+			logging::printf(logging::RS_VERBOSE,
+			                "[VERBOSE] Antenna '%s' does not specify efficiency, assuming unity.\n", ant_name.c_str());
 		}
 		//Add it to the world
 		world->add(antenna);
@@ -867,9 +858,9 @@ namespace
 		{
 			//If there is no frequency, we default to the system sample frequency
 			timing->setFrequency(RsParameters::rate());
-			rs_debug::printf(rs_debug::RS_VERBOSE,
-			                 "[VERBOSE] Clock section '%s' does not specify frequency. Assuming %g.\n", name.c_str(),
-			                 RsParameters::rate());
+			logging::printf(logging::RS_VERBOSE,
+			                "[VERBOSE] Clock section '%s' does not specify frequency. Assuming %g.\n", name.c_str(),
+			                RsParameters::rate());
 		}
 		//Process the synconpulse tag
 		if (getAttributeBool(antXml, "synconpulse", "", true))
@@ -877,7 +868,7 @@ namespace
 			timing->setSyncOnPulse();
 		}
 		//Notify the debug log
-		rs_debug::printf(rs_debug::RS_VERY_VERBOSE, "[VV] Loading timing source '%s'\n", name.c_str());
+		logging::printf(logging::RS_VERY_VERBOSE, "[VV] Loading timing source '%s'\n", name.c_str());
 
 		//Add it to the world
 		world->add(timing);
@@ -896,7 +887,7 @@ namespace
 		}
 		catch ([[maybe_unused]] XmlImportException& xe)
 		{
-			rs_debug::printf(rs_debug::RS_VERBOSE, "[VERBOSE] Using default value of c: %f(m/s)\n", RsParameters::c());
+			logging::printf(logging::RS_VERBOSE, "[VERBOSE] Using default value of c: %f(m/s)\n", RsParameters::c());
 		}
 		//Get the export sampling rate
 		try
@@ -906,7 +897,7 @@ namespace
 		}
 		catch ([[maybe_unused]] XmlImportException& xe)
 		{
-			rs_debug::printf(rs_debug::RS_VERBOSE, "[VERBOSE] Using default sampling rate.\n");
+			logging::printf(logging::RS_VERBOSE, "[VERBOSE] Using default sampling rate.\n");
 		}
 		//Get the cw Interpolation rate
 		try
@@ -916,43 +907,43 @@ namespace
 		}
 		catch ([[maybe_unused]] XmlImportException& xe)
 		{
-			rs_debug::printf(rs_debug::RS_VERBOSE,
-			                 "[VERBOSE] Using default value of CW position interpolation rate: %g\n",
-			                 RsParameters::cwSampleRate());
+			logging::printf(logging::RS_VERBOSE,
+			                "[VERBOSE] Using default value of CW position interpolation rate: %g\n",
+			                RsParameters::cwSampleRate());
 		}
 		//Get the random seed
 		try
 		{
 			const RS_FLOAT seed = getChildRsFloat(root, "randomseed");
-			RsParameters::setRandomSeed(static_cast<unsigned int>(std::fabs(seed)));
+			RsParameters::setRandomSeed(static_cast<unsigned>(std::fabs(seed)));
 		}
 		catch ([[maybe_unused]] XmlImportException& xe)
 		{
-			rs_debug::printf(rs_debug::RS_VERBOSE, "[VERBOSE] Using random seed from clock(): %d\n",
-			                 RsParameters::randomSeed());
+			logging::printf(logging::RS_VERBOSE, "[VERBOSE] Using random seed from clock(): %d\n",
+			                RsParameters::randomSeed());
 		}
 		//Get the number of ADC bits to simulate
 		try
 		{
 			const RS_FLOAT adc_bits = getChildRsFloat(root, "adc_bits");
-			RsParameters::setAdcBits(static_cast<unsigned int>(std::floor(adc_bits)));
-			rs_debug::printf(rs_debug::RS_VERBOSE, "[VERBOSE] Quantizing results to %d bits\n",
-			                 RsParameters::adcBits());
+			RsParameters::setAdcBits(static_cast<unsigned>(std::floor(adc_bits)));
+			logging::printf(logging::RS_VERBOSE, "[VERBOSE] Quantizing results to %d bits\n",
+			                RsParameters::adcBits());
 		}
 		catch ([[maybe_unused]] XmlImportException& xe)
 		{
-			rs_debug::printf(rs_debug::RS_VERY_VERBOSE, "[VERBOSE] Using full precision simulation.\n");
+			logging::printf(logging::RS_VERY_VERBOSE, "[VERBOSE] Using full precision simulation.\n");
 		}
 		// Get the oversampling ratio
 		try
 		{
 			const RS_FLOAT ratio = getChildRsFloat(root, "oversample");
-			RsParameters::setOversampleRatio(static_cast<unsigned int>(std::floor(ratio)));
+			RsParameters::setOversampleRatio(static_cast<unsigned>(std::floor(ratio)));
 		}
 		catch ([[maybe_unused]] XmlImportException& xe)
 		{
-			rs_debug::printf(rs_debug::RS_VERY_VERBOSE,
-			                 "[VV] Oversampling not in use. Ensure than pulses are correctly sampled.\n");
+			logging::printf(logging::RS_VERY_VERBOSE,
+			                "[VV] Oversampling not in use. Ensure than pulses are correctly sampled.\n");
 		}
 		//Process the "export" tag
 		if (const TiXmlHandle exporttag = root.ChildElement("export", 0); exporttag.Element())
@@ -968,7 +959,7 @@ namespace
 	void processDocument(const TiXmlHandle& root, World* world, bool included);
 
 	/// Process the inclusion of a file
-	void processInclude(const TiXmlHandle& plat, World* world)  // NOLINT(misc-no-recursion)
+	void processInclude(const TiXmlHandle& plat, World* world) // NOLINT(misc-no-recursion)
 	{
 		const char* name = getNodeText(plat);
 		TiXmlDocument doc(name);
@@ -982,7 +973,7 @@ namespace
 	}
 
 	/// Process the XML tree, starting at the root
-	void processDocument(const TiXmlHandle& root, World* world, const bool included)  // NOLINT(misc-no-recursion)
+	void processDocument(const TiXmlHandle& root, World* world, const bool included) // NOLINT(misc-no-recursion)
 	{
 		if (!included)
 		{
@@ -1042,7 +1033,7 @@ namespace
 	}
 } //Anonymous Namespace
 
-/// Load a XML file into the world with the given filename
+/// Load an XML file into the world with the given filename
 void xml::loadXmlFile(const string& filename, World* world)
 {
 	TiXmlDocument doc(filename.c_str());

@@ -16,9 +16,9 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
 
-#include "rsdebug.h"
-#include "rsradar.h"
-#include "rsworld.h"
+#include "logging.h"
+#include "radar_system.h"
+#include "world.h"
 
 #if BOOST_VERSION < 105000
 #define TIME_UTC_ TIME_UTC
@@ -62,7 +62,7 @@ public:
 	//Operator () is executed when we create the thread
 	void operator()() const
 	{
-		rs_debug::printf(rs_debug::RS_VERBOSE,
+		logging::printf(logging::RS_VERBOSE,
 		                "[VERBOSE] Created simulator thread for transmitter '%s' and receiver '%s' ",
 		                _trans->getName().c_str(), _recv->getName().c_str());
 		try
@@ -71,7 +71,7 @@ public:
 		}
 		catch (std::exception& ex)
 		{
-			rs_debug::printf(rs_debug::RS_CRITICAL,
+			logging::printf(logging::RS_CRITICAL,
 			                "[ERROR] First pass thread terminated with unexpected error:\n\t%s\nSimulator will terminate\n",
 			                ex.what());
 			setError();
@@ -100,7 +100,7 @@ public:
 	/// Operator () is executed when we create the thread
 	void operator()() const
 	{
-		rs_debug::printf(rs_debug::RS_VERY_VERBOSE, "[VV] Created render thread for receiver '%s'\n",
+		logging::printf(logging::RS_VERY_VERBOSE, "[VV] Created render thread for receiver '%s'\n",
 		                _recv->getName().c_str());
 		try
 		{
@@ -108,7 +108,7 @@ public:
 		}
 		catch (std::exception& ex)
 		{
-			rs_debug::printf(rs_debug::RS_CRITICAL,
+			logging::printf(logging::RS_CRITICAL,
 			                "[ERROR] Render thread terminated with unexpected error:\n\t%s\nSimulator will terminate\n",
 			                ex.what());
 			setError();
@@ -128,11 +128,11 @@ static void incThreads()
 }
 
 //Run a sim thread for each of the receiver-transmitter pairs, limiting concurrent threads
-void rs::runThreadedSim(const unsigned int threadLimit, World* world)
+void rs::runThreadedSim(const unsigned threadLimit, World* world)
 {
 	std::vector<std::unique_ptr<boost::thread>> running;
 	std::vector<Receiver*>::iterator ri;
-	rs_debug::printf(rs_debug::RS_INFORMATIVE, "[INFO] Using threaded simulation with %d threads.\n", threadLimit);
+	logging::printf(logging::RS_INFORMATIVE, "[INFO] Using threaded simulation with %d threads.\n", threadLimit);
 	//PHASE 1: Do first pass of simulator
 	//Loop through the lists for transmitters and receivers
 	for (ri = world->_receivers.begin(); ri != world->_receivers.end(); ++ri)
@@ -160,7 +160,7 @@ void rs::runThreadedSim(const unsigned int threadLimit, World* world)
 	while (threads)
 	{
 		boost::thread::yield();
-		//      rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Main Thread Poll, Waiting on %d first pass threads.\n", threads);
+		//      logging::printf(logging::RS_VERY_VERBOSE, "[VV] Main Thread Poll, Waiting on %d first pass threads.\n", threads);
 		if (error)
 		{
 			throw std::runtime_error("Thread terminated with error. Aborting simulation");
@@ -172,7 +172,7 @@ void rs::runThreadedSim(const unsigned int threadLimit, World* world)
 	// Report on the number of responses added to each receiver
 	for (ri = world->_receivers.begin(); ri != world->_receivers.end(); ++ri)
 	{
-		rs_debug::printf(rs_debug::RS_VERY_VERBOSE, "[VV] %d responses added to receiver '%s'\n", (*ri)->countResponses(),
+		logging::printf(logging::RS_VERY_VERBOSE, "[VV] %d responses added to receiver '%s'\n", (*ri)->countResponses(),
 		                (*ri)->getName().c_str());
 	}
 
@@ -201,7 +201,7 @@ void rs::runThreadedSim(const unsigned int threadLimit, World* world)
 	while (threads)
 	{
 		boost::thread::yield();
-		//rsDebug::printf(rsDebug::RS_VERY_VERBOSE, "[VV] Main Thread Poll, Waiting on %d render threads.\n", threads);
+		//logging::printf(logging::RS_VERY_VERBOSE, "[VV] Main Thread Poll, Waiting on %d render threads.\n", threads);
 		if (error)
 		{
 			throw std::runtime_error("Thread terminated with error. Aborting simulation");

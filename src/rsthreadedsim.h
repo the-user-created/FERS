@@ -6,6 +6,6 @@
 #ifndef RS_THREADEDSIM_H
 #define RS_THREADEDSIM_H
 
-#include "rsworld.h"
+#include "world.h"
 
 #endif
