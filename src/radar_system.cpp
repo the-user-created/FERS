@@ -13,7 +13,7 @@
 #include "multipath_surface.h"
 #include "platform.h"
 #include "response.h"
-#include "rsparameters.h"
+#include "parameters.h"
 #include "rspulserender.h"
 #include "timing.h"
 
@@ -54,7 +54,7 @@ void Radar::setMultipathDual(const RS_FLOAT reflect)
 
 int Transmitter::getPulseCount() const
 {
-	const RS_FLOAT time = RsParameters::endTime() - RsParameters::startTime();
+	const RS_FLOAT time = parameters::endTime() - parameters::startTime();
 	if (_pulsed)
 	{
 		const RS_FLOAT pulses = time * _prf;
@@ -75,7 +75,7 @@ void Transmitter::getPulse(TransmitterPulse* pulse, const int number) const
 
 void Transmitter::setPrf(const RS_FLOAT mprf)
 {
-	const RS_FLOAT rate = RsParameters::rate() * RsParameters::oversampleRatio();
+	const RS_FLOAT rate = parameters::rate() * parameters::oversampleRatio();
 	_prf = 1 / (std::floor(rate / mprf) / rate);
 }
 
@@ -112,15 +112,15 @@ void Receiver::render()
 	{
 		boost::try_mutex::scoped_try_lock lock(_responses_mutex);
 		std::sort(_responses.begin(), _responses.end(), compareTimes);
-		if (RsParameters::exportXml())
+		if (parameters::exportXml())
 		{
 			exportReceiverXml(_responses, getName() + "_results");
 		}
-		if (RsParameters::exportBinary())
+		if (parameters::exportBinary())
 		{
 			exportReceiverBinary(_responses, this, getName() + "_results");
 		}
-		if (RsParameters::exportCsv())
+		if (parameters::exportCsv())
 		{
 			exportReceiverCsv(_responses, getName() + "_results");
 		}
@@ -134,7 +134,7 @@ void Receiver::render()
 
 void Receiver::setWindowProperties(const RS_FLOAT length, const RS_FLOAT prf, const RS_FLOAT skip)
 {
-	const RS_FLOAT rate = RsParameters::rate() * RsParameters::oversampleRatio();
+	const RS_FLOAT rate = parameters::rate() * parameters::oversampleRatio();
 	_window_length = length;
 	_window_prf = prf;
 	_window_skip = skip;
@@ -144,7 +144,7 @@ void Receiver::setWindowProperties(const RS_FLOAT length, const RS_FLOAT prf, co
 
 int Receiver::getWindowCount() const
 {
-	const RS_FLOAT time = RsParameters::endTime() - RsParameters::startTime();
+	const RS_FLOAT time = parameters::endTime() - parameters::startTime();
 	const RS_FLOAT pulses = time * _window_prf;
 	return static_cast<int>(std::ceil(pulses));
 }

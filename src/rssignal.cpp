@@ -9,7 +9,7 @@
 #include "interpolation_filter.h"
 #include "logging.h"
 #include "portable_utils.h"
-#include "rsparameters.h"
+#include "parameters.h"
 
 using namespace signal;
 using namespace rs;
@@ -77,7 +77,7 @@ void Signal::load(const RS_FLOAT* inData, const unsigned samples, const RS_FLOAT
 void Signal::load(const RS_COMPLEX* inData, const unsigned samples, const RS_FLOAT sampleRate)
 {
 	clear();
-	const unsigned ratio = RsParameters::oversampleRatio();
+	const unsigned ratio = parameters::oversampleRatio();
 	_data = new RS_COMPLEX[samples * ratio];
 	_size = samples * ratio;
 	_rate = sampleRate * ratio;
@@ -112,7 +112,7 @@ boost::shared_array<RS_COMPLEX> Signal::render(const std::vector<InterpPoint>& p
 	//Get the sample interval
 	const RS_FLOAT timestep = 1.0 / _rate;
 	//Create the rendering window
-	const int filt_length = static_cast<int>(RsParameters::renderFilterLength());
+	const int filt_length = static_cast<int>(parameters::renderFilterLength());
 	const interp_filt::InterpFilter* interp = interp_filt::InterpFilter::getInstance();
 	//Loop through the interp points, rendering each in time
 	auto iter = points.begin();

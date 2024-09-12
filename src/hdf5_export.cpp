@@ -11,7 +11,7 @@
 #include <string>
 
 #include "config.h"
-#include "rsparameters.h"
+#include "parameters.h"
 
 extern "C" {
 #include <hdf5.h>
@@ -34,7 +34,7 @@ hid_t openFile(const std::string& name)
 void hdf5_export::readPulseData(const std::string& name, std::complex<RS_FLOAT>** data, unsigned& size, RS_FLOAT& rate)
 {
 	// TODO: Can be optimized and simplified
-	rate = rs::RsParameters::rate();
+	rate = parameters::rate();
 	const hid_t file = openFile(name);
 	size_t type_size;
 	H5T_class_t class_id;

@@ -10,7 +10,7 @@
 #include <stdexcept>
 
 #include "logging.h"
-#include "rsparameters.h"
+#include "parameters.h"
 
 using namespace rs;
 
@@ -23,7 +23,7 @@ namespace
 
 	RS_FLOAT* blackmanFir(const RS_FLOAT cutoff, unsigned& filtLength)
 	{
-		filtLength = RsParameters::renderFilterLength() * 2;
+		filtLength = parameters::renderFilterLength() * 2;
 		auto* coeffs = new RS_FLOAT[filtLength];
 		const RS_FLOAT n = filtLength / 2.0;
 		for (int i = 0; i < filtLength; i++)

@@ -7,7 +7,7 @@
 #include <stdexcept>
 
 #include "portable_utils.h"
-#include "rsparameters.h"
+#include "parameters.h"
 #include "sim_threading.h"
 #include "xmlimport.h"
 
@@ -28,14 +28,14 @@ int main(const int argc, char* argv[])
 
 	try
 	{
-		rs::RsParameters::setThreads(portable_utils::countProcessors());
+		parameters::setThreads(portable_utils::countProcessors());
 		auto* world = new rs::World();
 		rs_noise::initializeNoise();
 
 		logging::printf(logging::RS_VERBOSE, "[VERBOSE] Loading XML Script File.\n");
 		xml::loadXmlFile(argv[1], world);
 
-		rs::threaded_sim::runThreadedSim(rs::RsParameters::renderThreads(), world);
+		rs::threaded_sim::runThreadedSim(parameters::renderThreads(), world);
 		logging::printf(logging::RS_VERBOSE, "[VERBOSE] Cleaning up.\n");
 
 		delete world;

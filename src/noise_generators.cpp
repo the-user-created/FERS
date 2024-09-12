@@ -12,7 +12,7 @@
 
 #include "dsp_filters.h"
 #include "logging.h"
-#include "rsparameters.h"
+#include "parameters.h"
 
 using namespace rs;
 
@@ -41,7 +41,7 @@ void rs_noise::initializeNoise()
 {
 	delete rng;
 	delete normal_vg;
-	rng = new boost::mt19937(RsParameters::randomSeed());
+	rng = new boost::mt19937(parameters::randomSeed());
 	normal_vg = new boost::variate_generator<boost::mt19937&, boost::normal_distribution<>>(*rng, nd);
 	uniform_vg = new boost::variate_generator<boost::mt19937&, boost::uniform_real<>>(*rng, ud);
 }
@@ -65,7 +65,7 @@ RS_FLOAT rs_noise::uniformSample()
 
 RS_FLOAT rs_noise::noiseTemperatureToPower(const RS_FLOAT temperature, const RS_FLOAT bandwidth)
 {
-	return RsParameters::boltzmannK() * temperature * bandwidth;
+	return parameters::boltzmannK() * temperature * bandwidth;
 }
 
 // =====================================================================================================================
@@ -401,7 +401,7 @@ RS_FLOAT ClockModelGenerator::getSample()
 		sample += _generators[i]->getSample() * _weights[i];
 	}
 	sample += _phase_offset;
-	sample += 2 * M_PI * _freq_offset * static_cast<double>(_count) / RsParameters::rate();
+	sample += 2 * M_PI * _freq_offset * static_cast<double>(_count) / parameters::rate();
 	_count++;
 	return sample;
 }

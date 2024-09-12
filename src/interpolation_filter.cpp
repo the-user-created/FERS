@@ -6,7 +6,7 @@
 #include "interpolation_filter.h"
 
 #include "logging.h"
-#include "rsparameters.h"
+#include "parameters.h"
 
 namespace interp_filt
 {
@@ -45,13 +45,13 @@ namespace interp_filt
 
 	InterpFilter::InterpFilter()
 	{
-		_length = static_cast<int>(rs::RsParameters::renderFilterLength());
+		_length = static_cast<int>(parameters::renderFilterLength());
 		//Size of the table to use for interpolation
 		_table_filters = 1000;
 		//Allocate memory for the table
 		_filter_table = new RS_FLOAT[_table_filters * _length];
 		//Alpha is half the filter length
-		_alpha = std::floor(rs::RsParameters::renderFilterLength() / 2.0);
+		_alpha = std::floor(parameters::renderFilterLength() / 2.0);
 		//Beta sets the window shape
 		_beta = 5;
 		_bessel_beta = besselI0(_beta);

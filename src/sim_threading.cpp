@@ -14,10 +14,11 @@
 #include <boost/thread/thread.hpp>
 
 #include "logging.h"
-#include "rsparameters.h"
+#include "parameters.h"
 #include "target.h"
 #include "world.h"
 
+// TODO: Is this BOOST_VERSION check necessary?
 #if BOOST_VERSION < 105000
 #define TIME_UTC_ TIME_UTC
 #endif
@@ -35,7 +36,7 @@ namespace rs::threaded_sim
 	void SimThread::operator()() const
 	{
 		logging::printf(logging::RS_VERBOSE,
-		                "[VERBOSE] Created simulator thread for transmitter '%s' and receiver '%s' ",
+		                "[VERBOSE] Created simulator thread for transmitter '%s' and receiver '%s'\n",
 		                _trans->getName().c_str(), _recv->getName().c_str());
 		try
 		{
@@ -165,7 +166,7 @@ namespace rs::threaded_sim
 		}
 		const RS_FLOAT start_time = signal->time;
 		const RS_FLOAT end_time = signal->time + signal->wave->getLength();
-		const RS_FLOAT sample_time = 1.0 / RsParameters::cwSampleRate();
+		const RS_FLOAT sample_time = 1.0 / parameters::cwSampleRate();
 		const RS_FLOAT point_count = std::ceil(signal->wave->getLength() / sample_time);
 		auto* response = new Response(signal->wave, trans);
 		try
@@ -196,7 +197,7 @@ namespace rs::threaded_sim
 	{
 		const RS_FLOAT start_time = signal->time;
 		const RS_FLOAT end_time = signal->time + signal->wave->getLength();
-		const RS_FLOAT sample_time = 1.0 / RsParameters::cwSampleRate();
+		const RS_FLOAT sample_time = 1.0 / parameters::cwSampleRate();
 		const RS_FLOAT point_count = std::ceil(signal->wave->getLength() / sample_time);
 		auto* response = new Response(signal->wave, trans);
 		try
@@ -240,9 +241,9 @@ namespace rs::threaded_sim
 		{
 			throw RangeError();
 		}
-		results.delay = (transmitter_to_target_distance + receiver_to_target_distance) / RsParameters::c();
+		results.delay = (transmitter_to_target_distance + receiver_to_target_distance) / parameters::c();
 		const RS_FLOAT rcs = targ->getRcs(transmitter_to_target_vector, receiver_to_target_vector);
-		const RS_FLOAT wavelength = RsParameters::c() / wave->getCarrier();
+		const RS_FLOAT wavelength = parameters::c() / wave->getCarrier();
 		const RS_FLOAT transmitter_gain = trans->getGain(transmitter_to_target_vector, trans->getRotation(time),
 		                                                 wavelength);
 		const RS_FLOAT receiver_gain = recv->getGain(receiver_to_target_vector, recv->getRotation(results.delay + time),
@@ -275,8 +276,8 @@ namespace rs::threaded_sim
 		}
 		const RS_FLOAT v_r = (rr_end - receiver_to_target_distance) / length;
 		const RS_FLOAT v_t = (rt_end - transmitter_to_target_distance) / length;
-		results.doppler = std::sqrt((1 + v_r / RsParameters::c()) / (1 - v_r / RsParameters::c())) * std::sqrt(
-			(1 + v_t / RsParameters::c()) / (1 - v_t / RsParameters::c()));
+		results.doppler = std::sqrt((1 + v_r / parameters::c()) / (1 - v_r / parameters::c())) * std::sqrt(
+			(1 + v_t / parameters::c()) / (1 - v_t / parameters::c()));
 		results.noise_temperature = recv->getNoiseTemperature(recv->getRotation(time + results.delay));
 	}
 
@@ -292,8 +293,8 @@ namespace rs::threaded_sim
 		recvvec.length = 1;
 		if (r > std::numeric_limits<RS_FLOAT>::epsilon())
 		{
-			results.delay = r / RsParameters::c();
-			const RS_FLOAT wl = RsParameters::c() / wave->getCarrier();
+			results.delay = r / parameters::c();
+			const RS_FLOAT wl = parameters::c() / wave->getCarrier();
 			const RS_FLOAT gt = trans->getGain(transvec, trans->getRotation(time), wl);
 			const RS_FLOAT gr = recv->getGain(recvvec, recv->getRotation(time + results.delay), wl);
 			results.power = gt * gr * wl * wl / (4 * M_PI);
@@ -306,7 +307,7 @@ namespace rs::threaded_sim
 			const Vec3 trpos_end = tpos_end - rpos_end;
 			const RS_FLOAT r_end = trpos_end.length();
 			const RS_FLOAT vdoppler = (r_end - r) / length;
-			results.doppler = (RsParameters::c() + vdoppler) / (RsParameters::c() - vdoppler);
+			results.doppler = (parameters::c() + vdoppler) / (parameters::c() - vdoppler);
 			if (trans->isMultipathDual())
 			{
 				results.power = 0;

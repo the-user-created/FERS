@@ -15,7 +15,7 @@
 #include "logging.h"
 #include "multipath_surface.h"
 #include "radar_system.h"
-#include "rsparameters.h"
+#include "parameters.h"
 #include "target.h"
 
 using namespace rs;
@@ -857,10 +857,10 @@ namespace
 		catch ([[maybe_unused]] XmlImportException& xe)
 		{
 			//If there is no frequency, we default to the system sample frequency
-			timing->setFrequency(RsParameters::rate());
+			timing->setFrequency(parameters::rate());
 			logging::printf(logging::RS_VERBOSE,
 			                "[VERBOSE] Clock section '%s' does not specify frequency. Assuming %g.\n", name.c_str(),
-			                RsParameters::rate());
+			                parameters::rate());
 		}
 		//Process the synconpulse tag
 		if (getAttributeBool(antXml, "synconpulse", "", true))
@@ -878,22 +878,22 @@ namespace
 	void processParameters(const TiXmlHandle& root)
 	{
 		//Get the simulation start and end times
-		RsParameters::setTime(getChildRsFloat(root, "starttime"), getChildRsFloat(root, "endtime"));
+		parameters::setTime(getChildRsFloat(root, "starttime"), getChildRsFloat(root, "endtime"));
 		//Get the propagation speed in air
 		try
 		{
 			const RS_FLOAT c = getChildRsFloat(root, "c");
-			RsParameters::setC(c);
+			parameters::setC(c);
 		}
 		catch ([[maybe_unused]] XmlImportException& xe)
 		{
-			logging::printf(logging::RS_VERBOSE, "[VERBOSE] Using default value of c: %f(m/s)\n", RsParameters::c());
+			logging::printf(logging::RS_VERBOSE, "[VERBOSE] Using default value of c: %f(m/s)\n", parameters::c());
 		}
 		//Get the export sampling rate
 		try
 		{
 			const RS_FLOAT rate = getChildRsFloat(root, "rate");
-			RsParameters::setRate(rate);
+			parameters::setRate(rate);
 		}
 		catch ([[maybe_unused]] XmlImportException& xe)
 		{
@@ -903,32 +903,32 @@ namespace
 		try
 		{
 			const RS_FLOAT rate = getChildRsFloat(root, "interprate");
-			RsParameters::setCwSampleRate(rate);
+			parameters::setCwSampleRate(rate);
 		}
 		catch ([[maybe_unused]] XmlImportException& xe)
 		{
 			logging::printf(logging::RS_VERBOSE,
 			                "[VERBOSE] Using default value of CW position interpolation rate: %g\n",
-			                RsParameters::cwSampleRate());
+			                parameters::cwSampleRate());
 		}
 		//Get the random seed
 		try
 		{
 			const RS_FLOAT seed = getChildRsFloat(root, "randomseed");
-			RsParameters::setRandomSeed(static_cast<unsigned>(std::fabs(seed)));
+			parameters::setRandomSeed(static_cast<unsigned>(std::fabs(seed)));
 		}
 		catch ([[maybe_unused]] XmlImportException& xe)
 		{
 			logging::printf(logging::RS_VERBOSE, "[VERBOSE] Using random seed from clock(): %d\n",
-			                RsParameters::randomSeed());
+			                parameters::randomSeed());
 		}
 		//Get the number of ADC bits to simulate
 		try
 		{
 			const RS_FLOAT adc_bits = getChildRsFloat(root, "adc_bits");
-			RsParameters::setAdcBits(static_cast<unsigned>(std::floor(adc_bits)));
+			parameters::setAdcBits(static_cast<unsigned>(std::floor(adc_bits)));
 			logging::printf(logging::RS_VERBOSE, "[VERBOSE] Quantizing results to %d bits\n",
-			                RsParameters::adcBits());
+			                parameters::adcBits());
 		}
 		catch ([[maybe_unused]] XmlImportException& xe)
 		{
@@ -938,7 +938,7 @@ namespace
 		try
 		{
 			const RS_FLOAT ratio = getChildRsFloat(root, "oversample");
-			RsParameters::setOversampleRatio(static_cast<unsigned>(std::floor(ratio)));
+			parameters::setOversampleRatio(static_cast<unsigned>(std::floor(ratio)));
 		}
 		catch ([[maybe_unused]] XmlImportException& xe)
 		{
@@ -948,10 +948,10 @@ namespace
 		//Process the "export" tag
 		if (const TiXmlHandle exporttag = root.ChildElement("export", 0); exporttag.Element())
 		{
-			const bool export_xml = getAttributeBool(exporttag, "xml", "", RsParameters::exportXml());
-			const bool export_csv = getAttributeBool(exporttag, "csv", "", RsParameters::exportCsv());
-			const bool export_binary = getAttributeBool(exporttag, "binary", "", RsParameters::exportBinary());
-			RsParameters::setExporters(export_xml, export_csv, export_binary);
+			const bool export_xml = getAttributeBool(exporttag, "xml", "", parameters::exportXml());
+			const bool export_csv = getAttributeBool(exporttag, "csv", "", parameters::exportCsv());
+			const bool export_binary = getAttributeBool(exporttag, "binary", "", parameters::exportBinary());
+			parameters::setExporters(export_xml, export_csv, export_binary);
 		}
 	}
 
