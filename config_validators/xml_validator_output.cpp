@@ -22,7 +22,7 @@ using namespace xercesc;
 using namespace std;
 
 // Setting default values if not specified in FERSXML file
-// Default values for rsparameters.cpp
+// Default values for parameters.cpp
 double default_c = 299792458.0;
 double default_starttime = 0.0;
 double default_endtime = 0.0;

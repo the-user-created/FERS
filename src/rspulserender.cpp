@@ -25,7 +25,7 @@
 #include "portable_utils.h"
 #include "radar_system.h"
 #include "response.h"
-#include "rsparameters.h"
+#include "parameters.h"
 #include "rssignal.h"
 #include "timing.h"
 
@@ -36,7 +36,7 @@ namespace
 	long openHdf5File(const std::string& recvName)
 	{
 		long hdf5_file = 0;
-		if (RsParameters::exportBinary())
+		if (parameters::exportBinary())
 		{
 			std::ostringstream b_oss;
 			b_oss.setf(std::ios::scientific);
@@ -53,7 +53,7 @@ namespace
 			return;
 		}
 		const RS_FLOAT power = rs_noise::noiseTemperatureToPower(temperature,
-		                                                         RsParameters::rate() * RsParameters::oversampleRatio()
+		                                                         parameters::rate() * parameters::oversampleRatio()
 		                                                         / 2);
 		WgnGenerator generator(sqrt(power) / 2.0);
 		for (unsigned i = 0; i < size; i++)
@@ -81,9 +81,9 @@ namespace
 				throw std::runtime_error("NaN in QuantizeWindow -- early");
 			}
 		}
-		if (RsParameters::adcBits() > 0)
+		if (parameters::adcBits() > 0)
 		{
-			signal::adcSimulate(data, size, RsParameters::adcBits(), max);
+			signal::adcSimulate(data, size, parameters::adcBits(), max);
 		}
 		else
 		{
@@ -189,14 +189,14 @@ namespace
 		const long out_bin = openHdf5File(recvName);
 
 		// Create a threaded render object, to manage the rendering process
-		const ThreadedRenderer thr_renderer(&responses, recv, RsParameters::renderThreads());
+		const ThreadedRenderer thr_renderer(&responses, recv, parameters::renderThreads());
 
 		// Now loop through the responses and write them to the file
 		const int window_count = recv->getWindowCount();
 		for (int i = 0; i < window_count; i++)
 		{
 			const RS_FLOAT length = recv->getWindowLength();
-			const RS_FLOAT rate = RsParameters::rate() * RsParameters::oversampleRatio();
+			const RS_FLOAT rate = parameters::rate() * parameters::oversampleRatio();
 			auto size = static_cast<unsigned>(std::ceil(length * rate));
 			// logging::printf(logging::RS_VERY_VERBOSE, "Length: %g Size: %d\n", length, size);
 			//Generate the phase noise samples for the window
@@ -218,14 +218,14 @@ namespace
 			// Render to the window, using the threaded renderer
 			thr_renderer.renderWindow(window, length, start, frac_delay);
 			//Downsample the contents of the window, if appropriate
-			if (RsParameters::oversampleRatio() != 1)
+			if (parameters::oversampleRatio() != 1)
 			{
 				// Calculate the size of the window after downsampling
-				const unsigned new_size = size / RsParameters::oversampleRatio();
+				const unsigned new_size = size / parameters::oversampleRatio();
 				// Allocate memory for downsampled window
 				auto* tmp = new RS_COMPLEX[new_size];
 				//Downsample the data into tmp
-				downsample(window, size, tmp, RsParameters::oversampleRatio());
+				downsample(window, size, tmp, parameters::oversampleRatio());
 				// Set tmp as the new window
 				size = new_size;
 				delete[] window;
@@ -241,9 +241,9 @@ namespace
 			//Normalize and quantize the window
 			const RS_FLOAT fullscale = quantizeWindow(window, size);
 			//Export the binary format
-			if (RsParameters::exportBinary())
+			if (parameters::exportBinary())
 			{
-				hdf5_export::addChunkToFile(out_bin, window, size, start, RsParameters::rate(), fullscale, i);
+				hdf5_export::addChunkToFile(out_bin, window, size, start, parameters::rate(), fullscale, i);
 			}
 			// Clean up memory
 			delete[] window;
@@ -347,7 +347,7 @@ void ThreadedRenderer::renderWindow(RS_COMPLEX* window, RS_FLOAT length, RS_FLOA
 
 void RenderThread::operator()()
 {
-	const RS_FLOAT rate = RsParameters::rate() * RsParameters::oversampleRatio();
+	const RS_FLOAT rate = parameters::rate() * parameters::oversampleRatio();
 	const auto size = static_cast<unsigned>(std::ceil(_length * rate));
 	_local_window = new RS_COMPLEX[size]();
 	const Response* resp = getWork();
@@ -371,7 +371,7 @@ void RenderThread::operator()()
 
 void RenderThread::addWindow(const RS_COMPLEX* array, const RS_FLOAT startTime, const unsigned arraySize) const
 {
-	const RS_FLOAT rate = RsParameters::rate() * RsParameters::oversampleRatio();
+	const RS_FLOAT rate = parameters::rate() * parameters::oversampleRatio();
 	const auto size = static_cast<unsigned>(std::ceil(_length * rate));
 	addArrayToWindow(_start, _local_window, size, rate, startTime, array, arraySize);
 }

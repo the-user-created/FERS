@@ -37,9 +37,7 @@ namespace rs
 	{
 	public:
 		ThreadedRenderer(const std::vector<Response*>* responses, const Receiver* recv,
-		                 const unsigned maxThreads) : _responses(responses), _recv(recv), _max_threads(maxThreads)
-		{
-		}
+		                 const unsigned maxThreads) : _responses(responses), _recv(recv), _max_threads(maxThreads) {}
 
 		~ThreadedRenderer() = default;
 
@@ -58,9 +56,7 @@ namespace rs
 		             const RS_FLOAT start, const RS_FLOAT fracDelay, boost::mutex* workListMutex,
 		             std::queue<Response*>* workList) :
 			_serial(serial), _window_mutex(windowMutex), _window(window), _length(length), _start(start),
-			_frac_delay(fracDelay), _work_list_mutex(workListMutex), _work_list(workList)
-		{
-		}
+			_frac_delay(fracDelay), _work_list_mutex(workListMutex), _work_list(workList) {}
 
 		~RenderThread() = default;
 
