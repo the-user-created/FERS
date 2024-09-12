@@ -16,10 +16,7 @@ namespace interp_filt
 	class InterpFilter
 	{
 	public:
-		static RS_FLOAT sinc(const RS_FLOAT x)
-		{
-			return x == 0.0 ? 1.0 : std::sin(x * M_PI) / (x * M_PI);
-		}
+		static RS_FLOAT sinc(const RS_FLOAT x) { return x == 0.0 ? 1.0 : std::sin(x * M_PI) / (x * M_PI); }
 
 		[[nodiscard]] RS_FLOAT kaiserWinCompute(const RS_FLOAT x) const
 		{
@@ -28,10 +25,7 @@ namespace interp_filt
 				       : besselI0(_beta * std::sqrt(1 - std::pow((x - _alpha) / _alpha, 2))) / _bessel_beta;
 		}
 
-		[[nodiscard]] RS_FLOAT interpFilter(const RS_FLOAT x) const
-		{
-			return kaiserWinCompute(x + _alpha) * sinc(x);
-		}
+		[[nodiscard]] RS_FLOAT interpFilter(const RS_FLOAT x) const { return kaiserWinCompute(x + _alpha) * sinc(x); }
 
 		[[nodiscard]] const RS_FLOAT* getFilter(RS_FLOAT delay) const;
 
