@@ -6,33 +6,18 @@
 #ifndef RADAR_SIGNAL_H
 #define RADAR_SIGNAL_H
 
-#include <boost/shared_array.hpp>
+#include <memory>
+#include <vector>
 #include <boost/utility.hpp>
 
 #include "config.h"
+#include "interpolation_point.h"
 #include "jones_vector.h"
 #include "rssignal.h"
 
 namespace rs
 {
 	class Signal; // Forward declaration
-	class JonesVector; // Forward declaration
-
-	// TODO this should be in a separate file
-	struct InterpPoint
-	{
-		InterpPoint(const RS_FLOAT power, const RS_FLOAT start, const RS_FLOAT delay, const RS_FLOAT doppler,
-		            const RS_FLOAT phase, const RS_FLOAT noiseTemperature) :
-			power(power), time(start), delay(delay), doppler(doppler), phase(phase),
-			noise_temperature(noiseTemperature) {}
-
-		RS_FLOAT power;
-		RS_FLOAT time;
-		RS_FLOAT delay;
-		RS_FLOAT doppler;
-		RS_FLOAT phase;
-		RS_FLOAT noise_temperature;
-	};
 
 	class RadarSignal : public boost::noncopyable
 	{
