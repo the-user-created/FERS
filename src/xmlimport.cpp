@@ -14,8 +14,9 @@
 
 #include "logging.h"
 #include "multipath_surface.h"
-#include "radar_system.h"
 #include "parameters.h"
+#include "pulse_factory.h"
+#include "radar_system.h"
 #include "target.h"
 
 using namespace rs;
@@ -30,9 +31,7 @@ class XmlImportException final : public std::runtime_error
 {
 public:
 	explicit XmlImportException(const std::string& error):
-		std::runtime_error("[ERROR] Error while parsing XML file: " + error)
-	{
-	}
+		std::runtime_error("[ERROR] Error while parsing XML file: " + error) {}
 };
 
 /// Function which takes a TiXmlHandle and returns the text contained in it's children.
@@ -81,15 +80,9 @@ const char* getNodeText(const TiXmlHandle& parent)
 //<rcs>10</rcs>
 RS_FLOAT getNodeFloat(const TiXmlHandle& node)
 {
-	if (!node.Element())
-	{
-		throw XmlImportException("[BUG] Node does not exist during GetNodeFloat");
-	}
+	if (!node.Element()) { throw XmlImportException("[BUG] Node does not exist during GetNodeFloat"); }
 	const char* data = node.Element()->GetText();
-	if (!data)
-	{
-		throw XmlImportException("Node does not contain text during GetNodeFloat");
-	}
+	if (!data) { throw XmlImportException("Node does not contain text during GetNodeFloat"); }
 	RS_FLOAT result;
 	std::istringstream iss(data);
 	iss >> result;
@@ -100,14 +93,8 @@ RS_FLOAT getNodeFloat(const TiXmlHandle& node)
 std::string getAttributeString(const TiXmlHandle& handle, const std::string& name, const std::string& error,
                                const bool optional = false)
 {
-	if (const std::string* text = handle.Element()->Attribute(name))
-	{
-		return *text;
-	}
-	if (!optional)
-	{
-		throw XmlImportException(error);
-	}
+	if (const std::string* text = handle.Element()->Attribute(name)) { return *text; }
+	if (!optional) { throw XmlImportException(error); }
 	return {};
 }
 
@@ -116,10 +103,7 @@ bool getAttributeBool(const TiXmlHandle& handle, const std::string& name, const 
                       const bool optional = true)
 {
 	const string str = getAttributeString(handle, name, error, optional);
-	if (str.empty())
-	{
-		return def;
-	}
+	if (str.empty()) { return def; }
 	return str == "true" || str == "yes";
 }
 
@@ -140,10 +124,7 @@ namespace
 		const string name = getAttributeString(targXml, "name", "Target does not specify a name");
 		//Get the RCS
 		const TiXmlHandle rcs_xml = targXml.ChildElement("rcs", 0);
-		if (!rcs_xml.Element())
-		{
-			throw XmlImportException("Target " + name + " does not specify RCS.");
-		}
+		if (!rcs_xml.Element()) { throw XmlImportException("Target " + name + " does not specify RCS."); }
 		const string rcs_type = getAttributeString(rcs_xml, "type",
 		                                           "RCS attached to target '" + name + "' does not specify type.");
 		// Handle the target type (isotropic, file imported, etc.)
@@ -164,10 +145,7 @@ namespace
 			                                           "' does not specify filename.");
 			target = createFileTarget(platform, name, filename);
 		}
-		else
-		{
-			throw XmlImportException("RCS type " + rcs_type + " not currently supported.");
-		}
+		else { throw XmlImportException("RCS type " + rcs_type + " not currently supported."); }
 		//Handle the target statistical model
 		if (const TiXmlHandle model_xml = targXml.ChildElement("model", 0); model_xml.Element())
 		{
@@ -185,10 +163,7 @@ namespace
 				RcsModel* model = processGammaModel(model_xml);
 				target->setFluctuationModel(model);
 			}
-			else
-			{
-				throw XmlImportException("Target fluctuation model type '" + model_type + "' not recognised.");
-			}
+			else { throw XmlImportException("Target fluctuation model type '" + model_type + "' not recognised."); }
 		}
 		//Add the target to the world
 		world->add(target);
@@ -224,9 +199,7 @@ namespace
 			const RS_FLOAT temperature = getChildRsFloat(recvXml, "noise_temp");
 			receiver->setNoiseTemperature(temperature);
 		}
-		catch ([[maybe_unused]] XmlImportException& e)
-		{
-		}
+		catch ([[maybe_unused]] XmlImportException& e) {}
 
 		//Process the PRF tag
 		const RS_FLOAT prf = getChildRsFloat(recvXml, "prf");
@@ -283,10 +256,7 @@ namespace
 		                                             "Transmitter '" + name + "' does not specify a pulse");
 		//Get the pulse from the table of pulses
 		RadarSignal* wave = world->findSignal(pulse_name);
-		if (!wave)
-		{
-			throw XmlImportException("Pulse with name '" + pulse_name + "' does not exist");
-		}
+		if (!wave) { throw XmlImportException("Pulse with name '" + pulse_name + "' does not exist"); }
 		//Get the Pulse Repetition Frequency
 		const RS_FLOAT prf = getChildRsFloat(transXml, "prf");
 		//Attach the pulse to the transmitter
@@ -305,10 +275,7 @@ namespace
 		                                             "Transmitter '" + name + "' does not specify a pulse");
 		//Get the pulse from the table of pulses
 		RadarSignal* wave = world->findSignal(pulse_name);
-		if (!wave)
-		{
-			throw XmlImportException("Pulse with name '" + pulse_name + "' does not exist");
-		}
+		if (!wave) { throw XmlImportException("Pulse with name '" + pulse_name + "' does not exist"); }
 		//Attach the CW waveform to the transmitter
 		transmitter->setWave(wave);
 		return transmitter;
@@ -330,18 +297,9 @@ namespace
 		//Get the transmitter type
 		const string type = getAttributeString(transXml, "type", "Transmitter '" + name + "' does not specify type");
 		Transmitter* transmitter;
-		if (type == "pulsed")
-		{
-			transmitter = processPulseTransmitter(transXml, name, platform, world);
-		}
-		else if (type == "continuous")
-		{
-			transmitter = processCwTransmitter(transXml, name, platform, world);
-		}
-		else
-		{
-			throw XmlImportException("[ERROR] Invalid transmitter type specified in transmitter " + name);
-		}
+		if (type == "pulsed") { transmitter = processPulseTransmitter(transXml, name, platform, world); }
+		else if (type == "continuous") { transmitter = processCwTransmitter(transXml, name, platform, world); }
+		else { throw XmlImportException("[ERROR] Invalid transmitter type specified in transmitter " + name); }
 
 		//Get the name of the antenna
 		const string ant_name = getAttributeString(transXml, "antenna",
@@ -376,10 +334,7 @@ namespace
 		world->add(transmitter);
 
 		// If the system is monostatic, return the transmitter
-		if (isMonostatic)
-		{
-			return transmitter;
-		}
+		if (isMonostatic) { return transmitter; }
 		return std::nullopt;
 	}
 
@@ -428,10 +383,7 @@ namespace
 			//Load the Path module
 			path->loadPythonPath(modname, funcname);
 		}
-		catch (XmlImportException& e)
-		{
-			logging::printf(logging::RS_VERBOSE, "%s", e.what());
-		}
+		catch (XmlImportException& e) { logging::printf(logging::RS_VERBOSE, "%s", e.what()); }
 	}
 
 	/// Process a MotionPath XML entry
@@ -446,14 +398,8 @@ namespace
 			{
 				path->setInterp(Path::RS_INTERP_LINEAR);
 			}
-			else if (rottype == "cubic")
-			{
-				path->setInterp(Path::RS_INTERP_CUBIC);
-			}
-			else if (rottype == "static")
-			{
-				path->setInterp(Path::RS_INTERP_STATIC);
-			}
+			else if (rottype == "cubic") { path->setInterp(Path::RS_INTERP_CUBIC); }
+			else if (rottype == "static") { path->setInterp(Path::RS_INTERP_STATIC); }
 			else if (rottype == "python")
 			{
 				path->setInterp(Path::RS_INTERP_PYTHON);
@@ -552,14 +498,8 @@ namespace
 			{
 				path->setInterp(RotationPath::RS_INTERP_LINEAR);
 			}
-			else if (rottype == "cubic")
-			{
-				path->setInterp(RotationPath::RS_INTERP_CUBIC);
-			}
-			else if (rottype == "static")
-			{
-				path->setInterp(RotationPath::RS_INTERP_STATIC);
-			}
+			else if (rottype == "cubic") { path->setInterp(RotationPath::RS_INTERP_CUBIC); }
+			else if (rottype == "static") { path->setInterp(RotationPath::RS_INTERP_STATIC); }
 			else
 			{
 				logging::printf(logging::RS_VERBOSE,
@@ -666,14 +606,8 @@ namespace
 		//Generate the pulse
 		logging::printf(logging::RS_VERY_VERBOSE, "[VV] Generating Pulse %s of type '%s'\n", pulse_name.c_str(),
 		                pulse_type.c_str());
-		if (pulse_type == "file")
-		{
-			processAnyPulseFile(pulseXml, world, pulse_name);
-		}
-		else
-		{
-			throw XmlImportException("Unrecognised type in pulse");
-		}
+		if (pulse_type == "file") { processAnyPulseFile(pulseXml, world, pulse_name); }
+		else { throw XmlImportException("Unrecognised type in pulse"); }
 	}
 
 	Antenna* processPythonAntenna(const TiXmlHandle& antXml, const string& name)
@@ -734,38 +668,14 @@ namespace
 		//Get the type of the antenna
 		const string ant_pattern = getAttributeString(antXml, "pattern", "Antennas must specify a pattern");
 		Antenna* antenna;
-		if (ant_pattern == "isotropic")
-		{
-			antenna = createIsotropicAntenna(ant_name);
-		}
-		else if (ant_pattern == "file")
-		{
-			antenna = processFileAntenna(antXml, ant_name);
-		}
-		else if (ant_pattern == "xml")
-		{
-			antenna = processXmlAntenna(antXml, ant_name);
-		}
-		else if (ant_pattern == "python")
-		{
-			antenna = processPythonAntenna(antXml, ant_name);
-		}
-		else if (ant_pattern == "sinc")
-		{
-			antenna = processSincAntenna(antXml, ant_name);
-		}
-		else if (ant_pattern == "gaussian")
-		{
-			antenna = processGaussianAntenna(antXml, ant_name);
-		}
-		else if (ant_pattern == "parabolic")
-		{
-			antenna = processParabolicAntenna(antXml, ant_name);
-		}
-		else
-		{
-			throw XmlImportException("Antenna specified unrecognised gain pattern '" + ant_pattern + "'");
-		}
+		if (ant_pattern == "isotropic") { antenna = createIsotropicAntenna(ant_name); }
+		else if (ant_pattern == "file") { antenna = processFileAntenna(antXml, ant_name); }
+		else if (ant_pattern == "xml") { antenna = processXmlAntenna(antXml, ant_name); }
+		else if (ant_pattern == "python") { antenna = processPythonAntenna(antXml, ant_name); }
+		else if (ant_pattern == "sinc") { antenna = processSincAntenna(antXml, ant_name); }
+		else if (ant_pattern == "gaussian") { antenna = processGaussianAntenna(antXml, ant_name); }
+		else if (ant_pattern == "parabolic") { antenna = processParabolicAntenna(antXml, ant_name); }
+		else { throw XmlImportException("Antenna specified unrecognised gain pattern '" + ant_pattern + "'"); }
 		//Notify the debug log
 		logging::printf(logging::RS_VERY_VERBOSE, "[VV] Loading antenna '%s' of type '%s'\n", ant_name.c_str(),
 		                ant_pattern.c_str());
@@ -820,34 +730,26 @@ namespace
 			const RS_FLOAT offset = getChildRsFloat(antXml, "freq_offset");
 			timing->addFreqOffset(offset);
 		}
-		catch ([[maybe_unused]] XmlImportException& xe)
-		{
-		}
+		catch ([[maybe_unused]] XmlImportException& xe) {}
 		try
 		{
 			const RS_FLOAT stdev = getChildRsFloat(antXml, "random_freq_offset");
 			timing->addRandomFreqOffset(stdev);
 		}
-		catch ([[maybe_unused]] XmlImportException& xe)
-		{
-		}
+		catch ([[maybe_unused]] XmlImportException& xe) {}
 		// Process the phase offset
 		try
 		{
 			const RS_FLOAT offset = getChildRsFloat(antXml, "phase_offset");
 			timing->addPhaseOffset(offset);
 		}
-		catch ([[maybe_unused]] XmlImportException& xe)
-		{
-		}
+		catch ([[maybe_unused]] XmlImportException& xe) {}
 		try
 		{
 			const RS_FLOAT stdev = getChildRsFloat(antXml, "random_phase_offset");
 			timing->addRandomPhaseOffset(stdev);
 		}
-		catch ([[maybe_unused]] XmlImportException& xe)
-		{
-		}
+		catch ([[maybe_unused]] XmlImportException& xe) {}
 		// Process the frequency
 		try
 		{
@@ -863,10 +765,7 @@ namespace
 			                parameters::rate());
 		}
 		//Process the synconpulse tag
-		if (getAttributeBool(antXml, "synconpulse", "", true))
-		{
-			timing->setSyncOnPulse();
-		}
+		if (getAttributeBool(antXml, "synconpulse", "", true)) { timing->setSyncOnPulse(); }
 		//Notify the debug log
 		logging::printf(logging::RS_VERY_VERBOSE, "[VV] Loading timing source '%s'\n", name.c_str());
 
@@ -963,10 +862,7 @@ namespace
 	{
 		const char* name = getNodeText(plat);
 		TiXmlDocument doc(name);
-		if (!doc.LoadFile())
-		{
-			throw std::runtime_error("Cannot open included file: " + std::string(name));
-		}
+		if (!doc.LoadFile()) { throw std::runtime_error("Cannot open included file: " + std::string(name)); }
 		//Process the XML document
 		const TiXmlHandle root(doc.RootElement());
 		processDocument(root, world, true);
@@ -1037,10 +933,7 @@ namespace
 void xml::loadXmlFile(const string& filename, World* world)
 {
 	TiXmlDocument doc(filename.c_str());
-	if (!doc.LoadFile())
-	{
-		throw std::runtime_error("Cannot open script file");
-	}
+	if (!doc.LoadFile()) { throw std::runtime_error("Cannot open script file"); }
 	//Process the XML document
 	const TiXmlHandle root(doc.RootElement());
 	processDocument(root, world, false);

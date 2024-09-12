@@ -53,11 +53,4 @@ namespace rs
 	};
 }
 
-namespace pulse_factory
-{
-	rs::RadarSignal* loadPulseFromFile(const std::string& name, const std::string& filename, RS_FLOAT power,
-	                                   RS_FLOAT carrierFreq);
-}
-
-
 #endif
