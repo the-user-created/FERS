@@ -135,7 +135,7 @@ namespace rs
 
 		[[nodiscard]] bool getSyncOnPulse() const
 		{
-			return _sync_on_pulse;
+			return _sync_on_pulse;  // TODO: BUG #2 - _sync_on_pulse always false
 		}
 
 		void initializeModel(const PrototypeTiming* timing);
@@ -147,7 +147,7 @@ namespace rs
 
 		[[nodiscard]] RS_FLOAT getFrequency() const
 		{
-			return _frequency;
+			return _frequency;  // TODO: BUG #2 - _frequency always 0.0
 		}
 
 		[[nodiscard]] bool enabled() const
@@ -160,8 +160,8 @@ namespace rs
 		ClockModelGenerator* _model;
 		std::vector<RS_FLOAT> _alphas;
 		std::vector<RS_FLOAT> _weights;
-		RS_FLOAT _frequency{};
-		bool _sync_on_pulse{};
+		RS_FLOAT _frequency{};  // TODO: BUG #1 - default-initialization of _frequency
+		bool _sync_on_pulse{};  // TODO: BUG #2 - default-initialization of _sync_on_pulse
 	};
 }
 
