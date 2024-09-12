@@ -48,17 +48,27 @@ namespace
 
 	void addNoiseToWindow(RS_COMPLEX* data, const unsigned size, const RS_FLOAT temperature)
 	{
-		if (temperature == 0)
-		{
-			return;
-		}
+		if (temperature == 0) { return; }
 		const RS_FLOAT power = rs_noise::noiseTemperatureToPower(temperature,
 		                                                         parameters::rate() * parameters::oversampleRatio()
 		                                                         / 2);
 		WgnGenerator generator(sqrt(power) / 2.0);
-		for (unsigned i = 0; i < size; i++)
+		for (unsigned i = 0; i < size; i++) { data[i] += RS_COMPLEX(generator.getSample(), generator.getSample()); }
+	}
+
+	void adcSimulate(RS_COMPLEX* data, const unsigned size, const unsigned bits, const RS_FLOAT fullscale)
+	{
+		const RS_FLOAT levels = pow(2, bits - 1);
+		for (unsigned it = 0; it < size; it++)
 		{
-			data[i] += RS_COMPLEX(generator.getSample(), generator.getSample());
+			RS_FLOAT i = std::floor(levels * data[it].real() / fullscale) / levels;
+			RS_FLOAT q = std::floor(levels * data[it].imag() / fullscale) / levels;
+			// TODO: can use std::clamp
+			if (i > 1) { i = 1; }
+			else if (i < -1) { i = -1; }
+			if (q > 1) { q = 1; }
+			else if (q < -1) { q = -1; }
+			data[it] = RS_COMPLEX(i, q);
 		}
 	}
 
@@ -68,23 +78,14 @@ namespace
 		RS_FLOAT max = 0;
 		for (unsigned i = 0; i < size; i++)
 		{
-			if (std::fabs(data[i].real()) > max)
-			{
-				max = std::fabs(data[i].real());
-			}
-			if (std::fabs(data[i].imag()) > max)
-			{
-				max = std::fabs(data[i].imag());
-			}
+			if (std::fabs(data[i].real()) > max) { max = std::fabs(data[i].real()); }
+			if (std::fabs(data[i].imag()) > max) { max = std::fabs(data[i].imag()); }
 			if (std::isnan(data[i].real()) || std::isnan(data[i].imag()))
 			{
 				throw std::runtime_error("NaN in QuantizeWindow -- early");
 			}
 		}
-		if (parameters::adcBits() > 0)
-		{
-			signal::adcSimulate(data, size, parameters::adcBits(), max);
-		}
+		if (parameters::adcBits() > 0) { adcSimulate(data, size, parameters::adcBits(), max); }
 		else
 		{
 			if (max != 0)
@@ -112,29 +113,20 @@ namespace
 			roffset = -start_sample;
 			start_sample = 0;
 		}
-		for (unsigned i = roffset; i < rSize && i + start_sample < wSize; i++)
-		{
-			window[i + start_sample] += resp[i];
-		}
+		for (unsigned i = roffset; i < rSize && i + start_sample < wSize; i++) { window[i + start_sample] += resp[i]; }
 	}
 
 	RS_FLOAT* generatePhaseNoise(const Receiver* recv, const unsigned wSize, const RS_FLOAT rate,
 	                             RS_FLOAT& carrier, bool& enabled)
 	{
 		auto* timing = dynamic_cast<ClockModelTiming*>(recv->getTiming());
-		if (!timing)
-		{
-			throw std::runtime_error("[BUG] Could not cast receiver->GetTiming() to ClockModelTiming");
-		}
+		if (!timing) { throw std::runtime_error("[BUG] Could not cast receiver->GetTiming() to ClockModelTiming"); }
 		auto* noise = new RS_FLOAT[wSize];
 		enabled = timing->enabled();
 		if (enabled)
 		{
-			for (unsigned i = 0; i < wSize; i++)
-			{
-				noise[i] = timing->nextNoiseSample();
-			}
-			if (timing->getSyncOnPulse())  // TODO: BUG #2 - sync_on_pulse always false
+			for (unsigned i = 0; i < wSize; i++) { noise[i] = timing->nextNoiseSample(); }
+			if (timing->getSyncOnPulse()) // TODO: BUG #2 - sync_on_pulse always false
 			{
 				timing->reset();
 				const int skip = static_cast<int>(std::floor(rate * recv->getWindowSkip()));
@@ -145,16 +137,13 @@ namespace
 				const long skip = std::floor(rate / recv->getPrf() - rate * recv->getWindowLength());
 				timing->skipSamples(skip);
 			}
-			carrier = timing->getFrequency();  // TODO: BUG #1,#3 - carrier has no effect on phase noise?
+			carrier = timing->getFrequency(); // TODO: BUG #1,#3 - carrier has no effect on phase noise?
 		}
 		else
 		{
 			// TODO: Can use std:fill
-			for (unsigned i = 0; i < wSize; i++)
-			{
-				noise[i] = 0;
-			}
-			carrier = 1;  // TODO: BUG #3 - carrier has no effect on phase noise?
+			for (unsigned i = 0; i < wSize; i++) { noise[i] = 0; }
+			carrier = 1; // TODO: BUG #3 - carrier has no effect on phase noise?
 		}
 		return noise;
 	}
@@ -163,10 +152,7 @@ namespace
 	{
 		for (unsigned i = 0; i < wSize; i++)
 		{
-			if (std::isnan(noise[i]))
-			{
-				throw std::runtime_error("[BUG] Noise is NaN in addPhaseNoiseToWindow");
-			}
+			if (std::isnan(noise[i])) { throw std::runtime_error("[BUG] Noise is NaN in addPhaseNoiseToWindow"); }
 			const RS_COMPLEX mn = exp(RS_COMPLEX(0.0, 1.0) * noise[i]);
 			window[i] *= mn;
 			if (std::isnan(window[i].real()) || std::isnan(window[i].imag()))
@@ -181,10 +167,7 @@ namespace
 	{
 		// TODO: This can be simplified and optimized
 		//Bail if there are no responses to export
-		if (responses.empty())
-		{
-			return;
-		}
+		if (responses.empty()) { return; }
 
 		const long out_bin = openHdf5File(recvName);
 
@@ -232,10 +215,7 @@ namespace
 				window = tmp;
 			}
 			//Add Phase noise to the window
-			if (pn_enabled)
-			{
-				addPhaseNoiseToWindow(pnoise, window, size);
-			}
+			if (pn_enabled) { addPhaseNoiseToWindow(pnoise, window, size); }
 			//Clean up the phase noise array
 			delete[] pnoise;
 			//Normalize and quantize the window
@@ -249,10 +229,7 @@ namespace
 			delete[] window;
 		}
 		// Close the binary and csv files
-		if (out_bin)
-		{
-			hdf5_export::closeFile(out_bin);
-		}
+		if (out_bin) { hdf5_export::closeFile(out_bin); }
 	}
 }
 
@@ -263,10 +240,7 @@ void rs::exportReceiverXml(const std::vector<Response*>& responses, const std::s
 	doc.LinkEndChild(decl.release());
 	auto* root = new TiXmlElement("receiver");
 	doc.LinkEndChild(root);
-	for (const auto response : responses)
-	{
-		response->renderXml(root);
-	}
+	for (const auto response : responses) { response->renderXml(root); }
 	if (!doc.SaveFile(filename + ".fersxml"))
 	{
 		throw std::runtime_error("Failed to save XML file: " + filename + ".fersxml");
@@ -285,29 +259,17 @@ void rs::exportReceiverCsv(const std::vector<Response*>& responses, const std::s
 			oss << filename << "_" << response->getTransmitterName() << ".csv";
 			of = new std::ofstream(oss.str().c_str());
 			of->setf(std::ios::scientific);
-			if (!*of)
-			{
-				throw std::runtime_error("[ERROR] Could not open file " + oss.str() + " for writing");
-			}
+			if (!*of) { throw std::runtime_error("[ERROR] Could not open file " + oss.str() + " for writing"); }
 			streams[response->getTransmitterName()] = of;
 		}
-		else
-		{
-			of = ofi->second;
-		}
+		else { of = ofi->second; }
 		response->renderCsv(*of);
 	}
-	for (auto& [fst, snd] : streams)
-	{
-		delete snd;
-	}
+	for (auto& [fst, snd] : streams) { delete snd; }
 }
 
 void rs::exportReceiverBinary(const std::vector<Response*>& responses, const Receiver* recv,
-                              const std::string& recvName)
-{
-	exportResponseFersBin(responses, recv, recvName);
-}
+                              const std::string& recvName) { exportResponseFersBin(responses, recv, recvName); }
 
 //
 // ThreadedRenderer Implementation
@@ -361,10 +323,7 @@ void RenderThread::operator()()
 	}
 	{
 		boost::mutex::scoped_lock lock(*_window_mutex);
-		for (unsigned i = 0; i < size; i++)
-		{
-			_window[i] += _local_window[i];
-		}
+		for (unsigned i = 0; i < size; i++) { _window[i] += _local_window[i]; }
 	}
 	delete[] _local_window;
 }
@@ -381,10 +340,7 @@ Response* RenderThread::getWork() const
 	Response* ret;
 	{
 		boost::mutex::scoped_lock lock(*_work_list_mutex);
-		if (_work_list->empty())
-		{
-			return nullptr;
-		}
+		if (_work_list->empty()) { return nullptr; }
 		ret = _work_list->front();
 		_work_list->pop();
 	}

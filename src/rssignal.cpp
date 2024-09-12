@@ -11,41 +11,12 @@
 #include "portable_utils.h"
 #include "parameters.h"
 
-using namespace signal;
 using namespace rs;
 
 namespace interp_filt
 {
 	// Initialize the interpolation filter instance
 	InterpFilter* InterpFilter::_instance = nullptr;
-}
-
-void signal::adcSimulate(RS_COMPLEX* data, const unsigned size, const unsigned bits, const RS_FLOAT fullscale)
-{
-	const RS_FLOAT levels = pow(2, bits - 1);
-	for (unsigned it = 0; it < size; it++)
-	{
-		RS_FLOAT i = std::floor(levels * data[it].real() / fullscale) / levels;
-		RS_FLOAT q = std::floor(levels * data[it].imag() / fullscale) / levels;
-		// TODO: can use std::clamp
-		if (i > 1)
-		{
-			i = 1;
-		}
-		else if (i < -1)
-		{
-			i = -1;
-		}
-		if (q > 1)
-		{
-			q = 1;
-		}
-		else if (q < -1)
-		{
-			q = -1;
-		}
-		data[it] = RS_COMPLEX(i, q);
-	}
 }
 
 // =====================================================================================================================
@@ -68,10 +39,7 @@ void Signal::load(const RS_FLOAT* inData, const unsigned samples, const RS_FLOAT
 	_size = samples;
 	_rate = sampleRate;
 	_data = new RS_COMPLEX[samples];
-	for (unsigned i = 0; i < samples; i++)
-	{
-		_data[i] = RS_COMPLEX(inData[i], 0.0);
-	}
+	for (unsigned i = 0; i < samples; i++) { _data[i] = RS_COMPLEX(inData[i], 0.0); }
 }
 
 void Signal::load(const RS_COMPLEX* inData, const unsigned samples, const RS_FLOAT sampleRate)
@@ -81,17 +49,8 @@ void Signal::load(const RS_COMPLEX* inData, const unsigned samples, const RS_FLO
 	_data = new RS_COMPLEX[samples * ratio];
 	_size = samples * ratio;
 	_rate = sampleRate * ratio;
-	if (ratio == 1)
-	{
-		for (unsigned i = 0; i < samples; i++)
-		{
-			_data[i] = inData[i];
-		}
-	}
-	else
-	{
-		upsample(inData, samples, _data, ratio);
-	}
+	if (ratio == 1) { for (unsigned i = 0; i < samples; i++) { _data[i] = inData[i]; } }
+	else { upsample(inData, samples, _data, ratio); }
 }
 
 RS_FLOAT* Signal::copyData() const
@@ -117,10 +76,7 @@ boost::shared_array<RS_COMPLEX> Signal::render(const std::vector<InterpPoint>& p
 	//Loop through the interp points, rendering each in time
 	auto iter = points.begin();
 	auto next = iter + 1;
-	if (next == points.end())
-	{
-		next = iter;
-	}
+	if (next == points.end()) { next = iter; }
 
 	//Get the delay of the first point
 	//C Tong: iDelay is in number of receiver samples (possibly with a fractional part)
@@ -135,10 +91,7 @@ boost::shared_array<RS_COMPLEX> Signal::render(const std::vector<InterpPoint>& p
 		if (sample_time > next->time)
 		{
 			iter = next;
-			if (next + 1 != points.end())
-			{
-				++next;
-			}
+			if (next + 1 != points.end()) { ++next; }
 		}
 		//Get the weightings for the parameters
 		RS_FLOAT aw = 1, bw = 0;
@@ -174,16 +127,10 @@ boost::shared_array<RS_COMPLEX> Signal::render(const std::vector<InterpPoint>& p
 
 		//Get the start and end times of interpolation
 		int start = -filt_length / 2;
-		if (i + start < 0)
-		{
-			start = -i;
-		}
+		if (i + start < 0) { start = -i; }
 
 		int end = filt_length / 2;
-		if (i + end >= _size)
-		{
-			end = static_cast<int>(_size) - i;
-		}
+		if (i + end >= _size) { end = static_cast<int>(_size) - i; }
 
 		//Apply the filter
 		RS_COMPLEX accum(0.0, 0.0);
@@ -191,25 +138,13 @@ boost::shared_array<RS_COMPLEX> Signal::render(const std::vector<InterpPoint>& p
 		for (int j = start; j < end; j++)
 		{
 			//Check that unwrapping doesn't put us out of bounds.
-			if (i + j + i_sample_unwrap >= _size || i + j + i_sample_unwrap < 0)
-			{
-				continue;
-			}
+			if (i + j + i_sample_unwrap >= _size || i + j + i_sample_unwrap < 0) { continue; }
 
 			accum += amplitude * _data[i + j + i_sample_unwrap] * filt[j + filt_length / 2];
 			//Apply unwrapping to Tx samples.
-			if (std::isnan(_data[j].real()))
-			{
-				throw std::runtime_error("NaN in Render: data[j].r");
-			}
-			if (std::isnan(_data[j].imag()))
-			{
-				throw std::runtime_error("NaN in Render: data[j].i");
-			}
-			if (std::isnan(filt[j - start]))
-			{
-				throw std::runtime_error("NaN in Render: filt");
-			}
+			if (std::isnan(_data[j].real())) { throw std::runtime_error("NaN in Render: data[j].r"); }
+			if (std::isnan(_data[j].imag())) { throw std::runtime_error("NaN in Render: data[j].i"); }
+			if (std::isnan(filt[j - start])) { throw std::runtime_error("NaN in Render: filt"); }
 		}
 		//logging::printf(logging::RS_VERY_VERBOSE, "Out = %g %g\n", accum.real(), accum.imag());
 
