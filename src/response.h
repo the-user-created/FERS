@@ -20,37 +20,23 @@ namespace rs
 	{
 	public:
 		Response(const RadarSignal* wave, const Transmitter* transmitter) :
-			_transmitter(transmitter), _wave(wave)
-		{
-		}
+			_transmitter(transmitter), _wave(wave) {}
 
 		~Response() = default;
 
-		[[nodiscard]] RS_FLOAT startTime() const
-		{
-			return _points.empty() ? 0.0 : _points.front().time;
-		}
+		[[nodiscard]] RS_FLOAT startTime() const { return _points.empty() ? 0.0 : _points.front().time; }
 
-		[[nodiscard]] RS_FLOAT endTime() const
-		{
-			return _points.empty() ? 0.0 : _points.back().time;
-		}
+		[[nodiscard]] RS_FLOAT endTime() const { return _points.empty() ? 0.0 : _points.back().time; }
 
 		void renderXml(TiXmlElement* root);
 
 		void renderCsv(std::ofstream& of);
 
-		boost::shared_array<RS_COMPLEX> renderBinary(RS_FLOAT& rate, unsigned& size, RS_FLOAT fracWinDelay) const;
+		std::shared_ptr<RS_COMPLEX[]> renderBinary(RS_FLOAT& rate, unsigned& size, RS_FLOAT fracWinDelay) const;
 
-		[[nodiscard]] RS_FLOAT getLength() const
-		{
-			return endTime() - startTime();
-		}
+		[[nodiscard]] RS_FLOAT getLength() const { return endTime() - startTime(); }
 
-		[[nodiscard]] const RadarSignal* getWave() const
-		{
-			return _wave;
-		}
+		[[nodiscard]] const RadarSignal* getWave() const { return _wave; }
 
 		[[nodiscard]] std::string getTransmitterName() const;
 

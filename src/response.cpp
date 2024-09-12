@@ -29,10 +29,7 @@ namespace
 	                       const bool scientific = true)
 	{
 		std::ostringstream oss;
-		if (scientific)
-		{
-			oss.setf(std::ios::scientific);
-		}
+		if (scientific) { oss.setf(std::ios::scientific); }
 		constexpr int precision = 10;
 		oss << std::setprecision(precision) << data;
 		attachTextNode(root, name, oss.str());
@@ -43,10 +40,7 @@ namespace
 // ResponseBase Implementation
 //
 
-std::string Response::getTransmitterName() const
-{
-	return _transmitter->getName();
-}
+std::string Response::getTransmitterName() const { return _transmitter->getName(); }
 
 void Response::renderResponseXml(TiXmlElement* root, const InterpPoint& point) const
 {
@@ -72,10 +66,7 @@ void Response::renderXml(TiXmlElement* root)
 	attachRsFloatNode(element.get(), "start", startTime(), false);
 	attachTextNode(element.get(), "name", _wave->getName());
 
-	for (auto& point : _points)
-	{
-		renderResponseXml(element.get(), point);
-	}
+	for (auto& point : _points) { renderResponseXml(element.get(), point); }
 
 	// Release ownership to avoid deletion
 	element.release(); // NOLINT (must release and disregard the returned pointer)
@@ -87,13 +78,7 @@ void Response::renderResponseCsv(std::ofstream& of, const InterpPoint& point) co
 		<< "\n";
 }
 
-void Response::renderCsv(std::ofstream& of)
-{
-	for (auto& point : _points)
-	{
-		renderResponseCsv(of, point);
-	}
-}
+void Response::renderCsv(std::ofstream& of) { for (auto& point : _points) { renderResponseCsv(of, point); } }
 
 void Response::addInterpPoint(const InterpPoint& point)
 {
@@ -104,7 +89,7 @@ void Response::addInterpPoint(const InterpPoint& point)
 	_points.push_back(point);
 }
 
-boost::shared_array<RS_COMPLEX> Response::renderBinary(RS_FLOAT& rate, unsigned& size, const RS_FLOAT fracWinDelay) const
+std::shared_ptr<RS_COMPLEX[]> Response::renderBinary(RS_FLOAT& rate, unsigned& size, const RS_FLOAT fracWinDelay) const
 {
 	rate = _wave->getRate();
 	return _wave->render(_points, size, fracWinDelay);
