@@ -22,10 +22,9 @@ namespace rs
 	struct InterpPoint
 	{
 		InterpPoint(const RS_FLOAT power, const RS_FLOAT start, const RS_FLOAT delay, const RS_FLOAT doppler,
-					const RS_FLOAT phase, const RS_FLOAT noiseTemperature) :
-			power(power), time(start), delay(delay), doppler(doppler), phase(phase), noise_temperature(noiseTemperature)
-		{
-		}
+		            const RS_FLOAT phase, const RS_FLOAT noiseTemperature) :
+			power(power), time(start), delay(delay), doppler(doppler), phase(phase),
+			noise_temperature(noiseTemperature) {}
 
 		RS_FLOAT power;
 		RS_FLOAT time;
@@ -42,37 +41,22 @@ namespace rs
 
 		~RadarSignal();
 
-		[[nodiscard]] RS_FLOAT getPower() const
-		{
-			return _power;
-		}
+		[[nodiscard]] RS_FLOAT getPower() const { return _power; }
 
 		[[nodiscard]] RS_FLOAT getCarrier() const;
 
-		[[nodiscard]] std::string getName() const
-		{
-			return _name;
-		}
+		[[nodiscard]] std::string getName() const { return _name; }
 
 		[[nodiscard]] RS_FLOAT getRate() const;
 
-		[[nodiscard]] RS_FLOAT getLength() const
-		{
-			return _length;
-		}
+		[[nodiscard]] RS_FLOAT getLength() const { return _length; }
 
-		boost::shared_array<RS_COMPLEX> render(const std::vector<InterpPoint>& points, unsigned& size,
-		                                      RS_FLOAT fracWinDelay) const;
+		std::shared_ptr<RS_COMPLEX[]> render(const std::vector<InterpPoint>& points, unsigned& size,
+		                                     RS_FLOAT fracWinDelay) const;
 
-		[[nodiscard]] JonesVector getPolarization() const
-		{
-			return _polar;
-		}
+		[[nodiscard]] JonesVector getPolarization() const { return _polar; }
 
-		void setPolarization(const JonesVector& in)
-		{
-			_polar = in;
-		}
+		void setPolarization(const JonesVector& in) { _polar = in; }
 
 	private:
 		std::string _name;

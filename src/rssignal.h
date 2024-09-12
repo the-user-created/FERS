@@ -34,8 +34,8 @@ namespace rs
 
 		[[nodiscard]] RS_FLOAT* copyData() const;
 
-		boost::shared_array<RS_COMPLEX> render(const std::vector<InterpPoint>& points,
-		                                       unsigned& size, double fracWinDelay) const;
+		std::shared_ptr<std::complex<double>[]> render(const std::vector<InterpPoint>& points,
+		                                               unsigned& size, double fracWinDelay) const;
 
 	private:
 		RS_COMPLEX* _data;

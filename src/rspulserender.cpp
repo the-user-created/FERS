@@ -317,7 +317,7 @@ void RenderThread::operator()()
 	{
 		unsigned psize;
 		RS_FLOAT prate;
-		boost::shared_array<RS_COMPLEX> array = resp->renderBinary(prate, psize, _frac_delay);
+		std::shared_ptr<RS_COMPLEX[]> array = resp->renderBinary(prate, psize, _frac_delay);
 		addWindow(array.get(), resp->startTime(), psize);
 		resp = getWork();
 	}

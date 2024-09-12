@@ -60,12 +60,12 @@ RS_FLOAT* Signal::copyData() const
 	return result;
 }
 
-boost::shared_array<RS_COMPLEX> Signal::render(const std::vector<InterpPoint>& points, unsigned& size,
-                                               const double fracWinDelay) const
+std::shared_ptr<RS_COMPLEX[]> Signal::render(const std::vector<InterpPoint>& points, unsigned& size,
+                                             const double fracWinDelay) const
 {
 	// TODO: This needs to be fixed and simplified
 	//Allocate memory for rendering
-	auto* out = new RS_COMPLEX[_size];
+	auto out = std::make_unique<RS_COMPLEX[]>(_size);
 	size = _size;
 
 	//Get the sample interval
@@ -138,13 +138,12 @@ boost::shared_array<RS_COMPLEX> Signal::render(const std::vector<InterpPoint>& p
 		for (int j = start; j < end; j++)
 		{
 			//Check that unwrapping doesn't put us out of bounds.
-			if (i + j + i_sample_unwrap >= _size || i + j + i_sample_unwrap < 0) { continue; }
+			if (i + j + i_sample_unwrap >= _size || i + j + i_sample_unwrap < 0 || j + filt_length / 2 >= filt_length)
+			{
+				continue;
+			}
 
 			accum += amplitude * _data[i + j + i_sample_unwrap] * filt[j + filt_length / 2];
-			//Apply unwrapping to Tx samples.
-			if (std::isnan(_data[j].real())) { throw std::runtime_error("NaN in Render: data[j].r"); }
-			if (std::isnan(_data[j].imag())) { throw std::runtime_error("NaN in Render: data[j].i"); }
-			if (std::isnan(filt[j - start])) { throw std::runtime_error("NaN in Render: filt"); }
 		}
 		//logging::printf(logging::RS_VERY_VERBOSE, "Out = %g %g\n", accum.real(), accum.imag());
 
@@ -156,5 +155,5 @@ boost::shared_array<RS_COMPLEX> Signal::render(const std::vector<InterpPoint>& p
 		sample_time += timestep;
 	}
 	//Return the result
-	return boost::shared_array<RS_COMPLEX>(out);
+	return std::shared_ptr<RS_COMPLEX[]>(out.release());
 }

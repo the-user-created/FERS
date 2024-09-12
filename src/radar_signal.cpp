@@ -28,39 +28,24 @@ RadarSignal::RadarSignal(std::string name, const RS_FLOAT power, const RS_FLOAT 
 	: _name(std::move(name)), _power(power), _carrierfreq(carrierfreq), _length(length), _signal(signal),
 	  _polar(std::complex<RS_FLOAT>(1.0, 0.0), std::complex<RS_FLOAT>(0.0, 0.0))
 {
-	if (!signal)
-	{
-		throw std::logic_error("RadarSignal cannot be constructed with NULL signal");
-	}
+	if (!signal) { throw std::logic_error("RadarSignal cannot be constructed with NULL signal"); }
 }
 
 //Destructor
-RadarSignal::~RadarSignal()
-{
-	delete _signal;
-}
+RadarSignal::~RadarSignal() { delete _signal; }
 
 //Get the carrier frequency TODO: Cannot make this inline?????????
-RS_FLOAT RadarSignal::getCarrier() const
-{
-	return _carrierfreq;
-}
+RS_FLOAT RadarSignal::getCarrier() const { return _carrierfreq; }
 
 //Get the native sample rate of the pulse
-RS_FLOAT RadarSignal::getRate() const
-{
-	return _signal->rate();
-}
+RS_FLOAT RadarSignal::getRate() const { return _signal->rate(); }
 
-boost::shared_array<RS_COMPLEX> RadarSignal::render(const std::vector<InterpPoint>& points, unsigned& size,
-                                                   const RS_FLOAT fracWinDelay) const
+std::shared_ptr<RS_COMPLEX[]> RadarSignal::render(const std::vector<InterpPoint>& points, unsigned& size,
+                                                  const RS_FLOAT fracWinDelay) const
 {
-	boost::shared_array<RS_COMPLEX> data = _signal->render(points, size, fracWinDelay);
+	std::shared_ptr<RS_COMPLEX[]> data = _signal->render(points, size, fracWinDelay);
 	const RS_FLOAT scale = std::sqrt(_power);
-	for (unsigned i = 0; i < size; i++)
-	{
-		data[i] *= scale;
-	}
+	for (unsigned i = 0; i < size; i++) { data[i] *= scale; }
 	return data;
 }
 
@@ -87,36 +72,24 @@ RadarSignal* loadPulseFromCsvFile(const std::string& name, const std::string& fi
                                   const RS_FLOAT carrierFreq)
 {
 	std::ifstream ifile(filename.c_str());
-	if (!ifile)
-	{
-		throw std::runtime_error("Could not open " + filename + " to read pulse waveform");
-	}
+	if (!ifile) { throw std::runtime_error("Could not open " + filename + " to read pulse waveform"); }
 	RS_FLOAT rlength, rate;
 	ifile >> rlength >> rate;
 	const unsigned length = static_cast<int>(rlength);
 	const boost::scoped_array data(new RS_COMPLEX[length]);
 	unsigned done = 0;
-	while (!ifile.eof() && done < length)
-	{
-		ifile >> data[done++];
-	}
-	if (done != length)
-	{
-		throw std::runtime_error("Could not read pulse waveform from file " + filename);
-	}
+	while (!ifile.eof() && done < length) { ifile >> data[done++]; }
+	if (done != length) { throw std::runtime_error("Could not read pulse waveform from file " + filename); }
 	auto* signal = new Signal();
 	signal->load(data.get(), length, rate);
 	return new RadarSignal(name, power, carrierFreq, rlength / rate, signal);
 }
 
 RadarSignal* pulse_factory::loadPulseFromFile(const std::string& name, const std::string& filename,
-                                                 const RS_FLOAT power, const RS_FLOAT carrierFreq)
+                                              const RS_FLOAT power, const RS_FLOAT carrierFreq)
 {
 	if (const unsigned long ln = filename.length() - 1; tolower(filename[ln]) == 'v' && tolower(filename[ln - 1]) == 's'
-		&& tolower(filename[ln - 2]) == 'c')
-	{
-		return loadPulseFromCsvFile(name, filename, power, carrierFreq);
-	}
+		&& tolower(filename[ln - 2]) == 'c') { return loadPulseFromCsvFile(name, filename, power, carrierFreq); }
 	else
 	{
 		if (tolower(filename[ln]) == '5' && tolower(filename[ln - 1]) == 'h')
