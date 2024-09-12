@@ -9,6 +9,8 @@ set(fers_SRCS logging.cpp main.cpp platform.cpp radar_system.cpp target.cpp worl
 	interpolation_set.h dsp_filters.h multipath_surface.h antenna_pattern.h jones_vector.h polarization_matrix.cpp
 	polarization_matrix.h interpolation_filter.cpp interpolation_filter.h
 	interpolation_point.h
+	pulse_factory.cpp
+	pulse_factory.h
 )
 
 add_executable(fers ${fers_SRCS})
