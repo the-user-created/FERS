@@ -9,18 +9,7 @@
 #include "config.h"
 #include "radar_signal.h"
 
-// TODO: this dual namespace is funky
 // TODO: move to radar_signal.h - only used there
-
-namespace signal
-{
-	void addNoise(RS_FLOAT* data, RS_FLOAT temperature, unsigned size, RS_FLOAT fs); // TODO: unused function
-
-	RS_COMPLEX* iqDemodulate(RS_FLOAT* data, unsigned size, RS_FLOAT phase); // TODO: unused function
-
-	// TODO: only used in rspulserender.cpp
-	void adcSimulate(RS_COMPLEX* data, unsigned size, unsigned bits, RS_FLOAT fullscale);
-}
 
 namespace rs
 {
@@ -29,14 +18,9 @@ namespace rs
 	class Signal
 	{
 	public:
-		Signal() : _data(nullptr), _size(0), _rate(0)
-		{
-		}
+		Signal() : _data(nullptr), _size(0), _rate(0) {}
 
-		~Signal()
-		{
-			delete[] _data;
-		}
+		~Signal() { delete[] _data; }
 
 		void clear();
 
@@ -44,15 +28,9 @@ namespace rs
 
 		void load(const RS_FLOAT* inData, unsigned samples, RS_FLOAT sampleRate);
 
-		[[nodiscard]] RS_FLOAT rate() const
-		{
-			return _rate;
-		}
+		[[nodiscard]] RS_FLOAT rate() const { return _rate; }
 
-		[[nodiscard]] unsigned size() const
-		{
-			return _size;
-		}
+		[[nodiscard]] unsigned size() const { return _size; }
 
 		[[nodiscard]] RS_FLOAT* copyData() const;
 
