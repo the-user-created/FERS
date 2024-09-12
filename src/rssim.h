@@ -4,13 +4,11 @@
 #ifndef RS_SIM_H
 #define RS_SIM_H
 
-#include "rsworld.h"
+#include "world.h"
 
 namespace rs
 {
-	//Run the radar simulation specified by world
-	//Limit the number of concurrent threads to thread_limit
-	void runThread(int threadLimit, World* world);
+	void runThread(int threadLimit, World* world);  // TODO: unused function
 }
 
 #endif

@@ -1,77 +1,69 @@
-//signal.cpp
-//Interface for the signal class
-//Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-//Started 24 May 2006
+// signal.cpp
+// Interface for the signal class
+// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
+// Started 24 May 2006
 
 #ifndef RS_SIGNAL_H
 #define RS_SIGNAL_H
 
-#include <complex>
-#include <boost/shared_array.hpp>
-#include <boost/utility.hpp>
-
 #include "config.h"
-#include "rsradarwaveform.h"
+#include "radar_signal.h"
 
-///Forward declarations
-namespace rs
+// TODO: this dual namespace is funky
+// TODO: move to radar_signal.h - only used there
+
+namespace signal
 {
-	class Signal; //rssignal.h
-}
+	void addNoise(RS_FLOAT* data, RS_FLOAT temperature, unsigned size, RS_FLOAT fs); // TODO: unused function
 
-namespace rs_signal
-{
-	/// Type for storing signal
-	using Complex = std::complex<RS_FLOAT>;
+	RS_COMPLEX* iqDemodulate(RS_FLOAT* data, unsigned size, RS_FLOAT phase); // TODO: unused function
 
-	/// Add noise to the signal with the given temperature
-	void addNoise(RS_FLOAT* data, RS_FLOAT temperature, unsigned int size, RS_FLOAT fs);
-
-	/// Demodulate a frequency domain signal into time domain I and Q
-	Complex* iqDemodulate(RS_FLOAT* data, unsigned int size, RS_FLOAT phase);
-
-	/// Simulate the effect of and ADC converter on the signal
-	void adcSimulate(Complex* data, unsigned int size, unsigned int bits, RS_FLOAT fullscale);
+	// TODO: only used in rspulserender.cpp
+	void adcSimulate(RS_COMPLEX* data, unsigned size, unsigned bits, RS_FLOAT fullscale);
 }
 
 namespace rs
 {
-	/// Class to store and process a time domain signal
-	class Signal : boost::noncopyable
+	struct InterpPoint;
+
+	class Signal
 	{
 	public:
-		Signal(); //!< Default constructor
-		~Signal(); //!< Default destructor
+		Signal() : _data(nullptr), _size(0), _rate(0)
+		{
+		}
 
-		/// Clear deletes the data currently associated with the signal
+		~Signal()
+		{
+			delete[] _data;
+		}
+
 		void clear();
 
-		/// Load data into the signal (time domain, complex)
-		void load(const rs_signal::Complex* inData, unsigned int samples, RS_FLOAT sampleRate);
+		void load(const RS_COMPLEX* inData, unsigned samples, RS_FLOAT sampleRate);
 
-		/// Load data into the signal (time domain, real)
-		void load(const RS_FLOAT* inData, unsigned int samples, RS_FLOAT sampleRate);
+		void load(const RS_FLOAT* inData, unsigned samples, RS_FLOAT sampleRate);
 
-		/// Return the sample rate of the signal
-		[[nodiscard]] RS_FLOAT rate() const;
+		[[nodiscard]] RS_FLOAT rate() const
+		{
+			return _rate;
+		}
 
-		/// Return the size, in samples of the signal
-		[[nodiscard]] unsigned int size() const;
+		[[nodiscard]] unsigned size() const
+		{
+			return _size;
+		}
 
-		/// Get a copy of the signal domain data
 		[[nodiscard]] RS_FLOAT* copyData() const;
 
-		/// Render the pulse with the specified doppler, delay and amplitude
-		boost::shared_array<RsComplex> render(const std::vector<InterpPoint>& points,
-		                                      unsigned int& size, double fracWinDelay) const;
+		boost::shared_array<RS_COMPLEX> render(const std::vector<InterpPoint>& points,
+		                                       unsigned& size, double fracWinDelay) const;
 
 	private:
-		/// The signal data
-		rs_signal::Complex* _data;
-		/// Size of the signal in samples
-		unsigned int _size;
-		/// The sample rate of the signal in the time domain
+		RS_COMPLEX* _data;
+		unsigned _size;
 		RS_FLOAT _rate;
 	};
 }
+
 #endif

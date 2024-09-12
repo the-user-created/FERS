@@ -1,14 +1,16 @@
-//rsparameters.cpp
-//Implementation of Singleton class to hold common simulation parameters
-//Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-//11 June 2006
+// rsparameters.cpp
+// Implementation of Singleton class to hold common simulation parameters
+// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
+// 11 June 2006
 
 #include "rsparameters.h"
 
 #include <ctime>
 #include <stdexcept>
 
-#include "rsdebug.h"
+#include "logging.h"
+
+// TODO: rsparameters needs a major refactor
 
 using namespace rs;
 
@@ -23,15 +25,15 @@ namespace
 		RS_FLOAT end{}; //!< The end time of the simulation
 		RS_FLOAT cw_sample_rate{}; //<! The number of samples per second to take of changes in the CW state
 		RS_FLOAT rate{}; //!< The sample rate to use for rendering
-		unsigned int random_seed{}; //!< The seed used for random number calculations
-		unsigned int adc_bits{}; //!< The number of bits to use for quantization
-		unsigned int filter_length{}; //!< The length of the filter for rendering purposes
+		unsigned random_seed{}; //!< The seed used for random number calculations
+		unsigned adc_bits{}; //!< The number of bits to use for quantization
+		unsigned filter_length{}; //!< The length of the filter for rendering purposes
 		rs_parms::BinaryFileType filetype{}; //!< The type of binary files produced by binary rendering
 		bool export_xml{}; //!< Export results in XML format
 		bool export_csv{}; //!< Export results in CSV format
 		bool export_binary{}; //!< Export results in binary format
-		unsigned int render_threads{}; //!< Number of threads to use to render each receiver
-		unsigned int oversample_ratio{}; //!< Ratio of oversampling applied to pulses before rendering
+		unsigned render_threads{}; //!< Number of threads to use to render each receiver
+		unsigned oversample_ratio{}; //!< Ratio of oversampling applied to pulses before rendering
 	};
 
 	/// Object which contains all the simulation parameters
@@ -61,7 +63,7 @@ RsParameters::RsParameters()
 	// Export binary by default
 	sim_parms.export_binary = true;
 	// The random seed is set the to the current time by default
-	sim_parms.random_seed = static_cast<unsigned int>(time(nullptr));
+	sim_parms.random_seed = static_cast<unsigned>(time(nullptr));
 	// The default is not to quantize
 	sim_parms.adc_bits = 0;
 	// Default maximum number of render threads
@@ -94,7 +96,7 @@ RS_FLOAT RsParameters::boltzmannK()
 	return 1.3806503e-23;
 }
 
-RS_FLOAT RsParameters::startTime()  // NOLINT
+RS_FLOAT RsParameters::startTime() // NOLINT
 {
 	if (!_instance)
 	{
@@ -103,7 +105,7 @@ RS_FLOAT RsParameters::startTime()  // NOLINT
 	return sim_parms.start;
 }
 
-RS_FLOAT RsParameters::endTime()  // NOLINT
+RS_FLOAT RsParameters::endTime() // NOLINT
 {
 	if (!_instance)
 	{
@@ -130,7 +132,7 @@ rs_parms::BinaryFileType RsParameters::binaryFileType()
 	return sim_parms.filetype;
 }
 
-RS_FLOAT RsParameters::rate()  // NOLINT
+RS_FLOAT RsParameters::rate() // NOLINT
 {
 	if (!_instance)
 	{
@@ -139,7 +141,7 @@ RS_FLOAT RsParameters::rate()  // NOLINT
 	return sim_parms.rate;
 }
 
-unsigned int RsParameters::randomSeed()
+unsigned RsParameters::randomSeed()
 {
 	if (!_instance)
 	{
@@ -148,7 +150,7 @@ unsigned int RsParameters::randomSeed()
 	return sim_parms.random_seed;
 }
 
-unsigned int RsParameters::adcBits()  // NOLINT
+unsigned RsParameters::adcBits() // NOLINT
 {
 	if (!_instance)
 	{
@@ -157,7 +159,7 @@ unsigned int RsParameters::adcBits()  // NOLINT
 	return sim_parms.adc_bits;
 }
 
-bool RsParameters::exportXml()  // NOLINT
+bool RsParameters::exportXml() // NOLINT
 {
 	if (!_instance)
 	{
@@ -166,7 +168,7 @@ bool RsParameters::exportXml()  // NOLINT
 	return sim_parms.export_xml;
 }
 
-bool RsParameters::exportCsv()  // NOLINT
+bool RsParameters::exportCsv() // NOLINT
 {
 	if (!_instance)
 	{
@@ -185,7 +187,7 @@ bool RsParameters::exportBinary()
 }
 
 /// Length to use for the rendering filter
-unsigned int RsParameters::renderFilterLength()
+unsigned RsParameters::renderFilterLength()
 {
 	if (!_instance)
 	{
@@ -195,7 +197,7 @@ unsigned int RsParameters::renderFilterLength()
 }
 
 /// Maximum number of threads to use for rendering
-unsigned int RsParameters::renderThreads()
+unsigned RsParameters::renderThreads()
 {
 	if (!_instance)
 	{
@@ -204,7 +206,7 @@ unsigned int RsParameters::renderThreads()
 	return sim_parms.render_threads;
 }
 
-unsigned int RsParameters::oversampleRatio()
+unsigned RsParameters::oversampleRatio()
 {
 	if (!_instance)
 	{
@@ -213,14 +215,16 @@ unsigned int RsParameters::oversampleRatio()
 	return sim_parms.oversample_ratio;
 }
 
+// =====================================================================================================================
 //
-//Setters for global parameters
+// GLOBAL SETTERS
 //
+// =====================================================================================================================
 
 void RsParameters::setC(const RS_FLOAT c)
 {
 	sim_parms.c = c;
-	rs_debug::printf(rs_debug::RS_CRITICAL, "[CRITICAL] Propagation speed (c) set to custom value: %8.5f\n", c);
+	logging::printf(logging::RS_CRITICAL, "[CRITICAL] Propagation speed (c) set to custom value: %8.5f\n", c);
 }
 
 void RsParameters::setTime(const RS_FLOAT start, const RS_FLOAT end)
@@ -237,10 +241,10 @@ void RsParameters::setCwSampleRate(const RS_FLOAT rate)
 void RsParameters::setRate(const RS_FLOAT factor)
 {
 	sim_parms.rate = factor;
-	rs_debug::printf(rs_debug::RS_VERY_VERBOSE, "[VV] System sample rate set to custom value: %8.5f\n", factor);
+	logging::printf(logging::RS_VERY_VERBOSE, "[VV] System sample rate set to custom value: %8.5f\n", factor);
 }
 
-void RsParameters::setRandomSeed(const unsigned int randomSeed)
+void RsParameters::setRandomSeed(const unsigned randomSeed)
 {
 	sim_parms.random_seed = randomSeed;
 }
@@ -257,34 +261,32 @@ void RsParameters::setExporters(const bool xml, const bool csv, const bool binar
 	sim_parms.export_binary = binary;
 }
 
-void RsParameters::setAdcBits(const unsigned int bits)
+void RsParameters::setAdcBits(const unsigned bits)
 {
 	sim_parms.adc_bits = bits;
 }
 
-void RsParameters::setRenderFilterLength(const unsigned int length) // TODO: unused function??
+void RsParameters::setRenderFilterLength(const unsigned length)
 {
-	//Sanity check the render filter length
 	if (length < 16)
 	{
 		throw std::runtime_error("[ERROR] Render filter length must be > 16");
 	}
 	sim_parms.filter_length = length;
-	rs_debug::printf(rs_debug::RS_VERY_VERBOSE, "[VV] Render filter length set to custom value: %d\n", length);
+	logging::printf(logging::RS_VERY_VERBOSE, "[VV] Render filter length set to custom value: %d\n", length);
 }
 
-void RsParameters::setOversampleRatio(const unsigned int ratio)
+void RsParameters::setOversampleRatio(const unsigned ratio)
 {
-	//Sanity check the ratio
 	if (ratio == 0)
 	{
 		throw std::runtime_error("[ERROR] Oversample ratio must be >= 1");
 	}
 	sim_parms.oversample_ratio = ratio;
-	rs_debug::printf(rs_debug::RS_VERY_VERBOSE, "[VV] Oversampling enabled with ratio %d\n", ratio);
+	logging::printf(logging::RS_VERY_VERBOSE, "[VV] Oversampling enabled with ratio %d\n", ratio);
 }
 
-void RsParameters::setThreads(const unsigned int threads)
+void RsParameters::setThreads(const unsigned threads)
 {
 	sim_parms.render_threads = threads;
 }

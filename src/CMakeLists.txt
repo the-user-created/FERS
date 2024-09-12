@@ -1,16 +1,21 @@
 include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_BINARY_DIR})
 
 set(fers_SRCS
-	rsdebug.cpp rsmain.cpp rsplatform.cpp rsradar.cpp rstarget.cpp rsworld.cpp
-	xmlimport.cpp rsgeometry.cpp rspath.cpp rssim.cpp rsthreadedsim.cpp
-	rspulserender.cpp rsradarwaveform.cpp rsparameters.cpp rsobject.cpp
-	rsantenna.cpp rsportable.cpp rsresponse.cpp rsnoise.cpp rssignal.cpp
-	rstiming.cpp rshdf5.cpp rspython.cpp rsinterp.cpp rsdsp.cpp rsmultipath.cpp
-	rspattern.cpp rspolarize.cpp rsdebug.h rspath.h rsportable.h rsradar.h
-	rssim.h rsworld.h rsgeometry.h rsplatform.h rstarget.h xmlimport.h
-	rsradarwaveform.h rsparameters.h rssignal.h rsthreadedsim.h rsobject.h
-	rsantenna.h rsresponse.h rsnoise.h rstiming.h rshdf5.h rspython.h rsinterp.h
-	rsdsp.h rsmultipath.h rspattern.h rspolarize.h
+	logging.cpp main.cpp platform.cpp radar_system.cpp target.cpp world.cpp
+	xmlimport.cpp geometry_ops.cpp rspath.cpp rssim.cpp rsthreadedsim.cpp
+	rspulserender.cpp radar_signal.cpp rsparameters.cpp
+	antenna_factory.cpp response.cpp noise_generators.cpp rssignal.cpp
+	timing.cpp hdf5_export.cpp python_extension.cpp interpolation_set.cpp dsp_filters.cpp multipath_surface.cpp
+	antenna_pattern.cpp logging.h rspath.h portable_utils.h radar_system.h
+	rssim.h world.h geometry_ops.h platform.h target.h xmlimport.h
+	radar_signal.h rsparameters.h rssignal.h rsthreadedsim.h object.h
+	antenna_factory.h response.h noise_generators.h timing.h hdf5_export.h python_extension.h interpolation_set.h
+	dsp_filters.h multipath_surface.h antenna_pattern.h
+	jones_vector.h
+	polarization_matrix.cpp
+	polarization_matrix.h
+	interpolation_filter.cpp
+	interpolation_filter.h
 )
 
 add_executable(fers ${fers_SRCS})

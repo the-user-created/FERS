@@ -31,7 +31,7 @@ hid_t openFile(const std::string& name)
 void readAndDump(hid_t file, FILE* outfile)
 {
 	size_t size = 0;
-	unsigned int it;
+	unsigned it;
 	double max_i = 0, max_q = 0;
 	//Open the / group
 	hid_t slash = H5Gopen1(file, "/");
@@ -108,7 +108,7 @@ void readAndDump(hid_t file, FILE* outfile)
 		H5LTget_attribute_double(slash, i_chunk_name.c_str(), "fullscale", &i_scale);
 		H5LTget_attribute_double(slash, q_chunk_name.c_str(), "fullscale", &q_scale);
 		// Write out the data
-		for (unsigned int j = 0; j < size; j++)
+		for (unsigned j = 0; j < size; j++)
 		{
 			double i = buffer_i[j] * i_scale / max_i;
 			double q = buffer_q[j] * q_scale / max_q;

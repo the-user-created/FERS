@@ -39,7 +39,7 @@ bool binarySpecified = false; // Flag to indicate if binary value was specified
 bool csvSpecified = false;    // Flag to indicate if csv value was specified
 bool xmlSpecified = false;    // Flag to indicate if xml value was specified
 
-// Default values for rstiming.cpp
+// Default values for timing.cpp
 double default_freq_offset = 0.0;
 double default_phase_offset = 0.0;
 double default_frequency = 0.0;
