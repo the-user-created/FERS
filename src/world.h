@@ -74,11 +74,22 @@ namespace rs
 			return _timings[name];
 		}
 
+		[[nodiscard]] std::vector<Target*> getTargets() const
+		{
+			return _targets;
+		}
+
+		[[nodiscard]] std::vector<Receiver*> getReceivers() const
+		{
+			return _receivers;
+		}
+
+		[[nodiscard]] std::vector<Transmitter*> getTransmitters() const
+		{
+			return _transmitters;
+		}
+
 		void processMultipath();
-
-		friend void runThreadedSim(unsigned threadLimit, World* world);
-
-		friend void simulatePair(const Transmitter* trans, Receiver* recv, const World* world);
 
 	protected:
 		std::vector<Platform*> _platforms;
@@ -90,9 +101,6 @@ namespace rs
 		std::map<std::string, PrototypeTiming*> _timings;
 		MultipathSurface* _multipath_surface;
 	};
-
-	// TODO: why is this here?????????
-	void runThreadedSim(unsigned threadLimit, World* world);
 }
 
 #endif
