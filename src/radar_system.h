@@ -6,19 +6,17 @@
 #ifndef RADAR_SYSTEM_H
 #define RADAR_SYSTEM_H
 
-#include <string>
-#include <vector>
-#include <boost/thread/mutex.hpp>
+#include <boost/thread/pthread/mutex.hpp>
 
 #include "antenna_factory.h"
 #include "config.h"
 #include "object.h"
-#include "radar_signal.h"
 #include "response.h"
 #include "timing.h"
 
 namespace rs
 {
+	class RadarSignal;
 	class Response;
 	class Antenna;
 	class SVec3;

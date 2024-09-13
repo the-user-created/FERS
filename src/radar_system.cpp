@@ -5,17 +5,10 @@
 
 #include "radar_system.h"
 
-#include <algorithm>
-#include <cmath>
-#include <stdexcept>
-
 #include "logging.h"
 #include "multipath_surface.h"
 #include "parameters.h"
-#include "platform.h"
-#include "response.h"
-#include "rspulserender.h"
-#include "timing.h"
+#include "receiver_export.h"
 
 using namespace rs;
 
@@ -27,10 +20,7 @@ using namespace rs;
 
 Timing* Radar::getTiming() const
 {
-	if (!_timing)
-	{
-		throw std::runtime_error("[BUG] Radar::GetTiming called before timing set");
-	}
+	if (!_timing) { throw std::runtime_error("[BUG] Radar::GetTiming called before timing set"); }
 	return _timing;
 }
 
@@ -99,10 +89,7 @@ void Receiver::addResponse(Response* response)
 
 void Receiver::clearResponses()
 {
-	for (const auto& response : _responses)
-	{
-		delete response;
-	}
+	for (const auto& response : _responses) { delete response; }
 	_responses.clear();
 }
 
@@ -112,24 +99,15 @@ void Receiver::render()
 	{
 		boost::try_mutex::scoped_try_lock lock(_responses_mutex);
 		std::sort(_responses.begin(), _responses.end(), compareTimes);
-		if (parameters::exportXml())
-		{
-			exportReceiverXml(_responses, getName() + "_results");
-		}
+		if (parameters::exportXml()) { receiver_export::exportReceiverXml(_responses, getName() + "_results"); }
 		if (parameters::exportBinary())
 		{
-			exportReceiverBinary(_responses, this, getName() + "_results");
+			receiver_export::exportReceiverBinary(_responses, this, getName() + "_results");
 		}
-		if (parameters::exportCsv())
-		{
-			exportReceiverCsv(_responses, getName() + "_results");
-		}
+		if (parameters::exportCsv()) { receiver_export::exportReceiverCsv(_responses, getName() + "_results"); }
 		lock.unlock();
 	}
-	catch (boost::lock_error&)
-	{
-		throw std::runtime_error("[BUG] Responses lock is locked during Render()");
-	}
+	catch (boost::lock_error&) { throw std::runtime_error("[BUG] Responses lock is locked during Render()"); }
 }
 
 void Receiver::setWindowProperties(const RS_FLOAT length, const RS_FLOAT prf, const RS_FLOAT skip)
@@ -152,10 +130,7 @@ int Receiver::getWindowCount() const
 RS_FLOAT Receiver::getWindowStart(const int window) const
 {
 	const RS_FLOAT stime = static_cast<RS_FLOAT>(window) / _window_prf + _window_skip;
-	if (!_timing)
-	{
-		throw std::logic_error("[BUG] Receiver must be associated with timing source");
-	}
+	if (!_timing) { throw std::logic_error("[BUG] Receiver must be associated with timing source"); }
 	return stime;
 }
 
@@ -167,10 +142,7 @@ RS_FLOAT Receiver::getWindowStart(const int window) const
 
 Receiver* rs::createMultipathDual(Receiver* recv, const MultipathSurface* surf) // NOLINT(misc-no-recursion)
 {
-	if (recv->_dual)
-	{
-		return recv->_dual;
-	}
+	if (recv->_dual) { return recv->_dual; }
 	const Platform* dual_plat = createMultipathDual(recv->getPlatform(), surf);
 	auto* dual = new Receiver(dual_plat, recv->getName() + "_dual");
 	recv->_dual = dual;
@@ -190,10 +162,7 @@ Receiver* rs::createMultipathDual(Receiver* recv, const MultipathSurface* surf) 
 
 Transmitter* rs::createMultipathDual(Transmitter* trans, const MultipathSurface* surf) // NOLINT(misc-no-recursion)
 {
-	if (trans->_dual)
-	{
-		return trans->_dual;
-	}
+	if (trans->_dual) { return trans->_dual; }
 	const Platform* dual_plat = createMultipathDual(trans->getPlatform(), surf);
 	auto* dual = new Transmitter(dual_plat, trans->getName() + "_dual", trans->_pulsed);
 	trans->_dual = dual;
