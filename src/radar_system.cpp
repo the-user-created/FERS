@@ -11,9 +11,9 @@
 
 #include "logging.h"
 #include "multipath_surface.h"
+#include "parameters.h"
 #include "platform.h"
 #include "response.h"
-#include "parameters.h"
 #include "rspulserender.h"
 #include "timing.h"
 

@@ -34,6 +34,7 @@ World::~World()
 		delete snd;
 	}
 
+	// TODO: These should all be moved to smart pointers
 	std::for_each(_receivers.begin(), _receivers.end(), ObjDel<Receiver*>());
 	std::for_each(_transmitters.begin(), _transmitters.end(), ObjDel<Transmitter*>());
 	std::for_each(_targets.begin(), _targets.end(), ObjDel<Target*>());
