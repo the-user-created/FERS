@@ -207,7 +207,7 @@ void Path::setInterp(const InterpType settype)
 }
 
 //Compares two paths at the same time and returns a vector with the distance and angle
-SVec3 compare(const RS_FLOAT time, const Path& start, const Path& end)
+SVec3 compare(const RS_FLOAT time, const Path& start, const Path& end)  // TODO: unused
 {
 	const Vec3 difference = end.getPosition(time) - start.getPosition(time);
 	const SVec3 result(difference); //Get the result in spherical co-ordinates

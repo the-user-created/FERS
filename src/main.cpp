@@ -6,8 +6,8 @@
 #include <cstring>
 #include <stdexcept>
 
-#include "portable_utils.h"
 #include "parameters.h"
+#include "portable_utils.h"
 #include "sim_threading.h"
 #include "xmlimport.h"
 
