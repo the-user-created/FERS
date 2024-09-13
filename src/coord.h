@@ -18,29 +18,29 @@ namespace coord
 
 		bool operator<(const Coord& b) const { return t < b.t; }
 
-		Coord& operator=(const RS_FLOAT a)
+		Coord& operator=(RS_FLOAT a)
 		{
 			t = a;
-			pos.x = pos.y = pos.z = a;
+			pos = {a, a, a};
 			return *this;
 		}
 	};
 
-	Coord operator*(const Coord& a, const Coord& b);
+	inline Coord operator*(const Coord& a, const Coord& b) { return {a.pos * b.pos, a.t}; }
 
-	Coord operator+(const Coord& a, const Coord& b);
+	inline Coord operator+(const Coord& a, const Coord& b) { return {a.pos + b.pos, a.t}; }
 
-	Coord operator-(const Coord& a, const Coord& b);
+	inline Coord operator-(const Coord& a, const Coord& b) { return {a.pos - b.pos, a.t}; }
 
-	Coord operator/(const Coord& a, const Coord& b);
+	inline Coord operator/(const Coord& a, const Coord& b) { return {a.pos / b.pos, a.t}; }
 
-	Coord operator+(const Coord& a, RS_FLOAT b);
+	inline Coord operator+(const Coord& a, const RS_FLOAT b) { return {a.pos + b, a.t}; }
 
-	Coord operator*(const Coord& a, RS_FLOAT b);
+	inline Coord operator*(const Coord& a, const RS_FLOAT b) { return {a.pos * b, a.t}; }
 
-	Coord operator/(RS_FLOAT a, const Coord& b);
+	inline Coord operator/(const RS_FLOAT a, const Coord& b) { return {a / b.pos, b.t}; }
 
-	Coord operator/(const Coord& b, RS_FLOAT a);
+	inline Coord operator/(const Coord& b, const RS_FLOAT a) { return {b.pos / a, b.t}; }
 
 	struct RotationCoord
 	{
@@ -57,23 +57,50 @@ namespace coord
 		}
 
 		explicit RotationCoord(const RS_FLOAT a = 0) : azimuth(a), elevation(a), t(a) {}
+
+		RotationCoord(const RS_FLOAT az, const RS_FLOAT el,
+		              const RS_FLOAT time) : azimuth(az), elevation(el), t(time) {}
 	};
 
-	RotationCoord operator*(const RotationCoord& a, const RotationCoord& b);
+	inline RotationCoord operator*(const RotationCoord& a, const RotationCoord& b)
+	{
+		return {a.azimuth * b.azimuth, a.elevation * b.elevation, a.t};
+	}
 
-	RotationCoord operator+(const RotationCoord& a, const RotationCoord& b);
+	inline RotationCoord operator+(const RotationCoord& a, const RotationCoord& b)
+	{
+		return {a.azimuth + b.azimuth, a.elevation + b.elevation, a.t};
+	}
 
-	RotationCoord operator-(const RotationCoord& a, const RotationCoord& b);
+	inline RotationCoord operator-(const RotationCoord& a, const RotationCoord& b)
+	{
+		return {a.azimuth - b.azimuth, a.elevation - b.elevation, a.t};
+	}
 
-	RotationCoord operator/(const RotationCoord& a, const RotationCoord& b);
+	inline RotationCoord operator/(const RotationCoord& a, const RotationCoord& b)
+	{
+		return {a.azimuth / b.azimuth, a.elevation / b.elevation, a.t};
+	}
 
-	RotationCoord operator+(const RotationCoord& a, RS_FLOAT b);
+	inline RotationCoord operator+(const RotationCoord& a, const RS_FLOAT b)
+	{
+		return {a.azimuth + b, a.elevation + b, a.t};
+	}
 
-	RotationCoord operator*(const RotationCoord& a, RS_FLOAT b);
+	inline RotationCoord operator*(const RotationCoord& a, const RS_FLOAT b)
+	{
+		return {a.azimuth * b, a.elevation * b, a.t};
+	}
 
-	RotationCoord operator/(RS_FLOAT a, const RotationCoord& b);
+	inline RotationCoord operator/(const RS_FLOAT a, const RotationCoord& b)
+	{
+		return {a / b.azimuth, a / b.elevation, b.t};
+	}
 
-	RotationCoord operator/(const RotationCoord& b, RS_FLOAT a);
+	inline RotationCoord operator/(const RotationCoord& b, const RS_FLOAT a)
+	{
+		return {b.azimuth / a, b.elevation / a, b.t};
+	}
 }
 
 #endif //COORD_H

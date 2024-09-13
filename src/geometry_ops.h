@@ -23,15 +23,9 @@ namespace rs
 
 		~Matrix3() = default;
 
-		[[nodiscard]] const RS_FLOAT* getData() const
-		{
-			return elements;
-		}
+		[[nodiscard]] const RS_FLOAT* getData() const { return elements; }
 
-		RS_FLOAT* getData()
-		{
-			return elements;
-		}
+		RS_FLOAT* getData() { return elements; }
 	};
 
 	class Vec3
@@ -39,13 +33,9 @@ namespace rs
 	public:
 		RS_FLOAT x, y, z;
 
-		Vec3() : x(0), y(0), z(0)
-		{
-		}
+		Vec3() : x(0), y(0), z(0) {}
 
-		Vec3(const RS_FLOAT x, const RS_FLOAT y, const RS_FLOAT z) : x(x), y(y), z(z)
-		{
-		}
+		Vec3(const RS_FLOAT x, const RS_FLOAT y, const RS_FLOAT z) : x(x), y(y), z(z) {}
 
 		explicit Vec3(const SVec3& svec);
 
@@ -66,6 +56,8 @@ namespace rs
 		Vec3& operator/=(RS_FLOAT b);
 
 		Vec3& operator+=(RS_FLOAT b);
+
+		Vec3 operator+(const RS_FLOAT value) const { return {x + value, y + value, z + value}; }
 
 		[[nodiscard]] RS_FLOAT length() const;
 	};
@@ -93,14 +85,10 @@ namespace rs
 	public:
 		RS_FLOAT length, azimuth, elevation;
 
-		SVec3() : length(0), azimuth(0), elevation(0)
-		{
-		}
+		SVec3() : length(0), azimuth(0), elevation(0) {}
 
 		SVec3(const RS_FLOAT length, const RS_FLOAT azimuth, const RS_FLOAT elevation)
-			: length(length), azimuth(azimuth), elevation(elevation)
-		{
-		}
+			: length(length), azimuth(azimuth), elevation(elevation) {}
 
 		SVec3(const SVec3& svec) = default;
 
@@ -116,10 +104,7 @@ namespace rs
 	inline SVec3 operator+(const SVec3& a, const SVec3& b)
 	{
 		RS_FLOAT new_azimuth = fmod(a.azimuth + b.azimuth, 2 * M_PI);
-		if (new_azimuth < 0)
-		{
-			new_azimuth += 2 * M_PI;
-		}
+		if (new_azimuth < 0) { new_azimuth += 2 * M_PI; }
 		RS_FLOAT new_elevation = fmod(a.elevation + b.elevation, M_PI);
 		return {a.length + b.length, new_azimuth, new_elevation};
 	}
@@ -127,10 +112,7 @@ namespace rs
 	inline SVec3 operator-(const SVec3& a, const SVec3& b)
 	{
 		RS_FLOAT new_azimuth = fmod(a.azimuth - b.azimuth, 2 * M_PI);
-		if (new_azimuth < 0)
-		{
-			new_azimuth += 2 * M_PI;
-		}
+		if (new_azimuth < 0) { new_azimuth += 2 * M_PI; }
 		RS_FLOAT new_elevation = fmod(a.elevation - b.elevation, M_PI);
 		return {a.length - b.length, new_azimuth, new_elevation};
 	}
