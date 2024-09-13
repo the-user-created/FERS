@@ -12,11 +12,14 @@
 #include <optional>
 #include <tinyxml.h>
 
+#include "coord.h"
 #include "logging.h"
 #include "multipath_surface.h"
 #include "parameters.h"
+#include "path.h"
 #include "pulse_factory.h"
 #include "radar_system.h"
+#include "rotation_path.h"
 #include "target.h"
 
 using namespace rs;
@@ -348,7 +351,7 @@ namespace
 	}
 
 	/// Process a motion path waypoint
-	void processWaypoint(const TiXmlHandle& handXml, Path* path)
+	void processWaypoint(const TiXmlHandle& handXml, path::Path* path)
 	{
 		try
 		{
@@ -356,7 +359,7 @@ namespace
 			const RS_FLOAT y = getChildRsFloat(handXml, "y");
 			const RS_FLOAT z = getChildRsFloat(handXml, "altitude");
 			const RS_FLOAT t = getChildRsFloat(handXml, "time");
-			Coord coord;
+			coord::Coord coord;
 			coord.t = t;
 			coord.pos = Vec3(x, y, z);
 			path->addCoord(coord);
@@ -369,7 +372,7 @@ namespace
 	}
 
 	/// Process the path's python attributes
-	void processPythonPath(const TiXmlHandle& pathXml, Path* path)
+	void processPythonPath(const TiXmlHandle& pathXml, path::Path* path)
 	{
 		//Initialize python, if it isn't done already
 		rs_python::initPython();
@@ -390,19 +393,19 @@ namespace
 	void processMotionPath(const TiXmlHandle& mpXml, const Platform* platform)
 	{
 		//Get a pointer to the platform's path
-		Path* path = platform->getMotionPath();
+		path::Path* path = platform->getMotionPath();
 		//Get the interpolation type
 		try
 		{
 			if (const std::string rottype = getAttributeString(mpXml, "interpolation", ""); rottype == "linear")
 			{
-				path->setInterp(Path::RS_INTERP_LINEAR);
+				path->setInterp(path::Path::RS_INTERP_LINEAR);
 			}
-			else if (rottype == "cubic") { path->setInterp(Path::RS_INTERP_CUBIC); }
-			else if (rottype == "static") { path->setInterp(Path::RS_INTERP_STATIC); }
+			else if (rottype == "cubic") { path->setInterp(path::Path::RS_INTERP_CUBIC); }
+			else if (rottype == "static") { path->setInterp(path::Path::RS_INTERP_STATIC); }
 			else if (rottype == "python")
 			{
-				path->setInterp(Path::RS_INTERP_PYTHON);
+				path->setInterp(path::Path::RS_INTERP_PYTHON);
 				processPythonPath(mpXml, path);
 			}
 			else
@@ -410,7 +413,7 @@ namespace
 				logging::printf(logging::RS_VERBOSE,
 				                "[WARNING] Unsupported motion path interpolation type for platform '" + platform->
 				                getName() + "'. Defaulting to static.\n");
-				path->setInterp(Path::RS_INTERP_STATIC);
+				path->setInterp(path::Path::RS_INTERP_STATIC);
 			}
 		}
 		catch ([[maybe_unused]] XmlImportException& e)
@@ -418,7 +421,7 @@ namespace
 			logging::printf(logging::RS_VERBOSE,
 			                "[WARNING] Motion path interpolation type not specified for platform '" + platform->
 			                getName() + "'. Defaulting to static.\n");
-			path->setInterp(Path::RS_INTERP_STATIC);
+			path->setInterp(path::Path::RS_INTERP_STATIC);
 		}
 
 		//Process all the PositionWaypoints
@@ -433,11 +436,11 @@ namespace
 	}
 
 	/// Process a rotation path waypoint
-	void processRotationWaypoint(const TiXmlHandle& handXml, RotationPath* path)
+	void processRotationWaypoint(const TiXmlHandle& handXml, path::RotationPath* path)
 	{
 		try
 		{
-			RotationCoord coord;
+			coord::RotationCoord coord;
 			coord.elevation = getChildRsFloat(handXml, "elevation");
 			coord.azimuth = getChildRsFloat(handXml, "azimuth");
 			coord.t = getChildRsFloat(handXml, "time");
@@ -451,7 +454,7 @@ namespace
 	}
 
 	/// Process Waypoints for RotationPath
-	void processRotationWaypoints(const TiXmlHandle& mpXml, RotationPath* path)
+	void processRotationWaypoints(const TiXmlHandle& mpXml, path::RotationPath* path)
 	{
 		//Process all the RotationWaypoints
 		TiXmlHandle tmp = mpXml.ChildElement("rotationwaypoint", 0);
@@ -467,10 +470,10 @@ namespace
 	/// Process an entry for a fixed rotation
 	void processRotationConstant(const TiXmlHandle& mpXml, const Platform* platform)
 	{
-		RotationPath* path = platform->getRotationPath();
+		path::RotationPath* path = platform->getRotationPath();
 		try
 		{
-			RotationCoord start, rate;
+			coord::RotationCoord start, rate;
 			start.azimuth = getChildRsFloat(mpXml, "startazimuth");
 			start.elevation = getChildRsFloat(mpXml, "startelevation");
 			rate.azimuth = getChildRsFloat(mpXml, "azimuthrate");
@@ -489,23 +492,23 @@ namespace
 		logging::printf(logging::RS_VERY_VERBOSE, "[VV] Loading Rotation Path.\n");
 
 		//Get a pointer to the rotation path
-		RotationPath* path = platform->getRotationPath();
+		path::RotationPath* path = platform->getRotationPath();
 
 		//Get the interpolation type
 		try
 		{
 			if (const std::string rottype = getAttributeString(mpXml, "interpolation", ""); rottype == "linear")
 			{
-				path->setInterp(RotationPath::RS_INTERP_LINEAR);
+				path->setInterp(path::RotationPath::RS_INTERP_LINEAR);
 			}
-			else if (rottype == "cubic") { path->setInterp(RotationPath::RS_INTERP_CUBIC); }
-			else if (rottype == "static") { path->setInterp(RotationPath::RS_INTERP_STATIC); }
+			else if (rottype == "cubic") { path->setInterp(path::RotationPath::RS_INTERP_CUBIC); }
+			else if (rottype == "static") { path->setInterp(path::RotationPath::RS_INTERP_STATIC); }
 			else
 			{
 				logging::printf(logging::RS_VERBOSE,
 				                "[WARNING] Unsupported rotation path interpolation type for platform '" + platform->
 				                getName() + "'. Defaulting to static.\n");
-				path->setInterp(RotationPath::RS_INTERP_STATIC);
+				path->setInterp(path::RotationPath::RS_INTERP_STATIC);
 			}
 		}
 		catch ([[maybe_unused]] XmlImportException& e)
@@ -513,7 +516,7 @@ namespace
 			logging::printf(logging::RS_VERBOSE,
 			                "[WARNING] Rotation path interpolation type not specified for platform '" + platform->
 			                getName() + "'. Defaulting to static.\n");
-			path->setInterp(RotationPath::RS_INTERP_STATIC);
+			path->setInterp(path::RotationPath::RS_INTERP_STATIC);
 		}
 		// Process the rotation waypoints
 		processRotationWaypoints(mpXml, path);

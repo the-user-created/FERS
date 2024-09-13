@@ -10,7 +10,8 @@
 #include <boost/utility.hpp>
 
 #include "config.h"
-#include "rspath.h"
+#include "path.h"
+#include "rotation_path.h"
 
 namespace rs
 {
@@ -19,13 +20,14 @@ namespace rs
 	class Platform : boost::noncopyable
 	{
 	public:
-		explicit Platform(std::string name) : _motion_path(new Path()), _rotation_path(new RotationPath()), _name(std::move(name)), _dual(nullptr) {}
+		explicit Platform(std::string name) : _motion_path(new path::Path()), _rotation_path(new path::RotationPath()),
+		                                      _name(std::move(name)), _dual(nullptr) {}
 
 		~Platform();
 
-		[[nodiscard]] Path* getMotionPath() const { return _motion_path; }
+		[[nodiscard]] path::Path* getMotionPath() const { return _motion_path; }
 
-		[[nodiscard]] RotationPath* getRotationPath() const { return _rotation_path; }
+		[[nodiscard]] path::RotationPath* getRotationPath() const { return _rotation_path; }
 
 		[[nodiscard]] Vec3 getPosition(const RS_FLOAT time) const { return _motion_path->getPosition(time); }
 
@@ -35,8 +37,8 @@ namespace rs
 
 	private:
 		// TODO: use unique_ptr
-		Path* _motion_path;
-		RotationPath* _rotation_path;
+		path::Path* _motion_path;
+		path::RotationPath* _rotation_path;
 		std::string _name;
 		Platform* _dual;
 
