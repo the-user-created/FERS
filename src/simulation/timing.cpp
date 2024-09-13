@@ -85,7 +85,6 @@ void ClockModelTiming::initializeModel(const PrototypeTiming* timing)
 		throw std::logic_error("[BUG] ClockModelTiming::InitializeModel called more than once");
 	}
 	timing->getAlphas(_alphas, _weights);
-	logging::printf(logging::RS_VERY_VERBOSE, "%d\n", _alphas.size());
 	_model = new ClockModelGenerator(_alphas, _weights, timing->getFrequency(), timing->getPhaseOffset(),
 	                                 timing->getFreqOffset(), 15);
 	if (timing->getFrequency() == 0.0)
