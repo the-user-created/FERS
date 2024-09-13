@@ -13,6 +13,7 @@
 namespace rs
 {
 	class SVec3;
+	class Vec3;
 
 	class Matrix3
 	{
@@ -27,58 +28,6 @@ namespace rs
 
 		RS_FLOAT* getData() { return elements; }
 	};
-
-	class Vec3
-	{
-	public:
-		RS_FLOAT x, y, z;
-
-		Vec3() : x(0), y(0), z(0) {}
-
-		Vec3(const RS_FLOAT x, const RS_FLOAT y, const RS_FLOAT z) : x(x), y(y), z(z) {}
-
-		explicit Vec3(const SVec3& svec);
-
-		~Vec3() = default;
-
-		Vec3& operator+=(const Vec3& b);
-
-		Vec3& operator-=(const Vec3& b);
-
-		Vec3& operator*=(const Vec3& b);
-
-		Vec3& operator=(const Vec3& b);
-
-		Vec3& operator*=(const Matrix3& m);
-
-		Vec3& operator*=(RS_FLOAT b);
-
-		Vec3& operator/=(RS_FLOAT b);
-
-		Vec3& operator+=(RS_FLOAT b);
-
-		Vec3 operator+(const RS_FLOAT value) const { return {x + value, y + value, z + value}; }
-
-		[[nodiscard]] RS_FLOAT length() const;
-	};
-
-	RS_FLOAT dotProduct(const Vec3& a, const Vec3& b);
-
-	Vec3 crossProduct(const Vec3& a, const Vec3& b);
-
-	Vec3 operator*(const Vec3& a, const Vec3& b);
-
-	Vec3 operator+(const Vec3& a, const Vec3& b);
-
-	Vec3 operator-(const Vec3& a, const Vec3& b);
-
-	Vec3 operator/(const Vec3& a, const Vec3& b);
-
-	Vec3 operator*(const Vec3& a, RS_FLOAT b);
-
-	Vec3 operator/(const Vec3& a, RS_FLOAT b);
-
-	Vec3 operator/(RS_FLOAT a, const Vec3& b);
 
 	class SVec3
 	{
@@ -96,10 +45,111 @@ namespace rs
 
 		~SVec3() = default;
 
-		SVec3& operator*=(RS_FLOAT b);
+		SVec3& operator*=(const RS_FLOAT b)
+		{
+			length *= b;
+			return *this;
+		}
 
-		SVec3& operator/=(RS_FLOAT b);
+		SVec3& operator/=(const RS_FLOAT b)
+		{
+			length /= b;
+			return *this;
+		}
 	};
+
+	class Vec3
+	{
+	public:
+		RS_FLOAT x, y, z;
+
+		Vec3() : x(0), y(0), z(0) {}
+
+		Vec3(const RS_FLOAT x, const RS_FLOAT y, const RS_FLOAT z) : x(x), y(y), z(z) {}
+
+		explicit Vec3(const SVec3& svec) : x(svec.length * std::cos(svec.azimuth) * std::cos(svec.elevation)),
+		                                   y(svec.length * std::sin(svec.azimuth) * std::cos(svec.elevation)),
+		                                   z(svec.length * std::sin(svec.elevation)) {}
+
+		~Vec3() = default;
+
+		Vec3& operator+=(const Vec3& b)
+		{
+			x += b.x;
+			y += b.y;
+			z += b.z;
+			return *this;
+		}
+
+		Vec3& operator-=(const Vec3& b)
+		{
+			x -= b.x;
+			y -= b.y;
+			z -= b.z;
+			return *this;
+		}
+
+		Vec3& operator*=(const Vec3& b)
+		{
+			x *= b.x;
+			y *= b.y;
+			z *= b.z;
+			return *this;
+		}
+
+		Vec3& operator=(const Vec3& b) = default;
+
+		Vec3& operator*=(const Matrix3& m);
+
+		Vec3& operator*=(const RS_FLOAT b)
+		{
+			x *= b;
+			y *= b;
+			z *= b;
+			return *this;
+		}
+
+		Vec3& operator/=(const RS_FLOAT b)
+		{
+			x /= b;
+			y /= b;
+			z /= b;
+			return *this;
+		}
+
+		Vec3& operator+=(const RS_FLOAT b)
+		{
+			x += b;
+			y += b;
+			z += b;
+			return *this;
+		}
+
+		Vec3 operator+(const RS_FLOAT value) const { return {x + value, y + value, z + value}; }
+
+		[[nodiscard]] RS_FLOAT length() const { return std::sqrt(x * x + y * y + z * z); }
+	};
+
+	inline RS_FLOAT dotProduct(const Vec3& a, const Vec3& b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
+
+	inline Vec3 crossProduct(const Vec3& a, const Vec3& b) // TODO: unused
+	{
+		return {a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x};
+	}
+
+	inline Vec3 operator*(const Vec3& a, const Vec3& b) { return {a.x * b.x, a.y * b.y, a.z * b.z}; }
+
+	inline Vec3 operator+(const Vec3& a, const Vec3& b) { return {a.x + b.x, a.y + b.y, a.z + b.z}; }
+
+	inline Vec3 operator-(const Vec3& a, const Vec3& b) { return {a.x - b.x, a.y - b.y, a.z - b.z}; }
+
+	inline Vec3 operator/(const Vec3& a, const Vec3& b) { return {a.x / b.x, a.y / b.y, a.z / b.z}; }
+
+	inline Vec3 operator*(const Vec3& a, const RS_FLOAT b) { return {a.x * b, a.y * b, a.z * b}; }
+
+	inline Vec3 operator/(const Vec3& a, const RS_FLOAT b) { return {a.x / b, a.y / b, a.z / b}; }
+
+	inline Vec3 operator/(const RS_FLOAT a, const Vec3& b) { return {a / b.x, a / b.y, a / b.z}; }
 
 	inline SVec3 operator+(const SVec3& a, const SVec3& b)
 	{
