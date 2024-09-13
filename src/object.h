@@ -11,7 +11,6 @@
 
 #include "config.h"
 #include "platform.h"
-#include "rspath.h"
 
 namespace rs
 {

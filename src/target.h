@@ -9,7 +9,6 @@
 #include "config.h"
 #include "object.h"
 #include "polarization_matrix.h"
-#include "rspath.h"
 
 namespace rs
 {

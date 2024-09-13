@@ -1,18 +1,15 @@
 include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_BINARY_DIR})
 
 set(fers_SRCS logging.cpp main.cpp platform.cpp radar_system.cpp target.cpp world.cpp xmlimport.cpp geometry_ops.cpp
-	rspath.cpp sim_threading.cpp response_renderer.cpp radar_signal.cpp parameters.cpp antenna_factory.cpp response.cpp
+	sim_threading.cpp response_renderer.cpp radar_signal.cpp parameters.cpp antenna_factory.cpp response.cpp
 	noise_generators.cpp timing.cpp hdf5_export.cpp python_extension.cpp interpolation_set.cpp
-	dsp_filters.cpp multipath_surface.cpp antenna_pattern.cpp logging.h rspath.h portable_utils.h radar_system.h
+	dsp_filters.cpp multipath_surface.cpp antenna_pattern.cpp logging.h portable_utils.h radar_system.h
 	world.h geometry_ops.h platform.h target.h xmlimport.h radar_signal.h parameters.h sim_threading.h
 	object.h antenna_factory.h response.h noise_generators.h timing.h hdf5_export.h python_extension.h
 	interpolation_set.h dsp_filters.h multipath_surface.h antenna_pattern.h jones_vector.h polarization_matrix.cpp
 	polarization_matrix.h interpolation_filter.cpp interpolation_filter.h response_renderer.h
-	interpolation_point.h
-	pulse_factory.cpp
-	pulse_factory.h
-	receiver_export.cpp
-	receiver_export.h
+	interpolation_point.h pulse_factory.cpp pulse_factory.h receiver_export.cpp receiver_export.h rotation_path.cpp
+	rotation_path.h path.cpp path.h coord.cpp coord.h path_utils.h
 )
 
 add_executable(fers ${fers_SRCS})
