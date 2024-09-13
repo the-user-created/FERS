@@ -1,34 +1,20 @@
-// rspulserender.cpp
-// Performs the second phase of the simulation - rendering the result
-// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-// 7 June 2006
+// received_export.cpp
+// Export receiver data to various formats
+// Created by David Young on 9/13/24.
+// Original code by Marc Brooker mbrooker@rrsg.ee.uct.ac.za
+//
 
-#define TIXML_USE_STL
+#include "receiver_export.h"
 
-#include "rspulserender.h"
-
-#include <cstdio>
 #include <fstream>
-#include <iomanip>
 #include <map>
-#include <sstream>
-#include <stdexcept>
-#include <string>
+#include <response_renderer.h>
 #include <tinyxml.h>
-#include <boost/scoped_array.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/thread.hpp>
 
-#include "dsp_filters.h"
 #include "hdf5_export.h"
-#include "noise_generators.h"
 #include "parameters.h"
 #include "portable_utils.h"
 #include "radar_system.h"
-#include "response.h"
-#include "timing.h"
-
-using namespace rs;
 
 namespace
 {
@@ -51,7 +37,7 @@ namespace
 		const RS_FLOAT power = rs_noise::noiseTemperatureToPower(temperature,
 		                                                         parameters::rate() * parameters::oversampleRatio()
 		                                                         / 2);
-		WgnGenerator generator(sqrt(power) / 2.0);
+		rs::WgnGenerator generator(sqrt(power) / 2.0);
 		for (unsigned i = 0; i < size; i++) { data[i] += RS_COMPLEX(generator.getSample(), generator.getSample()); }
 	}
 
@@ -102,23 +88,10 @@ namespace
 		return max;
 	}
 
-	void addArrayToWindow(const RS_FLOAT wStart, RS_COMPLEX* window, const unsigned wSize, const RS_FLOAT rate,
-	                      const RS_FLOAT rStart, const RS_COMPLEX* resp, const unsigned rSize)
-	{
-		int start_sample = static_cast<int>(portable_utils::rsRound(rate * (rStart - wStart)));
-		unsigned roffset = 0;
-		if (start_sample < 0)
-		{
-			roffset = -start_sample;
-			start_sample = 0;
-		}
-		for (unsigned i = roffset; i < rSize && i + start_sample < wSize; i++) { window[i + start_sample] += resp[i]; }
-	}
-
-	RS_FLOAT* generatePhaseNoise(const Receiver* recv, const unsigned wSize, const RS_FLOAT rate,
+	RS_FLOAT* generatePhaseNoise(const rs::Receiver* recv, const unsigned wSize, const RS_FLOAT rate,
 	                             RS_FLOAT& carrier, bool& enabled)
 	{
-		auto* timing = dynamic_cast<ClockModelTiming*>(recv->getTiming());
+		auto* timing = dynamic_cast<rs::ClockModelTiming*>(recv->getTiming());
 		if (!timing) { throw std::runtime_error("[BUG] Could not cast receiver->GetTiming() to ClockModelTiming"); }
 		auto* noise = new RS_FLOAT[wSize];
 		enabled = timing->enabled();
@@ -161,7 +134,7 @@ namespace
 		}
 	}
 
-	void exportResponseFersBin(const std::vector<Response*>& responses, const Receiver* recv,
+	void exportResponseFersBin(const std::vector<rs::Response*>& responses, const rs::Receiver* recv,
 	                           const std::string& recvName)
 	{
 		// TODO: This can be simplified and optimized
@@ -171,7 +144,7 @@ namespace
 		const long out_bin = openHdf5File(recvName);
 
 		// Create a threaded render object, to manage the rendering process
-		const ThreadedRenderer thr_renderer(&responses, recv, parameters::renderThreads());
+		const response_renderer::ThreadedResponseRenderer thr_renderer(&responses, recv, parameters::renderThreads());
 
 		// Now loop through the responses and write them to the file
 		const int window_count = recv->getWindowCount();
@@ -207,7 +180,7 @@ namespace
 				// Allocate memory for downsampled window
 				auto* tmp = new RS_COMPLEX[new_size];
 				//Downsample the data into tmp
-				downsample(window, size, tmp, parameters::oversampleRatio());
+				rs::downsample(window, size, tmp, parameters::oversampleRatio());
 				// Set tmp as the new window
 				size = new_size;
 				delete[] window;
@@ -232,116 +205,43 @@ namespace
 	}
 }
 
-void rs::exportReceiverXml(const std::vector<Response*>& responses, const std::string& filename)
+namespace receiver_export
 {
-	TiXmlDocument doc;
-	auto decl = std::make_unique<TiXmlDeclaration>("1.0", "", "");
-	doc.LinkEndChild(decl.release());
-	auto* root = new TiXmlElement("receiver");
-	doc.LinkEndChild(root);
-	for (const auto response : responses) { response->renderXml(root); }
-	if (!doc.SaveFile(filename + ".fersxml"))
+	void exportReceiverXml(const std::vector<rs::Response*>& responses, const std::string& filename)
 	{
-		throw std::runtime_error("Failed to save XML file: " + filename + ".fersxml");
-	}
-}
-
-void rs::exportReceiverCsv(const std::vector<Response*>& responses, const std::string& filename)
-{
-	std::map<std::string, std::ofstream*> streams;
-	for (const auto response : responses)
-	{
-		std::ofstream* of;
-		if (auto ofi = streams.find(response->getTransmitterName()); ofi == streams.end())
+		TiXmlDocument doc;
+		auto decl = std::make_unique<TiXmlDeclaration>("1.0", "", "");
+		doc.LinkEndChild(decl.release());
+		auto* root = new TiXmlElement("receiver");
+		doc.LinkEndChild(root);
+		for (const auto response : responses) { response->renderXml(root); }
+		if (!doc.SaveFile(filename + ".fersxml"))
 		{
-			std::ostringstream oss;
-			oss << filename << "_" << response->getTransmitterName() << ".csv";
-			of = new std::ofstream(oss.str().c_str());
-			of->setf(std::ios::scientific);
-			if (!*of) { throw std::runtime_error("[ERROR] Could not open file " + oss.str() + " for writing"); }
-			streams[response->getTransmitterName()] = of;
-		}
-		else { of = ofi->second; }
-		response->renderCsv(*of);
-	}
-	for (auto& [fst, snd] : streams) { delete snd; }
-}
-
-void rs::exportReceiverBinary(const std::vector<Response*>& responses, const Receiver* recv,
-                              const std::string& recvName) { exportResponseFersBin(responses, recv, recvName); }
-
-//
-// ThreadedRenderer Implementation
-//
-
-void ThreadedRenderer::renderWindow(RS_COMPLEX* window, RS_FLOAT length, RS_FLOAT start, RS_FLOAT fracDelay) const
-{
-	RS_FLOAT end = start + length;
-	std::queue<Response*> work_list;
-	for (auto response : *_responses)
-	{
-		RS_FLOAT resp_start = response->startTime();
-		if (RS_FLOAT resp_end = response->endTime(); resp_start <= end && resp_end >= start)
-		{
-			work_list.push(response);
+			throw std::runtime_error("Failed to save XML file: " + filename + ".fersxml");
 		}
 	}
-	boost::thread_group group;
-	boost::mutex work_list_mutex, window_mutex;
+
+	void exportReceiverCsv(const std::vector<rs::Response*>& responses, const std::string& filename)
 	{
-		std::vector<std::unique_ptr<RenderThread>> threads;
-		boost::mutex::scoped_lock lock(work_list_mutex);
-		for (int i = 0; i < _max_threads; i++)
+		std::map<std::string, std::ofstream*> streams;
+		for (const auto response : responses)
 		{
-			auto thr = std::make_unique<RenderThread>(i, &window_mutex, window, length, start, fracDelay,
-			                                          &work_list_mutex, &work_list);
-			group.create_thread(*thr);
-			threads.push_back(std::move(thr));
+			std::ofstream* of;
+			if (auto ofi = streams.find(response->getTransmitterName()); ofi == streams.end())
+			{
+				std::ostringstream oss;
+				oss << filename << "_" << response->getTransmitterName() << ".csv";
+				of = new std::ofstream(oss.str().c_str());
+				of->setf(std::ios::scientific);
+				if (!*of) { throw std::runtime_error("[ERROR] Could not open file " + oss.str() + " for writing"); }
+				streams[response->getTransmitterName()] = of;
+			}
+			else { of = ofi->second; }
+			response->renderCsv(*of);
 		}
+		for (auto& [fst, snd] : streams) { delete snd; }
 	}
-	group.join_all();
-}
 
-//
-// RenderThread Implementation
-//
-
-void RenderThread::operator()()
-{
-	const RS_FLOAT rate = parameters::rate() * parameters::oversampleRatio();
-	const auto size = static_cast<unsigned>(std::ceil(_length * rate));
-	_local_window = new RS_COMPLEX[size]();
-	const Response* resp = getWork();
-	while (resp)
-	{
-		unsigned psize;
-		RS_FLOAT prate;
-		std::shared_ptr<RS_COMPLEX[]> array = resp->renderBinary(prate, psize, _frac_delay);
-		addWindow(array.get(), resp->startTime(), psize);
-		resp = getWork();
-	}
-	{
-		boost::mutex::scoped_lock lock(*_window_mutex);
-		for (unsigned i = 0; i < size; i++) { _window[i] += _local_window[i]; }
-	}
-	delete[] _local_window;
-}
-
-void RenderThread::addWindow(const RS_COMPLEX* array, const RS_FLOAT startTime, const unsigned arraySize) const
-{
-	const RS_FLOAT rate = parameters::rate() * parameters::oversampleRatio();
-	const auto size = static_cast<unsigned>(std::ceil(_length * rate));
-	addArrayToWindow(_start, _local_window, size, rate, startTime, array, arraySize);
-}
-
-Response* RenderThread::getWork() const
-{
-	Response* ret;
-	{
-		boost::mutex::scoped_lock lock(*_work_list_mutex);
-		if (_work_list->empty()) { return nullptr; }
-		ret = _work_list->front();
-		_work_list->pop();
-	}
-	return ret;
+	void exportReceiverBinary(const std::vector<rs::Response*>& responses, const rs::Receiver* recv,
+	                          const std::string& recvName) { exportResponseFersBin(responses, recv, recvName); }
 }
