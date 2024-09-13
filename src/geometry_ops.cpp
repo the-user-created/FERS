@@ -13,9 +13,7 @@ using namespace rs;
 Vec3::Vec3(const SVec3& svec)
 	: x(svec.length * std::cos(svec.azimuth) * std::cos(svec.elevation)),
 	  y(svec.length * std::sin(svec.azimuth) * std::cos(svec.elevation)),
-	  z(svec.length * std::sin(svec.elevation))
-{
-}
+	  z(svec.length * std::sin(svec.elevation)) {}
 
 // Addition operator
 Vec3& Vec3::operator+=(const Vec3& b)
@@ -86,10 +84,7 @@ Vec3& Vec3::operator+=(const RS_FLOAT b)
 }
 
 // Return the length of the vector
-RS_FLOAT Vec3::length() const
-{
-	return std::sqrt(x * x + y * y + z * z);
-}
+RS_FLOAT Vec3::length() const { return std::sqrt(x * x + y * y + z * z); }
 
 // =====================================================================================================================
 //
@@ -98,10 +93,7 @@ RS_FLOAT Vec3::length() const
 // =====================================================================================================================
 
 // Inner (dot) product operator
-RS_FLOAT rs::dotProduct(const Vec3& a, const Vec3& b)
-{
-	return a.x * b.x + a.y * b.y + a.z * b.z;
-}
+RS_FLOAT rs::dotProduct(const Vec3& a, const Vec3& b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
 
 // Returns a new vector containing the cross (outer) product of two vectors
 Vec3 rs::crossProduct(const Vec3& a, const Vec3& b)
