@@ -27,7 +27,11 @@ namespace rs
 
 		[[nodiscard]] path::Path* getMotionPath() const { return _motion_path; }
 
+		void setMotionPath(path::Path* path) { _motion_path = path; }
+
 		[[nodiscard]] path::RotationPath* getRotationPath() const { return _rotation_path; }
+
+		void setRotationPath(path::RotationPath* path) { _rotation_path = path; }
 
 		[[nodiscard]] Vec3 getPosition(const RS_FLOAT time) const { return _motion_path->getPosition(time); }
 
@@ -35,14 +39,16 @@ namespace rs
 
 		[[nodiscard]] std::string getName() const { return _name; }
 
+		[[nodiscard]] Platform* getDual() const { return _dual; }
+
+		void setDual(Platform* dual) { _dual = dual; }
+
 	private:
 		// TODO: use unique_ptr
 		path::Path* _motion_path;
 		path::RotationPath* _rotation_path;
 		std::string _name;
 		Platform* _dual;
-
-		friend Platform* createMultipathDual(const Platform* plat, const MultipathSurface* surf);
 	};
 
 	Platform* createMultipathDual(const Platform* plat, const MultipathSurface* surf);

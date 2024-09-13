@@ -47,15 +47,9 @@ namespace rs
 
 		WgnGenerator();
 
-		~WgnGenerator() override
-		{
-			delete _gen;
-		}
+		~WgnGenerator() override { delete _gen; }
 
-		RS_FLOAT getSample() override
-		{
-			return (*_gen)();
-		}
+		RS_FLOAT getSample() override { return (*_gen)(); }
 
 	private:
 		boost::normal_distribution<> _dist;
@@ -70,22 +64,15 @@ namespace rs
 
 		~GammaGenerator() override = default;
 
-		RS_FLOAT getSample() override
-		{
-			return _gen();
-		}
+		RS_FLOAT getSample() override { return _gen(); }
 
-		RS_FLOAT operator()()
-		{
-			return _gen();
-		}
+		RS_FLOAT operator()() { return _gen(); }
 
 	private:
 		boost::gamma_distribution<> _dist;
 		boost::variate_generator<boost::mt19937&, boost::gamma_distribution<>> _gen;
 	};
 
-	// TODO: Move FAlphaBranch to a separate file?
 	class FAlphaBranch : boost::noncopyable
 	{
 	public:
@@ -96,6 +83,8 @@ namespace rs
 		RS_FLOAT getSample();
 
 		void flush(RS_FLOAT scale);
+
+		[[nodiscard]] FAlphaBranch* getPre() const { return _pre; }
 
 	private:
 		void init();
@@ -122,7 +111,6 @@ namespace rs
 		RS_FLOAT _offset_sample{};
 		bool _got_offset{};
 		RS_FLOAT _pre_scale{};
-		friend class MultirateGenerator;
 	};
 
 	class MultirateGenerator final : public NoiseGenerator
@@ -130,15 +118,9 @@ namespace rs
 	public:
 		MultirateGenerator(RS_FLOAT alpha, unsigned branches);
 
-		~MultirateGenerator() override
-		{
-			delete _topbranch;
-		}
+		~MultirateGenerator() override { delete _topbranch; }
 
-		RS_FLOAT getSample() override
-		{
-			return _topbranch->getSample() * _scale;
-		}
+		RS_FLOAT getSample() override { return _topbranch->getSample() * _scale; }
 
 		void skipSamples(long long samples) const;
 
@@ -166,10 +148,7 @@ namespace rs
 
 		void reset();
 
-		[[nodiscard]] bool enabled() const
-		{
-			return !_generators.empty() || _freq_offset != 0 || _phase_offset != 0;
-		}
+		[[nodiscard]] bool enabled() const { return !_generators.empty() || _freq_offset != 0 || _phase_offset != 0; }
 
 	private:
 		std::vector<std::unique_ptr<MultirateGenerator>> _generators;
@@ -183,16 +162,11 @@ namespace rs
 	class PythonNoiseGenerator final : public NoiseGenerator
 	{
 	public:
-		PythonNoiseGenerator(const std::string& module, const std::string& function) : _generator(module, function)
-		{
-		}
+		PythonNoiseGenerator(const std::string& module, const std::string& function) : _generator(module, function) {}
 
 		~PythonNoiseGenerator() override = default;
 
-		RS_FLOAT getSample() override
-		{
-			return _generator.getSample();
-		}
+		RS_FLOAT getSample() override { return _generator.getSample(); }
 
 	private:
 		rs_python::PythonNoise _generator;

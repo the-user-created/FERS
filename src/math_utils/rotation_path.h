@@ -34,6 +34,18 @@ namespace path
 
 		void setConstantRate(const coord::RotationCoord& setstart, const coord::RotationCoord& setrate);
 
+		[[nodiscard]] std::vector<coord::RotationCoord> getCoords() const { return _coords; }
+
+		[[nodiscard]] coord::RotationCoord getStart() const { return _start; }
+
+		[[nodiscard]] coord::RotationCoord getRate() const { return _rate; }
+
+		[[nodiscard]] InterpType getType() const { return _type; }
+
+		void setStart(const coord::RotationCoord& start) { _start = start; }
+
+		void setRate(const coord::RotationCoord& rate) { _rate = rate; }
+
 	protected:
 		std::vector<coord::RotationCoord> _coords;
 		std::vector<coord::RotationCoord> _dd;
@@ -41,9 +53,6 @@ namespace path
 		coord::RotationCoord _start;
 		coord::RotationCoord _rate;
 		InterpType _type;
-
-		// TODO: Make this not a friend function and use getters
-		friend RotationPath* reflectPath(const RotationPath* path, const rs::MultipathSurface* surf);
 	};
 
 	RotationPath* reflectPath(const RotationPath* path, const rs::MultipathSurface* surf);

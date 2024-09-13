@@ -15,13 +15,10 @@ Platform::~Platform()
 
 Platform* rs::createMultipathDual(const Platform* plat, const MultipathSurface* surf)
 {
-	if (plat->_dual)
-	{
-		return plat->_dual;
-	}
+	if (plat->getDual()) { return plat->getDual(); }
 	auto* dual = new Platform(plat->getName() + "_dual");
-	const_cast<Platform*>(plat)->_dual = dual;
-	dual->_motion_path = reflectPath(plat->_motion_path, surf);
-	dual->_rotation_path = reflectPath(plat->_rotation_path, surf);
+	const_cast<Platform*>(plat)->setDual(dual);
+	dual->setMotionPath(reflectPath(plat->getMotionPath(), surf));
+	dual->setRotationPath(reflectPath(plat->getRotationPath(), surf));
 	return dual;
 }

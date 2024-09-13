@@ -41,15 +41,18 @@ namespace path
 
 		void loadPythonPath(const std::string& modname, const std::string& pathname);
 
+		[[nodiscard]] rs_python::PythonPath* getPythonPath() const { return _pythonpath; }
+
+		[[nodiscard]] InterpType getType() const { return _type; }
+
+		[[nodiscard]] std::vector<coord::Coord> getCoords() const { return _coords; }
+
 	private:
 		std::vector<coord::Coord> _coords;
 		std::vector<coord::Coord> _dd;
 		bool _final;
 		InterpType _type;
 		rs_python::PythonPath* _pythonpath;
-
-		// TODO: Make this not a friend function and use getters
-		friend Path* reflectPath(const Path* path, const rs::MultipathSurface* surf);
 	};
 
 	Path* reflectPath(const Path* path, const rs::MultipathSurface* surf);

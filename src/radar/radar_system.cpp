@@ -142,39 +142,39 @@ RS_FLOAT Receiver::getWindowStart(const int window) const
 
 Receiver* rs::createMultipathDual(Receiver* recv, const MultipathSurface* surf) // NOLINT(misc-no-recursion)
 {
-	if (recv->_dual) { return recv->_dual; }
+	if (recv->getDual()) { return recv->getDual(); }
 	const Platform* dual_plat = createMultipathDual(recv->getPlatform(), surf);
 	auto* dual = new Receiver(dual_plat, recv->getName() + "_dual");
-	recv->_dual = dual;
-	dual->_antenna = recv->_antenna;
-	if (recv->_attached)
+	recv->setDual(dual);
+	dual->setAntenna(recv->getAntenna());
+	if (recv->getAttached())
 	{
-		dual->_attached = createMultipathDual(dynamic_cast<Transmitter*>(const_cast<Radar*>(recv->_attached)), surf);
+		dual->setAttached(
+			createMultipathDual(dynamic_cast<Transmitter*>(const_cast<Radar*>(recv->getAttached())), surf));
 	}
 	dual->setMultipathDual(surf->getFactor());
-	dual->_noise_temperature = recv->_noise_temperature;
-	dual->_window_length = recv->_window_length;
-	dual->_window_prf = recv->_window_prf;
-	dual->_window_skip = recv->_window_skip;
-	dual->_timing = recv->_timing;
+	dual->setNoiseTemperature(recv->getNoiseTemperature());
+	dual->setWindowProperties(recv->getWindowLength(), recv->getWindowPrf(), recv->getWindowSkip());
+	dual->setTiming(recv->getTiming());
 	return dual;
 }
 
 Transmitter* rs::createMultipathDual(Transmitter* trans, const MultipathSurface* surf) // NOLINT(misc-no-recursion)
 {
-	if (trans->_dual) { return trans->_dual; }
+	if (trans->getDual()) { return trans->getDual(); }
 	const Platform* dual_plat = createMultipathDual(trans->getPlatform(), surf);
-	auto* dual = new Transmitter(dual_plat, trans->getName() + "_dual", trans->_pulsed);
-	trans->_dual = dual;
-	dual->_antenna = trans->_antenna;
-	if (trans->_attached)
+	auto* dual = new Transmitter(dual_plat, trans->getName() + "_dual", trans->getPulsed());
+	trans->setDual(dual);
+	//dual->_antenna = trans->_antenna;
+	dual->setAntenna(trans->getAntenna());
+	if (trans->getAttached())
 	{
-		dual->_attached = createMultipathDual(dynamic_cast<Receiver*>(const_cast<Radar*>(trans->_attached)), surf);
+		dual->setAttached(createMultipathDual(dynamic_cast<Receiver*>(const_cast<Radar*>(trans->getAttached())), surf));
 	}
 	dual->setMultipathDual(surf->getFactor());
-	dual->_prf = trans->_prf;
-	dual->_pulsed = trans->_pulsed;
-	dual->_signal = trans->_signal;
-	dual->_timing = trans->_timing;
+	dual->setPrf(trans->getPrf());
+	dual->setPulsed(trans->getPulsed());
+	dual->setSignal(trans->getSignal());
+	dual->setTiming(trans->getTiming());
 	return dual;
 }

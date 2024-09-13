@@ -82,12 +82,12 @@ namespace path
 	RotationPath* reflectPath(const RotationPath* path, const rs::MultipathSurface* surf)
 	{
 		//Create the new RotationPath object
-		auto* dual = new RotationPath(path->_type);
+		auto* dual = new RotationPath(path->getType());
 		//Copy constant rotation params
-		dual->_start = path->_start;
-		dual->_rate = path->_rate;
+		dual->setStart(path->getStart());
+		dual->setRate(path->getRate());
 		//Copy the coords, reflecting them in the surface
-		for (const auto& coord : path->_coords)
+		for (const auto& coord : path->getCoords())
 		{
 			coord::RotationCoord rc;
 			//Time copies directly

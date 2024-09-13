@@ -88,7 +88,6 @@ namespace rs
 		unsigned _order;
 	}; // TODO: ArFilter class is not used, consider removing it
 
-	// TODO: Upsampler and DecadeUpsampler can be moved to a separate file?
 	class Upsampler : boost::noncopyable
 	{
 	public:
