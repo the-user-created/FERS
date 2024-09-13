@@ -71,10 +71,7 @@ PythonExtension::~PythonExtension()
 rs::Vec3 PythonPath::getPosition(const RS_FLOAT t) const
 {
 	PyObject* pargs = PyTuple_Pack(1, PyFloat_FromDouble(t));
-	if (!pargs)
-	{
-		throw std::runtime_error("Could not create new Python Tuple in PythonPath");
-	}
+	if (!pargs) { throw std::runtime_error("Could not create new Python Tuple in PythonPath"); }
 
 	PyObject* result = PyObject_CallObject(_data->p_func, pargs);
 	Py_DECREF(pargs);
@@ -84,9 +81,9 @@ rs::Vec3 PythonPath::getPosition(const RS_FLOAT t) const
 		throw std::runtime_error("Call of function " + _function + " from module " + _module + " failed");
 	}
 
-	rs::Vec3 vec(PyFloat_AsDouble(PyTuple_GetItem(result, 0)),
-	             PyFloat_AsDouble(PyTuple_GetItem(result, 1)),
-	             PyFloat_AsDouble(PyTuple_GetItem(result, 2)));
+	const rs::Vec3 vec(PyFloat_AsDouble(PyTuple_GetItem(result, 0)),
+	                   PyFloat_AsDouble(PyTuple_GetItem(result, 1)),
+	                   PyFloat_AsDouble(PyTuple_GetItem(result, 2)));
 	Py_DECREF(result);
 	return vec;
 }
@@ -120,10 +117,7 @@ RS_FLOAT PythonNoise::getSample() const
 RS_FLOAT PythonAntennaMod::getGain(const rs::SVec3& direction) const
 {
 	PyObject* pargs = PyTuple_Pack(2, PyFloat_FromDouble(direction.azimuth), PyFloat_FromDouble(direction.elevation));
-	if (!pargs)
-	{
-		throw std::runtime_error("Could not create new Python Tuple in PythonPath");
-	}
+	if (!pargs) { throw std::runtime_error("Could not create new Python Tuple in PythonPath"); }
 
 	PyObject* result = PyObject_CallObject(_data->p_func, pargs);
 	Py_DECREF(pargs);

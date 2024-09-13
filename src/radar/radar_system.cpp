@@ -6,8 +6,8 @@
 #include "radar_system.h"
 
 #include "core/logging.h"
-#include "math_utils/multipath_surface.h"
 #include "core/parameters.h"
+#include "math_utils/multipath_surface.h"
 #include "serialization/receiver_export.h"
 
 using namespace rs;

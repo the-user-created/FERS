@@ -5,8 +5,8 @@
 
 #include "timing.h"
 
-#include "core/logging.h"
 #include "noise_generators.h"
+#include "core/logging.h"
 
 using namespace rs;
 
