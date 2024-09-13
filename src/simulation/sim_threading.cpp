@@ -15,8 +15,8 @@
 
 #include "core/logging.h"
 #include "core/parameters.h"
-#include "radar/target.h"
 #include "core/world.h"
+#include "radar/target.h"
 
 // TODO: Is this BOOST_VERSION check necessary?
 #if BOOST_VERSION < 105000
