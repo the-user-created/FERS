@@ -106,7 +106,7 @@ namespace
 			}
 			else
 			{
-				const long skip = std::floor(rate / recv->getPrf() - rate * recv->getWindowLength());
+				const long skip = std::floor(rate / recv->getWindowPrf() - rate * recv->getWindowLength());
 				timing->skipSamples(skip);
 			}
 			carrier = timing->getFrequency(); // TODO: BUG #1,#3 - carrier has no effect on phase noise?

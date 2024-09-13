@@ -100,14 +100,14 @@ namespace path
 	Path* reflectPath(const Path* path, const rs::MultipathSurface* surf)
 	{
 		//Don't support multipath on python paths for now
-		if (path->_pythonpath)
+		if (path->getPythonPath())
 		{
 			throw std::runtime_error("[ERROR] Multipath surfaces are not currently supported for Python paths");
 		}
 		//Create a new path object
-		const auto dual = new Path(path->_type);
+		const auto dual = new Path(path->getType());
 		//Add all the coords from the current path to the old path, reflecting about the multipath plane
-		for (const auto& [pos, t] : path->_coords)
+		for (const auto& [pos, t] : path->getCoords())
 		{
 			coord::Coord refl;
 			refl.t = t;

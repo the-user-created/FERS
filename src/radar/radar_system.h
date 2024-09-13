@@ -37,9 +37,7 @@ namespace rs
 	public:
 		Radar(const Platform* platform, const std::string& name) :
 			Object(platform, name), _timing(nullptr), _antenna(nullptr), _attached(nullptr), _multipath_dual(false),
-			_multipath_reflect(0)
-		{
-		}
+			_multipath_reflect(0) {}
 
 		~Radar() override = default;
 
@@ -65,15 +63,9 @@ namespace rs
 				: _attached = recv;
 		}
 
-		[[nodiscard]] const Radar* getAttached() const
-		{
-			return _attached;
-		}
+		[[nodiscard]] const Radar* getAttached() const { return _attached; }
 
-		[[nodiscard]] bool isMonostatic() const
-		{
-			return _attached;
-		}
+		[[nodiscard]] bool isMonostatic() const { return _attached; }
 
 		void setTiming(Timing* tim)
 		{
@@ -82,17 +74,15 @@ namespace rs
 
 		[[nodiscard]] Timing* getTiming() const;
 
-		[[nodiscard]] bool isMultipathDual() const
-		{
-			return _multipath_dual;
-		}
+		[[nodiscard]] bool isMultipathDual() const { return _multipath_dual; }
 
 		void setMultipathDual(RS_FLOAT reflect);
 
-		[[nodiscard]] RS_FLOAT multipathDualFactor() const
-		{
-			return _multipath_reflect;
-		}
+		[[nodiscard]] RS_FLOAT multipathDualFactor() const { return _multipath_reflect; }
+
+		[[nodiscard]] const Antenna* getAntenna() const { return _antenna; }
+
+		void setAttached(const Radar* obj) { _attached = obj; }
 
 	protected:
 		Timing* _timing;
@@ -102,29 +92,17 @@ namespace rs
 		const Radar* _attached;
 		bool _multipath_dual;
 		RS_FLOAT _multipath_reflect;
-
-		friend Receiver* createMultipathDual(Receiver* recv, const MultipathSurface* surf);
-
-		friend Transmitter* createMultipathDual(Transmitter* trans, const MultipathSurface* surf);
 	};
 
 	class Transmitter final : public Radar
 	{
 	public:
 		Transmitter(const Platform* platform, const std::string& name, const bool pulsed) : Radar(platform, name),
-			_signal(nullptr), _pulsed(pulsed), _dual(nullptr)
-		{
-		}
+			_signal(nullptr), _pulsed(pulsed), _dual(nullptr) {}
 
-		~Transmitter() override
-		{
-			delete getTiming();
-		}
+		~Transmitter() override { delete getTiming(); }
 
-		void setWave(RadarSignal* pulse)
-		{
-			_signal = pulse;
-		}
+		void setWave(RadarSignal* pulse) { _signal = pulse; }
 
 		[[nodiscard]] int getPulseCount() const;
 
@@ -132,13 +110,25 @@ namespace rs
 
 		void setPrf(RS_FLOAT mprf);
 
+		[[nodiscard]] Transmitter* getDual() const { return _dual; }
+
+		[[nodiscard]] bool getPulsed() const { return _pulsed; }
+
+		void setPulsed(const bool pulsed) { _pulsed = pulsed; }
+
+		void setDual(Transmitter* dual) { _dual = dual; }
+
+		[[nodiscard]] RS_FLOAT getPrf() const { return _prf; }
+
+		[[nodiscard]] RadarSignal* getSignal() const { return _signal; }
+
+		void setSignal(RadarSignal* signal) { _signal = signal; }
+
 	protected:
 		RadarSignal* _signal;
 		RS_FLOAT _prf{};
 		bool _pulsed;
 		Transmitter* _dual;
-
-		friend Transmitter* createMultipathDual(Transmitter* trans, const MultipathSurface* surf);
 	};
 
 	class Receiver final : public Radar
@@ -147,9 +137,7 @@ namespace rs
 		enum RecvFlag { FLAG_NODIRECT = 1, FLAG_NOPROPLOSS = 2 };
 
 		explicit Receiver(const Platform* platform, const std::string& name = "defRecv") : Radar(platform, name),
-			_noise_temperature(0), _dual(nullptr), _flags(0)
-		{
-		}
+			_noise_temperature(0), _dual(nullptr), _flags(0) {}
 
 		~Receiver() override;
 
@@ -164,10 +152,7 @@ namespace rs
 			return _noise_temperature + Radar::getNoiseTemperature(angle);
 		}
 
-		[[nodiscard]] RS_FLOAT getNoiseTemperature() const
-		{
-			return _noise_temperature;
-		}
+		[[nodiscard]] RS_FLOAT getNoiseTemperature() const { return _noise_temperature; }
 
 		void setNoiseTemperature(const RS_FLOAT temp)
 		{
@@ -178,39 +163,25 @@ namespace rs
 
 		void setWindowProperties(RS_FLOAT length, RS_FLOAT prf, RS_FLOAT skip);
 
-		[[nodiscard]] int countResponses() const
-		{
-			return static_cast<int>(_responses.size());
-		}
+		[[nodiscard]] int countResponses() const { return static_cast<int>(_responses.size()); }
 
 		[[nodiscard]] int getWindowCount() const;
 
 		[[nodiscard]] RS_FLOAT getWindowStart(int window) const;
 
-		[[nodiscard]] RS_FLOAT getWindowLength() const
-		{
-			return _window_length;
-		}
+		[[nodiscard]] RS_FLOAT getWindowLength() const { return _window_length; }
 
-		[[nodiscard]] RS_FLOAT getWindowSkip() const
-		{
-			return _window_skip;
-		}
+		[[nodiscard]] RS_FLOAT getWindowSkip() const { return _window_skip; }
 
-		[[nodiscard]] RS_FLOAT getPrf() const
-		{
-			return _window_prf;
-		}
+		[[nodiscard]] RS_FLOAT getWindowPrf() const { return _window_prf; }
 
-		void setFlag(const RecvFlag flag)
-		{
-			_flags |= flag;
-		}
+		void setFlag(const RecvFlag flag) { _flags |= flag; }
 
-		[[nodiscard]] bool checkFlag(const RecvFlag flag) const
-		{
-			return _flags & flag;
-		}
+		[[nodiscard]] bool checkFlag(const RecvFlag flag) const { return _flags & flag; }
+
+		[[nodiscard]] Receiver* getDual() const { return _dual; }
+
+		void setDual(Receiver* dual) { _dual = dual; }
 
 	private:
 		std::vector<Response*> _responses;
@@ -221,18 +192,13 @@ namespace rs
 		RS_FLOAT _window_skip{};
 		Receiver* _dual;
 		int _flags;
-
-		friend Receiver* createMultipathDual(Receiver* recv, const MultipathSurface* surf);
 	};
 
 	Receiver* createMultipathDual(Receiver* recv, const MultipathSurface* surf);
 
 	Transmitter* createMultipathDual(Transmitter* trans, const MultipathSurface* surf);
 
-	inline bool compareTimes(const Response* a, const Response* b)
-	{
-		return a->startTime() < b->startTime();
-	}
+	inline bool compareTimes(const Response* a, const Response* b) { return a->startTime() < b->startTime(); }
 }
 
 #endif

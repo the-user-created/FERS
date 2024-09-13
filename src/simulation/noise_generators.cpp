@@ -287,7 +287,7 @@ void MultirateGenerator::skipSamples(long long samples) const
 		for (int i = 0; i < skip_branches && branch != nullptr; i++)
 		{
 			flushbranches.push_back(branch);
-			branch = branch->_pre;
+			branch = branch->getPre();
 		}
 		if (branch)
 		{
@@ -341,7 +341,7 @@ void MultirateGenerator::reset() const
 	while (branch)
 	{
 		flush_branches.push_back(branch);
-		branch = branch->_pre;
+		branch = branch->getPre();
 	}
 	const int size = static_cast<int>(flush_branches.size());
 	for (int i = size - 1; i >= 0; i--)

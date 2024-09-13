@@ -13,7 +13,6 @@
 
 namespace rs
 {
-	// TODO: These two classes can be moved to a separate file?
 	class InterpSetData
 	{
 	public:
