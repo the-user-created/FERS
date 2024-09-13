@@ -13,17 +13,13 @@
 #include <tinyxml.h>
 
 #include "pulse_factory.h"
-#include "core/logging.h"
 #include "core/parameters.h"
-#include "math_utils/coord.h"
 #include "math_utils/multipath_surface.h"
-#include "math_utils/path.h"
-#include "math_utils/rotation_path.h"
 #include "radar/radar_system.h"
 #include "radar/target.h"
 
+
 using namespace rs;
-using std::string;
 
 //
 // XML Parsing Utility Functions
@@ -46,36 +42,21 @@ public:
 //Pass a handle to tree, and the string "leaf1" to get "Green"
 const char* getChildText(const TiXmlHandle& parent, const char* childname)
 {
-	const TiXmlHandle tmp = parent.FirstChildElement(childname);
-	if (tmp.Element() == nullptr)
-	{
-		return nullptr; //The element does not exist
-	}
-	//Return the text
-	return tmp.Element()->GetText();
+	const TiXmlElement* element = parent.FirstChildElement(childname).Element();
+	return element ? element->GetText() : nullptr;
 }
 
 /// Gets child text as a rsFloat. See GetChildText for usage description
 RS_FLOAT getChildRsFloat(const TiXmlHandle& parent, const char* childname)
 {
 	const char* data = getChildText(parent, childname);
-	//If there is no data, flag failure and return
 	if (!data)
 	{
-		throw XmlImportException("No data in child element " + string(childname) + " during GetChildRsFloat.");
+		throw XmlImportException("No data in child element " + std::string(childname) + " during GetChildRsFloat.");
 	}
-	//Parse the first rsFloat from the data
 	RS_FLOAT result;
-	std::istringstream iss(data);
-	iss >> result;
+	std::istringstream(data) >> result;
 	return result;
-}
-
-/// Get the text contents of a node
-const char* getNodeText(const TiXmlHandle& parent)
-{
-	//Return the text
-	return parent.Element()->GetText();
 }
 
 /// Gets the text content of a node as an rsFloat.
@@ -83,12 +64,10 @@ const char* getNodeText(const TiXmlHandle& parent)
 //<rcs>10</rcs>
 RS_FLOAT getNodeFloat(const TiXmlHandle& node)
 {
-	if (!node.Element()) { throw XmlImportException("[BUG] Node does not exist during GetNodeFloat"); }
-	const char* data = node.Element()->GetText();
+	const char* data = node.Element() ? node.Element()->GetText() : nullptr;
 	if (!data) { throw XmlImportException("Node does not contain text during GetNodeFloat"); }
 	RS_FLOAT result;
-	std::istringstream iss(data);
-	iss >> result;
+	std::istringstream(data) >> result;
 	return result;
 }
 
@@ -105,32 +84,24 @@ std::string getAttributeString(const TiXmlHandle& handle, const std::string& nam
 bool getAttributeBool(const TiXmlHandle& handle, const std::string& name, const std::string& error, const bool def,
                       const bool optional = true)
 {
-	const string str = getAttributeString(handle, name, error, optional);
-	if (str.empty()) { return def; }
-	return str == "true" || str == "yes";
+	const std::string str = getAttributeString(handle, name, error, optional);
+	return str.empty() ? def : str == "true" || str == "yes";
 }
 
 
 namespace
 {
-	///Process a Gamma target model entry
-	RcsModel* processGammaModel(const TiXmlHandle& modelXml)
-	{
-		const RS_FLOAT k = getChildRsFloat(modelXml, "k");
-		return new RcsChiSquare(k);
-	}
-
 	/// Process a target XML entry
 	void processTarget(const TiXmlHandle& targXml, const Platform* platform, World* world)
 	{
-		Target* target;
-		const string name = getAttributeString(targXml, "name", "Target does not specify a name");
-		//Get the RCS
+		const std::string name = getAttributeString(targXml, "name", "Target does not specify a name");
 		const TiXmlHandle rcs_xml = targXml.ChildElement("rcs", 0);
 		if (!rcs_xml.Element()) { throw XmlImportException("Target " + name + " does not specify RCS."); }
-		const string rcs_type = getAttributeString(rcs_xml, "type",
-		                                           "RCS attached to target '" + name + "' does not specify type.");
-		// Handle the target type (isotropic, file imported, etc.)
+
+		const std::string rcs_type = getAttributeString(rcs_xml, "type",
+		                                                "RCS attached to target '" + name + "' does not specify type.");
+		Target* target = nullptr;
+
 		if (rcs_type == "isotropic")
 		{
 			const TiXmlHandle rcs_value_xml = rcs_xml.ChildElement("value", 0);
@@ -138,81 +109,69 @@ namespace
 			{
 				throw XmlImportException("Target " + name + " does not specify value of isotropic RCS.");
 			}
-			const RS_FLOAT value = getNodeFloat(rcs_value_xml);
-			target = createIsoTarget(platform, name, value);
+			target = createIsoTarget(platform, name, getNodeFloat(rcs_value_xml));
 		}
 		else if (rcs_type == "file")
 		{
-			const string filename = getAttributeString(rcs_xml, "filename",
-			                                           "RCS attached to target '" + name +
-			                                           "' does not specify filename.");
+			const std::string filename = getAttributeString(rcs_xml, "filename",
+			                                                "RCS attached to target '" + name +
+			                                                "' does not specify filename.");
 			target = createFileTarget(platform, name, filename);
 		}
 		else { throw XmlImportException("RCS type " + rcs_type + " not currently supported."); }
-		//Handle the target statistical model
+
 		if (const TiXmlHandle model_xml = targXml.ChildElement("model", 0); model_xml.Element())
 		{
-			//Get the mode type
-			const string model_type = getAttributeString(model_xml, "type",
-			                                             "Model attached to target '" + name +
-			                                             "' does not specify type.");
-			if (model_type == "constant")
-			{
-				auto* model = new RcsConst();
-				target->setFluctuationModel(model);
-			}
+			const std::string model_type = getAttributeString(model_xml, "type",
+			                                                  "Model attached to target '" + name +
+			                                                  "' does not specify type.");
+			if (model_type == "constant") { target->setFluctuationModel(new RcsConst()); }
 			else if (model_type == "chisquare" || model_type == "gamma")
 			{
-				RcsModel* model = processGammaModel(model_xml);
-				target->setFluctuationModel(model);
+				target->setFluctuationModel(new RcsChiSquare(getChildRsFloat(model_xml, "k")));
 			}
 			else { throw XmlImportException("Target fluctuation model type '" + model_type + "' not recognised."); }
 		}
-		//Add the target to the world
+
 		world->add(target);
 	}
 
+	/// Process a receiver XML entry
 	/// Process a receiver XML entry
 	Receiver* processReceiver(const TiXmlHandle& recvXml, const Platform* platform, World* world)
 	{
 		logging::printf(logging::RS_VERY_VERBOSE, "[VV] Loading Receiver: ");
 
-		//Get the name of the receiver
-		string name = getAttributeString(recvXml, "name", "Receiver does not specify a name");
+		const std::string name = getAttributeString(recvXml, "name", "Receiver does not specify a name");
 		auto* receiver = new Receiver(platform, name);
 
-		//Get the name of the antenna
-		const string ant_name = getAttributeString(recvXml, "antenna",
-		                                           "Receiver '" + string(name) + "' does not specify an antenna");
-
-		logging::printf(logging::RS_VERY_VERBOSE, "'%s' ", receiver->getName().c_str());
+		const std::string ant_name = getAttributeString(recvXml, "antenna",
+		                                                "Receiver '" + name + "' does not specify an antenna");
+		logging::printf(logging::RS_VERY_VERBOSE, "'%s'\n", receiver->getName().c_str());
 
 		const Antenna* antenna = world->findAntenna(ant_name);
 		if (!antenna)
 		{
 			throw XmlImportException(
-				"Antenna with name '" + ant_name + "' does not exist when processing Receiver " + string(name));
+				"Antenna with name '" + ant_name + "' does not exist when processing Receiver " + name);
 		}
-		//Set the receiver's antenna
 		receiver->setAntenna(antenna);
 
-		//Process the noise temperature tag
-		try
+		try { receiver->setNoiseTemperature(getChildRsFloat(recvXml, "noise_temp")); }
+		catch (XmlImportException&)
 		{
-			const RS_FLOAT temperature = getChildRsFloat(recvXml, "noise_temp");
-			receiver->setNoiseTemperature(temperature);
+			logging::printf(logging::RS_VERBOSE, "[WARNING] Receiver '%s' does not specify noise temperature.\n",
+			                receiver->getName().c_str());
 		}
-		catch ([[maybe_unused]] XmlImportException& e) {}
 
-		//Process the PRF tag
-		const RS_FLOAT prf = getChildRsFloat(recvXml, "prf");
-		const RS_FLOAT skip = getChildRsFloat(recvXml, "window_skip");
-		const RS_FLOAT length = getChildRsFloat(recvXml, "window_length");
-		receiver->setWindowProperties(length, prf, skip);
+		receiver->setWindowProperties(
+			getChildRsFloat(recvXml, "window_length"),
+			getChildRsFloat(recvXml, "prf"),
+			getChildRsFloat(recvXml, "window_skip")
+		);
 
-		//Get the name of the timing source
-		const string timing_name = getAttributeString(recvXml, "timing",
-		                                              "Receiver '" + name + "' does not specify a timing source");
+		const std::string timing_name = getAttributeString(recvXml, "timing",
+		                                                   "Receiver '" + name + "' does not specify a timing source");
 		auto* timing = new ClockModelTiming(timing_name);
 
 		const PrototypeTiming* proto = world->findTiming(timing_name);
@@ -221,12 +180,9 @@ namespace
 			throw XmlImportException(
 				"Timing source '" + timing_name + "' does not exist when processing receiver '" + name + "'");
 		}
-		//Initialize the new model from the prototype model
 		timing->initializeModel(proto);
-		//Set the receiver's timing source
 		receiver->setTiming(timing);
 
-		// Get the NoDirect flag, which causes direct signals to be ignored
 		if (getAttributeBool(recvXml, "nodirect", "", false))
 		{
 			receiver->setFlag(Receiver::FLAG_NODIRECT);
@@ -234,8 +190,6 @@ namespace
 			                receiver->getName().c_str());
 		}
 
-		// Get the NoPropagationLoss flag, which causes propagation loss to be ignored
-		// for example, when propagation loss is calculated with AREPS
 		if (getAttributeBool(recvXml, "nopropagationloss", "", false))
 		{
 			receiver->setFlag(Receiver::FLAG_NOPROPLOSS);
@@ -243,43 +197,33 @@ namespace
 			                receiver->getName().c_str());
 		}
 
-		//Add the receiver to the world
 		world->add(receiver);
-
 		return receiver;
 	}
 
 	/// Create a PulseTransmitter object and process XML entry
-	Transmitter* processPulseTransmitter(const TiXmlHandle& transXml, std::string& name, const Platform* platform,
+	Transmitter* processPulseTransmitter(const TiXmlHandle& transXml, const std::string& name, const Platform* platform,
 	                                     World* world)
 	{
-		auto* transmitter = new Transmitter(platform, string(name), true);
-		//Get the name of the pulse
-		const string pulse_name = getAttributeString(transXml, "pulse",
-		                                             "Transmitter '" + name + "' does not specify a pulse");
-		//Get the pulse from the table of pulses
+		auto* transmitter = new Transmitter(platform, name, true);
+		const std::string pulse_name = getAttributeString(transXml, "pulse",
+		                                                  "Transmitter '" + name + "' does not specify a pulse");
 		RadarSignal* wave = world->findSignal(pulse_name);
 		if (!wave) { throw XmlImportException("Pulse with name '" + pulse_name + "' does not exist"); }
-		//Get the Pulse Repetition Frequency
-		const RS_FLOAT prf = getChildRsFloat(transXml, "prf");
-		//Attach the pulse to the transmitter
 		transmitter->setWave(wave);
-		transmitter->setPrf(prf);
+		transmitter->setPrf(getChildRsFloat(transXml, "prf"));
 		return transmitter;
 	}
 
 	/// Create a PulseTransmitter object and process XML entry
-	Transmitter* processCwTransmitter(const TiXmlHandle& transXml, std::string& name, const Platform* platform,
+	Transmitter* processCwTransmitter(const TiXmlHandle& transXml, const std::string& name, const Platform* platform,
 	                                  World* world)
 	{
-		auto* transmitter = new Transmitter(platform, string(name), false);
-		//Get the name of the pulse
-		const string pulse_name = getAttributeString(transXml, "pulse",
-		                                             "Transmitter '" + name + "' does not specify a pulse");
-		//Get the pulse from the table of pulses
+		auto* transmitter = new Transmitter(platform, name, false);
+		const std::string pulse_name = getAttributeString(transXml, "pulse",
+		                                                  "Transmitter '" + name + "' does not specify a pulse");
 		RadarSignal* wave = world->findSignal(pulse_name);
 		if (!wave) { throw XmlImportException("Pulse with name '" + pulse_name + "' does not exist"); }
-		//Attach the CW waveform to the transmitter
 		transmitter->setWave(wave);
 		return transmitter;
 	}
@@ -294,51 +238,43 @@ namespace
 		// (as handled by processPlatform).
 		logging::printf(logging::RS_VERY_VERBOSE, "[VV] Loading Transmitter: ");
 
-		//Get the name of the transmitter
-		string name = getAttributeString(transXml, "name", "Transmitter does not specify a name");
+		const std::string name = getAttributeString(transXml, "name", "Transmitter does not specify a name");
+		const std::string type = getAttributeString(transXml, "type",
+		                                            "Transmitter '" + name + "' does not specify type");
 
-		//Get the transmitter type
-		const string type = getAttributeString(transXml, "type", "Transmitter '" + name + "' does not specify type");
-		Transmitter* transmitter;
-		if (type == "pulsed") { transmitter = processPulseTransmitter(transXml, name, platform, world); }
-		else if (type == "continuous") { transmitter = processCwTransmitter(transXml, name, platform, world); }
-		else { throw XmlImportException("[ERROR] Invalid transmitter type specified in transmitter " + name); }
+		Transmitter* transmitter = type == "pulsed"
+			                           ? processPulseTransmitter(transXml, name, platform, world)
+			                           : type == "continuous"
+			                           ? processCwTransmitter(transXml, name, platform, world)
+			                           : throw XmlImportException(
+				                           "[ERROR] Invalid transmitter type specified in transmitter " + name);
 
-		//Get the name of the antenna
-		const string ant_name = getAttributeString(transXml, "antenna",
-		                                           "Transmitter '" + name + "' does not specify an antenna");
+		const std::string ant_name = getAttributeString(transXml, "antenna",
+		                                                "Transmitter '" + name + "' does not specify an antenna");
 		const Antenna* antenna = world->findAntenna(ant_name);
 		if (!antenna)
 		{
 			throw XmlImportException(
-				"Antenna with name '" + ant_name + "' does not exist when processing Transmitter " + string(name));
+				"Antenna with name '" + ant_name + "' does not exist when processing Transmitter " + name);
 		}
-		//Set the transmitter's antenna
 		transmitter->setAntenna(antenna);
 
-		//Get the name of the timing source
-		const string timing_name = getAttributeString(transXml, "timing",
-		                                              "Transmitter '" + name + "' does not specify a timing source");
-
+		const std::string timing_name = getAttributeString(transXml, "timing",
+		                                                   "Transmitter '" + name +
+		                                                   "' does not specify a timing source");
 		auto* timing = new ClockModelTiming(name);
-
 		const PrototypeTiming* proto = world->findTiming(timing_name);
 		if (!proto)
 		{
 			throw XmlImportException(
 				"Timing source '" + timing_name + "' does not exist when processing receiver " + name);
 		}
-		//Initialize the new model from the prototype model
 		timing->initializeModel(proto);
-		//Set the receiver's timing source
 		transmitter->setTiming(timing);
 
-		//Add the transmitter to the world
 		world->add(transmitter);
 
-		// If the system is monostatic, return the transmitter
-		if (isMonostatic) { return transmitter; }
-		return std::nullopt;
+		return isMonostatic ? std::optional(transmitter) : std::nullopt;
 	}
 
 	/// Process a monostatic (Receiver and Transmitter sharing an antenna)
@@ -364,37 +300,34 @@ namespace
 			coord.pos = Vec3(x, y, z);
 			path->addCoord(coord);
 		}
-		catch ([[maybe_unused]] XmlImportException& e)
+		catch (XmlImportException& e)
 		{
 			logging::printf(logging::RS_VERBOSE,
-			                "[WARNING] Parse Error While Importing Waypoint. Discarding Waypoint.\n");
+			                "[WARNING] Parse Error While Importing Waypoint. Discarding Waypoint.\n%s", e.what());
 		}
 	}
 
 	/// Process the path's python attributes
 	void processPythonPath(const TiXmlHandle& pathXml, path::Path* path)
 	{
-		//Initialize python, if it isn't done already
 		rs_python::initPython();
-		//Get the python path definition
 		try
 		{
-			const TiXmlHandle tmp = pathXml.ChildElement("pythonpath", 0);
-			//Get the module and function name attributes
-			const std::string modname = getAttributeString(tmp, "module", "Attribute module missing");
-			const std::string funcname = getAttributeString(tmp, "function", "Attribute function missing");
-			//Load the Path module
-			path->loadPythonPath(modname, funcname);
+			const TiXmlHandle tmp = pathXml.FirstChildElement("pythonpath");
+			path->loadPythonPath(
+				getAttributeString(tmp, "module", "Attribute module missing"),
+				getAttributeString(tmp, "function", "Attribute function missing")
+			);
 		}
-		catch (XmlImportException& e) { logging::printf(logging::RS_VERBOSE, "%s", e.what()); }
+		catch (const XmlImportException& e) { logging::printf(logging::RS_VERBOSE, "%s", e.what()); }
 	}
 
 	/// Process a MotionPath XML entry
+	/// Process a MotionPath XML entry
 	void processMotionPath(const TiXmlHandle& mpXml, const Platform* platform)
 	{
-		//Get a pointer to the platform's path
 		path::Path* path = platform->getMotionPath();
-		//Get the interpolation type
+
 		try
 		{
 			if (const std::string rottype = getAttributeString(mpXml, "interpolation", ""); rottype == "linear")
@@ -411,27 +344,23 @@ namespace
 			else
 			{
 				logging::printf(logging::RS_VERBOSE,
-				                "[WARNING] Unsupported motion path interpolation type for platform '" + platform->
-				                getName() + "'. Defaulting to static.\n");
+				                "[WARNING] Unsupported motion path interpolation type for platform '%s'. Defaulting to static.\n",
+				                platform->getName().c_str());
 				path->setInterp(path::Path::RS_INTERP_STATIC);
 			}
 		}
-		catch ([[maybe_unused]] XmlImportException& e)
+		catch (XmlImportException&)
 		{
 			logging::printf(logging::RS_VERBOSE,
-			                "[WARNING] Motion path interpolation type not specified for platform '" + platform->
-			                getName() + "'. Defaulting to static.\n");
+			                "[WARNING] Motion path interpolation type not specified for platform '%s'. Defaulting to static.\n",
+			                platform->getName().c_str());
 			path->setInterp(path::Path::RS_INTERP_STATIC);
 		}
 
-		//Process all the PositionWaypoints
-		TiXmlHandle tmp = mpXml.ChildElement("positionwaypoint", 0);
-		for (int i = 1; tmp.Element() != nullptr; i++)
-		{
-			processWaypoint(tmp, path);
-			tmp = mpXml.ChildElement("positionwaypoint", i);
-		}
-		//Finalise the path after all the waypoints have been loaded
+		int i{};
+		for (TiXmlHandle tmp = mpXml.ChildElement("positionwaypoint", 0); tmp.Element();
+		     tmp = mpXml.ChildElement("positionwaypoint", ++i)) { processWaypoint(tmp, path); }
+
 		path->finalize();
 	}
 
@@ -440,30 +369,24 @@ namespace
 	{
 		try
 		{
-			coord::RotationCoord coord;
-			coord.elevation = getChildRsFloat(handXml, "elevation");
-			coord.azimuth = getChildRsFloat(handXml, "azimuth");
-			coord.t = getChildRsFloat(handXml, "time");
-			path->addCoord(coord);
+			path->addCoord({
+				getChildRsFloat(handXml, "elevation"),
+				getChildRsFloat(handXml, "azimuth"),
+				getChildRsFloat(handXml, "time")
+			});
 		}
-		catch ([[maybe_unused]] XmlImportException& e)
+		catch (const XmlImportException& e)
 		{
 			logging::printf(logging::RS_VERBOSE,
-			                "[WARNING] Parse Error While Importing Waypoint. Discarding Waypoint.\n");
+			                "[WARNING] Parse Error While Importing Waypoint. Discarding Waypoint.\n%s", e.what());
 		}
 	}
 
 	/// Process Waypoints for RotationPath
 	void processRotationWaypoints(const TiXmlHandle& mpXml, path::RotationPath* path)
 	{
-		//Process all the RotationWaypoints
-		TiXmlHandle tmp = mpXml.ChildElement("rotationwaypoint", 0);
-		for (int i = 1; tmp.Element() != nullptr; i++)
-		{
-			processRotationWaypoint(tmp, path);
-			tmp = mpXml.ChildElement("rotationwaypoint", i);
-		}
-		//Finalise the path after all the waypoints have been loaded
+		for (TiXmlHandle tmp = mpXml.ChildElement("rotationwaypoint", 0); tmp.Element(); tmp = tmp.Element()->
+		     NextSiblingElement("rotationwaypoint")) { processRotationWaypoint(tmp, path); }
 		path->finalize();
 	}
 
@@ -480,9 +403,10 @@ namespace
 			rate.elevation = getChildRsFloat(mpXml, "elevationrate");
 			path->setConstantRate(start, rate);
 		}
-		catch ([[maybe_unused]] XmlImportException& e)
+		catch (XmlImportException& e)
 		{
-			logging::printf(logging::RS_VERBOSE, "[WARNING] Parse Error While Importing Constant Rotation.\n");
+			logging::printf(logging::RS_VERBOSE, "[WARNING] Parse Error While Importing Constant Rotation.\n%s",
+			                e.what());
 		}
 	}
 
@@ -491,10 +415,8 @@ namespace
 	{
 		logging::printf(logging::RS_VERY_VERBOSE, "[VV] Loading Rotation Path.\n");
 
-		//Get a pointer to the rotation path
 		path::RotationPath* path = platform->getRotationPath();
 
-		//Get the interpolation type
 		try
 		{
 			if (const std::string rottype = getAttributeString(mpXml, "interpolation", ""); rottype == "linear")
@@ -506,171 +428,135 @@ namespace
 			else
 			{
 				logging::printf(logging::RS_VERBOSE,
-				                "[WARNING] Unsupported rotation path interpolation type for platform '" + platform->
-				                getName() + "'. Defaulting to static.\n");
+				                "[WARNING] Unsupported rotation path interpolation type for platform '%s'. Defaulting to static.\n",
+				                platform->getName().c_str());
 				path->setInterp(path::RotationPath::RS_INTERP_STATIC);
 			}
 		}
-		catch ([[maybe_unused]] XmlImportException& e)
+		catch (XmlImportException&)
 		{
 			logging::printf(logging::RS_VERBOSE,
-			                "[WARNING] Rotation path interpolation type not specified for platform '" + platform->
-			                getName() + "'. Defaulting to static.\n");
+			                "[WARNING] Rotation path interpolation type not specified for platform '%s'. Defaulting to static.\n",
+			                platform->getName().c_str());
 			path->setInterp(path::RotationPath::RS_INTERP_STATIC);
 		}
-		// Process the rotation waypoints
+
 		processRotationWaypoints(mpXml, path);
 	}
 
 	/// Process a platform, recursively processing all the elements that are attached to it
 	void processPlatform(const TiXmlHandle& platXml, World* world)
 	{
-		//Create the platform, using the name from the element
-		std::string name = getAttributeString(platXml, "name", "[ERROR] Platform must specify a name");
-		auto* platform = new Platform(string(name));
-		//Add the platform to the world
+		const std::string name = getAttributeString(platXml, "name", "[ERROR] Platform must specify a name");
+		auto* platform = new Platform(name);
 		world->add(platform);
 
-		//Process all the targets attached to the platform
-		TiXmlHandle tmp = platXml.ChildElement("target", 0);
-		for (int i = 1; tmp.Element() != nullptr; i++)
-		{
-			processTarget(tmp, platform, world);
-			tmp = platXml.ChildElement("target", i);
-		}
+		int i{};
+		for (TiXmlHandle tmp = platXml.ChildElement("target", 0); tmp.Element();
+		     tmp = platXml.ChildElement("target", ++i)) { processTarget(tmp, platform, world); }
 
-		//Process all the receivers attached to the platform
-		tmp = platXml.ChildElement("receiver", 0);
-		for (int i = 1; tmp.Element() != nullptr; i++)
-		{
-			processReceiver(tmp, platform, world);
-			tmp = platXml.ChildElement("receiver", i);
-		}
+		i = 0;
+		for (TiXmlHandle tmp = platXml.ChildElement("receiver", 0); tmp.Element();
+		     tmp = platXml.ChildElement("receiver", ++i)) { processReceiver(tmp, platform, world); }
 
-		//Process all the transmitters attached to the platform
-		tmp = platXml.ChildElement("transmitter", 0);
-		for (int i = 1; tmp.Element() != nullptr; i++)
-		{
-			processTransmitter(tmp, platform, world);
-			tmp = platXml.ChildElement("transmitter", i);
-		}
+		i = 0;
+		for (TiXmlHandle tmp = platXml.ChildElement("transmitter", 0); tmp.Element();
+		     tmp = platXml.ChildElement("transmitter", ++i)) { processTransmitter(tmp, platform, world); }
 
-		//Process all the monostatics attached to the platform
-		tmp = platXml.ChildElement("monostatic", 0);
-		for (int i = 1; tmp.Element() != nullptr; i++)
-		{
-			processMonostatic(tmp, platform, world);
-			tmp = platXml.ChildElement("monostatic", i);
-		}
+		i = 0;
+		for (TiXmlHandle tmp = platXml.ChildElement("monostatic", 0); tmp.Element();
+		     tmp = platXml.ChildElement("monostatic", ++i)) { processMonostatic(tmp, platform, world); }
 
-		//Process all the motion paths attached to the platform
-		tmp = platXml.ChildElement("motionpath", 0);
-		for (int i = 1; tmp.Element() != nullptr; i++)
-		{
-			processMotionPath(tmp, platform);
-			tmp = platXml.ChildElement("motionpath", i);
-		}
+		i = 0;
+		for (TiXmlHandle tmp = platXml.ChildElement("motionpath", 0); tmp.Element();
+		     tmp = platXml.ChildElement("motionpath", ++i)) { processMotionPath(tmp, platform); }
 
-		//Process all the rotation paths attached to the platform
-		tmp = platXml.ChildElement("rotationpath", 0);
-		for (int i = 1; tmp.Element() != nullptr; i++)
-		{
-			processRotationPath(tmp, platform);
-			tmp = platXml.ChildElement("rotationpath", i);
-		}
+		i = 0;
+		for (TiXmlHandle tmp = platXml.ChildElement("rotationpath", 0); tmp.Element();
+		     tmp = platXml.ChildElement("rotationpath", ++i)) { processRotationPath(tmp, platform); }
 
-		//Process all the rotation paths attached to the platform
-		tmp = platXml.ChildElement("fixedrotation", 0);
-		for (int i = 1; tmp.Element() != nullptr; i++)
-		{
-			processRotationConstant(tmp, platform);
-			tmp = platXml.ChildElement("fixedrotation", i);
-		}
+		i = 0;
+		for (TiXmlHandle tmp = platXml.ChildElement("fixedrotation", 0); tmp.Element();
+		     tmp = platXml.ChildElement("fixedrotation", ++i)) { processRotationConstant(tmp, platform); }
 	}
-
 
 	/// Process a pulse entry of type rect
 	void processAnyPulseFile(const TiXmlHandle& pulseXml, World* world, const std::string& name)
 	{
-		const string filename = getAttributeString(pulseXml, "filename", "Pulse must specify a filename");
-		const RS_FLOAT carrier = getChildRsFloat(pulseXml, "carrier");
-		const RS_FLOAT power = getChildRsFloat(pulseXml, "power");
-		RadarSignal* wave = pulse_factory::loadPulseFromFile(name, filename, power, carrier);
+		RadarSignal* wave = pulse_factory::loadPulseFromFile(
+			name,
+			getAttributeString(pulseXml, "filename", "Pulse must specify a filename"),
+			getChildRsFloat(pulseXml, "power"),
+			getChildRsFloat(pulseXml, "carrier")
+		);
 		world->add(wave);
 	}
 
 	/// Process a pulse entry
 	void processPulse(const TiXmlHandle& pulseXml, World* world)
 	{
-		//Get the name of the pulse
-		const string pulse_name = getAttributeString(pulseXml, "name", "Pulses must specify a name");
-		//Get the type of the pulse
-		const string pulse_type = getAttributeString(pulseXml, "type", "Pulses must specify a type");
-		//Generate the pulse
+		const std::string pulse_name = getAttributeString(pulseXml, "name", "Pulses must specify a name");
+		const std::string pulse_type = getAttributeString(pulseXml, "type", "Pulses must specify a type");
 		logging::printf(logging::RS_VERY_VERBOSE, "[VV] Generating Pulse %s of type '%s'\n", pulse_name.c_str(),
 		                pulse_type.c_str());
+
 		if (pulse_type == "file") { processAnyPulseFile(pulseXml, world, pulse_name); }
 		else { throw XmlImportException("Unrecognised type in pulse"); }
 	}
 
-	Antenna* processPythonAntenna(const TiXmlHandle& antXml, const string& name)
+	// TODO: These should be moved to a separate file
+	Antenna* processPythonAntenna(const TiXmlHandle& antXml, const std::string& name)
 	{
-		//Initialize python, if it isn't done already
 		rs_python::initPython();
-		//Get the module and function name attributes
-		const std::string modname = getAttributeString(antXml, "module", "Attribute module missing");
-		const std::string funcname = getAttributeString(antXml, "function", "Attribute function missing");
-		//Create the antenna
-		return createPythonAntenna(name, modname, funcname);
+		return createPythonAntenna(
+			name,
+			getAttributeString(antXml, "module", "Attribute module missing"),
+			getAttributeString(antXml, "function", "Attribute function missing")
+		);
 	}
 
-
-	Antenna* processXmlAntenna(const TiXmlHandle& antXml, const string& name)
+	Antenna* processXmlAntenna(const TiXmlHandle& antXml, const std::string& name)
 	{
-		//Get the module and function name attributes
-		const std::string filename = getAttributeString(antXml, "filename",
-		                                                "Antenna definition must specify a filename");
-		//Create the antenna
-		return createXmlAntenna(name, filename);
+		return createXmlAntenna(
+			name, getAttributeString(antXml, "filename", "Antenna definition must specify a filename"));
 	}
 
-	Antenna* processFileAntenna(const TiXmlHandle& antXml, const string& name)
+	Antenna* processFileAntenna(const TiXmlHandle& antXml, const std::string& name)
 	{
-		//Get the module and function name attributes
-		const std::string filename = getAttributeString(antXml, "filename",
-		                                                "Antenna definition must specify a filename");
-		//Create the antenna
-		return createFileAntenna(name, filename);
+		return createFileAntenna(
+			name, getAttributeString(antXml, "filename", "Antenna definition must specify a filename"));
 	}
 
-	Antenna* processSincAntenna(const TiXmlHandle& antXml, const string& name)
+	Antenna* processSincAntenna(const TiXmlHandle& antXml, const std::string& name)
 	{
-		const RS_FLOAT alpha = getChildRsFloat(antXml, "alpha");
-		const RS_FLOAT beta = getChildRsFloat(antXml, "beta");
-		const RS_FLOAT gamma = getChildRsFloat(antXml, "gamma");
-		return createSincAntenna(name, alpha, beta, gamma);
+		return createSincAntenna(
+			name,
+			getChildRsFloat(antXml, "alpha"),
+			getChildRsFloat(antXml, "beta"),
+			getChildRsFloat(antXml, "gamma")
+		);
 	}
 
-	Antenna* processGaussianAntenna(const TiXmlHandle& antXml, const string& name)
+	Antenna* processGaussianAntenna(const TiXmlHandle& antXml, const std::string& name)
 	{
-		const RS_FLOAT azscale = getChildRsFloat(antXml, "azscale");
-		const RS_FLOAT elscale = getChildRsFloat(antXml, "elscale");
-		return createGaussianAntenna(name, azscale, elscale);
+		return createGaussianAntenna(
+			name,
+			getChildRsFloat(antXml, "azscale"),
+			getChildRsFloat(antXml, "elscale")
+		);
 	}
 
-	Antenna* processParabolicAntenna(const TiXmlHandle& antXml, const string& name)
+	Antenna* processParabolicAntenna(const TiXmlHandle& antXml, const std::string& name)
 	{
-		const RS_FLOAT diameter = getChildRsFloat(antXml, "diameter");
-		return createParabolicAntenna(name, diameter);
+		return createParabolicAntenna(name, getChildRsFloat(antXml, "diameter"));
 	}
 
 	void processAntenna(const TiXmlHandle& antXml, World* world)
 	{
-		//Get the name of the antenna
-		const string ant_name = getAttributeString(antXml, "name", "Antennas must specify a name");
-		//Get the type of the antenna
-		const string ant_pattern = getAttributeString(antXml, "pattern", "Antennas must specify a pattern");
+		const std::string ant_name = getAttributeString(antXml, "name", "Antennas must specify a name");
+		const std::string ant_pattern = getAttributeString(antXml, "pattern", "Antennas must specify a pattern");
 		Antenna* antenna;
+
 		if (ant_pattern == "isotropic") { antenna = createIsotropicAntenna(ant_name); }
 		else if (ant_pattern == "file") { antenna = processFileAntenna(antXml, ant_name); }
 		else if (ant_pattern == "xml") { antenna = processXmlAntenna(antXml, ant_name); }
@@ -679,181 +565,144 @@ namespace
 		else if (ant_pattern == "gaussian") { antenna = processGaussianAntenna(antXml, ant_name); }
 		else if (ant_pattern == "parabolic") { antenna = processParabolicAntenna(antXml, ant_name); }
 		else { throw XmlImportException("Antenna specified unrecognised gain pattern '" + ant_pattern + "'"); }
-		//Notify the debug log
+
 		logging::printf(logging::RS_VERY_VERBOSE, "[VV] Loading antenna '%s' of type '%s'\n", ant_name.c_str(),
 		                ant_pattern.c_str());
-		//Load the efficiency factor
-		try
-		{
-			const RS_FLOAT factor = getChildRsFloat(antXml, "efficiency");
-			antenna->setEfficiencyFactor(factor);
-		}
-		catch ([[maybe_unused]] XmlImportException& xe)
+
+		try { antenna->setEfficiencyFactor(getChildRsFloat(antXml, "efficiency")); }
+		catch (XmlImportException&)
 		{
 			logging::printf(logging::RS_VERBOSE,
 			                "[VERBOSE] Antenna '%s' does not specify efficiency, assuming unity.\n", ant_name.c_str());
 		}
-		//Add it to the world
+
 		world->add(antenna);
 	}
 
-	/// Process a multipath surface and add it to the world
 	void processMultipath(const TiXmlHandle& mpXml, World* world)
 	{
-		//Get the reflecting factor
-		const RS_FLOAT factor = getChildRsFloat(mpXml, "factor");
-		const RS_FLOAT nx = getChildRsFloat(mpXml, "nx");
-		const RS_FLOAT ny = getChildRsFloat(mpXml, "ny");
-		const RS_FLOAT nz = getChildRsFloat(mpXml, "nz");
-		const RS_FLOAT d = getChildRsFloat(mpXml, "d");
-		//Create the multipath object
-		auto* mps = new MultipathSurface(nx, ny, nz, d, factor);
-		//Add it to the world
+		auto* mps = new MultipathSurface(
+			getChildRsFloat(mpXml, "nx"),
+			getChildRsFloat(mpXml, "ny"),
+			getChildRsFloat(mpXml, "nz"),
+			getChildRsFloat(mpXml, "d"),
+			getChildRsFloat(mpXml, "factor")
+		);
 		world->addMultipathSurface(mps);
 	}
 
 	/// Process a timing source and add it to the world
 	void processTiming(const TiXmlHandle& antXml, World* world)
 	{
-		//Get the name of the antenna
-		const string name = getAttributeString(antXml, "name", "Timing sources must specify a name");
+		const std::string name = getAttributeString(antXml, "name", "Timing sources must specify a name");
 		auto* timing = new PrototypeTiming(name);
-		//Process all the clock entries
-		TiXmlHandle plat = antXml.ChildElement("noise_entry", 0);
-		for (int i = 1; plat.Element() != nullptr; i++)
+
+		int i{};
+		for (TiXmlHandle plat = antXml.ChildElement("noise_entry", 0); plat.Element(); plat = antXml.
+		     ChildElement("noise_entry", ++i))
 		{
-			const RS_FLOAT alpha = getChildRsFloat(plat, "alpha");
-			const RS_FLOAT weight = getChildRsFloat(plat, "weight");
-			timing->addAlpha(alpha, weight);
-			plat = antXml.ChildElement("noise_entry", i);
+			timing->addAlpha(getChildRsFloat(plat, "alpha"), getChildRsFloat(plat, "weight"));
 		}
-		// Process the frequency offset
-		try
+
+		try { timing->addFreqOffset(getChildRsFloat(antXml, "freq_offset")); }
+		catch (XmlImportException&)
 		{
-			const RS_FLOAT offset = getChildRsFloat(antXml, "freq_offset");
-			timing->addFreqOffset(offset);
+			logging::printf(logging::RS_VERY_VERBOSE, "[VV] Clock section '%s' does not specify frequency offset.\n",
+			                name.c_str());
 		}
-		catch ([[maybe_unused]] XmlImportException& xe) {}
-		try
+
+		try { timing->addRandomFreqOffset(getChildRsFloat(antXml, "random_freq_offset")); }
+		catch (XmlImportException&)
 		{
-			const RS_FLOAT stdev = getChildRsFloat(antXml, "random_freq_offset");
-			timing->addRandomFreqOffset(stdev);
+			logging::printf(logging::RS_VERY_VERBOSE,
+			                "[VV] Clock section '%s' does not specify random frequency offset.\n", name.c_str());
 		}
-		catch ([[maybe_unused]] XmlImportException& xe) {}
-		// Process the phase offset
-		try
+
+		try { timing->addPhaseOffset(getChildRsFloat(antXml, "phase_offset")); }
+		catch (XmlImportException&)
 		{
-			const RS_FLOAT offset = getChildRsFloat(antXml, "phase_offset");
-			timing->addPhaseOffset(offset);
+			logging::printf(logging::RS_VERY_VERBOSE, "[VV] Clock section '%s' does not specify phase offset.\n",
+			                name.c_str());
 		}
-		catch ([[maybe_unused]] XmlImportException& xe) {}
-		try
+
+		try { timing->addRandomPhaseOffset(getChildRsFloat(antXml, "random_phase_offset")); }
+		catch (XmlImportException&)
 		{
-			const RS_FLOAT stdev = getChildRsFloat(antXml, "random_phase_offset");
-			timing->addRandomPhaseOffset(stdev);
+			logging::printf(logging::RS_VERY_VERBOSE, "[VV] Clock section '%s' does not specify random phase offset.\n",
+			                name.c_str());
 		}
-		catch ([[maybe_unused]] XmlImportException& xe) {}
-		// Process the frequency
-		try
+
+		try { timing->setFrequency(getChildRsFloat(antXml, "frequency")); }
+		catch (XmlImportException&)
 		{
-			const RS_FLOAT freq = getChildRsFloat(antXml, "frequency");
-			timing->setFrequency(freq);
-		}
-		catch ([[maybe_unused]] XmlImportException& xe)
-		{
-			//If there is no frequency, we default to the system sample frequency
 			timing->setFrequency(parameters::rate());
 			logging::printf(logging::RS_VERBOSE,
 			                "[VERBOSE] Clock section '%s' does not specify frequency. Assuming %g.\n", name.c_str(),
 			                parameters::rate());
 		}
-		//Process the synconpulse tag
-		if (getAttributeBool(antXml, "synconpulse", "", true)) { timing->setSyncOnPulse(); }
-		//Notify the debug log
-		logging::printf(logging::RS_VERY_VERBOSE, "[VV] Loading timing source '%s'\n", name.c_str());
 
-		//Add it to the world
+		if (getAttributeBool(antXml, "synconpulse", "", true)) { timing->setSyncOnPulse(); }
+
+		logging::printf(logging::RS_VERY_VERBOSE, "[VV] Loading timing source '%s'\n", name.c_str());
 		world->add(timing);
 	}
 
 	/// Process the <parameters> element
 	void processParameters(const TiXmlHandle& root)
 	{
-		//Get the simulation start and end times
 		parameters::setTime(getChildRsFloat(root, "starttime"), getChildRsFloat(root, "endtime"));
-		//Get the propagation speed in air
-		try
-		{
-			const RS_FLOAT c = getChildRsFloat(root, "c");
-			parameters::setC(c);
-		}
-		catch ([[maybe_unused]] XmlImportException& xe)
+
+		try { parameters::setC(getChildRsFloat(root, "c")); }
+		catch (XmlImportException&)
 		{
 			logging::printf(logging::RS_VERBOSE, "[VERBOSE] Using default value of c: %f(m/s)\n", parameters::c());
 		}
-		//Get the export sampling rate
-		try
-		{
-			const RS_FLOAT rate = getChildRsFloat(root, "rate");
-			parameters::setRate(rate);
-		}
-		catch ([[maybe_unused]] XmlImportException& xe)
+
+		try { parameters::setRate(getChildRsFloat(root, "rate")); }
+		catch (XmlImportException&)
 		{
 			logging::printf(logging::RS_VERBOSE, "[VERBOSE] Using default sampling rate.\n");
 		}
-		//Get the cw Interpolation rate
-		try
-		{
-			const RS_FLOAT rate = getChildRsFloat(root, "interprate");
-			parameters::setCwSampleRate(rate);
-		}
-		catch ([[maybe_unused]] XmlImportException& xe)
+
+		try { parameters::setCwSampleRate(getChildRsFloat(root, "interprate")); }
+		catch (XmlImportException&)
 		{
 			logging::printf(logging::RS_VERBOSE,
 			                "[VERBOSE] Using default value of CW position interpolation rate: %g\n",
 			                parameters::cwSampleRate());
 		}
-		//Get the random seed
-		try
-		{
-			const RS_FLOAT seed = getChildRsFloat(root, "randomseed");
-			parameters::setRandomSeed(static_cast<unsigned>(std::fabs(seed)));
-		}
-		catch ([[maybe_unused]] XmlImportException& xe)
+
+		try { parameters::setRandomSeed(static_cast<unsigned>(std::fabs(getChildRsFloat(root, "randomseed")))); }
+		catch (XmlImportException&)
 		{
 			logging::printf(logging::RS_VERBOSE, "[VERBOSE] Using random seed from clock(): %d\n",
 			                parameters::randomSeed());
 		}
-		//Get the number of ADC bits to simulate
+
 		try
 		{
-			const RS_FLOAT adc_bits = getChildRsFloat(root, "adc_bits");
-			parameters::setAdcBits(static_cast<unsigned>(std::floor(adc_bits)));
-			logging::printf(logging::RS_VERBOSE, "[VERBOSE] Quantizing results to %d bits\n",
-			                parameters::adcBits());
+			parameters::setAdcBits(static_cast<unsigned>(std::floor(getChildRsFloat(root, "adc_bits"))));
+			logging::printf(logging::RS_VERBOSE, "[VERBOSE] Quantizing results to %d bits\n", parameters::adcBits());
 		}
-		catch ([[maybe_unused]] XmlImportException& xe)
+		catch (XmlImportException&)
 		{
 			logging::printf(logging::RS_VERY_VERBOSE, "[VERBOSE] Using full precision simulation.\n");
 		}
-		// Get the oversampling ratio
-		try
-		{
-			const RS_FLOAT ratio = getChildRsFloat(root, "oversample");
-			parameters::setOversampleRatio(static_cast<unsigned>(std::floor(ratio)));
-		}
-		catch ([[maybe_unused]] XmlImportException& xe)
+
+		try { parameters::setOversampleRatio(static_cast<unsigned>(std::floor(getChildRsFloat(root, "oversample")))); }
+		catch (XmlImportException&)
 		{
 			logging::printf(logging::RS_VERY_VERBOSE,
 			                "[VV] Oversampling not in use. Ensure than pulses are correctly sampled.\n");
 		}
-		//Process the "export" tag
+
 		if (const TiXmlHandle exporttag = root.ChildElement("export", 0); exporttag.Element())
 		{
-			const bool export_xml = getAttributeBool(exporttag, "xml", "", parameters::exportXml());
-			const bool export_csv = getAttributeBool(exporttag, "csv", "", parameters::exportCsv());
-			const bool export_binary = getAttributeBool(exporttag, "binary", "", parameters::exportBinary());
-			parameters::setExporters(export_xml, export_csv, export_binary);
+			parameters::setExporters(
+				getAttributeBool(exporttag, "xml", "", parameters::exportXml()),
+				getAttributeBool(exporttag, "csv", "", parameters::exportCsv()),
+				getAttributeBool(exporttag, "binary", "", parameters::exportBinary())
+			);
 		}
 	}
 
@@ -863,12 +712,12 @@ namespace
 	/// Process the inclusion of a file
 	void processInclude(const TiXmlHandle& plat, World* world) // NOLINT(misc-no-recursion)
 	{
-		const char* name = getNodeText(plat);
-		TiXmlDocument doc(name);
-		if (!doc.LoadFile()) { throw std::runtime_error("Cannot open included file: " + std::string(name)); }
-		//Process the XML document
-		const TiXmlHandle root(doc.RootElement());
-		processDocument(root, world, true);
+		TiXmlDocument doc(plat.Element()->GetText());
+		if (!doc.LoadFile())
+		{
+			throw std::runtime_error("Cannot open included file: " + std::string(plat.Element()->GetText()));
+		}
+		processDocument(TiXmlHandle(doc.RootElement()), world, true);
 	}
 
 	/// Process the XML tree, starting at the root
@@ -876,70 +725,52 @@ namespace
 	{
 		if (!included)
 		{
-			//Process the parameters
-			const TiXmlHandle parameters = root.ChildElement("parameters", 0);
-			processParameters(parameters);
+			processParameters(root.ChildElement("parameters", 0));
 		}
-		//Process all the pulses
-		TiXmlHandle plat = root.ChildElement("pulse", 0);
-		for (int i = 1; plat.Element() != nullptr; i++)
+
+		const std::vector<std::string> elements = {"pulse", "antenna", "timing", "multipath", "platform", "include", "incblock"};
+		for (const auto& element : elements)
 		{
-			processPulse(plat, world);
-			plat = root.ChildElement("pulse", i);
-		}
-		//Process all the antennas
-		plat = root.ChildElement("antenna", 0);
-		for (int i = 1; plat.Element() != nullptr; i++)
-		{
-			processAntenna(plat, world);
-			plat = root.ChildElement("antenna", i);
-		}
-		//Process all the timing sources
-		plat = root.ChildElement("timing", 0);
-		for (int i = 1; plat.Element() != nullptr; i++)
-		{
-			processTiming(plat, world);
-			plat = root.ChildElement("timing", i);
-		}
-		//Process all the multipath surfaces
-		plat = root.ChildElement("multipath", 0);
-		for (int i = 1; plat.Element() != nullptr; i++)
-		{
-			processMultipath(plat, world);
-			plat = root.ChildElement("multipath", i);
-		}
-		//Process all the platforms
-		plat = root.ChildElement("platform", 0);
-		for (int i = 1; plat.Element() != nullptr; i++)
-		{
-			processPlatform(plat, world); //Recursively process the platform
-			plat = root.ChildElement("platform", i);
-		}
-		//Process all the includes
-		plat = root.ChildElement("include", 0);
-		for (int i = 1; plat.Element() != nullptr; i++)
-		{
-			processInclude(plat, world); //Recursively process the platform
-			plat = root.ChildElement("include", i);
-		}
-		//Process all the incblocks
-		plat = root.ChildElement("incblock", 0);
-		for (int i = 1; plat.Element() != nullptr; i++)
-		{
-			processDocument(plat, world, true); //Recursively process the platform
-			plat = root.ChildElement("incblock", i);
+			for (TiXmlHandle plat = root.ChildElement(element.c_str(), 0); plat.Element(); plat = plat.Element()->NextSiblingElement(element.c_str()))
+			{
+				if (element == "pulse")
+				{
+					processPulse(plat, world);
+				}
+				else if (element == "antenna")
+				{
+					processAntenna(plat, world);
+				}
+				else if (element == "timing")
+				{
+					processTiming(plat, world);
+				}
+				else if (element == "multipath")
+				{
+					processMultipath(plat, world);
+				}
+				else if (element == "platform")
+				{
+					processPlatform(plat, world);
+				}
+				else if (element == "include")
+				{
+					processInclude(plat, world);
+				}
+				else if (element == "incblock")
+				{
+					processDocument(plat, world, true);
+				}
+			}
 		}
 	}
 } //Anonymous Namespace
 
 /// Load an XML file into the world with the given filename
-void xml::loadXmlFile(const string& filename, World* world)
+void xml::loadXmlFile(const std::string& filename, World* world)
 {
 	TiXmlDocument doc(filename.c_str());
 	if (!doc.LoadFile()) { throw std::runtime_error("Cannot open script file"); }
-	//Process the XML document
-	const TiXmlHandle root(doc.RootElement());
-	processDocument(root, world, false);
-	//Create multipath duals of all objects, if a surface was added
+	processDocument(TiXmlHandle(doc.RootElement()), world, false);
 	world->processMultipath();
 }
