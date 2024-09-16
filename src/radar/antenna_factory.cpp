@@ -26,15 +26,9 @@ RS_FLOAT getNodeFloat(const TiXmlHandle& node);
 
 namespace
 {
-	RS_FLOAT sinc(const RS_FLOAT theta)
-	{
-		return std::sin(theta) / (theta + std::numeric_limits<RS_FLOAT>::epsilon());
-	}
+	RS_FLOAT sinc(const RS_FLOAT theta) { return std::sin(theta) / (theta + std::numeric_limits<RS_FLOAT>::epsilon()); }
 
-	RS_FLOAT j1C(const RS_FLOAT x)
-	{
-		return x == 0 ? 1 : portable_utils::besselJ1(x) / x;
-	}
+	RS_FLOAT j1C(const RS_FLOAT x) { return x == 0 ? 1 : portable_utils::besselJ1(x) / x; }
 
 	void loadAntennaGainAxis(const InterpSet* set, const TiXmlHandle& axisXml)
 	{
@@ -55,30 +49,13 @@ namespace
 //
 // =====================================================================================================================
 
-Antenna::Antenna(std::string name) : _loss_factor(1), _name(std::move(name))
-{
-}
-
-Antenna::~Antenna() = default;
 
 void Antenna::setEfficiencyFactor(const RS_FLOAT loss)
 {
-	if (loss > 1)
-	{
-		logging::printf(logging::RS_IMPORTANT, "Using greater than unity antenna efficiency.\n");
-	}
+	if (loss > 1) { logging::printf(logging::RS_IMPORTANT, "Using greater than unity antenna efficiency.\n"); }
 	_loss_factor = loss;
 }
 
-RS_FLOAT Antenna::getEfficiencyFactor() const
-{
-	return _loss_factor;
-}
-
-std::string Antenna::getName() const
-{
-	return _name;
-}
 
 RS_FLOAT Antenna::getAngle(const SVec3& angle, const SVec3& refangle)
 {
@@ -87,15 +64,7 @@ RS_FLOAT Antenna::getAngle(const SVec3& angle, const SVec3& refangle)
 	return std::acos(dotProduct(Vec3(normangle), Vec3(refangle)));
 }
 
-RS_FLOAT Antenna::getNoiseTemperature(const SVec3& angle) const
-{
-	return 0; // TODO: Implement noise temperature calculation
-}
-
-Antenna* rs::createIsotropicAntenna(const std::string& name)
-{
-	return new Isotropic(name);
-}
+Antenna* rs::createIsotropicAntenna(const std::string& name) { return new Isotropic(name); }
 
 Antenna* rs::createSincAntenna(const std::string& name, const RS_FLOAT alpha, const RS_FLOAT beta, const RS_FLOAT gamma)
 {
@@ -117,15 +86,9 @@ Antenna* rs::createParabolicAntenna(const std::string& name, const RS_FLOAT diam
 	return new ParabolicReflector(name, diameter);
 }
 
-Antenna* rs::createXmlAntenna(const std::string& name, const std::string& file)
-{
-	return new XmlAntenna(name, file);
-}
+Antenna* rs::createXmlAntenna(const std::string& name, const std::string& file) { return new XmlAntenna(name, file); }
 
-Antenna* rs::createFileAntenna(const std::string& name, const std::string& file)
-{
-	return new FileAntenna(name, file);
-}
+Antenna* rs::createFileAntenna(const std::string& name, const std::string& file) { return new FileAntenna(name, file); }
 
 Antenna* rs::createPythonAntenna(const std::string& name, const std::string& module, const std::string& function)
 {
@@ -134,33 +97,9 @@ Antenna* rs::createPythonAntenna(const std::string& name, const std::string& mod
 
 // =====================================================================================================================
 //
-// ISOTROPIC CLASS
-//
-// =====================================================================================================================
-
-Isotropic::Isotropic(const std::string& name) : Antenna(name)
-{
-}
-
-Isotropic::~Isotropic() = default;
-
-RS_FLOAT Isotropic::getGain(const SVec3& angle, const SVec3& refangle, RS_FLOAT wavelength) const
-{
-	return getEfficiencyFactor();
-}
-
-// =====================================================================================================================
-//
 // GAUSSIAN CLASS
 //
 // =====================================================================================================================
-
-Gaussian::Gaussian(const std::string& name, const RS_FLOAT azscale, const RS_FLOAT elscale)
-	: Antenna(name), _azscale(azscale), _elscale(elscale)
-{
-}
-
-Gaussian::~Gaussian() = default;
 
 RS_FLOAT Gaussian::getGain(const SVec3& angle, const SVec3& refangle, RS_FLOAT wavelength) const
 {
@@ -173,13 +112,6 @@ RS_FLOAT Gaussian::getGain(const SVec3& angle, const SVec3& refangle, RS_FLOAT w
 // SINC CLASS
 //
 // =====================================================================================================================
-
-Sinc::Sinc(const std::string& name, const RS_FLOAT alpha, const RS_FLOAT beta, const RS_FLOAT gamma)
-	: Antenna(name), _alpha(alpha), _beta(beta), _gamma(gamma)
-{
-}
-
-Sinc::~Sinc() = default;
 
 RS_FLOAT Sinc::getGain(const SVec3& angle, const SVec3& refangle, RS_FLOAT wavelength) const
 {
@@ -195,12 +127,6 @@ RS_FLOAT Sinc::getGain(const SVec3& angle, const SVec3& refangle, RS_FLOAT wavel
 //
 // =====================================================================================================================
 
-SquareHorn::SquareHorn(const std::string& name, const RS_FLOAT dimension) : Antenna(name), _dimension(dimension)
-{
-}
-
-SquareHorn::~SquareHorn() = default;
-
 RS_FLOAT SquareHorn::getGain(const SVec3& angle, const SVec3& refangle, const RS_FLOAT wavelength) const
 {
 	const RS_FLOAT ge = 4 * M_PI * _dimension * _dimension / (wavelength * wavelength);
@@ -214,39 +140,11 @@ RS_FLOAT SquareHorn::getGain(const SVec3& angle, const SVec3& refangle, const RS
 //
 // =====================================================================================================================
 
-ParabolicReflector::ParabolicReflector(const std::string& name, const RS_FLOAT diameter)
-	: Antenna(name), _diameter(diameter)
-{
-}
-
-ParabolicReflector::~ParabolicReflector() = default;
-
 RS_FLOAT ParabolicReflector::getGain(const SVec3& angle, const SVec3& refangle, const RS_FLOAT wavelength) const
 {
 	const RS_FLOAT ge = std::pow(M_PI * _diameter / wavelength, 2);
 	const RS_FLOAT x = M_PI * _diameter * std::sin(getAngle(angle, refangle)) / wavelength;
 	return ge * std::pow(2 * j1C(x), 2) * getEfficiencyFactor();
-}
-
-// =====================================================================================================================
-//
-// FILE ANTENNA CLASS
-//
-// =====================================================================================================================
-
-FileAntenna::FileAntenna(const std::string& name, const std::string& filename) : Antenna(name)
-{
-	_pattern = new Pattern(filename);
-}
-
-FileAntenna::~FileAntenna()
-{
-	delete _pattern;
-}
-
-RS_FLOAT FileAntenna::getGain(const SVec3& angle, const SVec3& refangle, RS_FLOAT wavelength) const
-{
-	return _pattern->getGain(angle - refangle) * getEfficiencyFactor();
 }
 
 // =====================================================================================================================
@@ -278,32 +176,11 @@ RS_FLOAT XmlAntenna::getGain(const SVec3& angle, const SVec3& refangle, RS_FLOAT
 void XmlAntenna::loadAntennaDescription(const std::string& filename)
 {
 	TiXmlDocument doc(filename.c_str());
-	if (!doc.LoadFile())
-	{
-		throw std::runtime_error("[ERROR] Could not load antenna description " + filename);
-	}
+	if (!doc.LoadFile()) { throw std::runtime_error("[ERROR] Could not load antenna description " + filename); }
 	const TiXmlHandle root(doc.RootElement());
 	loadAntennaGainAxis(_elev_samples, root.ChildElement("elevation", 0));
 	loadAntennaGainAxis(_azi_samples, root.ChildElement("azimuth", 0));
 	_max_gain = std::max(_azi_samples->max(), _elev_samples->max());
 	_elev_samples->divide(_max_gain);
 	_azi_samples->divide(_max_gain);
-}
-
-// =====================================================================================================================
-//
-// PYTHON ANTENNA CLASS
-//
-// =====================================================================================================================
-
-PythonAntenna::PythonAntenna(const std::string& name, const std::string& module, const std::string& function)
-	: Antenna(name), _py_antenna(module, function)
-{
-}
-
-PythonAntenna::~PythonAntenna() = default;
-
-RS_FLOAT PythonAntenna::getGain(const SVec3& angle, const SVec3& refangle, RS_FLOAT wavelength) const
-{
-	return _py_antenna.getGain(angle - refangle) * getEfficiencyFactor();
 }
