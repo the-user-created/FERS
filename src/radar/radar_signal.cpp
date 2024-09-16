@@ -88,63 +88,62 @@ RS_FLOAT* Signal::copyData() const
 std::shared_ptr<RS_COMPLEX[]> Signal::render(const std::vector<InterpPoint>& points, unsigned& size,
                                              const double fracWinDelay) const
 {
-	// Allocate memory for rendering
 	auto out = std::make_unique<RS_COMPLEX[]>(_size);
 	size = _size;
 
 	const RS_FLOAT timestep = 1.0 / _rate;
 	const int filt_length = static_cast<int>(parameters::renderFilterLength());
 	const interp_filt::InterpFilter* interp = interp_filt::InterpFilter::getInstance();
+
 	auto iter = points.begin();
-	auto next = iter + 1;
-
-	if (next == points.end()) { next = iter; }
-
+	auto next = points.size() > 1 ? iter + 1 : iter;
 	const RS_FLOAT idelay = round(_rate * iter->delay);
-
 	RS_FLOAT sample_time = iter->time;
+
 	for (int i = 0; i < static_cast<int>(_size); i++)
 	{
-		// Check if we should move on to the next set of interp points
-		if (sample_time > next->time)
+		if (sample_time > next->time && next != iter)
 		{
 			iter = next;
 			if (next + 1 != points.end()) { ++next; }
 		}
 
-		RS_FLOAT aw = 1, bw = 0;
-		if (iter < next)
-		{
-			bw = (sample_time - iter->time) / (next->time - iter->time);
-			aw = 1 - bw;
-		}
-
-		RS_FLOAT amplitude = std::sqrt(iter->power) * aw + std::sqrt(next->power) * bw;
-		RS_FLOAT phase = iter->phase * aw + next->phase * bw;
-		RS_FLOAT fdelay = -((iter->delay * aw + next->delay * bw) * _rate - idelay + fracWinDelay);
-
-		const int i_sample_unwrap = floor(fdelay);
-		fdelay -= i_sample_unwrap;
+		auto [amplitude, phase, fdelay, i_sample_unwrap] = calculateWeightsAndDelays(
+			iter, next, sample_time, idelay, fracWinDelay);
 		const RS_FLOAT* filt = interp->getFilter(fdelay);
-
-		const int start = std::max(-filt_length / 2, -i);
-		const int end = std::min(filt_length / 2, static_cast<int>(_size) - i);
-
-		RS_COMPLEX accum(0.0, 0.0);
-		for (int j = start; j < end; j++)
-		{
-			if (i + j + i_sample_unwrap >= _size || i + j + i_sample_unwrap < 0 || j + filt_length / 2 >= filt_length)
-			{
-				continue;
-			}
-
-			accum += amplitude * _data[i + j + i_sample_unwrap] * filt[j + filt_length / 2];
-		}
-
-		RS_COMPLEX ph = exp(RS_COMPLEX(0.0, 1.0) * phase);
-		out[i] = ph * accum;
+		const RS_COMPLEX accum = performConvolution(i, filt, filt_length, amplitude, i_sample_unwrap);
+		out[i] = std::exp(RS_COMPLEX(0.0, 1.0) * phase) * accum;
 		sample_time += timestep;
 	}
 
 	return std::shared_ptr<RS_COMPLEX[]>(out.release());
+}
+
+std::tuple<RS_FLOAT, RS_FLOAT, RS_FLOAT, int> Signal::calculateWeightsAndDelays(
+	const std::vector<InterpPoint>::const_iterator iter, const std::vector<InterpPoint>::const_iterator next,
+	const RS_FLOAT sampleTime, const RS_FLOAT idelay, const RS_FLOAT fracWinDelay) const
+{
+	const RS_FLOAT bw = iter < next ? (sampleTime - iter->time) / (next->time - iter->time) : 0;
+	const RS_FLOAT aw = 1.0 - bw;
+	RS_FLOAT amplitude = std::sqrt(iter->power) * aw + std::sqrt(next->power) * bw;
+	RS_FLOAT phase = iter->phase * aw + next->phase * bw;
+	RS_FLOAT fdelay = -((iter->delay * aw + next->delay * bw) * _rate - idelay + fracWinDelay);
+	const int i_sample_unwrap = static_cast<int>(floor(fdelay));
+	fdelay -= i_sample_unwrap;
+	return {amplitude, phase, fdelay, i_sample_unwrap};
+}
+
+RS_COMPLEX Signal::performConvolution(const int i, const RS_FLOAT* filt, const int filtLength, const RS_FLOAT amplitude,
+                                      const int iSampleUnwrap) const
+{
+	const int start = std::max(-filtLength / 2, -i);
+	const int end = std::min(filtLength / 2, static_cast<int>(_size) - i);
+	RS_COMPLEX accum(0.0, 0.0);
+
+	for (int j = start; j < end; j++)
+	{
+		if (const int sample_idx = i + j + iSampleUnwrap; sample_idx >= 0 && sample_idx < _size && j + filtLength / 2
+			< filtLength) { accum += amplitude * _data[sample_idx] * filt[j + filtLength / 2]; }
+	}
+	return accum;
 }

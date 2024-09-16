@@ -36,13 +36,20 @@ namespace rs
 		// Note: This function is not used in the codebase
 		[[nodiscard]] RS_FLOAT* copyData() const;
 
-		std::shared_ptr<std::complex<double>[]> render(const std::vector<InterpPoint>& points,
-		                                               unsigned& size, double fracWinDelay) const;
+		std::shared_ptr<std::complex<double>[]> render(const std::vector<InterpPoint>& points, unsigned& size,
+		                                               double fracWinDelay) const;
 
 	private:
 		RS_COMPLEX* _data;
 		unsigned _size;
 		RS_FLOAT _rate;
+
+		[[nodiscard]] std::tuple<double, double, double, int> calculateWeightsAndDelays(
+			std::vector<InterpPoint>::const_iterator iter, std::vector<InterpPoint>::const_iterator next,
+			double sampleTime, double idelay, double fracWinDelay) const;
+
+		std::complex<double> performConvolution(int i, const double* filt, int filtLength, double amplitude,
+		                                        int iSampleUnwrap) const;
 	};
 
 	class RadarSignal : public boost::noncopyable
