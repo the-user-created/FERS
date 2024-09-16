@@ -138,7 +138,6 @@ namespace
 	}
 
 	/// Process a receiver XML entry
-	/// Process a receiver XML entry
 	Receiver* processReceiver(const TiXmlHandle& recvXml, const Platform* platform, World* world)
 	{
 		logging::printf(logging::RS_VERY_VERBOSE, "[VV] Loading Receiver: ");
@@ -324,7 +323,6 @@ namespace
 	}
 
 	/// Process a MotionPath XML entry
-	/// Process a MotionPath XML entry
 	void processMotionPath(const TiXmlHandle& mpXml, const Platform* platform)
 	{
 		path::Path* path = platform->getMotionPath();
@@ -505,7 +503,6 @@ namespace
 		else { throw XmlImportException("Unrecognised type in pulse"); }
 	}
 
-	// TODO: These should be moved to a separate file
 	Antenna* processPythonAntenna(const TiXmlHandle& antXml, const std::string& name)
 	{
 		rs_python::initPython();
@@ -724,44 +721,23 @@ namespace
 	/// Process the XML tree, starting at the root
 	void processDocument(const TiXmlHandle& root, World* world, const bool included) // NOLINT(misc-no-recursion)
 	{
-		if (!included)
-		{
-			processParameters(root.ChildElement("parameters", 0));
-		}
+		if (!included) { processParameters(root.ChildElement("parameters", 0)); }
 
-		const std::vector<std::string> elements = {"pulse", "antenna", "timing", "multipath", "platform", "include", "incblock"};
+		const std::vector<std::string> elements = {
+			"pulse", "antenna", "timing", "multipath", "platform", "include", "incblock"
+		};
 		for (const auto& element : elements)
 		{
-			for (TiXmlHandle plat = root.ChildElement(element.c_str(), 0); plat.Element(); plat = plat.Element()->NextSiblingElement(element.c_str()))
+			for (TiXmlHandle plat = root.ChildElement(element.c_str(), 0); plat.Element(); plat = plat.Element()->
+			     NextSiblingElement(element.c_str()))
 			{
-				if (element == "pulse")
-				{
-					processPulse(plat, world);
-				}
-				else if (element == "antenna")
-				{
-					processAntenna(plat, world);
-				}
-				else if (element == "timing")
-				{
-					processTiming(plat, world);
-				}
-				else if (element == "multipath")
-				{
-					processMultipath(plat, world);
-				}
-				else if (element == "platform")
-				{
-					processPlatform(plat, world);
-				}
-				else if (element == "include")
-				{
-					processInclude(plat, world);
-				}
-				else if (element == "incblock")
-				{
-					processDocument(plat, world, true);
-				}
+				if (element == "pulse") { processPulse(plat, world); }
+				else if (element == "antenna") { processAntenna(plat, world); }
+				else if (element == "timing") { processTiming(plat, world); }
+				else if (element == "multipath") { processMultipath(plat, world); }
+				else if (element == "platform") { processPlatform(plat, world); }
+				else if (element == "include") { processInclude(plat, world); }
+				else if (element == "incblock") { processDocument(plat, world, true); }
 			}
 		}
 	}

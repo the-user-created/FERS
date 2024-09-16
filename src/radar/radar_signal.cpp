@@ -26,14 +26,8 @@ RadarSignal::RadarSignal(std::string name, const RS_FLOAT power, const RS_FLOAT 
 	if (!signal) { throw std::logic_error("RadarSignal cannot be constructed with NULL signal"); }
 }
 
-//Destructor
-RadarSignal::~RadarSignal() { delete _signal; }
-
-//Get the carrier frequency TODO: Cannot make this inline?????????
+// Get the carrier frequency
 RS_FLOAT RadarSignal::getCarrier() const { return _carrierfreq; }
-
-//Get the native sample rate of the pulse
-RS_FLOAT RadarSignal::getRate() const { return _signal->rate(); }
 
 std::shared_ptr<RS_COMPLEX[]> RadarSignal::render(const std::vector<InterpPoint>& points, unsigned& size,
                                                   const RS_FLOAT fracWinDelay) const
@@ -106,7 +100,7 @@ std::shared_ptr<RS_COMPLEX[]> Signal::render(const std::vector<InterpPoint>& poi
 
 	if (next == points.end()) { next = iter; }
 
-	const RS_FLOAT idelay = portable_utils::rsRound(_rate * iter->delay);
+	const RS_FLOAT idelay = round(_rate * iter->delay);
 
 	RS_FLOAT sample_time = iter->time;
 	for (int i = 0; i < static_cast<int>(_size); i++)

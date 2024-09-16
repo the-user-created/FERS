@@ -18,7 +18,7 @@ namespace
 	void addArrayToWindow(const RS_FLOAT wStart, RS_COMPLEX* window, const unsigned wSize, const RS_FLOAT rate,
 	                      const RS_FLOAT rStart, const RS_COMPLEX* resp, const unsigned rSize)
 	{
-		int start_sample = static_cast<int>(portable_utils::rsRound(rate * (rStart - wStart)));
+		int start_sample = static_cast<int>(round(rate * (rStart - wStart)));
 		unsigned roffset = 0;
 		if (start_sample < 0)
 		{

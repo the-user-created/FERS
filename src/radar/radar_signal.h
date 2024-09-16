@@ -50,7 +50,7 @@ namespace rs
 	public:
 		RadarSignal(std::string name, RS_FLOAT power, RS_FLOAT carrierfreq, RS_FLOAT length, Signal* signal);
 
-		~RadarSignal();
+		~RadarSignal() { delete _signal; }
 
 		[[nodiscard]] RS_FLOAT getPower() const { return _power; }
 
@@ -58,7 +58,7 @@ namespace rs
 
 		[[nodiscard]] std::string getName() const { return _name; }
 
-		[[nodiscard]] RS_FLOAT getRate() const;
+		[[nodiscard]] RS_FLOAT getRate() const { return _signal->rate(); }
 
 		[[nodiscard]] RS_FLOAT getLength() const { return _length; }
 
