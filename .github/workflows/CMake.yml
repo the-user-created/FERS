@@ -32,6 +32,7 @@ jobs:
           mkdir -p build
           cd build
           cmake -S .. -B . \
+            -D CMAKE_BUILD_TYPE=Release \
             -D FERS_LIB_HDF5="/usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5.so" \
             -D FERS_LIB_HDF5_HL="/usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5_hl.so" \
             -D CMAKE_CXX_FLAGS="-I/usr/include/hdf5/serial/"
