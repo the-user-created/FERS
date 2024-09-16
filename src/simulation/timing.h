@@ -32,7 +32,7 @@ namespace rs
 
 		virtual void skipSamples(long long samples) = 0;
 
-		[[nodiscard]] std::string getName() const
+		[[nodiscard]] std::string getName() const  // TODO: unused
 		{
 			return _name;
 		}
@@ -140,7 +140,7 @@ namespace rs
 
 		void initializeModel(const PrototypeTiming* timing);
 
-		[[nodiscard]] RS_FLOAT getPulseTimeError() const override
+		[[nodiscard]] RS_FLOAT getPulseTimeError() const override  // TODO: unused
 		{
 			return _enabled ? _model->getSample() : 0;
 		}
