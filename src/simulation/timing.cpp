@@ -92,8 +92,8 @@ void ClockModelTiming::initializeModel(const PrototypeTiming* timing)
 		logging::printf(logging::RS_IMPORTANT,
 		                "[Important] Timing source frequency not set, results could be incorrect.");
 	}
-	_frequency = timing->getFrequency();  // TODO: BUG #1 - default-initialization of _frequency
-	_sync_on_pulse = timing->getSyncOnPulse();  // TODO: BUG #2 - default-initialization of _sync_on_pulse
+	_frequency = timing->getFrequency();
+	_sync_on_pulse = timing->getSyncOnPulse();
 	_enabled = true;
 }
 

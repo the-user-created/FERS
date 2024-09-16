@@ -20,7 +20,7 @@ namespace interp_filt
 		return _instance;
 	}
 
-	RS_FLOAT InterpFilter::besselI0(const RS_FLOAT x)  // TODO: x is always 5
+	RS_FLOAT InterpFilter::besselI0(const RS_FLOAT x)
 	{
 		// Use the polynomial approximation from section 9.8 of
 		// "Handbook of Mathematical Functions" by Abramowitz and Stegun
@@ -53,7 +53,7 @@ namespace interp_filt
 		//Alpha is half the filter length
 		_alpha = std::floor(parameters::renderFilterLength() / 2.0);
 		//Beta sets the window shape
-		_beta = 5;  // TODO: beta is always 5?
+		_beta = 5;
 		_bessel_beta = besselI0(_beta);
 		const int hfilt = _table_filters / 2;
 		logging::printf(logging::RS_VERY_VERBOSE, "[VV] Building table of %d filters\n", _table_filters);
