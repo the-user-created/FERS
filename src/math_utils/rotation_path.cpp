@@ -23,12 +23,12 @@ namespace path
 		_final = false;
 	}
 
-	//Get the position of the path object at a specified time
+	// Get the position of the path object at a specified time
 	rs::SVec3 RotationPath::getPosition(const RS_FLOAT t) const
 	{
 		coord::RotationCoord coord;
 		if (!_final) { throw PathException("Finalize not called before GetPosition in Rotation"); }
-		//Call the interpolation function relevent to the type
+		// Call the interpolation function relevant to the type
 		switch (_type)
 		{
 		case RS_INTERP_STATIC: getPositionStatic<coord::RotationCoord>(coord, _coords);

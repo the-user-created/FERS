@@ -79,7 +79,7 @@ namespace
 		if (!recv->checkFlag(rs::Receiver::FLAG_NOPROPLOSS))
 		{
 			const RS_FLOAT distance_product = transmitter_to_target_distance * receiver_to_target_distance;
-			results.power *= (wavelength * wavelength) / (pow(4 * M_PI, 2) * distance_product * distance_product);
+			results.power *= wavelength * wavelength / (pow(4 * M_PI, 2) * distance_product * distance_product);
 		}
 
 		// Apply multipath factors if applicable
@@ -130,7 +130,7 @@ namespace
 
 		results.power = transmitter_gain * receiver_gain * wavelength * wavelength / (4 * M_PI);
 
-		if (!recv->checkFlag(rs::Receiver::FLAG_NOPROPLOSS)) { results.power /= (4 * M_PI * distance * distance); }
+		if (!recv->checkFlag(rs::Receiver::FLAG_NOPROPLOSS)) { results.power /= 4 * M_PI * distance * distance; }
 
 		// Doppler shift calculation
 		const auto trpos_end = trans->getPosition(time + length) - recv->getPosition(time + length);
@@ -163,7 +163,7 @@ namespace
 			// Iterate through sample points
 			for (int i = 0; i <= point_count; ++i)
 			{
-				const RS_FLOAT current_time = (i < point_count) ? start_time + i * sample_time : end_time;
+				const RS_FLOAT current_time = i < point_count ? start_time + i * sample_time : end_time;
 
 				// Compute simulation results
 				rs::threaded_sim::ReResults results{};
@@ -185,7 +185,7 @@ namespace
 	}
 
 	void simulateTarget(const rs::Transmitter* trans, rs::Receiver* recv, const rs::Target* targ,
-					const rs::TransmitterPulse* signal)
+	                    const rs::TransmitterPulse* signal)
 	{
 		const RS_FLOAT start_time = signal->time;
 		const RS_FLOAT end_time = start_time + signal->wave->getLength();
@@ -194,10 +194,12 @@ namespace
 
 		auto* response = new rs::Response(signal->wave, trans);
 
-		try {
+		try
+		{
 			// Loop over all time points, including the final one
-			for (int i = 0; i <= point_count; ++i) {
-				const RS_FLOAT current_time = (i < point_count) ? start_time + i * sample_time : end_time;
+			for (int i = 0; i <= point_count; ++i)
+			{
+				const RS_FLOAT current_time = i < point_count ? start_time + i * sample_time : end_time;
 
 				// Simulate the results for each time step
 				rs::threaded_sim::ReResults results{};
@@ -205,10 +207,12 @@ namespace
 
 				// Add interpolation point to the response
 				rs::InterpPoint point(results.power, current_time + results.delay, results.delay, results.doppler,
-									  results.phase, results.noise_temperature);
+				                      results.phase, results.noise_temperature);
 				response->addInterpPoint(point);
 			}
-		} catch (rs::threaded_sim::RangeError&) {
+		}
+		catch (rs::threaded_sim::RangeError&)
+		{
 			throw std::runtime_error("Receiver or Transmitter too close to Target for accurate simulation");
 		}
 
@@ -279,7 +283,7 @@ namespace
 		{
 			for (const auto& transmitter : transmitters)
 			{
-				startSimThread(threadLimit, running, [&]()
+				startSimThread(threadLimit, running, [&]
 				{
 					return std::make_unique<boost::thread>(
 						rs::threaded_sim::SimThread(transmitter, receiver, world));
@@ -305,7 +309,7 @@ namespace
 	{
 		for (const auto& receiver : receivers)
 		{
-			startSimThread(threadLimit, running, [&]()
+			startSimThread(threadLimit, running, [&]
 			{
 				return std::make_unique<boost::thread>(rs::threaded_sim::RenderThread(receiver));
 			});

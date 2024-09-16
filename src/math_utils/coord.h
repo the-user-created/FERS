@@ -56,7 +56,7 @@ namespace coord
 			return *this;
 		}
 
-		explicit RotationCoord(const RS_FLOAT a = 0) : azimuth(a), elevation(a), t(a) {}
+		RotationCoord(const RS_FLOAT a = 0) : azimuth(a), elevation(a), t(a) {} // NOLINT
 
 		RotationCoord(const RS_FLOAT az, const RS_FLOAT el,
 		              const RS_FLOAT time) : azimuth(az), elevation(el), t(time) {}

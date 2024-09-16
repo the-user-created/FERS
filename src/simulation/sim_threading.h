@@ -10,7 +10,7 @@
 
 namespace boost
 {
-	class thread;
+	class thread; // NOLINT
 }
 
 namespace rs

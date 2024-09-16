@@ -58,10 +58,7 @@ RS_FLOAT rs_noise::wgnSample(const RS_FLOAT stddev)
 	return stddev > std::numeric_limits<RS_FLOAT>::epsilon() ? (*normal_vg)() * stddev : 0;
 }
 
-RS_FLOAT rs_noise::uniformSample()
-{
-	return (*uniform_vg)();
-}
+RS_FLOAT rs_noise::uniformSample() { return (*uniform_vg)(); }
 
 RS_FLOAT rs_noise::noiseTemperatureToPower(const RS_FLOAT temperature, const RS_FLOAT bandwidth)
 {
@@ -74,9 +71,7 @@ RS_FLOAT rs_noise::noiseTemperatureToPower(const RS_FLOAT temperature, const RS_
 //
 // =====================================================================================================================
 
-GammaGenerator::GammaGenerator(const RS_FLOAT k) : _dist(k), _gen(*rng, _dist)
-{
-}
+GammaGenerator::GammaGenerator(const RS_FLOAT k) : _dist(k), _gen(*rng, _dist) {}
 
 
 // =====================================================================================================================
@@ -110,10 +105,7 @@ FAlphaBranch::FAlphaBranch(const RS_FLOAT ffrac, const unsigned fint, FAlphaBran
 	_upsample_scale = std::pow(10, ffrac + fint + 0.5);
 	init();
 	_buffer = new RS_FLOAT[10];
-	if (!last)
-	{
-		refill();
-	}
+	if (!last) { refill(); }
 }
 
 FAlphaBranch::~FAlphaBranch()
@@ -179,18 +171,12 @@ void FAlphaBranch::init()
 			constexpr RS_FLOAT i_num[3] = {1, 0, 0};
 			_integ_filter = new IirFilter(i_den, i_num, 3);
 		}
-		else
-		{
-			throw std::runtime_error("Only alpha values between 2 and -2 are supported for noise generation");
-		}
+		else { throw std::runtime_error("Only alpha values between 2 and -2 are supported for noise generation"); }
 	}
 	_offset_sample = 0;
 	_got_offset = false;
 	_buffer = new RS_FLOAT[10];
-	if (!_last)
-	{
-		refill();
-	}
+	if (!_last) { refill(); }
 	_pre_scale = 1;
 }
 
@@ -199,10 +185,7 @@ RS_FLOAT FAlphaBranch::getSample() // NOLINT(misc-no-recursion)
 	if (!_last)
 	{
 		const RS_FLOAT ret = _buffer[_buffer_samples++];
-		if (_buffer_samples == 10)
-		{
-			refill();
-		}
+		if (_buffer_samples == 10) { refill(); }
 		return ret;
 	}
 	return calcSample() + _offset_sample * _upsample_scale;
@@ -220,21 +203,12 @@ void FAlphaBranch::clean() const
 RS_FLOAT FAlphaBranch::calcSample() // NOLINT(misc-no-recursion)
 {
 	RS_FLOAT sample = rs_noise::wgnSample(1);
-	if (_shape_filter)
-	{
-		sample = _shape_filter->filter(sample) / _shape_gain;
-	}
-	if (_integ_filter)
-	{
-		sample = _integ_filter->filter(sample) / _integ_gain;
-	}
+	if (_shape_filter) { sample = _shape_filter->filter(sample) / _shape_gain; }
+	if (_integ_filter) { sample = _integ_filter->filter(sample) / _integ_gain; }
 	if (_pre)
 	{
 		sample = _highpass->filter(sample);
-		if (_got_offset)
-		{
-			sample += _pre->getSample() * _pre_scale - _offset_sample;
-		}
+		if (_got_offset) { sample += _pre->getSample() * _pre_scale - _offset_sample; }
 		else
 		{
 			_got_offset = true;
@@ -292,44 +266,23 @@ void MultirateGenerator::skipSamples(long long samples) const
 		if (branch)
 		{
 			samples /= static_cast<long long>(std::pow(10.0, skip_branches));
-			for (int i = 0; i < samples; i++)
-			{
-				branch->getSample();
-			}
+			for (int i = 0; i < samples; i++) { branch->getSample(); }
 		}
 		const int size = static_cast<int>(flushbranches.size());
 		flushbranches[size - 1]->flush(std::pow(10.0, skip_branches - 2.0));
-		for (int i = size - 2; i >= 0; i--)
-		{
-			flushbranches[i]->flush();
-		}
+		for (int i = size - 2; i >= 0; i--) { flushbranches[i]->flush(); }
 	}
-	else
-	{
-		for (int i = 0; i < samples; i++)
-		{
-			_topbranch->getSample();
-		}
-	}
+	else { for (int i = 0; i < samples; i++) { _topbranch->getSample(); } }
 }
 
 void MultirateGenerator::createTree(const RS_FLOAT falpha, const int fint, const unsigned branches)
 {
-	if (branches == 0)
-	{
-		throw std::runtime_error("Cannot create multirate noise generator with zero branches");
-	}
-	if (falpha == 0 && fint == 0)
-	{
-		_topbranch = new FAlphaBranch(0, 0, nullptr, true);
-	}
+	if (branches == 0) { throw std::runtime_error("Cannot create multirate noise generator with zero branches"); }
+	if (falpha == 0 && fint == 0) { _topbranch = new FAlphaBranch(0, 0, nullptr, true); }
 	else
 	{
 		_topbranch = nullptr;
-		for (unsigned i = 0; i < branches - 1; i++)
-		{
-			_topbranch = new FAlphaBranch(falpha, fint, _topbranch, false);
-		}
+		for (unsigned i = 0; i < branches - 1; i++) { _topbranch = new FAlphaBranch(falpha, fint, _topbranch, false); }
 		_topbranch = new FAlphaBranch(falpha, fint, _topbranch, true);
 	}
 }
@@ -344,10 +297,7 @@ void MultirateGenerator::reset() const
 		branch = branch->getPre();
 	}
 	const int size = static_cast<int>(flush_branches.size());
-	for (int i = size - 1; i >= 0; i--)
-	{
-		flush_branches[i]->flush();
-	}
+	for (int i = size - 1; i >= 0; i--) { flush_branches[i]->flush(); }
 }
 
 // =====================================================================================================================
@@ -359,7 +309,7 @@ void MultirateGenerator::reset() const
 ClockModelGenerator::ClockModelGenerator(const std::vector<RS_FLOAT>& alpha, const std::vector<RS_FLOAT>& inWeights,
                                          const RS_FLOAT frequency, const RS_FLOAT phaseOffset,
                                          const RS_FLOAT freqOffset, const int branches)
-	: _phase_offset(phaseOffset), _freq_offset(freqOffset), _frequency(frequency), _count(0)
+	: _weights(inWeights), _phase_offset(phaseOffset), _freq_offset(freqOffset), _frequency(frequency), _count(0)
 {
 	auto iter = alpha.begin();
 	auto witer = _weights.begin();
@@ -369,20 +319,15 @@ ClockModelGenerator::ClockModelGenerator(const std::vector<RS_FLOAT>& alpha, con
 		_generators.push_back(std::move(mgen));
 		switch (static_cast<int>(*iter))
 		{
-		case 2:
-			*witer *= std::pow(10.0, 1.2250);
+		case 2: *witer *= std::pow(10.0, 1.2250);
 			break;
-		case 1:
-			*witer *= std::pow(10.0, 0.25);
+		case 1: *witer *= std::pow(10.0, 0.25);
 			break;
-		case 0:
-			*witer *= std::pow(10.0, -0.25);
+		case 0: *witer *= std::pow(10.0, -0.25);
 			break;
-		case -1:
-			*witer *= std::pow(10.0, -0.5);
+		case -1: *witer *= std::pow(10.0, -0.5);
 			break;
-		case -2:
-			*witer *= std::pow(10.0, -1);
+		case -2: *witer *= std::pow(10.0, -1);
 			break;
 		default:
 			// Handle unexpected values
@@ -396,10 +341,7 @@ RS_FLOAT ClockModelGenerator::getSample()
 {
 	RS_FLOAT sample = 0;
 	const int size = static_cast<int>(_generators.size());
-	for (int i = 0; i < size; i++)
-	{
-		sample += _generators[i]->getSample() * _weights[i];
-	}
+	for (int i = 0; i < size; i++) { sample += _generators[i]->getSample() * _weights[i]; }
 	sample += _phase_offset;
 	sample += 2 * M_PI * _freq_offset * static_cast<double>(_count) / parameters::rate();
 	_count++;
@@ -409,19 +351,13 @@ RS_FLOAT ClockModelGenerator::getSample()
 void ClockModelGenerator::skipSamples(const long long samples)
 {
 	const int gens = static_cast<int>(_generators.size());
-	for (int i = 0; i < gens; i++)
-	{
-		_generators[i]->skipSamples(samples);
-	}
+	for (int i = 0; i < gens; i++) { _generators[i]->skipSamples(samples); }
 	_count += samples;
 }
 
 void ClockModelGenerator::reset()
 {
 	const int gens = static_cast<int>(_generators.size());
-	for (int i = 0; i < gens; i++)
-	{
-		_generators[i]->reset();
-	}
+	for (int i = 0; i < gens; i++) { _generators[i]->reset(); }
 	_count = 0;
 }

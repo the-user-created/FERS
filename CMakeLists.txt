@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.13)
 project(fers)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)  # Useful for static code analysis tools
 
 # Add the directory where config.h is located to the include path
 include_directories(${CMAKE_SOURCE_DIR})

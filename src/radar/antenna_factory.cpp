@@ -13,7 +13,6 @@
 #include <tinyxml.h>
 #include <utility>
 
-#include "antenna_pattern.h"
 #include "radar_signal.h"
 #include "core/logging.h"
 #include "core/portable_utils.h"
