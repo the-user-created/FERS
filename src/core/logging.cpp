@@ -39,19 +39,7 @@ namespace logging
 		}
 	}
 
-	void printf(const Level level, const std::string& format, ...)  // TODO: unused
-	{
-		if (level >= debug_level)
-		{
-			boost::mutex::scoped_lock lock(debug_mutex);
-			va_list ap;
-			va_start(ap, format);
-			vfprintf(stderr, format.c_str(), ap);
-			va_end(ap);
-		}
-	}
-
-	void setDebugLevel(const Level level)  // TODO: unused
+	void setDebugLevel(const Level level)
 	{
 		if (level <= RS_EXTREMELY_CRITICAL) { debug_level = level; }
 	}
