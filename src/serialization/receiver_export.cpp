@@ -98,7 +98,7 @@ namespace
 		if (enabled)
 		{
 			for (unsigned i = 0; i < wSize; i++) { noise[i] = timing->nextNoiseSample(); }
-			if (timing->getSyncOnPulse()) // TODO: BUG #2 - sync_on_pulse always false
+			if (timing->getSyncOnPulse())
 			{
 				timing->reset();
 				const int skip = static_cast<int>(std::floor(rate * recv->getWindowSkip()));
@@ -109,13 +109,13 @@ namespace
 				const long skip = std::floor(rate / recv->getWindowPrf() - rate * recv->getWindowLength());
 				timing->skipSamples(skip);
 			}
-			carrier = timing->getFrequency(); // TODO: BUG #1,#3 - carrier has no effect on phase noise?
+			carrier = timing->getFrequency();
 		}
 		else
 		{
 			// TODO: Can use std:fill
 			for (unsigned i = 0; i < wSize; i++) { noise[i] = 0; }
-			carrier = 1; // TODO: BUG #3 - carrier has no effect on phase noise?
+			carrier = 1;
 		}
 		return noise;
 	}
