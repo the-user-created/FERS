@@ -132,7 +132,8 @@ namespace rs
 
 	inline RS_FLOAT dotProduct(const Vec3& a, const Vec3& b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
 
-	inline Vec3 crossProduct(const Vec3& a, const Vec3& b) // TODO: unused
+	// Note: This function is not used in the codebase
+	inline Vec3 crossProduct(const Vec3& a, const Vec3& b)
 	{
 		return {a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x};
 	}

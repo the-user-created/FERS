@@ -16,8 +16,9 @@
 namespace portable_utils
 {
 	// strcasecmp is a GNU extension
-	inline int stricmp(const char* one, const char* two)  // TODO: unused function
+	inline int stricmp(const char* one, const char* two)
 	{
+		// Note: This function is not used in the codebase
 		return strcasecmp(one, two);
 	}
 

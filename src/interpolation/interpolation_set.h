@@ -42,7 +42,8 @@ namespace rs
 
 		~InterpSet();
 
-		void loadSamples(const std::vector<RS_FLOAT>& x, const std::vector<RS_FLOAT>& y) const;  // TODO: unused
+		// Note: This function is not used in the codebase
+		void loadSamples(const std::vector<RS_FLOAT>& x, const std::vector<RS_FLOAT>& y) const;
 
 		void insertSample(RS_FLOAT x, RS_FLOAT y) const;
 

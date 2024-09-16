@@ -33,7 +33,8 @@ namespace rs
 		std::complex<RS_FLOAT> v;
 	};
 
-	inline std::complex<RS_FLOAT> dot(const JonesVector& a, const JonesVector& b)  // TODO: unused
+	// Note: This function is not used in the codebase
+	inline std::complex<RS_FLOAT> dot(const JonesVector& a, const JonesVector& b)
 	{
 		return a.v * b.v + a.h * b.h;
 	}
