@@ -161,8 +161,8 @@ namespace
 			// Get the window start time, including clock drift effects
 			RS_FLOAT start = recv->getWindowStart(i) + pnoise[0] / (2 * M_PI * carrier);
 			// Get the fraction of a sample of the window delay
-			const RS_FLOAT frac_delay = start * rate - portable_utils::rsRound(start * rate);
-			start = portable_utils::rsRound(start * rate) / rate;
+			const RS_FLOAT frac_delay = start * rate - round(start * rate);
+			start = round(start * rate) / rate;
 			// rsFloat start = recv->GetWindowStart(i);
 			// Allocate memory for the entire window
 			auto* window = new RS_COMPLEX[size];
