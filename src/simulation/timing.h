@@ -32,7 +32,8 @@ namespace rs
 
 		virtual void skipSamples(long long samples) = 0;
 
-		[[nodiscard]] std::string getName() const  // TODO: unused
+		// Note: This function is not used in the codebase
+		[[nodiscard]] std::string getName() const
 		{
 			return _name;
 		}
@@ -140,7 +141,8 @@ namespace rs
 
 		void initializeModel(const PrototypeTiming* timing);
 
-		[[nodiscard]] RS_FLOAT getPulseTimeError() const override  // TODO: unused
+		// Note: This function is not used in the codebase
+		[[nodiscard]] RS_FLOAT getPulseTimeError() const override
 		{
 			return _enabled ? _model->getSample() : 0;
 		}

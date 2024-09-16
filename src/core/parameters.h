@@ -109,7 +109,7 @@ namespace parameters
 
 	inline void setBinaryFileType(const BinaryFileType type)
 	{
-		// David Young: This function is unused
+		// Note: This function is not used in the codebase
 		params.filetype = type;
 	}
 
@@ -124,7 +124,7 @@ namespace parameters
 
 	inline void setRenderFilterLength(const unsigned length)
 	{
-		// David Young: This function is unused
+		// Note: This function is not used in the codebase
 		if (length < 16) { throw std::runtime_error("[ERROR] Render filter length must be > 16"); }
 		params.filter_length = length;
 		logging::printf(logging::RS_VERY_VERBOSE, "[VV] Render filter length set to custom value: %d\n", length);

@@ -79,7 +79,8 @@ namespace path
 	}
 
 	//Compares two paths at the same time and returns a vector with the distance and angle
-	rs::SVec3 compare(const RS_FLOAT time, const Path& start, const Path& end) // TODO: unused
+	// Note: This function is not used in the codebase
+	rs::SVec3 compare(const RS_FLOAT time, const Path& start, const Path& end)
 	{
 		const rs::Vec3 difference = end.getPosition(time) - start.getPosition(time);
 		const rs::SVec3 result(difference); //Get the result in spherical co-ordinates

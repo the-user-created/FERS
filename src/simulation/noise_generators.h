@@ -23,7 +23,8 @@ namespace rs_noise
 
 	RS_FLOAT wgnSample(RS_FLOAT stddev);
 
-	RS_FLOAT uniformSample();  // TODO: unused
+	// Note: This function is not used in the codebase
+	RS_FLOAT uniformSample();
 
 	RS_FLOAT noiseTemperatureToPower(RS_FLOAT temperature, RS_FLOAT bandwidth);
 }
@@ -166,7 +167,8 @@ namespace rs
 
 		~PythonNoiseGenerator() override = default;
 
-		RS_FLOAT getSample() override { return _generator.getSample(); }  // TODO: unused
+		// Note: This function is not used in the codebase
+		RS_FLOAT getSample() override { return _generator.getSample(); }
 
 	private:
 		rs_python::PythonNoise _generator;

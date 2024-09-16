@@ -58,7 +58,8 @@ namespace rs
 
 	Antenna* createGaussianAntenna(const std::string& name, RS_FLOAT azscale, RS_FLOAT elscale);
 
-	Antenna* createHornAntenna(const std::string& name, RS_FLOAT dimension);  // TODO: unused
+	// Note: This function is not used in the codebase
+	Antenna* createHornAntenna(const std::string& name, RS_FLOAT dimension);
 
 	Antenna* createParabolicAntenna(const std::string& name, RS_FLOAT diameter);
 }

@@ -53,15 +53,18 @@ namespace rs
 	class FirFilter final : public DspFilter
 	{
 	public:
-		explicit FirFilter(const std::vector<RS_FLOAT>& coeffs);  // TODO: unused
+		// Note: This function is not used in the codebase
+		explicit FirFilter(const std::vector<RS_FLOAT>& coeffs);
 
 		FirFilter(const RS_FLOAT* coeffs, unsigned count);
 
 		~FirFilter() override;
 
-		RS_FLOAT filter(RS_FLOAT sample) override;  // TODO: unused
+		// Note: This function is not used in the codebase
+		RS_FLOAT filter(RS_FLOAT sample) override;
 
-		void filter(RS_FLOAT* samples, int size) override;  // TODO: unused
+		// Note: This function is not used in the codebase
+		void filter(RS_FLOAT* samples, int size) override;
 
 		void filter(std::complex<RS_FLOAT>* samples, unsigned size) const;
 
@@ -74,13 +77,16 @@ namespace rs
 	class ArFilter final : public DspFilter
 	{
 	public:
-		explicit ArFilter(const std::vector<RS_FLOAT>& coeffs);  // TODO: unused
+		// Note: This function is not used in the codebase
+		explicit ArFilter(const std::vector<RS_FLOAT>& coeffs);
 
 		~ArFilter() override;
 
-		RS_FLOAT filter(RS_FLOAT sample) override;  // TODO: unused
+		// Note: This function is not used in the codebase
+		RS_FLOAT filter(RS_FLOAT sample) override;
 
-		void filter(RS_FLOAT* samples, int size) override;  // TODO: unused
+		// Note: This function is not used in the codebase
+		void filter(RS_FLOAT* samples, int size) override;
 
 	private:
 		RS_FLOAT* _w;
@@ -91,11 +97,13 @@ namespace rs
 	class Upsampler : boost::noncopyable
 	{
 	public:
-		explicit Upsampler(int ratio);  // TODO: unused
+		// Note: This function is not used in the codebase
+		explicit Upsampler(int ratio);
 
 		~Upsampler();
 
-		void upsample(const RS_FLOAT* inSamples, int inSize, RS_FLOAT* outSamples, int outSize) const;  // TODO: unused
+		// Note: This function is not used in the codebase
+		void upsample(const RS_FLOAT* inSamples, int inSize, RS_FLOAT* outSamples, int outSize) const;
 
 	private:
 		int _ratio;
@@ -115,7 +123,8 @@ namespace rs
 
 		void upsample(RS_FLOAT sample, RS_FLOAT* out) const;
 
-		void upsample(const RS_FLOAT* in, int count, RS_FLOAT* out) const;  // TODO: unused
+		// Note: This function is not used in the codebase
+		void upsample(const RS_FLOAT* in, int count, RS_FLOAT* out) const;
 
 	private:
 		IirFilter* _filter;
