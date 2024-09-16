@@ -39,7 +39,7 @@ namespace logging
 		}
 	}
 
-	void printf(const Level level, const std::string& format, ...)
+	void printf(const Level level, const std::string& format, ...)  // TODO: unused
 	{
 		if (level >= debug_level)
 		{
@@ -51,7 +51,7 @@ namespace logging
 		}
 	}
 
-	void setDebugLevel(const Level level)
+	void setDebugLevel(const Level level)  // TODO: unused
 	{
 		if (level <= RS_EXTREMELY_CRITICAL) { debug_level = level; }
 	}
