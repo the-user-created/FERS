@@ -13,7 +13,7 @@ endif ()
 
 if (CMAKE_COMPILER_IS_GNUCXX)
 	message(STATUS "Setting compiler flags for GNU C++ compiler")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -pthread -ffast-math")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pthread -ffast-math")
 
 	if (CMAKE_BUILD_TYPE MATCHES "Release")
 		message(STATUS "Setting compiler flags for Release")
@@ -23,6 +23,8 @@ if (CMAKE_COMPILER_IS_GNUCXX)
 
 	if (CMAKE_BUILD_TYPE MATCHES "Debug")
 		message(STATUS "Setting compiler flags for Debug")
+		# Include the -g flag for debugging information
+		set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0")
 	endif ()
 endif ()
 
