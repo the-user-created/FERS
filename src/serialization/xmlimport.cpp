@@ -3,8 +3,6 @@
 // Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 // Started 26 April 2006
 
-//TODO: Rewrite this code to be less ugly
-
 #define TIXML_USE_STL
 
 #include "xmlimport.h"
@@ -17,7 +15,6 @@
 #include "math_utils/multipath_surface.h"
 #include "radar/radar_system.h"
 #include "radar/target.h"
-
 
 using namespace rs;
 
@@ -87,7 +84,6 @@ bool getAttributeBool(const TiXmlHandle& handle, const std::string& name, const 
 	const std::string str = getAttributeString(handle, name, error, optional);
 	return str.empty() ? def : str == "true" || str == "yes";
 }
-
 
 namespace
 {
@@ -718,28 +714,31 @@ namespace
 		processDocument(TiXmlHandle(doc.RootElement()), world, true);
 	}
 
+	/// Process an element in the XML tree
+	void processElement(const TiXmlHandle& root, const std::string& element, World* world,
+	                    const std::function<void(const TiXmlHandle&, World*)>& processFunc)
+	{
+		for (TiXmlHandle handle = root.ChildElement(element.c_str(), 0); handle.Element();
+		     handle = handle.Element()->NextSiblingElement(element.c_str())) { processFunc(handle, world); }
+	}
+
 	/// Process the XML tree, starting at the root
 	void processDocument(const TiXmlHandle& root, World* world, const bool included) // NOLINT(misc-no-recursion)
 	{
 		if (!included) { processParameters(root.ChildElement("parameters", 0)); }
 
-		const std::vector<std::string> elements = {
-			"pulse", "antenna", "timing", "multipath", "platform", "include", "incblock"
-		};
-		for (const auto& element : elements)
+		processElement(root, "pulse", world, processPulse);
+		processElement(root, "antenna", world, processAntenna);
+		processElement(root, "timing", world, processTiming);
+		processElement(root, "multipath", world, processMultipath);
+		processElement(root, "platform", world, processPlatform);
+		processElement(root, "include", world, processInclude);
+
+		// For "incblock", we need to recursively call processDocument with 'included = true'
+		processElement(root, "incblock", world, [](const TiXmlHandle& handle, World* world2)
 		{
-			for (TiXmlHandle plat = root.ChildElement(element.c_str(), 0); plat.Element(); plat = plat.Element()->
-			     NextSiblingElement(element.c_str()))
-			{
-				if (element == "pulse") { processPulse(plat, world); }
-				else if (element == "antenna") { processAntenna(plat, world); }
-				else if (element == "timing") { processTiming(plat, world); }
-				else if (element == "multipath") { processMultipath(plat, world); }
-				else if (element == "platform") { processPlatform(plat, world); }
-				else if (element == "include") { processInclude(plat, world); }
-				else if (element == "incblock") { processDocument(plat, world, true); }
-			}
-		}
+			processDocument(handle, world2, true);
+		});
 	}
 } //Anonymous Namespace
 
