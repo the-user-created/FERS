@@ -359,37 +359,37 @@ void MultirateGenerator::reset() const
 ClockModelGenerator::ClockModelGenerator(const std::vector<RS_FLOAT>& alpha, const std::vector<RS_FLOAT>& inWeights,
                                          const RS_FLOAT frequency, const RS_FLOAT phaseOffset,
                                          const RS_FLOAT freqOffset, const int branches)
-	: _phase_offset(phaseOffset), _freq_offset(freqOffset), _frequency(frequency)
+	: _phase_offset(phaseOffset), _freq_offset(freqOffset), _frequency(frequency), _count(0)
 {
-	_weights = inWeights;
 	auto iter = alpha.begin();
 	auto witer = _weights.begin();
 	for (; iter != alpha.end(); ++iter, ++witer)
 	{
 		auto mgen = std::make_unique<MultirateGenerator>(*iter, branches);
 		_generators.push_back(std::move(mgen));
-		if (*iter == 2)
+		switch (static_cast<int>(*iter))
 		{
+		case 2:
 			*witer *= std::pow(10.0, 1.2250);
-		}
-		else if (*iter == 1)
-		{
+			break;
+		case 1:
 			*witer *= std::pow(10.0, 0.25);
-		}
-		else if (*iter == 0)
-		{
+			break;
+		case 0:
 			*witer *= std::pow(10.0, -0.25);
-		}
-		else if (*iter == -1)
-		{
+			break;
+		case -1:
 			*witer *= std::pow(10.0, -0.5);
-		}
-		else if (*iter == -2)
-		{
+			break;
+		case -2:
 			*witer *= std::pow(10.0, -1);
+			break;
+		default:
+			// Handle unexpected values
+			*witer *= 1.0; // No change to the weight
+			break;
 		}
 	}
-	_count = 0;
 }
 
 RS_FLOAT ClockModelGenerator::getSample()
