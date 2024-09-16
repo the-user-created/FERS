@@ -8,6 +8,7 @@
 
 #include <string>
 
+#include "antenna_pattern.h"
 #include "config.h"
 #include "boost/utility.hpp"
 #include "math_utils/geometry_ops.h"
@@ -23,20 +24,21 @@ namespace rs
 	class Antenna : public boost::noncopyable
 	{
 	public:
-		explicit Antenna(std::string name);
+		explicit Antenna(std::string name) : _loss_factor(1), _name(std::move(name)) {}
 
-		virtual ~Antenna();
+		virtual ~Antenna() = default;
 
 		[[nodiscard]] virtual RS_FLOAT getGain(const SVec3& angle, const SVec3& refangle, RS_FLOAT wavelength) const =
 		0;
 
-		[[nodiscard]] virtual RS_FLOAT getNoiseTemperature(const SVec3& angle) const;
+		// TODO: Implement noise temperature calculation
+		[[nodiscard]] virtual RS_FLOAT getNoiseTemperature(const SVec3& angle) const { return 0; }
 
 		void setEfficiencyFactor(RS_FLOAT loss);
 
-		[[nodiscard]] RS_FLOAT getEfficiencyFactor() const;
+		[[nodiscard]] RS_FLOAT getEfficiencyFactor() const { return _loss_factor; }
 
-		[[nodiscard]] std::string getName() const;
+		[[nodiscard]] std::string getName() const { return _name; }
 
 	protected:
 		static RS_FLOAT getAngle(const SVec3& angle, const SVec3& refangle);
@@ -69,20 +71,24 @@ namespace rs_antenna
 	class Isotropic final : public rs::Antenna
 	{
 	public:
-		explicit Isotropic(const std::string& name);
+		explicit Isotropic(const std::string& name) : Antenna(name) {}
 
-		~Isotropic() override;
+		~Isotropic() override = default;
 
 		[[nodiscard]] RS_FLOAT
-		getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const override;
+		getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const override
+		{
+			return getEfficiencyFactor();
+		}
 	};
 
 	class Sinc final : public rs::Antenna
 	{
 	public:
-		Sinc(const std::string& name, RS_FLOAT alpha, RS_FLOAT beta, RS_FLOAT gamma);
+		Sinc(const std::string& name, const RS_FLOAT alpha, const RS_FLOAT beta, const RS_FLOAT gamma) : Antenna(name),
+			_alpha(alpha), _beta(beta), _gamma(gamma) {}
 
-		~Sinc() override;
+		~Sinc() override = default;
 
 		[[nodiscard]] RS_FLOAT
 		getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const override;
@@ -96,9 +102,11 @@ namespace rs_antenna
 	class Gaussian final : public rs::Antenna
 	{
 	public:
-		Gaussian(const std::string& name, RS_FLOAT azscale, RS_FLOAT elscale);
+		Gaussian(const std::string& name, const RS_FLOAT azscale, const RS_FLOAT elscale) : Antenna(name),
+			_azscale(azscale),
+			_elscale(elscale) {}
 
-		~Gaussian() override;
+		~Gaussian() override = default;
 
 		[[nodiscard]] RS_FLOAT
 		getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const override;
@@ -111,9 +119,9 @@ namespace rs_antenna
 	class SquareHorn final : public rs::Antenna
 	{
 	public:
-		SquareHorn(const std::string& name, RS_FLOAT dimension);
+		SquareHorn(const std::string& name, const RS_FLOAT dimension) : Antenna(name), _dimension(dimension) {}
 
-		~SquareHorn() override;
+		~SquareHorn() override = default;
 
 		[[nodiscard]] RS_FLOAT
 		getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const override;
@@ -125,9 +133,9 @@ namespace rs_antenna
 	class ParabolicReflector final : public rs::Antenna
 	{
 	public:
-		ParabolicReflector(const std::string& name, RS_FLOAT diameter);
+		ParabolicReflector(const std::string& name, const RS_FLOAT diameter) : Antenna(name), _diameter(diameter) {}
 
-		~ParabolicReflector() override;
+		~ParabolicReflector() override = default;
 
 		[[nodiscard]] RS_FLOAT
 		getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const override;
@@ -157,12 +165,18 @@ namespace rs_antenna
 	class FileAntenna final : public rs::Antenna
 	{
 	public:
-		FileAntenna(const std::string& name, const std::string& filename);
+		FileAntenna(const std::string& name, const std::string& filename) : Antenna(name)
+		{
+			_pattern = new rs::Pattern(filename);
+		}
 
-		~FileAntenna() override;
+		~FileAntenna() override { delete _pattern; }
 
 		[[nodiscard]] RS_FLOAT
-		getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const override;
+		getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const override
+		{
+			return _pattern->getGain(angle - refangle) * getEfficiencyFactor();
+		}
 
 	private:
 		rs::Pattern* _pattern;
@@ -171,12 +185,16 @@ namespace rs_antenna
 	class PythonAntenna final : public rs::Antenna
 	{
 	public:
-		PythonAntenna(const std::string& name, const std::string& module, const std::string& function);
+		PythonAntenna(const std::string& name, const std::string& module, const std::string& function) : Antenna(name),
+			_py_antenna(module, function) {}
 
-		~PythonAntenna() override;
+		~PythonAntenna() override = default;
 
 		[[nodiscard]] RS_FLOAT
-		getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const override;
+		getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const override
+		{
+			return _py_antenna.getGain(angle - refangle) * getEfficiencyFactor();
+		}
 
 	private:
 		rs_python::PythonAntennaMod _py_antenna;
