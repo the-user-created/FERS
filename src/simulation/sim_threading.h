@@ -8,6 +8,11 @@
 
 #include "radar/radar_system.h"
 
+namespace boost
+{
+	class thread;
+}
+
 namespace rs
 {
 	class World;
@@ -24,10 +29,7 @@ namespace rs::threaded_sim
 	class RangeError final : public std::exception
 	{
 	public:
-		[[nodiscard]] const char* what() const noexcept override
-		{
-			return "Range error in RE calculations";
-		}
+		[[nodiscard]] const char* what() const noexcept override { return "Range error in RE calculations"; }
 	};
 
 	class Thread
@@ -42,9 +44,7 @@ namespace rs::threaded_sim
 	{
 	public:
 		SimThread(const Transmitter* transmitter, Receiver* receiver, const World* world)
-			: _trans(transmitter), _recv(receiver), _world(world)
-		{
-		}
+			: _trans(transmitter), _recv(receiver), _world(world) {}
 
 		void operator()() const;
 
@@ -57,9 +57,7 @@ namespace rs::threaded_sim
 	class RenderThread : public Thread
 	{
 	public:
-		explicit RenderThread(Receiver* recv) : _recv(recv)
-		{
-		}
+		explicit RenderThread(Receiver* recv) : _recv(recv) {}
 
 		void operator()() const;
 
@@ -67,21 +65,7 @@ namespace rs::threaded_sim
 		Receiver* _recv;
 	};
 
-	void incThreads();
-
 	void runThreadedSim(unsigned threadLimit, const World* world);
-
-	void simulatePair(const Transmitter* trans, Receiver* recv, const World* world);
-
-	void simulateTarget(const Transmitter* trans, Receiver* recv, const Target* targ, const TransmitterPulse* signal);
-
-	void addDirect(const Transmitter* trans, Receiver* recv, const TransmitterPulse* signal);
-
-	void solveRe(const Transmitter* trans, const Receiver* recv, const Target* targ, RS_FLOAT time, RS_FLOAT length,
-	             const RadarSignal* wave, ReResults& results);
-
-	void solveReDirect(const Transmitter* trans, const Receiver* recv, RS_FLOAT time, RS_FLOAT length,
-	                   const RadarSignal* wave, ReResults& results);
 }
 
 #endif
