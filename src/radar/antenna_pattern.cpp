@@ -12,20 +12,6 @@
 
 using namespace rs;
 
-Pattern::Pattern(const std::string& filename)
-{
-	_pattern = hdf5_export::readPattern(filename, "antenna", _size_azi, _size_elev);
-}
-
-Pattern::~Pattern()
-{
-	for (unsigned i = 0; i < _size_azi; i++)
-	{
-		delete[] _pattern[i];
-	}
-	delete[] _pattern;
-}
-
 RS_FLOAT Pattern::getGain(const SVec3& angle) const
 {
 	const double x1 = std::floor((angle.azimuth + M_PI) / (2 * M_PI) * (_size_azi - 1)) / (_size_azi - 1);
@@ -39,7 +25,7 @@ RS_FLOAT Pattern::getGain(const SVec3& angle) const
 	const int arr_x = std::floor(x1 * _size_azi);
 	const int arr_y = std::floor(y1 * _size_elev);
 
-	double interp = (1.0 - t) * (1.0 - u) * _pattern[arr_x][arr_y];
+	RS_FLOAT interp = (1.0 - t) * (1.0 - u) * _pattern[arr_x][arr_y];
 	interp += t * (1.0 - u) * _pattern[(arr_x + 1) % _size_azi][arr_y];
 	interp += t * u * _pattern[(arr_x + 1) % _size_azi][(arr_y + 1) % _size_elev];
 	interp += (1.0 - t) * u * _pattern[arr_x][(arr_y + 1) % _size_elev];

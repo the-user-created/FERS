@@ -7,23 +7,28 @@
 #define ANTENNA_PATTERN
 
 #include <string>
+#include <vector>
 
 #include "math_utils/geometry_ops.h"
+#include "serialization/hdf5_export.h"
 
 namespace rs
 {
 	class Pattern
 	{
 	public:
-		explicit Pattern(const std::string& filename);
+		explicit Pattern(const std::string& filename)
+		{
+			_pattern = hdf5_export::readPattern(filename, "antenna", _size_azi, _size_elev);
+		}
 
-		~Pattern();
+		~Pattern() = default;
 
 		[[nodiscard]] RS_FLOAT getGain(const SVec3& angle) const;
 
 	private:
 		unsigned _size_elev{}, _size_azi{};
-		RS_FLOAT** _pattern;
+		std::vector<std::vector<RS_FLOAT>> _pattern;
 	};
 }
 
