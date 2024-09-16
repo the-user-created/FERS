@@ -53,15 +53,15 @@ namespace rs
 	class FirFilter final : public DspFilter
 	{
 	public:
-		explicit FirFilter(const std::vector<RS_FLOAT>& coeffs);
+		explicit FirFilter(const std::vector<RS_FLOAT>& coeffs);  // TODO: unused
 
 		FirFilter(const RS_FLOAT* coeffs, unsigned count);
 
 		~FirFilter() override;
 
-		RS_FLOAT filter(RS_FLOAT sample) override;
+		RS_FLOAT filter(RS_FLOAT sample) override;  // TODO: unused
 
-		void filter(RS_FLOAT* samples, int size) override;
+		void filter(RS_FLOAT* samples, int size) override;  // TODO: unused
 
 		void filter(std::complex<RS_FLOAT>* samples, unsigned size) const;
 
@@ -69,33 +69,33 @@ namespace rs
 		RS_FLOAT* _w;
 		RS_FLOAT* _filter;
 		unsigned _order;
-	}; // TODO: FirFilter class is not used, consider removing it
+	};
 
 	class ArFilter final : public DspFilter
 	{
 	public:
-		explicit ArFilter(const std::vector<RS_FLOAT>& coeffs);
+		explicit ArFilter(const std::vector<RS_FLOAT>& coeffs);  // TODO: unused
 
 		~ArFilter() override;
 
-		RS_FLOAT filter(RS_FLOAT sample) override;
+		RS_FLOAT filter(RS_FLOAT sample) override;  // TODO: unused
 
-		void filter(RS_FLOAT* samples, int size) override;
+		void filter(RS_FLOAT* samples, int size) override;  // TODO: unused
 
 	private:
 		RS_FLOAT* _w;
 		RS_FLOAT* _filter;
 		unsigned _order;
-	}; // TODO: ArFilter class is not used, consider removing it
+	};
 
 	class Upsampler : boost::noncopyable
 	{
 	public:
-		explicit Upsampler(int ratio);
+		explicit Upsampler(int ratio);  // TODO: unused
 
 		~Upsampler();
 
-		void upsample(const RS_FLOAT* inSamples, int inSize, RS_FLOAT* outSamples, int outSize) const;
+		void upsample(const RS_FLOAT* inSamples, int inSize, RS_FLOAT* outSamples, int outSize) const;  // TODO: unused
 
 	private:
 		int _ratio;
@@ -115,7 +115,7 @@ namespace rs
 
 		void upsample(RS_FLOAT sample, RS_FLOAT* out) const;
 
-		void upsample(const RS_FLOAT* in, int count, RS_FLOAT* out) const;
+		void upsample(const RS_FLOAT* in, int count, RS_FLOAT* out) const;  // TODO: unused
 
 	private:
 		IirFilter* _filter;

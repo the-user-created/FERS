@@ -34,9 +34,9 @@ namespace rs
 
 		std::shared_ptr<RS_COMPLEX[]> renderBinary(RS_FLOAT& rate, unsigned& size, RS_FLOAT fracWinDelay) const;
 
-		[[nodiscard]] RS_FLOAT getLength() const { return endTime() - startTime(); }
+		[[nodiscard]] RS_FLOAT getLength() const { return endTime() - startTime(); }  // TODO: unused
 
-		[[nodiscard]] const RadarSignal* getWave() const { return _wave; }
+		[[nodiscard]] const RadarSignal* getWave() const { return _wave; }  // TODO: unused
 
 		[[nodiscard]] std::string getTransmitterName() const;
 
