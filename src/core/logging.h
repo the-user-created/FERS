@@ -26,9 +26,9 @@ namespace logging
 
 	void printf(Level level, const char* format, ...);
 
-	void printf(Level level, const std::string& format, ...);
+	void printf(Level level, const std::string& format, ...);  // TODO: unused
 
-	void setDebugLevel(Level level);
+	void setDebugLevel(Level level);  // TODO: unused
 }
 
 #endif

@@ -62,12 +62,12 @@ namespace rs
 
 		virtual RS_FLOAT getRcs(SVec3& inAngle, SVec3& outAngle) const = 0;
 
-		[[nodiscard]] virtual PsMatrix getPolarization() const
+		[[nodiscard]] virtual PsMatrix getPolarization() const  // TODO: unused
 		{
 			return _psm;
 		}
 
-		virtual void setPolarization(const PsMatrix& in)
+		virtual void setPolarization(const PsMatrix& in)  // TODO: unused
 		{
 			_psm = in;
 		}

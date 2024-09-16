@@ -33,7 +33,7 @@ namespace rs
 
 		[[nodiscard]] unsigned size() const { return _size; }
 
-		[[nodiscard]] RS_FLOAT* copyData() const;
+		[[nodiscard]] RS_FLOAT* copyData() const;  // TODO: unused
 
 		std::shared_ptr<std::complex<double>[]> render(const std::vector<InterpPoint>& points,
 		                                               unsigned& size, double fracWinDelay) const;
@@ -64,9 +64,9 @@ namespace rs
 		std::shared_ptr<RS_COMPLEX[]> render(const std::vector<InterpPoint>& points, unsigned& size,
 		                                     RS_FLOAT fracWinDelay) const;
 
-		[[nodiscard]] JonesVector getPolarization() const { return _polar; }
+		[[nodiscard]] JonesVector getPolarization() const { return _polar; }  // TODO: unused
 
-		void setPolarization(const JonesVector& in) { _polar = in; }
+		void setPolarization(const JonesVector& in) { _polar = in; }  // TODO: unused
 
 	private:
 		std::string _name;
