@@ -41,7 +41,7 @@ namespace response_renderer
 	class RenderThread
 	{
 	public:
-		RenderThread(const int serial, std::mutex* windowMutex, RS_COMPLEX* window, const RS_FLOAT length,
+		RenderThread(const unsigned serial, std::mutex* windowMutex, RS_COMPLEX* window, const RS_FLOAT length,
 		             const RS_FLOAT start, const RS_FLOAT fracDelay, std::mutex* workListMutex,
 		             std::queue<rs::Response*>* workList) :
 			_serial(serial), _window_mutex(windowMutex), _window(window), _length(length), _start(start),
@@ -56,7 +56,7 @@ namespace response_renderer
 
 		void addWindow(const RS_COMPLEX* array, RS_FLOAT startTime, unsigned arraySize) const;
 
-		int _serial;
+		unsigned _serial;
 		std::mutex* _window_mutex;
 		RS_COMPLEX* _window;
 		RS_FLOAT _length;
