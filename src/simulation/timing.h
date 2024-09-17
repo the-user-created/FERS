@@ -11,8 +11,8 @@
 #include <vector>
 
 #include "config.h"
-#include "noise_generators.h"
-#include "noise_utils.h"
+#include "noise/noise_generators.h"
+#include "noise/noise_utils.h"
 
 namespace rs
 {

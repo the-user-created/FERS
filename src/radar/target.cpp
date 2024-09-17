@@ -11,7 +11,7 @@
 #include <tinyxml.h>
 
 #include "interpolation/interpolation_set.h"
-#include "simulation/noise_generators.h"
+#include "noise/noise_generators.h"
 
 using namespace rs;
 

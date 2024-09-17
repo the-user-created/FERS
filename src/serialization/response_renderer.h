@@ -6,8 +6,8 @@
 #ifndef RESPONSE_RENDERER_H
 #define RESPONSE_RENDERER_H
 
-#include <mutex>
 #include <complex>
+#include <mutex>
 #include <queue>
 #include <vector>
 
