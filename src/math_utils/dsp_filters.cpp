@@ -26,7 +26,7 @@ namespace
 		filtLength = parameters::renderFilterLength() * 2;
 		auto* coeffs = new RS_FLOAT[filtLength];
 		const RS_FLOAT n = filtLength / 2.0;
-		for (int i = 0; i < filtLength; i++)
+		for (unsigned i = 0; i < filtLength; i++)
 		{
 			// We use the Blackman window, for a suitable tradeoff between rolloff and stopband attenuation
 			// Equivalent Kaiser beta = 7.04 (Oppenhiem and Schaffer, Hamming)
@@ -49,13 +49,13 @@ namespace rs
 		const RS_FLOAT* coeffs = blackmanFir(1 / static_cast<RS_FLOAT>(ratio), filt_length);
 		auto* tmp = new RS_COMPLEX[size * ratio + filt_length]();
 		// TODO: can use std::copy
-		for (int i = 0; i < size; i++)
+		for (unsigned i = 0; i < size; i++)
 		{
 			tmp[i * ratio] = in[i];
 		}
 		const FirFilter filt(coeffs, filt_length);
 		filt.filter(tmp, size * ratio + filt_length);
-		for (int i = 0; i < size * ratio; i++)
+		for (unsigned i = 0; i < size * ratio; i++)
 		{
 			out[i] = tmp[i + filt_length / 2 - 1];
 		}
@@ -75,13 +75,13 @@ namespace rs
 			tmp[i] = 0;
 		}
 
-		for (int i = 0; i < size; i++)
+		for (unsigned i = 0; i < size; i++)
 		{
 			tmp[i] = in[i];
 		}
 		const FirFilter filt(coeffs, filt_length);
 		filt.filter(tmp, size + filt_length);
-		for (int i = 0; i < size / ratio; i++)
+		for (unsigned i = 0; i < size / ratio; i++)
 		{
 			out[i] = tmp[i * ratio + filt_length / 2] / static_cast<RS_FLOAT>(ratio);
 		}
@@ -255,7 +255,7 @@ inline void FirFilter::filter(std::complex<RS_FLOAT>* samples, const unsigned si
 	{
 		line[i] = 0;
 	}
-	for (int i = 0; i < size; i++)
+	for (unsigned i = 0; i < size; i++)
 	{
 		line[0] = samples[i];
 		RS_COMPLEX res(0.0, 0.0);

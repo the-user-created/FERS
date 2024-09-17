@@ -257,7 +257,7 @@ namespace
 	{
 		incThreads();
 		auto thrd = createThread();
-		while (threads >= threadLimit) { boost::thread::yield(); }
+		while (static_cast<unsigned>(threads) >= threadLimit) { boost::thread::yield(); }
 		checkForError();
 		running.push_back(std::move(thrd));
 	}

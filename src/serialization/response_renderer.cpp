@@ -55,7 +55,7 @@ namespace response_renderer
 		{
 			std::vector<std::unique_ptr<RenderThread>> threads;
 			boost::mutex::scoped_lock lock(work_list_mutex);
-			for (int i = 0; i < _max_threads; i++)
+			for (unsigned i = 0; i < _max_threads; i++)
 			{
 				auto thr = std::make_unique<RenderThread>(i, &window_mutex, window, length, start, fracDelay,
 				                                          &work_list_mutex, &work_list);
