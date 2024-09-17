@@ -168,7 +168,7 @@ XmlAntenna::~XmlAntenna()
 RS_FLOAT XmlAntenna::getGain(const SVec3& angle, const SVec3& refangle, RS_FLOAT wavelength) const
 {
 	const SVec3 t_angle = angle - refangle;
-	return _azi_samples->value(std::fabs(t_angle.azimuth)) * _elev_samples->value(std::fabs(t_angle.elevation)) *
+	return _azi_samples->getValueAt(std::fabs(t_angle.azimuth)) * _elev_samples->getValueAt(std::fabs(t_angle.elevation)) *
 		_max_gain * getEfficiencyFactor();
 }
 
@@ -179,7 +179,7 @@ void XmlAntenna::loadAntennaDescription(const std::string& filename)
 	const TiXmlHandle root(doc.RootElement());
 	loadAntennaGainAxis(_elev_samples, root.ChildElement("elevation", 0));
 	loadAntennaGainAxis(_azi_samples, root.ChildElement("azimuth", 0));
-	_max_gain = std::max(_azi_samples->max(), _elev_samples->max());
+	_max_gain = std::max(_azi_samples->getMax(), _elev_samples->getMax());
 	_elev_samples->divide(_max_gain);
 	_azi_samples->divide(_max_gain);
 }

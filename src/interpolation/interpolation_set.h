@@ -20,7 +20,7 @@ namespace rs
 		void loadSamples(const std::vector<RS_FLOAT>& x, const std::vector<RS_FLOAT>& y);
 
 		///Load a single sample into the set
-		void insertSample(RS_FLOAT x, RS_FLOAT y);
+		void insertSample(RS_FLOAT x, RS_FLOAT y) { _data.insert({x, y}); }
 
 		///Get the interpolated value at a given point
 		RS_FLOAT value(RS_FLOAT x);
@@ -38,20 +38,23 @@ namespace rs
 	class InterpSet
 	{
 	public:
-		InterpSet();
+		InterpSet() { _data = new InterpSetData(); }
 
-		~InterpSet();
+		~InterpSet() { delete _data; }
 
 		// Note: This function is not used in the codebase
-		void loadSamples(const std::vector<RS_FLOAT>& x, const std::vector<RS_FLOAT>& y) const;
+		void loadSamples(const std::vector<RS_FLOAT>& x, const std::vector<RS_FLOAT>& y) const
+		{
+			_data->loadSamples(x, y);
+		}
 
-		void insertSample(RS_FLOAT x, RS_FLOAT y) const;
+		void insertSample(const RS_FLOAT x, const RS_FLOAT y) const { _data->insertSample(x, y); }
 
-		[[nodiscard]] RS_FLOAT value(RS_FLOAT x) const;
+		[[nodiscard]] RS_FLOAT getValueAt(const RS_FLOAT x) const { return _data->value(x); }
 
-		[[nodiscard]] RS_FLOAT max() const;
+		[[nodiscard]] RS_FLOAT getMax() const { return _data->max(); }
 
-		void divide(RS_FLOAT a) const;
+		void divide(const RS_FLOAT a) const { _data->divide(a); }
 
 	private:
 		InterpSetData* _data;
