@@ -5,6 +5,8 @@
 
 #include "world.h"
 
+#include <algorithm>
+
 #include "math_utils/multipath_surface.h"
 #include "radar/radar_system.h"
 #include "radar/target.h"

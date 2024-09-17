@@ -12,7 +12,7 @@ namespace interp_filt
 {
 	InterpFilter* InterpFilter::getInstance()
 	{
-		boost::mutex::scoped_lock lock(interp_mutex);
+		std::lock_guard lock(interp_mutex);
 		if (!_instance)
 		{
 			_instance = new InterpFilter();

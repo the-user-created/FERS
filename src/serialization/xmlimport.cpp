@@ -7,6 +7,7 @@
 
 #include "xmlimport.h"
 
+#include <functional>
 #include <optional>
 #include <tinyxml.h>
 
@@ -90,7 +91,6 @@ namespace
 	/// Process a target XML entry
 	void processTarget(const TiXmlHandle& targXml, const Platform* platform, World* world)
 	{
-		// TODO: Figure out why is name attribute is > 16 characters, a memory leak occurs......
 		const std::string name = getAttributeString(targXml, "name", "Target does not specify a name");
 		const TiXmlHandle rcs_xml = targXml.ChildElement("rcs", 0);
 		if (!rcs_xml.Element()) { throw XmlImportException("Target " + name + " does not specify RCS."); }

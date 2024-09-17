@@ -6,7 +6,7 @@
 #include "pulse_factory.h"
 
 #include <fstream>
-#include <boost/scoped_array.hpp>
+#include <memory>
 
 #include "hdf5_export.h"
 #include "radar/radar_signal.h"
@@ -38,7 +38,7 @@ rs::RadarSignal* loadPulseFromCsvFile(const std::string& name, const std::string
 	RS_FLOAT rlength, rate;
 	ifile >> rlength >> rate;
 	const unsigned length = static_cast<int>(rlength);
-	const boost::scoped_array data(new RS_COMPLEX[length]);
+	std::unique_ptr<RS_COMPLEX[]> data(new RS_COMPLEX[length]);
 	unsigned done = 0;
 	while (!ifile.eof() && done < length) { ifile >> data[done++]; }
 	if (done != length) { throw std::runtime_error("Could not read pulse waveform from file " + filename); }

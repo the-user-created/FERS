@@ -6,10 +6,11 @@
 #ifndef INTERPOLATION_FILTER_H
 #define INTERPOLATION_FILTER_H
 
-#include <boost/thread/mutex.hpp>
+#include <complex>
+#include <mutex>
 #include "config.h"
 
-inline boost::mutex interp_mutex;
+inline std::mutex interp_mutex;
 
 namespace interp_filt
 {

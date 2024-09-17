@@ -10,7 +10,6 @@
 
 #include "antenna_pattern.h"
 #include "config.h"
-#include "boost/utility.hpp"
 #include "math_utils/geometry_ops.h"
 #include "python/python_extension.h"
 
@@ -21,12 +20,17 @@ namespace rs
 	class InterpSet;
 	class Pattern;
 
-	class Antenna : public boost::noncopyable
+	class Antenna
 	{
 	public:
 		explicit Antenna(std::string name) : _loss_factor(1), _name(std::move(name)) {}
 
 		virtual ~Antenna() = default;
+
+		// Delete copy constructor and assignment operator to prevent copying
+		Antenna(const Antenna&) = delete;
+
+		Antenna& operator=(const Antenna&) = delete;
 
 		[[nodiscard]] virtual RS_FLOAT getGain(const SVec3& angle, const SVec3& refangle, RS_FLOAT wavelength) const =
 		0;

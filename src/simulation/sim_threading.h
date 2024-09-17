@@ -8,11 +8,6 @@
 
 #include "radar/radar_system.h"
 
-namespace boost
-{
-	class thread; // NOLINT
-}
-
 namespace rs
 {
 	class World;

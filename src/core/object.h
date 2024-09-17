@@ -7,7 +7,6 @@
 #define OBJECT_H
 
 #include <string>
-#include <boost/utility.hpp>
 
 #include "config.h"
 #include "radar/platform.h"
@@ -16,34 +15,25 @@ namespace rs
 {
 	class Platform;
 
-	class Object : boost::noncopyable
+	class Object
 	{
 	public:
-		Object(const Platform* platform, std::string name) : _platform(platform), _name(std::move(name))
-		{
-		}
+		Object(const Platform* platform, std::string name) : _platform(platform), _name(std::move(name)) {}
 
 		virtual ~Object() = default;
 
-		[[nodiscard]] Vec3 getPosition(const RS_FLOAT time) const
-		{
-			return _platform->getPosition(time);
-		}
+		// Delete the copy constructor and copy assignment operator
+		Object(const Object&) = delete;
 
-		[[nodiscard]] SVec3 getRotation(const RS_FLOAT time) const
-		{
-			return _platform->getRotation(time);
-		}
+		Object& operator=(const Object&) = delete;
 
-		[[nodiscard]] const Platform* getPlatform() const
-		{
-			return _platform;
-		}
+		[[nodiscard]] Vec3 getPosition(const RS_FLOAT time) const { return _platform->getPosition(time); }
 
-		[[nodiscard]] std::string getName() const
-		{
-			return _name;
-		}
+		[[nodiscard]] SVec3 getRotation(const RS_FLOAT time) const { return _platform->getRotation(time); }
+
+		[[nodiscard]] const Platform* getPlatform() const { return _platform; }
+
+		[[nodiscard]] std::string getName() const { return _name; }
 
 	private:
 		const Platform* _platform;

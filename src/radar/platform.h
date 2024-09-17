@@ -7,7 +7,6 @@
 #define PLATFORM_H
 
 #include <string>
-#include <boost/utility.hpp>
 
 #include "config.h"
 #include "math_utils/path.h"
@@ -17,13 +16,17 @@ namespace rs
 {
 	class MultipathSurface;
 
-	class Platform : boost::noncopyable
+	class Platform
 	{
 	public:
 		explicit Platform(std::string name) : _motion_path(new path::Path()), _rotation_path(new path::RotationPath()),
 		                                      _name(std::move(name)), _dual(nullptr) {}
 
 		~Platform();
+
+		// Delete copy constructor and assignment operator to prevent copying
+		Platform(const Platform&) = delete;
+		Platform& operator=(const Platform&) = delete;
 
 		[[nodiscard]] path::Path* getMotionPath() const { return _motion_path; }
 

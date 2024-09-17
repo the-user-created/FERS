@@ -5,6 +5,8 @@
 
 #include "radar_system.h"
 
+#include <algorithm>
+
 #include "core/logging.h"
 #include "core/parameters.h"
 #include "math_utils/multipath_surface.h"
@@ -83,7 +85,7 @@ Receiver::~Receiver()
 
 void Receiver::addResponse(Response* response)
 {
-	boost::try_mutex::scoped_lock lock(_responses_mutex);
+	std::unique_lock lock(_responses_mutex);
 	_responses.push_back(response);
 }
 
@@ -97,7 +99,8 @@ void Receiver::render()
 {
 	try
 	{
-		boost::try_mutex::scoped_try_lock lock(_responses_mutex);
+		std::unique_lock lock(_responses_mutex, std::try_to_lock);
+		if (!lock.owns_lock()) { throw std::runtime_error("[BUG] Responses lock is locked during Render()"); }
 		std::sort(_responses.begin(), _responses.end(), compareTimes);
 		if (parameters::exportXml()) { receiver_export::exportReceiverXml(_responses, getName() + "_results"); }
 		if (parameters::exportBinary())
@@ -107,7 +110,7 @@ void Receiver::render()
 		if (parameters::exportCsv()) { receiver_export::exportReceiverCsv(_responses, getName() + "_results"); }
 		lock.unlock();
 	}
-	catch (boost::lock_error&) { throw std::runtime_error("[BUG] Responses lock is locked during Render()"); }
+	catch (const std::system_error&) { throw std::runtime_error("[BUG] Responses lock is locked during Render()"); }
 }
 
 void Receiver::setWindowProperties(const RS_FLOAT length, const RS_FLOAT prf, const RS_FLOAT skip)

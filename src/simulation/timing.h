@@ -6,9 +6,9 @@
 #ifndef TIMING_H
 #define TIMING_H
 
+#include <optional>
 #include <string>
 #include <vector>
-#include <boost/utility.hpp>
 
 #include "config.h"
 #include "noise_generators.h"
@@ -67,13 +67,17 @@ namespace rs
 		bool _sync_on_pulse;
 	};
 
-	class Timing : boost::noncopyable
+	class Timing
 	{
 	public:
 		explicit Timing(std::string name) : _name(std::move(name)) {}
 
 		// Virtual destructor ensures proper cleanup in derived classes
 		virtual ~Timing() = default;
+
+		// Deleted copy constructor and assignment operator to prevent copying
+		Timing(const Timing&) = delete;
+		Timing& operator=(const Timing&) = delete;
 
 		[[nodiscard]] virtual RS_FLOAT getPulseTimeError() const noexcept = 0;
 

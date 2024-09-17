@@ -7,8 +7,6 @@
 
 #include "response_renderer.h"
 
-#include <boost/thread/thread.hpp>
-
 #include "core/parameters.h"
 #include "core/portable_utils.h"
 #include "radar/radar_system.h"
@@ -37,33 +35,35 @@ namespace
 
 namespace response_renderer
 {
-	void ThreadedResponseRenderer::renderWindow(RS_COMPLEX* window, RS_FLOAT length, RS_FLOAT start,
-	                                            RS_FLOAT fracDelay) const
+	void ThreadedResponseRenderer::renderWindow(RS_COMPLEX* window, const RS_FLOAT length, const RS_FLOAT start,
+	                                            const RS_FLOAT fracDelay) const
 	{
-		RS_FLOAT end = start + length;
+		const RS_FLOAT end = start + length;
 		std::queue<rs::Response*> work_list;
 		for (auto response : *_responses)
 		{
-			RS_FLOAT resp_start = response->startTime();
-			if (RS_FLOAT resp_end = response->endTime(); resp_start <= end && resp_end >= start)
+			const RS_FLOAT resp_start = response->startTime();
+			if (const RS_FLOAT resp_end = response->endTime(); resp_start <= end && resp_end >= start)
 			{
 				work_list.push(response);
 			}
 		}
-		boost::thread_group group;
-		boost::mutex work_list_mutex, window_mutex;
+
+		std::mutex work_list_mutex, window_mutex;
+		std::vector<std::thread> threads;
 		{
-			std::vector<std::unique_ptr<RenderThread>> threads;
-			boost::mutex::scoped_lock lock(work_list_mutex);
-			for (unsigned i = 0; i < _max_threads; i++)
+			std::lock_guard lock(work_list_mutex);
+			for (int i = 0; i < _max_threads; i++)
 			{
-				auto thr = std::make_unique<RenderThread>(i, &window_mutex, window, length, start, fracDelay,
-				                                          &work_list_mutex, &work_list);
-				group.create_thread(*thr);
-				threads.push_back(std::move(thr));
+				threads.emplace_back([&, i]
+				{
+					RenderThread thr(i, &window_mutex, window, length, start, fracDelay, &work_list_mutex, &work_list);
+					thr();
+				});
 			}
 		}
-		group.join_all();
+
+		for (auto& th : threads) { if (th.joinable()) { th.join(); } }
 	}
 
 	// =====================================================================================================================
@@ -87,7 +87,7 @@ namespace response_renderer
 			resp = getWork();
 		}
 		{
-			boost::mutex::scoped_lock lock(*_window_mutex);
+			std::lock_guard lock(*_window_mutex);
 			for (unsigned i = 0; i < size; i++) { _window[i] += _local_window[i]; }
 		}
 		delete[] _local_window;
@@ -104,7 +104,7 @@ namespace response_renderer
 	{
 		rs::Response* ret;
 		{
-			boost::mutex::scoped_lock lock(*_work_list_mutex);
+			std::lock_guard lock(*_work_list_mutex);
 			if (_work_list->empty()) { return nullptr; }
 			ret = _work_list->front();
 			_work_list->pop();

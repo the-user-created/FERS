@@ -8,7 +8,6 @@
 
 #include <memory>
 #include <vector>
-#include <boost/utility.hpp>
 
 #include "config.h"
 #include "jones_vector.h"
@@ -52,12 +51,16 @@ namespace rs
 		                                        int iSampleUnwrap) const;
 	};
 
-	class RadarSignal : public boost::noncopyable
+	class RadarSignal
 	{
 	public:
 		RadarSignal(std::string name, RS_FLOAT power, RS_FLOAT carrierfreq, RS_FLOAT length, Signal* signal);
 
 		~RadarSignal() { delete _signal; }
+
+		// Delete copy constructor and copy assignment operator to prevent copying
+		RadarSignal(const RadarSignal&) = delete;
+		RadarSignal& operator=(const RadarSignal&) = delete;
 
 		[[nodiscard]] RS_FLOAT getPower() const { return _power; }
 
