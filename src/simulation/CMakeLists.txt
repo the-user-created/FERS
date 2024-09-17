@@ -3,6 +3,8 @@ set(SRCS
 	response.cpp
 	noise_generators.cpp
 	timing.cpp
+	falpha_branch.cpp
+	noise_utils.cpp
 )
 
 set(HEADERS
@@ -10,6 +12,8 @@ set(HEADERS
 	response.h
 	noise_generators.h
 	timing.h
+	falpha_branch.h
+	noise_utils.h
 )
 
 target_sources(${PROJECT_NAME} PRIVATE ${SRCS} ${HEADERS})

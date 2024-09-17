@@ -16,6 +16,7 @@
 #include "core/parameters.h"
 #include "core/portable_utils.h"
 #include "radar/radar_system.h"
+#include "simulation/noise_utils.h"
 
 namespace
 {
@@ -35,7 +36,7 @@ namespace
 	{
 		if (temperature == 0) { return; }
 
-		const RS_FLOAT power = rs_noise::noiseTemperatureToPower(
+		const RS_FLOAT power = noise_utils::noiseTemperatureToPower(
 			temperature,
 			parameters::rate() * parameters::oversampleRatio() / 2
 		);
