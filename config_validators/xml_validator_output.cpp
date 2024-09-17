@@ -22,7 +22,7 @@ using namespace xercesc;
 using namespace std;
 
 // Setting default values if not specified in FERSXML file
-// Default values for rsparameters.cpp
+// Default values for parameters.cpp
 double default_c = 299792458.0;
 double default_starttime = 0.0;
 double default_endtime = 0.0;
@@ -39,7 +39,7 @@ bool binarySpecified = false; // Flag to indicate if binary value was specified
 bool csvSpecified = false;    // Flag to indicate if csv value was specified
 bool xmlSpecified = false;    // Flag to indicate if xml value was specified
 
-// Default values for rstiming.cpp
+// Default values for timing.cpp
 double default_freq_offset = 0.0;
 double default_phase_offset = 0.0;
 double default_frequency = 0.0;

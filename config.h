@@ -7,5 +7,6 @@
 #define CONFIG_H
 
 #define RS_FLOAT double
+#define RS_COMPLEX std::complex<RS_FLOAT>
 
 #endif //CONFIG_H

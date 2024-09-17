@@ -72,7 +72,7 @@ v &= \frac{dR_t}{dt} \\
 f' &= f_0 \frac{c+v}{c-v}
 \end{align}
 
-\section {rsnoise.cpp}
+\section {noise_generators.cpp}
 
 \subsection{Noise Power Equation}
 From page 2-29 of \cite{skolnik70}:
@@ -95,7 +95,7 @@ P_n &= k (T_a+T_r) B
 \end{align}
 
 
-\section{rsantenna.cpp}
+\section{antenna_factory.cpp}
 
 \subsection{Sinc Pattern}
 The sinc radiation pattern is based on the equation
@@ -127,7 +127,7 @@ $$G(\theta) = G_e\left(\frac{2 J_1(x)}{x}\right)^2$$
  \item[$J_1(x)$] The Bessel function of the first kind of order one of x
 \end{description}
 
-\section {rssignal.cpp}
+\section {signal.cpp}
 
 \subsection{Doppler Shift}
 The doppler shift simulation in performed in the time domain, using libsamplerate (http://www.mega-nerd.com/SRC/). This library uses an algorithm developed by Julius O. Smith\cite{smith} which performs very well for irrational sampling factors. A frequency domain doppler algorithm will likely replace this one at some stage.
