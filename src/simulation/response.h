@@ -44,7 +44,7 @@ namespace rs
 
 		void addInterpPoint(const InterpPoint& point);
 
-	protected:
+	private:
 		const Transmitter* _transmitter;
 
 		void renderResponseXml(TiXmlElement* root, const InterpPoint& point) const;

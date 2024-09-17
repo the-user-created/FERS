@@ -16,7 +16,7 @@ namespace rs
 	class JonesVector
 	{
 	public:
-		JonesVector(const std::complex<RS_FLOAT> h, const std::complex<RS_FLOAT> v) : h(h), v(v)
+		JonesVector(const std::complex<RS_FLOAT> h, const std::complex<RS_FLOAT> v) : _h(h), _v(v)
 		{
 		}
 
@@ -26,17 +26,28 @@ namespace rs
 
 		JonesVector operator*(const PsMatrix& mat) const
 		{
-			return {h * mat.s[0] + v * mat.s[1], h * mat.s[2] + v * mat.s[3]};
+			return {_h * mat.s[0] + _v * mat.s[1], _h * mat.s[2] + _v * mat.s[3]};
 		}
 
-		std::complex<RS_FLOAT> h;
-		std::complex<RS_FLOAT> v;
+		[[nodiscard]] std::complex<RS_FLOAT> getH() const
+		{
+			return _h;
+		}
+
+		[[nodiscard]] std::complex<RS_FLOAT> getV() const
+		{
+			return _v;
+		}
+
+	private:
+		std::complex<RS_FLOAT> _h;
+		std::complex<RS_FLOAT> _v;
 	};
 
 	// Note: This function is not used in the codebase
 	inline std::complex<RS_FLOAT> dot(const JonesVector& a, const JonesVector& b)
 	{
-		return a.v * b.v + a.h * b.h;
+		return a.getV() * b.getV() + a.getH() * b.getH();
 	}
 }
 
