@@ -21,7 +21,7 @@ using namespace rs;
 RadarSignal::RadarSignal(std::string name, const RS_FLOAT power, const RS_FLOAT carrierfreq, const RS_FLOAT length,
                          Signal* signal)
 	: _name(std::move(name)), _power(power), _carrierfreq(carrierfreq), _length(length), _signal(signal),
-	  _polar(std::complex<RS_FLOAT>(1.0, 0.0), std::complex<RS_FLOAT>(0.0, 0.0))
+	  _polar(std::complex(1.0, 0.0), std::complex(0.0, 0.0))
 {
 	if (!signal) { throw std::logic_error("RadarSignal cannot be constructed with NULL signal"); }
 }
@@ -93,26 +93,27 @@ std::shared_ptr<RS_COMPLEX[]> Signal::render(const std::vector<InterpPoint>& poi
 
 	const RS_FLOAT timestep = 1.0 / _rate;
 	const int filt_length = static_cast<int>(parameters::renderFilterLength());
-	const interp_filt::InterpFilter* interp = interp_filt::InterpFilter::getInstance();
+	const auto* interp = interp_filt::InterpFilter::getInstance();
 
 	auto iter = points.begin();
-	auto next = points.size() > 1 ? iter + 1 : iter;
-	const RS_FLOAT idelay = round(_rate * iter->delay);
+	auto next = points.size() > 1 ? std::next(iter) : iter;
+	const RS_FLOAT idelay = std::round(_rate * iter->delay);
 	RS_FLOAT sample_time = iter->time;
 
-	for (int i = 0; i < static_cast<int>(_size); i++)
+	for (int i = 0; i < static_cast<int>(_size); ++i)
 	{
 		if (sample_time > next->time && next != iter)
 		{
 			iter = next;
-			if (next + 1 != points.end()) { ++next; }
+			if (std::next(next) != points.end()) { ++next; }
 		}
 
 		auto [amplitude, phase, fdelay, i_sample_unwrap] = calculateWeightsAndDelays(
 			iter, next, sample_time, idelay, fracWinDelay);
 		const RS_FLOAT* filt = interp->getFilter(fdelay);
-		const RS_COMPLEX accum = performConvolution(i, filt, filt_length, amplitude, i_sample_unwrap);
+		RS_COMPLEX accum = performConvolution(i, filt, filt_length, amplitude, i_sample_unwrap);
 		out[i] = std::exp(RS_COMPLEX(0.0, 1.0) * phase) * accum;
+
 		sample_time += timestep;
 	}
 
@@ -123,13 +124,16 @@ std::tuple<RS_FLOAT, RS_FLOAT, RS_FLOAT, int> Signal::calculateWeightsAndDelays(
 	const std::vector<InterpPoint>::const_iterator iter, const std::vector<InterpPoint>::const_iterator next,
 	const RS_FLOAT sampleTime, const RS_FLOAT idelay, const RS_FLOAT fracWinDelay) const
 {
-	const RS_FLOAT bw = iter < next ? (sampleTime - iter->time) / (next->time - iter->time) : 0;
+	const RS_FLOAT bw = iter < next ? (sampleTime - iter->time) / (next->time - iter->time) : 0.0;
 	const RS_FLOAT aw = 1.0 - bw;
-	RS_FLOAT amplitude = std::sqrt(iter->power) * aw + std::sqrt(next->power) * bw;
-	RS_FLOAT phase = iter->phase * aw + next->phase * bw;
+
+	const RS_FLOAT amplitude = std::sqrt(iter->power) * aw + std::sqrt(next->power) * bw;
+	const RS_FLOAT phase = iter->phase * aw + next->phase * bw;
 	RS_FLOAT fdelay = -((iter->delay * aw + next->delay * bw) * _rate - idelay + fracWinDelay);
-	const int i_sample_unwrap = static_cast<int>(floor(fdelay));
+
+	const int i_sample_unwrap = static_cast<int>(std::floor(fdelay));
 	fdelay -= i_sample_unwrap;
+
 	return {amplitude, phase, fdelay, i_sample_unwrap};
 }
 
@@ -138,12 +142,17 @@ RS_COMPLEX Signal::performConvolution(const int i, const RS_FLOAT* filt, const i
 {
 	const int start = std::max(-filtLength / 2, -i);
 	const int end = std::min(filtLength / 2, static_cast<int>(_size) - i);
+
 	RS_COMPLEX accum(0.0, 0.0);
 
-	for (int j = start; j < end; j++)
+	for (int j = start; j < end; ++j)
 	{
-		if (const unsigned sample_idx = i + j + iSampleUnwrap; sample_idx < _size && j + filtLength / 2
-			< filtLength) { accum += amplitude * _data[sample_idx] * filt[j + filtLength / 2]; }
+		if (const unsigned sample_idx = i + j + iSampleUnwrap;
+			sample_idx < _size && j + filtLength / 2 < filtLength)
+		{
+			accum += amplitude * _data[sample_idx] * filt[j + filtLength / 2];
+		}
 	}
+
 	return accum;
 }

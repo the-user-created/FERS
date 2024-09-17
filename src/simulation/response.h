@@ -19,8 +19,7 @@ namespace rs
 	class Response : boost::noncopyable
 	{
 	public:
-		Response(const RadarSignal* wave, const Transmitter* transmitter) :
-			_transmitter(transmitter), _wave(wave) {}
+		Response(const RadarSignal* wave, const Transmitter* transmitter) : _transmitter(transmitter), _wave(wave) {}
 
 		~Response() = default;
 
@@ -30,11 +29,10 @@ namespace rs
 
 		void renderXml(TiXmlElement* root);
 
-		void renderCsv(std::ofstream& of);
+		void renderCsv(std::ofstream& of) const;
 
 		std::shared_ptr<RS_COMPLEX[]> renderBinary(RS_FLOAT& rate, unsigned& size, RS_FLOAT fracWinDelay) const;
 
-		// Note: This function is not used in the codebase
 		[[nodiscard]] RS_FLOAT getLength() const { return endTime() - startTime(); }
 
 		// Note: This function is not used in the codebase
@@ -46,13 +44,12 @@ namespace rs
 
 	private:
 		const Transmitter* _transmitter;
+		const RadarSignal* _wave;
+		std::vector<InterpPoint> _points;
 
 		void renderResponseXml(TiXmlElement* root, const InterpPoint& point) const;
 
 		void renderResponseCsv(std::ofstream& of, const InterpPoint& point) const;
-
-		const RadarSignal* _wave;
-		std::vector<InterpPoint> _points;
 	};
 }
 

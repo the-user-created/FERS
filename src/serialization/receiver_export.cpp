@@ -24,8 +24,7 @@ namespace
 		if (parameters::exportBinary())
 		{
 			std::ostringstream b_oss;
-			b_oss.setf(std::ios::scientific);
-			b_oss << recvName << ".h5";
+			b_oss << std::scientific << recvName << ".h5";
 			hdf5_file = hdf5_export::createFile(b_oss.str());
 		}
 		return hdf5_file;
@@ -34,58 +33,77 @@ namespace
 	void addNoiseToWindow(RS_COMPLEX* data, const unsigned size, const RS_FLOAT temperature)
 	{
 		if (temperature == 0) { return; }
-		const RS_FLOAT power = rs_noise::noiseTemperatureToPower(temperature,
-		                                                         parameters::rate() * parameters::oversampleRatio()
-		                                                         / 2);
-		rs::WgnGenerator generator(sqrt(power) / 2.0);
-		for (unsigned i = 0; i < size; i++) { data[i] += RS_COMPLEX(generator.getSample(), generator.getSample()); }
+
+		const RS_FLOAT power = rs_noise::noiseTemperatureToPower(
+			temperature,
+			parameters::rate() * parameters::oversampleRatio() / 2
+		);
+
+		rs::WgnGenerator generator(std::sqrt(power) / 2.0);
+
+		for (unsigned i = 0; i < size; ++i)
+		{
+			const RS_COMPLEX noise(generator.getSample(), generator.getSample());
+			data[i] += noise;
+		}
 	}
 
-	void adcSimulate(RS_COMPLEX* data, const unsigned size, const unsigned bits, const RS_FLOAT fullscale)
+	void adcSimulate(RS_COMPLEX* data, const unsigned size, const unsigned bits, RS_FLOAT fullscale)
 	{
-		const RS_FLOAT levels = pow(2, bits - 1);
-		for (unsigned it = 0; it < size; it++)
+		const RS_FLOAT levels = std::pow(2, bits - 1);
+
+		for (unsigned it = 0; it < size; ++it)
 		{
+			// Normalize and quantize the real and imaginary parts
 			RS_FLOAT i = std::floor(levels * data[it].real() / fullscale) / levels;
 			RS_FLOAT q = std::floor(levels * data[it].imag() / fullscale) / levels;
-			// TODO: can use std::clamp
-			if (i > 1) { i = 1; }
-			else if (i < -1) { i = -1; }
-			if (q > 1) { q = 1; }
-			else if (q < -1) { q = -1; }
+
+			// Use std::clamp to ensure the values are within the range [-1, 1]
+			i = std::clamp(i, -1.0, 1.0);
+			q = std::clamp(q, -1.0, 1.0);
+
 			data[it] = RS_COMPLEX(i, q);
 		}
 	}
 
 	RS_FLOAT quantizeWindow(RS_COMPLEX* data, const unsigned size)
 	{
-		// TODO: This can be simplified and optimized
-		RS_FLOAT max = 0;
-		for (unsigned i = 0; i < size; i++)
+		// Find the maximum absolute value across real and imaginary parts
+		RS_FLOAT max_value = 0;
+
+		// Loop through the data to calculate the maximum and check for NaNs
+		for (unsigned i = 0; i < size; ++i)
 		{
-			if (std::fabs(data[i].real()) > max) { max = std::fabs(data[i].real()); }
-			if (std::fabs(data[i].imag()) > max) { max = std::fabs(data[i].imag()); }
-			if (std::isnan(data[i].real()) || std::isnan(data[i].imag()))
+			RS_FLOAT real_abs = std::fabs(data[i].real());
+			RS_FLOAT imag_abs = std::fabs(data[i].imag());
+
+			max_value = std::max({max_value, real_abs, imag_abs});
+
+			// Check for NaN in both real and imaginary parts
+			if (std::isnan(real_abs) || std::isnan(imag_abs))
 			{
-				throw std::runtime_error("NaN in QuantizeWindow -- early");
+				throw std::runtime_error("NaN encountered in QuantizeWindow -- early");
 			}
 		}
-		if (parameters::adcBits() > 0) { adcSimulate(data, size, parameters::adcBits(), max); }
-		else
+
+		// Simulate ADC if adcBits parameter is greater than 0
+		if (parameters::adcBits() > 0) { adcSimulate(data, size, parameters::adcBits(), max_value); }
+		else if (max_value != 0)
 		{
-			if (max != 0)
+			// Normalize the data if max_value is not zero
+			for (unsigned i = 0; i < size; ++i)
 			{
-				for (unsigned i = 0; i < size; i++)
+				data[i] /= max_value;
+
+				// Re-check for NaN after normalization
+				if (std::isnan(data[i].real()) || std::isnan(data[i].imag()))
 				{
-					data[i] /= max;
-					if (std::isnan(data[i].real()) || std::isnan(data[i].imag()))
-					{
-						throw std::runtime_error("NaN in QuantizeWindow -- late");
-					}
+					throw std::runtime_error("NaN encountered in QuantizeWindow -- late");
 				}
 			}
 		}
-		return max;
+
+		return max_value;
 	}
 
 	RS_FLOAT* generatePhaseNoise(const rs::Receiver* recv, const unsigned wSize, const RS_FLOAT rate,
@@ -93,11 +111,16 @@ namespace
 	{
 		auto* timing = dynamic_cast<rs::ClockModelTiming*>(recv->getTiming());
 		if (!timing) { throw std::runtime_error("[BUG] Could not cast receiver->GetTiming() to ClockModelTiming"); }
-		auto* noise = new RS_FLOAT[wSize];
+
+		// Use a smart pointer for memory safety; can be released later if raw pointer is required
+		auto noise = std::make_unique<RS_FLOAT[]>(wSize);
+
 		enabled = timing->enabled();
+
 		if (enabled)
 		{
-			for (unsigned i = 0; i < wSize; i++) { noise[i] = timing->nextNoiseSample(); }
+			for (unsigned i = 0; i < wSize; ++i) { noise[i] = timing->nextNoiseSample(); }
+
 			if (timing->getSyncOnPulse())
 			{
 				timing->reset();
@@ -106,27 +129,37 @@ namespace
 			}
 			else
 			{
-				const long skip = std::floor(rate / recv->getWindowPrf() - rate * recv->getWindowLength());
+				const long skip = static_cast<long>(std::floor(
+					rate / recv->getWindowPrf() - rate * recv->getWindowLength()));
 				timing->skipSamples(skip);
 			}
+
 			carrier = timing->getFrequency();
 		}
 		else
 		{
-			// TODO: Can use std:fill
-			for (unsigned i = 0; i < wSize; i++) { noise[i] = 0; }
+			// Use std::fill for setting noise to 0
+			std::fill_n(noise.get(), wSize, 0);
 			carrier = 1;
 		}
-		return noise;
+
+		// Release the smart pointer to return the raw pointer, maintaining original behavior
+		return noise.release();
 	}
 
 	void addPhaseNoiseToWindow(const RS_FLOAT* noise, RS_COMPLEX* window, const unsigned wSize)
 	{
-		for (unsigned i = 0; i < wSize; i++)
+		for (unsigned i = 0; i < wSize; ++i)
 		{
 			if (std::isnan(noise[i])) { throw std::runtime_error("[BUG] Noise is NaN in addPhaseNoiseToWindow"); }
-			const RS_COMPLEX mn = exp(RS_COMPLEX(0.0, 1.0) * noise[i]);
-			window[i] *= mn;
+
+			// Generate the phase noise multiplier using std::polar for efficiency and clarity
+			const RS_COMPLEX phase_noise = std::polar(1.0, noise[i]);
+
+			// Apply the phase noise to the window element
+			window[i] *= phase_noise;
+
+			// Check for NaN in the result
 			if (std::isnan(window[i].real()) || std::isnan(window[i].imag()))
 			{
 				throw std::runtime_error("[BUG] NaN encountered in addPhaseNoiseToWindow");
@@ -137,70 +170,80 @@ namespace
 	void exportResponseFersBin(const std::vector<rs::Response*>& responses, const rs::Receiver* recv,
 	                           const std::string& recvName)
 	{
-		// TODO: This can be simplified and optimized
-		//Bail if there are no responses to export
+		// Bail if there are no responses to export
 		if (responses.empty()) { return; }
 
+		// Open HDF5 file for writing
 		const long out_bin = openHdf5File(recvName);
 
-		// Create a threaded render object, to manage the rendering process
+		// Create a threaded render object to manage the rendering process
 		const response_renderer::ThreadedResponseRenderer thr_renderer(&responses, recv, parameters::renderThreads());
 
-		// Now loop through the responses and write them to the file
+		// Retrieve the window count from the receiver
 		const int window_count = recv->getWindowCount();
-		for (int i = 0; i < window_count; i++)
+
+		// Loop through each window
+		for (int i = 0; i < window_count; ++i)
 		{
 			const RS_FLOAT length = recv->getWindowLength();
 			const RS_FLOAT rate = parameters::rate() * parameters::oversampleRatio();
 			auto size = static_cast<unsigned>(std::ceil(length * rate));
-			// logging::printf(logging::RS_VERY_VERBOSE, "Length: %g Size: %d\n", length, size);
-			//Generate the phase noise samples for the window
+
+			// Generate phase noise samples for the window
 			RS_FLOAT carrier;
 			bool pn_enabled;
-			const RS_FLOAT* pnoise = generatePhaseNoise(recv, size, rate, carrier, pn_enabled);
+			std::unique_ptr<const RS_FLOAT[]> pnoise(generatePhaseNoise(recv, size, rate, carrier, pn_enabled));
+
 			// Get the window start time, including clock drift effects
 			RS_FLOAT start = recv->getWindowStart(i) + pnoise[0] / (2 * M_PI * carrier);
-			// Get the fraction of a sample of the window delay
-			const RS_FLOAT frac_delay = start * rate - round(start * rate);
-			start = round(start * rate) / rate;
-			// rsFloat start = recv->GetWindowStart(i);
-			// Allocate memory for the entire window
-			auto* window = new RS_COMPLEX[size];
-			// Clear the window in memory
-			std::fill_n(window, size, RS_COMPLEX(0.0, 0.0));
-			//Add Noise to the window
-			addNoiseToWindow(window, size, recv->getNoiseTemperature());
-			// Render to the window, using the threaded renderer
-			thr_renderer.renderWindow(window, length, start, frac_delay);
-			//Downsample the contents of the window, if appropriate
+
+			// Calculate the fractional delay
+			const RS_FLOAT frac_delay = start * rate - std::round(start * rate);
+			start = std::round(start * rate) / rate;
+
+			// Allocate memory for the window using smart pointers
+			std::unique_ptr<RS_COMPLEX[]> window = std::make_unique<RS_COMPLEX[]>(size);
+
+			// Clear the window memory
+			std::fill_n(window.get(), size, RS_COMPLEX(0.0, 0.0));
+
+			// Add noise to the window
+			addNoiseToWindow(window.get(), size, recv->getNoiseTemperature());
+
+			// Render the window using the threaded renderer
+			thr_renderer.renderWindow(window.get(), length, start, frac_delay);
+
+			// Downsample the window if the oversample ratio is greater than 1
 			if (parameters::oversampleRatio() != 1)
 			{
-				// Calculate the size of the window after downsampling
+				// Calculate the new size after downsampling
 				const unsigned new_size = size / parameters::oversampleRatio();
-				// Allocate memory for downsampled window
-				auto* tmp = new RS_COMPLEX[new_size];
-				//Downsample the data into tmp
-				rs::downsample(window, size, tmp, parameters::oversampleRatio());
-				// Set tmp as the new window
+
+				// Allocate memory for the downsampled window
+				std::unique_ptr<RS_COMPLEX[]> tmp = std::make_unique<RS_COMPLEX[]>(new_size);
+
+				// Perform downsampling
+				rs::downsample(window.get(), size, tmp.get(), parameters::oversampleRatio());
+
+				// Replace the window with the downsampled one
 				size = new_size;
-				delete[] window;
-				window = tmp;
+				window = std::move(tmp);
 			}
-			//Add Phase noise to the window
-			if (pn_enabled) { addPhaseNoiseToWindow(pnoise, window, size); }
-			//Clean up the phase noise array
-			delete[] pnoise;
-			//Normalize and quantize the window
-			const RS_FLOAT fullscale = quantizeWindow(window, size);
-			//Export the binary format
+
+			// Add phase noise to the window if enabled
+			if (pn_enabled) { addPhaseNoiseToWindow(pnoise.get(), window.get(), size); }
+
+			// Normalize and quantize the window
+			const RS_FLOAT fullscale = quantizeWindow(window.get(), size);
+
+			// Export the binary format if enabled
 			if (parameters::exportBinary())
 			{
-				hdf5_export::addChunkToFile(out_bin, window, size, start, parameters::rate(), fullscale, i);
+				hdf5_export::addChunkToFile(out_bin, window.get(), size, start, parameters::rate(), fullscale, i);
 			}
-			// Clean up memory
-			delete[] window;
 		}
-		// Close the binary and csv files
+
+		// Close the binary file
 		if (out_bin) { hdf5_export::closeFile(out_bin); }
 	}
 }
@@ -223,23 +266,34 @@ namespace receiver_export
 
 	void exportReceiverCsv(const std::vector<rs::Response*>& responses, const std::string& filename)
 	{
-		std::map<std::string, std::ofstream*> streams;
-		for (const auto response : responses)
+		// Use std::unique_ptr to handle automatic cleanup of the streams
+		std::map<std::string, std::unique_ptr<std::ofstream>> streams;
+
+		// Iterate over each response in the vector
+		for (const auto* response : responses)
 		{
-			std::ofstream* of;
-			if (auto ofi = streams.find(response->getTransmitterName()); ofi == streams.end())
+			// Get the transmitter name from the response
+			const std::string& transmitter_name = response->getTransmitterName();
+
+			// Check if a stream for this transmitter already exists
+			if (auto it = streams.find(transmitter_name); it == streams.end())
 			{
+				// If not found, create a new output file stream
 				std::ostringstream oss;
-				oss << filename << "_" << response->getTransmitterName() << ".csv";
-				of = new std::ofstream(oss.str().c_str());
+				oss << filename << "_" << transmitter_name << ".csv";
+
+				auto of = std::make_unique<std::ofstream>(oss.str());
 				of->setf(std::ios::scientific);
+
 				if (!*of) { throw std::runtime_error("[ERROR] Could not open file " + oss.str() + " for writing"); }
-				streams[response->getTransmitterName()] = of;
+
+				// Add the new stream to the map
+				streams[transmitter_name] = std::move(of);
 			}
-			else { of = ofi->second; }
-			response->renderCsv(*of);
+
+			// Render the CSV for the current response
+			response->renderCsv(*streams[transmitter_name]);
 		}
-		for (auto& [fst, snd] : streams) { delete snd; }
 	}
 
 	void exportReceiverBinary(const std::vector<rs::Response*>& responses, const rs::Receiver* recv,
