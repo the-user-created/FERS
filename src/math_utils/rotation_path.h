@@ -46,7 +46,7 @@ namespace path
 
 		void setRate(const coord::RotationCoord& rate) { _rate = rate; }
 
-	protected:
+	private:
 		std::vector<coord::RotationCoord> _coords;
 		std::vector<coord::RotationCoord> _dd;
 		bool _final;

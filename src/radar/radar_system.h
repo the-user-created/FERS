@@ -124,7 +124,7 @@ namespace rs
 
 		void setSignal(RadarSignal* signal) { _signal = signal; }
 
-	protected:
+	private:
 		RadarSignal* _signal;
 		RS_FLOAT _prf{};
 		bool _pulsed;

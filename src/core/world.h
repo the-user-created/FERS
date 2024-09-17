@@ -91,7 +91,7 @@ namespace rs
 
 		void processMultipath();
 
-	protected:
+	private:
 		std::vector<Platform*> _platforms;
 		std::vector<Transmitter*> _transmitters;
 		std::vector<Receiver*> _receivers;
