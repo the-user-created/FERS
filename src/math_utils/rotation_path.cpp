@@ -31,11 +31,11 @@ namespace path
 		// Call the interpolation function relevant to the type
 		switch (_type)
 		{
-		case RS_INTERP_STATIC: getPositionStatic<coord::RotationCoord>(coord, _coords);
+		case RS_INTERP_STATIC: getPositionStatic(coord, _coords);
 			break;
-		case RS_INTERP_LINEAR: getPositionLinear<coord::RotationCoord>(t, coord, _coords);
+		case RS_INTERP_LINEAR: getPositionLinear(t, coord, _coords);
 			break;
-		case RS_INTERP_CUBIC: getPositionCubic<coord::RotationCoord>(t, coord, _coords, _dd);
+		case RS_INTERP_CUBIC: getPositionCubic(t, coord, _coords, _dd);
 			break;
 		case RS_INTERP_CONSTANT: coord.t = t;
 			coord.azimuth = std::fmod(t * _rate.azimuth + _start.azimuth, 2 * M_PI);

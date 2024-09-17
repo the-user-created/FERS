@@ -38,11 +38,11 @@ namespace path
 		//Call the interpolation function relevant to the type
 		switch (_type)
 		{
-		case RS_INTERP_STATIC: getPositionStatic<coord::Coord>(coord, _coords);
+		case RS_INTERP_STATIC: getPositionStatic(coord, _coords);
 			break;
-		case RS_INTERP_LINEAR: getPositionLinear<coord::Coord>(t, coord, _coords);
+		case RS_INTERP_LINEAR: getPositionLinear(t, coord, _coords);
 			break;
-		case RS_INTERP_CUBIC: getPositionCubic<coord::Coord>(t, coord, _coords, _dd);
+		case RS_INTERP_CUBIC: getPositionCubic(t, coord, _coords, _dd);
 			break;
 		case RS_INTERP_PYTHON: if (!_pythonpath)
 			{
