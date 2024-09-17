@@ -16,7 +16,6 @@ jobs:
       - name: Set up environment  # Update package lists and install required packages
         run: |
           apt-get update && apt-get install -y \
-          libboost-all-dev \
           libhdf5-dev \
           libhdf5-serial-dev \
           build-essential \
