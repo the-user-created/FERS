@@ -166,8 +166,8 @@ namespace
 			// rsFloat start = recv->GetWindowStart(i);
 			// Allocate memory for the entire window
 			auto* window = new RS_COMPLEX[size];
-			//Clear the window in memory
-			memset(window, 0, sizeof(RS_COMPLEX) * size);
+			// Clear the window in memory
+			std::fill_n(window, size, RS_COMPLEX(0.0, 0.0));
 			//Add Noise to the window
 			addNoiseToWindow(window, size, recv->getNoiseTemperature());
 			// Render to the window, using the threaded renderer

@@ -142,7 +142,7 @@ RS_COMPLEX Signal::performConvolution(const int i, const RS_FLOAT* filt, const i
 
 	for (int j = start; j < end; j++)
 	{
-		if (const int sample_idx = i + j + iSampleUnwrap; sample_idx >= 0 && sample_idx < _size && j + filtLength / 2
+		if (const unsigned sample_idx = i + j + iSampleUnwrap; sample_idx < _size && j + filtLength / 2
 			< filtLength) { accum += amplitude * _data[sample_idx] * filt[j + filtLength / 2]; }
 	}
 	return accum;
