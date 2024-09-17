@@ -29,9 +29,9 @@ namespace rs
 
 		void load(const RS_FLOAT* inData, unsigned samples, RS_FLOAT sampleRate);
 
-		[[nodiscard]] RS_FLOAT rate() const { return _rate; }
+		[[nodiscard]] RS_FLOAT getRate() const { return _rate; }
 
-		[[nodiscard]] unsigned size() const { return _size; }
+		[[nodiscard]] unsigned getSize() const { return _size; }
 
 		// Note: This function is not used in the codebase
 		[[nodiscard]] RS_FLOAT* copyData() const;
@@ -65,7 +65,7 @@ namespace rs
 
 		[[nodiscard]] std::string getName() const { return _name; }
 
-		[[nodiscard]] RS_FLOAT getRate() const { return _signal->rate(); }
+		[[nodiscard]] RS_FLOAT getRate() const { return _signal->getRate(); }
 
 		[[nodiscard]] RS_FLOAT getLength() const { return _length; }
 

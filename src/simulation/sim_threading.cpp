@@ -83,8 +83,8 @@ namespace
 		}
 
 		// Apply multipath factors if applicable
-		if (trans->isMultipathDual()) { results.power *= trans->multipathDualFactor(); }
-		if (recv->isMultipathDual()) { results.power *= recv->multipathDualFactor(); }
+		if (trans->getMultipathDual()) { results.power *= trans->getMultipathFactor(); }
+		if (recv->getMultipathDual()) { results.power *= recv->getMultipathFactor(); }
 
 		results.phase = -results.delay * 2 * M_PI * wave->getCarrier();
 
@@ -139,7 +139,7 @@ namespace
 		results.doppler = (parameters::c() + doppler_shift) / (parameters::c() - doppler_shift);
 
 		// Multipath conditions
-		if (trans->isMultipathDual() || recv->isMultipathDual()) { results.power = 0; }
+		if (trans->getMultipathDual() || recv->getMultipathDual()) { results.power = 0; }
 
 		results.phase = fmod(results.delay * 2 * M_PI * wave->getCarrier(), 2 * M_PI);
 		results.noise_temperature = recv->getNoiseTemperature(recv->getRotation(time + results.delay));

@@ -27,8 +27,8 @@ Timing* Radar::getTiming() const
 void Radar::setMultipathDual(const RS_FLOAT reflect)
 {
 	_multipath_dual = true;
-	_multipath_reflect = reflect;
-	if (_multipath_reflect > 1)
+	_multipath_factor = reflect;
+	if (_multipath_factor > 1)
 	{
 		logging::printf(logging::RS_CRITICAL,
 		                "[CRITICAL] Multipath reflection factor greater than 1 (=%g) for radar %s, results are likely to be incorrect\n",

@@ -37,7 +37,7 @@ namespace rs
 	public:
 		Radar(const Platform* platform, const std::string& name) :
 			Object(platform, name), _timing(nullptr), _antenna(nullptr), _attached(nullptr), _multipath_dual(false),
-			_multipath_reflect(0) {}
+			_multipath_factor(0) {}
 
 		~Radar() override = default;
 
@@ -74,11 +74,11 @@ namespace rs
 
 		[[nodiscard]] Timing* getTiming() const;
 
-		[[nodiscard]] bool isMultipathDual() const { return _multipath_dual; }
+		[[nodiscard]] bool getMultipathDual() const { return _multipath_dual; }
 
 		void setMultipathDual(RS_FLOAT reflect);
 
-		[[nodiscard]] RS_FLOAT multipathDualFactor() const { return _multipath_reflect; }
+		[[nodiscard]] RS_FLOAT getMultipathFactor() const { return _multipath_factor; }
 
 		[[nodiscard]] const Antenna* getAntenna() const { return _antenna; }
 
@@ -91,7 +91,7 @@ namespace rs
 		const Antenna* _antenna;
 		const Radar* _attached;
 		bool _multipath_dual;
-		RS_FLOAT _multipath_reflect;
+		RS_FLOAT _multipath_factor;
 	};
 
 	class Transmitter final : public Radar
