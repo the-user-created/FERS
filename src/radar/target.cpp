@@ -76,7 +76,7 @@ RS_FLOAT FileTarget::getRcs(SVec3& inAngle, SVec3& outAngle) const
 {
 	const SVec3 t_angle = inAngle + outAngle;
 	const RS_FLOAT rcs = std::sqrt(
-		_azi_samples->value(t_angle.azimuth / 2.0) * _elev_samples->value(t_angle.elevation / 2.0));
+		_azi_samples->getValueAt(t_angle.azimuth / 2.0) * _elev_samples->getValueAt(t_angle.elevation / 2.0));
 	return _model ? rcs * _model->sampleModel() : rcs;
 }
 
