@@ -15,8 +15,8 @@
 #include "response_renderer.h"
 #include "core/parameters.h"
 #include "core/portable_utils.h"
+#include "noise/noise_utils.h"
 #include "radar/radar_system.h"
-#include "simulation/noise_utils.h"
 
 namespace
 {

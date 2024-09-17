@@ -9,6 +9,7 @@ add_subdirectory(serialization)
 add_subdirectory(math_utils)
 add_subdirectory(python)
 add_subdirectory(interpolation)
+add_subdirectory(noise)
 
 find_library(FERS_LIB_HDF5 NAMES hdf5)
 
