@@ -10,6 +10,7 @@
 #include "portable_utils.h"
 #include "serialization/xmlimport.h"
 #include "simulation/noise_generators.h"
+#include "simulation/noise_utils.h"
 #include "simulation/sim_threading.h"
 
 int main(const int argc, char* argv[])
@@ -31,7 +32,7 @@ int main(const int argc, char* argv[])
 	{
 		parameters::setThreads(portable_utils::countProcessors());
 		auto* world = new rs::World();
-		rs_noise::initializeNoise();
+		noise_utils::initializeNoise();
 
 		logging::printf(logging::RS_VERBOSE, "[VERBOSE] Loading XML Script File.\n");
 		xml::loadXmlFile(argv[1], world);
@@ -40,7 +41,7 @@ int main(const int argc, char* argv[])
 		logging::printf(logging::RS_VERBOSE, "[VERBOSE] Cleaning up.\n");
 
 		delete world;
-		rs_noise::cleanUpNoise();
+		noise_utils::cleanUpNoise();
 
 		logging::printf(logging::RS_CRITICAL, "------------------------------------------------\n");
 		logging::printf(logging::RS_CRITICAL, "Simulation completed successfully...\n\n");
