@@ -12,7 +12,7 @@
 #include "config.h"
 #include "core/object.h"
 #include "simulation/response.h"
-#include "simulation/timing.h"
+#include "timing/timing.h"
 
 namespace rs
 {
