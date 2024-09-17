@@ -1,12 +1,11 @@
 name: C++ Build on Linux
 
-on: [push]  # Trigger the workflow on push events
+on:
+  push:
 
 jobs:
   build:
     runs-on: self-hosted  # Use a self-hosted runner
-    container:
-      image: ubuntu:latest  # Use the latest Ubuntu container image
 
     steps:
       - name: Checkout project
