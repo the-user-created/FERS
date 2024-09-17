@@ -6,6 +6,8 @@ on:
 jobs:
   build:
     runs-on: self-hosted  # Use a self-hosted runner
+    container:
+      image: ubuntu:latest  # Use the latest Ubuntu container image
 
     steps:
       - name: Checkout project
