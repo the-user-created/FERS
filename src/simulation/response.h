@@ -16,12 +16,16 @@ namespace rs
 	class Antenna;
 	class Transmitter;
 
-	class Response : boost::noncopyable
+	class Response
 	{
 	public:
 		Response(const RadarSignal* wave, const Transmitter* transmitter) : _transmitter(transmitter), _wave(wave) {}
 
 		~Response() = default;
+
+		// Delete copy constructor and copy assignment operator to prevent copying
+		Response(const Response&) = delete;
+		Response& operator=(const Response&) = delete;
 
 		[[nodiscard]] RS_FLOAT startTime() const { return _points.empty() ? 0.0 : _points.front().time; }
 

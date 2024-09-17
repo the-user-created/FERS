@@ -9,8 +9,6 @@
 #include <memory>
 #include <random>
 #include <vector>
-#include <boost/random.hpp>
-#include <boost/utility.hpp>
 
 #include "config.h"
 #include "math_utils/dsp_filters.h"
@@ -32,7 +30,7 @@ namespace rs_noise
 
 namespace rs
 {
-	class NoiseGenerator : boost::noncopyable
+	class NoiseGenerator
 	{
 	public:
 		NoiseGenerator() = default;
@@ -41,6 +39,11 @@ namespace rs
 
 		// Pure virtual method to generate a sample
 		virtual RS_FLOAT getSample() = 0;
+
+		// Delete copy constructor and assignment operator to make the class noncopyable
+		NoiseGenerator(const NoiseGenerator&) = delete;
+
+		NoiseGenerator& operator=(const NoiseGenerator&) = delete;
 	};
 
 	class WgnGenerator final : public NoiseGenerator
@@ -81,12 +84,17 @@ namespace rs
 	};
 
 	// TODO: move to a separate file
-	class FAlphaBranch : boost::noncopyable
+	class FAlphaBranch
 	{
 	public:
 		FAlphaBranch(RS_FLOAT ffrac, unsigned fint, std::unique_ptr<FAlphaBranch> pre, bool last);
 
 		~FAlphaBranch() { clean(); }
+
+		// Delete copy constructor and assignment operator to make the class noncopyable
+		FAlphaBranch(const FAlphaBranch&) = delete;
+
+		FAlphaBranch& operator=(const FAlphaBranch&) = delete;
 
 		RS_FLOAT getSample();
 

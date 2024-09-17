@@ -2,7 +2,7 @@
 
 #include <fstream>
 #include <iostream>
-#include <boost/random.hpp>
+#include <random>
 
 using namespace std;
 
@@ -34,32 +34,33 @@ int main()
 	double time = 0;
 	if (spread != 0)
 	{
-		cout << "Simulation end time";
+		cout << "Simulation end time: ";
 		cin >> time;
 	}
 	string filename;
-	cout << "Filename:";
+	cout << "Filename: ";
 	cin >> filename;
-	//Open the file
+	// Open the file
 	ofstream fo(filename.c_str());
-	//Create the rng
-	boost::mt19937 rng;
-	boost::uniform_real ud_x(start_range_x, start_range_x + range_x);
-	boost::uniform_real ud_y(start_range_y, start_range_y + range_y);
-	boost::normal_distribution<> nd(0, spread);
-	boost::variate_generator<boost::mt19937&, boost::uniform_real<>> gen_x(rng, ud_x);
-	boost::variate_generator<boost::mt19937&, boost::uniform_real<>> gen_y(rng, ud_y);
-	boost::variate_generator<boost::mt19937&, boost::normal_distribution<>> sprgen(rng, nd);
+
+	// Create the rng
+	random_device rd;
+	mt19937 rng(rd());
+
+	uniform_real_distribution ud_x(start_range_x, start_range_x + range_x);
+	uniform_real_distribution ud_y(start_range_y, start_range_y + range_y);
+	normal_distribution<> nd(0, spread);
+
 	fo << "<incblock>";
 	for (int i = 0; i < samples; i++)
 	{
 		fo << "<platform name=\"clutter\">\n";
 		fo << "<motionpath interpolation=\"cubic\">\n";
-		double pos_x = gen_x();
-		double pos_y = gen_y();
+		double pos_x = ud_x(rng);
+		double pos_y = ud_y(rng);
 		fo << "<positionwaypoint>\n<x>" << pos_x << "</x>\n<y>" << pos_y <<
 			"</y>\n<altitude>0</altitude>\n<time>0</time>\n</positionwaypoint>\n";
-		fo << "<positionwaypoint>\n<x>" << pos_x + time * sprgen() << "</x>\n<y>" << pos_y + time * sprgen() <<
+		fo << "<positionwaypoint>\n<x>" << pos_x + time * nd(rng) << "</x>\n<y>" << pos_y + time * nd(rng) <<
 			"</y>\n<altitude>0</altitude>\n<time>" << time << "</time>\n</positionwaypoint>\n";
 		fo << "</motionpath>\n";
 		fo <<
@@ -69,4 +70,6 @@ int main()
 		fo << "</value>\n</rcs>\n</target>\n</platform>\n\n";
 	}
 	fo << "</incblock>";
+
+	return 0;
 }

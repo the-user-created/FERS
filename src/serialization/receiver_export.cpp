@@ -6,6 +6,7 @@
 
 #include "receiver_export.h"
 
+#include <algorithm>
 #include <fstream>
 #include <map>
 #include <tinyxml.h>

@@ -6,16 +6,12 @@
 #ifndef RESPONSE_RENDERER_H
 #define RESPONSE_RENDERER_H
 
+#include <mutex>
 #include <complex>
 #include <queue>
 #include <vector>
 
 #include "config.h"
-
-namespace boost
-{
-	class mutex; // NOLINT
-}
 
 namespace rs
 {
@@ -45,8 +41,8 @@ namespace response_renderer
 	class RenderThread
 	{
 	public:
-		RenderThread(const int serial, boost::mutex* windowMutex, RS_COMPLEX* window, const RS_FLOAT length,
-		             const RS_FLOAT start, const RS_FLOAT fracDelay, boost::mutex* workListMutex,
+		RenderThread(const int serial, std::mutex* windowMutex, RS_COMPLEX* window, const RS_FLOAT length,
+		             const RS_FLOAT start, const RS_FLOAT fracDelay, std::mutex* workListMutex,
 		             std::queue<rs::Response*>* workList) :
 			_serial(serial), _window_mutex(windowMutex), _window(window), _length(length), _start(start),
 			_frac_delay(fracDelay), _work_list_mutex(workListMutex), _work_list(workList) {}
@@ -61,12 +57,12 @@ namespace response_renderer
 		void addWindow(const RS_COMPLEX* array, RS_FLOAT startTime, unsigned arraySize) const;
 
 		int _serial;
-		boost::mutex* _window_mutex;
+		std::mutex* _window_mutex;
 		RS_COMPLEX* _window;
 		RS_FLOAT _length;
 		RS_FLOAT _start;
 		RS_FLOAT _frac_delay;
-		boost::mutex* _work_list_mutex;
+		std::mutex* _work_list_mutex;
 		std::queue<rs::Response*>* _work_list;
 		RS_COMPLEX* _local_window{};
 	};

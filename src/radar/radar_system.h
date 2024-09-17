@@ -6,7 +6,7 @@
 #ifndef RADAR_SYSTEM_H
 #define RADAR_SYSTEM_H
 
-#include <boost/thread/pthread/mutex.hpp>
+#include <mutex>
 
 #include "antenna_factory.h"
 #include "config.h"
@@ -35,9 +35,9 @@ namespace rs
 	class Radar : public Object
 	{
 	public:
-		Radar(const Platform* platform, const std::string& name) :
-			Object(platform, name), _timing(nullptr), _antenna(nullptr), _attached(nullptr), _multipath_dual(false),
-			_multipath_factor(0) {}
+		Radar(const Platform* platform, const std::string& name) : Object(platform, name), _timing(nullptr),
+		                                                           _antenna(nullptr), _attached(nullptr),
+		                                                           _multipath_dual(false), _multipath_factor(0) {}
 
 		~Radar() override = default;
 
@@ -185,7 +185,7 @@ namespace rs
 
 	private:
 		std::vector<Response*> _responses;
-		boost::try_mutex _responses_mutex;
+		std::mutex _responses_mutex;
 		RS_FLOAT _noise_temperature;
 		RS_FLOAT _window_length{};
 		RS_FLOAT _window_prf{};

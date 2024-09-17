@@ -11,25 +11,21 @@
 
 #include "sim_threading.h"
 
-#include <boost/thread/thread.hpp>
+#include <functional>
+#include <thread>
 
 #include "core/logging.h"
 #include "core/parameters.h"
 #include "core/world.h"
 #include "radar/target.h"
 
-// TODO: Is this BOOST_VERSION check necessary?
-#if BOOST_VERSION < 105000
-#define TIME_UTC_ TIME_UTC
-#endif
-
 // Counter of currently running threads
 volatile int threads;
-boost::mutex threads_mutex;
+std::mutex threads_mutex;
 
 // Flag to set if a thread encounters an error
 volatile int error;
-boost::mutex error_mutex;
+std::mutex error_mutex;
 
 namespace
 {
@@ -247,36 +243,32 @@ namespace
 
 	void incThreads()
 	{
-		boost::mutex::scoped_lock lock(threads_mutex);
+		std::lock_guard lock(threads_mutex);
 		threads++;
 	}
 
 	// Helper function to start a simulation thread
-	void startSimThread(const unsigned threadLimit, std::vector<std::unique_ptr<boost::thread>>& running,
-	                    const std::function<std::unique_ptr<boost::thread>()>& createThread)
+	void startSimThread(const unsigned threadLimit, std::vector<std::unique_ptr<std::thread>>& running,
+	                    const std::function<std::unique_ptr<std::thread>()>& createThread)
 	{
 		incThreads();
 		auto thrd = createThread();
-		while (static_cast<unsigned>(threads) >= threadLimit) { boost::thread::yield(); }
+		while (static_cast<unsigned>(threads) >= threadLimit) { std::this_thread::yield(); }
 		checkForError();
 		running.push_back(std::move(thrd));
 	}
 
 	// Helper function to wait for threads to finish
-	void waitForThreadsToFinish(std::vector<std::unique_ptr<boost::thread>>& running)
+	void waitForThreadsToFinish(std::vector<std::unique_ptr<std::thread>>& running)
 	{
-		while (threads)
-		{
-			boost::thread::yield();
-			checkForError();
-		}
+		for (const auto& thrd : running) { if (thrd->joinable()) { thrd->join(); } }
 		running.clear();
 	}
 
 	// Helper function to run simulation for receiver-transmitter pairs
 	void runSimForReceiverTransmitterPairs(const unsigned threadLimit, const rs::World* world,
 	                                       const std::vector<rs::Receiver*>& receivers,
-	                                       std::vector<std::unique_ptr<boost::thread>>& running)
+	                                       std::vector<std::unique_ptr<std::thread>>& running)
 	{
 		const std::vector<rs::Transmitter*> transmitters = world->getTransmitters();
 		for (const auto& receiver : receivers)
@@ -285,7 +277,7 @@ namespace
 			{
 				startSimThread(threadLimit, running, [&]
 				{
-					return std::make_unique<boost::thread>(
+					return std::make_unique<std::thread>(
 						rs::threaded_sim::SimThread(transmitter, receiver, world));
 				});
 			}
@@ -305,13 +297,13 @@ namespace
 
 	// Helper function to run rendering threads for receivers
 	void runRenderThreads(const unsigned threadLimit, const std::vector<rs::Receiver*>& receivers,
-	                      std::vector<std::unique_ptr<boost::thread>>& running)
+	                      std::vector<std::unique_ptr<std::thread>>& running)
 	{
 		for (const auto& receiver : receivers)
 		{
 			startSimThread(threadLimit, running, [&]
 			{
-				return std::make_unique<boost::thread>(rs::threaded_sim::RenderThread(receiver));
+				return std::make_unique<std::thread>(rs::threaded_sim::RenderThread(receiver));
 			});
 		}
 		waitForThreadsToFinish(running);
@@ -328,13 +320,13 @@ namespace rs::threaded_sim
 
 	void Thread::decThreads()
 	{
-		boost::mutex::scoped_lock lock(threads_mutex);
+		std::lock_guard lock(threads_mutex);
 		threads--;
 	}
 
 	void Thread::setError()
 	{
-		boost::mutex::scoped_lock lock(error_mutex);
+		std::lock_guard lock(error_mutex);
 		error = 1;
 	}
 
@@ -389,7 +381,7 @@ namespace rs::threaded_sim
 
 	void runThreadedSim(const unsigned threadLimit, const World* world)
 	{
-		std::vector<std::unique_ptr<boost::thread>> running;
+		std::vector<std::unique_ptr<std::thread>> running;
 		logging::printf(logging::RS_INFORMATIVE, "[INFO] Using threaded simulation with %d threads.\n", threadLimit);
 
 		// Get receivers from the world

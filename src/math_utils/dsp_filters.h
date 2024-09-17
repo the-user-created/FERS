@@ -9,7 +9,6 @@
 #include <complex>
 #include <memory>
 #include <vector>
-#include <boost/utility.hpp>
 
 #include "config.h"
 
@@ -19,7 +18,7 @@ namespace rs
 
 	void downsample(const RS_COMPLEX* in, unsigned size, RS_COMPLEX* out, unsigned ratio);
 
-	class DspFilter : boost::noncopyable
+	class DspFilter
 	{
 	public:
 		DspFilter() = default;
@@ -29,6 +28,10 @@ namespace rs
 		virtual RS_FLOAT filter(RS_FLOAT sample) = 0;
 
 		virtual void filter(RS_FLOAT* samples, int size) = 0;
+
+		// Disable copy constructor and copy assignment operator
+		DspFilter(const DspFilter&) = delete;
+		DspFilter& operator=(const DspFilter&) = delete;
 	};
 
 	class IirFilter final : public DspFilter
@@ -102,7 +105,7 @@ namespace rs
 		unsigned _order;
 	};
 
-	class Upsampler : boost::noncopyable
+	class Upsampler
 	{
 	public:
 		// Note: This function is not used in the codebase
@@ -130,7 +133,7 @@ namespace rs
 		}
 	};
 
-	class DecadeUpsampler : boost::noncopyable
+	class DecadeUpsampler
 	{
 	public:
 		DecadeUpsampler();
@@ -141,6 +144,10 @@ namespace rs
 
 		// Note: This function is not used in the codebase
 		void upsample(const RS_FLOAT* in, int count, RS_FLOAT* out) const;
+
+		// Disable copy constructor and copy assignment operator
+		DecadeUpsampler(const DecadeUpsampler&) = delete;
+		DecadeUpsampler& operator=(const DecadeUpsampler&) = delete;
 
 	private:
 		std::unique_ptr<IirFilter> _filter;
