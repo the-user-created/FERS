@@ -21,33 +21,45 @@ namespace path
 	};
 }
 
-// TODO: Can use concepts with these template functions
+// Define a concept to ensure type T supports the necessary operations
+template <typename T>
+concept Interpolatable = requires(T a, T b, RS_FLOAT t)
+{
+	{ a - b } -> std::same_as<T>;
+	{ a * t } -> std::same_as<T>;
+	{ a + b } -> std::same_as<T>;
+	{ a.t } -> std::convertible_to<RS_FLOAT>;
+};
 
 // The interpolation functions are implemented as template functions
 // to ease adding more functions to both rotation and motion classes
 
-// Static "interpolation" function - the path is at the same point all the time
-template <typename T>
+// Static interpolation: the value remains constant
+template <Interpolatable T>
 void getPositionStatic(T& coord, const std::vector<T>& coords)
 {
 	if (coords.empty()) { throw path::PathException("coord list empty during GetPositionStatic"); }
 	coord = coords[0];
 }
 
-// Linear interpolation function
-template <typename T>
+// Linear interpolation: interpolates linearly between two points
+template <Interpolatable T>
 void getPositionLinear(RS_FLOAT t, T& coord, const std::vector<T>& coords)
 {
-	T s_key = {};
+	if (coords.empty()) { throw path::PathException("coord list empty during GetPositionLinear"); }
+
+	T s_key{};
 	s_key.t = t;
-	auto xrp = std::upper_bound(coords.begin(), coords.end(), s_key);
+
+	// Use std::ranges and algorithms to simplify the search
+	auto xrp = std::ranges::upper_bound(coords, t, {}, &T::t);
 
 	if (xrp == coords.begin()) { coord = *xrp; }
 	else if (xrp == coords.end()) { coord = *(xrp - 1); }
 	else
 	{
-		int xri = xrp - coords.begin();
-		int xli = xri - 1;
+		auto xri = std::distance(coords.begin(), xrp);
+		auto xli = xri - 1;
 		RS_FLOAT iw = coords[xri].t - coords[xli].t;
 		RS_FLOAT rw = (coords[xri].t - t) / iw;
 		RS_FLOAT lw = 1 - rw;
@@ -56,26 +68,31 @@ void getPositionLinear(RS_FLOAT t, T& coord, const std::vector<T>& coords)
 	coord.t = t;
 }
 
-// Cubic spline interpolation function
+// Cubic spline interpolation using second derivatives
 // The method used (but not the code) is from
 // Numerical Recipes in C, Second Edition by Press, et al. pages 114-116
-template <typename T>
+template <Interpolatable T>
 void getPositionCubic(RS_FLOAT t, T& coord, const std::vector<T>& coords, const std::vector<T>& dd)
 {
-	T s_key = {};
+	if (coords.empty()) { throw path::PathException("coord list empty during GetPositionCubic"); }
+
+	T s_key{};
 	s_key.t = t;
-	auto xrp = std::upper_bound(coords.begin(), coords.end(), s_key);
+
+	auto xrp = std::ranges::upper_bound(coords, t, {}, &T::t);
 
 	if (xrp == coords.begin()) { coord = *xrp; }
 	else if (xrp == coords.end()) { coord = *(xrp - 1); }
 	else
 	{
-		int xri = xrp - coords.begin();
-		int xli = xri - 1;
-		const RS_FLOAT xrd = coords[xri].t - t, xld = t - coords[xli].t;
+		auto xri = std::distance(coords.begin(), xrp);
+		auto xli = xri - 1;
+		const RS_FLOAT xrd = coords[xri].t - t;
+		const RS_FLOAT xld = t - coords[xli].t;
 		const RS_FLOAT iw = coords[xri].t - coords[xli].t;
 		const RS_FLOAT iws = iw * iw / 6.0;
-		RS_FLOAT a = xrd / iw, b = xld / iw;
+		RS_FLOAT a = xrd / iw;
+		RS_FLOAT b = xld / iw;
 		RS_FLOAT c = (a * a * a - a) * iws;
 		RS_FLOAT d = (b * b * b - b) * iws;
 		coord = coords[xli] * a + coords[xri] * b + dd[xli] * c + dd[xri] * d;
@@ -83,20 +100,22 @@ void getPositionCubic(RS_FLOAT t, T& coord, const std::vector<T>& coords, const 
 	coord.t = t;
 }
 
-// Finalize function to calculate vector of second derivatives
+// Finalize cubic interpolation: Calculate second derivatives
 // The method used (but not the code) is from
 // Numerical Recipes in C, Second Edition by Press, et al. pages 114-116
-template <typename T>
+template <Interpolatable T>
 void finalizeCubic(std::vector<T>& coords, std::vector<T>& dd)
 {
-	int size = coords.size();
+	const int size = coords.size();
+	if (size < 2) { throw path::PathException("Not enough points for cubic interpolation"); }
+
 	std::vector<T> tmp(size);
 	dd.resize(size);
 
 	dd[0] = 0;
 	dd[size - 1] = 0;
 
-	for (int i = 1; i < size - 1; i++)
+	for (int i = 1; i < size - 1; ++i)
 	{
 		T yrd = coords[i + 1] - coords[i];
 		T yld = coords[i] - coords[i - 1];
