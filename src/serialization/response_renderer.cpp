@@ -53,7 +53,7 @@ namespace response_renderer
 		std::vector<std::thread> threads;
 		{
 			std::lock_guard lock(work_list_mutex);
-			for (int i = 0; i < _max_threads; i++)
+			for (unsigned i = 0; i < _max_threads; i++)
 			{
 				threads.emplace_back([&, i]
 				{

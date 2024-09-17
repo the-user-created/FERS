@@ -20,11 +20,11 @@
 #include "radar/target.h"
 
 // Counter of currently running threads
-volatile int threads;
+std::atomic threads{0};
 std::mutex threads_mutex;
 
 // Flag to set if a thread encounters an error
-volatile int error;
+std::atomic error{0};
 std::mutex error_mutex;
 
 namespace
@@ -244,7 +244,7 @@ namespace
 	void incThreads()
 	{
 		std::lock_guard lock(threads_mutex);
-		threads++;
+		++threads;
 	}
 
 	// Helper function to start a simulation thread
@@ -321,7 +321,7 @@ namespace rs::threaded_sim
 	void Thread::decThreads()
 	{
 		std::lock_guard lock(threads_mutex);
-		threads--;
+		--threads;
 	}
 
 	void Thread::setError()

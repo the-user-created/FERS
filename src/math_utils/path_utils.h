@@ -48,9 +48,6 @@ void getPositionLinear(RS_FLOAT t, T& coord, const std::vector<T>& coords)
 {
 	if (coords.empty()) { throw path::PathException("coord list empty during GetPositionLinear"); }
 
-	T s_key{};
-	s_key.t = t;
-
 	// Use std::ranges and algorithms to simplify the search
 	auto xrp = std::ranges::upper_bound(coords, t, {}, &T::t);
 
@@ -75,9 +72,6 @@ template <Interpolatable T>
 void getPositionCubic(RS_FLOAT t, T& coord, const std::vector<T>& coords, const std::vector<T>& dd)
 {
 	if (coords.empty()) { throw path::PathException("coord list empty during GetPositionCubic"); }
-
-	T s_key{};
-	s_key.t = t;
 
 	auto xrp = std::ranges::upper_bound(coords, t, {}, &T::t);
 
