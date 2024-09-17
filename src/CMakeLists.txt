@@ -36,16 +36,4 @@ if (Python3_FOUND)
 	include_directories(${Python3_INCLUDE_DIRS})
 endif ()
 
-if (WIN32)
-	set(Boost_USE_STATIC_LIBS ON)
-else ()
-	set(Boost_USE_STATIC_LIBS OFF)
-endif ()
-
-find_package(Boost COMPONENTS system thread REQUIRED)
-
-if (Boost_LIBRARIES)
-	target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES})
-endif ()
-
 install(TARGETS ${PROJECT_NAME} DESTINATION bin)
