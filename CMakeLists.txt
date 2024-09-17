@@ -4,6 +4,11 @@ project(fers)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)  # Useful for static code analysis tools
 
+# Enforce C++23 standard
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 # Add the directory where config.h is located to the include path
 include_directories(${CMAKE_SOURCE_DIR})
 
