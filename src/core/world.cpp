@@ -10,6 +10,7 @@
 #include "math_utils/multipath_surface.h"
 #include "radar/radar_system.h"
 #include "radar/target.h"
+#include "timing/prototype_timing.h"
 
 using namespace rs;
 
