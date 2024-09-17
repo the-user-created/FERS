@@ -84,7 +84,7 @@ void hdf5_export::readPulseData(const std::string& name, std::complex<RS_FLOAT>*
 
 	// Allocate and populate the complex data
 	*data = new std::complex<RS_FLOAT>[size];
-	for (unsigned i = 0; i < size; ++i) { (*data)[i] = std::complex<RS_FLOAT>(buffer_i[i], buffer_q[i]); }
+	for (unsigned i = 0; i < size; ++i) { (*data)[i] = std::complex(buffer_i[i], buffer_q[i]); }
 }
 
 long hdf5_export::createFile(const std::string& name)

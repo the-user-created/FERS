@@ -7,6 +7,7 @@
 #define DSP_FILTERS_H
 
 #include <complex>
+#include <memory>
 #include <vector>
 #include <boost/utility.hpp>
 
@@ -37,40 +38,44 @@ namespace rs
 
 		IirFilter(const RS_FLOAT* denCoeffs, const RS_FLOAT* numCoeffs, unsigned order);
 
-		~IirFilter() override;
+		~IirFilter() override = default;
 
 		RS_FLOAT filter(RS_FLOAT sample) override;
 
 		void filter(RS_FLOAT* samples, int size) override;
 
 	private:
-		RS_FLOAT* _w;
-		RS_FLOAT* _a;
-		RS_FLOAT* _b;
+		std::vector<RS_FLOAT> _a; // Denominator coefficients
+		std::vector<RS_FLOAT> _b; // Numerator coefficients
+		std::vector<RS_FLOAT> _w; // State (internal delay line)
 		unsigned _order;
 	};
 
 	class FirFilter final : public DspFilter
 	{
 	public:
-		// Note: This function is not used in the codebase
-		explicit FirFilter(const std::vector<RS_FLOAT>& coeffs);
+		// Constructor accepting a std::vector of coefficients (not used in the codebase)
+		explicit FirFilter(const std::vector<RS_FLOAT>& coeffs) : _filter(coeffs), _w(coeffs.size(), 0),
+		                                                          _order(coeffs.size()) {}
 
-		FirFilter(const RS_FLOAT* coeffs, unsigned count);
+		// Constructor accepting a raw array of coefficients and its size
+		FirFilter(const RS_FLOAT* coeffs, const unsigned count) : _filter(coeffs, coeffs + count), _w(count, 0),
+		                                                          _order(count) {}
 
-		~FirFilter() override;
+		~FirFilter() override = default;
 
-		// Note: This function is not used in the codebase
-		RS_FLOAT filter(RS_FLOAT sample) override;
+		// Single sample filter (still not used)
+		RS_FLOAT filter(RS_FLOAT sample) override { return 0; }
 
-		// Note: This function is not used in the codebase
+		// Filter an array of samples (still not used)
 		void filter(RS_FLOAT* samples, int size) override;
 
+		// Filter for complex samples
 		void filter(std::complex<RS_FLOAT>* samples, unsigned size) const;
 
 	private:
-		RS_FLOAT* _w;
-		RS_FLOAT* _filter;
+		std::vector<RS_FLOAT> _filter; // FIR filter coefficients
+		std::vector<RS_FLOAT> _w; // State for the filter
 		unsigned _order;
 	};
 
@@ -78,9 +83,12 @@ namespace rs
 	{
 	public:
 		// Note: This function is not used in the codebase
-		explicit ArFilter(const std::vector<RS_FLOAT>& coeffs);
+		explicit ArFilter(const std::vector<RS_FLOAT>& coeffs) : _filter(coeffs), _order(coeffs.size())
+		{
+			_w.resize(_order, 0.0f); // Initialize _w after _order is set
+		}
 
-		~ArFilter() override;
+		~ArFilter() override = default;
 
 		// Note: This function is not used in the codebase
 		RS_FLOAT filter(RS_FLOAT sample) override;
@@ -89,8 +97,8 @@ namespace rs
 		void filter(RS_FLOAT* samples, int size) override;
 
 	private:
-		RS_FLOAT* _w;
-		RS_FLOAT* _filter;
+		std::vector<RS_FLOAT> _w; // Store internal state
+		std::vector<RS_FLOAT> _filter; // Coefficients
 		unsigned _order;
 	};
 
@@ -100,18 +108,26 @@ namespace rs
 		// Note: This function is not used in the codebase
 		explicit Upsampler(int ratio);
 
-		~Upsampler();
+		~Upsampler() = default;
 
 		// Note: This function is not used in the codebase
-		void upsample(const RS_FLOAT* inSamples, int inSize, RS_FLOAT* outSamples, int outSize) const;
+		void upsample(const RS_FLOAT* inSamples, int inSize, RS_FLOAT* outSamples, int outSize);
+
+		// Disable copy constructor and copy assignment operator
+		Upsampler(const Upsampler&) = delete;
+
+		Upsampler& operator=(const Upsampler&) = delete;
 
 	private:
 		int _ratio;
-		RS_FLOAT* _filterbank;
-		RS_FLOAT* _sample_memory;
+		std::vector<RS_FLOAT> _filterbank;
+		std::vector<RS_FLOAT> _sample_memory;
 		int _filter_size;
 
-		inline RS_FLOAT getSample(const RS_FLOAT* samples, int n) const;
+		RS_FLOAT getSample(const RS_FLOAT* samples, const int n) const
+		{
+			return n >= 0 ? samples[n] : _sample_memory[n + _filter_size];
+		}
 	};
 
 	class DecadeUpsampler : boost::noncopyable
@@ -119,7 +135,7 @@ namespace rs
 	public:
 		DecadeUpsampler();
 
-		~DecadeUpsampler();
+		~DecadeUpsampler() = default;
 
 		void upsample(RS_FLOAT sample, RS_FLOAT* out) const;
 
@@ -127,7 +143,7 @@ namespace rs
 		void upsample(const RS_FLOAT* in, int count, RS_FLOAT* out) const;
 
 	private:
-		IirFilter* _filter;
+		std::unique_ptr<IirFilter> _filter;
 	};
 }
 

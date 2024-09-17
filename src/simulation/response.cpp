@@ -46,6 +46,7 @@ void Response::renderResponseXml(TiXmlElement* root, const InterpPoint& point) c
 {
 	auto element = std::make_unique<TiXmlElement>("InterpolationPoint");
 	root->LinkEndChild(element.get());
+
 	attachRsFloatNode(element.get(), "time", point.time, false);
 	attachRsFloatNode(element.get(), "amplitude", std::sqrt(point.power * _wave->getPower()), false);
 	attachRsFloatNode(element.get(), "phase", point.phase, false);
@@ -55,30 +56,34 @@ void Response::renderResponseXml(TiXmlElement* root, const InterpPoint& point) c
 	attachRsFloatNode(element.get(), "Qamplitude", std::sin(point.phase) * std::sqrt(point.power * _wave->getPower()));
 	attachRsFloatNode(element.get(), "noise_temperature", point.noise_temperature);
 	attachRsFloatNode(element.get(), "phasedeg", point.phase / M_PI * 180);
-	element.release(); // Release ownership to avoid deletion NOLINT (must release and disregard the returned pointer)
+
+	element.release(); // TODO: this is a bad practice
 }
 
 void Response::renderXml(TiXmlElement* root)
 {
 	auto element = std::make_unique<TiXmlElement>("Response");
 	root->LinkEndChild(element.get());
+
 	element->SetAttribute("transmitter", getTransmitterName());
 	attachRsFloatNode(element.get(), "start", startTime(), false);
 	attachTextNode(element.get(), "name", _wave->getName());
 
-	for (auto& point : _points) { renderResponseXml(element.get(), point); }
+	for (const auto& point : _points) { renderResponseXml(element.get(), point); }
 
-	// Release ownership to avoid deletion
-	element.release(); // NOLINT (must release and disregard the returned pointer)
+	element.release(); // TODO: this is a bad practice
 }
 
 void Response::renderResponseCsv(std::ofstream& of, const InterpPoint& point) const
 {
-	of << point.time << ", " << point.power << ", " << point.phase << ", " << _wave->getCarrier() * (1 - point.doppler)
-		<< "\n";
+	of << point.time << ", " << point.power << ", " << point.phase << ", "
+		<< _wave->getCarrier() * (1 - point.doppler) << "\n";
 }
 
-void Response::renderCsv(std::ofstream& of) { for (auto& point : _points) { renderResponseCsv(of, point); } }
+void Response::renderCsv(std::ofstream& of) const
+{
+	for (const auto& point : _points) { renderResponseCsv(of, point); }
+}
 
 void Response::addInterpPoint(const InterpPoint& point)
 {

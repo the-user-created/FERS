@@ -7,6 +7,7 @@
 #define NOISE_GENERATORS_H
 
 #include <memory>
+#include <random>
 #include <vector>
 #include <boost/random.hpp>
 #include <boost/utility.hpp>
@@ -38,6 +39,7 @@ namespace rs
 
 		virtual ~NoiseGenerator() = default;
 
+		// Pure virtual method to generate a sample
 		virtual RS_FLOAT getSample() = 0;
 	};
 
@@ -46,16 +48,18 @@ namespace rs
 	public:
 		explicit WgnGenerator(RS_FLOAT stddev);
 
+		// Default constructor with standard deviation = 1.0
 		WgnGenerator();
 
-		~WgnGenerator() override { delete _gen; }
+		~WgnGenerator() override = default;
 
-		RS_FLOAT getSample() override { return (*_gen)(); }
+		// Override to generate a sample
+		double getSample() override { return _dist(*_rng) * _stddev; }
 
 	private:
-		boost::normal_distribution<> _dist;
-		boost::variate_generator<boost::mt19937&, boost::normal_distribution<>>* _gen;
-		RS_FLOAT _temperature{};
+		std::unique_ptr<std::mt19937> _rng;
+		std::normal_distribution<> _dist;
+		RS_FLOAT _stddev{};
 	};
 
 	class GammaGenerator final : public NoiseGenerator
@@ -65,47 +69,50 @@ namespace rs
 
 		~GammaGenerator() override = default;
 
-		RS_FLOAT getSample() override { return _gen(); }
+		// Override to generate a sample
+		RS_FLOAT getSample() override { return _dist(*_rng); }
 
-		RS_FLOAT operator()() { return _gen(); }
+		// Functor interface
+		RS_FLOAT operator()() { return _dist(*_rng); }
 
 	private:
-		boost::gamma_distribution<> _dist;
-		boost::variate_generator<boost::mt19937&, boost::gamma_distribution<>> _gen;
+		std::unique_ptr<std::mt19937> _rng;
+		std::gamma_distribution<> _dist;
 	};
 
+	// TODO: move to a separate file
 	class FAlphaBranch : boost::noncopyable
 	{
 	public:
-		FAlphaBranch(RS_FLOAT ffrac, unsigned fint, FAlphaBranch* pre, bool last);
+		FAlphaBranch(RS_FLOAT ffrac, unsigned fint, std::unique_ptr<FAlphaBranch> pre, bool last);
 
-		~FAlphaBranch();
+		~FAlphaBranch() { clean(); }
 
 		RS_FLOAT getSample();
 
 		void flush(RS_FLOAT scale);
 
-		[[nodiscard]] FAlphaBranch* getPre() const { return _pre; }
+		[[nodiscard]] FAlphaBranch* getPre() const { return _pre.get(); }
 
 	private:
 		void init();
 
-		void clean() const;
+		void clean();
 
 		void refill();
 
 		RS_FLOAT calcSample();
 
-		IirFilter* _shape_filter{};
+		std::unique_ptr<IirFilter> _shape_filter;
 		RS_FLOAT _shape_gain{};
-		IirFilter* _integ_filter{};
+		std::unique_ptr<IirFilter> _integ_filter;
 		RS_FLOAT _integ_gain{};
 		RS_FLOAT _upsample_scale;
-		IirFilter* _highpass{};
-		FAlphaBranch* _pre;
+		std::unique_ptr<IirFilter> _highpass;
+		std::unique_ptr<FAlphaBranch> _pre;
 		bool _last;
-		DecadeUpsampler* _upsampler{};
-		RS_FLOAT* _buffer;
+		std::unique_ptr<DecadeUpsampler> _upsampler;
+		std::unique_ptr<RS_FLOAT[]> _buffer;
 		unsigned _buffer_samples{};
 		RS_FLOAT _ffrac;
 		RS_FLOAT _fint;
@@ -119,7 +126,7 @@ namespace rs
 	public:
 		MultirateGenerator(RS_FLOAT alpha, unsigned branches);
 
-		~MultirateGenerator() override { delete _topbranch; }
+		~MultirateGenerator() override = default;
 
 		RS_FLOAT getSample() override { return _topbranch->getSample() * _scale; }
 
@@ -130,9 +137,9 @@ namespace rs
 	private:
 		RS_FLOAT _scale;
 
-		void createTree(RS_FLOAT falpha, int fint, unsigned branches);
+		void createTree(RS_FLOAT fAlpha, int fInt, unsigned branches);
 
-		FAlphaBranch* _topbranch{};
+		std::unique_ptr<FAlphaBranch> _topbranch;
 	};
 
 	class ClockModelGenerator final : public NoiseGenerator
@@ -157,7 +164,7 @@ namespace rs
 		RS_FLOAT _phase_offset;
 		RS_FLOAT _freq_offset;
 		RS_FLOAT _frequency;
-		unsigned long _count;
+		unsigned long _count{0}; // Initialize with 0
 	};
 
 	class PythonNoiseGenerator final : public NoiseGenerator

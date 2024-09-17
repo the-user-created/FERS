@@ -88,7 +88,7 @@ void InterpSetData::divide(const RS_FLOAT a)
 // INTERPOLATION SET CLASS
 //
 // =====================================================================================================================
-
+// TODO: Can inline these functions?
 InterpSet::InterpSet()
 {
 	_data = new InterpSetData();
