@@ -8,7 +8,7 @@
         <endtime>1</endtime>
         <c>340.29</c>
         <rate>44100</rate>
-        <export csv="true" binary="true" csvbinary="true"/>
+        <export csv="true" binary="true"/>
     </parameters>
 
     <pulse name="trpulse" type="file" filename="waveform.csv">

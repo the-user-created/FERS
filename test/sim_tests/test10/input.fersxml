@@ -9,7 +9,6 @@
         <c>299792458</c> <!-- Speed of light in m/s -->
         <rate>1e7</rate> <!-- 10 MHz sampling rate -->
         <export csv="true" binary="false" xml="false"/> <!-- only export csv to save space -->
-        <adcbits>16</adcbits> <!-- 16-bit ADC resolution -->
     </parameters>
 
     <!-- Pulse Definition -->

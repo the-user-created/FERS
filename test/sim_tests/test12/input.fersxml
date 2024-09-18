@@ -6,7 +6,7 @@
         <starttime>0</starttime>
         <endtime>0.01</endtime>
         <rate>10e6</rate>
-        <export binary="true" csvbinary="true" xml="true"/>
+        <export binary="true" csv="false" xml="true"/>
     </parameters>
 
     <pulse name="pulse1" type="file" filename="waveform.csv">
