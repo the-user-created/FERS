@@ -6,6 +6,7 @@
 #include "hdf5_export.h"
 
 #include <iomanip>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -28,6 +29,7 @@ hid_t openFile(const std::string& name)
 	if (file < 0) { throw std::runtime_error("[ERROR] Could not open HDF5 file " + name + " to read pulse"); }
 	return file;
 }
+
 
 void hdf5_export::readPulseData(const std::string& name, std::complex<RS_FLOAT>** data, unsigned& size, RS_FLOAT& rate)
 {
@@ -84,7 +86,7 @@ void hdf5_export::readPulseData(const std::string& name, std::complex<RS_FLOAT>*
 
 	// Allocate and populate the complex data
 	*data = new std::complex<RS_FLOAT>[size];
-	for (unsigned i = 0; i < size; ++i) { (*data)[i] = std::complex(buffer_i[i], buffer_q[i]); }
+	for (unsigned i = 0; i < size; ++i) { (*data)[i] = std::complex<RS_FLOAT>(buffer_i[i], buffer_q[i]); }
 }
 
 long hdf5_export::createFile(const std::string& name)
@@ -153,71 +155,41 @@ void hdf5_export::closeFile(const long file)
 	if (H5Fclose(file) < 0) { throw std::runtime_error("[ERROR] Error while closing HDF5 file"); }
 }
 
-std::vector<std::vector<RS_FLOAT>> hdf5_export::readPattern(const std::string& name, const std::string& datasetName,
-                                                            unsigned& aziSize,
-                                                            unsigned& elevSize)
+RS_FLOAT** hdf5_export::readPattern(const std::string& name, const std::string& datasetName, unsigned& aziSize,
+                                    unsigned& elevSize)
 {
-	// TODO: Use the HDF5 C++ API instead of the C API
-	// Open the HDF5 file
-	const hid_t file_id = H5Fopen(name.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
-	if (file_id < 0) { throw std::runtime_error("Cannot open HDF5 file " + name + " to read antenna data"); }
-
-	// Get dataset dimensions and properties
-	const hid_t dataset_id = H5Dopen(file_id, datasetName.c_str(), H5P_DEFAULT);
-	if (dataset_id < 0)
-	{
-		H5Fclose(file_id);
-		throw std::runtime_error("Could not open dataset \"" + datasetName + "\" in file " + name);
-	}
-
-	const hid_t dataspace_id = H5Dget_space(dataset_id);
-	if (const int rank = H5Sget_simple_extent_ndims(dataspace_id); rank != 2)
-	{
-		H5Sclose(dataspace_id);
-		H5Dclose(dataset_id);
-		H5Fclose(file_id);
-		throw std::runtime_error("Dataset \"" + datasetName + "\" does not have rank 2");
-	}
-
 	hsize_t dims[2];
-	H5Sget_simple_extent_dims(dataspace_id, dims, nullptr);
-	aziSize = static_cast<unsigned>(dims[0]);
-	elevSize = static_cast<unsigned>(dims[1]);
+	const hid_t file_id = H5Fopen(name.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+	if (file_id < 0) { throw std::runtime_error("[ERROR] Cannot open HDF5 file " + name + " to read antenna data"); }
 
-	// Ensure the datatype is RS_FLOAT
-	const hid_t datatype_id = H5Dget_type(dataset_id);
-	if (H5Tget_size(datatype_id) != sizeof(RS_FLOAT))
+	int rank;
+	size_t type_size;
+	H5T_class_t data_class;
+	if (H5LTget_dataset_ndims(file_id, datasetName.c_str(), &rank) < 0 || rank != 2 ||
+		H5LTget_dataset_info(file_id, datasetName.c_str(), dims, &data_class, &type_size) < 0 || type_size != sizeof(
+			float))
 	{
-		H5Tclose(datatype_id);
-		H5Sclose(dataspace_id);
-		H5Dclose(dataset_id);
 		H5Fclose(file_id);
-		throw std::runtime_error("Incorrect data type size in dataset");
+		throw std::runtime_error("[ERROR] Invalid dataset \"" + datasetName + "\" in file " + name);
 	}
 
-	// Read data into a 1D vector
-	std::vector<RS_FLOAT> data(aziSize * elevSize);
-	if (const herr_t err = H5Dread(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, data.data()); err < 0)
+	const std::unique_ptr<float[]> data(new float[dims[0] * dims[1]]);
+	if (H5LTread_dataset_float(file_id, datasetName.c_str(), data.get()) < 0)
 	{
-		H5Tclose(datatype_id);
-		H5Sclose(dataspace_id);
-		H5Dclose(dataset_id);
 		H5Fclose(file_id);
-		throw std::runtime_error("Could not read float data from dataset \"" + datasetName + "\" in file " + name);
+		throw std::runtime_error(
+			"[ERROR] Could not read float data from dataset \"" + datasetName + "\" in file " + name);
 	}
 
-	// Cleanup
-	H5Tclose(datatype_id);
-	H5Sclose(dataspace_id);
-	H5Dclose(dataset_id);
-	H5Fclose(file_id);
+	if (H5Fclose(file_id) < 0) { throw std::runtime_error("[ERROR] Error while closing HDF5 file " + name); }
 
-	// Convert 1D vector to 2D vector
-	std::vector ret(aziSize, std::vector<RS_FLOAT>(elevSize));
+	aziSize = dims[0];
+	elevSize = dims[1];
+	auto** ret = new RS_FLOAT*[aziSize];
 	for (unsigned i = 0; i < aziSize; ++i)
 	{
-		for (unsigned j = 0; j < elevSize; ++j) { ret[i][j] = data[i * elevSize + j]; }
+		ret[i] = new RS_FLOAT[elevSize];
+		for (unsigned j = 0; j < elevSize; ++j) { ret[i][j] = data[i * aziSize + j]; }
 	}
-
 	return ret;
 }

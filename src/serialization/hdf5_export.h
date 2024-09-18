@@ -7,7 +7,6 @@
 #define HDF5_EXPORT_H
 
 #include <complex>
-#include <vector>
 
 #include "config.h"
 
@@ -22,8 +21,8 @@ namespace hdf5_export
 
 	void readPulseData(const std::string& name, std::complex<RS_FLOAT>** data, unsigned& size, RS_FLOAT& rate);
 
-	std::vector<std::vector<RS_FLOAT>> readPattern(const std::string& name, const std::string& datasetName,
-	                                               unsigned& aziSize, unsigned& elevSize);
+	RS_FLOAT** readPattern(const std::string& name, const std::string& datasetName, unsigned& aziSize,
+	                       unsigned& elevSize);
 }
 
 #endif
