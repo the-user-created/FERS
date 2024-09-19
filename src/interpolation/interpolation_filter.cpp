@@ -15,10 +15,12 @@ namespace interp_filt
 		std::lock_guard lock(interp_mutex);
 		if (!_instance)
 		{
-			_instance = new InterpFilter();
+			_instance = std::unique_ptr<InterpFilter, std::function<void(InterpFilter*)>>(
+				new InterpFilter(), [](const InterpFilter* instance) { delete instance; });
 		}
-		return _instance;
+		return _instance.get();
 	}
+
 
 	RS_FLOAT InterpFilter::besselI0(const RS_FLOAT x)
 	{
@@ -49,7 +51,7 @@ namespace interp_filt
 		//Size of the table to use for interpolation
 		_table_filters = 1000;
 		//Allocate memory for the table
-		_filter_table = new RS_FLOAT[_table_filters * _length];
+		_filter_table = std::make_unique<RS_FLOAT[]>(_table_filters * _length);
 		//Alpha is half the filter length
 		_alpha = std::floor(parameters::renderFilterLength() / 2.0);
 		//Beta sets the window shape

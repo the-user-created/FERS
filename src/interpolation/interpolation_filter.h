@@ -7,6 +7,8 @@
 #define INTERPOLATION_FILTER_H
 
 #include <complex>
+#include <functional>
+#include <memory>
 #include <mutex>
 #include "config.h"
 
@@ -37,14 +39,14 @@ namespace interp_filt
 
 		InterpFilter();
 
-		static InterpFilter* _instance;
+		static std::unique_ptr<InterpFilter, std::function<void(InterpFilter*)>> _instance;
 
 		RS_FLOAT _alpha;
 		RS_FLOAT _beta;
 		RS_FLOAT _bessel_beta;
 		int _length;
 		int _table_filters;
-		RS_FLOAT* _filter_table;
+		std::unique_ptr<RS_FLOAT[]> _filter_table;
 	};
 }
 
