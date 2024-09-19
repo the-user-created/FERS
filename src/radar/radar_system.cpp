@@ -20,7 +20,7 @@ using namespace rs;
 //
 // =====================================================================================================================
 
-Timing* Radar::getTiming() const
+std::shared_ptr<Timing> Radar::getTiming() const
 {
 	if (!_timing) { throw std::runtime_error("[BUG] Radar::GetTiming called before timing set"); }
 	return _timing;
@@ -80,7 +80,6 @@ void Transmitter::setPrf(const RS_FLOAT mprf)
 Receiver::~Receiver()
 {
 	clearResponses();
-	delete _timing;
 }
 
 void Receiver::addResponse(Response* response)

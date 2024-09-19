@@ -111,7 +111,8 @@ namespace
 	RS_FLOAT* generatePhaseNoise(const rs::Receiver* recv, const unsigned wSize, const RS_FLOAT rate,
 	                             RS_FLOAT& carrier, bool& enabled)
 	{
-		auto* timing = dynamic_cast<rs::ClockModelTiming*>(recv->getTiming());
+		// Get the timing model from the receiver
+		const auto timing = std::dynamic_pointer_cast<rs::ClockModelTiming>(recv->getTiming());
 		if (!timing) { throw std::runtime_error("[BUG] Could not cast receiver->GetTiming() to ClockModelTiming"); }
 
 		// Use a smart pointer for memory safety; can be released later if raw pointer is required
