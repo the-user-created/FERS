@@ -28,7 +28,7 @@ namespace rs
 
 	private:
 		unsigned _size_elev{}, _size_azi{};
-		RS_FLOAT** _pattern;
+		std::vector<std::vector<RS_FLOAT>> _pattern;
 	};
 }
 
