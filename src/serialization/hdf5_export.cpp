@@ -155,7 +155,7 @@ void hdf5_export::closeFile(const long file)
 	if (H5Fclose(file) < 0) { throw std::runtime_error("[ERROR] Error while closing HDF5 file"); }
 }
 
-RS_FLOAT** hdf5_export::readPattern(const std::string& name, const std::string& datasetName, unsigned& aziSize,
+std::vector<std::vector<RS_FLOAT>> hdf5_export::readPattern(const std::string& name, const std::string& datasetName, unsigned& aziSize,
                                     unsigned& elevSize)
 {
 	hsize_t dims[2];
@@ -185,11 +185,14 @@ RS_FLOAT** hdf5_export::readPattern(const std::string& name, const std::string& 
 
 	aziSize = dims[0];
 	elevSize = dims[1];
-	auto** ret = new RS_FLOAT*[aziSize];
+
+	std::vector ret(aziSize, std::vector<RS_FLOAT>(elevSize));
 	for (unsigned i = 0; i < aziSize; ++i)
 	{
-		ret[i] = new RS_FLOAT[elevSize];
-		for (unsigned j = 0; j < elevSize; ++j) { ret[i][j] = data[i * elevSize + j]; }
+		for (unsigned j = 0; j < elevSize; ++j)
+		{
+			ret[i][j] = data[i * elevSize + j];
+		}
 	}
 	return ret;
 }
