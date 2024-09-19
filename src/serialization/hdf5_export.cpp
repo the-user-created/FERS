@@ -189,7 +189,7 @@ RS_FLOAT** hdf5_export::readPattern(const std::string& name, const std::string& 
 	for (unsigned i = 0; i < aziSize; ++i)
 	{
 		ret[i] = new RS_FLOAT[elevSize];
-		for (unsigned j = 0; j < elevSize; ++j) { ret[i][j] = data[i * aziSize + j]; }
+		for (unsigned j = 0; j < elevSize; ++j) { ret[i][j] = data[i * elevSize + j]; }
 	}
 	return ret;
 }
