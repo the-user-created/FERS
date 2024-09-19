@@ -47,7 +47,7 @@ std::shared_ptr<RS_COMPLEX[]> RadarSignal::render(const std::vector<InterpPoint>
 namespace interp_filt
 {
 	// Initialize the interpolation filter instance
-	InterpFilter* InterpFilter::_instance = nullptr;
+	std::unique_ptr<InterpFilter, std::function<void(InterpFilter*)>> InterpFilter::_instance = nullptr;
 }
 
 void Signal::clear()
