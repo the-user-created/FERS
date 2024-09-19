@@ -85,10 +85,12 @@ void World::processMultipath()
 {
 	if (_multipath_surface)
 	{
+		std::vector<Platform*> new_duals;
 		for (const auto plat : _platforms)
 		{
-			_platforms.push_back(createMultipathDual(plat, _multipath_surface));
+			new_duals.push_back(createMultipathDual(plat, _multipath_surface));
 		}
+		_platforms.insert(_platforms.end(), new_duals.begin(), new_duals.end());
 		for (const auto recv : _receivers)
 		{
 			_receivers.push_back(createMultipathDual(recv, _multipath_surface));

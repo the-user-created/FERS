@@ -8,7 +8,10 @@
 
 #include <string>
 
+#include <optional>
+
 #include "config.h"
+#include "core/logging.h"
 #include "math_utils/path.h"
 #include "math_utils/rotation_path.h"
 
@@ -42,12 +45,20 @@ namespace rs
 
 		[[nodiscard]] std::string getName() const { return _name; }
 
-		[[nodiscard]] Platform* getDual() const { return _dual; }
+		[[nodiscard]] std::optional<Platform*> getDual() const
+		{
+			if (!_dual)
+			{
+				logging::printf(logging::RS_VERBOSE, "[Platform.getDual()] Dual platform does not exist\n");
+				return std::nullopt;
+			}
+			logging::printf(logging::RS_VERBOSE, "[Platform.getDual()] Getting dual platform for %s\n", _name.c_str());
+			return _dual;
+		}
 
 		void setDual(Platform* dual) { _dual = dual; }
 
 	private:
-		// TODO: use unique_ptr
 		path::Path* _motion_path;
 		path::RotationPath* _rotation_path;
 		std::string _name;

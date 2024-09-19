@@ -25,31 +25,17 @@ namespace rs
 	class World
 	{
 	public:
-		World() : _multipath_surface(nullptr)
-		{
-		}
+		World() : _multipath_surface(nullptr) {}
 
 		~World();
 
-		void add(Platform* plat)
-		{
-			_platforms.push_back(plat);
-		}
+		void add(Platform* plat) { _platforms.push_back(plat); }
 
-		void add(Transmitter* trans)
-		{
-			_transmitters.push_back(trans);
-		}
+		void add(Transmitter* trans) { _transmitters.push_back(trans); }
 
-		void add(Receiver* recv)
-		{
-			_receivers.push_back(recv);
-		}
+		void add(Receiver* recv) { _receivers.push_back(recv); }
 
-		void add(Target* target)
-		{
-			_targets.push_back(target);
-		}
+		void add(Target* target) { _targets.push_back(target); }
 
 		void add(RadarSignal* pulse);
 
@@ -59,35 +45,17 @@ namespace rs
 
 		void addMultipathSurface(MultipathSurface* surface);
 
-		RadarSignal* findSignal(const std::string& name)
-		{
-			return _pulses[name];
-		}
+		RadarSignal* findSignal(const std::string& name) { return _pulses[name]; }
 
-		Antenna* findAntenna(const std::string& name)
-		{
-			return _antennas[name];
-		}
+		Antenna* findAntenna(const std::string& name) { return _antennas[name]; }
 
-		PrototypeTiming* findTiming(const std::string& name)
-		{
-			return _timings[name];
-		}
+		PrototypeTiming* findTiming(const std::string& name) { return _timings[name]; }
 
-		[[nodiscard]] std::vector<Target*> getTargets() const
-		{
-			return _targets;
-		}
+		[[nodiscard]] std::vector<Target*> getTargets() const { return _targets; }
 
-		[[nodiscard]] std::vector<Receiver*> getReceivers() const
-		{
-			return _receivers;
-		}
+		[[nodiscard]] std::vector<Receiver*> getReceivers() const { return _receivers; }
 
-		[[nodiscard]] std::vector<Transmitter*> getTransmitters() const
-		{
-			return _transmitters;
-		}
+		[[nodiscard]] std::vector<Transmitter*> getTransmitters() const { return _transmitters; }
 
 		void processMultipath();
 
