@@ -67,12 +67,12 @@ namespace rs
 
 		[[nodiscard]] bool isMonostatic() const { return _attached; }
 
-		void setTiming(Timing* tim)
+		void setTiming(const std::shared_ptr<Timing>& tim)
 		{
 			!tim ? throw std::runtime_error("[BUG] Radar timing source must not be set to NULL") : _timing = tim;
 		}
 
-		[[nodiscard]] Timing* getTiming() const;
+		[[nodiscard]] std::shared_ptr<Timing> getTiming() const;
 
 		[[nodiscard]] bool getMultipathDual() const { return _multipath_dual; }
 
@@ -85,7 +85,7 @@ namespace rs
 		void setAttached(const Radar* obj) { _attached = obj; }
 
 	protected:
-		Timing* _timing;
+		std::shared_ptr<Timing> _timing;
 
 	private:
 		const Antenna* _antenna;
@@ -100,7 +100,7 @@ namespace rs
 		Transmitter(const Platform* platform, const std::string& name, const bool pulsed) : Radar(platform, name),
 			_signal(nullptr), _pulsed(pulsed), _dual(nullptr) {}
 
-		~Transmitter() override { delete getTiming(); }
+		~Transmitter() override = default;
 
 		void setWave(RadarSignal* pulse) { _signal = pulse; }
 

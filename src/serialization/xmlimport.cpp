@@ -169,7 +169,7 @@ namespace
 
 		const std::string timing_name = getAttributeString(recvXml, "timing",
 		                                                   "Receiver '" + name + "' does not specify a timing source");
-		auto* timing = new ClockModelTiming(timing_name);
+		auto timing = std::make_shared<ClockModelTiming>(name);
 
 		const PrototypeTiming* proto = world->findTiming(timing_name);
 		if (!proto)
@@ -259,7 +259,7 @@ namespace
 		const std::string timing_name = getAttributeString(transXml, "timing",
 		                                                   "Transmitter '" + name +
 		                                                   "' does not specify a timing source");
-		auto* timing = new ClockModelTiming(name);
+		auto timing = std::make_shared<ClockModelTiming>(name);
 		const PrototypeTiming* proto = world->findTiming(timing_name);
 		if (!proto)
 		{
