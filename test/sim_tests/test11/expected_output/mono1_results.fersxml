@@ -5,23 +5,23 @@
         <name>pulse1</name>
         <InterpolationPoint>
             <time>6.671281904e-05</time>
-            <amplitude>2.116668534e-09</amplitude>
+            <amplitude>1.089896211e-09</amplitude>
             <phase>-419169.0044</phase>
             <doppler>0</doppler>
-            <power>4.4802856820e-18</power>
-            <Iamplitude>8.8966051531e-10</Iamplitude>
-            <Qamplitude>1.9206222558e-09</Qamplitude>
+            <power>1.1878737505e-18</power>
+            <Iamplitude>4.5809611148e-10</Iamplitude>
+            <Qamplitude>9.8894979811e-10</Qamplitude>
             <noise_temperature>0.0000000000e+00</noise_temperature>
             <phasedeg>-2.4016614854e+07</phasedeg>
         </InterpolationPoint>
         <InterpolationPoint>
             <time>7.671281904e-05</time>
-            <amplitude>2.116668534e-09</amplitude>
+            <amplitude>1.089896211e-09</amplitude>
             <phase>-419169.0044</phase>
             <doppler>0</doppler>
-            <power>4.4802856820e-18</power>
-            <Iamplitude>8.8966051531e-10</Iamplitude>
-            <Qamplitude>1.9206222558e-09</Qamplitude>
+            <power>1.1878737505e-18</power>
+            <Iamplitude>4.5809611148e-10</Iamplitude>
+            <Qamplitude>9.8894979811e-10</Qamplitude>
             <noise_temperature>0.0000000000e+00</noise_temperature>
             <phasedeg>-2.4016614854e+07</phasedeg>
         </InterpolationPoint>
@@ -31,23 +31,23 @@
         <name>pulse1</name>
         <InterpolationPoint>
             <time>0.001066712819</time>
-            <amplitude>2.116668534e-09</amplitude>
+            <amplitude>1.089896211e-09</amplitude>
             <phase>-419169.0044</phase>
             <doppler>0</doppler>
-            <power>4.4802856820e-18</power>
-            <Iamplitude>8.8966051531e-10</Iamplitude>
-            <Qamplitude>1.9206222558e-09</Qamplitude>
+            <power>1.1878737505e-18</power>
+            <Iamplitude>4.5809611148e-10</Iamplitude>
+            <Qamplitude>9.8894979811e-10</Qamplitude>
             <noise_temperature>0.0000000000e+00</noise_temperature>
             <phasedeg>-2.4016614854e+07</phasedeg>
         </InterpolationPoint>
         <InterpolationPoint>
             <time>0.001076712819</time>
-            <amplitude>2.116668534e-09</amplitude>
+            <amplitude>1.089896211e-09</amplitude>
             <phase>-419169.0044</phase>
             <doppler>0</doppler>
-            <power>4.4802856820e-18</power>
-            <Iamplitude>8.8966051531e-10</Iamplitude>
-            <Qamplitude>1.9206222558e-09</Qamplitude>
+            <power>1.1878737505e-18</power>
+            <Iamplitude>4.5809611148e-10</Iamplitude>
+            <Qamplitude>9.8894979811e-10</Qamplitude>
             <noise_temperature>0.0000000000e+00</noise_temperature>
             <phasedeg>-2.4016614854e+07</phasedeg>
         </InterpolationPoint>
@@ -57,23 +57,23 @@
         <name>pulse1</name>
         <InterpolationPoint>
             <time>0.002066712819</time>
-            <amplitude>2.116668534e-09</amplitude>
+            <amplitude>1.089896211e-09</amplitude>
             <phase>-419169.0044</phase>
             <doppler>0</doppler>
-            <power>4.4802856820e-18</power>
-            <Iamplitude>8.8966051531e-10</Iamplitude>
-            <Qamplitude>1.9206222558e-09</Qamplitude>
+            <power>1.1878737505e-18</power>
+            <Iamplitude>4.5809611148e-10</Iamplitude>
+            <Qamplitude>9.8894979811e-10</Qamplitude>
             <noise_temperature>0.0000000000e+00</noise_temperature>
             <phasedeg>-2.4016614854e+07</phasedeg>
         </InterpolationPoint>
         <InterpolationPoint>
             <time>0.002076712819</time>
-            <amplitude>2.116668534e-09</amplitude>
+            <amplitude>1.089896211e-09</amplitude>
             <phase>-419169.0044</phase>
             <doppler>0</doppler>
-            <power>4.4802856820e-18</power>
-            <Iamplitude>8.8966051531e-10</Iamplitude>
-            <Qamplitude>1.9206222558e-09</Qamplitude>
+            <power>1.1878737505e-18</power>
+            <Iamplitude>4.5809611148e-10</Iamplitude>
+            <Qamplitude>9.8894979811e-10</Qamplitude>
             <noise_temperature>0.0000000000e+00</noise_temperature>
             <phasedeg>-2.4016614854e+07</phasedeg>
         </InterpolationPoint>
@@ -83,23 +83,23 @@
         <name>pulse1</name>
         <InterpolationPoint>
             <time>0.003066712819</time>
-            <amplitude>2.116668534e-09</amplitude>
+            <amplitude>1.089896211e-09</amplitude>
             <phase>-419169.0044</phase>
             <doppler>0</doppler>
-            <power>4.4802856820e-18</power>
-            <Iamplitude>8.8966051531e-10</Iamplitude>
-            <Qamplitude>1.9206222558e-09</Qamplitude>
+            <power>1.1878737505e-18</power>
+            <Iamplitude>4.5809611148e-10</Iamplitude>
+            <Qamplitude>9.8894979811e-10</Qamplitude>
             <noise_temperature>0.0000000000e+00</noise_temperature>
             <phasedeg>-2.4016614854e+07</phasedeg>
         </InterpolationPoint>
         <InterpolationPoint>
             <time>0.003076712819</time>
-            <amplitude>2.116668534e-09</amplitude>
+            <amplitude>1.089896211e-09</amplitude>
             <phase>-419169.0044</phase>
             <doppler>0</doppler>
-            <power>4.4802856820e-18</power>
-            <Iamplitude>8.8966051531e-10</Iamplitude>
-            <Qamplitude>1.9206222558e-09</Qamplitude>
+            <power>1.1878737505e-18</power>
+            <Iamplitude>4.5809611148e-10</Iamplitude>
+            <Qamplitude>9.8894979811e-10</Qamplitude>
             <noise_temperature>0.0000000000e+00</noise_temperature>
             <phasedeg>-2.4016614854e+07</phasedeg>
         </InterpolationPoint>
@@ -109,23 +109,23 @@
         <name>pulse1</name>
         <InterpolationPoint>
             <time>0.004066712819</time>
-            <amplitude>2.116668534e-09</amplitude>
+            <amplitude>1.089896211e-09</amplitude>
             <phase>-419169.0044</phase>
             <doppler>0</doppler>
-            <power>4.4802856820e-18</power>
-            <Iamplitude>8.8966051531e-10</Iamplitude>
-            <Qamplitude>1.9206222558e-09</Qamplitude>
+            <power>1.1878737505e-18</power>
+            <Iamplitude>4.5809611148e-10</Iamplitude>
+            <Qamplitude>9.8894979811e-10</Qamplitude>
             <noise_temperature>0.0000000000e+00</noise_temperature>
             <phasedeg>-2.4016614854e+07</phasedeg>
         </InterpolationPoint>
         <InterpolationPoint>
             <time>0.004076712819</time>
-            <amplitude>2.116668534e-09</amplitude>
+            <amplitude>1.089896211e-09</amplitude>
             <phase>-419169.0044</phase>
             <doppler>0</doppler>
-            <power>4.4802856820e-18</power>
-            <Iamplitude>8.8966051531e-10</Iamplitude>
-            <Qamplitude>1.9206222558e-09</Qamplitude>
+            <power>1.1878737505e-18</power>
+            <Iamplitude>4.5809611148e-10</Iamplitude>
+            <Qamplitude>9.8894979811e-10</Qamplitude>
             <noise_temperature>0.0000000000e+00</noise_temperature>
             <phasedeg>-2.4016614854e+07</phasedeg>
         </InterpolationPoint>
@@ -135,23 +135,23 @@
         <name>pulse1</name>
         <InterpolationPoint>
             <time>0.005066712819</time>
-            <amplitude>2.116668534e-09</amplitude>
+            <amplitude>1.089896211e-09</amplitude>
             <phase>-419169.0044</phase>
             <doppler>0</doppler>
-            <power>4.4802856820e-18</power>
-            <Iamplitude>8.8966051531e-10</Iamplitude>
-            <Qamplitude>1.9206222558e-09</Qamplitude>
+            <power>1.1878737505e-18</power>
+            <Iamplitude>4.5809611148e-10</Iamplitude>
+            <Qamplitude>9.8894979811e-10</Qamplitude>
             <noise_temperature>0.0000000000e+00</noise_temperature>
             <phasedeg>-2.4016614854e+07</phasedeg>
         </InterpolationPoint>
         <InterpolationPoint>
             <time>0.005076712819</time>
-            <amplitude>2.116668534e-09</amplitude>
+            <amplitude>1.089896211e-09</amplitude>
             <phase>-419169.0044</phase>
             <doppler>0</doppler>
-            <power>4.4802856820e-18</power>
-            <Iamplitude>8.8966051531e-10</Iamplitude>
-            <Qamplitude>1.9206222558e-09</Qamplitude>
+            <power>1.1878737505e-18</power>
+            <Iamplitude>4.5809611148e-10</Iamplitude>
+            <Qamplitude>9.8894979811e-10</Qamplitude>
             <noise_temperature>0.0000000000e+00</noise_temperature>
             <phasedeg>-2.4016614854e+07</phasedeg>
         </InterpolationPoint>
@@ -161,23 +161,23 @@
         <name>pulse1</name>
         <InterpolationPoint>
             <time>0.006066712819</time>
-            <amplitude>2.116668534e-09</amplitude>
+            <amplitude>1.089896211e-09</amplitude>
             <phase>-419169.0044</phase>
             <doppler>0</doppler>
-            <power>4.4802856820e-18</power>
-            <Iamplitude>8.8966051531e-10</Iamplitude>
-            <Qamplitude>1.9206222558e-09</Qamplitude>
+            <power>1.1878737505e-18</power>
+            <Iamplitude>4.5809611148e-10</Iamplitude>
+            <Qamplitude>9.8894979811e-10</Qamplitude>
             <noise_temperature>0.0000000000e+00</noise_temperature>
             <phasedeg>-2.4016614854e+07</phasedeg>
         </InterpolationPoint>
         <InterpolationPoint>
             <time>0.006076712819</time>
-            <amplitude>2.116668534e-09</amplitude>
+            <amplitude>1.089896211e-09</amplitude>
             <phase>-419169.0044</phase>
             <doppler>0</doppler>
-            <power>4.4802856820e-18</power>
-            <Iamplitude>8.8966051531e-10</Iamplitude>
-            <Qamplitude>1.9206222558e-09</Qamplitude>
+            <power>1.1878737505e-18</power>
+            <Iamplitude>4.5809611148e-10</Iamplitude>
+            <Qamplitude>9.8894979811e-10</Qamplitude>
             <noise_temperature>0.0000000000e+00</noise_temperature>
             <phasedeg>-2.4016614854e+07</phasedeg>
         </InterpolationPoint>
@@ -187,23 +187,23 @@
         <name>pulse1</name>
         <InterpolationPoint>
             <time>0.007066712819</time>
-            <amplitude>2.116668534e-09</amplitude>
+            <amplitude>1.089896211e-09</amplitude>
             <phase>-419169.0044</phase>
             <doppler>0</doppler>
-            <power>4.4802856820e-18</power>
-            <Iamplitude>8.8966051531e-10</Iamplitude>
-            <Qamplitude>1.9206222558e-09</Qamplitude>
+            <power>1.1878737505e-18</power>
+            <Iamplitude>4.5809611148e-10</Iamplitude>
+            <Qamplitude>9.8894979811e-10</Qamplitude>
             <noise_temperature>0.0000000000e+00</noise_temperature>
             <phasedeg>-2.4016614854e+07</phasedeg>
         </InterpolationPoint>
         <InterpolationPoint>
             <time>0.007076712819</time>
-            <amplitude>2.116668534e-09</amplitude>
+            <amplitude>1.089896211e-09</amplitude>
             <phase>-419169.0044</phase>
             <doppler>0</doppler>
-            <power>4.4802856820e-18</power>
-            <Iamplitude>8.8966051531e-10</Iamplitude>
-            <Qamplitude>1.9206222558e-09</Qamplitude>
+            <power>1.1878737505e-18</power>
+            <Iamplitude>4.5809611148e-10</Iamplitude>
+            <Qamplitude>9.8894979811e-10</Qamplitude>
             <noise_temperature>0.0000000000e+00</noise_temperature>
             <phasedeg>-2.4016614854e+07</phasedeg>
         </InterpolationPoint>
@@ -213,23 +213,23 @@
         <name>pulse1</name>
         <InterpolationPoint>
             <time>0.008066712819</time>
-            <amplitude>2.116668534e-09</amplitude>
+            <amplitude>1.089896211e-09</amplitude>
             <phase>-419169.0044</phase>
             <doppler>0</doppler>
-            <power>4.4802856820e-18</power>
-            <Iamplitude>8.8966051531e-10</Iamplitude>
-            <Qamplitude>1.9206222558e-09</Qamplitude>
+            <power>1.1878737505e-18</power>
+            <Iamplitude>4.5809611148e-10</Iamplitude>
+            <Qamplitude>9.8894979811e-10</Qamplitude>
             <noise_temperature>0.0000000000e+00</noise_temperature>
             <phasedeg>-2.4016614854e+07</phasedeg>
         </InterpolationPoint>
         <InterpolationPoint>
             <time>0.008076712819</time>
-            <amplitude>2.116668534e-09</amplitude>
+            <amplitude>1.089896211e-09</amplitude>
             <phase>-419169.0044</phase>
             <doppler>0</doppler>
-            <power>4.4802856820e-18</power>
-            <Iamplitude>8.8966051531e-10</Iamplitude>
-            <Qamplitude>1.9206222558e-09</Qamplitude>
+            <power>1.1878737505e-18</power>
+            <Iamplitude>4.5809611148e-10</Iamplitude>
+            <Qamplitude>9.8894979811e-10</Qamplitude>
             <noise_temperature>0.0000000000e+00</noise_temperature>
             <phasedeg>-2.4016614854e+07</phasedeg>
         </InterpolationPoint>
@@ -239,23 +239,23 @@
         <name>pulse1</name>
         <InterpolationPoint>
             <time>0.009066712819</time>
-            <amplitude>2.116668534e-09</amplitude>
+            <amplitude>1.089896211e-09</amplitude>
             <phase>-419169.0044</phase>
             <doppler>0</doppler>
-            <power>4.4802856820e-18</power>
-            <Iamplitude>8.8966051531e-10</Iamplitude>
-            <Qamplitude>1.9206222558e-09</Qamplitude>
+            <power>1.1878737505e-18</power>
+            <Iamplitude>4.5809611148e-10</Iamplitude>
+            <Qamplitude>9.8894979811e-10</Qamplitude>
             <noise_temperature>0.0000000000e+00</noise_temperature>
             <phasedeg>-2.4016614854e+07</phasedeg>
         </InterpolationPoint>
         <InterpolationPoint>
             <time>0.009076712819</time>
-            <amplitude>2.116668534e-09</amplitude>
+            <amplitude>1.089896211e-09</amplitude>
             <phase>-419169.0044</phase>
             <doppler>0</doppler>
-            <power>4.4802856820e-18</power>
-            <Iamplitude>8.8966051531e-10</Iamplitude>
-            <Qamplitude>1.9206222558e-09</Qamplitude>
+            <power>1.1878737505e-18</power>
+            <Iamplitude>4.5809611148e-10</Iamplitude>
+            <Qamplitude>9.8894979811e-10</Qamplitude>
             <noise_temperature>0.0000000000e+00</noise_temperature>
             <phasedeg>-2.4016614854e+07</phasedeg>
         </InterpolationPoint>
