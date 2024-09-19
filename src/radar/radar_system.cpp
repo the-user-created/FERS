@@ -146,6 +146,7 @@ RS_FLOAT Receiver::getWindowStart(const int window) const
 Receiver* rs::createMultipathDual(Receiver* recv, const MultipathSurface* surf) // NOLINT(misc-no-recursion)
 {
 	if (recv->getDual()) { return recv->getDual(); }
+	logging::printf(logging::RS_VERBOSE, "[Receiver.createMultipathDual] Creating dual receiver for %s\n", recv->getName().c_str());
 	const Platform* dual_plat = createMultipathDual(recv->getPlatform(), surf);
 	auto* dual = new Receiver(dual_plat, recv->getName() + "_dual");
 	recv->setDual(dual);
@@ -165,6 +166,7 @@ Receiver* rs::createMultipathDual(Receiver* recv, const MultipathSurface* surf) 
 Transmitter* rs::createMultipathDual(Transmitter* trans, const MultipathSurface* surf) // NOLINT(misc-no-recursion)
 {
 	if (trans->getDual()) { return trans->getDual(); }
+	logging::printf(logging::RS_VERBOSE, "[Transmitter.createMultipathDual] Creating dual transmitter for %s\n", trans->getName().c_str());
 	const Platform* dual_plat = createMultipathDual(trans->getPlatform(), surf);
 	auto* dual = new Transmitter(dual_plat, trans->getName() + "_dual", trans->getPulsed());
 	trans->setDual(dual);

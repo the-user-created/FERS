@@ -5,6 +5,8 @@
 
 #include "platform.h"
 
+#include "core/logging.h"
+
 using namespace rs;
 
 Platform::~Platform()
@@ -15,7 +17,12 @@ Platform::~Platform()
 
 Platform* rs::createMultipathDual(const Platform* plat, const MultipathSurface* surf)
 {
-	if (plat->getDual()) { return plat->getDual(); }
+	// Check if the dual platform already exists
+	if (plat->getDual().has_value())
+	{
+		logging::printf(logging::RS_VERBOSE, "[Platform.createMultipathDual] Dual platform already exists\n");
+		return plat->getDual().value();
+	}
 	auto* dual = new Platform(plat->getName() + "_dual");
 	const_cast<Platform*>(plat)->setDual(dual);
 	dual->setMotionPath(reflectPath(plat->getMotionPath(), surf));
