@@ -31,7 +31,7 @@ namespace portable_utils
 		const unsigned hardware_threads = std::thread::hardware_concurrency();
 		return hardware_threads
 			       ? hardware_threads
-			       : (logging::printf(logging::RS_IMPORTANT, "[IMPORTANT] Unable to get CPU count, assuming 1.\n"), 1);
+			       : (LOG(logging::Level::INFO, "Unable to get CPU count, assuming 1."), 1);
 	}
 }
 

@@ -1,36 +1,70 @@
 // logging.h
-// Message support functions and debug levels
-// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-// 20 March 2006
+// Created by David Young on 9/20/24.
+//
 
-#ifndef LOGGING_H
-#define LOGGING_H
+#pragma once
 
+#include <format>
+#include <fstream>
+#include <mutex>
+#include <source_location>
 #include <string>
 
-#define DEBUG_PRINT(level, str) logging::print(level, str, __FILE__, __LINE__)
+#define LOG(level, ...) logging::log(level, std::source_location::current(), __VA_ARGS__)
 
 namespace logging
 {
-	enum Level
+	enum class Level
 	{
-		RS_VERY_VERBOSE,
-		RS_VERBOSE,
-		RS_INFORMATIVE,
-		RS_IMPORTANT,
-		RS_CRITICAL,
-		RS_EXTREMELY_CRITICAL
+		VV,
+		VERBOSE,
+		INFO,
+		CRITICAL,
+		WARNING,
+		ERROR
 	};
 
-	void print(Level level, const std::string& str, const std::string& file, int line);
+	class Logger
+	{
+	public:
+		Logger();
 
-	void printf(Level level, const char* format, ...);
+		~Logger();
 
-	// Note: This function is not used in the codebase
-	void printf(Level level, const std::string& format, ...);
+		void setLevel(Level level);
 
-	// Note: This function is not used in the codebase
-	void setDebugLevel(Level level);
+		void log(Level level, const std::string& message,
+		         std::source_location location = std::source_location::current());
+
+		template <typename... Args>
+		void log(const Level level, const std::source_location location, const std::string& formatStr, Args&&... args)
+		{
+			if (level >= _log_level)
+			{
+				const std::string message = std::vformat(formatStr, std::make_format_args(args...));
+				log(level, message, location);
+			}
+		}
+
+		void logToFile(const std::string& filePath);
+
+		void stopLoggingToFile();
+
+	private:
+		Level _log_level;
+		std::ofstream _log_file;
+		std::mutex _log_mutex;
+
+		static std::string getLevelString(Level level);
+
+		static std::string getCurrentTimestamp();
+	};
+
+	extern Logger logger; // Externally available logger object
+
+	template <typename... Args>
+	void log(Level level, const std::source_location location, const std::string& formatStr, Args&&... args)
+	{
+		logger.log(level, location, formatStr, std::forward<Args>(args)...);
+	}
 }
-
-#endif

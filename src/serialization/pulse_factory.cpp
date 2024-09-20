@@ -56,6 +56,6 @@ std::unique_ptr<rs::RadarSignal> pulse_factory::loadPulseFromFile(const std::str
 		{
 			return loadPulseFromHdf5File(name, filename, power, carrierFreq);
 		}
-		throw std::runtime_error("[ERROR] Unrecognised extension while trying to load " + filename);
+		throw std::runtime_error("Unrecognised extension while trying to load " + filename);
 	}
 }

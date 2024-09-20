@@ -19,7 +19,7 @@ void rs_python::initPython()
 	if (!initialized)
 	{
 		Py_Initialize();
-		logging::printf(logging::RS_VERBOSE, "Using Python version %s\n", Py_GetVersion());
+		LOG(logging::Level::VERBOSE, "Using Python version {}", Py_GetVersion());
 		PyRun_SimpleString("import sys; sys.path.append('.');");
 		initialized = true;
 	}

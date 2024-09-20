@@ -15,16 +15,18 @@
 
 int main(const int argc, char* argv[])
 {
-	logging::printf(logging::RS_CRITICAL, "/------------------------------------------------\\\n");
-	logging::printf(logging::RS_CRITICAL, "| FERS - The Flexible Extensible Radar Simulator |\n");
-	logging::printf(logging::RS_CRITICAL, "| Version 0.28                                   |\n");
-	logging::printf(logging::RS_CRITICAL, "\\------------------------------------------------/\n\n");
+	logging::logger.setLevel(logging::Level::VV);
+
+	LOG(logging::Level::INFO, "/------------------------------------------------\\");
+	LOG(logging::Level::INFO, "| FERS - The Flexible Extensible Radar Simulator |");
+	LOG(logging::Level::INFO, "| Version 0.28                                   |");
+	LOG(logging::Level::INFO, "\\------------------------------------------------/");
 
 	if (argc != 2 || !strncmp(argv[1], "--help", 6))
 	{
-		logging::printf(logging::RS_CRITICAL, "Usage: %s <scriptfile> (Run simulation specified by script file)\n",
-		                argv[0]);
-		logging::printf(logging::RS_CRITICAL, "Usage: %s --help (Show this message)\n\n", argv[0]);
+		LOG(logging::Level::INFO, "Usage: {} <scriptfile> (Run simulation specified by script file)",
+		    argv[0]);
+		LOG(logging::Level::INFO, "Usage: {} --help (Show this message)", argv[0]);
 		return 2;
 	}
 
@@ -34,24 +36,24 @@ int main(const int argc, char* argv[])
 		const auto world = std::make_unique<rs::World>();
 		noise_utils::initializeNoise();
 
-		logging::printf(logging::RS_VERBOSE, "[VERBOSE] Loading XML Script File.\n");
+		LOG(logging::Level::VERBOSE, "Loading XML Script File.");
 		xml::loadXmlFile(argv[1], world.get());
 
 		rs::threaded_sim::runThreadedSim(parameters::renderThreads(), world.get());
-		logging::printf(logging::RS_VERBOSE, "[VERBOSE] Cleaning up.\n");
+
+		LOG(logging::Level::VERBOSE, "Cleaning up");
 
 		noise_utils::cleanUpNoise();
 
-		logging::printf(logging::RS_CRITICAL, "------------------------------------------------\n");
-		logging::printf(logging::RS_CRITICAL, "Simulation completed successfully...\n\n");
+		LOG(logging::Level::CRITICAL, "Simulation completed successfully!");
 
 		return 0;
 	}
 	catch (std::exception& ex)
 	{
-		logging::printf(logging::RS_CRITICAL,
-		                "[ERROR] Simulation encountered unexpected error:\n\t%s\nSimulator will terminate.\n",
-		                ex.what());
+		LOG(logging::Level::CRITICAL,
+		    "Simulation encountered unexpected error:\t{}\nSimulator will terminate.",
+		    ex.what());
 		return 1;
 	}
 }

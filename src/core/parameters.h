@@ -88,7 +88,7 @@ namespace parameters
 	inline void setC(const RS_FLOAT c)
 	{
 		params.c = c;
-		logging::printf(logging::RS_CRITICAL, "[CRITICAL] Propagation speed (c) set to custom value: %8.5f\n", c);
+		LOG(logging::Level::WARNING, "Propagation speed (c) set to custom value: {:8.5f}", c);
 	}
 
 	inline void setTime(const RS_FLOAT start, const RS_FLOAT end)
@@ -102,7 +102,7 @@ namespace parameters
 	inline void setRate(const RS_FLOAT rate)
 	{
 		params.rate = rate;
-		logging::printf(logging::RS_VERY_VERBOSE, "[VV] System sample rate set to custom value: %8.5f\n", rate);
+		LOG(logging::Level::VV, "System sample rate set to custom value: {:8.5f}", rate);
 	}
 
 	inline void setRandomSeed(const unsigned seed) { params.random_seed = seed; }
@@ -125,16 +125,16 @@ namespace parameters
 	inline void setRenderFilterLength(const unsigned length)
 	{
 		// Note: This function is not used in the codebase
-		if (length < 16) { throw std::runtime_error("[ERROR] Render filter length must be > 16"); }
+		if (length < 16) { throw std::runtime_error("Render filter length must be > 16"); }
 		params.filter_length = length;
-		logging::printf(logging::RS_VERY_VERBOSE, "[VV] Render filter length set to custom value: %d\n", length);
+		LOG(logging::Level::VV, "Render filter length set to custom value: {}", length);
 	}
 
 	inline void setOversampleRatio(const unsigned ratio)
 	{
-		if (ratio == 0) { throw std::runtime_error("[ERROR] Oversample ratio must be >= 1"); }
+		if (ratio == 0) { throw std::runtime_error("Oversample ratio must be >= 1"); }
 		params.oversample_ratio = ratio;
-		logging::printf(logging::RS_VERY_VERBOSE, "[VV] Oversampling enabled with ratio %d\n", ratio);
+		LOG(logging::Level::VV, "Oversampling enabled with ratio {}", ratio);
 	}
 
 	inline void setThreads(const unsigned threads) { params.render_threads = threads; }
