@@ -43,10 +43,7 @@ void World::add(std::unique_ptr<PrototypeTiming> timing)
 
 void World::addMultipathSurface(std::unique_ptr<MultipathSurface> surface)
 {
-	if (_multipath_surface)
-	{
-		throw std::runtime_error("Only one multipath surface per simulation is supported");
-	}
+	if (_multipath_surface) { throw std::runtime_error("Only one multipath surface per simulation is supported"); }
 	_multipath_surface = std::move(surface);
 }
 
@@ -54,22 +51,32 @@ void World::processMultipath()
 {
 	if (_multipath_surface)
 	{
-		// TODO: See if there is a way to do this without copying across the vector
-		std::vector<std::unique_ptr<Platform>> new_duals;
-		for (const auto& plat : _platforms)
-		{
-		    new_duals.push_back(std::unique_ptr<Platform>(createMultipathDual(plat.get(), _multipath_surface.get())));
-		}
-		_platforms.insert(_platforms.end(), std::make_move_iterator(new_duals.begin()), std::make_move_iterator(new_duals.end()));
+		// Store the original sizes of the vectors before modification
+		const size_t platform_count = _platforms.size();
+		const size_t receiver_count = _receivers.size();
+		const size_t transmitter_count = _transmitters.size();
 
-		for (const auto& recv : _receivers)
+		// Reserve space to avoid multiple reallocations
+		_platforms.reserve(platform_count * 2);
+		_receivers.reserve(receiver_count * 2);
+		_transmitters.reserve(transmitter_count * 2);
+
+		// Create and append new duals for platforms
+		for (size_t i = 0; i < platform_count; ++i)
 		{
-			_receivers.push_back(std::vector<std::unique_ptr<Receiver>>::value_type(createMultipathDual(recv.get(), _multipath_surface.get())));
+			_platforms.emplace_back(createMultipathDual(_platforms[i].get(), _multipath_surface.get()));
 		}
 
-		for (const auto& trans : _transmitters)
+		// Create and append new duals for receivers
+		for (size_t i = 0; i < receiver_count; ++i)
 		{
-			_transmitters.push_back(std::vector<std::unique_ptr<Transmitter>>::value_type(createMultipathDual(trans.get(), _multipath_surface.get())));
+			_receivers.emplace_back(createMultipathDual(_receivers[i].get(), _multipath_surface.get()));
+		}
+
+		// Create and append new duals for transmitters
+		for (size_t i = 0; i < transmitter_count; ++i)
+		{
+			_transmitters.emplace_back(createMultipathDual(_transmitters[i].get(), _multipath_surface.get()));
 		}
 
 		_multipath_surface.reset();
