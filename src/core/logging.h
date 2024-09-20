@@ -16,12 +16,12 @@ namespace logging
 {
 	enum class Level
 	{
-		VV,
-		VERBOSE,
+		TRACE,
+		DEBUG,
 		INFO,
-		CRITICAL,
 		WARNING,
-		ERROR
+		ERROR,
+		FATAL
 	};
 
 	class Logger

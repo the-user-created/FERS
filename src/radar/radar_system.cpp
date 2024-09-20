@@ -33,7 +33,7 @@ void Radar::setMultipathDual(const RS_FLOAT reflect)
 	_multipath_factor = reflect;
 	if (_multipath_factor > 1)
 	{
-		LOG(logging::Level::WARNING,
+		LOG(logging::Level::ERROR,
 		                "Multipath reflection factor greater than 1 (={}) for radar {}, results are likely to be incorrect",
 		                reflect, getName().c_str());
 	}
@@ -139,7 +139,7 @@ T* createMultipathDualBase(T* obj, const MultipathSurface* surf, const std::stri
 		return obj->getDual();
 	}
 
-	LOG(logging::Level::VERBOSE, "[{}.createMultipathDual] Creating dual for {}",
+	LOG(logging::Level::DEBUG, "[{}.createMultipathDual] Creating dual for {}",
 					typeid(T).name(), obj->getName().c_str());
 
 	// Create or retrieve the dual platform
@@ -182,7 +182,7 @@ T* createMultipathDualBase(T* obj, const MultipathSurface* surf, const std::stri
 
 	while (!stack.empty()) {
 		// print stack size
-		LOG(logging::Level::VERBOSE, "[{}.createMultipathDual] Stack size: {}",
+		LOG(logging::Level::DEBUG, "[{}.createMultipathDual] Stack size: {}",
 						typeid(T).name(), stack.size());
 		Radar* attached = stack.top();
 		stack.pop();

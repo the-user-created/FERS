@@ -52,7 +52,7 @@ namespace interp_filt
 		_beta = 5;
 		_bessel_beta = besselI0(_beta);
 		const int hfilt = _table_filters / 2;
-		LOG(logging::Level::VV, "Building table of {} filters", _table_filters);
+		LOG(logging::Level::DEBUG, "Building table of {} filters", _table_filters);
 		//Fill the table of filters
 		//C Tong: delay appears to be the fraction of time ellapsed between samples
 		for (int i = -hfilt; i < hfilt; i++)
@@ -63,7 +63,7 @@ namespace interp_filt
 				_filter_table[static_cast<int>((i + hfilt) * _length + j + _alpha)] = interpFilter(j - delay);
 			}
 		}
-		LOG(logging::Level::VV, "Filter table complete");
+		LOG(logging::Level::DEBUG, "Filter table complete");
 	}
 
 	const RS_FLOAT* InterpFilter::getFilter(const RS_FLOAT delay) const
@@ -72,7 +72,7 @@ namespace interp_filt
 
 		if (delay <= -1 || delay >= 1)
 		{
-			LOG(logging::Level::VV, "GetFilter {} {}", delay, filt);
+			LOG(logging::Level::DEBUG, "GetFilter {} {}", delay, filt);
 			throw std::runtime_error("[BUG] Requested delay filter value out of range");
 		}
 

@@ -10,6 +10,8 @@
 #include <cstring>
 #include <thread>
 
+#include "config.h"
+
 namespace portable_utils
 {
 	// strcasecmp is a GNU extension
@@ -31,7 +33,7 @@ namespace portable_utils
 		const unsigned hardware_threads = std::thread::hardware_concurrency();
 		return hardware_threads
 			       ? hardware_threads
-			       : (LOG(logging::Level::INFO, "Unable to get CPU count, assuming 1."), 1);
+			       : (LOG(logging::Level::ERROR, "Unable to get CPU count, assuming 1."), 1);
 	}
 }
 

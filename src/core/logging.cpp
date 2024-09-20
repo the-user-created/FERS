@@ -16,7 +16,7 @@ namespace logging
 {
 	Logger logger; // Initialize global logger
 
-	Logger::Logger() : _log_level(Level::VV) {}
+	Logger::Logger() : _log_level(Level::DEBUG) {}
 
 	Logger::~Logger() { if (_log_file.is_open()) { _log_file.close(); } }
 
@@ -26,12 +26,12 @@ namespace logging
 	{
 		switch (level)
 		{
-		case Level::VV: return "VV";
-		case Level::VERBOSE: return "VERBOSE";
+		case Level::TRACE: return "TRACE";
+		case Level::DEBUG: return "DEBUG";
 		case Level::INFO: return "INFO";
-		case Level::CRITICAL: return "CRITICAL";
 		case Level::WARNING: return "WARNING";
 		case Level::ERROR: return "ERROR";
+		case Level::FATAL: return "FATAL";
 		default: return "UNKNOWN";
 		}
 	}
@@ -62,7 +62,7 @@ namespace logging
 			std::ostringstream oss;
 			// Format each component with fixed width
 			oss << "[" << getCurrentTimestamp() << "] "
-				<< "[" << std::setw(8) << std::left << getLevelString(level) << "] " // Log level (fixed width of 8)
+				<< "[" << std::setw(7) << std::left << getLevelString(level) << "] " // Log level (fixed width of 8)
 				<< "[" << std::setw(30) << std::left << file_line << "] " // Filename:Line (fixed width)
 				<< message << std::endl;
 

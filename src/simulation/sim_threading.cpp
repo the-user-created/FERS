@@ -289,7 +289,7 @@ namespace
 	{
 		for (const auto& receiver : receivers)
 		{
-			LOG(logging::Level::VV, "{} responses added to receiver '{}'",
+			LOG(logging::Level::DEBUG, "{} responses added to receiver '{}'",
 			                receiver->countResponses(), receiver->getName().c_str());
 		}
 	}
@@ -337,7 +337,7 @@ namespace rs::threaded_sim
 
 	void SimThread::operator()() const
 	{
-		LOG(logging::Level::VERBOSE,
+		LOG(logging::Level::DEBUG,
 		                "Created simulator thread for transmitter '{}' and receiver '{}'",
 		                _trans->getName().c_str(), _recv->getName().c_str());
 		try { simulatePair(_trans, _recv, _world); }
@@ -359,12 +359,12 @@ namespace rs::threaded_sim
 
 	void RenderThread::operator()() const
 	{
-		LOG(logging::Level::VV, "Created render thread for receiver '{}'",
+		LOG(logging::Level::DEBUG, "Created render thread for receiver '{}'",
 		                _recv->getName().c_str());
 		try { _recv->render(); }
 		catch (std::exception& ex)
 		{
-			LOG(logging::Level::CRITICAL,
+			LOG(logging::Level::INFO,
 			                "Render thread terminated with unexpected error:\t{}Simulator will terminate",
 			                ex.what());
 			setError();
