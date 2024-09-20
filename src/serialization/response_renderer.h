@@ -31,7 +31,7 @@ namespace response_renderer
 
 		~ThreadedResponseRenderer() = default;
 
-		void renderWindow(RS_COMPLEX* window, RS_FLOAT length, RS_FLOAT start, RS_FLOAT fracDelay) const;
+		void renderWindow(std::vector<RS_COMPLEX>& window, RS_FLOAT length, RS_FLOAT start, RS_FLOAT fracDelay) const;
 
 	private:
 		const std::vector<std::unique_ptr<rs::Response>>& _responses;
@@ -42,7 +42,7 @@ namespace response_renderer
 	class RenderThread
 	{
 	public:
-		RenderThread(const unsigned serial, std::mutex* windowMutex, RS_COMPLEX* window, const RS_FLOAT length,
+		RenderThread(const unsigned serial, std::mutex* windowMutex, std::vector<RS_COMPLEX>& window, const RS_FLOAT length,
 		             const RS_FLOAT start, const RS_FLOAT fracDelay, std::mutex* workListMutex,
 		             std::queue<rs::Response*>* workList) :
 			_serial(serial), _window_mutex(windowMutex), _window(window), _length(length), _start(start),
@@ -55,11 +55,11 @@ namespace response_renderer
 	private:
 		[[nodiscard]] rs::Response* getWork() const;
 
-		void addWindow(const RS_COMPLEX* array, std::vector<RS_COMPLEX>& localWindow, RS_FLOAT startTime, unsigned arraySize) const;
+		void addWindow(const std::vector<RS_COMPLEX>& array, std::vector<RS_COMPLEX>& localWindow, RS_FLOAT startTime, unsigned arraySize) const;
 
 		unsigned _serial;
 		std::mutex* _window_mutex;
-		RS_COMPLEX* _window;
+		std::vector<RS_COMPLEX>& _window;
 		RS_FLOAT _length;
 		RS_FLOAT _start;
 		RS_FLOAT _frac_delay;

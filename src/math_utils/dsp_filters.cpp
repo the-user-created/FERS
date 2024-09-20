@@ -65,9 +65,9 @@ namespace rs
 		std::copy_n(tmp.begin() + filt_length / 2 - 1, size * ratio, out);
 	}
 
-	void downsample(const RS_COMPLEX* in, const unsigned size, RS_COMPLEX* out, const unsigned ratio)
+	void downsample(const std::vector<RS_COMPLEX>& in, const unsigned size, std::vector<RS_COMPLEX>& out, const unsigned ratio)
 	{
-		if (ratio == 0 || size == 0 || !in || !out) { throw std::invalid_argument("Invalid input arguments"); }
+		if (ratio == 0 || size == 0 || !in.data() || !out.data()) { throw std::invalid_argument("Invalid input arguments"); }
 
 		// TODO: Replace with a more efficient multirate downsampling implementation.
 		unsigned filt_length = 0;
@@ -81,7 +81,7 @@ namespace rs
 		std::fill(tmp.begin() + size, tmp.end(), RS_COMPLEX{0, 0});
 
 		// Copy input data to the temporary buffer
-		std::copy_n(in, size, tmp.begin());
+		std::copy_n(in.data(), size, tmp.begin());
 
 		// FirFilter class usage
 		const FirFilter filt(coeffs);
@@ -138,7 +138,7 @@ RS_FLOAT IirFilter::filter(const RS_FLOAT sample)
 	return std::inner_product(_b.begin(), _b.end(), _w.begin(), 0.0);
 }
 
-void IirFilter::filter(RS_FLOAT* samples, const int size)
+void IirFilter::filter(std::vector<RS_FLOAT>& samples, const int size)
 {
 	for (int i = 0; i < size; ++i)
 	{
@@ -162,7 +162,7 @@ void IirFilter::filter(RS_FLOAT* samples, const int size)
 //
 // =====================================================================================================================
 
-void FirFilter::filter(RS_FLOAT* samples, const int size)
+void FirFilter::filter(std::vector<RS_FLOAT>& samples, const int size)
 {
 	// See Oppenheim and Scaffer, section 6.5 "Basic Network Structures for FIR Systems"
 	// TODO: Implement one of the more efficient FIR filter forms
@@ -220,7 +220,7 @@ RS_FLOAT ArFilter::filter(const RS_FLOAT sample)
 	return _w[0];
 }
 
-void ArFilter::filter(RS_FLOAT* samples, const int size)
+void ArFilter::filter(std::vector<RS_FLOAT>& samples, const int size)
 {
 	for (int i = 0; i < size; ++i)
 	{
@@ -306,21 +306,21 @@ DecadeUpsampler::DecadeUpsampler()
 	_filter = std::make_unique<IirFilter>(den_coeffs.data(), num_coeffs.data(), den_coeffs.size());
 }
 
-void DecadeUpsampler::upsample(const RS_FLOAT sample, RS_FLOAT* out) const
+void DecadeUpsampler::upsample(const RS_FLOAT sample, std::vector<RS_FLOAT>& out) const
 {
 	out[0] = sample;
 	// Use std::fill to fill the rest of the array with 0s
-	std::fill(out + 1, out + 10, 0);
+	std::fill(out.data() + 1, out.data() + 10, 0);
 	_filter->filter(out, 10);
 }
 
-void DecadeUpsampler::upsample(const RS_FLOAT* in, const int count, RS_FLOAT* out) const
+void DecadeUpsampler::upsample(const std::vector<RS_FLOAT>& in, const int count, std::vector<RS_FLOAT>& out) const
 {
 	for (int i = 0; i < count; ++i)
 	{
 		out[i * 10] = in[i];
 		// Use std::fill to zero-fill the rest of the 10-sample block
-		std::fill(out + i * 10 + 1, out + (i + 1) * 10, 0);
+		std::fill(out.data() + i * 10 + 1, out.data() + (i + 1) * 10, 0);
 	}
 	_filter->filter(out, count * 10);
 }

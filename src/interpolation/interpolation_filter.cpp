@@ -45,7 +45,7 @@ namespace interp_filt
 		//Size of the table to use for interpolation
 		_table_filters = 1000;
 		//Allocate memory for the table
-		_filter_table = std::make_unique<RS_FLOAT[]>(_table_filters * _length);
+		_filter_table = std::vector<RS_FLOAT>(_table_filters * _length);
 		//Alpha is half the filter length
 		_alpha = std::floor(parameters::renderFilterLength() / 2.0);
 		//Beta sets the window shape

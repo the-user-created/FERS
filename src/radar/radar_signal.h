@@ -35,8 +35,7 @@ namespace rs
 		// Note: This function is not used in the codebase
 		[[nodiscard]] std::vector<RS_FLOAT> copyData() const;
 
-		std::shared_ptr<std::complex<double>[]> render(const std::vector<InterpPoint>& points, unsigned& size,
-		                                               double fracWinDelay) const;
+		std::vector<RS_COMPLEX> render(const std::vector<InterpPoint>& points, unsigned& size, double fracWinDelay) const;
 
 	private:
 		std::vector<RS_COMPLEX> _data;
@@ -72,8 +71,7 @@ namespace rs
 
 		[[nodiscard]] RS_FLOAT getLength() const { return _length; }
 
-		std::shared_ptr<RS_COMPLEX[]> render(const std::vector<InterpPoint>& points, unsigned& size,
-		                                     RS_FLOAT fracWinDelay) const;
+		std::vector<RS_COMPLEX> render(const std::vector<InterpPoint>& points, unsigned& size, RS_FLOAT fracWinDelay) const;
 
 		// Note: This function is not used in the codebase
 		[[nodiscard]] JonesVector getPolarization() const { return _polar; }

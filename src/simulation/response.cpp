@@ -94,7 +94,7 @@ void Response::addInterpPoint(const InterpPoint& point)
 	_points.push_back(point);
 }
 
-std::shared_ptr<RS_COMPLEX[]> Response::renderBinary(RS_FLOAT& rate, unsigned& size, const RS_FLOAT fracWinDelay) const
+std::vector<RS_COMPLEX> Response::renderBinary(RS_FLOAT& rate, unsigned& size, const RS_FLOAT fracWinDelay) const
 {
 	rate = _wave->getRate();
 	return _wave->render(_points, size, fracWinDelay);

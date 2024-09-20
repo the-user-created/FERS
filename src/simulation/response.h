@@ -35,7 +35,7 @@ namespace rs
 
 		void renderCsv(std::ofstream& of) const;
 
-		std::shared_ptr<RS_COMPLEX[]> renderBinary(RS_FLOAT& rate, unsigned& size, RS_FLOAT fracWinDelay) const;
+		std::vector<RS_COMPLEX> renderBinary(RS_FLOAT& rate, unsigned& size, RS_FLOAT fracWinDelay) const;
 
 		[[nodiscard]] RS_FLOAT getLength() const { return endTime() - startTime(); }
 

@@ -41,7 +41,7 @@ namespace interp_filt
 		RS_FLOAT _bessel_beta;
 		int _length;
 		int _table_filters;
-		std::unique_ptr<RS_FLOAT[]> _filter_table;
+		std::vector<RS_FLOAT> _filter_table;
 	};
 }
 

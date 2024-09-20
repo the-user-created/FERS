@@ -16,7 +16,7 @@ namespace rs
 {
 	void upsample(const RS_COMPLEX* in, unsigned size, RS_COMPLEX* out, unsigned ratio);
 
-	void downsample(const RS_COMPLEX* in, unsigned size, RS_COMPLEX* out, unsigned ratio);
+	void downsample(const std::vector<RS_COMPLEX>& in, unsigned size, std::vector<RS_COMPLEX>& out, unsigned ratio);
 
 	class DspFilter
 	{
@@ -27,7 +27,7 @@ namespace rs
 
 		virtual RS_FLOAT filter(RS_FLOAT sample) = 0;
 
-		virtual void filter(RS_FLOAT* samples, int size) = 0;
+		virtual void filter(std::vector<RS_FLOAT>& samples, int size) = 0;
 
 		// Disable copy constructor and copy assignment operator
 		DspFilter(const DspFilter&) = delete;
@@ -45,7 +45,7 @@ namespace rs
 
 		RS_FLOAT filter(RS_FLOAT sample) override;
 
-		void filter(RS_FLOAT* samples, int size) override;
+		void filter(std::vector<RS_FLOAT>& samples, int size) override;
 
 	private:
 		std::vector<RS_FLOAT> _a; // Denominator coefficients
@@ -67,7 +67,7 @@ namespace rs
 		RS_FLOAT filter(RS_FLOAT sample) override { return 0; }
 
 		// Filter an array of samples (still not used)
-		void filter(RS_FLOAT* samples, int size) override;
+		void filter(std::vector<RS_FLOAT>& samples, int size) override;
 
 		// Filter for complex samples
 		void filter(std::vector<RS_COMPLEX>& samples, unsigned size) const;
@@ -93,7 +93,7 @@ namespace rs
 		RS_FLOAT filter(RS_FLOAT sample) override;
 
 		// Note: This function is not used in the codebase
-		void filter(RS_FLOAT* samples, int size) override;
+		void filter(std::vector<RS_FLOAT>& samples, int size) override;
 
 	private:
 		std::vector<RS_FLOAT> _w; // Store internal state
@@ -136,10 +136,10 @@ namespace rs
 
 		~DecadeUpsampler() = default;
 
-		void upsample(RS_FLOAT sample, RS_FLOAT* out) const;
+		void upsample(RS_FLOAT sample, std::vector<RS_FLOAT>& out) const;
 
 		// Note: This function is not used in the codebase
-		void upsample(const RS_FLOAT* in, int count, RS_FLOAT* out) const;
+		void upsample(const std::vector<RS_FLOAT>& in, int count, std::vector<RS_FLOAT>& out) const;
 
 		// Disable copy constructor and copy assignment operator
 		DecadeUpsampler(const DecadeUpsampler&) = delete;

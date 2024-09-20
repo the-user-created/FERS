@@ -14,7 +14,7 @@
 namespace
 {
 	void addArrayToWindow(const RS_FLOAT wStart, std::vector<RS_COMPLEX>& window, const unsigned wSize, const RS_FLOAT rate,
-	                      const RS_FLOAT rStart, const RS_COMPLEX* resp, const unsigned rSize)
+	                      const RS_FLOAT rStart, const std::vector<RS_COMPLEX>& resp, const unsigned rSize)
 	{
 		int start_sample = static_cast<int>(round(rate * (rStart - wStart)));
 		unsigned roffset = 0;
@@ -35,7 +35,7 @@ namespace
 
 namespace response_renderer
 {
-	void ThreadedResponseRenderer::renderWindow(RS_COMPLEX* window, const RS_FLOAT length, const RS_FLOAT start,
+	void ThreadedResponseRenderer::renderWindow(std::vector<RS_COMPLEX>& window, const RS_FLOAT length, const RS_FLOAT start,
 	                                            const RS_FLOAT fracDelay) const
 	{
 		const RS_FLOAT end = start + length;
@@ -82,9 +82,8 @@ namespace response_renderer
 		{
 			unsigned psize;
 			RS_FLOAT prate;
-			// TODO: change from shared_ptr to unique_ptr
-			std::shared_ptr<RS_COMPLEX[]> array = resp->renderBinary(prate, psize, _frac_delay);
-			addWindow(array.get(), local_window, resp->startTime(), psize);
+			std::vector<RS_COMPLEX> array = resp->renderBinary(prate, psize, _frac_delay);
+			addWindow(array, local_window, resp->startTime(), psize);
 			resp = getWork();
 		}
 		{
@@ -93,7 +92,7 @@ namespace response_renderer
 		}
 	}
 
-	void RenderThread::addWindow(const RS_COMPLEX* array, std::vector<RS_COMPLEX>& localWindow, const RS_FLOAT startTime, const unsigned arraySize) const
+	void RenderThread::addWindow(const std::vector<RS_COMPLEX>& array, std::vector<RS_COMPLEX>& localWindow, const RS_FLOAT startTime, const unsigned arraySize) const
 	{
 		const RS_FLOAT rate = parameters::rate() * parameters::oversampleRatio();
 		const auto size = static_cast<unsigned>(std::ceil(_length * rate));
