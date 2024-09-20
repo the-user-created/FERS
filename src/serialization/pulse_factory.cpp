@@ -17,37 +17,35 @@
 //
 // =====================================================================================================================
 
-rs::RadarSignal* loadPulseFromHdf5File(const std::string& name, const std::string& filename, const RS_FLOAT power,
+std::unique_ptr<rs::RadarSignal> loadPulseFromHdf5File(const std::string& name, const std::string& filename, const RS_FLOAT power,
                                        const RS_FLOAT carrierFreq)
 {
 	RS_FLOAT rate;
-	unsigned size;
-	RS_COMPLEX* data;
-	hdf5_export::readPulseData(filename, &data, size, rate);
-	auto* signal = new rs::Signal();
-	signal->load(data, size, rate);
-	delete[] data;
-	return new rs::RadarSignal(name, power, carrierFreq, size / rate, signal);
+	std::vector<RS_COMPLEX> data;
+	hdf5_export::readPulseData(filename, data, rate);
+
+	auto signal = std::make_unique<rs::Signal>();
+	signal->load(data.data(), data.size(), rate);
+	return std::make_unique<rs::RadarSignal>(name, power, carrierFreq, static_cast<RS_FLOAT>(data.size()) / rate, std::move(signal));
 }
 
-rs::RadarSignal* loadPulseFromCsvFile(const std::string& name, const std::string& filename, const RS_FLOAT power,
-                                      const RS_FLOAT carrierFreq)
+std::unique_ptr<rs::RadarSignal> loadPulseFromCsvFile(const std::string& name, const std::string& filename, const RS_FLOAT power, const RS_FLOAT carrierFreq)
 {
 	std::ifstream ifile(filename.c_str());
 	if (!ifile) { throw std::runtime_error("Could not open " + filename + " to read pulse waveform"); }
 	RS_FLOAT rlength, rate;
 	ifile >> rlength >> rate;
 	const unsigned length = static_cast<int>(rlength);
-	std::unique_ptr<RS_COMPLEX[]> data(new RS_COMPLEX[length]);
+	std::vector<RS_COMPLEX> data(length);
 	unsigned done = 0;
 	while (!ifile.eof() && done < length) { ifile >> data[done++]; }
 	if (done != length) { throw std::runtime_error("Could not read pulse waveform from file " + filename); }
-	auto* signal = new rs::Signal();
-	signal->load(data.get(), length, rate);
-	return new rs::RadarSignal(name, power, carrierFreq, rlength / rate, signal);
+	auto signal = std::make_unique<rs::Signal>();
+	signal->load(data.data(), length, rate);
+	return std::make_unique<rs::RadarSignal>(name, power, carrierFreq, rlength / rate, std::move(signal));
 }
 
-rs::RadarSignal* pulse_factory::loadPulseFromFile(const std::string& name, const std::string& filename,
+std::unique_ptr<rs::RadarSignal> pulse_factory::loadPulseFromFile(const std::string& name, const std::string& filename,
                                                   const RS_FLOAT power, const RS_FLOAT carrierFreq)
 {
 	if (const unsigned long ln = filename.length() - 1; tolower(filename[ln]) == 'v' && tolower(filename[ln - 1]) == 's'

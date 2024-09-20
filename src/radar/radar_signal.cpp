@@ -19,11 +19,12 @@ using namespace rs;
 // =====================================================================================================================
 
 RadarSignal::RadarSignal(std::string name, const RS_FLOAT power, const RS_FLOAT carrierfreq, const RS_FLOAT length,
-                         Signal* signal)
-	: _name(std::move(name)), _power(power), _carrierfreq(carrierfreq), _length(length), _signal(signal),
+                         std::unique_ptr<Signal> signal)
+	: _name(std::move(name)), _power(power), _carrierfreq(carrierfreq), _length(length), _signal(std::move(signal)),
 	  _polar(std::complex(1.0, 0.0), std::complex(0.0, 0.0))
 {
-	if (!signal) { throw std::logic_error("RadarSignal cannot be constructed with NULL signal"); }
+	// Check if the signal is empty
+	if (!_signal) { throw std::runtime_error("Signal is empty"); }
 }
 
 // Get the carrier frequency
@@ -44,16 +45,8 @@ std::shared_ptr<RS_COMPLEX[]> RadarSignal::render(const std::vector<InterpPoint>
 //
 // =====================================================================================================================
 
-namespace interp_filt
-{
-	// Initialize the interpolation filter instance
-	std::unique_ptr<InterpFilter, std::function<void(InterpFilter*)>> InterpFilter::_instance = nullptr;
-}
-
 void Signal::clear()
 {
-	delete[] _data;
-	_data = nullptr;
 	_size = 0;
 	_rate = 0;
 }
@@ -63,7 +56,7 @@ void Signal::load(const RS_FLOAT* inData, const unsigned samples, const RS_FLOAT
 	clear();
 	_size = samples;
 	_rate = sampleRate;
-	_data = new RS_COMPLEX[samples];
+	_data.resize(samples);
 	for (unsigned i = 0; i < samples; i++) { _data[i] = RS_COMPLEX(inData[i], 0.0); }
 }
 
@@ -71,17 +64,19 @@ void Signal::load(const RS_COMPLEX* inData, const unsigned samples, const RS_FLO
 {
 	clear();
 	const unsigned ratio = parameters::oversampleRatio();
-	_data = new RS_COMPLEX[samples * ratio];
+	_data.resize(samples * ratio);
 	_size = samples * ratio;
 	_rate = sampleRate * ratio;
 	if (ratio == 1) { for (unsigned i = 0; i < samples; i++) { _data[i] = inData[i]; } }
-	else { upsample(inData, samples, _data, ratio); }
+	else { upsample(inData, samples, _data.data(), ratio); }
 }
 
-RS_FLOAT* Signal::copyData() const
+std::vector<RS_FLOAT> Signal::copyData() const
 {
-	auto* result = new RS_FLOAT[_size];
-	std::memcpy(result, _data, sizeof(RS_FLOAT) * _size);
+	std::vector<RS_FLOAT> result(_size);
+	for (unsigned i = 0; i < _size; ++i) {
+		result[i] = _data[i].real();
+	}
 	return result;
 }
 

@@ -10,16 +10,9 @@
 #include "multipath_surface.h"
 #include "path_utils.h"
 #include "core/logging.h"
-#include "python/python_extension.h"
 
 namespace path
 {
-	Path::Path(const InterpType type):
-		_final(false), _type(type)
-	{
-		_pythonpath = nullptr; //No python path, until loaded
-	}
-
 	void Path::addCoord(const coord::Coord& coord)
 	{
 		//Find the position to insert the coordinate, preserving sort
@@ -44,7 +37,7 @@ namespace path
 			break;
 		case RS_INTERP_CUBIC: getPositionCubic(t, coord, _coords, _dd);
 			break;
-		case RS_INTERP_PYTHON: if (!_pythonpath)
+		case RS_INTERP_PYTHON: if (_pythonpath == nullptr)
 			{
 				throw std::logic_error("Python path GetPosition called before module loaded");
 			}
@@ -90,23 +83,19 @@ namespace path
 	/// Load a python path function
 	void Path::loadPythonPath(const std::string& modname, const std::string& pathname)
 	{
-		//If we have one already, delete it
-		delete _pythonpath;
-
-		//Load the new python path
-		_pythonpath = new rs_python::PythonPath(modname, pathname);
+		_pythonpath = std::make_unique<rs_python::PythonPath>(modname, pathname);
 	}
 
 	/// Create a new path which is a reflection of this one around the given plane
-	Path* reflectPath(const Path* path, const rs::MultipathSurface* surf)
+	std::unique_ptr<Path> reflectPath(const Path* path, const rs::MultipathSurface* surf)
 	{
 		//Don't support multipath on python paths for now
-		if (path->getPythonPath())
+		if (path->getType() == Path::RS_INTERP_PYTHON)
 		{
 			throw std::runtime_error("[ERROR] Multipath surfaces are not currently supported for Python paths");
 		}
 		//Create a new path object
-		const auto dual = new Path(path->getType());
+		auto dual_path = std::make_unique<Path>(path->getType());
 		//Add all the coords from the current path to the old path, reflecting about the multipath plane
 		for (const auto& [pos, t] : path->getCoords())
 		{
@@ -116,11 +105,11 @@ namespace path
 			refl.pos = surf->reflectPoint(pos);
 			logging::printf(logging::RS_VERBOSE, "Reflected (%g, %g, %g) to (%g, %g, %g)\n", pos.x, pos.y,
 			                pos.z, refl.pos.x, refl.pos.y, refl.pos.z);
-			dual->addCoord(refl);
+			dual_path->addCoord(refl);
 		}
 		//Finalize the new path
-		dual->finalize();
+		dual_path->finalize();
 		//Done, return the new path
-		return dual;
+		return dual_path;
 	}
 }

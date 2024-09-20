@@ -139,11 +139,9 @@ namespace rs
 		explicit Receiver(const Platform* platform, const std::string& name = "defRecv") : Radar(platform, name),
 			_noise_temperature(0), _dual(nullptr), _flags(0) {}
 
-		~Receiver() override;
+		~Receiver() override = default;
 
-		void addResponse(Response* response);
-
-		void clearResponses();
+		void addResponse(std::unique_ptr<Response> response);
 
 		void render();
 
@@ -184,7 +182,7 @@ namespace rs
 		void setDual(Receiver* dual) { _dual = dual; }
 
 	private:
-		std::vector<Response*> _responses;
+		std::vector<std::unique_ptr<Response>> _responses;
 		std::mutex _responses_mutex;
 		RS_FLOAT _noise_temperature;
 		RS_FLOAT _window_length{};
@@ -198,7 +196,7 @@ namespace rs
 
 	Transmitter* createMultipathDual(Transmitter* trans, const MultipathSurface* surf);
 
-	inline bool compareTimes(const Response* a, const Response* b) { return a->startTime() < b->startTime(); }
+	inline bool compareTimes(const std::unique_ptr<Response>& a, const std::unique_ptr<Response>& b) { return a->startTime() < b->startTime(); }
 }
 
 #endif

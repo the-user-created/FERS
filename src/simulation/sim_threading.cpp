@@ -152,7 +152,7 @@ namespace
 		const int point_count = static_cast<int>(std::ceil(signal->wave->getLength() / sample_time));
 
 		// Create a response object for this signal
-		auto* response = new rs::Response(signal->wave, trans);
+		auto response = std::make_unique<rs::Response>(signal->wave, trans);
 
 		try
 		{
@@ -177,7 +177,7 @@ namespace
 		}
 
 		// Add response to receiver
-		recv->addResponse(response);
+		recv->addResponse(std::move(response));
 	}
 
 	void simulateTarget(const rs::Transmitter* trans, rs::Receiver* recv, const rs::Target* targ,
@@ -188,7 +188,7 @@ namespace
 		const RS_FLOAT sample_time = 1.0 / parameters::cwSampleRate();
 		const int point_count = static_cast<int>(std::ceil(signal->wave->getLength() / sample_time));
 
-		auto* response = new rs::Response(signal->wave, trans);
+		auto response = std::make_unique<rs::Response>(signal->wave, trans);
 
 		try
 		{
@@ -213,20 +213,19 @@ namespace
 		}
 
 		// Add the response to the receiver
-		recv->addResponse(response);
+		recv->addResponse(std::move(response));
 	}
 
 	void simulatePair(const rs::Transmitter* trans, rs::Receiver* recv, const rs::World* world)
 	{
 		const int pulses = trans->getPulseCount();
-		auto* pulse = new rs::TransmitterPulse();
+		const auto pulse = std::make_unique<rs::TransmitterPulse>();
 		for (int i = 0; i < pulses; i++)
 		{
-			trans->getPulse(pulse, i);
-			for (const auto target : world->getTargets()) { simulateTarget(trans, recv, target, pulse); }
-			if (!recv->checkFlag(rs::Receiver::FLAG_NODIRECT)) { addDirect(trans, recv, pulse); }
+			trans->getPulse(pulse.get(), i);
+			for (const auto& target : world->getTargets()) { simulateTarget(trans, recv, target.get(), pulse.get()); }
+			if (!recv->checkFlag(rs::Receiver::FLAG_NODIRECT)) { addDirect(trans, recv, pulse.get()); }
 		}
-		delete pulse;
 	}
 
 	// =================================================================================================================
@@ -267,10 +266,10 @@ namespace
 
 	// Helper function to run simulation for receiver-transmitter pairs
 	void runSimForReceiverTransmitterPairs(const unsigned threadLimit, const rs::World* world,
-	                                       const std::vector<rs::Receiver*>& receivers,
+	                                       const std::vector<std::unique_ptr<rs::Receiver>>& receivers,
 	                                       std::vector<std::unique_ptr<std::thread>>& running)
 	{
-		const std::vector<rs::Transmitter*> transmitters = world->getTransmitters();
+		const auto& transmitters = world->getTransmitters();
 		for (const auto& receiver : receivers)
 		{
 			for (const auto& transmitter : transmitters)
@@ -278,7 +277,7 @@ namespace
 				startSimThread(threadLimit, running, [&]
 				{
 					return std::make_unique<std::thread>(
-						rs::threaded_sim::SimThread(transmitter, receiver, world));
+						rs::threaded_sim::SimThread(transmitter.get(), receiver.get(), world));
 				});
 			}
 		}
@@ -286,7 +285,7 @@ namespace
 	}
 
 	// Helper function to finalize receiver responses and log
-	void finalizeReceiverResponses(const std::vector<rs::Receiver*>& receivers)
+	void finalizeReceiverResponses(const std::vector<std::unique_ptr<rs::Receiver>>& receivers)
 	{
 		for (const auto& receiver : receivers)
 		{
@@ -296,14 +295,14 @@ namespace
 	}
 
 	// Helper function to run rendering threads for receivers
-	void runRenderThreads(const unsigned threadLimit, const std::vector<rs::Receiver*>& receivers,
+	void runRenderThreads(const unsigned threadLimit, const std::vector<std::unique_ptr<rs::Receiver>>& receivers,
 	                      std::vector<std::unique_ptr<std::thread>>& running)
 	{
 		for (const auto& receiver : receivers)
 		{
 			startSimThread(threadLimit, running, [&]
 			{
-				return std::make_unique<std::thread>(rs::threaded_sim::RenderThread(receiver));
+				return std::make_unique<std::thread>(rs::threaded_sim::RenderThread(receiver.get()));
 			});
 		}
 		waitForThreadsToFinish(running);
@@ -385,7 +384,7 @@ namespace rs::threaded_sim
 		logging::printf(logging::RS_INFORMATIVE, "[INFO] Using threaded simulation with %d threads.\n", threadLimit);
 
 		// Get receivers from the world
-		const std::vector<Receiver*> receivers = world->getReceivers();
+		const auto& receivers = world->getReceivers();
 
 		// Run simulation for receiver-transmitter pairs
 		runSimForReceiverTransmitterPairs(threadLimit, world, receivers, running);

@@ -7,6 +7,7 @@
 #define RESPONSE_RENDERER_H
 
 #include <complex>
+#include <memory>
 #include <mutex>
 #include <queue>
 #include <vector>
@@ -24,7 +25,7 @@ namespace response_renderer
 	class ThreadedResponseRenderer
 	{
 	public:
-		ThreadedResponseRenderer(const std::vector<rs::Response*>* responses, const rs::Receiver* recv,
+		ThreadedResponseRenderer(const std::vector<std::unique_ptr<rs::Response>>& responses, const rs::Receiver* recv,
 		                         const unsigned maxThreads) : _responses(responses), _recv(recv),
 		                                                      _max_threads(maxThreads) {}
 
@@ -33,7 +34,7 @@ namespace response_renderer
 		void renderWindow(RS_COMPLEX* window, RS_FLOAT length, RS_FLOAT start, RS_FLOAT fracDelay) const;
 
 	private:
-		const std::vector<rs::Response*>* _responses;
+		const std::vector<std::unique_ptr<rs::Response>>& _responses;
 		const rs::Receiver* _recv;
 		unsigned _max_threads;
 	};
@@ -49,12 +50,12 @@ namespace response_renderer
 
 		~RenderThread() = default;
 
-		void operator()();
+		void operator()() const;
 
 	private:
 		[[nodiscard]] rs::Response* getWork() const;
 
-		void addWindow(const RS_COMPLEX* array, RS_FLOAT startTime, unsigned arraySize) const;
+		void addWindow(const RS_COMPLEX* array, std::vector<RS_COMPLEX>& localWindow, RS_FLOAT startTime, unsigned arraySize) const;
 
 		unsigned _serial;
 		std::mutex* _window_mutex;
@@ -64,7 +65,6 @@ namespace response_renderer
 		RS_FLOAT _frac_delay;
 		std::mutex* _work_list_mutex;
 		std::queue<rs::Response*>* _work_list;
-		RS_COMPLEX* _local_window{};
 	};
 }
 

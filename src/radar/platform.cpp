@@ -9,23 +9,18 @@
 
 using namespace rs;
 
-Platform::~Platform()
-{
-	delete _motion_path;
-	delete _rotation_path;
-}
-
 Platform* rs::createMultipathDual(const Platform* plat, const MultipathSurface* surf)
 {
-	// Check if the dual platform already exists
 	if (plat->getDual().has_value())
 	{
 		logging::printf(logging::RS_VERBOSE, "[Platform.createMultipathDual] Dual platform already exists\n");
 		return plat->getDual().value();
 	}
-	auto* dual = new Platform(plat->getName() + "_dual");
-	const_cast<Platform*>(plat)->setDual(dual);
+	auto dual = std::make_unique<Platform>(plat->getName() + "_dual");
+	const_cast<Platform*>(plat)->setDual(dual.get());
+
 	dual->setMotionPath(reflectPath(plat->getMotionPath(), surf));
 	dual->setRotationPath(reflectPath(plat->getRotationPath(), surf));
-	return dual;
+
+	return dual.release();
 }

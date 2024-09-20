@@ -34,43 +34,9 @@ namespace
 
 // =====================================================================================================================
 //
-// RCS CHI SQUARE CLASS
-//
-// =====================================================================================================================
-
-RcsChiSquare::RcsChiSquare(const RS_FLOAT k) : _gen(new GammaGenerator(k))
-{
-}
-
-
-RcsChiSquare::~RcsChiSquare()
-{
-	delete _gen;
-}
-
-RS_FLOAT RcsChiSquare::sampleModel()
-{
-	return _gen->getSample();
-}
-
-// =====================================================================================================================
-//
 // FILE TARGET CLASS
 //
 // =====================================================================================================================
-
-FileTarget::FileTarget(const Platform* platform, const std::string& name, const std::string& filename)
-	: Target(platform, name), _azi_samples(new InterpSet()), _elev_samples(new InterpSet())
-{
-	loadRcsDescription(filename);
-}
-
-FileTarget::~FileTarget()
-{
-	delete _azi_samples;
-	delete _elev_samples;
-}
-
 
 RS_FLOAT FileTarget::getRcs(SVec3& inAngle, SVec3& outAngle) const
 {
@@ -93,11 +59,11 @@ void FileTarget::loadRcsDescription(const std::string& filename) const
 	{
 		throw std::runtime_error("[ERROR] Malformed XML in target description: No elevation pattern definition");
 	}
-	loadTargetGainAxis(_elev_samples, tmp);
+	loadTargetGainAxis(_elev_samples.get(), tmp);
 	tmp = root.ChildElement("azimuth", 0);
 	if (!tmp.Element())
 	{
 		throw std::runtime_error("[ERROR] Malformed XML in target description: No azimuth pattern definition");
 	}
-	loadTargetGainAxis(_azi_samples, tmp);
+	loadTargetGainAxis(_azi_samples.get(), tmp);
 }

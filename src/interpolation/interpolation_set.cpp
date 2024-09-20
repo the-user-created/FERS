@@ -10,8 +10,6 @@
 #include <stdexcept>
 #include <utility>
 
-#include "core/logging.h"
-
 using namespace rs;
 
 // =====================================================================================================================

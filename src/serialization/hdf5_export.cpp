@@ -31,7 +31,7 @@ hid_t openFile(const std::string& name)
 }
 
 
-void hdf5_export::readPulseData(const std::string& name, std::complex<RS_FLOAT>** data, unsigned& size, RS_FLOAT& rate)
+void hdf5_export::readPulseData(const std::string& name, std::vector<RS_COMPLEX>& data, RS_FLOAT& rate)
 {
 	// Set rate from parameters
 	rate = parameters::rate();
@@ -71,12 +71,11 @@ void hdf5_export::readPulseData(const std::string& name, std::complex<RS_FLOAT>*
 
 	// Read I dataset
 	std::vector<double> buffer_i;
-	size = read_dataset("I", buffer_i);
+	const unsigned size = read_dataset("I", buffer_i);
 
 	// Read Q dataset and ensure it has the same size as I
 	std::vector<double> buffer_q;
-	if (read_dataset("Q", buffer_q) != size)
-	{
+	if (read_dataset("Q", buffer_q) != size) {
 		throw std::runtime_error(R"([ERROR] Dataset "Q" is not the same size as dataset "I" in file )" + name);
 	}
 
@@ -84,9 +83,11 @@ void hdf5_export::readPulseData(const std::string& name, std::complex<RS_FLOAT>*
 	H5Gclose(slash);
 	H5Fclose(file);
 
-	// Allocate and populate the complex data
-	*data = new std::complex<RS_FLOAT>[size];
-	for (unsigned i = 0; i < size; ++i) { (*data)[i] = std::complex<RS_FLOAT>(buffer_i[i], buffer_q[i]); }
+	// Allocate and populate the complex data using std::vector
+	data.resize(size);
+	for (unsigned i = 0; i < size; ++i) {
+		data[i] = RS_COMPLEX(buffer_i[i], buffer_q[i]);
+	}
 }
 
 long hdf5_export::createFile(const std::string& name)
@@ -173,8 +174,8 @@ std::vector<std::vector<RS_FLOAT>> hdf5_export::readPattern(const std::string& n
 		throw std::runtime_error("[ERROR] Invalid dataset \"" + datasetName + "\" in file " + name);
 	}
 
-	const std::unique_ptr<float[]> data(new float[dims[0] * dims[1]]);
-	if (H5LTread_dataset_float(file_id, datasetName.c_str(), data.get()) < 0)
+	std::vector<float> data(dims[0] * dims[1]);
+	if (H5LTread_dataset_float(file_id, datasetName.c_str(), data.data()) < 0)
 	{
 		H5Fclose(file_id);
 		throw std::runtime_error(

@@ -6,6 +6,7 @@
 #ifndef PYTHON_EXTENSION_H
 #define PYTHON_EXTENSION_H
 
+#include <memory>
 #include <Python.h>
 #include <string>
 
@@ -29,7 +30,7 @@ namespace rs_python
 		~PythonExtension();
 
 	protected:
-		PythonExtensionData* _data;
+		std::unique_ptr<PythonExtensionData> _data;
 		std::string _module;
 		std::string _function;
 	};

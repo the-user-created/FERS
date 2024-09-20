@@ -22,22 +22,22 @@ namespace rs
 	class Platform
 	{
 	public:
-		explicit Platform(std::string name) : _motion_path(new path::Path()), _rotation_path(new path::RotationPath()),
-		                                      _name(std::move(name)), _dual(nullptr) {}
+		explicit Platform(std::string name) : _motion_path(std::make_unique<path::Path>()),
+		_rotation_path(std::make_unique<path::RotationPath>()), _name(std::move(name)), _dual(nullptr) {}
 
-		~Platform();
+		~Platform() = default;
 
 		// Delete copy constructor and assignment operator to prevent copying
 		Platform(const Platform&) = delete;
 		Platform& operator=(const Platform&) = delete;
 
-		[[nodiscard]] path::Path* getMotionPath() const { return _motion_path; }
+		[[nodiscard]] path::Path* getMotionPath() const { return _motion_path.get(); }
 
-		void setMotionPath(path::Path* path) { _motion_path = path; }
+		void setMotionPath(std::unique_ptr<path::Path> path) { _motion_path = std::move(path); }
 
-		[[nodiscard]] path::RotationPath* getRotationPath() const { return _rotation_path; }
+		[[nodiscard]] path::RotationPath* getRotationPath() const { return _rotation_path.get(); }
 
-		void setRotationPath(path::RotationPath* path) { _rotation_path = path; }
+		void setRotationPath(std::unique_ptr<path::RotationPath> path) { _rotation_path = std::move(path); }
 
 		[[nodiscard]] Vec3 getPosition(const RS_FLOAT time) const { return _motion_path->getPosition(time); }
 
@@ -59,8 +59,8 @@ namespace rs
 		void setDual(Platform* dual) { _dual = dual; }
 
 	private:
-		path::Path* _motion_path;
-		path::RotationPath* _rotation_path;
+		std::unique_ptr<path::Path> _motion_path;
+		std::unique_ptr<path::RotationPath> _rotation_path;
 		std::string _name;
 		Platform* _dual;
 	};

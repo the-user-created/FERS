@@ -9,10 +9,7 @@
 #include <complex>
 #include <functional>
 #include <memory>
-#include <mutex>
 #include "config.h"
-
-inline std::mutex interp_mutex;
 
 namespace interp_filt
 {
@@ -38,8 +35,6 @@ namespace interp_filt
 		static RS_FLOAT besselI0(RS_FLOAT x);
 
 		InterpFilter();
-
-		static std::unique_ptr<InterpFilter, std::function<void(InterpFilter*)>> _instance;
 
 		RS_FLOAT _alpha;
 		RS_FLOAT _beta;

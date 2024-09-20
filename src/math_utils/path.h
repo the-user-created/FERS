@@ -6,11 +6,13 @@
 #ifndef PATH_H
 #define PATH_H
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "config.h"
 #include "coord.h"
+#include "python/python_extension.h"
 
 namespace rs_python
 {
@@ -29,7 +31,9 @@ namespace path
 	public:
 		enum InterpType { RS_INTERP_STATIC, RS_INTERP_LINEAR, RS_INTERP_CUBIC, RS_INTERP_PYTHON };
 
-		explicit Path(InterpType type = RS_INTERP_STATIC);
+		explicit Path(const InterpType type = RS_INTERP_STATIC) : _final(false), _type(type), _pythonpath(nullptr) {}
+
+		~Path() = default;
 
 		void addCoord(const coord::Coord& coord);
 
@@ -41,7 +45,7 @@ namespace path
 
 		void loadPythonPath(const std::string& modname, const std::string& pathname);
 
-		[[nodiscard]] rs_python::PythonPath* getPythonPath() const { return _pythonpath; }
+		[[nodiscard]] rs_python::PythonPath* getPythonPath() const { return _pythonpath.get(); }
 
 		[[nodiscard]] InterpType getType() const { return _type; }
 
@@ -52,10 +56,10 @@ namespace path
 		std::vector<coord::Coord> _dd;
 		bool _final;
 		InterpType _type;
-		rs_python::PythonPath* _pythonpath;
+		std::unique_ptr<rs_python::PythonPath> _pythonpath;
 	};
 
-	Path* reflectPath(const Path* path, const rs::MultipathSurface* surf);
+	std::unique_ptr<Path> reflectPath(const Path* path, const rs::MultipathSurface* surf);
 }
 
 #endif //PATH_H
