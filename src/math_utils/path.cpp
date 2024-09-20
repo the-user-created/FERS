@@ -31,13 +31,13 @@ namespace path
 		//Call the interpolation function relevant to the type
 		switch (_type)
 		{
-		case RS_INTERP_STATIC: getPositionStatic(coord, _coords);
+		case InterpType::INTERP_STATIC: getPositionStatic(coord, _coords);
 			break;
-		case RS_INTERP_LINEAR: getPositionLinear(t, coord, _coords);
+		case InterpType::INTERP_LINEAR: getPositionLinear(t, coord, _coords);
 			break;
-		case RS_INTERP_CUBIC: getPositionCubic(t, coord, _coords, _dd);
+		case InterpType::INTERP_CUBIC: getPositionCubic(t, coord, _coords, _dd);
 			break;
-		case RS_INTERP_PYTHON: if (_pythonpath == nullptr)
+		case InterpType::INTERP_PYTHON: if (_pythonpath == nullptr)
 			{
 				throw std::logic_error("Python path GetPosition called before module loaded");
 			}
@@ -54,10 +54,10 @@ namespace path
 		{
 			switch (_type)
 			{
-			case RS_INTERP_STATIC:
-			case RS_INTERP_LINEAR:
-			case RS_INTERP_PYTHON: break;
-			case RS_INTERP_CUBIC: finalizeCubic<coord::Coord>(_coords, _dd);
+			case InterpType::INTERP_STATIC:
+			case InterpType::INTERP_LINEAR:
+			case InterpType::INTERP_PYTHON: break;
+			case InterpType::INTERP_CUBIC: finalizeCubic<coord::Coord>(_coords, _dd);
 				break;
 			}
 			_final = true;
@@ -90,7 +90,7 @@ namespace path
 	std::unique_ptr<Path> reflectPath(const Path* path, const rs::MultipathSurface* surf)
 	{
 		//Don't support multipath on python paths for now
-		if (path->getType() == Path::RS_INTERP_PYTHON)
+		if (path->getType() == Path::InterpType::INTERP_PYTHON)
 		{
 			throw std::runtime_error("Multipath surfaces are not currently supported for Python paths");
 		}

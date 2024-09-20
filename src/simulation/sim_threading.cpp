@@ -72,7 +72,7 @@ namespace
 		results.power = transmitter_gain * receiver_gain * rcs / (4 * M_PI);
 
 		// Propagation loss calculation
-		if (!recv->checkFlag(rs::Receiver::FLAG_NOPROPLOSS))
+		if (!recv->checkFlag(rs::Receiver::RecvFlag::FLAG_NOPROPLOSS))
 		{
 			const RS_FLOAT distance_product = transmitter_to_target_distance * receiver_to_target_distance;
 			results.power *= wavelength * wavelength / (pow(4 * M_PI, 2) * distance_product * distance_product);
@@ -126,7 +126,7 @@ namespace
 
 		results.power = transmitter_gain * receiver_gain * wavelength * wavelength / (4 * M_PI);
 
-		if (!recv->checkFlag(rs::Receiver::FLAG_NOPROPLOSS)) { results.power /= 4 * M_PI * distance * distance; }
+		if (!recv->checkFlag(rs::Receiver::RecvFlag::FLAG_NOPROPLOSS)) { results.power /= 4 * M_PI * distance * distance; }
 
 		// Doppler shift calculation
 		const auto trpos_end = trans->getPosition(time + length) - recv->getPosition(time + length);
@@ -224,7 +224,7 @@ namespace
 		{
 			trans->getPulse(pulse.get(), i);
 			for (const auto& target : world->getTargets()) { simulateTarget(trans, recv, target.get(), pulse.get()); }
-			if (!recv->checkFlag(rs::Receiver::FLAG_NODIRECT)) { addDirect(trans, recv, pulse.get()); }
+			if (!recv->checkFlag(rs::Receiver::RecvFlag::FLAG_NODIRECT)) { addDirect(trans, recv, pulse.get()); }
 		}
 	}
 

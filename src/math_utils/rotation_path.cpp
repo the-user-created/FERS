@@ -31,13 +31,13 @@ namespace path
 		// Call the interpolation function relevant to the type
 		switch (_type)
 		{
-		case RS_INTERP_STATIC: getPositionStatic(coord, _coords);
+		case InterpType::INTERP_STATIC: getPositionStatic(coord, _coords);
 			break;
-		case RS_INTERP_LINEAR: getPositionLinear(t, coord, _coords);
+		case InterpType::INTERP_LINEAR: getPositionLinear(t, coord, _coords);
 			break;
-		case RS_INTERP_CUBIC: getPositionCubic(t, coord, _coords, _dd);
+		case InterpType::INTERP_CUBIC: getPositionCubic(t, coord, _coords, _dd);
 			break;
-		case RS_INTERP_CONSTANT: coord.t = t;
+		case InterpType::INTERP_CONSTANT: coord.t = t;
 			coord.azimuth = std::fmod(t * _rate.azimuth + _start.azimuth, 2 * M_PI);
 			coord.elevation = std::fmod(t * _rate.elevation + _start.elevation, 2 * M_PI);
 			break;
@@ -52,10 +52,10 @@ namespace path
 		{
 			switch (_type)
 			{
-			case RS_INTERP_STATIC:
-			case RS_INTERP_LINEAR:
-			case RS_INTERP_CONSTANT: break;
-			case RS_INTERP_CUBIC: finalizeCubic<coord::RotationCoord>(_coords, _dd);
+			case InterpType::INTERP_STATIC:
+			case InterpType::INTERP_LINEAR:
+			case InterpType::INTERP_CONSTANT: break;
+			case InterpType::INTERP_CUBIC: finalizeCubic<coord::RotationCoord>(_coords, _dd);
 				break;
 			}
 			_final = true;
@@ -74,7 +74,7 @@ namespace path
 	{
 		_start = setstart;
 		_rate = setrate;
-		_type = RS_INTERP_CONSTANT;
+		_type = InterpType::INTERP_CONSTANT;
 		_final = true;
 	}
 
