@@ -164,7 +164,7 @@ namespace
 		try { receiver->setNoiseTemperature(getChildRsFloat(recvXml, "noise_temp")); }
 		catch (XmlImportException&)
 		{
-			LOG(logging::Level::CRITICAL, "Receiver '{}' does not specify noise temperature",
+			LOG(logging::Level::INFO, "Receiver '{}' does not specify noise temperature",
 			                receiver->getName().c_str());
 		}
 
@@ -190,14 +190,14 @@ namespace
 		if (getAttributeBool(recvXml, "nodirect", "", false))
 		{
 			receiver->setFlag(Receiver::FLAG_NODIRECT);
-			LOG(logging::Level::VV, "Ignoring direct signals for receiver '{}'",
+			LOG(logging::Level::DEBUG, "Ignoring direct signals for receiver '{}'",
 			                receiver->getName().c_str());
 		}
 
 		if (getAttributeBool(recvXml, "nopropagationloss", "", false))
 		{
 			receiver->setFlag(Receiver::FLAG_NOPROPLOSS);
-			LOG(logging::Level::VV, "Ignoring propagation losses for receiver '{}'",
+			LOG(logging::Level::DEBUG, "Ignoring propagation losses for receiver '{}'",
 			                receiver->getName().c_str());
 		}
 
@@ -301,7 +301,7 @@ namespace
 		}
 		catch (XmlImportException& e)
 		{
-			LOG(logging::Level::WARNING, "Parse Error While Importing Waypoint. Discarding Waypoint.{}", e.what());
+			LOG(logging::Level::ERROR, "Parse Error While Importing Waypoint. Discarding Waypoint.{}", e.what());
 		}
 	}
 
@@ -317,7 +317,7 @@ namespace
 				getAttributeString(tmp, "function", "Attribute function missing")
 			);
 		}
-		catch (const XmlImportException& e) { LOG(logging::Level::VERBOSE, "{}", e.what()); }
+		catch (const XmlImportException& e) { LOG(logging::Level::DEBUG, "{}", e.what()); }
 	}
 
 	/// Process a MotionPath XML entry
@@ -340,7 +340,7 @@ namespace
 			}
 			else
 			{
-				LOG(logging::Level::WARNING,
+				LOG(logging::Level::ERROR,
 				                "Unsupported motion path interpolation type for platform '{}'. Defaulting to static.",
 				                platform->getName().c_str());
 				path->setInterp(path::Path::RS_INTERP_STATIC);
@@ -348,7 +348,7 @@ namespace
 		}
 		catch (XmlImportException&)
 		{
-			LOG(logging::Level::WARNING,
+			LOG(logging::Level::ERROR,
 			                "Motion path interpolation type not specified for platform '{}'. Defaulting to static.",
 			                platform->getName().c_str());
 			path->setInterp(path::Path::RS_INTERP_STATIC);
@@ -374,7 +374,7 @@ namespace
 		}
 		catch (const XmlImportException& e)
 		{
-			LOG(logging::Level::WARNING, "Parse Error While Importing Waypoint. Discarding Waypoint.{}", e.what());
+			LOG(logging::Level::ERROR, "Parse Error While Importing Waypoint. Discarding Waypoint.{}", e.what());
 		}
 	}
 
@@ -401,7 +401,7 @@ namespace
 		}
 		catch (XmlImportException& e)
 		{
-			LOG(logging::Level::WARNING, "Parse Error While Importing Constant Rotation.{}", e.what());
+			LOG(logging::Level::ERROR, "Parse Error While Importing Constant Rotation.{}", e.what());
 		}
 	}
 
@@ -420,7 +420,7 @@ namespace
 			else if (rottype == "static") { path->setInterp(path::RotationPath::RS_INTERP_STATIC); }
 			else
 			{
-				LOG(logging::Level::WARNING,
+				LOG(logging::Level::ERROR,
 				                "Unsupported rotation path interpolation type for platform '{}'. Defaulting to static.",
 				                platform->getName().c_str());
 				path->setInterp(path::RotationPath::RS_INTERP_STATIC);
@@ -428,7 +428,7 @@ namespace
 		}
 		catch (XmlImportException&)
 		{
-			LOG(logging::Level::WARNING,
+			LOG(logging::Level::ERROR,
 			                "Rotation path interpolation type not specified for platform '{}'. Defaulting to static.",
 			                platform->getName().c_str());
 			path->setInterp(path::RotationPath::RS_INTERP_STATIC);
@@ -491,7 +491,7 @@ namespace
 	{
 		const std::string pulse_name = getAttributeString(pulseXml, "name", "Pulses must specify a name");
 		const std::string pulse_type = getAttributeString(pulseXml, "type", "Pulses must specify a type");
-		LOG(logging::Level::VV, "Generating Pulse {} of type '{}'", pulse_name.c_str(),
+		LOG(logging::Level::DEBUG, "Generating Pulse {} of type '{}'", pulse_name.c_str(),
 		                pulse_type.c_str());
 
 		if (pulse_type == "file") { processAnyPulseFile(pulseXml, world, pulse_name); }
@@ -550,13 +550,13 @@ namespace
 			throw XmlImportException("Antenna specified unrecognised gain pattern '" + ant_pattern + "'");
 		}
 
-		LOG(logging::Level::VV, "Loading antenna '{}' of type '{}'", ant_name.c_str(),
+		LOG(logging::Level::DEBUG, "Loading antenna '{}' of type '{}'", ant_name.c_str(),
 						ant_pattern.c_str());
 
 		try {
 			antenna->setEfficiencyFactor(getChildRsFloat(antXml, "efficiency"));
 		} catch (XmlImportException&) {
-			LOG(logging::Level::VERBOSE,
+			LOG(logging::Level::DEBUG,
 							"Antenna '{}' does not specify efficiency, assuming unity.", ant_name.c_str());
 		}
 
@@ -591,28 +591,28 @@ namespace
 		try { timing->addFreqOffset(getChildRsFloat(antXml, "freq_offset")); }
 		catch (XmlImportException&)
 		{
-			LOG(logging::Level::VV, "Clock section '{}' does not specify frequency offset.",
+			LOG(logging::Level::DEBUG, "Clock section '{}' does not specify frequency offset.",
 			                name.c_str());
 		}
 
 		try { timing->addRandomFreqOffset(getChildRsFloat(antXml, "random_freq_offset")); }
 		catch (XmlImportException&)
 		{
-			LOG(logging::Level::VV,
+			LOG(logging::Level::DEBUG,
 			                "Clock section '{}' does not specify random frequency offset.", name.c_str());
 		}
 
 		try { timing->addPhaseOffset(getChildRsFloat(antXml, "phase_offset")); }
 		catch (XmlImportException&)
 		{
-			LOG(logging::Level::VV, "Clock section '{}' does not specify phase offset.",
+			LOG(logging::Level::DEBUG, "Clock section '{}' does not specify phase offset.",
 			                name.c_str());
 		}
 
 		try { timing->addRandomPhaseOffset(getChildRsFloat(antXml, "random_phase_offset")); }
 		catch (XmlImportException&)
 		{
-			LOG(logging::Level::VV, "Clock section '{}' does not specify random phase offset.",
+			LOG(logging::Level::DEBUG, "Clock section '{}' does not specify random phase offset.",
 			                name.c_str());
 		}
 
@@ -620,14 +620,14 @@ namespace
 		catch (XmlImportException&)
 		{
 			timing->setFrequency(parameters::rate());
-			LOG(logging::Level::VERBOSE,
+			LOG(logging::Level::DEBUG,
 			                "Clock section '{}' does not specify frequency. Assuming {}.", name.c_str(),
 			                parameters::rate());
 		}
 
 		if (getAttributeBool(antXml, "synconpulse", "", true)) { timing->setSyncOnPulse(); }
 
-		LOG(logging::Level::VV, "Loading timing source '{}'", name.c_str());
+		LOG(logging::Level::DEBUG, "Loading timing source '{}'", name.c_str());
 		world->add(std::move(timing));
 	}
 
@@ -639,19 +639,19 @@ namespace
 		try { parameters::setC(getChildRsFloat(root, "c")); }
 		catch (XmlImportException&)
 		{
-			LOG(logging::Level::VERBOSE, "Using default value of c: {}(m/s)", parameters::c());
+			LOG(logging::Level::DEBUG, "Using default value of c: {}(m/s)", parameters::c());
 		}
 
 		try { parameters::setRate(getChildRsFloat(root, "rate")); }
 		catch (XmlImportException&)
 		{
-			LOG(logging::Level::VERBOSE, "Using default sampling rate.");
+			LOG(logging::Level::DEBUG, "Using default sampling rate.");
 		}
 
 		try { parameters::setCwSampleRate(getChildRsFloat(root, "interprate")); }
 		catch (XmlImportException&)
 		{
-			LOG(logging::Level::VERBOSE,
+			LOG(logging::Level::DEBUG,
 			                "Using default value of CW position interpolation rate: {}",
 			                parameters::cwSampleRate());
 		}
@@ -659,24 +659,24 @@ namespace
 		try { parameters::setRandomSeed(static_cast<unsigned>(std::fabs(getChildRsFloat(root, "randomseed")))); }
 		catch (XmlImportException&)
 		{
-			LOG(logging::Level::VERBOSE, "Using random seed from clock(): {}",
+			LOG(logging::Level::DEBUG, "Using random seed from clock(): {}",
 			                parameters::randomSeed());
 		}
 
 		try
 		{
 			parameters::setAdcBits(static_cast<unsigned>(std::floor(getChildRsFloat(root, "adc_bits"))));
-			LOG(logging::Level::VERBOSE, "Quantizing results to {} bits", parameters::adcBits());
+			LOG(logging::Level::DEBUG, "Quantizing results to {} bits", parameters::adcBits());
 		}
 		catch (XmlImportException&)
 		{
-			LOG(logging::Level::VV, "Using full precision simulation.");
+			LOG(logging::Level::DEBUG, "Using full precision simulation.");
 		}
 
 		try { parameters::setOversampleRatio(static_cast<unsigned>(std::floor(getChildRsFloat(root, "oversample")))); }
 		catch (XmlImportException&)
 		{
-			LOG(logging::Level::VV,
+			LOG(logging::Level::DEBUG,
 			                "Oversampling not in use. Ensure than pulses are correctly sampled.");
 		}
 

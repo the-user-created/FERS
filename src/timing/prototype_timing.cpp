@@ -31,7 +31,7 @@ namespace rs
 	{
 		if (_random_freq.has_value())
 		{
-			LOG(logging::Level::INFO,
+			LOG(logging::Level::ERROR,
 			                "Random frequency offset and constant frequency offset are set for timing source {}. Only the random offset will be used.",
 			                getName().c_str());
 		}
@@ -42,7 +42,7 @@ namespace rs
 	{
 		if (_random_phase.has_value())
 		{
-			LOG(logging::Level::INFO,
+			LOG(logging::Level::ERROR,
 			                "Random phase offset and constant phase offset are set for timing source {}. Only the random offset will be used.",
 			                getName().c_str());
 		}
@@ -53,7 +53,7 @@ namespace rs
 	{
 		if (_freq_offset.has_value())
 		{
-			LOG(logging::Level::INFO,
+			LOG(logging::Level::ERROR,
 			                "Random frequency offset and constant frequency offset are set for timing source {}. Only the random offset will be used.",
 			                getName().c_str());
 		}
@@ -64,7 +64,7 @@ namespace rs
 	{
 		if (_phase_offset.has_value())
 		{
-			LOG(logging::Level::INFO,
+			LOG(logging::Level::ERROR,
 			                "Random phase offset and constant phase offset are set for timing source {}. Only the random offset will be used.",
 			                getName().c_str());
 		}

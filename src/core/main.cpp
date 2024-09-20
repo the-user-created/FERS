@@ -3,9 +3,10 @@
 // Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 // Started: 25 April 2006
 
-#include <cstring>
-#include <stdexcept>
+#include <iostream>
 
+#include "arg_parser.h"
+#include "logging.h"
 #include "parameters.h"
 #include "portable_utils.h"
 #include "noise/noise_generators.h"
@@ -15,44 +16,38 @@
 
 int main(const int argc, char* argv[])
 {
-	logging::logger.setLevel(logging::Level::VV);
-
-	LOG(logging::Level::INFO, "/------------------------------------------------\\");
-	LOG(logging::Level::INFO, "| FERS - The Flexible Extensible Radar Simulator |");
-	LOG(logging::Level::INFO, "| Version 0.28                                   |");
-	LOG(logging::Level::INFO, "\\------------------------------------------------/");
-
-	if (argc != 2 || !strncmp(argv[1], "--help", 6))
+	const auto config_opt = arg_parser::parseArguments(argc, argv);
+	if (!config_opt)
 	{
-		LOG(logging::Level::INFO, "Usage: {} <scriptfile> (Run simulation specified by script file)",
-		    argv[0]);
-		LOG(logging::Level::INFO, "Usage: {} --help (Show this message)", argv[0]);
-		return 2;
+		return 1; // Invalid arguments or help/version shown
 	}
+
+	const auto& [script_file, log_level, num_threads] = *config_opt;
+
+	// Set the logging level
+	logging::logger.setLevel(log_level);
 
 	try
 	{
-		parameters::setThreads(portable_utils::countProcessors());
+		parameters::setThreads(num_threads);
 		const auto world = std::make_unique<rs::World>();
 		noise_utils::initializeNoise();
 
-		LOG(logging::Level::VERBOSE, "Loading XML Script File.");
-		xml::loadXmlFile(argv[1], world.get());
+		xml::loadXmlFile(script_file, world.get());
 
 		rs::threaded_sim::runThreadedSim(parameters::renderThreads(), world.get());
 
-		LOG(logging::Level::VERBOSE, "Cleaning up");
+		LOG(logging::Level::INFO, "Cleaning up");
 
 		noise_utils::cleanUpNoise();
 
-		LOG(logging::Level::CRITICAL, "Simulation completed successfully!");
+		LOG(logging::Level::INFO, "Simulation completed successfully!");
 
 		return 0;
 	}
 	catch (std::exception& ex)
 	{
-		LOG(logging::Level::CRITICAL,
-		    "Simulation encountered unexpected error:\t{}\nSimulator will terminate.",
+		LOG(logging::Level::FATAL, "Simulation encountered unexpected error:\t{}\nSimulator will terminate.",
 		    ex.what());
 		return 1;
 	}

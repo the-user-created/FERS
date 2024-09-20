@@ -49,10 +49,10 @@ namespace rs
 		{
 			if (!_dual)
 			{
-				LOG(logging::Level::VERBOSE, "[Platform.getDual()] Dual platform does not exist");
+				LOG(logging::Level::DEBUG, "[Platform.getDual()] Dual platform does not exist");
 				return std::nullopt;
 			}
-			LOG(logging::Level::VERBOSE, "[Platform.getDual()] Getting dual platform for {}", _name.c_str());
+			LOG(logging::Level::DEBUG, "[Platform.getDual()] Getting dual platform for {}", _name.c_str());
 			return _dual;
 		}
 

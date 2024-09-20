@@ -103,7 +103,7 @@ namespace path
 			refl.t = t;
 			//Reflect the point in the plane
 			refl.pos = surf->reflectPoint(pos);
-			LOG(logging::Level::VERBOSE, "Reflected ({}, {}, {}) to ({}, {}, {})", pos.x, pos.y,
+			LOG(logging::Level::DEBUG, "Reflected ({}, {}, {}) to ({}, {}, {})", pos.x, pos.y,
 			                pos.z, refl.pos.x, refl.pos.y, refl.pos.z);
 			dual_path->addCoord(refl);
 		}
