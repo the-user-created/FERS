@@ -6,6 +6,7 @@
 #include "radar_system.h"
 
 #include <algorithm>
+#include <stack>
 
 #include "core/logging.h"
 #include "core/parameters.h"
@@ -142,43 +143,81 @@ RS_FLOAT Receiver::getWindowStart(const int window) const
 //
 // =====================================================================================================================
 
-Receiver* rs::createMultipathDual(Receiver* recv, const MultipathSurface* surf) // NOLINT(misc-no-recursion)
+template <typename T>
+T* createMultipathDualBase(T* obj, const MultipathSurface* surf, const std::string& dualNameSuffix) // NOLINT(misc-no-recursion)
 {
-	if (recv->getDual()) { return recv->getDual(); }
-	logging::printf(logging::RS_VERBOSE, "[Receiver.createMultipathDual] Creating dual receiver for %s\n", recv->getName().c_str());
-	const Platform* dual_plat = createMultipathDual(recv->getPlatform(), surf);
-	auto* dual = new Receiver(dual_plat, recv->getName() + "_dual");
-	recv->setDual(dual);
-	dual->setAntenna(recv->getAntenna());
-	if (recv->getAttached())
-	{
-		dual->setAttached(
-			createMultipathDual(dynamic_cast<Transmitter*>(const_cast<Radar*>(recv->getAttached())), surf));
+	if (obj->getDual()) {
+		return obj->getDual();
 	}
+
+	logging::printf(logging::RS_VERBOSE, "[%s.createMultipathDual] Creating dual for %s\n",
+					typeid(T).name(), obj->getName().c_str());
+
+	// Create or retrieve the dual platform
+	Platform* dual_platform = createMultipathDual(obj->getPlatform(), surf);
+
+	// Handle the specific case for Transmitter that needs an extra 'pulsed' parameter
+	T* dual = nullptr;
+	if constexpr (std::is_same_v<T, Transmitter>) {
+		dual = new Transmitter(dual_platform, obj->getName() + dualNameSuffix, obj->getPulsed());
+	} else {
+		dual = new T(dual_platform, obj->getName() + dualNameSuffix);
+	}
+
+	// Link the dual to the original
+	obj->setDual(dual);
+
+	// Set shared properties
+	dual->setAntenna(obj->getAntenna());
+	dual->setTiming(obj->getTiming());
+
+	if constexpr (std::is_same_v<T, Receiver>) {
+		dual->setNoiseTemperature(obj->getNoiseTemperature());
+		dual->setWindowProperties(obj->getWindowLength(), obj->getWindowPrf(), obj->getWindowSkip());
+	} else if constexpr (std::is_same_v<T, Transmitter>) {
+		dual->setPrf(obj->getPrf());
+		dual->setSignal(obj->getSignal());
+		dual->setPulsed(obj->getPulsed());
+	}
+
+	// Set multipath factor
 	dual->setMultipathDual(surf->getFactor());
-	dual->setNoiseTemperature(recv->getNoiseTemperature());
-	dual->setWindowProperties(recv->getWindowLength(), recv->getWindowPrf(), recv->getWindowSkip());
-	dual->setTiming(recv->getTiming());
+
+	// Use a stack to iteratively process attached objects
+	std::stack<Radar*> stack;
+
+	// If the object has an attached component, push it onto the stack for further processing
+	if (obj->getAttached()) {
+		stack.push(const_cast<Radar*>(obj->getAttached()));
+	}
+
+	while (!stack.empty()) {
+		// print stack size
+		logging::printf(logging::RS_VERBOSE, "[%s.createMultipathDual] Stack size: %d\n",
+						typeid(T).name(), stack.size());
+		Radar* attached = stack.top();
+		stack.pop();
+
+		if (auto* trans = dynamic_cast<Transmitter*>(attached)) {
+			// Create dual for attached Transmitter and link it to the dual of the current object
+			dual->setAttached(createMultipathDualBase(trans, surf, dualNameSuffix));
+		} else if (auto* recv = dynamic_cast<Receiver*>(attached)) {
+			// Create dual for attached Receiver and link it to the dual of the current object
+			dual->setAttached(createMultipathDualBase(recv, surf, dualNameSuffix));
+		}
+	}
+
 	return dual;
 }
 
-Transmitter* rs::createMultipathDual(Transmitter* trans, const MultipathSurface* surf) // NOLINT(misc-no-recursion)
+
+Receiver* rs::createMultipathDual(Receiver* recv, const MultipathSurface* surf)
 {
-	if (trans->getDual()) { return trans->getDual(); }
-	logging::printf(logging::RS_VERBOSE, "[Transmitter.createMultipathDual] Creating dual transmitter for %s\n", trans->getName().c_str());
-	const Platform* dual_plat = createMultipathDual(trans->getPlatform(), surf);
-	auto* dual = new Transmitter(dual_plat, trans->getName() + "_dual", trans->getPulsed());
-	trans->setDual(dual);
-	//dual->_antenna = trans->_antenna;
-	dual->setAntenna(trans->getAntenna());
-	if (trans->getAttached())
-	{
-		dual->setAttached(createMultipathDual(dynamic_cast<Receiver*>(const_cast<Radar*>(trans->getAttached())), surf));
-	}
-	dual->setMultipathDual(surf->getFactor());
-	dual->setPrf(trans->getPrf());
-	dual->setPulsed(trans->getPulsed());
-	dual->setSignal(trans->getSignal());
-	dual->setTiming(trans->getTiming());
-	return dual;
+	return createMultipathDualBase(recv, surf, "_dual");
+}
+
+
+Transmitter* rs::createMultipathDual(Transmitter* trans, const MultipathSurface* surf)
+{
+	return createMultipathDualBase(trans, surf, "_dual");
 }
