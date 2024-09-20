@@ -17,59 +17,43 @@ namespace rs
 	class PrototypeTiming;
 	class ClockModelGenerator;
 
-	class Timing
+	class Timing final
 	{
 	public:
-		explicit Timing(std::string name) : _name(std::move(name)) {}
+		explicit Timing(std::string name)
+			: _name(std::move(name)), _enabled(false), _model(nullptr) {}
 
 		// Virtual destructor ensures proper cleanup in derived classes
-		virtual ~Timing() = default;
+		~Timing() = default;
 
 		// Deleted copy constructor and assignment operator to prevent copying
 		Timing(const Timing&) = delete;
+
 		Timing& operator=(const Timing&) = delete;
 
-		[[nodiscard]] virtual RS_FLOAT getPulseTimeError() const noexcept = 0;
+		[[nodiscard]] RS_FLOAT getPulseTimeError() const noexcept
+		{
+			return _enabled && _model ? _model->getSample() : 0.0f;
+		}
 
-		virtual RS_FLOAT nextNoiseSample() = 0;
+		[[nodiscard]] RS_FLOAT nextNoiseSample() const { return _enabled ? _model->getSample() : 0.0f; }
 
-		virtual void skipSamples(long long samples) = 0;
+		void skipSamples(const long long samples) const { if (_enabled && _model) { _model->skipSamples(samples); } }
 
-		// Note: This function is not used in the codebase
 		[[nodiscard]] std::string getName() const noexcept { return _name; }
-
-	private:
-		std::string _name;
-	};
-
-	class ClockModelTiming final : public Timing
-	{
-	public:
-		explicit ClockModelTiming(const std::string& name) : Timing(name), _enabled(false), _model(nullptr) {}
-
-		~ClockModelTiming() override = default;
-
-		RS_FLOAT nextNoiseSample() override { return _enabled ? _model->getSample() : 0.0f; }
-
-		void skipSamples(const long long samples) override { if (_enabled && _model) { _model->skipSamples(samples); } }
-
-		void reset() const { if (_model) { _model->reset(); } }
 
 		[[nodiscard]] bool getSyncOnPulse() const noexcept { return _sync_on_pulse; }
 
 		void initializeModel(const PrototypeTiming* timing);
 
-		// Note: This function is not used in the codebase
-		[[nodiscard]] RS_FLOAT getPulseTimeError() const noexcept override
-		{
-			return _enabled && _model ? _model->getSample() : 0.0f;
-		}
+		void reset() const { if (_model) { _model->reset(); } }
 
 		[[nodiscard]] RS_FLOAT getFrequency() const noexcept { return _frequency; }
 
 		[[nodiscard]] bool enabled() const noexcept { return _enabled && _model && _model->enabled(); }
 
 	private:
+		std::string _name;
 		bool _enabled;
 		std::unique_ptr<ClockModelGenerator> _model; // Use a smart pointer for automatic memory management
 		std::vector<RS_FLOAT> _alphas;
