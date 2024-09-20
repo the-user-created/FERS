@@ -7,6 +7,7 @@
 #define INTERPOLATION_SET_H
 
 #include <map>
+#include <memory>
 #include <vector>
 
 #include "config.h"
@@ -38,9 +39,9 @@ namespace rs
 	class InterpSet
 	{
 	public:
-		InterpSet() { _data = new InterpSetData(); }
+		InterpSet() { _data = std::make_unique<InterpSetData>(); }
 
-		~InterpSet() { delete _data; }
+		~InterpSet() = default;
 
 		// Note: This function is not used in the codebase
 		void loadSamples(const std::vector<RS_FLOAT>& x, const std::vector<RS_FLOAT>& y) const
@@ -57,7 +58,7 @@ namespace rs
 		void divide(const RS_FLOAT a) const { _data->divide(a); }
 
 	private:
-		InterpSetData* _data;
+		std::unique_ptr<InterpSetData> _data;
 	};
 }
 

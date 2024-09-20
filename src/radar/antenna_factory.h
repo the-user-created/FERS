@@ -6,10 +6,12 @@
 #ifndef ANTENNA_FACTORY_H
 #define ANTENNA_FACTORY_H
 
+#include <memory>
 #include <string>
 
 #include "antenna_pattern.h"
 #include "config.h"
+#include "interpolation/interpolation_set.h"
 #include "math_utils/geometry_ops.h"
 #include "python/python_extension.h"
 
@@ -151,9 +153,13 @@ namespace rs_antenna
 	class XmlAntenna final : public rs::Antenna
 	{
 	public:
-		XmlAntenna(const std::string& name, const std::string& filename);
+		XmlAntenna(const std::string& name, const std::string& filename) : Antenna(name),
+		_azi_samples(std::make_unique<rs::InterpSet>()), _elev_samples(std::make_unique<rs::InterpSet>())
+		{
+			loadAntennaDescription(filename);
+		}
 
-		~XmlAntenna() override;
+		~XmlAntenna() override = default;
 
 		[[nodiscard]] RS_FLOAT
 		getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const override;
@@ -162,19 +168,17 @@ namespace rs_antenna
 		void loadAntennaDescription(const std::string& filename);
 
 		RS_FLOAT _max_gain{};
-		rs::InterpSet* _azi_samples;
-		rs::InterpSet* _elev_samples;
+		std::unique_ptr<rs::InterpSet> _azi_samples;
+		std::unique_ptr<rs::InterpSet> _elev_samples;
 	};
 
 	class FileAntenna final : public rs::Antenna
 	{
 	public:
-		FileAntenna(const std::string& name, const std::string& filename) : Antenna(name)
-		{
-			_pattern = new rs::Pattern(filename);
-		}
+		FileAntenna(const std::string& name, const std::string& filename) : Antenna(name),
+		_pattern(std::make_unique<rs::Pattern>(filename)) {}
 
-		~FileAntenna() override { delete _pattern; }
+		~FileAntenna() override = default;
 
 		[[nodiscard]] RS_FLOAT
 		getGain(const rs::SVec3& angle, const rs::SVec3& refangle, RS_FLOAT wavelength) const override
@@ -183,7 +187,7 @@ namespace rs_antenna
 		}
 
 	private:
-		rs::Pattern* _pattern;
+		std::unique_ptr<rs::Pattern> _pattern;
 	};
 
 	class PythonAntenna final : public rs::Antenna

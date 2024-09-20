@@ -78,21 +78,10 @@ void Transmitter::setPrf(const RS_FLOAT mprf)
 //
 // =====================================================================================================================
 
-Receiver::~Receiver()
-{
-	clearResponses();
-}
-
-void Receiver::addResponse(Response* response)
+void Receiver::addResponse(std::unique_ptr<Response> response)
 {
 	std::unique_lock lock(_responses_mutex);
-	_responses.push_back(response);
-}
-
-void Receiver::clearResponses()
-{
-	for (const auto& response : _responses) { delete response; }
-	_responses.clear();
+	_responses.push_back(std::move(response));
 }
 
 void Receiver::render()
@@ -210,12 +199,10 @@ T* createMultipathDualBase(T* obj, const MultipathSurface* surf, const std::stri
 	return dual;
 }
 
-
 Receiver* rs::createMultipathDual(Receiver* recv, const MultipathSurface* surf)
 {
 	return createMultipathDualBase(recv, surf, "_dual");
 }
-
 
 Transmitter* rs::createMultipathDual(Transmitter* trans, const MultipathSurface* surf)
 {

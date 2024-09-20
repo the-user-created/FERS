@@ -14,92 +14,64 @@
 
 using namespace rs;
 
-template <typename T>
-struct ObjDel
-{
-	void operator()(T x)
-	{
-		delete x;
-	}
-};
-
-World::~World()
-{
-	for (auto& [_, snd] : _pulses)
-	{
-		delete snd;
-	}
-	for (auto& [_, snd] : _antennas)
-	{
-		delete snd;
-	}
-	for (auto& [_, snd] : _timings)
-	{
-		delete snd;
-	}
-
-	// TODO: These should all be moved to smart pointers
-	std::for_each(_receivers.begin(), _receivers.end(), ObjDel<Receiver*>());
-	std::for_each(_transmitters.begin(), _transmitters.end(), ObjDel<Transmitter*>());
-	std::for_each(_targets.begin(), _targets.end(), ObjDel<Target*>());
-	std::for_each(_platforms.begin(), _platforms.end(), ObjDel<Platform*>());
-}
-
-void World::add(RadarSignal* pulse)
+void World::add(std::unique_ptr<RadarSignal> pulse)
 {
 	if (findSignal(pulse->getName()))
 	{
 		throw std::runtime_error("[ERROR] A pulse with the name " + pulse->getName() + " already exists.");
 	}
-	_pulses[pulse->getName()] = pulse;
+	_pulses[pulse->getName()] = std::move(pulse);
 }
 
-void World::add(Antenna* antenna)
+void World::add(std::unique_ptr<Antenna> antenna)
 {
 	if (findAntenna(antenna->getName()))
 	{
 		throw std::runtime_error("[ERROR] An antenna with the name " + antenna->getName() + " already exists.");
 	}
-	_antennas[antenna->getName()] = antenna;
+	_antennas[antenna->getName()] = std::move(antenna);
 }
 
-void World::add(PrototypeTiming* timing)
+void World::add(std::unique_ptr<PrototypeTiming> timing)
 {
 	if (findTiming(timing->getName()))
 	{
 		throw std::runtime_error("[ERROR] A timing source with the name " + timing->getName() + " already exists.");
 	}
-	_timings[timing->getName()] = timing;
+	_timings[timing->getName()] = std::move(timing);
 }
 
-void World::addMultipathSurface(MultipathSurface* surface)
+void World::addMultipathSurface(std::unique_ptr<MultipathSurface> surface)
 {
 	if (_multipath_surface)
 	{
 		throw std::runtime_error("[ERROR] Only one multipath surface per simulation is supported");
 	}
-	_multipath_surface = surface;
+	_multipath_surface = std::move(surface);
 }
 
 void World::processMultipath()
 {
 	if (_multipath_surface)
 	{
-		std::vector<Platform*> new_duals;
-		for (const auto plat : _platforms)
+		// TODO: See if there is a way to do this without copying across the vector
+		std::vector<std::unique_ptr<Platform>> new_duals;
+		for (const auto& plat : _platforms)
 		{
-			new_duals.push_back(createMultipathDual(plat, _multipath_surface));
+		    new_duals.push_back(std::unique_ptr<Platform>(createMultipathDual(plat.get(), _multipath_surface.get())));
 		}
-		_platforms.insert(_platforms.end(), new_duals.begin(), new_duals.end());
-		for (const auto recv : _receivers)
+		_platforms.insert(_platforms.end(), std::make_move_iterator(new_duals.begin()), std::make_move_iterator(new_duals.end()));
+
+		for (const auto& recv : _receivers)
 		{
-			_receivers.push_back(createMultipathDual(recv, _multipath_surface));
+			_receivers.push_back(std::vector<std::unique_ptr<Receiver>>::value_type(createMultipathDual(recv.get(), _multipath_surface.get())));
 		}
-		for (const auto trans : _transmitters)
+
+		for (const auto& trans : _transmitters)
 		{
-			_transmitters.push_back(createMultipathDual(trans, _multipath_surface));
+			_transmitters.push_back(std::vector<std::unique_ptr<Transmitter>>::value_type(createMultipathDual(trans.get(), _multipath_surface.get())));
 		}
-		delete _multipath_surface;
-		_multipath_surface = nullptr;
+
+		_multipath_surface.reset();
 	}
 }

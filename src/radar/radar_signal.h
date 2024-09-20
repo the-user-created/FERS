@@ -18,9 +18,9 @@ namespace rs
 	class Signal
 	{
 	public:
-		Signal() : _data(nullptr), _size(0), _rate(0) {}
+		Signal() : _size(0), _rate(0) {}
 
-		~Signal() { delete[] _data; }
+		~Signal() = default;
 
 		void clear();
 
@@ -33,13 +33,13 @@ namespace rs
 		[[nodiscard]] unsigned getSize() const { return _size; }
 
 		// Note: This function is not used in the codebase
-		[[nodiscard]] RS_FLOAT* copyData() const;
+		[[nodiscard]] std::vector<RS_FLOAT> copyData() const;
 
 		std::shared_ptr<std::complex<double>[]> render(const std::vector<InterpPoint>& points, unsigned& size,
 		                                               double fracWinDelay) const;
 
 	private:
-		RS_COMPLEX* _data;
+		std::vector<RS_COMPLEX> _data;
 		unsigned _size;
 		RS_FLOAT _rate;
 
@@ -54,9 +54,9 @@ namespace rs
 	class RadarSignal
 	{
 	public:
-		RadarSignal(std::string name, RS_FLOAT power, RS_FLOAT carrierfreq, RS_FLOAT length, Signal* signal);
+		RadarSignal(std::string name, RS_FLOAT power, RS_FLOAT carrierfreq, RS_FLOAT length, std::unique_ptr<Signal> signal);
 
-		~RadarSignal() { delete _signal; }
+		~RadarSignal() = default;
 
 		// Delete copy constructor and copy assignment operator to prevent copying
 		RadarSignal(const RadarSignal&) = delete;
@@ -86,7 +86,7 @@ namespace rs
 		RS_FLOAT _power;
 		RS_FLOAT _carrierfreq;
 		RS_FLOAT _length;
-		Signal* _signal;
+		std::unique_ptr<Signal> _signal;
 		JonesVector _polar;
 	};
 }

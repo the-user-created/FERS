@@ -79,13 +79,13 @@ namespace path
 	}
 
 	/// Create a new path which is a reflection of this one around the given plane
-	RotationPath* reflectPath(const RotationPath* path, const rs::MultipathSurface* surf)
+	std::unique_ptr<RotationPath> reflectPath(const RotationPath* path, const rs::MultipathSurface* surf)
 	{
 		//Create the new RotationPath object
-		auto* dual = new RotationPath(path->getType());
+		auto dual_path = std::make_unique<RotationPath>(path->getType());
 		//Copy constant rotation params
-		dual->setStart(path->getStart());
-		dual->setRate(path->getRate());
+		dual_path->setStart(path->getStart());
+		dual_path->setRate(path->getRate());
 		//Copy the coords, reflecting them in the surface
 		for (const auto& coord : path->getCoords())
 		{
@@ -99,11 +99,11 @@ namespace path
 			const rs::SVec3 refl(v);
 			rc.azimuth = refl.azimuth;
 			rc.elevation = refl.elevation;
-			dual->addCoord(rc);
+			dual_path->addCoord(rc);
 		}
 		//Finalize the copied path
-		dual->finalize();
+		dual_path->finalize();
 		//Done, return the created object
-		return dual;
+		return dual_path;
 	}
 }

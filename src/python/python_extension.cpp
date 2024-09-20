@@ -32,7 +32,7 @@ void rs_python::initPython()
 // =====================================================================================================================
 
 PythonExtension::PythonExtension(const std::string& module, const std::string& function)
-	: _data(new PythonExtensionData), _module(module), _function(function)
+	: _data(std::make_unique<PythonExtensionData>()), _module(module), _function(function)
 {
 	PyObject* modname = PyUnicode_FromString(module.c_str());
 	_data->p_module = PyImport_Import(modname);
@@ -59,7 +59,6 @@ PythonExtension::~PythonExtension()
 {
 	Py_DECREF(_data->p_func);
 	Py_DECREF(_data->p_module);
-	delete _data;
 }
 
 // =====================================================================================================================

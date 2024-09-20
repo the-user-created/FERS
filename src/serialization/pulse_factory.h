@@ -6,6 +6,7 @@
 #ifndef PULSE_FACTORY_H
 #define PULSE_FACTORY_H
 
+#include <memory>
 #include <string>
 
 #include "config.h"
@@ -18,8 +19,7 @@ namespace rs
 
 namespace pulse_factory
 {
-	rs::RadarSignal* loadPulseFromFile(const std::string& name, const std::string& filename, RS_FLOAT power,
-	                                   RS_FLOAT carrierFreq);
+	std::unique_ptr<rs::RadarSignal> loadPulseFromFile(const std::string& name, const std::string& filename, RS_FLOAT power, RS_FLOAT carrierFreq);
 }
 
 #endif //PULSE_FACTORY_H

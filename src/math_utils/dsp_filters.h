@@ -57,13 +57,9 @@ namespace rs
 	class FirFilter final : public DspFilter
 	{
 	public:
-		// Constructor accepting a std::vector of coefficients (not used in the codebase)
+		// Constructor accepting a std::vector of coefficients
 		explicit FirFilter(const std::vector<RS_FLOAT>& coeffs) : _filter(coeffs), _w(coeffs.size(), 0),
-		                                                          _order(coeffs.size()) {}
-
-		// Constructor accepting a raw array of coefficients and its size
-		FirFilter(const RS_FLOAT* coeffs, const unsigned count) : _filter(coeffs, coeffs + count), _w(count, 0),
-		                                                          _order(count) {}
+		_order(coeffs.size()) {}
 
 		~FirFilter() override = default;
 
@@ -74,7 +70,7 @@ namespace rs
 		void filter(RS_FLOAT* samples, int size) override;
 
 		// Filter for complex samples
-		void filter(std::complex<RS_FLOAT>* samples, unsigned size) const;
+		void filter(std::vector<RS_COMPLEX>& samples, unsigned size) const;
 
 	private:
 		std::vector<RS_FLOAT> _filter; // FIR filter coefficients

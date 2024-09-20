@@ -8,8 +8,13 @@
 #define WORLD_H
 
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
+
+#include "math_utils/multipath_surface.h"
+#include "radar/target.h"
+#include "timing/prototype_timing.h"
 
 namespace rs
 {
@@ -17,57 +22,54 @@ namespace rs
 	class Transmitter;
 	class RadarSignal;
 	class Antenna;
-	class Target;
 	class Platform;
-	class PrototypeTiming;
-	class MultipathSurface;
 
 	class World
 	{
 	public:
-		World() : _multipath_surface(nullptr) {}
+		World() = default;
 
-		~World();
+		~World() = default;
 
-		void add(Platform* plat) { _platforms.push_back(plat); }
+		void add(std::unique_ptr<Platform> plat) { _platforms.push_back(std::move(plat)); }
 
-		void add(Transmitter* trans) { _transmitters.push_back(trans); }
+		void add(std::unique_ptr<Transmitter> trans) { _transmitters.push_back(std::move(trans)); }
 
-		void add(Receiver* recv) { _receivers.push_back(recv); }
+		void add(std::unique_ptr<Receiver> recv) { _receivers.push_back(std::move(recv)); }
 
-		void add(Target* target) { _targets.push_back(target); }
+		void add(std::unique_ptr<Target> target) { _targets.push_back(std::move(target)); }
 
-		void add(RadarSignal* pulse);
+		void add(std::unique_ptr<RadarSignal> pulse);
 
-		void add(Antenna* antenna);
+		void add(std::unique_ptr<Antenna> antenna);
 
-		void add(PrototypeTiming* timing);
+		void add(std::unique_ptr<PrototypeTiming> timing);
 
-		void addMultipathSurface(MultipathSurface* surface);
+		void addMultipathSurface(std::unique_ptr<MultipathSurface> surface);
 
-		RadarSignal* findSignal(const std::string& name) { return _pulses[name]; }
+		RadarSignal* findSignal(const std::string& name) { return _pulses[name].get(); }
 
-		Antenna* findAntenna(const std::string& name) { return _antennas[name]; }
+		Antenna* findAntenna(const std::string& name) { return _antennas[name].get(); }
 
-		PrototypeTiming* findTiming(const std::string& name) { return _timings[name]; }
+		PrototypeTiming* findTiming(const std::string& name) { return _timings[name].get(); }
 
-		[[nodiscard]] std::vector<Target*> getTargets() const { return _targets; }
+		[[nodiscard]] const std::vector<std::unique_ptr<Target>>& getTargets() const { return _targets; }
 
-		[[nodiscard]] std::vector<Receiver*> getReceivers() const { return _receivers; }
+		[[nodiscard]] const std::vector<std::unique_ptr<Receiver>>& getReceivers() const { return _receivers; }
 
-		[[nodiscard]] std::vector<Transmitter*> getTransmitters() const { return _transmitters; }
+		[[nodiscard]] const std::vector<std::unique_ptr<Transmitter>>& getTransmitters() const { return _transmitters; }
 
 		void processMultipath();
 
 	private:
-		std::vector<Platform*> _platforms;
-		std::vector<Transmitter*> _transmitters;
-		std::vector<Receiver*> _receivers;
-		std::vector<Target*> _targets;
-		std::map<std::string, RadarSignal*> _pulses;
-		std::map<std::string, Antenna*> _antennas;
-		std::map<std::string, PrototypeTiming*> _timings;
-		MultipathSurface* _multipath_surface;
+		std::vector<std::unique_ptr<Platform>> _platforms;
+		std::vector<std::unique_ptr<Transmitter>> _transmitters;
+		std::vector<std::unique_ptr<Receiver>> _receivers;
+		std::vector<std::unique_ptr<Target>> _targets;
+		std::map<std::string, std::unique_ptr<RadarSignal>> _pulses;
+		std::map<std::string, std::unique_ptr<Antenna>> _antennas;
+		std::map<std::string, std::unique_ptr<PrototypeTiming>> _timings;
+		std::unique_ptr<MultipathSurface> _multipath_surface;
 	};
 }
 

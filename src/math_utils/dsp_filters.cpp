@@ -24,10 +24,10 @@ namespace
 {
 	RS_FLOAT sinc(const RS_FLOAT x) { return x == 0 ? 1.0 : std::sin(x * M_PI) / (x * M_PI); }
 
-	RS_FLOAT* blackmanFir(const RS_FLOAT cutoff, unsigned& filtLength)
+	std::vector<RS_FLOAT> blackmanFir(const RS_FLOAT cutoff, unsigned& filtLength)
 	{
 		filtLength = parameters::renderFilterLength() * 2;
-		auto* coeffs = new RS_FLOAT[filtLength];
+		std::vector<RS_FLOAT> coeffs(filtLength);  // Use vector for automatic memory management
 		const RS_FLOAT n = filtLength / 2.0;
 		for (unsigned i = 0; i < filtLength; i++)
 		{
@@ -49,7 +49,7 @@ namespace rs
 		// This implementation is functional but suboptimal.
 		// Users requiring higher accuracy should oversample outside FERS until this is addressed.
 		unsigned filt_length;
-		const std::unique_ptr<const RS_FLOAT[]> coeffs(blackmanFir(1 / static_cast<RS_FLOAT>(ratio), filt_length));
+		const auto coeffs = blackmanFir(1 / static_cast<RS_FLOAT>(ratio), filt_length);
 
 		// Temporary buffer to hold upsampled and filtered data
 		std::vector<RS_COMPLEX> tmp(size * ratio + filt_length);
@@ -58,8 +58,8 @@ namespace rs
 		for (unsigned i = 0; i < size; ++i) { tmp[i * ratio] = in[i]; }
 
 		// Create the FIR filter and apply it
-		const FirFilter filt(coeffs.get(), filt_length);
-		filt.filter(tmp.data(), size * ratio + filt_length);
+		const FirFilter filt(coeffs);
+		filt.filter(tmp, size * ratio + filt_length);
 
 		// Output the filtered result with appropriate offset for the filter delay (filt_length / 2 - 1)
 		std::copy_n(tmp.begin() + filt_length / 2 - 1, size * ratio, out);
@@ -72,8 +72,7 @@ namespace rs
 		// TODO: Replace with a more efficient multirate downsampling implementation.
 		unsigned filt_length = 0;
 
-		// Use a smart pointer or vector for automatic memory management.
-		const std::unique_ptr<const RS_FLOAT[]> coeffs(blackmanFir(1 / static_cast<RS_FLOAT>(ratio), filt_length));
+		const auto coeffs = blackmanFir(1 / static_cast<RS_FLOAT>(ratio), filt_length);
 
 		// Use std::vector for temporary buffer allocation
 		std::vector<RS_COMPLEX> tmp(size + filt_length);
@@ -84,9 +83,9 @@ namespace rs
 		// Copy input data to the temporary buffer
 		std::copy_n(in, size, tmp.begin());
 
-		// FirFilter class usage (assuming it supports filtering in-place).
-		const FirFilter filt(coeffs.get(), filt_length);
-		filt.filter(tmp.data(), size + filt_length);
+		// FirFilter class usage
+		const FirFilter filt(coeffs);
+		filt.filter(tmp, size + filt_length);
 
 		// Downsample the filtered data
 		for (unsigned i = 0; i < size / ratio; ++i)
@@ -184,7 +183,7 @@ void FirFilter::filter(RS_FLOAT* samples, const int size)
 	}
 }
 
-void FirFilter::filter(std::complex<RS_FLOAT>* samples, const unsigned size) const
+void FirFilter::filter(std::vector<RS_COMPLEX>& samples, const unsigned size) const
 {
 	std::vector<std::complex<RS_FLOAT>> line(_order, {0.0, 0.0}); // Zero-initialize the line buffer
 

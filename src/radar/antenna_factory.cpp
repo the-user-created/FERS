@@ -48,50 +48,17 @@ namespace
 //
 // =====================================================================================================================
 
-
 void Antenna::setEfficiencyFactor(const RS_FLOAT loss)
 {
 	if (loss > 1) { logging::printf(logging::RS_IMPORTANT, "Using greater than unity antenna efficiency.\n"); }
 	_loss_factor = loss;
 }
 
-
 RS_FLOAT Antenna::getAngle(const SVec3& angle, const SVec3& refangle)
 {
 	SVec3 normangle(angle);
 	normangle.length = 1;
 	return std::acos(dotProduct(Vec3(normangle), Vec3(refangle)));
-}
-
-Antenna* rs::createIsotropicAntenna(const std::string& name) { return new Isotropic(name); }
-
-Antenna* rs::createSincAntenna(const std::string& name, const RS_FLOAT alpha, const RS_FLOAT beta, const RS_FLOAT gamma)
-{
-	return new Sinc(name, alpha, beta, gamma);
-}
-
-Antenna* rs::createGaussianAntenna(const std::string& name, const RS_FLOAT azscale, const RS_FLOAT elscale)
-{
-	return new Gaussian(name, azscale, elscale);
-}
-
-Antenna* rs::createHornAntenna(const std::string& name, const RS_FLOAT dimension)
-{
-	return new SquareHorn(name, dimension);
-}
-
-Antenna* rs::createParabolicAntenna(const std::string& name, const RS_FLOAT diameter)
-{
-	return new ParabolicReflector(name, diameter);
-}
-
-Antenna* rs::createXmlAntenna(const std::string& name, const std::string& file) { return new XmlAntenna(name, file); }
-
-Antenna* rs::createFileAntenna(const std::string& name, const std::string& file) { return new FileAntenna(name, file); }
-
-Antenna* rs::createPythonAntenna(const std::string& name, const std::string& module, const std::string& function)
-{
-	return new PythonAntenna(name, module, function);
 }
 
 // =====================================================================================================================
@@ -152,19 +119,6 @@ RS_FLOAT ParabolicReflector::getGain(const SVec3& angle, const SVec3& refangle, 
 //
 // =====================================================================================================================
 
-XmlAntenna::XmlAntenna(const std::string& name, const std::string& filename) : Antenna(name)
-{
-	_azi_samples = new InterpSet();
-	_elev_samples = new InterpSet();
-	loadAntennaDescription(filename);
-}
-
-XmlAntenna::~XmlAntenna()
-{
-	delete _azi_samples;
-	delete _elev_samples;
-}
-
 RS_FLOAT XmlAntenna::getGain(const SVec3& angle, const SVec3& refangle, RS_FLOAT wavelength) const
 {
 	const SVec3 t_angle = angle - refangle;
@@ -177,8 +131,8 @@ void XmlAntenna::loadAntennaDescription(const std::string& filename)
 	TiXmlDocument doc(filename.c_str());
 	if (!doc.LoadFile()) { throw std::runtime_error("[ERROR] Could not load antenna description " + filename); }
 	const TiXmlHandle root(doc.RootElement());
-	loadAntennaGainAxis(_elev_samples, root.ChildElement("elevation", 0));
-	loadAntennaGainAxis(_azi_samples, root.ChildElement("azimuth", 0));
+	loadAntennaGainAxis(_elev_samples.get(), root.ChildElement("elevation", 0));
+	loadAntennaGainAxis(_azi_samples.get(), root.ChildElement("azimuth", 0));
 	_max_gain = std::max(_azi_samples->getMax(), _elev_samples->getMax());
 	_elev_samples->divide(_max_gain);
 	_azi_samples->divide(_max_gain);

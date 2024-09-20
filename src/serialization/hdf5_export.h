@@ -20,7 +20,7 @@ namespace hdf5_export
 
 	void closeFile(long file);
 
-	void readPulseData(const std::string& name, std::complex<RS_FLOAT>** data, unsigned& size, RS_FLOAT& rate);
+	void readPulseData(const std::string& name, std::vector<RS_COMPLEX>& data, RS_FLOAT& rate);
 
 	std::vector<std::vector<RS_FLOAT>> readPattern(const std::string& name, const std::string& datasetName, unsigned& aziSize,
 	                                               unsigned& elevSize);

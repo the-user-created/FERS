@@ -7,6 +7,7 @@
 #ifndef RECEIVER_EXPORT_H
 #define RECEIVER_EXPORT_H
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -19,12 +20,12 @@ namespace rs
 
 namespace receiver_export
 {
-	void exportReceiverXml(const std::vector<rs::Response*>& responses, const std::string& filename);
+	void exportReceiverXml(const std::vector<std::unique_ptr<rs::Response>>& responses, const std::string& filename);
 
-	void exportReceiverBinary(const std::vector<rs::Response*>& responses, const rs::Receiver* recv,
+	void exportReceiverBinary(const std::vector<std::unique_ptr<rs::Response>>& responses, const rs::Receiver* recv,
 	                          const std::string& recvName);
 
-	void exportReceiverCsv(const std::vector<rs::Response*>& responses, const std::string& filename);
+	void exportReceiverCsv(const std::vector<std::unique_ptr<rs::Response>>& responses, const std::string& filename);
 }
 
 #endif //RECEIVER_EXPORT_H

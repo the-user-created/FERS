@@ -6,6 +6,7 @@
 #ifndef ROTATION_PATH_H
 #define ROTATION_PATH_H
 
+#include <memory>
 #include <vector>
 
 #include "coord.h"
@@ -55,7 +56,7 @@ namespace path
 		InterpType _type;
 	};
 
-	RotationPath* reflectPath(const RotationPath* path, const rs::MultipathSurface* surf);
+	std::unique_ptr<RotationPath> reflectPath(const RotationPath* path, const rs::MultipathSurface* surf);
 }
 
 #endif //ROTATION_PATH_H

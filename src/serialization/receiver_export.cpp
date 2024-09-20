@@ -147,6 +147,7 @@ namespace
 		}
 
 		// Release the smart pointer to return the raw pointer, maintaining original behavior
+		// TODO?: Consider returning the smart pointer instead
 		return noise.release();
 	}
 
@@ -170,7 +171,7 @@ namespace
 		}
 	}
 
-	void exportResponseFersBin(const std::vector<rs::Response*>& responses, const rs::Receiver* recv,
+	void exportResponseFersBin(const std::vector<std::unique_ptr<rs::Response>>& responses, const rs::Receiver* recv,
 	                           const std::string& recvName)
 	{
 		// Bail if there are no responses to export
@@ -180,7 +181,7 @@ namespace
 		const long out_bin = openHdf5File(recvName);
 
 		// Create a threaded render object to manage the rendering process
-		const response_renderer::ThreadedResponseRenderer thr_renderer(&responses, recv, parameters::renderThreads());
+		const response_renderer::ThreadedResponseRenderer thr_renderer(responses, recv, parameters::renderThreads());
 
 		// Retrieve the window count from the receiver
 		const int window_count = recv->getWindowCount();
@@ -253,27 +254,28 @@ namespace
 
 namespace receiver_export
 {
-	void exportReceiverXml(const std::vector<rs::Response*>& responses, const std::string& filename)
+	void exportReceiverXml(const std::vector<std::unique_ptr<rs::Response>>& responses, const std::string& filename)
 	{
 		TiXmlDocument doc;
 		auto decl = std::make_unique<TiXmlDeclaration>("1.0", "", "");
 		doc.LinkEndChild(decl.release());
+		// TODO: Can't make this a smart pointer...
 		auto* root = new TiXmlElement("receiver");
 		doc.LinkEndChild(root);
-		for (const auto response : responses) { response->renderXml(root); }
+		for (const auto& response : responses) { response->renderXml(root); }
 		if (!doc.SaveFile(filename + ".fersxml"))
 		{
 			throw std::runtime_error("Failed to save XML file: " + filename + ".fersxml");
 		}
 	}
 
-	void exportReceiverCsv(const std::vector<rs::Response*>& responses, const std::string& filename)
+	void exportReceiverCsv(const std::vector<std::unique_ptr<rs::Response>>& responses, const std::string& filename)
 	{
 		// Use std::unique_ptr to handle automatic cleanup of the streams
 		std::map<std::string, std::unique_ptr<std::ofstream>> streams;
 
 		// Iterate over each response in the vector
-		for (const auto* response : responses)
+		for (const auto& response : responses)
 		{
 			// Get the transmitter name from the response
 			const std::string& transmitter_name = response->getTransmitterName();
@@ -299,6 +301,6 @@ namespace receiver_export
 		}
 	}
 
-	void exportReceiverBinary(const std::vector<rs::Response*>& responses, const rs::Receiver* recv,
+	void exportReceiverBinary(const std::vector<std::unique_ptr<rs::Response>>& responses, const rs::Receiver* recv,
 	                          const std::string& recvName) { exportResponseFersBin(responses, recv, recvName); }
 }

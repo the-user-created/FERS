@@ -12,15 +12,9 @@ namespace interp_filt
 {
 	InterpFilter* InterpFilter::getInstance()
 	{
-		std::lock_guard lock(interp_mutex);
-		if (!_instance)
-		{
-			_instance = std::unique_ptr<InterpFilter, std::function<void(InterpFilter*)>>(
-				new InterpFilter(), [](const InterpFilter* instance) { delete instance; });
-		}
-		return _instance.get();
+		static InterpFilter instance;  // Meyers' Singleton
+		return &instance;
 	}
-
 
 	RS_FLOAT InterpFilter::besselI0(const RS_FLOAT x)
 	{

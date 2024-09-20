@@ -31,16 +31,15 @@ int main(const int argc, char* argv[])
 	try
 	{
 		parameters::setThreads(portable_utils::countProcessors());
-		auto* world = new rs::World();
+		const auto world = std::make_unique<rs::World>();
 		noise_utils::initializeNoise();
 
 		logging::printf(logging::RS_VERBOSE, "[VERBOSE] Loading XML Script File.\n");
-		xml::loadXmlFile(argv[1], world);
+		xml::loadXmlFile(argv[1], world.get());
 
-		rs::threaded_sim::runThreadedSim(parameters::renderThreads(), world);
+		rs::threaded_sim::runThreadedSim(parameters::renderThreads(), world.get());
 		logging::printf(logging::RS_VERBOSE, "[VERBOSE] Cleaning up.\n");
 
-		delete world;
 		noise_utils::cleanUpNoise();
 
 		logging::printf(logging::RS_CRITICAL, "------------------------------------------------\n");
