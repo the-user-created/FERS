@@ -112,7 +112,7 @@ namespace
 	                             RS_FLOAT& carrier, bool& enabled)
 	{
 		// Get the timing model from the receiver
-		const auto timing = std::dynamic_pointer_cast<rs::ClockModelTiming>(recv->getTiming());
+		const auto timing = recv->getTiming();
 		if (!timing) { throw std::runtime_error("[BUG] Could not cast receiver->GetTiming() to ClockModelTiming"); }
 
 		// Use a smart pointer for memory safety; can be released later if raw pointer is required

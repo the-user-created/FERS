@@ -17,7 +17,7 @@ using namespace rs;
 //
 // =====================================================================================================================
 
-void ClockModelTiming::initializeModel(const PrototypeTiming* timing)
+void Timing::initializeModel(const PrototypeTiming* timing)
 {
 	if (!_alphas.empty()) { throw std::logic_error("[BUG] ClockModelTiming::initializeModel called more than once"); }
 
