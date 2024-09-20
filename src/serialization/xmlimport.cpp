@@ -189,14 +189,14 @@ namespace
 
 		if (getAttributeBool(recvXml, "nodirect", "", false))
 		{
-			receiver->setFlag(Receiver::FLAG_NODIRECT);
+			receiver->setFlag(Receiver::RecvFlag::FLAG_NODIRECT);
 			LOG(logging::Level::DEBUG, "Ignoring direct signals for receiver '{}'",
 			                receiver->getName().c_str());
 		}
 
 		if (getAttributeBool(recvXml, "nopropagationloss", "", false))
 		{
-			receiver->setFlag(Receiver::FLAG_NOPROPLOSS);
+			receiver->setFlag(Receiver::RecvFlag::FLAG_NOPROPLOSS);
 			LOG(logging::Level::DEBUG, "Ignoring propagation losses for receiver '{}'",
 			                receiver->getName().c_str());
 		}
@@ -329,13 +329,13 @@ namespace
 		{
 			if (const std::string rottype = getAttributeString(mpXml, "interpolation", ""); rottype == "linear")
 			{
-				path->setInterp(path::Path::RS_INTERP_LINEAR);
+				path->setInterp(path::Path::InterpType::INTERP_LINEAR);
 			}
-			else if (rottype == "cubic") { path->setInterp(path::Path::RS_INTERP_CUBIC); }
-			else if (rottype == "static") { path->setInterp(path::Path::RS_INTERP_STATIC); }
+			else if (rottype == "cubic") { path->setInterp(path::Path::InterpType::INTERP_CUBIC); }
+			else if (rottype == "static") { path->setInterp(path::Path::InterpType::INTERP_STATIC); }
 			else if (rottype == "python")
 			{
-				path->setInterp(path::Path::RS_INTERP_PYTHON);
+				path->setInterp(path::Path::InterpType::INTERP_PYTHON);
 				processPythonPath(mpXml, path);
 			}
 			else
@@ -343,7 +343,7 @@ namespace
 				LOG(logging::Level::ERROR,
 				                "Unsupported motion path interpolation type for platform '{}'. Defaulting to static.",
 				                platform->getName().c_str());
-				path->setInterp(path::Path::RS_INTERP_STATIC);
+				path->setInterp(path::Path::InterpType::INTERP_STATIC);
 			}
 		}
 		catch (XmlImportException&)
@@ -351,7 +351,7 @@ namespace
 			LOG(logging::Level::ERROR,
 			                "Motion path interpolation type not specified for platform '{}'. Defaulting to static.",
 			                platform->getName().c_str());
-			path->setInterp(path::Path::RS_INTERP_STATIC);
+			path->setInterp(path::Path::InterpType::INTERP_STATIC);
 		}
 
 		int i{};
@@ -414,16 +414,16 @@ namespace
 		{
 			if (const std::string rottype = getAttributeString(mpXml, "interpolation", ""); rottype == "linear")
 			{
-				path->setInterp(path::RotationPath::RS_INTERP_LINEAR);
+				path->setInterp(path::RotationPath::InterpType::INTERP_LINEAR);
 			}
-			else if (rottype == "cubic") { path->setInterp(path::RotationPath::RS_INTERP_CUBIC); }
-			else if (rottype == "static") { path->setInterp(path::RotationPath::RS_INTERP_STATIC); }
+			else if (rottype == "cubic") { path->setInterp(path::RotationPath::InterpType::INTERP_CUBIC); }
+			else if (rottype == "static") { path->setInterp(path::RotationPath::InterpType::INTERP_STATIC); }
 			else
 			{
 				LOG(logging::Level::ERROR,
 				                "Unsupported rotation path interpolation type for platform '{}'. Defaulting to static.",
 				                platform->getName().c_str());
-				path->setInterp(path::RotationPath::RS_INTERP_STATIC);
+				path->setInterp(path::RotationPath::InterpType::INTERP_STATIC);
 			}
 		}
 		catch (XmlImportException&)
@@ -431,7 +431,7 @@ namespace
 			LOG(logging::Level::ERROR,
 			                "Rotation path interpolation type not specified for platform '{}'. Defaulting to static.",
 			                platform->getName().c_str());
-			path->setInterp(path::RotationPath::RS_INTERP_STATIC);
+			path->setInterp(path::RotationPath::InterpType::INTERP_STATIC);
 		}
 
 		processRotationWaypoints(mpXml, path);

@@ -134,7 +134,7 @@ namespace rs
 	class Receiver final : public Radar
 	{
 	public:
-		enum RecvFlag { FLAG_NODIRECT = 1, FLAG_NOPROPLOSS = 2 };
+		enum class RecvFlag { FLAG_NODIRECT = 1, FLAG_NOPROPLOSS = 2 };
 
 		explicit Receiver(const Platform* platform, const std::string& name = "defRecv") : Radar(platform, name),
 			_noise_temperature(0), _dual(nullptr), _flags(0) {}
@@ -173,9 +173,9 @@ namespace rs
 
 		[[nodiscard]] RS_FLOAT getWindowPrf() const { return _window_prf; }
 
-		void setFlag(const RecvFlag flag) { _flags |= flag; }
+		void setFlag(const RecvFlag flag) { _flags |= static_cast<int>(flag); }
 
-		[[nodiscard]] bool checkFlag(const RecvFlag flag) const { return _flags & flag; }
+		[[nodiscard]] bool checkFlag(const RecvFlag flag) const { return _flags & static_cast<int>(flag); }
 
 		[[nodiscard]] Receiver* getDual() const { return _dual; }
 

@@ -16,7 +16,7 @@
 
 namespace parameters
 {
-	enum BinaryFileType { RS_FILE_CSV, RS_FILE_FERSBIN, RS_FILE_RAW };
+	enum class BinaryFileType { RS_FILE_CSV, RS_FILE_FERSBIN, RS_FILE_RAW };
 
 	struct Parameters
 	{
@@ -29,7 +29,7 @@ namespace parameters
 		unsigned random_seed = static_cast<unsigned>(time(nullptr)); // Random seed initialized to current time
 		unsigned adc_bits = 0; // ADC quantization bits
 		unsigned filter_length = 33; // Render filter length
-		BinaryFileType filetype = RS_FILE_FERSBIN; // Binary file type
+		BinaryFileType filetype = BinaryFileType::RS_FILE_FERSBIN; // Binary file type
 		bool export_xml = false; // Export XML format
 		bool export_csv = false; // Export CSV format
 		bool export_binary = true; // Export a binary format

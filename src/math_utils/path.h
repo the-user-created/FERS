@@ -29,9 +29,9 @@ namespace path
 	class Path
 	{
 	public:
-		enum InterpType { RS_INTERP_STATIC, RS_INTERP_LINEAR, RS_INTERP_CUBIC, RS_INTERP_PYTHON };
+		enum class InterpType { INTERP_STATIC, INTERP_LINEAR, INTERP_CUBIC, INTERP_PYTHON };
 
-		explicit Path(const InterpType type = RS_INTERP_STATIC) : _final(false), _type(type), _pythonpath(nullptr) {}
+		explicit Path(const InterpType type = InterpType::INTERP_STATIC) : _final(false), _type(type), _pythonpath(nullptr) {}
 
 		~Path() = default;
 

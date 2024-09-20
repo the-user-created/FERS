@@ -21,9 +21,9 @@ namespace path
 	class RotationPath
 	{
 	public:
-		enum InterpType { RS_INTERP_STATIC, RS_INTERP_CONSTANT, RS_INTERP_LINEAR, RS_INTERP_CUBIC };
+		enum class InterpType { INTERP_STATIC, INTERP_CONSTANT, INTERP_LINEAR, INTERP_CUBIC };
 
-		explicit RotationPath(InterpType type = RS_INTERP_STATIC);
+		explicit RotationPath(InterpType type = InterpType::INTERP_STATIC);
 
 		void addCoord(const coord::RotationCoord& coord);
 
