@@ -25,7 +25,7 @@ namespace rs
 		logging::printf(logging::RS_VERY_VERBOSE, "[VV] Making branch ffrac=%f fint=%d\n", ffrac, fint);
 		_upsample_scale = std::pow(10, ffrac + fint + 0.5);
 		init();
-		_buffer = std::make_unique<RS_FLOAT[]>(10);
+		_buffer = std::vector<RS_FLOAT>(10);
 		if (!last) { refill(); }
 	}
 
@@ -92,7 +92,7 @@ namespace rs
 
 		_offset_sample = 0.0f;
 		_got_offset = false;
-		_buffer = std::make_unique<RS_FLOAT[]>(10);
+		_buffer = std::vector<RS_FLOAT>(10);
 
 		if (!_last) { refill(); }
 
@@ -143,7 +143,7 @@ namespace rs
 	void FAlphaBranch::refill() // NOLINT(misc-no-recursion)
 	{
 		const RS_FLOAT sample = calcSample();
-		_upsampler->upsample(sample, _buffer.get());
+		_upsampler->upsample(sample, _buffer);
 
 		for (int i = 0; i < 10; ++i)
 		{

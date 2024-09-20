@@ -15,7 +15,7 @@ namespace hdf5_export
 {
 	long createFile(const std::string& name);
 
-	void addChunkToFile(long file, const std::complex<RS_FLOAT>* data, unsigned size, RS_FLOAT time, RS_FLOAT rate,
+	void addChunkToFile(long file, const std::vector<RS_COMPLEX>& data, unsigned size, RS_FLOAT time, RS_FLOAT rate,
 	                    RS_FLOAT fullscale, unsigned count);
 
 	void closeFile(long file);

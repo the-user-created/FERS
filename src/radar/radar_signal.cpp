@@ -30,10 +30,10 @@ RadarSignal::RadarSignal(std::string name, const RS_FLOAT power, const RS_FLOAT 
 // Get the carrier frequency
 RS_FLOAT RadarSignal::getCarrier() const { return _carrierfreq; }
 
-std::shared_ptr<RS_COMPLEX[]> RadarSignal::render(const std::vector<InterpPoint>& points, unsigned& size,
+std::vector<RS_COMPLEX> RadarSignal::render(const std::vector<InterpPoint>& points, unsigned& size,
                                                   const RS_FLOAT fracWinDelay) const
 {
-	std::shared_ptr<RS_COMPLEX[]> data = _signal->render(points, size, fracWinDelay);
+	std::vector<RS_COMPLEX> data = _signal->render(points, size, fracWinDelay);
 	const RS_FLOAT scale = std::sqrt(_power);
 	for (unsigned i = 0; i < size; i++) { data[i] *= scale; }
 	return data;
@@ -80,10 +80,10 @@ std::vector<RS_FLOAT> Signal::copyData() const
 	return result;
 }
 
-std::shared_ptr<RS_COMPLEX[]> Signal::render(const std::vector<InterpPoint>& points, unsigned& size,
+std::vector<RS_COMPLEX> Signal::render(const std::vector<InterpPoint>& points, unsigned& size,
                                              const double fracWinDelay) const
 {
-	auto out = std::make_unique<RS_COMPLEX[]>(_size);
+	auto out = std::vector<RS_COMPLEX>(_size);
 	size = _size;
 
 	const RS_FLOAT timestep = 1.0 / _rate;
@@ -112,7 +112,7 @@ std::shared_ptr<RS_COMPLEX[]> Signal::render(const std::vector<InterpPoint>& poi
 		sample_time += timestep;
 	}
 
-	return std::shared_ptr<RS_COMPLEX[]>(out.release());
+	return out;
 }
 
 std::tuple<RS_FLOAT, RS_FLOAT, RS_FLOAT, int> Signal::calculateWeightsAndDelays(

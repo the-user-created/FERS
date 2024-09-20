@@ -52,7 +52,7 @@ namespace rs
 		std::unique_ptr<FAlphaBranch> _pre;
 		bool _last;
 		std::unique_ptr<DecadeUpsampler> _upsampler;
-		std::unique_ptr<RS_FLOAT[]> _buffer;
+		std::vector<RS_FLOAT> _buffer;
 		unsigned _buffer_samples{};
 		RS_FLOAT _ffrac;
 		RS_FLOAT _fint;

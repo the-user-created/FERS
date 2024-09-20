@@ -32,7 +32,7 @@ namespace
 		return hdf5_file;
 	}
 
-	void addNoiseToWindow(RS_COMPLEX* data, const unsigned size, const RS_FLOAT temperature)
+	void addNoiseToWindow(std::vector<RS_COMPLEX>& data, const unsigned size, const RS_FLOAT temperature)
 	{
 		if (temperature == 0) { return; }
 
@@ -50,7 +50,7 @@ namespace
 		}
 	}
 
-	void adcSimulate(RS_COMPLEX* data, const unsigned size, const unsigned bits, RS_FLOAT fullscale)
+	void adcSimulate(std::vector<RS_COMPLEX>& data, const unsigned size, const unsigned bits, RS_FLOAT fullscale)
 	{
 		const RS_FLOAT levels = std::pow(2, bits - 1);
 
@@ -68,7 +68,7 @@ namespace
 		}
 	}
 
-	RS_FLOAT quantizeWindow(RS_COMPLEX* data, const unsigned size)
+	RS_FLOAT quantizeWindow(std::vector<RS_COMPLEX>& data, const unsigned size)
 	{
 		// Find the maximum absolute value across real and imaginary parts
 		RS_FLOAT max_value = 0;
@@ -108,7 +108,7 @@ namespace
 		return max_value;
 	}
 
-	RS_FLOAT* generatePhaseNoise(const rs::Receiver* recv, const unsigned wSize, const RS_FLOAT rate,
+	std::vector<RS_FLOAT> generatePhaseNoise(const rs::Receiver* recv, const unsigned wSize, const RS_FLOAT rate,
 	                             RS_FLOAT& carrier, bool& enabled)
 	{
 		// Get the timing model from the receiver
@@ -116,7 +116,7 @@ namespace
 		if (!timing) { throw std::runtime_error("[BUG] Could not cast receiver->GetTiming() to ClockModelTiming"); }
 
 		// Use a smart pointer for memory safety; can be released later if raw pointer is required
-		auto noise = std::make_unique<RS_FLOAT[]>(wSize);
+		auto noise = std::vector<RS_FLOAT>(wSize);
 
 		enabled = timing->enabled();
 
@@ -142,16 +142,14 @@ namespace
 		else
 		{
 			// Use std::fill for setting noise to 0
-			std::fill_n(noise.get(), wSize, 0);
+			std::fill_n(noise.data(), wSize, 0);
 			carrier = 1;
 		}
 
-		// Release the smart pointer to return the raw pointer, maintaining original behavior
-		// TODO?: Consider returning the smart pointer instead
-		return noise.release();
+		return noise;
 	}
 
-	void addPhaseNoiseToWindow(const RS_FLOAT* noise, RS_COMPLEX* window, const unsigned wSize)
+	void addPhaseNoiseToWindow(const std::vector<RS_FLOAT>& noise, std::vector<RS_COMPLEX>& window, const unsigned wSize)
 	{
 		for (unsigned i = 0; i < wSize; ++i)
 		{
@@ -196,7 +194,7 @@ namespace
 			// Generate phase noise samples for the window
 			RS_FLOAT carrier;
 			bool pn_enabled;
-			std::unique_ptr<const RS_FLOAT[]> pnoise(generatePhaseNoise(recv, size, rate, carrier, pn_enabled));
+			std::vector<RS_FLOAT> pnoise(generatePhaseNoise(recv, size, rate, carrier, pn_enabled));
 
 			// Get the window start time, including clock drift effects
 			RS_FLOAT start = recv->getWindowStart(i) + pnoise[0] / (2 * M_PI * carrier);
@@ -206,16 +204,13 @@ namespace
 			start = std::round(start * rate) / rate;
 
 			// Allocate memory for the window using smart pointers
-			std::unique_ptr<RS_COMPLEX[]> window = std::make_unique<RS_COMPLEX[]>(size);
-
-			// Clear the window memory
-			std::fill_n(window.get(), size, RS_COMPLEX(0.0, 0.0));
+			std::vector<RS_COMPLEX> window = std::vector<RS_COMPLEX>(size);
 
 			// Add noise to the window
-			addNoiseToWindow(window.get(), size, recv->getNoiseTemperature());
+			addNoiseToWindow(window, size, recv->getNoiseTemperature());
 
 			// Render the window using the threaded renderer
-			thr_renderer.renderWindow(window.get(), length, start, frac_delay);
+			thr_renderer.renderWindow(window, length, start, frac_delay);
 
 			// Downsample the window if the oversample ratio is greater than 1
 			if (parameters::oversampleRatio() != 1)
@@ -224,26 +219,26 @@ namespace
 				const unsigned new_size = size / parameters::oversampleRatio();
 
 				// Allocate memory for the downsampled window
-				std::unique_ptr<RS_COMPLEX[]> tmp = std::make_unique<RS_COMPLEX[]>(new_size);
+				std::vector<RS_COMPLEX> tmp = std::vector<RS_COMPLEX>(new_size);
 
 				// Perform downsampling
-				rs::downsample(window.get(), size, tmp.get(), parameters::oversampleRatio());
+				rs::downsample(window, size, tmp, parameters::oversampleRatio());
 
 				// Replace the window with the downsampled one
 				size = new_size;
-				window = std::move(tmp);
+				window = tmp;
 			}
 
 			// Add phase noise to the window if enabled
-			if (pn_enabled) { addPhaseNoiseToWindow(pnoise.get(), window.get(), size); }
+			if (pn_enabled) { addPhaseNoiseToWindow(pnoise, window, size); }
 
 			// Normalize and quantize the window
-			const RS_FLOAT fullscale = quantizeWindow(window.get(), size);
+			const RS_FLOAT fullscale = quantizeWindow(window, size);
 
 			// Export the binary format if enabled
 			if (parameters::exportBinary())
 			{
-				hdf5_export::addChunkToFile(out_bin, window.get(), size, start, parameters::rate(), fullscale, i);
+				hdf5_export::addChunkToFile(out_bin, window, size, start, parameters::rate(), fullscale, i);
 			}
 		}
 

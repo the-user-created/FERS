@@ -97,7 +97,7 @@ long hdf5_export::createFile(const std::string& name)
 	return file;
 }
 
-void hdf5_export::addChunkToFile(const long file, const std::complex<RS_FLOAT>* data, const unsigned size,
+void hdf5_export::addChunkToFile(const long file, const std::vector<RS_COMPLEX>& data, const unsigned size,
                                  const RS_FLOAT time, const RS_FLOAT rate, const RS_FLOAT fullscale,
                                  const unsigned count)
 {
@@ -128,12 +128,12 @@ void hdf5_export::addChunkToFile(const long file, const std::complex<RS_FLOAT>* 
 	// Set attributes for chunk
 	auto set_chunk_attributes = [&](const std::string& chunkName)
 	{
-		const RS_FLOAT attributes[] = {time, rate, fullscale};
-		const char* attr_names[] = {"time", "rate", "fullscale"};
+		const std::vector attributes = {time, rate, fullscale};
+		const std::vector<std::string> attr_names = {"time", "rate", "fullscale"};
 
 		for (int it = 0; it < 3; ++it)
 		{
-			if (H5LTset_attribute_double(file, chunkName.c_str(), attr_names[it], &attributes[it], 1) < 0)
+			if (H5LTset_attribute_double(file, chunkName.c_str(), attr_names[it].c_str(), &attributes[it], 1) < 0)
 			{
 				throw std::runtime_error(
 					"[ERROR] Error while setting attribute \"" + std::string(attr_names[it]) + "\" on chunk " +
