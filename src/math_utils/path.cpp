@@ -92,7 +92,7 @@ namespace path
 		//Don't support multipath on python paths for now
 		if (path->getType() == Path::RS_INTERP_PYTHON)
 		{
-			throw std::runtime_error("[ERROR] Multipath surfaces are not currently supported for Python paths");
+			throw std::runtime_error("Multipath surfaces are not currently supported for Python paths");
 		}
 		//Create a new path object
 		auto dual_path = std::make_unique<Path>(path->getType());
@@ -103,7 +103,7 @@ namespace path
 			refl.t = t;
 			//Reflect the point in the plane
 			refl.pos = surf->reflectPoint(pos);
-			logging::printf(logging::RS_VERBOSE, "Reflected (%g, %g, %g) to (%g, %g, %g)\n", pos.x, pos.y,
+			LOG(logging::Level::VERBOSE, "Reflected ({}, {}, {}) to ({}, {}, {})", pos.x, pos.y,
 			                pos.z, refl.pos.x, refl.pos.y, refl.pos.z);
 			dual_path->addCoord(refl);
 		}

@@ -289,7 +289,7 @@ namespace
 	{
 		for (const auto& receiver : receivers)
 		{
-			logging::printf(logging::RS_VERY_VERBOSE, "[VV] %d responses added to receiver '%s'\n",
+			LOG(logging::Level::VV, "{} responses added to receiver '{}'",
 			                receiver->countResponses(), receiver->getName().c_str());
 		}
 	}
@@ -337,14 +337,14 @@ namespace rs::threaded_sim
 
 	void SimThread::operator()() const
 	{
-		logging::printf(logging::RS_VERBOSE,
-		                "[VERBOSE] Created simulator thread for transmitter '%s' and receiver '%s'\n",
+		LOG(logging::Level::VERBOSE,
+		                "Created simulator thread for transmitter '{}' and receiver '{}'",
 		                _trans->getName().c_str(), _recv->getName().c_str());
 		try { simulatePair(_trans, _recv, _world); }
 		catch (std::exception& ex)
 		{
-			logging::printf(logging::RS_CRITICAL,
-			                "[ERROR] First pass thread terminated with unexpected error:\n\t%s\nSimulator will terminate\n",
+			LOG(logging::Level::ERROR,
+			                "First pass thread terminated with unexpected error:\t{}\nSimulator will terminate",
 			                ex.what());
 			setError();
 		}
@@ -359,13 +359,13 @@ namespace rs::threaded_sim
 
 	void RenderThread::operator()() const
 	{
-		logging::printf(logging::RS_VERY_VERBOSE, "[VV] Created render thread for receiver '%s'\n",
+		LOG(logging::Level::VV, "Created render thread for receiver '{}'",
 		                _recv->getName().c_str());
 		try { _recv->render(); }
 		catch (std::exception& ex)
 		{
-			logging::printf(logging::RS_CRITICAL,
-			                "[ERROR] Render thread terminated with unexpected error:\n\t%s\nSimulator will terminate\n",
+			LOG(logging::Level::CRITICAL,
+			                "Render thread terminated with unexpected error:\t{}Simulator will terminate",
 			                ex.what());
 			setError();
 		}
@@ -381,7 +381,7 @@ namespace rs::threaded_sim
 	void runThreadedSim(const unsigned threadLimit, const World* world)
 	{
 		std::vector<std::unique_ptr<std::thread>> running;
-		logging::printf(logging::RS_INFORMATIVE, "[INFO] Using threaded simulation with %d threads.\n", threadLimit);
+		LOG(logging::Level::INFO, "Using threaded simulation with {} threads.", threadLimit);
 
 		// Get receivers from the world
 		const auto& receivers = world->getReceivers();

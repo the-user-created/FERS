@@ -31,8 +31,8 @@ namespace rs
 	{
 		if (_random_freq.has_value())
 		{
-			logging::printf(logging::RS_IMPORTANT,
-			                "[Important] Random frequency offset and constant frequency offset are set for timing source %s. Only the random offset will be used.",
+			LOG(logging::Level::INFO,
+			                "Random frequency offset and constant frequency offset are set for timing source {}. Only the random offset will be used.",
 			                getName().c_str());
 		}
 		_freq_offset = offset;
@@ -42,8 +42,8 @@ namespace rs
 	{
 		if (_random_phase.has_value())
 		{
-			logging::printf(logging::RS_IMPORTANT,
-			                "[Important] Random phase offset and constant phase offset are set for timing source %s. Only the random offset will be used.",
+			LOG(logging::Level::INFO,
+			                "Random phase offset and constant phase offset are set for timing source {}. Only the random offset will be used.",
 			                getName().c_str());
 		}
 		_phase_offset = offset;
@@ -53,8 +53,8 @@ namespace rs
 	{
 		if (_freq_offset.has_value())
 		{
-			logging::printf(logging::RS_IMPORTANT,
-			                "[Important] Random frequency offset and constant frequency offset are set for timing source %s. Only the random offset will be used.",
+			LOG(logging::Level::INFO,
+			                "Random frequency offset and constant frequency offset are set for timing source {}. Only the random offset will be used.",
 			                getName().c_str());
 		}
 		_random_freq = stdev;
@@ -64,8 +64,8 @@ namespace rs
 	{
 		if (_phase_offset.has_value())
 		{
-			logging::printf(logging::RS_IMPORTANT,
-			                "[Important] Random phase offset and constant phase offset are set for timing source %s. Only the random offset will be used.",
+			LOG(logging::Level::INFO,
+			                "Random phase offset and constant phase offset are set for timing source {}. Only the random offset will be used.",
 			                getName().c_str());
 		}
 		_random_phase = stdev;

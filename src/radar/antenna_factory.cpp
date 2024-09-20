@@ -50,7 +50,7 @@ namespace
 
 void Antenna::setEfficiencyFactor(const RS_FLOAT loss)
 {
-	if (loss > 1) { logging::printf(logging::RS_IMPORTANT, "Using greater than unity antenna efficiency.\n"); }
+	if (loss > 1) { LOG(logging::Level::INFO, "Using greater than unity antenna efficiency."); }
 	_loss_factor = loss;
 }
 
@@ -129,7 +129,7 @@ RS_FLOAT XmlAntenna::getGain(const SVec3& angle, const SVec3& refangle, RS_FLOAT
 void XmlAntenna::loadAntennaDescription(const std::string& filename)
 {
 	TiXmlDocument doc(filename.c_str());
-	if (!doc.LoadFile()) { throw std::runtime_error("[ERROR] Could not load antenna description " + filename); }
+	if (!doc.LoadFile()) { throw std::runtime_error("Could not load antenna description " + filename); }
 	const TiXmlHandle root(doc.RootElement());
 	loadAntennaGainAxis(_elev_samples.get(), root.ChildElement("elevation", 0));
 	loadAntennaGainAxis(_azi_samples.get(), root.ChildElement("azimuth", 0));

@@ -22,7 +22,7 @@ namespace rs
 	FAlphaBranch::FAlphaBranch(const RS_FLOAT ffrac, const unsigned fint, std::unique_ptr<FAlphaBranch> pre,
 	                           const bool last) : _pre(std::move(pre)), _last(last), _ffrac(ffrac), _fint(fint)
 	{
-		logging::printf(logging::RS_VERY_VERBOSE, "[VV] Making branch ffrac=%f fint=%d\n", ffrac, fint);
+		LOG(logging::Level::VV, "Making branch ffrac={} fint={}", ffrac, fint);
 		_upsample_scale = std::pow(10, ffrac + fint + 0.5);
 		init();
 		_buffer = std::vector<RS_FLOAT>(10);
@@ -67,7 +67,7 @@ namespace rs
 		}
 		else if (_ffrac != 0.0f)
 		{
-			logging::printf(logging::RS_CRITICAL, "[CRITICAL] Value of ffrac is %f\n", _ffrac);
+			LOG(logging::Level::CRITICAL, "Value of ffrac is {}", _ffrac);
 			throw std::runtime_error("Fractional integrator values other than 0.5 are not supported");
 		}
 

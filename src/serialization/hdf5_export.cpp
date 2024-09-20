@@ -26,7 +26,7 @@ using namespace hdf5_export;
 hid_t openFile(const std::string& name)
 {
 	const hid_t file = H5Fopen(name.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
-	if (file < 0) { throw std::runtime_error("[ERROR] Could not open HDF5 file " + name + " to read pulse"); }
+	if (file < 0) { throw std::runtime_error("Could not open HDF5 file " + name + " to read pulse"); }
 	return file;
 }
 
@@ -39,7 +39,7 @@ void hdf5_export::readPulseData(const std::string& name, std::vector<RS_COMPLEX>
 	// Open the HDF5 file
 	const hid_t file = openFile(name);
 	const hid_t slash = H5Gopen1(file, "/");
-	if (slash < 0) { throw std::runtime_error("[ERROR] HDF5 file " + name + " does not have top level group \"/\""); }
+	if (slash < 0) { throw std::runtime_error("HDF5 file " + name + " does not have top level group \"/\""); }
 
 	// Helper lambda to open group and read dataset
 	auto read_dataset = [&](const std::string& groupName, std::vector<double>& buffer)
@@ -47,7 +47,7 @@ void hdf5_export::readPulseData(const std::string& name, std::vector<RS_COMPLEX>
 		const hid_t group = H5Gopen1(slash, groupName.c_str());
 		if (group < 0)
 		{
-			throw std::runtime_error("[ERROR] HDF5 file " + name + " does not have group \"" + groupName + "\"");
+			throw std::runtime_error("HDF5 file " + name + " does not have group \"" + groupName + "\"");
 		}
 
 		// Get dataset info
@@ -56,13 +56,13 @@ void hdf5_export::readPulseData(const std::string& name, std::vector<RS_COMPLEX>
 		hsize_t dims[1];
 		if (H5LTget_dataset_info(group, "value", dims, &class_id, &type_size) < 0)
 		{
-			throw std::runtime_error("[ERROR] HDF5 file " + name + " does not have dataset \"" + groupName + "\"");
+			throw std::runtime_error("HDF5 file " + name + " does not have dataset \"" + groupName + "\"");
 		}
 
 		buffer.resize(dims[0]);
 		if (H5LTread_dataset_double(group, "value", buffer.data()) < 0)
 		{
-			throw std::runtime_error("[ERROR] Error reading dataset " + groupName + " of file " + name);
+			throw std::runtime_error("Error reading dataset " + groupName + " of file " + name);
 		}
 
 		H5Gclose(group);
@@ -76,7 +76,7 @@ void hdf5_export::readPulseData(const std::string& name, std::vector<RS_COMPLEX>
 	// Read Q dataset and ensure it has the same size as I
 	std::vector<double> buffer_q;
 	if (read_dataset("Q", buffer_q) != size) {
-		throw std::runtime_error(R"([ERROR] Dataset "Q" is not the same size as dataset "I" in file )" + name);
+		throw std::runtime_error(R"(Dataset "Q" is not the same size as dataset "I" in file )" + name);
 	}
 
 	// Close HDF5 handles
@@ -93,7 +93,7 @@ void hdf5_export::readPulseData(const std::string& name, std::vector<RS_COMPLEX>
 long hdf5_export::createFile(const std::string& name)
 {
 	const hid_t file = H5Fcreate(name.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-	if (file < 0) { throw std::runtime_error("[ERROR] Could not create HDF5 file " + name + " for export"); }
+	if (file < 0) { throw std::runtime_error("Could not create HDF5 file " + name + " for export"); }
 	return file;
 }
 
@@ -121,7 +121,7 @@ void hdf5_export::addChunkToFile(const long file, const std::vector<RS_COMPLEX>&
 	{
 		if (H5LTmake_dataset_double(file, chunkName.c_str(), 1, &datasize, chunkData.data()) < 0)
 		{
-			throw std::runtime_error("[ERROR] Error while writing data to HDF5 file: " + chunkName);
+			throw std::runtime_error("Error while writing data to HDF5 file: " + chunkName);
 		}
 	};
 
@@ -136,7 +136,7 @@ void hdf5_export::addChunkToFile(const long file, const std::vector<RS_COMPLEX>&
 			if (H5LTset_attribute_double(file, chunkName.c_str(), attr_names[it].c_str(), &attributes[it], 1) < 0)
 			{
 				throw std::runtime_error(
-					"[ERROR] Error while setting attribute \"" + std::string(attr_names[it]) + "\" on chunk " +
+					"Error while setting attribute \"" + std::string(attr_names[it]) + "\" on chunk " +
 					chunkName);
 			}
 		}
@@ -153,7 +153,7 @@ void hdf5_export::addChunkToFile(const long file, const std::vector<RS_COMPLEX>&
 
 void hdf5_export::closeFile(const long file)
 {
-	if (H5Fclose(file) < 0) { throw std::runtime_error("[ERROR] Error while closing HDF5 file"); }
+	if (H5Fclose(file) < 0) { throw std::runtime_error("Error while closing HDF5 file"); }
 }
 
 std::vector<std::vector<RS_FLOAT>> hdf5_export::readPattern(const std::string& name, const std::string& datasetName, unsigned& aziSize,
@@ -161,7 +161,7 @@ std::vector<std::vector<RS_FLOAT>> hdf5_export::readPattern(const std::string& n
 {
 	hsize_t dims[2];
 	const hid_t file_id = H5Fopen(name.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
-	if (file_id < 0) { throw std::runtime_error("[ERROR] Cannot open HDF5 file " + name + " to read antenna data"); }
+	if (file_id < 0) { throw std::runtime_error("Cannot open HDF5 file " + name + " to read antenna data"); }
 
 	int rank;
 	size_t type_size;
@@ -171,7 +171,7 @@ std::vector<std::vector<RS_FLOAT>> hdf5_export::readPattern(const std::string& n
 			float))
 	{
 		H5Fclose(file_id);
-		throw std::runtime_error("[ERROR] Invalid dataset \"" + datasetName + "\" in file " + name);
+		throw std::runtime_error("Invalid dataset \"" + datasetName + "\" in file " + name);
 	}
 
 	std::vector<float> data(dims[0] * dims[1]);
@@ -179,10 +179,10 @@ std::vector<std::vector<RS_FLOAT>> hdf5_export::readPattern(const std::string& n
 	{
 		H5Fclose(file_id);
 		throw std::runtime_error(
-			"[ERROR] Could not read float data from dataset \"" + datasetName + "\" in file " + name);
+			"Could not read float data from dataset \"" + datasetName + "\" in file " + name);
 	}
 
-	if (H5Fclose(file_id) < 0) { throw std::runtime_error("[ERROR] Error while closing HDF5 file " + name); }
+	if (H5Fclose(file_id) < 0) { throw std::runtime_error("Error while closing HDF5 file " + name); }
 
 	aziSize = dims[0];
 	elevSize = dims[1];

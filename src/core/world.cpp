@@ -18,7 +18,7 @@ void World::add(std::unique_ptr<RadarSignal> pulse)
 {
 	if (findSignal(pulse->getName()))
 	{
-		throw std::runtime_error("[ERROR] A pulse with the name " + pulse->getName() + " already exists.");
+		throw std::runtime_error("A pulse with the name " + pulse->getName() + " already exists.");
 	}
 	_pulses[pulse->getName()] = std::move(pulse);
 }
@@ -27,7 +27,7 @@ void World::add(std::unique_ptr<Antenna> antenna)
 {
 	if (findAntenna(antenna->getName()))
 	{
-		throw std::runtime_error("[ERROR] An antenna with the name " + antenna->getName() + " already exists.");
+		throw std::runtime_error("An antenna with the name " + antenna->getName() + " already exists.");
 	}
 	_antennas[antenna->getName()] = std::move(antenna);
 }
@@ -36,7 +36,7 @@ void World::add(std::unique_ptr<PrototypeTiming> timing)
 {
 	if (findTiming(timing->getName()))
 	{
-		throw std::runtime_error("[ERROR] A timing source with the name " + timing->getName() + " already exists.");
+		throw std::runtime_error("A timing source with the name " + timing->getName() + " already exists.");
 	}
 	_timings[timing->getName()] = std::move(timing);
 }
@@ -45,7 +45,7 @@ void World::addMultipathSurface(std::unique_ptr<MultipathSurface> surface)
 {
 	if (_multipath_surface)
 	{
-		throw std::runtime_error("[ERROR] Only one multipath surface per simulation is supported");
+		throw std::runtime_error("Only one multipath surface per simulation is supported");
 	}
 	_multipath_surface = std::move(surface);
 }

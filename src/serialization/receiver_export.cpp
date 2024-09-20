@@ -285,7 +285,7 @@ namespace receiver_export
 				auto of = std::make_unique<std::ofstream>(oss.str());
 				of->setf(std::ios::scientific);
 
-				if (!*of) { throw std::runtime_error("[ERROR] Could not open file " + oss.str() + " for writing"); }
+				if (!*of) { throw std::runtime_error("Could not open file " + oss.str() + " for writing"); }
 
 				// Add the new stream to the map
 				streams[transmitter_name] = std::move(of);

@@ -13,7 +13,7 @@ Platform* rs::createMultipathDual(const Platform* plat, const MultipathSurface* 
 {
 	if (plat->getDual().has_value())
 	{
-		logging::printf(logging::RS_VERBOSE, "[Platform.createMultipathDual] Dual platform already exists\n");
+		LOG(logging::Level::VERBOSE, "[Platform.createMultipathDual] Dual platform already exists");
 		return plat->getDual().value();
 	}
 	auto dual = std::make_unique<Platform>(plat->getName() + "_dual");

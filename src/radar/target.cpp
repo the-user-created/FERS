@@ -51,19 +51,19 @@ void FileTarget::loadRcsDescription(const std::string& filename) const
 	TiXmlDocument doc(filename.c_str());
 	if (!doc.LoadFile())
 	{
-		throw std::runtime_error("[ERROR] Could not load target description from " + filename);
+		throw std::runtime_error("Could not load target description from " + filename);
 	}
 	const TiXmlHandle root(doc.RootElement());
 	TiXmlHandle tmp = root.ChildElement("elevation", 0);
 	if (!tmp.Element())
 	{
-		throw std::runtime_error("[ERROR] Malformed XML in target description: No elevation pattern definition");
+		throw std::runtime_error("Malformed XML in target description: No elevation pattern definition");
 	}
 	loadTargetGainAxis(_elev_samples.get(), tmp);
 	tmp = root.ChildElement("azimuth", 0);
 	if (!tmp.Element())
 	{
-		throw std::runtime_error("[ERROR] Malformed XML in target description: No azimuth pattern definition");
+		throw std::runtime_error("Malformed XML in target description: No azimuth pattern definition");
 	}
 	loadTargetGainAxis(_azi_samples.get(), tmp);
 }
