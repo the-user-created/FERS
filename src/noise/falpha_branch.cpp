@@ -23,13 +23,13 @@ namespace noise
 	//
 	// =================================================================================================================
 
-	FAlphaBranch::FAlphaBranch(const RS_FLOAT ffrac, const unsigned fint, std::unique_ptr<FAlphaBranch> pre,
+	FAlphaBranch::FAlphaBranch(const RealType ffrac, const unsigned fint, std::unique_ptr<FAlphaBranch> pre,
 	                           const bool last) : _pre(std::move(pre)), _last(last), _ffrac(ffrac), _fint(fint)
 	{
 		LOG(Level::DEBUG, "Making branch ffrac={} fint={}", ffrac, fint);
 		_upsample_scale = std::pow(10, ffrac + fint + 0.5);
 		init();
-		_buffer = std::vector<RS_FLOAT>(10);
+		_buffer = std::vector<RealType>(10);
 		if (!last) { refill(); }
 	}
 
@@ -81,14 +81,14 @@ namespace noise
 
 			if (_fint == 1)
 			{
-				constexpr std::array<RS_FLOAT, 2> i_den = {1.0f, -1.0f};
-				constexpr std::array<RS_FLOAT, 2> i_num = {1.0f, 0.0f};
+				constexpr std::array<RealType, 2> i_den = {1.0f, -1.0f};
+				constexpr std::array<RealType, 2> i_num = {1.0f, 0.0f};
 				_integ_filter = std::make_unique<IirFilter>(i_den.data(), i_num.data(), i_num.size());
 			}
 			else if (_fint == 2)
 			{
-				constexpr std::array<RS_FLOAT, 3> i_den = {1.0f, -2.0f, 1.0f};
-				constexpr std::array<RS_FLOAT, 3> i_num = {1.0f, 0.0f, 0.0f};
+				constexpr std::array<RealType, 3> i_den = {1.0f, -2.0f, 1.0f};
+				constexpr std::array<RealType, 3> i_num = {1.0f, 0.0f, 0.0f};
 				_integ_filter = std::make_unique<IirFilter>(i_den.data(), i_num.data(), i_num.size());
 			}
 			else { throw std::runtime_error("Only alpha values between 2 and -2 are supported for noise generation"); }
@@ -96,18 +96,18 @@ namespace noise
 
 		_offset_sample = 0.0f;
 		_got_offset = false;
-		_buffer = std::vector<RS_FLOAT>(10);
+		_buffer = std::vector<RealType>(10);
 
 		if (!_last) { refill(); }
 
 		_pre_scale = 1.0f;
 	}
 
-	RS_FLOAT FAlphaBranch::getSample() // NOLINT(misc-no-recursion)
+	RealType FAlphaBranch::getSample() // NOLINT(misc-no-recursion)
 	{
 		if (!_last)
 		{
-			const RS_FLOAT ret = _buffer[_buffer_samples++];
+			const RealType ret = _buffer[_buffer_samples++];
 			if (_buffer_samples == 10) { refill(); }
 			return ret;
 		}
@@ -122,9 +122,9 @@ namespace noise
 		_upsampler.reset();
 	}
 
-	RS_FLOAT FAlphaBranch::calcSample() // NOLINT(misc-no-recursion)
+	RealType FAlphaBranch::calcSample() // NOLINT(misc-no-recursion)
 	{
-		RS_FLOAT sample = wgnSample(1);
+		RealType sample = wgnSample(1);
 
 		if (_shape_filter) { sample = _shape_filter->filter(sample) / _shape_gain; }
 
@@ -146,7 +146,7 @@ namespace noise
 
 	void FAlphaBranch::refill() // NOLINT(misc-no-recursion)
 	{
-		const RS_FLOAT sample = calcSample();
+		const RealType sample = calcSample();
 		_upsampler->upsample(sample, _buffer);
 
 		for (int i = 0; i < 10; ++i)
@@ -158,7 +158,7 @@ namespace noise
 		_buffer_samples = 0;
 	}
 
-	void FAlphaBranch::flush(const RS_FLOAT scale)
+	void FAlphaBranch::flush(const RealType scale)
 	{
 		clean();
 		init();

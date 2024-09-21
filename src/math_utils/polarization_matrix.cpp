@@ -13,7 +13,7 @@ namespace math
 		s[1] = s[2] = 0;
 	}
 
-	PsMatrix::PsMatrix(const RS_FLOAT s11, const RS_FLOAT s12, const RS_FLOAT s21, const RS_FLOAT s22)
+	PsMatrix::PsMatrix(const RealType s11, const RealType s12, const RealType s21, const RealType s22)
 	{
 		s[0] = s11;
 		s[1] = s12;

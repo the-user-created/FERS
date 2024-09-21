@@ -26,7 +26,7 @@ namespace math
 	}
 
 	// Get the position of the path object at a specified time
-	SVec3 RotationPath::getPosition(const RS_FLOAT t) const
+	SVec3 RotationPath::getPosition(const RealType t) const
 	{
 		RotationCoord coord;
 		if (!_final) { throw PathException("Finalize not called before GetPosition in Rotation"); }

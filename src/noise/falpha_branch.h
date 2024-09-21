@@ -17,7 +17,7 @@ namespace noise
 	class FAlphaBranch
 	{
 	public:
-		FAlphaBranch(RS_FLOAT ffrac, unsigned fint, std::unique_ptr<FAlphaBranch> pre, bool last);
+		FAlphaBranch(RealType ffrac, unsigned fint, std::unique_ptr<FAlphaBranch> pre, bool last);
 
 		~FAlphaBranch() { clean(); }
 
@@ -26,9 +26,9 @@ namespace noise
 
 		FAlphaBranch& operator=(const FAlphaBranch&) = delete;
 
-		RS_FLOAT getSample();
+		RealType getSample();
 
-		void flush(RS_FLOAT scale);
+		void flush(RealType scale);
 
 		[[nodiscard]] FAlphaBranch* getPre() const { return _pre.get(); }
 
@@ -39,24 +39,24 @@ namespace noise
 
 		void refill();
 
-		RS_FLOAT calcSample();
+		RealType calcSample();
 
 		std::unique_ptr<signal::IirFilter> _shape_filter;
-		RS_FLOAT _shape_gain{};
+		RealType _shape_gain{};
 		std::unique_ptr<signal::IirFilter> _integ_filter;
-		RS_FLOAT _integ_gain{};
-		RS_FLOAT _upsample_scale;
+		RealType _integ_gain{};
+		RealType _upsample_scale;
 		std::unique_ptr<signal::IirFilter> _highpass;
 		std::unique_ptr<FAlphaBranch> _pre;
 		bool _last;
 		std::unique_ptr<signal::DecadeUpsampler> _upsampler;
-		std::vector<RS_FLOAT> _buffer;
+		std::vector<RealType> _buffer;
 		unsigned _buffer_samples{};
-		RS_FLOAT _ffrac;
-		RS_FLOAT _fint;
-		RS_FLOAT _offset_sample{};
+		RealType _ffrac;
+		RealType _fint;
+		RealType _offset_sample{};
 		bool _got_offset{};
-		RS_FLOAT _pre_scale{};
+		RealType _pre_scale{};
 	};
 }
 

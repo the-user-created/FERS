@@ -41,7 +41,7 @@ namespace
 	// =================================================================================================================
 
 	void solveRe(const Transmitter* trans, const Receiver* recv, const Target* targ,
-	             const std::chrono::duration<RS_FLOAT> time, const std::chrono::duration<RS_FLOAT> length,
+	             const std::chrono::duration<RealType> time, const std::chrono::duration<RealType> length,
 	             const RadarSignal* wave, core::ReResults& results)
 	{
 		LOG(Level::TRACE, "Solving RE for transmitter '{}', receiver '{}' and target '{}'", trans->getName(),
@@ -57,7 +57,7 @@ namespace
 		const auto transmitter_to_target_distance = transmitter_to_target_vector.length;
 		const auto receiver_to_target_distance = receiver_to_target_vector.length;
 
-		constexpr RS_FLOAT epsilon = std::numeric_limits<RS_FLOAT>::epsilon();
+		constexpr RealType epsilon = std::numeric_limits<RealType>::epsilon();
 
 		if (transmitter_to_target_distance <= epsilon || receiver_to_target_distance <= epsilon)
 		{
@@ -84,7 +84,7 @@ namespace
 		// Propagation loss calculation
 		if (!recv->checkFlag(Receiver::RecvFlag::FLAG_NOPROPLOSS))
 		{
-			const RS_FLOAT distance_product = transmitter_to_target_distance * receiver_to_target_distance;
+			const RealType distance_product = transmitter_to_target_distance * receiver_to_target_distance;
 			results.power *= std::pow(wavelength, 2) / (std::pow(4 * std::numbers::pi, 2) * std::pow(
 				distance_product, 2));
 		}
@@ -101,16 +101,16 @@ namespace
 		const auto recvvec_end = SVec3(
 			targ->getPosition(time.count() + length.count()) - recv->getPosition(time.count() + length.count()));
 
-		const RS_FLOAT rt_end = transvec_end.length;
-		const RS_FLOAT rr_end = recvvec_end.length;
+		const RealType rt_end = transvec_end.length;
+		const RealType rr_end = recvvec_end.length;
 
 		if (rt_end <= epsilon || rr_end <= epsilon)
 		{
 			throw std::runtime_error("Target is too close to transmitter or receiver for accurate simulation");
 		}
 
-		const RS_FLOAT v_r = (rr_end - receiver_to_target_distance) / length.count();
-		const RS_FLOAT v_t = (rt_end - transmitter_to_target_distance) / length.count();
+		const RealType v_r = (rr_end - receiver_to_target_distance) / length.count();
+		const RealType v_t = (rt_end - transmitter_to_target_distance) / length.count();
 
 		const auto c = params::c();
 		results.doppler = std::sqrt((1 + v_r / c) / (1 - v_r / c)) * std::sqrt((1 + v_t / c) / (1 - v_t / c));
@@ -119,8 +119,8 @@ namespace
 		results.noise_temperature = recv->getNoiseTemperature(recv->getRotation(time.count() + results.delay));
 	}
 
-	void solveReDirect(const Transmitter* trans, const Receiver* recv, const std::chrono::duration<RS_FLOAT> time,
-	                   const std::chrono::duration<RS_FLOAT> length, const RadarSignal* wave, core::ReResults& results)
+	void solveReDirect(const Transmitter* trans, const Receiver* recv, const std::chrono::duration<RealType> time,
+	                   const std::chrono::duration<RealType> length, const RadarSignal* wave, core::ReResults& results)
 	{
 		// Get positions
 		const auto tpos = trans->getPosition(time.count());
@@ -128,9 +128,9 @@ namespace
 
 		// Calculate distance between transmitter and receiver
 		const SVec3 transvec{tpos - rpos};
-		const RS_FLOAT distance = transvec.length;
+		const RealType distance = transvec.length;
 
-		constexpr RS_FLOAT epsilon = std::numeric_limits<RS_FLOAT>::epsilon();
+		constexpr RealType epsilon = std::numeric_limits<RealType>::epsilon();
 		constexpr auto pi = std::numbers::pi;
 
 		if (distance <= epsilon) { throw core::RangeError(); }
@@ -139,9 +139,9 @@ namespace
 		results.delay = distance / params::c();
 
 		// Calculate gains and wavelength
-		const RS_FLOAT wavelength = params::c() / wave->getCarrier();
-		const RS_FLOAT transmitter_gain = trans->getGain(transvec, trans->getRotation(time.count()), wavelength);
-		const RS_FLOAT receiver_gain = recv->getGain(SVec3(rpos - tpos), recv->getRotation(time.count() + results.delay),
+		const RealType wavelength = params::c() / wave->getCarrier();
+		const RealType transmitter_gain = trans->getGain(transvec, trans->getRotation(time.count()), wavelength);
+		const RealType receiver_gain = recv->getGain(SVec3(rpos - tpos), recv->getRotation(time.count() + results.delay),
 		                                            wavelength);
 
 		// Power calculation
@@ -153,8 +153,8 @@ namespace
 		// Doppler shift calculation
 		const auto trpos_end = SVec3(
 			trans->getPosition(time.count() + length.count()) - recv->getPosition(time.count() + length.count()));
-		const RS_FLOAT r_end = trpos_end.length;
-		const RS_FLOAT doppler_shift = (r_end - distance) / length.count();
+		const RealType r_end = trpos_end.length;
+		const RealType doppler_shift = (r_end - distance) / length.count();
 
 		results.doppler = (params::c() + doppler_shift) / (params::c() - doppler_shift);
 
@@ -174,9 +174,9 @@ namespace
 		if (trans->isMonostatic() && trans->getAttached() == recv) { return; }
 
 		// Convert time variables to std::chrono for better type safety
-		const auto start_time = std::chrono::duration<RS_FLOAT>(signal->time);
-		const auto end_time = start_time + std::chrono::duration<RS_FLOAT>(signal->wave->getLength());
-		const auto sample_time = std::chrono::duration<RS_FLOAT>(1.0 / params::cwSampleRate());
+		const auto start_time = std::chrono::duration<RealType>(signal->time);
+		const auto end_time = start_time + std::chrono::duration<RealType>(signal->wave->getLength());
+		const auto sample_time = std::chrono::duration<RealType>(1.0 / params::cwSampleRate());
 		const int point_count = static_cast<int>(std::ceil(signal->wave->getLength() / sample_time.count()));
 
 		// Create a response object for this signal
@@ -213,9 +213,9 @@ namespace
 	                    const TransmitterPulse* signal)
 	{
 		// Convert time-related values to std::chrono::duration for improved type safety
-		const auto start_time = std::chrono::duration<RS_FLOAT>(signal->time);
-		const auto end_time = start_time + std::chrono::duration<RS_FLOAT>(signal->wave->getLength());
-		const auto sample_time = std::chrono::duration<RS_FLOAT>(1.0 / params::cwSampleRate());
+		const auto start_time = std::chrono::duration<RealType>(signal->time);
+		const auto end_time = start_time + std::chrono::duration<RealType>(signal->wave->getLength());
+		const auto sample_time = std::chrono::duration<RealType>(1.0 / params::cwSampleRate());
 		const int point_count = static_cast<int>(std::ceil(signal->wave->getLength() / sample_time.count()));
 
 		// Create a response object for this signal

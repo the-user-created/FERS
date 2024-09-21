@@ -47,7 +47,7 @@ namespace python
 
 		~PythonPath() = default;
 
-		[[nodiscard]] math::Vec3 getPosition(RS_FLOAT t) const;
+		[[nodiscard]] math::Vec3 getPosition(RealType t) const;
 	};
 
 	class PythonNoise : public PythonExtension
@@ -57,7 +57,7 @@ namespace python
 
 		~PythonNoise() = default;
 
-		[[nodiscard]] RS_FLOAT getSample() const;
+		[[nodiscard]] RealType getSample() const;
 	};
 
 	class PythonAntennaMod : public PythonExtension
@@ -67,7 +67,7 @@ namespace python
 
 		~PythonAntennaMod() = default;
 
-		[[nodiscard]] RS_FLOAT getGain(const math::SVec3& direction) const;
+		[[nodiscard]] RealType getGain(const math::SVec3& direction) const;
 	};
 }
 

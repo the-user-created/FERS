@@ -17,7 +17,7 @@ namespace noise
 	//
 	// =================================================================================================================
 
-	GammaGenerator::GammaGenerator(const RS_FLOAT k) : _rng(std::make_unique<std::mt19937>(params::randomSeed())),
+	GammaGenerator::GammaGenerator(const RealType k) : _rng(std::make_unique<std::mt19937>(params::randomSeed())),
 	                                                   _dist(k, 1.0) {}
 
 	// =================================================================================================================
@@ -26,7 +26,7 @@ namespace noise
 	//
 	// =================================================================================================================
 
-	WgnGenerator::WgnGenerator(const RS_FLOAT stddev) : _rng(std::make_unique<std::mt19937>(params::randomSeed())),
+	WgnGenerator::WgnGenerator(const RealType stddev) : _rng(std::make_unique<std::mt19937>(params::randomSeed())),
 	                                                    _dist(0.0, stddev), _stddev(stddev) {}
 
 	WgnGenerator::WgnGenerator() : _rng(std::make_unique<std::mt19937>(params::randomSeed())),
@@ -38,11 +38,11 @@ namespace noise
 	//
 	// =================================================================================================================
 
-	MultirateGenerator::MultirateGenerator(const RS_FLOAT alpha, const unsigned branches)
+	MultirateGenerator::MultirateGenerator(const RealType alpha, const unsigned branches)
 	{
-		const RS_FLOAT beta = -(alpha - 2) / 2.0;
+		const RealType beta = -(alpha - 2) / 2.0;
 		const int fint = static_cast<int>(std::floor(beta));
-		const RS_FLOAT ffrac = fmod(beta, 1.0);
+		const RealType ffrac = fmod(beta, 1.0);
 
 		createTree(ffrac, fint, branches);
 
@@ -87,7 +87,7 @@ namespace noise
 		}
 	}
 
-	void MultirateGenerator::createTree(const RS_FLOAT fAlpha, const int fInt, const unsigned branches)
+	void MultirateGenerator::createTree(const RealType fAlpha, const int fInt, const unsigned branches)
 	{
 		if (branches == 0) { throw std::runtime_error("Cannot create multirate noise generator with zero branches"); }
 
@@ -131,9 +131,9 @@ namespace noise
 	// =================================================================================================================
 
 
-	ClockModelGenerator::ClockModelGenerator(const std::vector<RS_FLOAT>& alpha, const std::vector<RS_FLOAT>& inWeights,
-	                                         const RS_FLOAT frequency, const RS_FLOAT phaseOffset,
-	                                         const RS_FLOAT freqOffset, int branches)
+	ClockModelGenerator::ClockModelGenerator(const std::vector<RealType>& alpha, const std::vector<RealType>& inWeights,
+	                                         const RealType frequency, const RealType phaseOffset,
+	                                         const RealType freqOffset, int branches)
 		: _weights(inWeights), _phase_offset(phaseOffset), _freq_offset(freqOffset), _frequency(frequency)
 	{
 		auto iter = alpha.begin();
@@ -162,9 +162,9 @@ namespace noise
 		}
 	}
 
-	RS_FLOAT ClockModelGenerator::getSample()
+	RealType ClockModelGenerator::getSample()
 	{
-		RS_FLOAT sample = 0;
+		RealType sample = 0;
 
 		for (size_t i = 0; i < _generators.size(); ++i) { sample += _generators[i]->getSample() * _weights[i]; }
 

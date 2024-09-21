@@ -18,7 +18,7 @@ namespace signal
 	//
 	// =================================================================================================================
 
-	RadarSignal::RadarSignal(std::string name, const RS_FLOAT power, const RS_FLOAT carrierfreq, const RS_FLOAT length,
+	RadarSignal::RadarSignal(std::string name, const RealType power, const RealType carrierfreq, const RealType length,
 	                         std::unique_ptr<Signal> signal)
 		: _name(std::move(name)), _power(power), _carrierfreq(carrierfreq), _length(length), _signal(std::move(signal)),
 		  _polar(std::complex(1.0, 0.0), std::complex(0.0, 0.0))
@@ -28,13 +28,13 @@ namespace signal
 	}
 
 	// Get the carrier frequency
-	RS_FLOAT RadarSignal::getCarrier() const { return _carrierfreq; }
+	RealType RadarSignal::getCarrier() const { return _carrierfreq; }
 
-	std::vector<RS_COMPLEX> RadarSignal::render(const std::vector<interp::InterpPoint>& points, unsigned& size,
-	                                            const RS_FLOAT fracWinDelay) const
+	std::vector<ComplexType> RadarSignal::render(const std::vector<interp::InterpPoint>& points, unsigned& size,
+	                                            const RealType fracWinDelay) const
 	{
-		std::vector<RS_COMPLEX> data = _signal->render(points, size, fracWinDelay);
-		const RS_FLOAT scale = std::sqrt(_power);
+		std::vector<ComplexType> data = _signal->render(points, size, fracWinDelay);
+		const RealType scale = std::sqrt(_power);
 		for (unsigned i = 0; i < size; i++) { data[i] *= scale; }
 		return data;
 	}
@@ -51,16 +51,16 @@ namespace signal
 		_rate = 0;
 	}
 
-	void Signal::load(const RS_FLOAT* inData, const unsigned samples, const RS_FLOAT sampleRate)
+	void Signal::load(const RealType* inData, const unsigned samples, const RealType sampleRate)
 	{
 		clear();
 		_size = samples;
 		_rate = sampleRate;
 		_data.resize(samples);
-		for (unsigned i = 0; i < samples; i++) { _data[i] = RS_COMPLEX(inData[i], 0.0); }
+		for (unsigned i = 0; i < samples; i++) { _data[i] = ComplexType(inData[i], 0.0); }
 	}
 
-	void Signal::load(const RS_COMPLEX* inData, const unsigned samples, const RS_FLOAT sampleRate)
+	void Signal::load(const ComplexType* inData, const unsigned samples, const RealType sampleRate)
 	{
 		clear();
 		const unsigned ratio = params::oversampleRatio();
@@ -71,27 +71,27 @@ namespace signal
 		else { upsample(inData, samples, _data.data(), ratio); }
 	}
 
-	std::vector<RS_FLOAT> Signal::copyData() const
+	std::vector<RealType> Signal::copyData() const
 	{
-		std::vector<RS_FLOAT> result(_size);
+		std::vector<RealType> result(_size);
 		for (unsigned i = 0; i < _size; ++i) { result[i] = _data[i].real(); }
 		return result;
 	}
 
-	std::vector<RS_COMPLEX> Signal::render(const std::vector<interp::InterpPoint>& points, unsigned& size,
+	std::vector<ComplexType> Signal::render(const std::vector<interp::InterpPoint>& points, unsigned& size,
 	                                       const double fracWinDelay) const
 	{
-		auto out = std::vector<RS_COMPLEX>(_size);
+		auto out = std::vector<ComplexType>(_size);
 		size = _size;
 
-		const RS_FLOAT timestep = 1.0 / _rate;
+		const RealType timestep = 1.0 / _rate;
 		const int filt_length = static_cast<int>(params::renderFilterLength());
 		const auto* interp = interp::InterpFilter::getInstance();
 
 		auto iter = points.begin();
 		auto next = points.size() > 1 ? std::next(iter) : iter;
-		const RS_FLOAT idelay = std::round(_rate * iter->delay);
-		RS_FLOAT sample_time = iter->time;
+		const RealType idelay = std::round(_rate * iter->delay);
+		RealType sample_time = iter->time;
 
 		for (int i = 0; i < static_cast<int>(_size); ++i)
 		{
@@ -103,9 +103,9 @@ namespace signal
 
 			auto [amplitude, phase, fdelay, i_sample_unwrap] = calculateWeightsAndDelays(
 				iter, next, sample_time, idelay, fracWinDelay);
-			const RS_FLOAT* filt = interp->getFilter(fdelay);
-			RS_COMPLEX accum = performConvolution(i, filt, filt_length, amplitude, i_sample_unwrap);
-			out[i] = std::exp(RS_COMPLEX(0.0, 1.0) * phase) * accum;
+			const RealType* filt = interp->getFilter(fdelay);
+			ComplexType accum = performConvolution(i, filt, filt_length, amplitude, i_sample_unwrap);
+			out[i] = std::exp(ComplexType(0.0, 1.0) * phase) * accum;
 
 			sample_time += timestep;
 		}
@@ -113,17 +113,17 @@ namespace signal
 		return out;
 	}
 
-	std::tuple<RS_FLOAT, RS_FLOAT, RS_FLOAT, int> Signal::calculateWeightsAndDelays(
+	std::tuple<RealType, RealType, RealType, int> Signal::calculateWeightsAndDelays(
 		const std::vector<interp::InterpPoint>::const_iterator iter,
 		const std::vector<interp::InterpPoint>::const_iterator next,
-		const RS_FLOAT sampleTime, const RS_FLOAT idelay, const RS_FLOAT fracWinDelay) const
+		const RealType sampleTime, const RealType idelay, const RealType fracWinDelay) const
 	{
-		const RS_FLOAT bw = iter < next ? (sampleTime - iter->time) / (next->time - iter->time) : 0.0;
-		const RS_FLOAT aw = 1.0 - bw;
+		const RealType bw = iter < next ? (sampleTime - iter->time) / (next->time - iter->time) : 0.0;
+		const RealType aw = 1.0 - bw;
 
-		const RS_FLOAT amplitude = std::sqrt(iter->power) * aw + std::sqrt(next->power) * bw;
-		const RS_FLOAT phase = iter->phase * aw + next->phase * bw;
-		RS_FLOAT fdelay = -((iter->delay * aw + next->delay * bw) * _rate - idelay + fracWinDelay);
+		const RealType amplitude = std::sqrt(iter->power) * aw + std::sqrt(next->power) * bw;
+		const RealType phase = iter->phase * aw + next->phase * bw;
+		RealType fdelay = -((iter->delay * aw + next->delay * bw) * _rate - idelay + fracWinDelay);
 
 		const int i_sample_unwrap = static_cast<int>(std::floor(fdelay));
 		fdelay -= i_sample_unwrap;
@@ -131,14 +131,14 @@ namespace signal
 		return {amplitude, phase, fdelay, i_sample_unwrap};
 	}
 
-	RS_COMPLEX Signal::performConvolution(const int i, const RS_FLOAT* filt, const int filtLength,
-	                                      const RS_FLOAT amplitude,
+	ComplexType Signal::performConvolution(const int i, const RealType* filt, const int filtLength,
+	                                      const RealType amplitude,
 	                                      const int iSampleUnwrap) const
 	{
 		const int start = std::max(-filtLength / 2, -i);
 		const int end = std::min(filtLength / 2, static_cast<int>(_size) - i);
 
-		RS_COMPLEX accum(0.0, 0.0);
+		ComplexType accum(0.0, 0.0);
 
 		for (int j = start; j < end; ++j)
 		{

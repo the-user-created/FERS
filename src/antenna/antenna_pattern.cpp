@@ -7,11 +7,11 @@
 
 #include "math_utils/geometry_ops.h"
 
-constexpr RS_FLOAT TWO_PI = 2.0 * M_PI; // Constant for 2*π
+constexpr RealType TWO_PI = 2.0 * M_PI; // Constant for 2*π
 
 namespace antenna
 {
-	RS_FLOAT Pattern::getGain(const math::SVec3& angle) const
+	RealType Pattern::getGain(const math::SVec3& angle) const
 	{
 		// Normalizing the azimuth and elevation angles between 0 and 1
 		const double ex1 = (angle.azimuth + M_PI) / TWO_PI;
@@ -32,7 +32,7 @@ namespace antenna
 		const unsigned arr_y = std::min(static_cast<unsigned>(std::floor(y1 * _size_elev)), _size_elev - 1);
 
 		// Bilinear interpolation using precomputed indices and weights
-		RS_FLOAT interp = (1.0 - t) * (1.0 - u) * _pattern[arr_x][arr_y];
+		RealType interp = (1.0 - t) * (1.0 - u) * _pattern[arr_x][arr_y];
 		interp += t * (1.0 - u) * _pattern[(arr_x + 1) % _size_azi][arr_y];
 		interp += t * u * _pattern[(arr_x + 1) % _size_azi][(arr_y + 1) % _size_elev];
 		interp += (1.0 - t) * u * _pattern[arr_x][(arr_y + 1) % _size_elev];

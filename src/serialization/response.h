@@ -6,7 +6,6 @@
 #ifndef RESPONSE_H
 #define RESPONSE_H
 
-#include <complex>
 #include <fstream>
 #include <vector>
 
@@ -40,17 +39,17 @@ namespace serial
 
 		Response& operator=(const Response&) = delete;
 
-		[[nodiscard]] RS_FLOAT startTime() const { return _points.empty() ? 0.0 : _points.front().time; }
+		[[nodiscard]] RealType startTime() const { return _points.empty() ? 0.0 : _points.front().time; }
 
-		[[nodiscard]] RS_FLOAT endTime() const { return _points.empty() ? 0.0 : _points.back().time; }
+		[[nodiscard]] RealType endTime() const { return _points.empty() ? 0.0 : _points.back().time; }
 
 		void renderXml(TiXmlElement* root);
 
 		void renderCsv(std::ofstream& of) const;
 
-		std::vector<RS_COMPLEX> renderBinary(RS_FLOAT& rate, unsigned& size, RS_FLOAT fracWinDelay) const;
+		std::vector<ComplexType> renderBinary(RealType& rate, unsigned& size, RealType fracWinDelay) const;
 
-		[[nodiscard]] RS_FLOAT getLength() const { return endTime() - startTime(); }
+		[[nodiscard]] RealType getLength() const { return endTime() - startTime(); }
 
 		// Note: This function is not used in the codebase
 		[[nodiscard]] const signal::RadarSignal* getWave() const { return _wave; }

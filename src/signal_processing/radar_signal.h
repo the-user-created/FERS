@@ -6,7 +6,6 @@
 #ifndef RADAR_SIGNAL_H
 #define RADAR_SIGNAL_H
 
-#include <complex>
 #include <memory>
 #include <vector>
 
@@ -29,38 +28,38 @@ namespace signal
 
 		void clear();
 
-		void load(const RS_COMPLEX* inData, unsigned samples, RS_FLOAT sampleRate);
+		void load(const ComplexType* inData, unsigned samples, RealType sampleRate);
 
-		void load(const RS_FLOAT* inData, unsigned samples, RS_FLOAT sampleRate);
+		void load(const RealType* inData, unsigned samples, RealType sampleRate);
 
-		[[nodiscard]] RS_FLOAT getRate() const { return _rate; }
+		[[nodiscard]] RealType getRate() const { return _rate; }
 
 		[[nodiscard]] unsigned getSize() const { return _size; }
 
 		// Note: This function is not used in the codebase
-		[[nodiscard]] std::vector<RS_FLOAT> copyData() const;
+		[[nodiscard]] std::vector<RealType> copyData() const;
 
-		std::vector<RS_COMPLEX> render(const std::vector<interp::InterpPoint>& points, unsigned& size,
+		std::vector<ComplexType> render(const std::vector<interp::InterpPoint>& points, unsigned& size,
 		                               double fracWinDelay) const;
 
 	private:
-		std::vector<RS_COMPLEX> _data;
+		std::vector<ComplexType> _data;
 		unsigned _size;
-		RS_FLOAT _rate;
+		RealType _rate;
 
 		[[nodiscard]] std::tuple<double, double, double, int> calculateWeightsAndDelays(
 			std::vector<interp::InterpPoint>::const_iterator iter,
 			std::vector<interp::InterpPoint>::const_iterator next,
 			double sampleTime, double idelay, double fracWinDelay) const;
 
-		RS_COMPLEX performConvolution(int i, const double* filt, int filtLength, double amplitude,
+		ComplexType performConvolution(int i, const double* filt, int filtLength, double amplitude,
 		                              int iSampleUnwrap) const;
 	};
 
 	class RadarSignal
 	{
 	public:
-		RadarSignal(std::string name, RS_FLOAT power, RS_FLOAT carrierfreq, RS_FLOAT length,
+		RadarSignal(std::string name, RealType power, RealType carrierfreq, RealType length,
 		            std::unique_ptr<Signal> signal);
 
 		~RadarSignal() = default;
@@ -70,18 +69,18 @@ namespace signal
 
 		RadarSignal& operator=(const RadarSignal&) = delete;
 
-		[[nodiscard]] RS_FLOAT getPower() const { return _power; }
+		[[nodiscard]] RealType getPower() const { return _power; }
 
-		[[nodiscard]] RS_FLOAT getCarrier() const;
+		[[nodiscard]] RealType getCarrier() const;
 
 		[[nodiscard]] std::string getName() const { return _name; }
 
-		[[nodiscard]] RS_FLOAT getRate() const { return _signal->getRate(); }
+		[[nodiscard]] RealType getRate() const { return _signal->getRate(); }
 
-		[[nodiscard]] RS_FLOAT getLength() const { return _length; }
+		[[nodiscard]] RealType getLength() const { return _length; }
 
-		std::vector<RS_COMPLEX> render(const std::vector<interp::InterpPoint>& points, unsigned& size,
-		                               RS_FLOAT fracWinDelay) const;
+		std::vector<ComplexType> render(const std::vector<interp::InterpPoint>& points, unsigned& size,
+		                               RealType fracWinDelay) const;
 
 		// Note: This function is not used in the codebase
 		[[nodiscard]] JonesVector getPolarization() const { return _polar; }
@@ -91,9 +90,9 @@ namespace signal
 
 	private:
 		std::string _name;
-		RS_FLOAT _power;
-		RS_FLOAT _carrierfreq;
-		RS_FLOAT _length;
+		RealType _power;
+		RealType _carrierfreq;
+		RealType _length;
 		std::unique_ptr<Signal> _signal;
 		JonesVector _polar;
 	};

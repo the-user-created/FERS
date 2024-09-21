@@ -28,23 +28,23 @@ namespace antenna
 
 		Antenna& operator=(const Antenna&) = delete;
 
-		[[nodiscard]] virtual RS_FLOAT getGain(const math::SVec3& angle, const math::SVec3& refangle,
-		                                       RS_FLOAT wavelength) const = 0;
+		[[nodiscard]] virtual RealType getGain(const math::SVec3& angle, const math::SVec3& refangle,
+		                                       RealType wavelength) const = 0;
 
 		// TODO: Implement noise temperature calculation
-		[[nodiscard]] virtual RS_FLOAT getNoiseTemperature(const math::SVec3& angle) const { return 0; }
+		[[nodiscard]] virtual RealType getNoiseTemperature(const math::SVec3& angle) const { return 0; }
 
-		void setEfficiencyFactor(RS_FLOAT loss);
+		void setEfficiencyFactor(RealType loss);
 
-		[[nodiscard]] RS_FLOAT getEfficiencyFactor() const { return _loss_factor; }
+		[[nodiscard]] RealType getEfficiencyFactor() const { return _loss_factor; }
 
 		[[nodiscard]] std::string getName() const { return _name; }
 
 	protected:
-		static RS_FLOAT getAngle(const math::SVec3& angle, const math::SVec3& refangle);
+		static RealType getAngle(const math::SVec3& angle, const math::SVec3& refangle);
 
 	private:
-		RS_FLOAT _loss_factor;
+		RealType _loss_factor;
 		std::string _name;
 	};
 
@@ -56,14 +56,14 @@ namespace antenna
 
 	Antenna* createPythonAntenna(const std::string& name, const std::string& module, const std::string& function);
 
-	Antenna* createSincAntenna(const std::string& name, RS_FLOAT alpha, RS_FLOAT beta, RS_FLOAT gamma);
+	Antenna* createSincAntenna(const std::string& name, RealType alpha, RealType beta, RealType gamma);
 
-	Antenna* createGaussianAntenna(const std::string& name, RS_FLOAT azscale, RS_FLOAT elscale);
+	Antenna* createGaussianAntenna(const std::string& name, RealType azscale, RealType elscale);
 
 	// Note: This function is not used in the codebase
-	Antenna* createHornAntenna(const std::string& name, RS_FLOAT dimension);
+	Antenna* createHornAntenna(const std::string& name, RealType dimension);
 
-	Antenna* createParabolicAntenna(const std::string& name, RS_FLOAT diameter);
+	Antenna* createParabolicAntenna(const std::string& name, RealType diameter);
 
 	class Isotropic final : public Antenna
 	{
@@ -72,8 +72,8 @@ namespace antenna
 
 		~Isotropic() override = default;
 
-		[[nodiscard]] RS_FLOAT
-		getGain(const math::SVec3& angle, const math::SVec3& refangle, RS_FLOAT wavelength) const override
+		[[nodiscard]] RealType
+		getGain(const math::SVec3& angle, const math::SVec3& refangle, RealType wavelength) const override
 		{
 			return getEfficiencyFactor();
 		}
@@ -82,63 +82,63 @@ namespace antenna
 	class Sinc final : public Antenna
 	{
 	public:
-		Sinc(const std::string& name, const RS_FLOAT alpha, const RS_FLOAT beta, const RS_FLOAT gamma) : Antenna(name),
+		Sinc(const std::string& name, const RealType alpha, const RealType beta, const RealType gamma) : Antenna(name),
 			_alpha(alpha), _beta(beta), _gamma(gamma) {}
 
 		~Sinc() override = default;
 
-		[[nodiscard]] RS_FLOAT getGain(const math::SVec3& angle, const math::SVec3& refangle,
-		                               RS_FLOAT wavelength) const override;
+		[[nodiscard]] RealType getGain(const math::SVec3& angle, const math::SVec3& refangle,
+		                               RealType wavelength) const override;
 
 	private:
-		RS_FLOAT _alpha;
-		RS_FLOAT _beta;
-		RS_FLOAT _gamma;
+		RealType _alpha;
+		RealType _beta;
+		RealType _gamma;
 	};
 
 	class Gaussian final : public Antenna
 	{
 	public:
-		Gaussian(const std::string& name, const RS_FLOAT azscale, const RS_FLOAT elscale) : Antenna(name),
+		Gaussian(const std::string& name, const RealType azscale, const RealType elscale) : Antenna(name),
 			_azscale(azscale),
 			_elscale(elscale) {}
 
 		~Gaussian() override = default;
 
-		[[nodiscard]] RS_FLOAT getGain(const math::SVec3& angle, const math::SVec3& refangle,
-		                               RS_FLOAT wavelength) const override;
+		[[nodiscard]] RealType getGain(const math::SVec3& angle, const math::SVec3& refangle,
+		                               RealType wavelength) const override;
 
 	private:
-		RS_FLOAT _azscale;
-		RS_FLOAT _elscale;
+		RealType _azscale;
+		RealType _elscale;
 	};
 
 	class SquareHorn final : public Antenna
 	{
 	public:
-		SquareHorn(const std::string& name, const RS_FLOAT dimension) : Antenna(name), _dimension(dimension) {}
+		SquareHorn(const std::string& name, const RealType dimension) : Antenna(name), _dimension(dimension) {}
 
 		~SquareHorn() override = default;
 
-		[[nodiscard]] RS_FLOAT getGain(const math::SVec3& angle, const math::SVec3& refangle,
-		                               RS_FLOAT wavelength) const override;
+		[[nodiscard]] RealType getGain(const math::SVec3& angle, const math::SVec3& refangle,
+		                               RealType wavelength) const override;
 
 	private:
-		RS_FLOAT _dimension;
+		RealType _dimension;
 	};
 
 	class ParabolicReflector final : public Antenna
 	{
 	public:
-		ParabolicReflector(const std::string& name, const RS_FLOAT diameter) : Antenna(name), _diameter(diameter) {}
+		ParabolicReflector(const std::string& name, const RealType diameter) : Antenna(name), _diameter(diameter) {}
 
 		~ParabolicReflector() override = default;
 
-		[[nodiscard]] RS_FLOAT getGain(const math::SVec3& angle, const math::SVec3& refangle,
-		                               RS_FLOAT wavelength) const override;
+		[[nodiscard]] RealType getGain(const math::SVec3& angle, const math::SVec3& refangle,
+		                               RealType wavelength) const override;
 
 	private:
-		RS_FLOAT _diameter;
+		RealType _diameter;
 	};
 
 	class XmlAntenna final : public Antenna
@@ -155,13 +155,13 @@ namespace antenna
 
 		~XmlAntenna() override = default;
 
-		[[nodiscard]] RS_FLOAT getGain(const math::SVec3& angle, const math::SVec3& refangle,
-		                               RS_FLOAT wavelength) const override;
+		[[nodiscard]] RealType getGain(const math::SVec3& angle, const math::SVec3& refangle,
+		                               RealType wavelength) const override;
 
 	private:
 		void loadAntennaDescription(const std::string& filename);
 
-		RS_FLOAT _max_gain{};
+		RealType _max_gain{};
 		std::unique_ptr<interp::InterpSet> _azi_samples;
 		std::unique_ptr<interp::InterpSet> _elev_samples;
 	};
@@ -175,8 +175,8 @@ namespace antenna
 
 		~FileAntenna() override = default;
 
-		[[nodiscard]] RS_FLOAT
-		getGain(const math::SVec3& angle, const math::SVec3& refangle, RS_FLOAT wavelength) const override
+		[[nodiscard]] RealType
+		getGain(const math::SVec3& angle, const math::SVec3& refangle, RealType wavelength) const override
 		{
 			return _pattern->getGain(angle - refangle) * getEfficiencyFactor();
 		}
@@ -193,8 +193,8 @@ namespace antenna
 
 		~PythonAntenna() override = default;
 
-		[[nodiscard]] RS_FLOAT
-		getGain(const math::SVec3& angle, const math::SVec3& refangle, RS_FLOAT wavelength) const override
+		[[nodiscard]] RealType
+		getGain(const math::SVec3& angle, const math::SVec3& refangle, RealType wavelength) const override
 		{
 			return _py_antenna.getGain(angle - refangle) * getEfficiencyFactor();
 		}

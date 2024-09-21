@@ -25,7 +25,7 @@ namespace math
 	}
 
 	//Get the position of the path object at a specified time
-	Vec3 Path::getPosition(const RS_FLOAT t) const
+	Vec3 Path::getPosition(const RealType t) const
 	{
 		Coord coord;
 		if (!_final) { throw PathException("Finalize not called before GetPosition"); }
@@ -74,7 +74,7 @@ namespace math
 
 	//Compares two paths at the same time and returns a vector with the distance and angle
 	// Note: This function is not used in the codebase
-	SVec3 compare(const RS_FLOAT time, const Path& start, const Path& end)
+	SVec3 compare(const RealType time, const Path& start, const Path& end)
 	{
 		const Vec3 difference = end.getPosition(time) - start.getPosition(time);
 		const SVec3 result(difference); //Get the result in spherical co-ordinates

@@ -6,8 +6,6 @@
 #ifndef POLARIZATION_MATRIX_H
 #define POLARIZATION_MATRIX_H
 
-#include <complex>
-
 #include "config.h"
 
 namespace math
@@ -17,13 +15,13 @@ namespace math
 	public:
 		PsMatrix();
 
-		PsMatrix(RS_FLOAT s11, RS_FLOAT s12, RS_FLOAT s21, RS_FLOAT s22);
+		PsMatrix(RealType s11, RealType s12, RealType s21, RealType s22);
 
 		PsMatrix(const PsMatrix& im);
 
 		PsMatrix& operator=(const PsMatrix& im);
 
-		RS_COMPLEX s[4];
+		ComplexType s[4];
 	};
 }
 

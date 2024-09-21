@@ -26,7 +26,7 @@ namespace
 		root->LinkEndChild(element.release());
 	}
 
-	void attachRsFloatNode(TiXmlElement* root, const std::string& name, const RS_FLOAT data,
+	void attachRsFloatNode(TiXmlElement* root, const std::string& name, const RealType data,
 	                       const bool scientific = true)
 	{
 		std::ostringstream oss;
@@ -101,7 +101,7 @@ namespace serial
 		_points.push_back(point);
 	}
 
-	std::vector<RS_COMPLEX> Response::renderBinary(RS_FLOAT& rate, unsigned& size, const RS_FLOAT fracWinDelay) const
+	std::vector<ComplexType> Response::renderBinary(RealType& rate, unsigned& size, const RealType fracWinDelay) const
 	{
 		rate = _wave->getRate();
 		return _wave->render(_points, size, fracWinDelay);

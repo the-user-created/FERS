@@ -28,7 +28,7 @@ namespace math
 
 		void finalize();
 
-		[[nodiscard]] SVec3 getPosition(RS_FLOAT t) const;
+		[[nodiscard]] SVec3 getPosition(RealType t) const;
 
 		void setInterp(InterpType setinterp);
 

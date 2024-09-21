@@ -34,7 +34,7 @@ namespace radar
 	struct TransmitterPulse
 	{
 		signal::RadarSignal* wave;
-		RS_FLOAT time;
+		RealType time;
 	};
 
 	class Radar : public Object
@@ -51,13 +51,13 @@ namespace radar
 			!ant ? throw std::logic_error("[BUG] Transmitter's antenna set to null") : _antenna = ant;
 		}
 
-		[[nodiscard]] RS_FLOAT getGain(const math::SVec3& angle, const math::SVec3& refangle,
-		                               const RS_FLOAT wavelength) const
+		[[nodiscard]] RealType getGain(const math::SVec3& angle, const math::SVec3& refangle,
+		                               const RealType wavelength) const
 		{
 			return _antenna->getGain(angle, refangle, wavelength);
 		}
 
-		[[nodiscard]] virtual RS_FLOAT getNoiseTemperature(const math::SVec3& angle) const
+		[[nodiscard]] virtual RealType getNoiseTemperature(const math::SVec3& angle) const
 		{
 			return _antenna->getNoiseTemperature(angle);
 		}
@@ -82,9 +82,9 @@ namespace radar
 
 		[[nodiscard]] bool getMultipathDual() const { return _multipath_dual; }
 
-		void setMultipathDual(RS_FLOAT reflect);
+		void setMultipathDual(RealType reflect);
 
-		[[nodiscard]] RS_FLOAT getMultipathFactor() const { return _multipath_factor; }
+		[[nodiscard]] RealType getMultipathFactor() const { return _multipath_factor; }
 
 		[[nodiscard]] const antenna::Antenna* getAntenna() const { return _antenna; }
 
@@ -97,7 +97,7 @@ namespace radar
 		const antenna::Antenna* _antenna;
 		const Radar* _attached;
 		bool _multipath_dual;
-		RS_FLOAT _multipath_factor;
+		RealType _multipath_factor;
 	};
 
 	class Transmitter final : public Radar
@@ -114,7 +114,7 @@ namespace radar
 
 		void getPulse(TransmitterPulse* pulse, int number) const;
 
-		void setPrf(RS_FLOAT mprf);
+		void setPrf(RealType mprf);
 
 		[[nodiscard]] Transmitter* getDual() const { return _dual; }
 
@@ -124,7 +124,7 @@ namespace radar
 
 		void setDual(Transmitter* dual) { _dual = dual; }
 
-		[[nodiscard]] RS_FLOAT getPrf() const { return _prf; }
+		[[nodiscard]] RealType getPrf() const { return _prf; }
 
 		[[nodiscard]] signal::RadarSignal* getSignal() const { return _signal; }
 
@@ -132,7 +132,7 @@ namespace radar
 
 	private:
 		signal::RadarSignal* _signal;
-		RS_FLOAT _prf{};
+		RealType _prf{};
 		bool _pulsed;
 		Transmitter* _dual;
 	};
@@ -151,33 +151,33 @@ namespace radar
 
 		void render();
 
-		[[nodiscard]] RS_FLOAT getNoiseTemperature(const math::SVec3& angle) const override
+		[[nodiscard]] RealType getNoiseTemperature(const math::SVec3& angle) const override
 		{
 			return _noise_temperature + Radar::getNoiseTemperature(angle);
 		}
 
-		[[nodiscard]] RS_FLOAT getNoiseTemperature() const { return _noise_temperature; }
+		[[nodiscard]] RealType getNoiseTemperature() const { return _noise_temperature; }
 
-		void setNoiseTemperature(const RS_FLOAT temp)
+		void setNoiseTemperature(const RealType temp)
 		{
-			temp < -std::numeric_limits<RS_FLOAT>::epsilon()
+			temp < -std::numeric_limits<RealType>::epsilon()
 				? throw std::runtime_error("[BUG] Noise temperature must be positive")
 				: _noise_temperature = temp;
 		}
 
-		void setWindowProperties(RS_FLOAT length, RS_FLOAT prf, RS_FLOAT skip);
+		void setWindowProperties(RealType length, RealType prf, RealType skip);
 
 		[[nodiscard]] int countResponses() const { return static_cast<int>(_responses.size()); }
 
 		[[nodiscard]] int getWindowCount() const;
 
-		[[nodiscard]] RS_FLOAT getWindowStart(int window) const;
+		[[nodiscard]] RealType getWindowStart(int window) const;
 
-		[[nodiscard]] RS_FLOAT getWindowLength() const { return _window_length; }
+		[[nodiscard]] RealType getWindowLength() const { return _window_length; }
 
-		[[nodiscard]] RS_FLOAT getWindowSkip() const { return _window_skip; }
+		[[nodiscard]] RealType getWindowSkip() const { return _window_skip; }
 
-		[[nodiscard]] RS_FLOAT getWindowPrf() const { return _window_prf; }
+		[[nodiscard]] RealType getWindowPrf() const { return _window_prf; }
 
 		void setFlag(const RecvFlag flag) { _flags |= static_cast<int>(flag); }
 
@@ -190,10 +190,10 @@ namespace radar
 	private:
 		std::vector<std::unique_ptr<serial::Response>> _responses;
 		std::mutex _responses_mutex;
-		RS_FLOAT _noise_temperature;
-		RS_FLOAT _window_length{};
-		RS_FLOAT _window_prf{};
-		RS_FLOAT _window_skip{};
+		RealType _noise_temperature;
+		RealType _window_length{};
+		RealType _window_prf{};
+		RealType _window_skip{};
 		Receiver* _dual;
 		int _flags;
 	};

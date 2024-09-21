@@ -7,11 +7,11 @@
 
 namespace math
 {
-	MultipathSurface::MultipathSurface(const RS_FLOAT a, const RS_FLOAT b, const RS_FLOAT c, const RS_FLOAT d,
-									   const RS_FLOAT factor)
+	MultipathSurface::MultipathSurface(const RealType a, const RealType b, const RealType c, const RealType d,
+									   const RealType factor)
 		: _factor(factor)
 	{
-		RS_FLOAT* mat = _reflection.getData();
+		RealType* mat = _reflection.getData();
 		mat[0] = -a * a + b * b + c * c;
 		mat[4] = a * a - b * b + c * c;
 		mat[8] = a * a + b * b - c * c;

@@ -62,14 +62,14 @@ const char* getChildText(const TiXmlHandle& parent, const char* childname)
 }
 
 /// Gets child text as a rsFloat. See GetChildText for usage description
-RS_FLOAT getChildRsFloat(const TiXmlHandle& parent, const char* childname)
+RealType getChildRsFloat(const TiXmlHandle& parent, const char* childname)
 {
 	const char* data = getChildText(parent, childname);
 	if (!data)
 	{
 		throw XmlImportException("No data in child element " + std::string(childname) + " during GetChildRsFloat.");
 	}
-	RS_FLOAT result;
+	RealType result;
 	std::istringstream(data) >> result;
 	return result;
 }
@@ -77,11 +77,11 @@ RS_FLOAT getChildRsFloat(const TiXmlHandle& parent, const char* childname)
 /// Gets the text content of a node as an rsFloat.
 //For XML like this:
 //<rcs>10</rcs>
-RS_FLOAT getNodeFloat(const TiXmlHandle& node)
+RealType getNodeFloat(const TiXmlHandle& node)
 {
 	const char* data = node.Element() ? node.Element()->GetText() : nullptr;
 	if (!data) { throw XmlImportException("Node does not contain text during GetNodeFloat"); }
-	RS_FLOAT result;
+	RealType result;
 	std::istringstream(data) >> result;
 	return result;
 }
@@ -298,10 +298,10 @@ namespace
 	{
 		try
 		{
-			const RS_FLOAT x = getChildRsFloat(handXml, "x");
-			const RS_FLOAT y = getChildRsFloat(handXml, "y");
-			const RS_FLOAT z = getChildRsFloat(handXml, "altitude");
-			const RS_FLOAT t = getChildRsFloat(handXml, "time");
+			const RealType x = getChildRsFloat(handXml, "x");
+			const RealType y = getChildRsFloat(handXml, "y");
+			const RealType z = getChildRsFloat(handXml, "altitude");
+			const RealType t = getChildRsFloat(handXml, "time");
 			math::Coord coord;
 			coord.t = t;
 			coord.pos = math::Vec3(x, y, z);

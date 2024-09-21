@@ -13,12 +13,12 @@ namespace noise
 
 	void cleanUpNoise();
 
-	RS_FLOAT wgnSample(RS_FLOAT stddev);
+	RealType wgnSample(RealType stddev);
 
 	// Note: This function is not used in the codebase
-	RS_FLOAT uniformSample();
+	RealType uniformSample();
 
-	RS_FLOAT noiseTemperatureToPower(RS_FLOAT temperature, RS_FLOAT bandwidth);
+	RealType noiseTemperatureToPower(RealType temperature, RealType bandwidth);
 }
 
 #endif //NOISE_UTILS_H

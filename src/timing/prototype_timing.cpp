@@ -17,19 +17,19 @@ namespace timing
 	//
 	// =================================================================================================================
 
-	void PrototypeTiming::addAlpha(const RS_FLOAT alpha, const RS_FLOAT weight)
+	void PrototypeTiming::addAlpha(const RealType alpha, const RealType weight)
 	{
 		_alphas.emplace_back(alpha);
 		_weights.emplace_back(weight);
 	}
 
-	void PrototypeTiming::getAlphas(std::vector<RS_FLOAT>& getAlphas, std::vector<RS_FLOAT>& getWeights) const
+	void PrototypeTiming::getAlphas(std::vector<RealType>& getAlphas, std::vector<RealType>& getWeights) const
 	{
 		getAlphas = _alphas;
 		getWeights = _weights;
 	}
 
-	void PrototypeTiming::addFreqOffset(const RS_FLOAT offset)
+	void PrototypeTiming::addFreqOffset(const RealType offset)
 	{
 		if (_random_freq.has_value())
 		{
@@ -40,7 +40,7 @@ namespace timing
 		_freq_offset = offset;
 	}
 
-	void PrototypeTiming::addPhaseOffset(const RS_FLOAT offset)
+	void PrototypeTiming::addPhaseOffset(const RealType offset)
 	{
 		if (_random_phase.has_value())
 		{
@@ -51,7 +51,7 @@ namespace timing
 		_phase_offset = offset;
 	}
 
-	void PrototypeTiming::addRandomFreqOffset(const RS_FLOAT stdev)
+	void PrototypeTiming::addRandomFreqOffset(const RealType stdev)
 	{
 		if (_freq_offset.has_value())
 		{
@@ -62,7 +62,7 @@ namespace timing
 		_random_freq = stdev;
 	}
 
-	void PrototypeTiming::addRandomPhaseOffset(const RS_FLOAT stdev)
+	void PrototypeTiming::addRandomPhaseOffset(const RealType stdev)
 	{
 		if (_phase_offset.has_value())
 		{
