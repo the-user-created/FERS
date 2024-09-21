@@ -7,7 +7,9 @@
 #include <iostream>
 #include <unordered_map>
 
-namespace arg_parser
+using logging::Level;
+
+namespace core
 {
 	void showHelp(const char* programName)
 	{
@@ -36,15 +38,15 @@ namespace arg_parser
 		std::cout << "Author: Marc Brooker\n";
 	}
 
-	std::optional<logging::Level> parseLogLevel(const std::string& level)
+	std::optional<Level> parseLogLevel(const std::string& level)
 	{
-		static const std::unordered_map<std::string, logging::Level> LEVEL_MAP = {
-			{"TRACE", logging::Level::TRACE},
-			{"DEBUG", logging::Level::DEBUG},
-			{"INFO", logging::Level::INFO},
-			{"WARNING", logging::Level::WARNING},
-			{"ERROR", logging::Level::ERROR},
-			{"FATAL", logging::Level::FATAL}
+		static const std::unordered_map<std::string, Level> LEVEL_MAP = {
+			{"TRACE", Level::TRACE},
+			{"DEBUG", Level::DEBUG},
+			{"INFO", Level::INFO},
+			{"WARNING", Level::WARNING},
+			{"ERROR", Level::ERROR},
+			{"FATAL", Level::FATAL}
 		};
 
 		if (const auto it = LEVEL_MAP.find(level); it != LEVEL_MAP.end()) { return it->second; }
@@ -99,10 +101,10 @@ namespace arg_parser
 							throw std::invalid_argument("Number of threads must be greater than 0");
 						}
 
-						if (const unsigned max_threads = portable_utils::countProcessors(); config.num_threads >
+						if (const unsigned max_threads = countProcessors(); config.num_threads >
 							max_threads)
 						{
-							LOG(logging::Level::ERROR,
+							LOG(Level::ERROR,
 							    "Number of threads specified is greater than the number of processors. Defaulting to the number of processors.");
 							config.num_threads = max_threads;
 						}
@@ -136,21 +138,21 @@ namespace arg_parser
 		return config;
 	}
 
-	void setLogLevel(const logging::Level level)
+	void setLogLevel(const Level level)
 	{
 		switch (level)
 		{
-		case logging::Level::TRACE: logging::logger.setLevel(logging::Level::TRACE);
+		case Level::TRACE: logging::logger.setLevel(Level::TRACE);
 			break;
-		case logging::Level::DEBUG: logging::logger.setLevel(logging::Level::DEBUG);
+		case Level::DEBUG: logging::logger.setLevel(Level::DEBUG);
 			break;
-		case logging::Level::INFO: logging::logger.setLevel(logging::Level::INFO);
+		case Level::INFO: logging::logger.setLevel(Level::INFO);
 			break;
-		case logging::Level::WARNING: logging::logger.setLevel(logging::Level::WARNING);
+		case Level::WARNING: logging::logger.setLevel(Level::WARNING);
 			break;
-		case logging::Level::ERROR: logging::logger.setLevel(logging::Level::ERROR);
+		case Level::ERROR: logging::logger.setLevel(Level::ERROR);
 			break;
-		case logging::Level::FATAL: logging::logger.setLevel(logging::Level::FATAL);
+		case Level::FATAL: logging::logger.setLevel(Level::FATAL);
 			break;
 		}
 	}

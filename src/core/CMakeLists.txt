@@ -12,7 +12,6 @@ set(HEADERS
 	portable_utils.h
 	parameters.h
 	world.h
-	object.h
 	arg_parser.h
 	sim_threading.h
 )

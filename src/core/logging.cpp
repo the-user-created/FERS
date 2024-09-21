@@ -4,13 +4,8 @@
 
 #include "logging.h"
 
-#include <chrono>
-#include <ctime>
 #include <filesystem>
-#include <iomanip>
 #include <iostream>
-#include <regex>
-#include <source_location>
 
 namespace logging
 {

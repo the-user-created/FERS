@@ -5,10 +5,11 @@
 
 #include "interpolation_filter.h"
 
-#include "core/logging.h"
 #include "core/parameters.h"
 
-namespace interp_filt
+using logging::Level;
+
+namespace interp
 {
 	InterpFilter* InterpFilter::getInstance()
 	{
@@ -38,16 +39,16 @@ namespace interp_filt
 
 	InterpFilter::InterpFilter()
 	{
-		_length = static_cast<int>(parameters::renderFilterLength());
+		_length = static_cast<int>(params::renderFilterLength());
 		//Size of the table to use for interpolation
 		_table_filters = 1000;
 		//Allocate memory for the table
 		_filter_table = std::vector<RS_FLOAT>(_table_filters * _length);
 		//Alpha is half the filter length
-		_alpha = std::floor(parameters::renderFilterLength() / 2.0);
+		_alpha = std::floor(params::renderFilterLength() / 2.0);
 		_bessel_beta = besselI0(_beta);
 		const int hfilt = _table_filters / 2;
-		LOG(logging::Level::DEBUG, "Building table of {} filters", _table_filters);
+		LOG(Level::DEBUG, "Building table of {} filters", _table_filters);
 		//Fill the table of filters
 		//C Tong: delay appears to be the fraction of time ellapsed between samples
 		for (int i = -hfilt; i < hfilt; i++)
@@ -58,7 +59,7 @@ namespace interp_filt
 				_filter_table[static_cast<int>((i + hfilt) * _length + j + _alpha)] = interpFilter(j - delay);
 			}
 		}
-		LOG(logging::Level::DEBUG, "Filter table complete");
+		LOG(Level::DEBUG, "Filter table complete");
 	}
 
 	const RS_FLOAT* InterpFilter::getFilter(const RS_FLOAT delay) const
@@ -67,7 +68,7 @@ namespace interp_filt
 
 		if (delay <= -1 || delay >= 1)
 		{
-			LOG(logging::Level::DEBUG, "GetFilter {} {}", delay, filt);
+			LOG(Level::DEBUG, "GetFilter {} {}", delay, filt);
 			throw std::runtime_error("[BUG] Requested delay filter value out of range");
 		}
 

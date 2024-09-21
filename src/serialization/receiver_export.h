@@ -8,24 +8,23 @@
 #define RECEIVER_EXPORT_H
 
 #include <memory>
-#include <string>
 #include <vector>
 
-namespace rs
+namespace radar
 {
-	// Forward declarations
 	class Receiver;
-	class Response;
 }
 
-namespace receiver_export
+namespace serial
 {
-	void exportReceiverXml(const std::vector<std::unique_ptr<rs::Response>>& responses, const std::string& filename);
+	class Response;
 
-	void exportReceiverBinary(const std::vector<std::unique_ptr<rs::Response>>& responses, const rs::Receiver* recv,
+	void exportReceiverXml(const std::vector<std::unique_ptr<Response>>& responses, const std::string& filename);
+
+	void exportReceiverBinary(const std::vector<std::unique_ptr<Response>>& responses, const radar::Receiver* recv,
 	                          const std::string& recvName);
 
-	void exportReceiverCsv(const std::vector<std::unique_ptr<rs::Response>>& responses, const std::string& filename);
+	void exportReceiverCsv(const std::vector<std::unique_ptr<Response>>& responses, const std::string& filename);
 }
 
 #endif //RECEIVER_EXPORT_H

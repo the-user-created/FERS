@@ -6,11 +6,12 @@
 #ifndef INTERPOLATION_FILTER_H
 #define INTERPOLATION_FILTER_H
 
-#include <complex>
-#include <functional>
+#include <cmath>
+#include <vector>
+
 #include "config.h"
 
-namespace interp_filt
+namespace interp
 {
 	class InterpFilter
 	{

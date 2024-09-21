@@ -6,12 +6,9 @@
 #ifndef JONES_VECTOR_H
 #define JONES_VECTOR_H
 
-#include <complex>
-
-#include "config.h"
 #include "math_utils/polarization_matrix.h"
 
-namespace rs
+namespace signal
 {
 	class JonesVector
 	{
@@ -24,7 +21,7 @@ namespace rs
 
 		JonesVector& operator=(const JonesVector& iv) = default;
 
-		JonesVector operator*(const PsMatrix& mat) const
+		JonesVector operator*(const math::PsMatrix& mat) const
 		{
 			return {_h * mat.s[0] + _v * mat.s[1], _h * mat.s[2] + _v * mat.s[3]};
 		}

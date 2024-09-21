@@ -5,15 +5,14 @@
 
 #ifndef COORD_H
 #define COORD_H
-
-#include "config.h"
 #include "geometry_ops.h"
 
-namespace coord
+
+namespace math
 {
 	struct Coord
 	{
-		rs::Vec3 pos;
+		Vec3 pos;
 		RS_FLOAT t;
 
 		bool operator<(const Coord& b) const { return t < b.t; }

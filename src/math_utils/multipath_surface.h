@@ -6,10 +6,12 @@
 #ifndef MULTIPATH_SURFACE_H
 #define MULTIPATH_SURFACE_H
 
+#include "config.h"
 #include "geometry_ops.h"
 
-namespace rs
+namespace math
 {
+
 	class MultipathSurface
 	{
 	public:

@@ -19,17 +19,17 @@ namespace
 	// Seed generation can be updated with a random device if no explicit seed is provided
 	unsigned int getSeed()
 	{
-		return parameters::randomSeed(); // Assuming this function still provides a seed, else use random_device
+		return params::randomSeed(); // Assuming this function still provides a seed, else use random_device
 	}
 }
 
-// =====================================================================================================================
+// =================================================================================================================
 //
 // IMPLEMENTATIONS OF NON-CLASS FUNCTIONS
 //
-// =====================================================================================================================
+// =================================================================================================================
 
-namespace noise_utils
+namespace noise
 {
 	void initializeNoise()
 	{
@@ -62,6 +62,6 @@ namespace noise_utils
 	RS_FLOAT noiseTemperatureToPower(const double temperature, const double bandwidth)
 	{
 		// Compute noise power given temperature and bandwidth
-		return parameters::boltzmannK() * temperature * bandwidth;
+		return params::boltzmannK() * temperature * bandwidth;
 	}
 }

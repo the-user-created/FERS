@@ -7,11 +7,12 @@
 #define HDF5_EXPORT_H
 
 #include <complex>
+#include <string>
 #include <vector>
 
 #include "config.h"
 
-namespace hdf5_handler
+namespace serial
 {
 	long createFile(const std::string& name);
 

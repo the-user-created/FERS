@@ -6,12 +6,9 @@
 #ifndef PATH_UTILS_H
 #define PATH_UTILS_H
 
-#include <algorithm>  // NOLINT
-#include <config.h>
-#include <stdexcept>
-#include <vector>
+#include <algorithm>
 
-namespace path
+namespace math
 {
 	class PathException final : public std::runtime_error
 	{
@@ -38,7 +35,7 @@ concept Interpolatable = requires(T a, T b, RS_FLOAT t)
 template <Interpolatable T>
 void getPositionStatic(T& coord, const std::vector<T>& coords)
 {
-	if (coords.empty()) { throw path::PathException("coord list empty during GetPositionStatic"); }
+	if (coords.empty()) { throw math::PathException("coord list empty during GetPositionStatic"); }
 	coord = coords[0];
 }
 
@@ -46,7 +43,7 @@ void getPositionStatic(T& coord, const std::vector<T>& coords)
 template <Interpolatable T>
 void getPositionLinear(RS_FLOAT t, T& coord, const std::vector<T>& coords)
 {
-	if (coords.empty()) { throw path::PathException("coord list empty during GetPositionLinear"); }
+	if (coords.empty()) { throw math::PathException("coord list empty during GetPositionLinear"); }
 
 	// Use std::ranges and algorithms to simplify the search
 	auto xrp = std::ranges::upper_bound(coords, t, {}, &T::t);
@@ -71,7 +68,7 @@ void getPositionLinear(RS_FLOAT t, T& coord, const std::vector<T>& coords)
 template <Interpolatable T>
 void getPositionCubic(RS_FLOAT t, T& coord, const std::vector<T>& coords, const std::vector<T>& dd)
 {
-	if (coords.empty()) { throw path::PathException("coord list empty during GetPositionCubic"); }
+	if (coords.empty()) { throw math::PathException("coord list empty during GetPositionCubic"); }
 
 	auto xrp = std::ranges::upper_bound(coords, t, {}, &T::t);
 
@@ -101,7 +98,7 @@ template <Interpolatable T>
 void finalizeCubic(std::vector<T>& coords, std::vector<T>& dd)
 {
 	const int size = coords.size();
-	if (size < 2) { throw path::PathException("Not enough points for cubic interpolation"); }
+	if (size < 2) { throw math::PathException("Not enough points for cubic interpolation"); }
 
 	std::vector<T> tmp(size);
 	dd.resize(size);

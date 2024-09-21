@@ -6,14 +6,19 @@
 #ifndef RADAR_SIGNAL_H
 #define RADAR_SIGNAL_H
 
+#include <complex>
 #include <memory>
 #include <vector>
 
 #include "config.h"
 #include "jones_vector.h"
-#include "interpolation/interpolation_point.h"
 
-namespace rs
+namespace interp
+{
+	struct InterpPoint;
+}
+
+namespace signal
 {
 	class Signal
 	{
@@ -35,7 +40,8 @@ namespace rs
 		// Note: This function is not used in the codebase
 		[[nodiscard]] std::vector<RS_FLOAT> copyData() const;
 
-		std::vector<RS_COMPLEX> render(const std::vector<InterpPoint>& points, unsigned& size, double fracWinDelay) const;
+		std::vector<RS_COMPLEX> render(const std::vector<interp::InterpPoint>& points, unsigned& size,
+		                               double fracWinDelay) const;
 
 	private:
 		std::vector<RS_COMPLEX> _data;
@@ -43,22 +49,25 @@ namespace rs
 		RS_FLOAT _rate;
 
 		[[nodiscard]] std::tuple<double, double, double, int> calculateWeightsAndDelays(
-			std::vector<InterpPoint>::const_iterator iter, std::vector<InterpPoint>::const_iterator next,
+			std::vector<interp::InterpPoint>::const_iterator iter,
+			std::vector<interp::InterpPoint>::const_iterator next,
 			double sampleTime, double idelay, double fracWinDelay) const;
 
 		RS_COMPLEX performConvolution(int i, const double* filt, int filtLength, double amplitude,
-		                                        int iSampleUnwrap) const;
+		                              int iSampleUnwrap) const;
 	};
 
 	class RadarSignal
 	{
 	public:
-		RadarSignal(std::string name, RS_FLOAT power, RS_FLOAT carrierfreq, RS_FLOAT length, std::unique_ptr<Signal> signal);
+		RadarSignal(std::string name, RS_FLOAT power, RS_FLOAT carrierfreq, RS_FLOAT length,
+		            std::unique_ptr<Signal> signal);
 
 		~RadarSignal() = default;
 
 		// Delete copy constructor and copy assignment operator to prevent copying
 		RadarSignal(const RadarSignal&) = delete;
+
 		RadarSignal& operator=(const RadarSignal&) = delete;
 
 		[[nodiscard]] RS_FLOAT getPower() const { return _power; }
@@ -71,7 +80,8 @@ namespace rs
 
 		[[nodiscard]] RS_FLOAT getLength() const { return _length; }
 
-		std::vector<RS_COMPLEX> render(const std::vector<InterpPoint>& points, unsigned& size, RS_FLOAT fracWinDelay) const;
+		std::vector<RS_COMPLEX> render(const std::vector<interp::InterpPoint>& points, unsigned& size,
+		                               RS_FLOAT fracWinDelay) const;
 
 		// Note: This function is not used in the codebase
 		[[nodiscard]] JonesVector getPolarization() const { return _polar; }

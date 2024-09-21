@@ -7,14 +7,16 @@
 
 #include "core/logging.h"
 
-// =====================================================================================================================
-//
-// PROTOTYPE TIMING CLASS
-//
-// =====================================================================================================================
+using logging::Level;
 
-namespace rs
+namespace timing
 {
+	// =================================================================================================================
+	//
+	// PROTOTYPE TIMING CLASS
+	//
+	// =================================================================================================================
+
 	void PrototypeTiming::addAlpha(const RS_FLOAT alpha, const RS_FLOAT weight)
 	{
 		_alphas.emplace_back(alpha);
@@ -31,7 +33,7 @@ namespace rs
 	{
 		if (_random_freq.has_value())
 		{
-			LOG(logging::Level::ERROR,
+			LOG(Level::ERROR,
 			    "Random frequency offset and constant frequency offset are set for timing source {}. Only the random offset will be used.",
 			    getName().c_str());
 		}
@@ -42,7 +44,7 @@ namespace rs
 	{
 		if (_random_phase.has_value())
 		{
-			LOG(logging::Level::ERROR,
+			LOG(Level::ERROR,
 			    "Random phase offset and constant phase offset are set for timing source {}. Only the random offset will be used.",
 			    getName().c_str());
 		}
@@ -53,7 +55,7 @@ namespace rs
 	{
 		if (_freq_offset.has_value())
 		{
-			LOG(logging::Level::ERROR,
+			LOG(Level::ERROR,
 			    "Random frequency offset and constant frequency offset are set for timing source {}. Only the random offset will be used.",
 			    getName().c_str());
 		}
@@ -64,7 +66,7 @@ namespace rs
 	{
 		if (_phase_offset.has_value())
 		{
-			LOG(logging::Level::ERROR,
+			LOG(Level::ERROR,
 			    "Random phase offset and constant phase offset are set for timing source {}. Only the random offset will be used.",
 			    getName().c_str());
 		}

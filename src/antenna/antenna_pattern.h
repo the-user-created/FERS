@@ -9,22 +9,30 @@
 #include <string>
 #include <vector>
 
-#include "math_utils/geometry_ops.h"
-#include "serialization/hdf5_handler.h"
+#include "config.h"
 
-namespace rs
+namespace serial
+{
+	std::vector<std::vector<RS_FLOAT>> readPattern(const std::string& name, const std::string& datasetName, unsigned& aziSize, unsigned& elevSize);
+}
+
+namespace math {
+	class SVec3;
+}
+
+namespace antenna
 {
 	class Pattern
 	{
 	public:
 		explicit Pattern(const std::string& filename)
 		{
-			_pattern = hdf5_handler::readPattern(filename, "antenna", _size_azi, _size_elev);
+			_pattern = serial::readPattern(filename, "antenna", _size_azi, _size_elev);
 		}
 
 		~Pattern() = default;
 
-		[[nodiscard]] RS_FLOAT getGain(const SVec3& angle) const;
+		[[nodiscard]] RS_FLOAT getGain(const math::SVec3& angle) const;
 
 	private:
 		unsigned _size_elev{}, _size_azi{};

@@ -6,16 +6,20 @@
 #ifndef SIM_THREADING_H
 #define SIM_THREADING_H
 
-#include "radar/radar_system.h"
+#include <exception>
 
-namespace rs
+#include "config.h"
+
+namespace radar
 {
-	class World;
-	class Target;
+	class Receiver;
+	class Transmitter;
 }
 
-namespace rs::threaded_sim
+namespace core
 {
+	class World;
+
 	struct ReResults
 	{
 		RS_FLOAT power, delay, doppler, phase, noise_temperature;
@@ -38,26 +42,26 @@ namespace rs::threaded_sim
 	class SimThread : public Thread
 	{
 	public:
-		SimThread(const Transmitter* transmitter, Receiver* receiver, const World* world)
+		SimThread(const radar::Transmitter* transmitter, radar::Receiver* receiver, const World* world)
 			: _trans(transmitter), _recv(receiver), _world(world) {}
 
 		void operator()() const;
 
 	private:
-		const Transmitter* _trans;
-		Receiver* _recv;
+		const radar::Transmitter* _trans;
+		radar::Receiver* _recv;
 		const World* _world;
 	};
 
 	class RenderThread : public Thread
 	{
 	public:
-		explicit RenderThread(Receiver* recv) : _recv(recv) {}
+		explicit RenderThread(radar::Receiver* recv) : _recv(recv) {}
 
 		void operator()() const;
 
 	private:
-		Receiver* _recv;
+		radar::Receiver* _recv;
 	};
 
 	void runThreadedSim(unsigned threadLimit, const World* world);

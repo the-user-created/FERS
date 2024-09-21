@@ -5,16 +5,19 @@
 #ifndef ARG_PARSER_H
 #define ARG_PARSER_H
 
+#include <optional>
+#include <string>
+
 #include "logging.h"
 #include "portable_utils.h"
 
-namespace arg_parser
+namespace core
 {
 	struct Config
 	{
 		std::string script_file;
 		logging::Level log_level = logging::Level::INFO;
-		unsigned num_threads = portable_utils::countProcessors();
+		unsigned num_threads = countProcessors();
 	};
 
 	void showHelp(const char* programName);

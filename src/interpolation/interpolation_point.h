@@ -6,9 +6,7 @@
 #ifndef INTERPOLATION_POINT_H
 #define INTERPOLATION_POINT_H
 
-#include "config.h"
-
-namespace rs
+namespace interp
 {
 	struct InterpPoint
 	{

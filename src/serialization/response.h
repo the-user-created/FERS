@@ -6,20 +6,32 @@
 #ifndef RESPONSE_H
 #define RESPONSE_H
 
+#include <complex>
+#include <fstream>
+#include <vector>
+
 #include "config.h"
-#include "signal_processing/radar_signal.h"
+#include "interpolation/interpolation_point.h"
 
 class TiXmlElement;
 
-namespace rs
+namespace signal
 {
-	class Antenna;
-	class Transmitter;
+	class RadarSignal;
+}
 
+namespace radar
+{
+	class Transmitter;
+}
+
+namespace serial
+{
 	class Response
 	{
 	public:
-		Response(const RadarSignal* wave, const Transmitter* transmitter) : _transmitter(transmitter), _wave(wave) {}
+		Response(const signal::RadarSignal* wave, const radar::Transmitter* transmitter) : _transmitter(transmitter),
+			_wave(wave) {}
 
 		~Response() = default;
 
@@ -41,20 +53,20 @@ namespace rs
 		[[nodiscard]] RS_FLOAT getLength() const { return endTime() - startTime(); }
 
 		// Note: This function is not used in the codebase
-		[[nodiscard]] const RadarSignal* getWave() const { return _wave; }
+		[[nodiscard]] const signal::RadarSignal* getWave() const { return _wave; }
 
 		[[nodiscard]] std::string getTransmitterName() const;
 
-		void addInterpPoint(const InterpPoint& point);
+		void addInterpPoint(const interp::InterpPoint& point);
 
 	private:
-		const Transmitter* _transmitter;
-		const RadarSignal* _wave;
-		std::vector<InterpPoint> _points;
+		const radar::Transmitter* _transmitter;
+		const signal::RadarSignal* _wave;
+		std::vector<interp::InterpPoint> _points;
 
-		void renderResponseXml(TiXmlElement* root, const InterpPoint& point) const;
+		void renderResponseXml(TiXmlElement* root, const interp::InterpPoint& point) const;
 
-		void renderResponseCsv(std::ofstream& of, const InterpPoint& point) const;
+		void renderResponseCsv(std::ofstream& of, const interp::InterpPoint& point) const;
 	};
 }
 

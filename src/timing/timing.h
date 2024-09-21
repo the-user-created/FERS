@@ -6,16 +6,16 @@
 #ifndef TIMING_H
 #define TIMING_H
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "config.h"
 #include "noise/noise_generators.h"
 
-namespace rs
+namespace timing
 {
 	class PrototypeTiming;
-	class ClockModelGenerator;
 
 	class Timing final
 	{
@@ -55,7 +55,7 @@ namespace rs
 	private:
 		std::string _name;
 		bool _enabled;
-		std::unique_ptr<ClockModelGenerator> _model; // Use a smart pointer for automatic memory management
+		std::unique_ptr<noise::ClockModelGenerator> _model; // Use a smart pointer for automatic memory management
 		std::vector<RS_FLOAT> _alphas;
 		std::vector<RS_FLOAT> _weights;
 		RS_FLOAT _frequency{};

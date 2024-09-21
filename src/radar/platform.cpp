@@ -7,20 +7,21 @@
 
 #include "core/logging.h"
 
-using namespace rs;
-
-Platform* rs::createMultipathDual(const Platform* plat, const MultipathSurface* surf)
+namespace radar
 {
-	if (plat->getDual().has_value())
+	Platform* createMultipathDual(const Platform* plat, const math::MultipathSurface* surf)
 	{
-		LOG(logging::Level::DEBUG, "[Platform.createMultipathDual] Dual platform already exists");
-		return plat->getDual().value();
+		if (plat->getDual().has_value())
+		{
+			LOG(logging::Level::DEBUG, "[Platform.createMultipathDual] Dual platform already exists");
+			return plat->getDual().value();
+		}
+		auto dual = std::make_unique<Platform>(plat->getName() + "_dual");
+		const_cast<Platform*>(plat)->setDual(dual.get());
+
+		dual->setMotionPath(reflectPath(plat->getMotionPath(), surf));
+		dual->setRotationPath(reflectPath(plat->getRotationPath(), surf));
+
+		return dual.release();
 	}
-	auto dual = std::make_unique<Platform>(plat->getName() + "_dual");
-	const_cast<Platform*>(plat)->setDual(dual.get());
-
-	dual->setMotionPath(reflectPath(plat->getMotionPath(), surf));
-	dual->setRotationPath(reflectPath(plat->getRotationPath(), surf));
-
-	return dual.release();
 }

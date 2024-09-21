@@ -7,27 +7,27 @@
 #include "receiver_export.h"
 
 #include <algorithm>
-#include <fstream>
+#include <complex>
 #include <map>
 #include <tinyxml.h>
 
 #include "hdf5_handler.h"
 #include "response_renderer.h"
 #include "core/parameters.h"
-#include "core/portable_utils.h"
 #include "noise/noise_utils.h"
 #include "radar/radar_system.h"
+#include "timing/timing.h"
 
 namespace
 {
 	long openHdf5File(const std::string& recvName)
 	{
 		long hdf5_file = 0;
-		if (parameters::exportBinary())
+		if (params::exportBinary())
 		{
 			std::ostringstream b_oss;
 			b_oss << std::scientific << recvName << ".h5";
-			hdf5_file = hdf5_handler::createFile(b_oss.str());
+			hdf5_file = serial::createFile(b_oss.str());
 		}
 		return hdf5_file;
 	}
@@ -36,12 +36,12 @@ namespace
 	{
 		if (temperature == 0) { return; }
 
-		const RS_FLOAT power = noise_utils::noiseTemperatureToPower(
+		const RS_FLOAT power = noise::noiseTemperatureToPower(
 			temperature,
-			parameters::rate() * parameters::oversampleRatio() / 2
+			params::rate() * params::oversampleRatio() / 2
 		);
 
-		rs::WgnGenerator generator(std::sqrt(power) / 2.0);
+		noise::WgnGenerator generator(std::sqrt(power) / 2.0);
 
 		for (unsigned i = 0; i < size; ++i)
 		{
@@ -89,7 +89,7 @@ namespace
 		}
 
 		// Simulate ADC if adcBits parameter is greater than 0
-		if (parameters::adcBits() > 0) { adcSimulate(data, size, parameters::adcBits(), max_value); }
+		if (params::adcBits() > 0) { adcSimulate(data, size, params::adcBits(), max_value); }
 		else if (max_value != 0)
 		{
 			// Normalize the data if max_value is not zero
@@ -108,8 +108,8 @@ namespace
 		return max_value;
 	}
 
-	std::vector<RS_FLOAT> generatePhaseNoise(const rs::Receiver* recv, const unsigned wSize, const RS_FLOAT rate,
-	                             RS_FLOAT& carrier, bool& enabled)
+	std::vector<RS_FLOAT> generatePhaseNoise(const radar::Receiver* recv, const unsigned wSize, const RS_FLOAT rate,
+	                                         RS_FLOAT& carrier, bool& enabled)
 	{
 		// Get the timing model from the receiver
 		const auto timing = recv->getTiming();
@@ -149,7 +149,8 @@ namespace
 		return noise;
 	}
 
-	void addPhaseNoiseToWindow(const std::vector<RS_FLOAT>& noise, std::vector<RS_COMPLEX>& window, const unsigned wSize)
+	void addPhaseNoiseToWindow(const std::vector<RS_FLOAT>& noise, std::vector<RS_COMPLEX>& window,
+	                           const unsigned wSize)
 	{
 		for (unsigned i = 0; i < wSize; ++i)
 		{
@@ -169,7 +170,8 @@ namespace
 		}
 	}
 
-	void exportResponseFersBin(const std::vector<std::unique_ptr<rs::Response>>& responses, const rs::Receiver* recv,
+	void exportResponseFersBin(const std::vector<std::unique_ptr<serial::Response>>& responses,
+	                           const radar::Receiver* recv,
 	                           const std::string& recvName)
 	{
 		// Bail if there are no responses to export
@@ -179,7 +181,7 @@ namespace
 		const long out_bin = openHdf5File(recvName);
 
 		// Create a threaded render object to manage the rendering process
-		const response_renderer::ThreadedResponseRenderer thr_renderer(responses, recv, parameters::renderThreads());
+		const serial::ThreadedResponseRenderer thr_renderer(responses, recv, params::renderThreads());
 
 		// Retrieve the window count from the receiver
 		const int window_count = recv->getWindowCount();
@@ -188,7 +190,7 @@ namespace
 		for (int i = 0; i < window_count; ++i)
 		{
 			const RS_FLOAT length = recv->getWindowLength();
-			const RS_FLOAT rate = parameters::rate() * parameters::oversampleRatio();
+			const RS_FLOAT rate = params::rate() * params::oversampleRatio();
 			auto size = static_cast<unsigned>(std::ceil(length * rate));
 
 			// Generate phase noise samples for the window
@@ -213,16 +215,16 @@ namespace
 			thr_renderer.renderWindow(window, length, start, frac_delay);
 
 			// Downsample the window if the oversample ratio is greater than 1
-			if (parameters::oversampleRatio() != 1)
+			if (params::oversampleRatio() != 1)
 			{
 				// Calculate the new size after downsampling
-				const unsigned new_size = size / parameters::oversampleRatio();
+				const unsigned new_size = size / params::oversampleRatio();
 
 				// Allocate memory for the downsampled window
-				std::vector<RS_COMPLEX> tmp = std::vector<RS_COMPLEX>(new_size);
+				auto tmp = std::vector<RS_COMPLEX>(new_size);
 
 				// Perform downsampling
-				rs::downsample(window, size, tmp, parameters::oversampleRatio());
+				signal::downsample(window, size, tmp, params::oversampleRatio());
 
 				// Replace the window with the downsampled one
 				size = new_size;
@@ -236,20 +238,20 @@ namespace
 			const RS_FLOAT fullscale = quantizeWindow(window, size);
 
 			// Export the binary format if enabled
-			if (parameters::exportBinary())
+			if (params::exportBinary())
 			{
-				hdf5_handler::addChunkToFile(out_bin, window, size, start, parameters::rate(), fullscale, i);
+				serial::addChunkToFile(out_bin, window, size, start, params::rate(), fullscale, i);
 			}
 		}
 
 		// Close the binary file
-		if (out_bin) { hdf5_handler::closeFile(out_bin); }
+		if (out_bin) { serial::closeFile(out_bin); }
 	}
 }
 
-namespace receiver_export
+namespace serial
 {
-	void exportReceiverXml(const std::vector<std::unique_ptr<rs::Response>>& responses, const std::string& filename)
+	void exportReceiverXml(const std::vector<std::unique_ptr<Response>>& responses, const std::string& filename)
 	{
 		TiXmlDocument doc;
 		auto decl = std::make_unique<TiXmlDeclaration>("1.0", "", "");
@@ -264,7 +266,7 @@ namespace receiver_export
 		}
 	}
 
-	void exportReceiverCsv(const std::vector<std::unique_ptr<rs::Response>>& responses, const std::string& filename)
+	void exportReceiverCsv(const std::vector<std::unique_ptr<Response>>& responses, const std::string& filename)
 	{
 		// Use std::unique_ptr to handle automatic cleanup of the streams
 		std::map<std::string, std::unique_ptr<std::ofstream>> streams;
@@ -296,6 +298,6 @@ namespace receiver_export
 		}
 	}
 
-	void exportReceiverBinary(const std::vector<std::unique_ptr<rs::Response>>& responses, const rs::Receiver* recv,
+	void exportReceiverBinary(const std::vector<std::unique_ptr<Response>>& responses, const radar::Receiver* recv,
 	                          const std::string& recvName) { exportResponseFersBin(responses, recv, recvName); }
 }

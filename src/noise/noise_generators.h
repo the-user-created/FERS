@@ -8,13 +8,11 @@
 
 #include <memory>
 #include <random>
-#include <vector>
 
-#include "config.h"
 #include "falpha_branch.h"
 #include "python/python_extension.h"
 
-namespace rs
+namespace noise
 {
 	class NoiseGenerator
 	{
@@ -126,7 +124,7 @@ namespace rs
 		RS_FLOAT getSample() override { return _generator.getSample(); }
 
 	private:
-		rs_python::PythonNoise _generator;
+		python::PythonNoise _generator;
 	};
 }
 

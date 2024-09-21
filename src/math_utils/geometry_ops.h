@@ -10,9 +10,8 @@
 
 #include "config.h"
 
-namespace rs
+namespace math
 {
-	class SVec3;
 	class Vec3;
 
 	class Matrix3
