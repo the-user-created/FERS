@@ -79,13 +79,13 @@ namespace
 		                                         recv->getRotation(results.delay + time.count()),
 		                                         wavelength);
 
-		results.power = transmitter_gain * receiver_gain * rcs / (4 * std::numbers::pi);
+		results.power = transmitter_gain * receiver_gain * rcs / (4 * PI);
 
 		// Propagation loss calculation
 		if (!recv->checkFlag(Receiver::RecvFlag::FLAG_NOPROPLOSS))
 		{
 			const RealType distance_product = transmitter_to_target_distance * receiver_to_target_distance;
-			results.power *= std::pow(wavelength, 2) / (std::pow(4 * std::numbers::pi, 2) * std::pow(
+			results.power *= std::pow(wavelength, 2) / (std::pow(4 * PI, 2) * std::pow(
 				distance_product, 2));
 		}
 
@@ -93,7 +93,7 @@ namespace
 		if (trans->getMultipathDual()) { results.power *= trans->getMultipathFactor(); }
 		if (recv->getMultipathDual()) { results.power *= recv->getMultipathFactor(); }
 
-		results.phase = -results.delay * 2 * std::numbers::pi * wave->getCarrier();
+		results.phase = -results.delay * 2 * PI * wave->getCarrier();
 
 		// End position and Doppler calculation
 		const auto transvec_end = SVec3(
@@ -131,7 +131,6 @@ namespace
 		const RealType distance = transvec.length;
 
 		constexpr RealType epsilon = std::numeric_limits<RealType>::epsilon();
-		constexpr auto pi = std::numbers::pi;
 
 		if (distance <= epsilon) { throw core::RangeError(); }
 
@@ -146,10 +145,10 @@ namespace
 		                                             wavelength);
 
 		// Power calculation
-		results.power = transmitter_gain * receiver_gain * wavelength * wavelength / (4 * pi);
+		results.power = transmitter_gain * receiver_gain * wavelength * wavelength / (4 * PI);
 
 		// Propagation loss
-		if (!recv->checkFlag(Receiver::RecvFlag::FLAG_NOPROPLOSS)) { results.power /= 4 * pi * distance * distance; }
+		if (!recv->checkFlag(Receiver::RecvFlag::FLAG_NOPROPLOSS)) { results.power /= 4 * PI * distance * distance; }
 
 		// Doppler shift calculation
 		const auto trpos_end = SVec3(
@@ -163,7 +162,7 @@ namespace
 		if (trans->getMultipathDual() || recv->getMultipathDual()) { results.power = 0; }
 
 		// Phase calculation, ensuring the phase is wrapped within [0, 2π]
-		results.phase = std::fmod(results.delay * 2 * pi * wave->getCarrier(), 2 * pi);
+		results.phase = std::fmod(results.delay * 2 * PI * wave->getCarrier(), 2 * PI);
 
 		// Set noise temperature
 		results.noise_temperature = recv->getNoiseTemperature(recv->getRotation(time.count() + results.delay));

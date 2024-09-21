@@ -198,7 +198,7 @@ namespace
 			std::vector<RealType> pnoise(generatePhaseNoise(recv, size, rate, carrier, pn_enabled));
 
 			// Get the window start time, including clock drift effects
-			RealType start = recv->getWindowStart(i) + pnoise[0] / (2 * M_PI * carrier);
+			RealType start = recv->getWindowStart(i) + pnoise[0] / (2 * PI * carrier);
 
 			// Calculate the fractional delay
 			const RealType frac_delay = start * rate - std::round(start * rate);

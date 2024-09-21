@@ -42,8 +42,6 @@ namespace
 
 namespace antenna
 {
-	constexpr RealType PI = std::numbers::pi; // Constant for π
-
 	// =================================================================================================================
 	//
 	// ANTENNA CLASS

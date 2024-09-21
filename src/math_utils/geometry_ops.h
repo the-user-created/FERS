@@ -153,17 +153,17 @@ namespace math
 
 	inline SVec3 operator+(const SVec3& a, const SVec3& b)
 	{
-		RealType new_azimuth = fmod(a.azimuth + b.azimuth, 2 * M_PI);
-		if (new_azimuth < 0) { new_azimuth += 2 * M_PI; }
-		RealType new_elevation = fmod(a.elevation + b.elevation, M_PI);
+		RealType new_azimuth = fmod(a.azimuth + b.azimuth, 2 * PI);
+		if (new_azimuth < 0) { new_azimuth += 2 * PI; }
+		RealType new_elevation = fmod(a.elevation + b.elevation, PI);
 		return {a.length + b.length, new_azimuth, new_elevation};
 	}
 
 	inline SVec3 operator-(const SVec3& a, const SVec3& b)
 	{
-		RealType new_azimuth = fmod(a.azimuth - b.azimuth, 2 * M_PI);
-		if (new_azimuth < 0) { new_azimuth += 2 * M_PI; }
-		RealType new_elevation = fmod(a.elevation - b.elevation, M_PI);
+		RealType new_azimuth = fmod(a.azimuth - b.azimuth, 2 * PI);
+		if (new_azimuth < 0) { new_azimuth += 2 * PI; }
+		RealType new_elevation = fmod(a.elevation - b.elevation, PI);
 		return {a.length - b.length, new_azimuth, new_elevation};
 	}
 }

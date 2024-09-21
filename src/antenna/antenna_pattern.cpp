@@ -7,7 +7,6 @@
 
 #include "math_utils/geometry_ops.h"
 
-constexpr RealType PI = std::numbers::pi; // Constant for π
 constexpr RealType TWO_PI = 2.0 * PI; // Constant for 2*π
 
 namespace antenna

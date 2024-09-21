@@ -14,8 +14,6 @@
 
 namespace interp
 {
-	constexpr RealType PI = std::numbers::pi_v<RealType>;
-
 	class InterpFilter
 	{
 	public:
