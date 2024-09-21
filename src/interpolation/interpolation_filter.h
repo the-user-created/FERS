@@ -16,32 +16,32 @@ namespace interp
 	class InterpFilter
 	{
 	public:
-		static RS_FLOAT sinc(const RS_FLOAT x) { return x == 0.0 ? 1.0 : std::sin(x * M_PI) / (x * M_PI); }
+		static RealType sinc(const RealType x) { return x == 0.0 ? 1.0 : std::sin(x * M_PI) / (x * M_PI); }
 
-		[[nodiscard]] RS_FLOAT kaiserWinCompute(const RS_FLOAT x) const
+		[[nodiscard]] RealType kaiserWinCompute(const RealType x) const
 		{
 			return x < 0 || x > _alpha * 2
 				       ? 0
 				       : besselI0(_beta * std::sqrt(1 - std::pow((x - _alpha) / _alpha, 2))) / _bessel_beta;
 		}
 
-		[[nodiscard]] RS_FLOAT interpFilter(const RS_FLOAT x) const { return kaiserWinCompute(x + _alpha) * sinc(x); }
+		[[nodiscard]] RealType interpFilter(const RealType x) const { return kaiserWinCompute(x + _alpha) * sinc(x); }
 
-		[[nodiscard]] const RS_FLOAT* getFilter(RS_FLOAT delay) const;
+		[[nodiscard]] const RealType* getFilter(RealType delay) const;
 
 		static InterpFilter* getInstance();
 
 	private:
-		static RS_FLOAT besselI0(RS_FLOAT x);
+		static RealType besselI0(RealType x);
 
 		InterpFilter();
 
-		RS_FLOAT _alpha;
-		RS_FLOAT _beta = 5; // Beta sets the window shape
-		RS_FLOAT _bessel_beta;
+		RealType _alpha;
+		RealType _beta = 5; // Beta sets the window shape
+		RealType _bessel_beta;
 		int _length;
 		int _table_filters;
-		std::vector<RS_FLOAT> _filter_table;
+		std::vector<RealType> _filter_table;
 	};
 }
 

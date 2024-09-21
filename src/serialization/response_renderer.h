@@ -6,7 +6,6 @@
 #ifndef RESPONSE_RENDERER_H
 #define RESPONSE_RENDERER_H
 
-#include <complex>
 #include <memory>
 #include <queue>
 
@@ -29,7 +28,7 @@ namespace serial
 
 		~ThreadedResponseRenderer() = default;
 
-		void renderWindow(std::vector<RS_COMPLEX>& window, RS_FLOAT length, RS_FLOAT start, RS_FLOAT fracDelay) const;
+		void renderWindow(std::vector<ComplexType>& window, RealType length, RealType start, RealType fracDelay) const;
 
 	private:
 		const std::vector<std::unique_ptr<Response>>& _responses;
@@ -40,8 +39,8 @@ namespace serial
 	class RenderThread
 	{
 	public:
-		RenderThread(const unsigned serial, std::mutex* windowMutex, std::vector<RS_COMPLEX>& window,
-		             const RS_FLOAT length, const RS_FLOAT start, const RS_FLOAT fracDelay, std::mutex* workListMutex,
+		RenderThread(const unsigned serial, std::mutex* windowMutex, std::vector<ComplexType>& window,
+		             const RealType length, const RealType start, const RealType fracDelay, std::mutex* workListMutex,
 		             std::queue<Response*>* workList) :
 			_serial(serial), _window_mutex(windowMutex), _window(window), _length(length), _start(start),
 			_frac_delay(fracDelay), _work_list_mutex(workListMutex), _work_list(workList) {}
@@ -53,15 +52,15 @@ namespace serial
 	private:
 		[[nodiscard]] Response* getWork() const;
 
-		void addWindow(const std::vector<RS_COMPLEX>& array, std::vector<RS_COMPLEX>& localWindow, RS_FLOAT startTime,
+		void addWindow(const std::vector<ComplexType>& array, std::vector<ComplexType>& localWindow, RealType startTime,
 		               unsigned arraySize) const;
 
 		unsigned _serial;
 		std::mutex* _window_mutex;
-		std::vector<RS_COMPLEX>& _window;
-		RS_FLOAT _length;
-		RS_FLOAT _start;
-		RS_FLOAT _frac_delay;
+		std::vector<ComplexType>& _window;
+		RealType _length;
+		RealType _start;
+		RealType _frac_delay;
 		std::mutex* _work_list_mutex;
 		std::queue<Response*>* _work_list;
 	};

@@ -13,7 +13,7 @@
 
 namespace serial
 {
-	std::vector<std::vector<RS_FLOAT>> readPattern(const std::string& name, const std::string& datasetName, unsigned& aziSize, unsigned& elevSize);
+	std::vector<std::vector<RealType>> readPattern(const std::string& name, const std::string& datasetName, unsigned& aziSize, unsigned& elevSize);
 }
 
 namespace math {
@@ -32,11 +32,11 @@ namespace antenna
 
 		~Pattern() = default;
 
-		[[nodiscard]] RS_FLOAT getGain(const math::SVec3& angle) const;
+		[[nodiscard]] RealType getGain(const math::SVec3& angle) const;
 
 	private:
 		unsigned _size_elev{}, _size_azi{};
-		std::vector<std::vector<RS_FLOAT>> _pattern;
+		std::vector<std::vector<RealType>> _pattern;
 	};
 }
 

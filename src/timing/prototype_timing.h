@@ -20,33 +20,33 @@ namespace timing
 	public:
 		explicit PrototypeTiming(std::string name) : _name(std::move(name)), _frequency(0), _sync_on_pulse(false) {}
 
-		void addAlpha(RS_FLOAT alpha, RS_FLOAT weight);
+		void addAlpha(RealType alpha, RealType weight);
 
-		void getAlphas(std::vector<RS_FLOAT>& getAlphas, std::vector<RS_FLOAT>& getWeights) const;
+		void getAlphas(std::vector<RealType>& getAlphas, std::vector<RealType>& getWeights) const;
 
-		[[nodiscard]] RS_FLOAT getPhaseOffset() const
+		[[nodiscard]] RealType getPhaseOffset() const
 		{
 			return _random_phase.has_value() ? noise::wgnSample(*_random_phase) : _phase_offset.value_or(0);
 		}
 
-		[[nodiscard]] RS_FLOAT getFreqOffset() const
+		[[nodiscard]] RealType getFreqOffset() const
 		{
 			return _random_freq.has_value() ? noise::wgnSample(*_random_freq) : _freq_offset.value_or(0);
 		}
 
-		[[nodiscard]] RS_FLOAT getFrequency() const { return _frequency; }
+		[[nodiscard]] RealType getFrequency() const { return _frequency; }
 
 		[[nodiscard]] bool getSyncOnPulse() const { return _sync_on_pulse; }
 
-		void addFreqOffset(RS_FLOAT offset);
+		void addFreqOffset(RealType offset);
 
-		void addPhaseOffset(RS_FLOAT offset);
+		void addPhaseOffset(RealType offset);
 
-		void addRandomFreqOffset(RS_FLOAT stdev);
+		void addRandomFreqOffset(RealType stdev);
 
-		void addRandomPhaseOffset(RS_FLOAT stdev);
+		void addRandomPhaseOffset(RealType stdev);
 
-		void setFrequency(const RS_FLOAT freq) { _frequency = freq; }
+		void setFrequency(const RealType freq) { _frequency = freq; }
 
 		[[nodiscard]] std::string getName() const { return _name; }
 
@@ -54,13 +54,13 @@ namespace timing
 
 	private:
 		std::string _name;
-		std::vector<RS_FLOAT> _alphas;
-		std::vector<RS_FLOAT> _weights;
-		std::optional<RS_FLOAT> _freq_offset;
-		std::optional<RS_FLOAT> _phase_offset;
-		std::optional<RS_FLOAT> _random_phase;
-		std::optional<RS_FLOAT> _random_freq;
-		RS_FLOAT _frequency;
+		std::vector<RealType> _alphas;
+		std::vector<RealType> _weights;
+		std::optional<RealType> _freq_offset;
+		std::optional<RealType> _phase_offset;
+		std::optional<RealType> _random_phase;
+		std::optional<RealType> _random_freq;
+		RealType _frequency;
 		bool _sync_on_pulse;
 	};
 }

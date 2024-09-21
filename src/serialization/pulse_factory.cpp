@@ -5,7 +5,6 @@
 
 #include "pulse_factory.h"
 
-#include <complex>
 #include <fstream>
 #include <vector>
 
@@ -25,27 +24,27 @@ namespace
 	// =================================================================================================================
 
 	std::unique_ptr<RadarSignal> loadPulseFromHdf5File(const std::string& name, const std::string& filename,
-	                                                   const RS_FLOAT power, const RS_FLOAT carrierFreq)
+	                                                   const RealType power, const RealType carrierFreq)
 	{
-		RS_FLOAT rate;
-		std::vector<RS_COMPLEX> data;
+		RealType rate;
+		std::vector<ComplexType> data;
 		serial::readPulseData(filename, data, rate);
 
 		auto signal = std::make_unique<Signal>();
 		signal->load(data.data(), data.size(), rate);
-		return std::make_unique<RadarSignal>(name, power, carrierFreq, static_cast<RS_FLOAT>(data.size()) / rate,
+		return std::make_unique<RadarSignal>(name, power, carrierFreq, static_cast<RealType>(data.size()) / rate,
 		                                     std::move(signal));
 	}
 
 	std::unique_ptr<RadarSignal> loadPulseFromCsvFile(const std::string& name, const std::string& filename,
-	                                                  const RS_FLOAT power, const RS_FLOAT carrierFreq)
+	                                                  const RealType power, const RealType carrierFreq)
 	{
 		std::ifstream ifile(filename.c_str());
 		if (!ifile) { throw std::runtime_error("Could not open " + filename + " to read pulse waveform"); }
-		RS_FLOAT rlength, rate;
+		RealType rlength, rate;
 		ifile >> rlength >> rate;
 		const unsigned length = static_cast<int>(rlength);
-		std::vector<RS_COMPLEX> data(length);
+		std::vector<ComplexType> data(length);
 		unsigned done = 0;
 		while (!ifile.eof() && done < length) { ifile >> data[done++]; }
 		if (done != length) { throw std::runtime_error("Could not read pulse waveform from file " + filename); }
@@ -58,7 +57,7 @@ namespace
 namespace serial
 {
 	std::unique_ptr<RadarSignal> loadPulseFromFile(const std::string& name, const std::string& filename,
-	                                               const RS_FLOAT power, const RS_FLOAT carrierFreq)
+	                                               const RealType power, const RealType carrierFreq)
 	{
 		if (const unsigned long ln = filename.length() - 1; tolower(filename[ln]) == 'v' && tolower(filename[ln - 1]) ==
 			's'

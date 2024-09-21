@@ -10,25 +10,25 @@
 
 #include "core/parameters.h"
 
-constexpr RS_FLOAT BLACKMAN_A0 = 0.42;
-constexpr RS_FLOAT BLACKMAN_A1 = 0.5;
-constexpr RS_FLOAT BLACKMAN_A2 = 0.08;
+constexpr RealType BLACKMAN_A0 = 0.42;
+constexpr RealType BLACKMAN_A1 = 0.5;
+constexpr RealType BLACKMAN_A2 = 0.08;
 
 namespace
 {
-	RS_FLOAT sinc(const RS_FLOAT x) { return x == 0 ? 1.0 : std::sin(x * M_PI) / (x * M_PI); }
+	RealType sinc(const RealType x) { return x == 0 ? 1.0 : std::sin(x * M_PI) / (x * M_PI); }
 
-	std::vector<RS_FLOAT> blackmanFir(const RS_FLOAT cutoff, unsigned& filtLength)
+	std::vector<RealType> blackmanFir(const RealType cutoff, unsigned& filtLength)
 	{
 		filtLength = params::renderFilterLength() * 2;
-		std::vector<RS_FLOAT> coeffs(filtLength); // Use vector for automatic memory management
-		const RS_FLOAT n = filtLength / 2.0;
+		std::vector<RealType> coeffs(filtLength); // Use vector for automatic memory management
+		const RealType n = filtLength / 2.0;
 		for (unsigned i = 0; i < filtLength; i++)
 		{
 			// We use the Blackman window, for a suitable tradeoff between rolloff and stopband attenuation
 			// Equivalent Kaiser beta = 7.04 (Oppenhiem and Schaffer, Hamming)
-			const RS_FLOAT filt = sinc(cutoff * (i - n));
-			const RS_FLOAT window = BLACKMAN_A0 - BLACKMAN_A1 * cos(M_PI * i / n) + BLACKMAN_A2 * cos(2 * M_PI * i / n);
+			const RealType filt = sinc(cutoff * (i - n));
+			const RealType window = BLACKMAN_A0 - BLACKMAN_A1 * cos(M_PI * i / n) + BLACKMAN_A2 * cos(2 * M_PI * i / n);
 			coeffs[i] = filt * window;
 		}
 		return coeffs;
@@ -37,16 +37,16 @@ namespace
 
 namespace signal
 {
-	void upsample(const RS_COMPLEX* in, const unsigned size, RS_COMPLEX* out, const unsigned ratio)
+	void upsample(const ComplexType* in, const unsigned size, ComplexType* out, const unsigned ratio)
 	{
 		// TODO: this would be better as a multirate upsampler
 		// This implementation is functional but suboptimal.
 		// Users requiring higher accuracy should oversample outside FERS until this is addressed.
 		unsigned filt_length;
-		const auto coeffs = blackmanFir(1 / static_cast<RS_FLOAT>(ratio), filt_length);
+		const auto coeffs = blackmanFir(1 / static_cast<RealType>(ratio), filt_length);
 
 		// Temporary buffer to hold upsampled and filtered data
-		std::vector<RS_COMPLEX> tmp(size * ratio + filt_length);
+		std::vector<ComplexType> tmp(size * ratio + filt_length);
 
 		// Insert the input samples at intervals of 'ratio', leaving zeroes in between
 		for (unsigned i = 0; i < size; ++i) { tmp[i * ratio] = in[i]; }
@@ -59,7 +59,7 @@ namespace signal
 		std::copy_n(tmp.begin() + filt_length / 2 - 1, size * ratio, out);
 	}
 
-	void downsample(const std::vector<RS_COMPLEX>& in, const unsigned size, std::vector<RS_COMPLEX>& out,
+	void downsample(const std::vector<ComplexType>& in, const unsigned size, std::vector<ComplexType>& out,
 	                const unsigned ratio)
 	{
 		if (ratio == 0 || size == 0 || !in.data() || !out.data())
@@ -70,13 +70,13 @@ namespace signal
 		// TODO: Replace with a more efficient multirate downsampling implementation.
 		unsigned filt_length = 0;
 
-		const auto coeffs = blackmanFir(1 / static_cast<RS_FLOAT>(ratio), filt_length);
+		const auto coeffs = blackmanFir(1 / static_cast<RealType>(ratio), filt_length);
 
 		// Use std::vector for temporary buffer allocation
-		std::vector<RS_COMPLEX> tmp(size + filt_length);
+		std::vector<ComplexType> tmp(size + filt_length);
 
 		// Initialize the tail of the temporary buffer with zeros (auto-handled by vector initialization).
-		std::fill(tmp.begin() + size, tmp.end(), RS_COMPLEX{0, 0});
+		std::fill(tmp.begin() + size, tmp.end(), ComplexType{0, 0});
 
 		// Copy input data to the temporary buffer
 		std::copy_n(in.data(), size, tmp.begin());
@@ -88,7 +88,7 @@ namespace signal
 		// Downsample the filtered data
 		for (unsigned i = 0; i < size / ratio; ++i)
 		{
-			out[i] = tmp[i * ratio + filt_length / 2] / static_cast<RS_FLOAT>(ratio);
+			out[i] = tmp[i * ratio + filt_length / 2] / static_cast<RealType>(ratio);
 		}
 	}
 
@@ -100,7 +100,7 @@ namespace signal
 	// =================================================================================================================
 
 
-	IirFilter::IirFilter(const std::vector<RS_FLOAT>& denCoeffs, const std::vector<RS_FLOAT>& numCoeffs)
+	IirFilter::IirFilter(const std::vector<RealType>& denCoeffs, const std::vector<RealType>& numCoeffs)
 	{
 		if (denCoeffs.size() != numCoeffs.size())
 		{
@@ -115,13 +115,13 @@ namespace signal
 		_w.assign(_order, 0.0); // Initialize _w to be a vector of zeros of the same size
 	}
 
-	IirFilter::IirFilter(const RS_FLOAT* denCoeffs, const RS_FLOAT* numCoeffs, const unsigned order)
+	IirFilter::IirFilter(const RealType* denCoeffs, const RealType* numCoeffs, const unsigned order)
 		: _a(denCoeffs, denCoeffs + order), // Initialize _a by copying from denCoeffs
 		  _b(numCoeffs, numCoeffs + order), // Initialize _b by copying from numCoeffs
 		  _w(order, 0.0), // Initialize _w with zeros
 		  _order(order) {}
 
-	RS_FLOAT IirFilter::filter(const RS_FLOAT sample)
+	RealType IirFilter::filter(const RealType sample)
 	{
 		// Shift delay line (state) to the right
 		std::rotate(_w.rbegin(), _w.rbegin() + 1, _w.rend());
@@ -136,7 +136,7 @@ namespace signal
 		return std::inner_product(_b.begin(), _b.end(), _w.begin(), 0.0);
 	}
 
-	void IirFilter::filter(std::vector<RS_FLOAT>& samples, const int size)
+	void IirFilter::filter(std::vector<RealType>& samples, const int size)
 	{
 		for (int i = 0; i < size; ++i)
 		{
@@ -160,16 +160,16 @@ namespace signal
 	//
 	// =================================================================================================================
 
-	void FirFilter::filter(std::vector<RS_FLOAT>& samples, const int size)
+	void FirFilter::filter(std::vector<RealType>& samples, const int size)
 	{
 		// See Oppenheim and Scaffer, section 6.5 "Basic Network Structures for FIR Systems"
 		// TODO: Implement one of the more efficient FIR filter forms
 		// FIR filter using direct form
-		std::vector<RS_FLOAT> line(_order, 0); // Initialize the line with zeros
+		std::vector<RealType> line(_order, 0); // Initialize the line with zeros
 		for (int i = 0; i < size; i++)
 		{
 			line[0] = samples[i]; // New sample input at the start of the line
-			RS_FLOAT res = 0;
+			RealType res = 0;
 
 			// Convolve the current line with the filter coefficients
 			for (unsigned j = 0; j < _order; j++) { res += line[_order - j - 1] * _filter[j]; }
@@ -181,14 +181,14 @@ namespace signal
 		}
 	}
 
-	void FirFilter::filter(std::vector<RS_COMPLEX>& samples, const unsigned size) const
+	void FirFilter::filter(std::vector<ComplexType>& samples, const unsigned size) const
 	{
-		std::vector<RS_COMPLEX> line(_order, {0.0, 0.0}); // Zero-initialize the line buffer
+		std::vector<ComplexType> line(_order, {0.0, 0.0}); // Zero-initialize the line buffer
 
 		for (unsigned i = 0; i < size; i++)
 		{
 			line[0] = samples[i]; // New complex sample input at the start of the line
-			RS_COMPLEX res(0.0, 0.0); // Result accumulator
+			ComplexType res(0.0, 0.0); // Result accumulator
 
 			// Convolve the current line with the filter coefficients
 			for (unsigned j = 0; j < _order; j++) { res += line[_order - j - 1] * _filter[j]; }
@@ -206,7 +206,7 @@ namespace signal
 	//
 	// =================================================================================================================
 
-	RS_FLOAT ArFilter::filter(const RS_FLOAT sample)
+	RealType ArFilter::filter(const RealType sample)
 	{
 		// Shift _w elements (use std::rotate)
 		std::rotate(_w.rbegin(), _w.rbegin() + 1, _w.rend());
@@ -218,7 +218,7 @@ namespace signal
 		return _w[0];
 	}
 
-	void ArFilter::filter(std::vector<RS_FLOAT>& samples, const int size)
+	void ArFilter::filter(std::vector<RealType>& samples, const int size)
 	{
 		for (int i = 0; i < size; ++i)
 		{
@@ -246,13 +246,13 @@ namespace signal
 
 		for (int i = 0; i < _filter_size; i++)
 		{
-			const RS_FLOAT window_value = 0.54 - 0.46 * std::cos(2 * M_PI * i / static_cast<RS_FLOAT>(_filter_size));
-			const RS_FLOAT filter_value = sinc(1.0 / static_cast<RS_FLOAT>(ratio) * (i - _filter_size / 2.0));
+			const RealType window_value = 0.54 - 0.46 * std::cos(2 * M_PI * i / static_cast<RealType>(_filter_size));
+			const RealType filter_value = sinc(1.0 / static_cast<RealType>(ratio) * (i - _filter_size / 2.0));
 			_filterbank[i] = filter_value * window_value;
 		}
 	}
 
-	void Upsampler::upsample(const RS_FLOAT* inSamples, const int inSize, RS_FLOAT* outSamples, const int outSize)
+	void Upsampler::upsample(const RealType* inSamples, const int inSize, RealType* outSamples, const int outSize)
 	{
 		if (outSize != _ratio * inSize) { throw std::runtime_error("Target array size is not correct in Upsample"); }
 		// Polyphase upsampler implementation
@@ -304,7 +304,7 @@ namespace signal
 		_filter = std::make_unique<IirFilter>(den_coeffs.data(), num_coeffs.data(), den_coeffs.size());
 	}
 
-	void DecadeUpsampler::upsample(const RS_FLOAT sample, std::vector<RS_FLOAT>& out) const
+	void DecadeUpsampler::upsample(const RealType sample, std::vector<RealType>& out) const
 	{
 		out[0] = sample;
 		// Use std::fill to fill the rest of the array with 0s
@@ -312,7 +312,7 @@ namespace signal
 		_filter->filter(out, 10);
 	}
 
-	void DecadeUpsampler::upsample(const std::vector<RS_FLOAT>& in, const int count, std::vector<RS_FLOAT>& out) const
+	void DecadeUpsampler::upsample(const std::vector<RealType>& in, const int count, std::vector<RealType>& out) const
 	{
 		for (int i = 0; i < count; ++i)
 		{

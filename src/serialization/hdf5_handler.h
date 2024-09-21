@@ -6,7 +6,6 @@
 #ifndef HDF5_EXPORT_H
 #define HDF5_EXPORT_H
 
-#include <complex>
 #include <string>
 #include <vector>
 
@@ -16,14 +15,14 @@ namespace serial
 {
 	long createFile(const std::string& name);
 
-	void addChunkToFile(long file, const std::vector<RS_COMPLEX>& data, unsigned size, RS_FLOAT time, RS_FLOAT rate,
-	                    RS_FLOAT fullscale, unsigned count);
+	void addChunkToFile(long file, const std::vector<ComplexType>& data, unsigned size, RealType time, RealType rate,
+	                    RealType fullscale, unsigned count);
 
 	void closeFile(long file);
 
-	void readPulseData(const std::string& name, std::vector<RS_COMPLEX>& data, RS_FLOAT& rate);
+	void readPulseData(const std::string& name, std::vector<ComplexType>& data, RealType& rate);
 
-	std::vector<std::vector<RS_FLOAT>> readPattern(const std::string& name, const std::string& datasetName, unsigned& aziSize,
+	std::vector<std::vector<RealType>> readPattern(const std::string& name, const std::string& datasetName, unsigned& aziSize,
 	                                               unsigned& elevSize);
 }
 

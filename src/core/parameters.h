@@ -27,16 +27,16 @@ namespace params
 	 */
 	struct Parameters
 	{
-		constexpr static RS_FLOAT DEFAULT_C = 299792458.0; ///< Speed of light (m/s)
-		constexpr static RS_FLOAT DEFAULT_BOLTZMANN_K = 1.3806503e-23; ///< Boltzmann constant
+		constexpr static RealType DEFAULT_C = 299792458.0; ///< Speed of light (m/s)
+		constexpr static RealType DEFAULT_BOLTZMANN_K = 1.3806503e-23; ///< Boltzmann constant
 		constexpr static unsigned MIN_FILTER_LENGTH = 16; ///< Minimum render filter length
 
-		RS_FLOAT c = DEFAULT_C; ///< Speed of light
-		RS_FLOAT boltzmann_k = DEFAULT_BOLTZMANN_K; ///< Boltzmann constant
-		RS_FLOAT start = 0; ///< Start time for simulation
-		RS_FLOAT end = 0; ///< End time for simulation
-		RS_FLOAT cw_sample_rate = 1000; ///< CW interpolation rate
-		RS_FLOAT rate = 0; ///< Sample rate for rendering
+		RealType c = DEFAULT_C; ///< Speed of light
+		RealType boltzmann_k = DEFAULT_BOLTZMANN_K; ///< Boltzmann constant
+		RealType start = 0; ///< Start time for simulation
+		RealType end = 0; ///< End time for simulation
+		RealType cw_sample_rate = 1000; ///< CW interpolation rate
+		RealType rate = 0; ///< Sample rate for rendering
 
 		unsigned random_seed = std::chrono::system_clock::now().time_since_epoch().count(); ///< Random seed using current time
 		unsigned adc_bits = 0; ///< ADC quantization bits
@@ -50,7 +50,7 @@ namespace params
 		unsigned render_threads = 1; ///< Number of rendering threads
 		unsigned oversample_ratio = 1; ///< Oversampling ratio
 
-		std::optional<RS_FLOAT> optional_rate = std::nullopt; ///< Optional sample rate
+		std::optional<RealType> optional_rate = std::nullopt; ///< Optional sample rate
 	};
 
 	/// Global instance of SimParameters
@@ -66,37 +66,37 @@ namespace params
 	 * @brief Get the speed of light.
 	 * @return Speed of light.
 	 */
-	inline RS_FLOAT c() noexcept { return params.c; }
+	inline RealType c() noexcept { return params.c; }
 
 	/**
 	 * @brief Get the Boltzmann constant.
 	 * @return Boltzmann constant.
 	 */
-	inline RS_FLOAT boltzmannK() noexcept { return params.boltzmann_k; }
+	inline RealType boltzmannK() noexcept { return params.boltzmann_k; }
 
 	/**
 	 * @brief Get the start time for simulation.
 	 * @return Start time.
 	 */
-	inline RS_FLOAT startTime() noexcept { return params.start; }
+	inline RealType startTime() noexcept { return params.start; }
 
 	/**
 	 * @brief Get the end time for simulation.
 	 * @return End time.
 	 */
-	inline RS_FLOAT endTime() noexcept { return params.end; }
+	inline RealType endTime() noexcept { return params.end; }
 
 	/**
 	 * @brief Get the CW interpolation rate.
 	 * @return CW interpolation rate.
 	 */
-	inline RS_FLOAT cwSampleRate() noexcept { return params.cw_sample_rate; }
+	inline RealType cwSampleRate() noexcept { return params.cw_sample_rate; }
 
 	/**
 	 * @brief Get the sample rate for rendering.
 	 * @return Sample rate.
 	 */
-	inline RS_FLOAT rate() noexcept { return params.rate; }
+	inline RealType rate() noexcept { return params.rate; }
 
 	/**
 	 * @brief Get the random seed.
@@ -162,7 +162,7 @@ namespace params
 	 * @brief Set the speed of light.
 	 * @param cValue Speed of light.
 	 */
-	inline void setC(RS_FLOAT cValue) noexcept
+	inline void setC(RealType cValue) noexcept
 	{
 		params.c = cValue;
 		LOG(logging::Level::INFO, "Propagation speed (c) set to: {:.5f}", cValue);
@@ -173,7 +173,7 @@ namespace params
 	 * @param startTime Start time.
 	 * @param endTime End time.
 	 */
-	inline void setTime(const RS_FLOAT startTime, const RS_FLOAT endTime) noexcept
+	inline void setTime(const RealType startTime, const RealType endTime) noexcept
 	{
 		params.start = startTime;
 		params.end = endTime;
@@ -184,7 +184,7 @@ namespace params
 	 * @brief Set the CW interpolation rate.
 	 * @param rate CW interpolation rate.
 	 */
-	inline void setCwSampleRate(const RS_FLOAT rate) noexcept
+	inline void setCwSampleRate(const RealType rate) noexcept
 	{
 		params.cw_sample_rate = rate;
 		LOG(logging::Level::DEBUG, "CW interpolation rate set to: {:.5f} Hz", rate);
@@ -194,7 +194,7 @@ namespace params
 	 * @brief Set the sample rate for rendering.
 	 * @param rateValue Sample rate.
 	 */
-	inline void setRate(RS_FLOAT rateValue) noexcept
+	inline void setRate(RealType rateValue) noexcept
 	{
 		params.rate = rateValue;
 		LOG(logging::Level::DEBUG, "Sample rate set to: {:.5f}", rateValue);

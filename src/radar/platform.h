@@ -33,9 +33,9 @@ namespace radar
 
 		void setRotationPath(std::unique_ptr<math::RotationPath> path) { _rotation_path = std::move(path); }
 
-		[[nodiscard]] math::Vec3 getPosition(const RS_FLOAT time) const { return _motion_path->getPosition(time); }
+		[[nodiscard]] math::Vec3 getPosition(const RealType time) const { return _motion_path->getPosition(time); }
 
-		[[nodiscard]] math::SVec3 getRotation(const RS_FLOAT time) const { return _rotation_path->getPosition(time); }
+		[[nodiscard]] math::SVec3 getRotation(const RealType time) const { return _rotation_path->getPosition(time); }
 
 		[[nodiscard]] std::string getName() const { return _name; }
 

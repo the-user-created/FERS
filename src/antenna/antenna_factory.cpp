@@ -7,7 +7,6 @@
 
 #include "antenna_factory.h"
 
-#include <complex>
 #include <tinyxml.h>
 
 #include "core/logging.h"
@@ -18,21 +17,21 @@ using logging::Level;
 using math::SVec3;
 using math::Vec3;
 
-RS_FLOAT getNodeFloat(const TiXmlHandle& node);
+RealType getNodeFloat(const TiXmlHandle& node);
 
 namespace
 {
-	RS_FLOAT sinc(const RS_FLOAT theta) { return std::sin(theta) / (theta + std::numeric_limits<RS_FLOAT>::epsilon()); }
+	RealType sinc(const RealType theta) { return std::sin(theta) / (theta + std::numeric_limits<RealType>::epsilon()); }
 
-	RS_FLOAT j1C(const RS_FLOAT x) { return x == 0 ? 1 : core::besselJ1(x) / x; }
+	RealType j1C(const RealType x) { return x == 0 ? 1 : core::besselJ1(x) / x; }
 
 	void loadAntennaGainAxis(const interp::InterpSet* set, const TiXmlHandle& axisXml)
 	{
 		TiXmlHandle tmp = axisXml.ChildElement("gainsample", 0);
 		for (int i = 0; tmp.Element() != nullptr; i++)
 		{
-			const RS_FLOAT angle = getNodeFloat(tmp.ChildElement("angle", 0));
-			const RS_FLOAT gain = getNodeFloat(tmp.ChildElement("gain", 0));
+			const RealType angle = getNodeFloat(tmp.ChildElement("angle", 0));
+			const RealType gain = getNodeFloat(tmp.ChildElement("gain", 0));
 			set->insertSample(angle, gain);
 			tmp = axisXml.ChildElement("gainsample", i);
 		}
@@ -47,13 +46,13 @@ namespace antenna
 	//
 	// =================================================================================================================
 
-	void Antenna::setEfficiencyFactor(const RS_FLOAT loss)
+	void Antenna::setEfficiencyFactor(const RealType loss)
 	{
 		if (loss > 1) { LOG(Level::INFO, "Using greater than unity antenna efficiency."); }
 		_loss_factor = loss;
 	}
 
-	RS_FLOAT Antenna::getAngle(const SVec3& angle, const SVec3& refangle)
+	RealType Antenna::getAngle(const SVec3& angle, const SVec3& refangle)
 	{
 		SVec3 normangle(angle);
 		normangle.length = 1;
@@ -66,7 +65,7 @@ namespace antenna
 	//
 	// =================================================================================================================
 
-	RS_FLOAT Gaussian::getGain(const SVec3& angle, const SVec3& refangle, RS_FLOAT wavelength) const
+	RealType Gaussian::getGain(const SVec3& angle, const SVec3& refangle, RealType wavelength) const
 	{
 		const SVec3 a = angle - refangle;
 		return std::exp(-a.azimuth * a.azimuth * _azscale) * std::exp(-a.elevation * a.elevation * _elscale);
@@ -78,11 +77,11 @@ namespace antenna
 	//
 	// =================================================================================================================
 
-	RS_FLOAT Sinc::getGain(const SVec3& angle, const SVec3& refangle, RS_FLOAT wavelength) const
+	RealType Sinc::getGain(const SVec3& angle, const SVec3& refangle, RealType wavelength) const
 	{
-		const RS_FLOAT theta = getAngle(angle, refangle);
-		const RS_COMPLEX complex_sinc(sinc(_beta * theta), 0.0);
-		const RS_COMPLEX complex_gain = _alpha * std::pow(complex_sinc, RS_COMPLEX(_gamma, 0.0)) *
+		const RealType theta = getAngle(angle, refangle);
+		const ComplexType complex_sinc(sinc(_beta * theta), 0.0);
+		const ComplexType complex_gain = _alpha * std::pow(complex_sinc, ComplexType(_gamma, 0.0)) *
 			getEfficiencyFactor();
 		return std::abs(complex_gain);
 	}
@@ -93,10 +92,10 @@ namespace antenna
 	//
 	// =================================================================================================================
 
-	RS_FLOAT SquareHorn::getGain(const SVec3& angle, const SVec3& refangle, const RS_FLOAT wavelength) const
+	RealType SquareHorn::getGain(const SVec3& angle, const SVec3& refangle, const RealType wavelength) const
 	{
-		const RS_FLOAT ge = 4 * M_PI * _dimension * _dimension / (wavelength * wavelength);
-		const RS_FLOAT x = M_PI * _dimension * std::sin(getAngle(angle, refangle)) / wavelength;
+		const RealType ge = 4 * M_PI * _dimension * _dimension / (wavelength * wavelength);
+		const RealType x = M_PI * _dimension * std::sin(getAngle(angle, refangle)) / wavelength;
 		return ge * std::pow(sinc(x), 2) * getEfficiencyFactor();
 	}
 
@@ -106,11 +105,11 @@ namespace antenna
 	//
 	// =================================================================================================================
 
-	RS_FLOAT ParabolicReflector::getGain(const SVec3& angle, const SVec3& refangle,
-	                                     const RS_FLOAT wavelength) const
+	RealType ParabolicReflector::getGain(const SVec3& angle, const SVec3& refangle,
+	                                     const RealType wavelength) const
 	{
-		const RS_FLOAT ge = std::pow(M_PI * _diameter / wavelength, 2);
-		const RS_FLOAT x = M_PI * _diameter * std::sin(getAngle(angle, refangle)) / wavelength;
+		const RealType ge = std::pow(M_PI * _diameter / wavelength, 2);
+		const RealType x = M_PI * _diameter * std::sin(getAngle(angle, refangle)) / wavelength;
 		return ge * std::pow(2 * j1C(x), 2) * getEfficiencyFactor();
 	}
 
@@ -120,7 +119,7 @@ namespace antenna
 	//
 	// =================================================================================================================
 
-	RS_FLOAT XmlAntenna::getGain(const SVec3& angle, const SVec3& refangle, RS_FLOAT wavelength) const
+	RealType XmlAntenna::getGain(const SVec3& angle, const SVec3& refangle, RealType wavelength) const
 	{
 		const SVec3 t_angle = angle - refangle;
 		return _azi_samples->getValueAt(std::fabs(t_angle.azimuth)) * _elev_samples->getValueAt(

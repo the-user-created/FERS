@@ -47,19 +47,19 @@ namespace noise
 		uniform_dist.reset();
 	}
 
-	RS_FLOAT wgnSample(const double stddev)
+	RealType wgnSample(const double stddev)
 	{
 		// Generate a white Gaussian noise sample with the specified standard deviation
 		return stddev > std::numeric_limits<double>::epsilon() ? (*normal_dist)(*rng) * stddev : 0.0;
 	}
 
-	RS_FLOAT uniformSample()
+	RealType uniformSample()
 	{
 		// Generate a sample from a uniform distribution between 0 and 1
 		return (*uniform_dist)(*rng);
 	}
 
-	RS_FLOAT noiseTemperatureToPower(const double temperature, const double bandwidth)
+	RealType noiseTemperatureToPower(const double temperature, const double bandwidth)
 	{
 		// Compute noise power given temperature and bandwidth
 		return params::boltzmannK() * temperature * bandwidth;

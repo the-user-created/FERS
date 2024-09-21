@@ -69,7 +69,7 @@ namespace python
 	//
 	// =================================================================================================================
 
-	Vec3 PythonPath::getPosition(const RS_FLOAT t) const
+	Vec3 PythonPath::getPosition(const RealType t) const
 	{
 		PyObject* pargs = PyTuple_Pack(1, PyFloat_FromDouble(t));
 		if (!pargs) { throw std::runtime_error("Could not create new Python Tuple in PythonPath"); }
@@ -95,7 +95,7 @@ namespace python
 	//
 	// =================================================================================================================
 
-	RS_FLOAT PythonNoise::getSample() const
+	RealType PythonNoise::getSample() const
 	{
 		PyObject* result = PyObject_CallObject(_data->p_func, nullptr);
 		if (!result)
@@ -104,7 +104,7 @@ namespace python
 			throw std::runtime_error("Call of function " + _function + " from module " + _module + " failed");
 		}
 
-		const RS_FLOAT sample = PyFloat_AsDouble(result);
+		const RealType sample = PyFloat_AsDouble(result);
 		Py_DECREF(result);
 		return sample;
 	}
@@ -115,7 +115,7 @@ namespace python
 	//
 	// =================================================================================================================
 
-	RS_FLOAT PythonAntennaMod::getGain(const SVec3& direction) const
+	RealType PythonAntennaMod::getGain(const SVec3& direction) const
 	{
 		PyObject* pargs = PyTuple_Pack(2, PyFloat_FromDouble(direction.azimuth),
 		                               PyFloat_FromDouble(direction.elevation));
@@ -129,7 +129,7 @@ namespace python
 			throw std::runtime_error("Call of function " + _function + " from module " + _module + " failed");
 		}
 
-		const RS_FLOAT sample = PyFloat_AsDouble(result);
+		const RealType sample = PyFloat_AsDouble(result);
 		Py_DECREF(result);
 		return sample;
 	}

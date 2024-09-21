@@ -10,7 +10,7 @@ namespace math
 	// Multiplication by a 3x3 matrix
 	Vec3& Vec3::operator*=(const Matrix3& m)
 	{
-		const RS_FLOAT* mat = m.getData();
+		const RealType* mat = m.getData();
 		const Vec3 v(x, y, z);
 		x = mat[0] * v.x + mat[1] * v.y + mat[2] * v.z;
 		y = mat[3] * v.x + mat[4] * v.y + mat[5] * v.z;

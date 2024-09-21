@@ -20,12 +20,12 @@ namespace math
 
 // Define a concept to ensure type T supports the necessary operations
 template <typename T>
-concept Interpolatable = requires(T a, T b, RS_FLOAT t)
+concept Interpolatable = requires(T a, T b, RealType t)
 {
 	{ a - b } -> std::same_as<T>;
 	{ a * t } -> std::same_as<T>;
 	{ a + b } -> std::same_as<T>;
-	{ a.t } -> std::convertible_to<RS_FLOAT>;
+	{ a.t } -> std::convertible_to<RealType>;
 };
 
 // The interpolation functions are implemented as template functions
@@ -41,7 +41,7 @@ void getPositionStatic(T& coord, const std::vector<T>& coords)
 
 // Linear interpolation: interpolates linearly between two points
 template <Interpolatable T>
-void getPositionLinear(RS_FLOAT t, T& coord, const std::vector<T>& coords)
+void getPositionLinear(RealType t, T& coord, const std::vector<T>& coords)
 {
 	if (coords.empty()) { throw math::PathException("coord list empty during GetPositionLinear"); }
 
@@ -54,9 +54,9 @@ void getPositionLinear(RS_FLOAT t, T& coord, const std::vector<T>& coords)
 	{
 		auto xri = std::distance(coords.begin(), xrp);
 		auto xli = xri - 1;
-		RS_FLOAT iw = coords[xri].t - coords[xli].t;
-		RS_FLOAT rw = (coords[xri].t - t) / iw;
-		RS_FLOAT lw = 1 - rw;
+		RealType iw = coords[xri].t - coords[xli].t;
+		RealType rw = (coords[xri].t - t) / iw;
+		RealType lw = 1 - rw;
 		coord = coords[xri] * lw + coords[xli] * rw;
 	}
 	coord.t = t;
@@ -66,7 +66,7 @@ void getPositionLinear(RS_FLOAT t, T& coord, const std::vector<T>& coords)
 // The method used (but not the code) is from
 // Numerical Recipes in C, Second Edition by Press, et al. pages 114-116
 template <Interpolatable T>
-void getPositionCubic(RS_FLOAT t, T& coord, const std::vector<T>& coords, const std::vector<T>& dd)
+void getPositionCubic(RealType t, T& coord, const std::vector<T>& coords, const std::vector<T>& dd)
 {
 	if (coords.empty()) { throw math::PathException("coord list empty during GetPositionCubic"); }
 
@@ -78,14 +78,14 @@ void getPositionCubic(RS_FLOAT t, T& coord, const std::vector<T>& coords, const 
 	{
 		auto xri = std::distance(coords.begin(), xrp);
 		auto xli = xri - 1;
-		const RS_FLOAT xrd = coords[xri].t - t;
-		const RS_FLOAT xld = t - coords[xli].t;
-		const RS_FLOAT iw = coords[xri].t - coords[xli].t;
-		const RS_FLOAT iws = iw * iw / 6.0;
-		RS_FLOAT a = xrd / iw;
-		RS_FLOAT b = xld / iw;
-		RS_FLOAT c = (a * a * a - a) * iws;
-		RS_FLOAT d = (b * b * b - b) * iws;
+		const RealType xrd = coords[xri].t - t;
+		const RealType xld = t - coords[xli].t;
+		const RealType iw = coords[xri].t - coords[xli].t;
+		const RealType iws = iw * iw / 6.0;
+		RealType a = xrd / iw;
+		RealType b = xld / iw;
+		RealType c = (a * a * a - a) * iws;
+		RealType d = (b * b * b - b) * iws;
 		coord = coords[xli] * a + coords[xri] * b + dd[xli] * c + dd[xri] * d;
 	}
 	coord.t = t;
@@ -110,10 +110,10 @@ void finalizeCubic(std::vector<T>& coords, std::vector<T>& dd)
 	{
 		T yrd = coords[i + 1] - coords[i];
 		T yld = coords[i] - coords[i - 1];
-		RS_FLOAT xrd = coords[i + 1].t - coords[i].t;
-		RS_FLOAT xld = coords[i].t - coords[i - 1].t;
-		RS_FLOAT iw = coords[i + 1].t - coords[i - 1].t;
-		RS_FLOAT si = xld / iw;
+		RealType xrd = coords[i + 1].t - coords[i].t;
+		RealType xld = coords[i].t - coords[i - 1].t;
+		RealType iw = coords[i + 1].t - coords[i - 1].t;
+		RealType si = xld / iw;
 		T p = dd[i - 1] * si + 2.0;
 		dd[i] = (si - 1.0) / p;
 		tmp[i] = ((yrd / xrd - yld / xld) * 6.0 / iw - tmp[i - 1] * si) / p;

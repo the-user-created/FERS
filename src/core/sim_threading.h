@@ -22,7 +22,7 @@ namespace core
 
 	struct ReResults
 	{
-		RS_FLOAT power, delay, doppler, phase, noise_temperature;
+		RealType power, delay, doppler, phase, noise_temperature;
 	};
 
 	class RangeError final : public std::exception

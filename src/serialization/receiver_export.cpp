@@ -7,7 +7,6 @@
 #include "receiver_export.h"
 
 #include <algorithm>
-#include <complex>
 #include <map>
 #include <tinyxml.h>
 
@@ -32,11 +31,11 @@ namespace
 		return hdf5_file;
 	}
 
-	void addNoiseToWindow(std::vector<RS_COMPLEX>& data, const unsigned size, const RS_FLOAT temperature)
+	void addNoiseToWindow(std::vector<ComplexType>& data, const unsigned size, const RealType temperature)
 	{
 		if (temperature == 0) { return; }
 
-		const RS_FLOAT power = noise::noiseTemperatureToPower(
+		const RealType power = noise::noiseTemperatureToPower(
 			temperature,
 			params::rate() * params::oversampleRatio() / 2
 		);
@@ -45,39 +44,39 @@ namespace
 
 		for (unsigned i = 0; i < size; ++i)
 		{
-			const RS_COMPLEX noise(generator.getSample(), generator.getSample());
+			const ComplexType noise(generator.getSample(), generator.getSample());
 			data[i] += noise;
 		}
 	}
 
-	void adcSimulate(std::vector<RS_COMPLEX>& data, const unsigned size, const unsigned bits, RS_FLOAT fullscale)
+	void adcSimulate(std::vector<ComplexType>& data, const unsigned size, const unsigned bits, RealType fullscale)
 	{
-		const RS_FLOAT levels = std::pow(2, bits - 1);
+		const RealType levels = std::pow(2, bits - 1);
 
 		for (unsigned it = 0; it < size; ++it)
 		{
 			// Normalize and quantize the real and imaginary parts
-			RS_FLOAT i = std::floor(levels * data[it].real() / fullscale) / levels;
-			RS_FLOAT q = std::floor(levels * data[it].imag() / fullscale) / levels;
+			RealType i = std::floor(levels * data[it].real() / fullscale) / levels;
+			RealType q = std::floor(levels * data[it].imag() / fullscale) / levels;
 
 			// Use std::clamp to ensure the values are within the range [-1, 1]
 			i = std::clamp(i, -1.0, 1.0);
 			q = std::clamp(q, -1.0, 1.0);
 
-			data[it] = RS_COMPLEX(i, q);
+			data[it] = ComplexType(i, q);
 		}
 	}
 
-	RS_FLOAT quantizeWindow(std::vector<RS_COMPLEX>& data, const unsigned size)
+	RealType quantizeWindow(std::vector<ComplexType>& data, const unsigned size)
 	{
 		// Find the maximum absolute value across real and imaginary parts
-		RS_FLOAT max_value = 0;
+		RealType max_value = 0;
 
 		// Loop through the data to calculate the maximum and check for NaNs
 		for (unsigned i = 0; i < size; ++i)
 		{
-			RS_FLOAT real_abs = std::fabs(data[i].real());
-			RS_FLOAT imag_abs = std::fabs(data[i].imag());
+			RealType real_abs = std::fabs(data[i].real());
+			RealType imag_abs = std::fabs(data[i].imag());
 
 			max_value = std::max({max_value, real_abs, imag_abs});
 
@@ -108,15 +107,15 @@ namespace
 		return max_value;
 	}
 
-	std::vector<RS_FLOAT> generatePhaseNoise(const radar::Receiver* recv, const unsigned wSize, const RS_FLOAT rate,
-	                                         RS_FLOAT& carrier, bool& enabled)
+	std::vector<RealType> generatePhaseNoise(const radar::Receiver* recv, const unsigned wSize, const RealType rate,
+	                                         RealType& carrier, bool& enabled)
 	{
 		// Get the timing model from the receiver
 		const auto timing = recv->getTiming();
 		if (!timing) { throw std::runtime_error("[BUG] Could not cast receiver->GetTiming() to ClockModelTiming"); }
 
 		// Use a smart pointer for memory safety; can be released later if raw pointer is required
-		auto noise = std::vector<RS_FLOAT>(wSize);
+		auto noise = std::vector<RealType>(wSize);
 
 		enabled = timing->enabled();
 
@@ -149,7 +148,7 @@ namespace
 		return noise;
 	}
 
-	void addPhaseNoiseToWindow(const std::vector<RS_FLOAT>& noise, std::vector<RS_COMPLEX>& window,
+	void addPhaseNoiseToWindow(const std::vector<RealType>& noise, std::vector<ComplexType>& window,
 	                           const unsigned wSize)
 	{
 		for (unsigned i = 0; i < wSize; ++i)
@@ -157,7 +156,7 @@ namespace
 			if (std::isnan(noise[i])) { throw std::runtime_error("[BUG] Noise is NaN in addPhaseNoiseToWindow"); }
 
 			// Generate the phase noise multiplier using std::polar for efficiency and clarity
-			const RS_COMPLEX phase_noise = std::polar(1.0, noise[i]);
+			const ComplexType phase_noise = std::polar(1.0, noise[i]);
 
 			// Apply the phase noise to the window element
 			window[i] *= phase_noise;
@@ -189,24 +188,24 @@ namespace
 		// Loop through each window
 		for (int i = 0; i < window_count; ++i)
 		{
-			const RS_FLOAT length = recv->getWindowLength();
-			const RS_FLOAT rate = params::rate() * params::oversampleRatio();
+			const RealType length = recv->getWindowLength();
+			const RealType rate = params::rate() * params::oversampleRatio();
 			auto size = static_cast<unsigned>(std::ceil(length * rate));
 
 			// Generate phase noise samples for the window
-			RS_FLOAT carrier;
+			RealType carrier;
 			bool pn_enabled;
-			std::vector<RS_FLOAT> pnoise(generatePhaseNoise(recv, size, rate, carrier, pn_enabled));
+			std::vector<RealType> pnoise(generatePhaseNoise(recv, size, rate, carrier, pn_enabled));
 
 			// Get the window start time, including clock drift effects
-			RS_FLOAT start = recv->getWindowStart(i) + pnoise[0] / (2 * M_PI * carrier);
+			RealType start = recv->getWindowStart(i) + pnoise[0] / (2 * M_PI * carrier);
 
 			// Calculate the fractional delay
-			const RS_FLOAT frac_delay = start * rate - std::round(start * rate);
+			const RealType frac_delay = start * rate - std::round(start * rate);
 			start = std::round(start * rate) / rate;
 
 			// Allocate memory for the window using smart pointers
-			std::vector<RS_COMPLEX> window = std::vector<RS_COMPLEX>(size);
+			std::vector<ComplexType> window = std::vector<ComplexType>(size);
 
 			// Add noise to the window
 			addNoiseToWindow(window, size, recv->getNoiseTemperature());
@@ -221,7 +220,7 @@ namespace
 				const unsigned new_size = size / params::oversampleRatio();
 
 				// Allocate memory for the downsampled window
-				auto tmp = std::vector<RS_COMPLEX>(new_size);
+				auto tmp = std::vector<ComplexType>(new_size);
 
 				// Perform downsampling
 				signal::downsample(window, size, tmp, params::oversampleRatio());
@@ -235,7 +234,7 @@ namespace
 			if (pn_enabled) { addPhaseNoiseToWindow(pnoise, window, size); }
 
 			// Normalize and quantize the window
-			const RS_FLOAT fullscale = quantizeWindow(window, size);
+			const RealType fullscale = quantizeWindow(window, size);
 
 			// Export the binary format if enabled
 			if (params::exportBinary())

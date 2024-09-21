@@ -31,12 +31,12 @@ namespace timing
 
 		Timing& operator=(const Timing&) = delete;
 
-		[[nodiscard]] RS_FLOAT getPulseTimeError() const noexcept
+		[[nodiscard]] RealType getPulseTimeError() const noexcept
 		{
 			return _enabled && _model ? _model->getSample() : 0.0f;
 		}
 
-		[[nodiscard]] RS_FLOAT nextNoiseSample() const { return _enabled ? _model->getSample() : 0.0f; }
+		[[nodiscard]] RealType nextNoiseSample() const { return _enabled ? _model->getSample() : 0.0f; }
 
 		void skipSamples(const long long samples) const { if (_enabled && _model) { _model->skipSamples(samples); } }
 
@@ -48,7 +48,7 @@ namespace timing
 
 		void reset() const { if (_model) { _model->reset(); } }
 
-		[[nodiscard]] RS_FLOAT getFrequency() const noexcept { return _frequency; }
+		[[nodiscard]] RealType getFrequency() const noexcept { return _frequency; }
 
 		[[nodiscard]] bool enabled() const noexcept { return _enabled && _model && _model->enabled(); }
 
@@ -56,9 +56,9 @@ namespace timing
 		std::string _name;
 		bool _enabled;
 		std::unique_ptr<noise::ClockModelGenerator> _model; // Use a smart pointer for automatic memory management
-		std::vector<RS_FLOAT> _alphas;
-		std::vector<RS_FLOAT> _weights;
-		RS_FLOAT _frequency{};
+		std::vector<RealType> _alphas;
+		std::vector<RealType> _weights;
+		RealType _frequency{};
 		bool _sync_on_pulse{};
 	};
 }

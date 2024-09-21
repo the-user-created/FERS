@@ -17,12 +17,12 @@ namespace interp
 		return &instance;
 	}
 
-	RS_FLOAT InterpFilter::besselI0(const RS_FLOAT x)
+	RealType InterpFilter::besselI0(const RealType x)
 	{
 		// Use the polynomial approximation from section 9.8 of
 		// "Handbook of Mathematical Functions" by Abramowitz and Stegun
 		if (x < 0.0) { throw std::logic_error("Modified Bessel approximation only valid for x > 0"); }
-		if (RS_FLOAT t = x / 3.75; t <= 1.0)
+		if (RealType t = x / 3.75; t <= 1.0)
 		{
 			t *= t;
 			return 1.0 + t * (
@@ -30,7 +30,7 @@ namespace interp
 		}
 		else
 		{
-			const RS_FLOAT i0 = 0.39894228 + t * (0.01328592 + t * (
+			const RealType i0 = 0.39894228 + t * (0.01328592 + t * (
 				0.00225319 + t * (-0.00157565 + t * (0.00916281 + t * (
 					-0.02057706 + t * (0.02635537 + t * (-0.01647633 + t * 0.00392377)))))));
 			return i0 * std::exp(x) / std::sqrt(x);
@@ -43,7 +43,7 @@ namespace interp
 		//Size of the table to use for interpolation
 		_table_filters = 1000;
 		//Allocate memory for the table
-		_filter_table = std::vector<RS_FLOAT>(_table_filters * _length);
+		_filter_table = std::vector<RealType>(_table_filters * _length);
 		//Alpha is half the filter length
 		_alpha = std::floor(params::renderFilterLength() / 2.0);
 		_bessel_beta = besselI0(_beta);
@@ -53,7 +53,7 @@ namespace interp
 		//C Tong: delay appears to be the fraction of time ellapsed between samples
 		for (int i = -hfilt; i < hfilt; i++)
 		{
-			const RS_FLOAT delay = i / static_cast<RS_FLOAT>(hfilt);
+			const RealType delay = i / static_cast<RealType>(hfilt);
 			for (int j = static_cast<int>(-_alpha); j < _alpha; j++)
 			{
 				_filter_table[static_cast<int>((i + hfilt) * _length + j + _alpha)] = interpFilter(j - delay);
@@ -62,7 +62,7 @@ namespace interp
 		LOG(Level::DEBUG, "Filter table complete");
 	}
 
-	const RS_FLOAT* InterpFilter::getFilter(const RS_FLOAT delay) const
+	const RealType* InterpFilter::getFilter(const RealType delay) const
 	{
 		const auto filt = static_cast<unsigned>((delay + 1) * (_table_filters / 2.0));
 

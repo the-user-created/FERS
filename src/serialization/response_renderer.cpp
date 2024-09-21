@@ -14,9 +14,9 @@
 
 namespace
 {
-	void addArrayToWindow(const RS_FLOAT wStart, std::vector<RS_COMPLEX>& window, const unsigned wSize,
-	                      const RS_FLOAT rate,
-	                      const RS_FLOAT rStart, const std::vector<RS_COMPLEX>& resp, const unsigned rSize)
+	void addArrayToWindow(const RealType wStart, std::vector<ComplexType>& window, const unsigned wSize,
+	                      const RealType rate,
+	                      const RealType rStart, const std::vector<ComplexType>& resp, const unsigned rSize)
 	{
 		int start_sample = static_cast<int>(round(rate * (rStart - wStart)));
 		unsigned roffset = 0;
@@ -37,16 +37,16 @@ namespace serial
 	//
 	// =================================================================================================================
 
-	void ThreadedResponseRenderer::renderWindow(std::vector<RS_COMPLEX>& window, const RS_FLOAT length,
-	                                            const RS_FLOAT start,
-	                                            const RS_FLOAT fracDelay) const
+	void ThreadedResponseRenderer::renderWindow(std::vector<ComplexType>& window, const RealType length,
+	                                            const RealType start,
+	                                            const RealType fracDelay) const
 	{
-		const RS_FLOAT end = start + length;
+		const RealType end = start + length;
 		std::queue<Response*> work_list;
 		for (const auto& response : _responses)
 		{
-			const RS_FLOAT resp_start = response->startTime();
-			if (const RS_FLOAT resp_end = response->endTime(); resp_start <= end && resp_end >= start)
+			const RealType resp_start = response->startTime();
+			if (const RealType resp_end = response->endTime(); resp_start <= end && resp_end >= start)
 			{
 				work_list.push(response.get());
 			}
@@ -78,15 +78,15 @@ namespace serial
 
 	void RenderThread::operator()() const
 	{
-		const RS_FLOAT rate = params::rate() * params::oversampleRatio();
+		const RealType rate = params::rate() * params::oversampleRatio();
 		const auto size = static_cast<unsigned>(std::ceil(_length * rate));
-		std::vector local_window(size, RS_COMPLEX{});
+		std::vector local_window(size, ComplexType{});
 		const Response* resp = getWork();
 		while (resp)
 		{
 			unsigned psize;
-			RS_FLOAT prate;
-			std::vector<RS_COMPLEX> array = resp->renderBinary(prate, psize, _frac_delay);
+			RealType prate;
+			std::vector<ComplexType> array = resp->renderBinary(prate, psize, _frac_delay);
 			addWindow(array, local_window, resp->startTime(), psize);
 			resp = getWork();
 		}
@@ -96,10 +96,10 @@ namespace serial
 		}
 	}
 
-	void RenderThread::addWindow(const std::vector<RS_COMPLEX>& array, std::vector<RS_COMPLEX>& localWindow,
-	                             const RS_FLOAT startTime, const unsigned arraySize) const
+	void RenderThread::addWindow(const std::vector<ComplexType>& array, std::vector<ComplexType>& localWindow,
+	                             const RealType startTime, const unsigned arraySize) const
 	{
-		const RS_FLOAT rate = params::rate() * params::oversampleRatio();
+		const RealType rate = params::rate() * params::oversampleRatio();
 		const auto size = static_cast<unsigned>(std::ceil(_length * rate));
 		addArrayToWindow(_start, localWindow, size, rate, startTime, array, arraySize);
 	}

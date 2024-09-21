@@ -33,7 +33,7 @@ namespace math
 
 		void finalize();
 
-		[[nodiscard]] Vec3 getPosition(RS_FLOAT t) const;
+		[[nodiscard]] Vec3 getPosition(RealType t) const;
 
 		void setInterp(InterpType settype);
 

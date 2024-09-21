@@ -22,7 +22,7 @@ namespace serial
 	}
 
 
-	void readPulseData(const std::string& name, std::vector<RS_COMPLEX>& data, RS_FLOAT& rate)
+	void readPulseData(const std::string& name, std::vector<ComplexType>& data, RealType& rate)
 	{
 		// Set rate from parameters
 		rate = params::rate();
@@ -77,7 +77,7 @@ namespace serial
 
 		// Allocate and populate the complex data using std::vector
 		data.resize(size);
-		for (unsigned i = 0; i < size; ++i) { data[i] = RS_COMPLEX(buffer_i[i], buffer_q[i]); }
+		for (unsigned i = 0; i < size; ++i) { data[i] = ComplexType(buffer_i[i], buffer_q[i]); }
 	}
 
 	long createFile(const std::string& name)
@@ -87,8 +87,8 @@ namespace serial
 		return file;
 	}
 
-	void addChunkToFile(const long file, const std::vector<RS_COMPLEX>& data, const unsigned size,
-	                    const RS_FLOAT time, const RS_FLOAT rate, const RS_FLOAT fullscale,
+	void addChunkToFile(const long file, const std::vector<ComplexType>& data, const unsigned size,
+	                    const RealType time, const RealType rate, const RealType fullscale,
 	                    const unsigned count)
 	{
 		// Generate chunk names
@@ -146,7 +146,7 @@ namespace serial
 		if (H5Fclose(file) < 0) { throw std::runtime_error("Error while closing HDF5 file"); }
 	}
 
-	std::vector<std::vector<RS_FLOAT>> readPattern(const std::string& name, const std::string& datasetName,
+	std::vector<std::vector<RealType>> readPattern(const std::string& name, const std::string& datasetName,
 	                                               unsigned& aziSize,
 	                                               unsigned& elevSize)
 	{
@@ -179,7 +179,7 @@ namespace serial
 		aziSize = dims[0];
 		elevSize = dims[1];
 
-		std::vector ret(aziSize, std::vector<RS_FLOAT>(elevSize));
+		std::vector ret(aziSize, std::vector<RealType>(elevSize));
 		for (unsigned i = 0; i < aziSize; ++i)
 		{
 			for (unsigned j = 0; j < elevSize; ++j) { ret[i][j] = data[i * elevSize + j]; }

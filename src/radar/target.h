@@ -21,7 +21,7 @@ namespace radar
 	public:
 		virtual ~RcsModel() = default;
 
-		virtual RS_FLOAT sampleModel() = 0;
+		virtual RealType sampleModel() = 0;
 	};
 
 	class RcsConst final : public RcsModel
@@ -29,17 +29,17 @@ namespace radar
 	public:
 		~RcsConst() override = default;
 
-		RS_FLOAT sampleModel() override { return 1.0; }
+		RealType sampleModel() override { return 1.0; }
 	};
 
 	class RcsChiSquare final : public RcsModel
 	{
 	public:
-		explicit RcsChiSquare(RS_FLOAT k) : _gen(std::make_unique<noise::GammaGenerator>(k)) {}
+		explicit RcsChiSquare(RealType k) : _gen(std::make_unique<noise::GammaGenerator>(k)) {}
 
 		~RcsChiSquare() override = default;
 
-		RS_FLOAT sampleModel() override { return _gen->getSample(); }
+		RealType sampleModel() override { return _gen->getSample(); }
 
 	private:
 		std::unique_ptr<noise::GammaGenerator> _gen;
@@ -52,7 +52,7 @@ namespace radar
 
 		~Target() override = default;
 
-		virtual RS_FLOAT getRcs(math::SVec3& inAngle, math::SVec3& outAngle) const = 0;
+		virtual RealType getRcs(math::SVec3& inAngle, math::SVec3& outAngle) const = 0;
 
 		// Note: This function is not used in the codebase
 		[[nodiscard]] virtual math::PsMatrix getPolarization() const { return _psm; }
@@ -70,18 +70,18 @@ namespace radar
 	class IsoTarget final : public Target
 	{
 	public:
-		IsoTarget(const Platform* platform, const std::string& name, const RS_FLOAT rcs) :
+		IsoTarget(const Platform* platform, const std::string& name, const RealType rcs) :
 			Target(platform, name), _rcs(rcs) {}
 
 		~IsoTarget() override = default;
 
-		RS_FLOAT getRcs(math::SVec3& inAngle, math::SVec3& outAngle) const override
+		RealType getRcs(math::SVec3& inAngle, math::SVec3& outAngle) const override
 		{
 			return _model ? _rcs * _model->sampleModel() : _rcs;
 		}
 
 	private:
-		RS_FLOAT _rcs;
+		RealType _rcs;
 	};
 
 	class FileTarget final : public Target
@@ -93,7 +93,7 @@ namespace radar
 
 		~FileTarget() override = default;
 
-		RS_FLOAT getRcs(math::SVec3& inAngle, math::SVec3& outAngle) const override;
+		RealType getRcs(math::SVec3& inAngle, math::SVec3& outAngle) const override;
 
 	private:
 		std::unique_ptr<interp::InterpSet> _azi_samples;
@@ -103,7 +103,7 @@ namespace radar
 	};
 
 	inline std::unique_ptr<Target> createIsoTarget(const Platform* platform, const std::string& name,
-	                                               const RS_FLOAT rcs)
+	                                               const RealType rcs)
 	{
 		return std::make_unique<IsoTarget>(platform, name, rcs);
 	}

@@ -30,7 +30,7 @@ namespace radar
 		return _timing;
 	}
 
-	void Radar::setMultipathDual(const RS_FLOAT reflect)
+	void Radar::setMultipathDual(const RealType reflect)
 	{
 		_multipath_dual = true;
 		_multipath_factor = reflect;
@@ -50,10 +50,10 @@ namespace radar
 
 	int Transmitter::getPulseCount() const
 	{
-		const RS_FLOAT time = params::endTime() - params::startTime();
+		const RealType time = params::endTime() - params::startTime();
 		if (_pulsed)
 		{
-			const RS_FLOAT pulses = time * _prf;
+			const RealType pulses = time * _prf;
 			return static_cast<int>(std::ceil(pulses));
 		}
 		return 1; // CW systems only have one 'pulse'
@@ -62,16 +62,16 @@ namespace radar
 	void Transmitter::getPulse(TransmitterPulse* pulse, const int number) const
 	{
 		pulse->wave = _signal;
-		pulse->time = _pulsed ? static_cast<RS_FLOAT>(number) / _prf : 0;
+		pulse->time = _pulsed ? static_cast<RealType>(number) / _prf : 0;
 		if (!_timing)
 		{
 			throw std::logic_error("[BUG] Transmitter " + getName() + " must be associated with timing source");
 		}
 	}
 
-	void Transmitter::setPrf(const RS_FLOAT mprf)
+	void Transmitter::setPrf(const RealType mprf)
 	{
-		const RS_FLOAT rate = params::rate() * params::oversampleRatio();
+		const RealType rate = params::rate() * params::oversampleRatio();
 		_prf = 1 / (std::floor(rate / mprf) / rate);
 	}
 
@@ -102,9 +102,9 @@ namespace radar
 		catch (const std::system_error&) { throw std::runtime_error("[BUG] Responses lock is locked during Render()"); }
 	}
 
-	void Receiver::setWindowProperties(const RS_FLOAT length, const RS_FLOAT prf, const RS_FLOAT skip)
+	void Receiver::setWindowProperties(const RealType length, const RealType prf, const RealType skip)
 	{
-		const RS_FLOAT rate = params::rate() * params::oversampleRatio();
+		const RealType rate = params::rate() * params::oversampleRatio();
 		_window_length = length;
 		_window_prf = prf;
 		_window_skip = skip;
@@ -114,14 +114,14 @@ namespace radar
 
 	int Receiver::getWindowCount() const
 	{
-		const RS_FLOAT time = params::endTime() - params::startTime();
-		const RS_FLOAT pulses = time * _window_prf;
+		const RealType time = params::endTime() - params::startTime();
+		const RealType pulses = time * _window_prf;
 		return static_cast<int>(std::ceil(pulses));
 	}
 
-	RS_FLOAT Receiver::getWindowStart(const int window) const
+	RealType Receiver::getWindowStart(const int window) const
 	{
-		const RS_FLOAT stime = static_cast<RS_FLOAT>(window) / _window_prf + _window_skip;
+		const RealType stime = static_cast<RealType>(window) / _window_prf + _window_skip;
 		if (!_timing) { throw std::logic_error("[BUG] Receiver must be associated with timing source"); }
 		return stime;
 	}

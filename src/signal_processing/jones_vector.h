@@ -13,7 +13,7 @@ namespace signal
 	class JonesVector
 	{
 	public:
-		JonesVector(const RS_COMPLEX h, const RS_COMPLEX v) : _h(h), _v(v)
+		JonesVector(const ComplexType h, const ComplexType v) : _h(h), _v(v)
 		{
 		}
 
@@ -26,23 +26,23 @@ namespace signal
 			return {_h * mat.s[0] + _v * mat.s[1], _h * mat.s[2] + _v * mat.s[3]};
 		}
 
-		[[nodiscard]] RS_COMPLEX getH() const
+		[[nodiscard]] ComplexType getH() const
 		{
 			return _h;
 		}
 
-		[[nodiscard]] RS_COMPLEX getV() const
+		[[nodiscard]] ComplexType getV() const
 		{
 			return _v;
 		}
 
 	private:
-		RS_COMPLEX _h;
-		RS_COMPLEX _v;
+		ComplexType _h;
+		ComplexType _v;
 	};
 
 	// Note: This function is not used in the codebase
-	inline RS_COMPLEX dot(const JonesVector& a, const JonesVector& b)
+	inline ComplexType dot(const JonesVector& a, const JonesVector& b)
 	{
 		return a.getV() * b.getV() + a.getH() * b.getH();
 	}

@@ -6,7 +6,9 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#define RS_FLOAT double
-#define RS_COMPLEX std::complex<RS_FLOAT>
+#include <complex>
+
+using RealType = double;
+using ComplexType = std::complex<RealType>;
 
 #endif //CONFIG_H

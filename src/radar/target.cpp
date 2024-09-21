@@ -11,7 +11,7 @@
 
 using math::SVec3;
 
-RS_FLOAT getNodeFloat(const TiXmlHandle& node);
+RealType getNodeFloat(const TiXmlHandle& node);
 
 namespace
 {
@@ -20,8 +20,8 @@ namespace
 		TiXmlHandle tmp = axisXml.ChildElement("rcssample", 0);
 		for (int i = 0; tmp.Element() != nullptr; i++)
 		{
-			const RS_FLOAT angle = getNodeFloat(tmp.ChildElement("angle", 0));
-			const RS_FLOAT gain = getNodeFloat(tmp.ChildElement("rcs", 0));
+			const RealType angle = getNodeFloat(tmp.ChildElement("angle", 0));
+			const RealType gain = getNodeFloat(tmp.ChildElement("rcs", 0));
 			set->insertSample(angle, gain);
 			tmp = axisXml.ChildElement("rcssample", i);
 		}
@@ -36,10 +36,10 @@ namespace radar
 	//
 	// =================================================================================================================
 
-	RS_FLOAT FileTarget::getRcs(SVec3& inAngle, SVec3& outAngle) const
+	RealType FileTarget::getRcs(SVec3& inAngle, SVec3& outAngle) const
 	{
 		const SVec3 t_angle = inAngle + outAngle;
-		const RS_FLOAT rcs = std::sqrt(
+		const RealType rcs = std::sqrt(
 			_azi_samples->getValueAt(t_angle.azimuth / 2.0) * _elev_samples->getValueAt(t_angle.elevation / 2.0));
 		return _model ? rcs * _model->sampleModel() : rcs;
 	}

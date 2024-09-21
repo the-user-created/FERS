@@ -18,7 +18,7 @@ namespace signal
 namespace serial
 {
 	std::unique_ptr<signal::RadarSignal> loadPulseFromFile(const std::string& name, const std::string& filename,
-	                                                       RS_FLOAT power, RS_FLOAT carrierFreq);
+	                                                       RealType power, RealType carrierFreq);
 }
 
 #endif //PULSE_FACTORY_H
