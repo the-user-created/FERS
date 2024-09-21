@@ -17,20 +17,14 @@ using signal::DecadeUpsampler;
 
 namespace noise
 {
-	// =================================================================================================================
-	//
-	// FALPHA BRANCH CLASS
-	//
-	// =================================================================================================================
-
-	FAlphaBranch::FAlphaBranch(const RealType ffrac, const unsigned fint, std::unique_ptr<FAlphaBranch> pre,
-	                           const bool last) : _pre(std::move(pre)), _last(last), _ffrac(ffrac), _fint(fint)
+	FAlphaBranch::FAlphaBranch(RealType ffrac, unsigned fint, std::unique_ptr<FAlphaBranch> pre, const bool last)
+		: _pre(std::move(pre)), _ffrac(ffrac), _fint(fint), _last(last)
 	{
-		LOG(Level::DEBUG, "Making branch ffrac={} fint={}", ffrac, fint);
+		LOG(Level::DEBUG, "Creating FAlphaBranch: ffrac={} fint={}", ffrac, fint);
 		_upsample_scale = std::pow(10, ffrac + fint + 0.5);
 		init();
-		_buffer = std::vector<RealType>(10);
-		if (!last) { refill(); }
+
+		if (!_last) { refill(); }
 	}
 
 	void FAlphaBranch::init()
@@ -39,12 +33,12 @@ namespace noise
 
 		if (_pre)
 		{
-			constexpr std::array hp_num = {
+			constexpr std::array<double, 12> hp_num = {
 				3.817871081981451e-01, -4.093384095523618e+00, 2.005300512623078e+01, -5.924672881811163e+01,
 				1.172948159891025e+02, -1.633810410083022e+02, 1.633810410083034e+02, -1.172948159891052e+02,
 				5.924672881811390e+01, -2.005300512623186e+01, 4.093384095523903e+00, -3.817871081981776e-01
 			};
-			constexpr std::array hp_den = {
+			constexpr std::array<double, 12> hp_den = {
 				1.000000000000000e+00, -8.829695665523831e+00, 3.583068809011030e+01, -8.811479652970442e+01,
 				1.457874067329429e+02, -1.702715637111961e+02, 1.431504350055831e+02, -8.656925883534657e+01,
 				3.687395592491803e+01, -1.052413841411803e+01, 1.808292123637038e+00, -1.412932578340511e-01
@@ -71,7 +65,7 @@ namespace noise
 		}
 		else if (_ffrac != 0.0f)
 		{
-			LOG(Level::INFO, "Value of ffrac is {}", _ffrac);
+			LOG(Level::INFO, "ffrac is {}", _ffrac);
 			throw std::runtime_error("Fractional integrator values other than 0.5 are not supported");
 		}
 
@@ -93,14 +87,10 @@ namespace noise
 			}
 			else { throw std::runtime_error("Only alpha values between 2 and -2 are supported for noise generation"); }
 		}
-
 		_offset_sample = 0.0f;
 		_got_offset = false;
-		_buffer = std::vector<RealType>(10);
 
 		if (!_last) { refill(); }
-
-		_pre_scale = 1.0f;
 	}
 
 	RealType FAlphaBranch::getSample() // NOLINT(misc-no-recursion)
@@ -112,14 +102,6 @@ namespace noise
 			return ret;
 		}
 		return calcSample() + _offset_sample * _upsample_scale;
-	}
-
-	void FAlphaBranch::clean()
-	{
-		_highpass.reset();
-		_integ_filter.reset();
-		_shape_filter.reset();
-		_upsampler.reset();
 	}
 
 	RealType FAlphaBranch::calcSample() // NOLINT(misc-no-recursion)
@@ -149,10 +131,10 @@ namespace noise
 		const RealType sample = calcSample();
 		_upsampler->upsample(sample, _buffer);
 
-		for (int i = 0; i < 10; ++i)
+		for (auto& value : _buffer)
 		{
-			_buffer[i] *= _upsample_scale;
-			_buffer[i] += _offset_sample;
+			value *= _upsample_scale;
+			value += _offset_sample;
 		}
 
 		_buffer_samples = 0;
@@ -160,8 +142,7 @@ namespace noise
 
 	void FAlphaBranch::flush(const RealType scale)
 	{
-		clean();
-		init();
+		init(); // Reset everything with the new scale
 		_pre_scale = scale;
 	}
 }

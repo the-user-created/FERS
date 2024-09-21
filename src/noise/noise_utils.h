@@ -1,4 +1,4 @@
-//
+// noise_utils.h
 // Created by David Young on 9/17/24.
 //
 
@@ -9,10 +9,6 @@
 
 namespace noise
 {
-	void initializeNoise();
-
-	void cleanUpNoise();
-
 	RealType wgnSample(RealType stddev);
 
 	// Note: This function is not used in the codebase
