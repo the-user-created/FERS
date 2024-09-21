@@ -24,8 +24,8 @@ namespace math
 	public:
 		enum class InterpType { INTERP_STATIC, INTERP_LINEAR, INTERP_CUBIC, INTERP_PYTHON };
 
-		explicit Path(const InterpType type = InterpType::INTERP_STATIC) : _final(false), _type(type),
-		                                                                   _pythonpath(nullptr) {}
+		explicit Path(const InterpType type = InterpType::INTERP_STATIC) noexcept : _final(false), _type(type),
+			_pythonpath(nullptr) {}
 
 		~Path() = default;
 
@@ -35,15 +35,15 @@ namespace math
 
 		[[nodiscard]] Vec3 getPosition(RealType t) const;
 
-		void setInterp(InterpType settype);
+		void setInterp(InterpType settype) noexcept;
 
-		void loadPythonPath(const std::string& modname, const std::string& pathname);
+		void loadPythonPath(std::string_view modname, std::string_view pathname);
 
-		[[nodiscard]] python::PythonPath* getPythonPath() const { return _pythonpath.get(); }
+		[[nodiscard]] python::PythonPath* getPythonPath() const noexcept { return _pythonpath.get(); }
 
-		[[nodiscard]] InterpType getType() const { return _type; }
+		[[nodiscard]] InterpType getType() const noexcept { return _type; }
 
-		[[nodiscard]] std::vector<Coord> getCoords() const { return _coords; }
+		[[nodiscard]] const std::vector<Coord>& getCoords() const noexcept { return _coords; }
 
 	private:
 		std::vector<Coord> _coords;

@@ -8,7 +8,7 @@
 namespace math
 {
 	// Multiplication by a 3x3 matrix
-	Vec3& Vec3::operator*=(const Matrix3& m)
+	Vec3& Vec3::operator*=(const Matrix3& m) noexcept
 	{
 		const RealType* mat = m.getData();
 		const Vec3 v(x, y, z);
