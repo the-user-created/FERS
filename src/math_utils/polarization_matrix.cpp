@@ -7,37 +7,21 @@
 
 namespace math
 {
-	PsMatrix::PsMatrix()
+	// Default constructor
+	PsMatrix::PsMatrix() noexcept
 	{
-		s[0] = s[3] = 1;
-		s[1] = s[2] = 0;
+		s[0] = {1, 0}; // Initialize as (1 + 0i)
+		s[1] = {0, 0};
+		s[2] = {0, 0};
+		s[3] = {1, 0};
 	}
 
-	PsMatrix::PsMatrix(const RealType s11, const RealType s12, const RealType s21, const RealType s22)
+	// Parameterized constructor
+	PsMatrix::PsMatrix(RealType s11, RealType s12, RealType s21, RealType s22) noexcept
 	{
-		s[0] = s11;
-		s[1] = s12;
-		s[2] = s21;
-		s[3] = s22;
-	}
-
-	PsMatrix::PsMatrix(const PsMatrix& im)
-	{
-		for (int i = 0; i < 4; i++)
-		{
-			s[i] = im.s[i];
-		}
-	}
-
-	PsMatrix& PsMatrix::operator=(const PsMatrix& im)
-	{
-		if (this != &im)
-		{
-			for (int i = 0; i < 4; i++)
-			{
-				s[i] = im.s[i];
-			}
-		}
-		return *this;
+		s[0] = {s11, 0};
+		s[1] = {s12, 0};
+		s[2] = {s21, 0};
+		s[3] = {s22, 0};
 	}
 }

@@ -11,17 +11,16 @@
 
 namespace math
 {
-
 	class MultipathSurface
 	{
 	public:
-		MultipathSurface(RealType a, RealType b, RealType c, RealType d, RealType factor);
+		MultipathSurface(RealType a, RealType b, RealType c, RealType d, RealType factor) noexcept;
 
 		~MultipathSurface() = default;
 
-		[[nodiscard]] Vec3 reflectPoint(const Vec3& b) const;
+		[[nodiscard]] Vec3 reflectPoint(const Vec3& b) const noexcept;
 
-		[[nodiscard]] RealType getFactor() const { return _factor; }
+		[[nodiscard]] RealType getFactor() const noexcept { return _factor; }
 
 	private:
 		RealType _factor;

@@ -22,7 +22,7 @@ namespace math
 	public:
 		enum class InterpType { INTERP_STATIC, INTERP_CONSTANT, INTERP_LINEAR, INTERP_CUBIC };
 
-		explicit RotationPath(InterpType type = InterpType::INTERP_STATIC);
+		explicit RotationPath(const InterpType type = InterpType::INTERP_STATIC) noexcept : _type(type) {}
 
 		void addCoord(const RotationCoord& coord);
 
@@ -30,29 +30,29 @@ namespace math
 
 		[[nodiscard]] SVec3 getPosition(RealType t) const;
 
-		void setInterp(InterpType setinterp);
+		void setInterp(InterpType setinterp) noexcept;
 
-		void setConstantRate(const RotationCoord& setstart, const RotationCoord& setrate);
+		void setConstantRate(const RotationCoord& setstart, const RotationCoord& setrate) noexcept;
 
-		[[nodiscard]] std::vector<RotationCoord> getCoords() const { return _coords; }
+		[[nodiscard]] const std::vector<RotationCoord>& getCoords() const noexcept { return _coords; }
 
-		[[nodiscard]] RotationCoord getStart() const { return _start; }
+		[[nodiscard]] RotationCoord getStart() const noexcept { return _start; }
 
-		[[nodiscard]] RotationCoord getRate() const { return _rate; }
+		[[nodiscard]] RotationCoord getRate() const noexcept { return _rate; }
 
-		[[nodiscard]] InterpType getType() const { return _type; }
+		[[nodiscard]] InterpType getType() const noexcept { return _type; }
 
-		void setStart(const RotationCoord& start) { _start = start; }
+		void setStart(const RotationCoord& start) noexcept { _start = start; }
 
-		void setRate(const RotationCoord& rate) { _rate = rate; }
+		void setRate(const RotationCoord& rate) noexcept { _rate = rate; }
 
 	private:
 		std::vector<RotationCoord> _coords;
 		std::vector<RotationCoord> _dd;
-		bool _final;
-		RotationCoord _start;
-		RotationCoord _rate;
-		InterpType _type;
+		bool _final{false};
+		RotationCoord _start{};
+		RotationCoord _rate{};
+		InterpType _type{InterpType::INTERP_STATIC};
 	};
 
 	std::unique_ptr<RotationPath> reflectPath(const RotationPath* path, const MultipathSurface* surf);

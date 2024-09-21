@@ -45,7 +45,6 @@ void getPositionLinear(RealType t, T& coord, const std::vector<T>& coords)
 {
 	if (coords.empty()) { throw math::PathException("coord list empty during GetPositionLinear"); }
 
-	// Use std::ranges and algorithms to simplify the search
 	auto xrp = std::ranges::upper_bound(coords, t, {}, &T::t);
 
 	if (xrp == coords.begin()) { coord = *xrp; }
@@ -54,9 +53,11 @@ void getPositionLinear(RealType t, T& coord, const std::vector<T>& coords)
 	{
 		auto xri = std::distance(coords.begin(), xrp);
 		auto xli = xri - 1;
-		RealType iw = coords[xri].t - coords[xli].t;
-		RealType rw = (coords[xri].t - t) / iw;
-		RealType lw = 1 - rw;
+
+		const RealType iw = coords[xri].t - coords[xli].t;
+		const RealType rw = (coords[xri].t - t) / iw;
+		const RealType lw = 1 - rw;
+
 		coord = coords[xri] * lw + coords[xli] * rw;
 	}
 	coord.t = t;
@@ -78,14 +79,16 @@ void getPositionCubic(RealType t, T& coord, const std::vector<T>& coords, const 
 	{
 		auto xri = std::distance(coords.begin(), xrp);
 		auto xli = xri - 1;
+
 		const RealType xrd = coords[xri].t - t;
 		const RealType xld = t - coords[xli].t;
 		const RealType iw = coords[xri].t - coords[xli].t;
 		const RealType iws = iw * iw / 6.0;
-		RealType a = xrd / iw;
-		RealType b = xld / iw;
-		RealType c = (a * a * a - a) * iws;
-		RealType d = (b * b * b - b) * iws;
+		const RealType a = xrd / iw;
+		const RealType b = xld / iw;
+		const RealType c = (a * a * a - a) * iws;
+		const RealType d = (b * b * b - b) * iws;
+
 		coord = coords[xli] * a + coords[xri] * b + dd[xli] * c + dd[xri] * d;
 	}
 	coord.t = t;
@@ -97,24 +100,24 @@ void getPositionCubic(RealType t, T& coord, const std::vector<T>& coords, const 
 template <Interpolatable T>
 void finalizeCubic(std::vector<T>& coords, std::vector<T>& dd)
 {
-	const int size = coords.size();
+	const int size = static_cast<int>(coords.size());
 	if (size < 2) { throw math::PathException("Not enough points for cubic interpolation"); }
 
 	std::vector<T> tmp(size);
 	dd.resize(size);
 
-	dd[0] = 0;
-	dd[size - 1] = 0;
+	dd.front() = 0;
+	dd.back() = 0;
 
 	for (int i = 1; i < size - 1; ++i)
 	{
-		T yrd = coords[i + 1] - coords[i];
-		T yld = coords[i] - coords[i - 1];
-		RealType xrd = coords[i + 1].t - coords[i].t;
-		RealType xld = coords[i].t - coords[i - 1].t;
-		RealType iw = coords[i + 1].t - coords[i - 1].t;
-		RealType si = xld / iw;
-		T p = dd[i - 1] * si + 2.0;
+		const T yrd = coords[i + 1] - coords[i];
+		const T yld = coords[i] - coords[i - 1];
+		const RealType xrd = coords[i + 1].t - coords[i].t;
+		const RealType xld = coords[i].t - coords[i - 1].t;
+		const RealType iw = coords[i + 1].t - coords[i - 1].t;
+		const RealType si = xld / iw;
+		const T p = dd[i - 1] * si + 2.0;
 		dd[i] = (si - 1.0) / p;
 		tmp[i] = ((yrd / xrd - yld / xld) * 6.0 / iw - tmp[i - 1] * si) / p;
 	}
