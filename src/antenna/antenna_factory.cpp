@@ -21,9 +21,11 @@ RealType getNodeFloat(const TiXmlHandle& node);
 
 namespace
 {
-	RealType sinc(const RealType theta) { return std::sin(theta) / (theta + std::numeric_limits<RealType>::epsilon()); }
+	constexpr RealType EPSILON = std::numeric_limits<RealType>::epsilon();
 
-	RealType j1C(const RealType x) { return x == 0 ? 1 : core::besselJ1(x) / x; }
+	RealType sinc(const RealType theta) { return std::sin(theta) / (theta + EPSILON); }
+
+	RealType j1C(const RealType x) { return x == 0 ? 1.0 : core::besselJ1(x) / x; }
 
 	void loadAntennaGainAxis(const interp::InterpSet* set, const TiXmlHandle& axisXml)
 	{
@@ -40,6 +42,8 @@ namespace
 
 namespace antenna
 {
+	constexpr RealType PI = std::numbers::pi; // Constant for π
+
 	// =================================================================================================================
 	//
 	// ANTENNA CLASS
@@ -94,8 +98,8 @@ namespace antenna
 
 	RealType SquareHorn::getGain(const SVec3& angle, const SVec3& refangle, const RealType wavelength) const
 	{
-		const RealType ge = 4 * M_PI * _dimension * _dimension / (wavelength * wavelength);
-		const RealType x = M_PI * _dimension * std::sin(getAngle(angle, refangle)) / wavelength;
+		const RealType ge = 4 * PI * std::pow(_dimension, 2) / std::pow(wavelength, 2);
+		const RealType x = PI * _dimension * std::sin(getAngle(angle, refangle)) / wavelength;
 		return ge * std::pow(sinc(x), 2) * getEfficiencyFactor();
 	}
 
@@ -105,11 +109,10 @@ namespace antenna
 	//
 	// =================================================================================================================
 
-	RealType ParabolicReflector::getGain(const SVec3& angle, const SVec3& refangle,
-	                                     const RealType wavelength) const
+	RealType ParabolicReflector::getGain(const SVec3& angle, const SVec3& refangle, const RealType wavelength) const
 	{
-		const RealType ge = std::pow(M_PI * _diameter / wavelength, 2);
-		const RealType x = M_PI * _diameter * std::sin(getAngle(angle, refangle)) / wavelength;
+		const RealType ge = std::pow(PI * _diameter / wavelength, 2);
+		const RealType x = PI * _diameter * std::sin(getAngle(angle, refangle)) / wavelength;
 		return ge * std::pow(2 * j1C(x), 2) * getEfficiencyFactor();
 	}
 
@@ -121,16 +124,20 @@ namespace antenna
 
 	RealType XmlAntenna::getGain(const SVec3& angle, const SVec3& refangle, RealType wavelength) const
 	{
-		const SVec3 t_angle = angle - refangle;
-		return _azi_samples->getValueAt(std::fabs(t_angle.azimuth)) * _elev_samples->getValueAt(
-				std::fabs(t_angle.elevation)) *
+		const SVec3 delta_angle = angle - refangle;
+		return _azi_samples->getValueAt(std::abs(delta_angle.azimuth)) *
+			_elev_samples->getValueAt(std::abs(delta_angle.elevation)) *
 			_max_gain * getEfficiencyFactor();
 	}
 
-	void XmlAntenna::loadAntennaDescription(const std::string& filename)
+	void XmlAntenna::loadAntennaDescription(const std::string_view filename)
 	{
-		TiXmlDocument doc(filename.c_str());
-		if (!doc.LoadFile()) { throw std::runtime_error("Could not load antenna description " + filename); }
+		TiXmlDocument doc((filename.data()));
+		if (!doc.LoadFile())
+		{
+			LOG(Level::FATAL, "Could not load antenna description {}", filename.data());
+			throw std::runtime_error("Could not load antenna description");
+		}
 		const TiXmlHandle root(doc.RootElement());
 		loadAntennaGainAxis(_elev_samples.get(), root.ChildElement("elevation", 0));
 		loadAntennaGainAxis(_azi_samples.get(), root.ChildElement("azimuth", 0));

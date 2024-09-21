@@ -48,27 +48,10 @@ namespace antenna
 		std::string _name;
 	};
 
-	Antenna* createIsotropicAntenna(const std::string& name);
-
-	Antenna* createXmlAntenna(const std::string& name, const std::string& file);
-
-	Antenna* createFileAntenna(const std::string& name, const std::string& file);
-
-	Antenna* createPythonAntenna(const std::string& name, const std::string& module, const std::string& function);
-
-	Antenna* createSincAntenna(const std::string& name, RealType alpha, RealType beta, RealType gamma);
-
-	Antenna* createGaussianAntenna(const std::string& name, RealType azscale, RealType elscale);
-
-	// Note: This function is not used in the codebase
-	Antenna* createHornAntenna(const std::string& name, RealType dimension);
-
-	Antenna* createParabolicAntenna(const std::string& name, RealType diameter);
-
 	class Isotropic final : public Antenna
 	{
 	public:
-		explicit Isotropic(const std::string& name) : Antenna(name) {}
+		explicit Isotropic(const std::string_view name) : Antenna(name.data()) {}
 
 		~Isotropic() override = default;
 
@@ -82,8 +65,8 @@ namespace antenna
 	class Sinc final : public Antenna
 	{
 	public:
-		Sinc(const std::string& name, const RealType alpha, const RealType beta, const RealType gamma) : Antenna(name),
-			_alpha(alpha), _beta(beta), _gamma(gamma) {}
+		Sinc(const std::string_view name, const RealType alpha, const RealType beta, const RealType gamma) : Antenna(name.data()),
+		                                                                                                     _alpha(alpha), _beta(beta), _gamma(gamma) {}
 
 		~Sinc() override = default;
 
@@ -99,9 +82,9 @@ namespace antenna
 	class Gaussian final : public Antenna
 	{
 	public:
-		Gaussian(const std::string& name, const RealType azscale, const RealType elscale) : Antenna(name),
-			_azscale(azscale),
-			_elscale(elscale) {}
+		Gaussian(const std::string_view name, const RealType azscale, const RealType elscale) : Antenna(name.data()),
+		                                                                                        _azscale(azscale),
+		                                                                                        _elscale(elscale) {}
 
 		~Gaussian() override = default;
 
@@ -116,7 +99,7 @@ namespace antenna
 	class SquareHorn final : public Antenna
 	{
 	public:
-		SquareHorn(const std::string& name, const RealType dimension) : Antenna(name), _dimension(dimension) {}
+		SquareHorn(const std::string_view name, const RealType dimension) : Antenna(name.data()), _dimension(dimension) {}
 
 		~SquareHorn() override = default;
 
@@ -130,7 +113,7 @@ namespace antenna
 	class ParabolicReflector final : public Antenna
 	{
 	public:
-		ParabolicReflector(const std::string& name, const RealType diameter) : Antenna(name), _diameter(diameter) {}
+		ParabolicReflector(const std::string_view name, const RealType diameter) : Antenna(name.data()), _diameter(diameter) {}
 
 		~ParabolicReflector() override = default;
 
@@ -144,11 +127,7 @@ namespace antenna
 	class XmlAntenna final : public Antenna
 	{
 	public:
-		XmlAntenna(const std::string& name, const std::string& filename) : Antenna(name),
-		                                                                   _azi_samples(
-			                                                                   std::make_unique<interp::InterpSet>()),
-		                                                                   _elev_samples(
-			                                                                   std::make_unique<interp::InterpSet>())
+		XmlAntenna(const std::string_view name, const std::string_view filename) : Antenna(name.data()), _azi_samples(std::make_unique<interp::InterpSet>()), _elev_samples(std::make_unique<interp::InterpSet>())
 		{
 			loadAntennaDescription(filename);
 		}
@@ -159,7 +138,7 @@ namespace antenna
 		                               RealType wavelength) const override;
 
 	private:
-		void loadAntennaDescription(const std::string& filename);
+		void loadAntennaDescription(std::string_view filename);
 
 		RealType _max_gain{};
 		std::unique_ptr<interp::InterpSet> _azi_samples;
@@ -169,9 +148,7 @@ namespace antenna
 	class FileAntenna final : public Antenna
 	{
 	public:
-		FileAntenna(const std::string& name, const std::string& filename) : Antenna(name),
-		                                                                    _pattern(
-			                                                                    std::make_unique<Pattern>(filename)) {}
+		FileAntenna(const std::string_view name, const std::string_view filename) : Antenna(name.data()), _pattern(std::make_unique<Pattern>(filename.data())) {}
 
 		~FileAntenna() override = default;
 
@@ -188,8 +165,7 @@ namespace antenna
 	class PythonAntenna final : public Antenna
 	{
 	public:
-		PythonAntenna(const std::string& name, const std::string& module, const std::string& function) : Antenna(name),
-			_py_antenna(module, function) {}
+		PythonAntenna(const std::string_view name, const std::string_view module, const std::string_view function) : Antenna(name.data()), _py_antenna(module.data(), function.data()) {}
 
 		~PythonAntenna() override = default;
 
