@@ -8,7 +8,7 @@
 #include "core/parameters.h"
 #include "core/portable_utils.h"
 #include "interpolation/interpolation_filter.h"
-#include "math_utils/dsp_filters.h"
+#include "signal_processing/dsp_filters.h"
 
 using namespace rs;
 

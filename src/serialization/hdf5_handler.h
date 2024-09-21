@@ -1,4 +1,4 @@
-// hdf5_export.h
+// hdf5_handler.h
 // Header file for HDF5 export functions
 // Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 // 03 November 2006
@@ -11,7 +11,7 @@
 
 #include "config.h"
 
-namespace hdf5_export
+namespace hdf5_handler
 {
 	long createFile(const std::string& name);
 

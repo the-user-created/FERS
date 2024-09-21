@@ -8,10 +8,10 @@
 #include "arg_parser.h"
 #include "logging.h"
 #include "parameters.h"
+#include "sim_threading.h"
 #include "noise/noise_generators.h"
 #include "noise/noise_utils.h"
 #include "serialization/xmlimport.h"
-#include "simulation/sim_threading.h"
 
 int main(const int argc, char* argv[])
 {

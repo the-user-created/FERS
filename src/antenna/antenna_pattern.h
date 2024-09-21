@@ -10,7 +10,7 @@
 #include <vector>
 
 #include "math_utils/geometry_ops.h"
-#include "serialization/hdf5_export.h"
+#include "serialization/hdf5_handler.h"
 
 namespace rs
 {
@@ -19,7 +19,7 @@ namespace rs
 	public:
 		explicit Pattern(const std::string& filename)
 		{
-			_pattern = hdf5_export::readPattern(filename, "antenna", _size_azi, _size_elev);
+			_pattern = hdf5_handler::readPattern(filename, "antenna", _size_azi, _size_elev);
 		}
 
 		~Pattern() = default;
