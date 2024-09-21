@@ -17,8 +17,7 @@ namespace noise
 	//
 	// =================================================================================================================
 
-	GammaGenerator::GammaGenerator(const RealType k) : _rng(std::make_unique<std::mt19937>(params::randomSeed())),
-	                                                   _dist(k, 1.0) {}
+	GammaGenerator::GammaGenerator(const RealType k) : _rng(params::randomSeed()), _dist(k, 1.0) {}
 
 	// =================================================================================================================
 	//
@@ -26,11 +25,8 @@ namespace noise
 	//
 	// =================================================================================================================
 
-	WgnGenerator::WgnGenerator(const RealType stddev) : _rng(std::make_unique<std::mt19937>(params::randomSeed())),
-	                                                    _dist(0.0, stddev), _stddev(stddev) {}
-
-	WgnGenerator::WgnGenerator() : _rng(std::make_unique<std::mt19937>(params::randomSeed())),
-	                               _dist(0.0, 1.0), _stddev(1.0) {}
+	WgnGenerator::WgnGenerator(const RealType stddev) : _rng(params::randomSeed()), _dist(0.0, stddev),
+	                                                    _stddev(stddev) {}
 
 	// =================================================================================================================
 	//
@@ -42,86 +38,61 @@ namespace noise
 	{
 		const RealType beta = -(alpha - 2) / 2.0;
 		const int fint = static_cast<int>(std::floor(beta));
-		const RealType ffrac = fmod(beta, 1.0);
+		const RealType ffrac = std::fmod(beta, 1.0);
 
 		createTree(ffrac, fint, branches);
-
 		_scale = 1.0 / std::pow(10.0, (-alpha + 2.0) * 2.0);
 	}
 
-	void MultirateGenerator::skipSamples(long long samples) const
+	void MultirateGenerator::skipSamples(const long long samples) const
 	{
-		if (const int skip_branches = static_cast<int>(std::floor(std::log10(samples))) - 1; skip_branches > 0)
+		if (const int skip_branches = static_cast<int>(std::log10(samples)) - 1; skip_branches > 0)
 		{
 			std::vector<FAlphaBranch*> flushbranches;
-			const FAlphaBranch* branch = _topbranch.get(); // Using unique_ptr's get() to access raw pointer
+			const FAlphaBranch* branch = _topbranch.get();
 
-			// Traverse the tree up to skip_branches or until the branch becomes null
-			for (int i = 0; i < skip_branches && branch != nullptr; ++i)
+			for (int i = 0; i < skip_branches && branch; ++i)
 			{
 				flushbranches.push_back(const_cast<FAlphaBranch*>(branch));
-				// Use const_cast to store non-const pointers for flushing
 				branch = branch->getPre();
 			}
 
-			// If there is still a branch after skipping, call getSample the required number of times
 			if (branch)
 			{
-				samples /= static_cast<long long>(std::pow(10.0, skip_branches));
-				for (int i = 0; i < samples; ++i)
-				{
-					const_cast<FAlphaBranch*>(branch)->getSample(); // Remove constness for calling getSample
-				}
+				auto reduced_samples = samples / static_cast<long long>(std::pow(10.0, skip_branches));
+				for (long long i = 0; i < reduced_samples; ++i) { const_cast<FAlphaBranch*>(branch)->getSample(); }
 			}
 
-			// Flush the branches in reverse order to reset the chain
-			const int size = static_cast<int>(flushbranches.size());
-			if (size > 0) { flushbranches[size - 1]->flush(std::pow(10.0, skip_branches - 2.0)); }
-
-			for (int i = size - 2; i >= 0; --i) { flushbranches[i]->flush(1.0); }
+			for (const auto& fb : std::ranges::reverse_view(flushbranches)) { fb->flush(1.0); }
 		}
-		else
-		{
-			// No branch skipping required, just generate samples from the top branch
-			for (int i = 0; i < samples; ++i) { _topbranch->getSample(); }
-		}
+		else { for (long long i = 0; i < samples; ++i) { _topbranch->getSample(); } }
 	}
 
 	void MultirateGenerator::createTree(const RealType fAlpha, const int fInt, const unsigned branches)
 	{
 		if (branches == 0) { throw std::runtime_error("Cannot create multirate noise generator with zero branches"); }
 
-		if (fAlpha == 0.0 && fInt == 0) { _topbranch = std::make_unique<FAlphaBranch>(0, 0, nullptr, true); }
-		else
+		std::unique_ptr<FAlphaBranch> previous_branch = nullptr;
+		for (unsigned i = 0; i < branches; ++i)
 		{
-			std::unique_ptr<FAlphaBranch> previous_branch = nullptr;
-
-			// Build the chain of branches
-			for (unsigned i = 0; i < branches - 1; ++i)
-			{
-				// Move the previous branch into the new FAlphaBranch constructor
-				previous_branch = std::make_unique<FAlphaBranch>(fAlpha, fInt, std::move(previous_branch), false);
-			}
-
-			// The top branch is the last branch in the chain (set `last` to true)
-			_topbranch = std::make_unique<FAlphaBranch>(fAlpha, fInt, std::move(previous_branch), true);
+			previous_branch = std::make_unique<FAlphaBranch>(fAlpha, fInt, std::move(previous_branch),
+			                                                 i == branches - 1);
 		}
+		_topbranch = std::move(previous_branch);
 	}
 
 	void MultirateGenerator::reset() const
 	{
-		std::vector<FAlphaBranch*> flush_branches;
-		FAlphaBranch* branch = _topbranch.get(); // Use get() to access the raw pointer from unique_ptr
+		std::vector<FAlphaBranch*> branches;
+		FAlphaBranch* branch = _topbranch.get();
 
-		// Collect all branches
 		while (branch)
 		{
-			flush_branches.push_back(branch);
+			branches.push_back(branch);
 			branch = branch->getPre();
 		}
 
-		// Flush branches in reverse order
-		for (const auto& flush_branche : std::ranges::reverse_view(flush_branches)) { flush_branche->flush(1.0); }
+		for (const auto& b : std::ranges::reverse_view(branches)) { b->flush(1.0); }
 	}
 
 	// =================================================================================================================
@@ -130,34 +101,29 @@ namespace noise
 	//
 	// =================================================================================================================
 
-
 	ClockModelGenerator::ClockModelGenerator(const std::vector<RealType>& alpha, const std::vector<RealType>& inWeights,
 	                                         const RealType frequency, const RealType phaseOffset,
 	                                         const RealType freqOffset, int branches)
 		: _weights(inWeights), _phase_offset(phaseOffset), _freq_offset(freqOffset), _frequency(frequency)
 	{
-		auto iter = alpha.begin();
-		auto witer = _weights.begin();
-
-		for (; iter != alpha.end(); ++iter, ++witer)
+		for (size_t i = 0; i < alpha.size(); ++i)
 		{
-			auto mgen = std::make_unique<MultirateGenerator>(*iter, branches);
+			auto mgen = std::make_unique<MultirateGenerator>(alpha[i], branches);
 			_generators.push_back(std::move(mgen));
 
-			switch (static_cast<int>(*iter))
+			switch (static_cast<int>(alpha[i]))
 			{
-			case 2: *witer *= std::pow(10.0, 1.2250);
+			case 2: _weights[i] *= std::pow(10.0, 1.225);
 				break;
-			case 1: *witer *= std::pow(10.0, 0.25);
+			case 1: _weights[i] *= std::pow(10.0, 0.25);
 				break;
-			case 0: *witer *= std::pow(10.0, -0.25);
+			case 0: _weights[i] *= std::pow(10.0, -0.25);
 				break;
-			case -1: *witer *= std::pow(10.0, -0.5);
+			case -1: _weights[i] *= std::pow(10.0, -0.5);
 				break;
-			case -2: *witer *= std::pow(10.0, -1);
+			case -2: _weights[i] *= std::pow(10.0, -1.0);
 				break;
-			default: *witer *= 1.0; // No change to the weight
-				break;
+			default: break;
 			}
 		}
 	}
@@ -165,7 +131,6 @@ namespace noise
 	RealType ClockModelGenerator::getSample()
 	{
 		RealType sample = 0;
-
 		for (size_t i = 0; i < _generators.size(); ++i) { sample += _generators[i]->getSample() * _weights[i]; }
 
 		sample += _phase_offset;
@@ -178,14 +143,17 @@ namespace noise
 	void ClockModelGenerator::skipSamples(const long long samples)
 	{
 		for (const auto& generator : _generators) { generator->skipSamples(samples); }
-
 		_count += samples;
 	}
 
 	void ClockModelGenerator::reset()
 	{
 		for (const auto& generator : _generators) { generator->reset(); }
-
 		_count = 0;
+	}
+
+	bool ClockModelGenerator::enabled() const
+	{
+		return !_generators.empty() || _freq_offset != 0 || _phase_offset != 0;
 	}
 }

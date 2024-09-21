@@ -1,67 +1,55 @@
-//
+// noise_utils.cpp
 // Created by David Young on 9/17/24.
 //
 
 #include "noise_utils.h"
 
-#include <memory>
+#include <optional>
 #include <random>
 
 #include "core/parameters.h"
 
 namespace
 {
-	// Use the Mersenne Twister PRNG with parameter 19937 from the C++ standard library
-	std::unique_ptr<std::mt19937> rng;
-	std::unique_ptr<std::normal_distribution<>> normal_dist;
-	std::unique_ptr<std::uniform_real_distribution<>> uniform_dist;
+	// Global random engine wrapped in std::optional for lazy initialization
+	std::optional<std::mt19937> rng;
 
-	// Seed generation can be updated with a random device if no explicit seed is provided
+	// Predefined normal and uniform distributions
+	std::normal_distribution normal_dist{0.0, 1.0};
+	std::uniform_real_distribution uniform_dist{0.0, 1.0};
+
+	// Get the seed either from params or use a random_device for better entropy
 	unsigned int getSeed()
 	{
-		return params::randomSeed(); // Assuming this function still provides a seed, else use random_device
+		const unsigned int seed = params::randomSeed();
+		return seed != 0 ? seed : std::random_device{}();
 	}
-}
 
-// =================================================================================================================
-//
-// IMPLEMENTATIONS OF NON-CLASS FUNCTIONS
-//
-// =================================================================================================================
+	// Ensure the RNG is initialized lazily
+	void ensureInitialized() { if (!rng) { rng.emplace(getSeed()); } }
+}
 
 namespace noise
 {
-	void initializeNoise()
+	// Generate a white Gaussian noise sample with the specified standard deviation
+	RealType wgnSample(const RealType stddev)
 	{
-		// Initialize random number generator and distributions using smart pointers
-		rng = std::make_unique<std::mt19937>(getSeed());
-		normal_dist = std::make_unique<std::normal_distribution<>>(0.0, 1.0);
-		uniform_dist = std::make_unique<std::uniform_real_distribution<>>(0.0, 1.0);
+		if (stddev <= std::numeric_limits<RealType>::epsilon()) { return 0.0; }
+
+		ensureInitialized(); // Ensure RNG is initialized
+		return normal_dist(*rng) * stddev;
 	}
 
-	void cleanUpNoise()
-	{
-		// Smart pointers automatically clean up, no need for manual deletion
-		rng.reset();
-		normal_dist.reset();
-		uniform_dist.reset();
-	}
-
-	RealType wgnSample(const double stddev)
-	{
-		// Generate a white Gaussian noise sample with the specified standard deviation
-		return stddev > std::numeric_limits<double>::epsilon() ? (*normal_dist)(*rng) * stddev : 0.0;
-	}
-
+	// Generate a sample from a uniform distribution between 0 and 1
 	RealType uniformSample()
 	{
-		// Generate a sample from a uniform distribution between 0 and 1
-		return (*uniform_dist)(*rng);
+		ensureInitialized(); // Ensure RNG is initialized
+		return uniform_dist(*rng);
 	}
 
-	RealType noiseTemperatureToPower(const double temperature, const double bandwidth)
+	// Compute noise power given temperature and bandwidth
+	RealType noiseTemperatureToPower(const RealType temperature, const RealType bandwidth)
 	{
-		// Compute noise power given temperature and bandwidth
 		return params::boltzmannK() * temperature * bandwidth;
 	}
 }

@@ -9,7 +9,6 @@
 #include "parameters.h"
 #include "sim_threading.h"
 #include "world.h"
-#include "noise/noise_utils.h"
 #include "serialization/xmlimport.h"
 
 using logging::Level;
@@ -47,19 +46,11 @@ int main(const int argc, char* argv[])
 		// Create the world object
 		const auto world = std::make_unique<core::World>();
 
-		// Initialize noise generation system
-		noise::initializeNoise();
-
 		// Load the XML file and deserialize it into the world object
 		serial::loadXmlFile(script_file, world.get());
 
 		// Run the simulation using the threading mechanism
 		runThreadedSim(params::renderThreads(), world.get());
-
-		LOG(Level::INFO, "Cleaning up");
-
-		// Clean up noise resources after the simulation
-		noise::cleanUpNoise();
 
 		LOG(Level::INFO, "Simulation completed successfully!");
 
