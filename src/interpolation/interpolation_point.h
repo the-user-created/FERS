@@ -10,11 +10,6 @@ namespace interp
 {
 	struct InterpPoint
 	{
-		InterpPoint(const RealType power, const RealType start, const RealType delay, const RealType doppler,
-		            const RealType phase, const RealType noiseTemperature) :
-			power(power), time(start), delay(delay), doppler(doppler), phase(phase),
-			noise_temperature(noiseTemperature) {}
-
 		RealType power;
 		RealType time;
 		RealType delay;

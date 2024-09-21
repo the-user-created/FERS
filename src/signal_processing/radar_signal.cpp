@@ -86,7 +86,7 @@ namespace signal
 
 		const RealType timestep = 1.0 / _rate;
 		const int filt_length = static_cast<int>(params::renderFilterLength());
-		const auto* interp = interp::InterpFilter::getInstance();
+		const auto interp = interp::InterpFilter::getInstance();
 
 		auto iter = points.begin();
 		auto next = points.size() > 1 ? std::next(iter) : iter;
@@ -103,7 +103,7 @@ namespace signal
 
 			auto [amplitude, phase, fdelay, i_sample_unwrap] = calculateWeightsAndDelays(
 				iter, next, sample_time, idelay, fracWinDelay);
-			const RealType* filt = interp->getFilter(fdelay);
+			const RealType* filt = interp.getFilter(fdelay).data();
 			ComplexType accum = performConvolution(i, filt, filt_length, amplitude, i_sample_unwrap);
 			out[i] = std::exp(ComplexType(0.0, 1.0) * phase) * accum;
 

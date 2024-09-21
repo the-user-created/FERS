@@ -6,7 +6,6 @@
 #include "interpolation_set.h"
 
 #include <algorithm>
-#include <cmath>
 #include <ranges>
 
 namespace interp
@@ -17,46 +16,67 @@ namespace interp
 	//
 	// =================================================================================================================
 
-	void InterpSetData::loadSamples(const std::vector<RealType>& x, const std::vector<RealType>& y)
+	template <RealConcept T>
+	void InterpSetData::loadSamples(const std::vector<T>& x, const std::vector<T>& y)
 	{
-		auto ix = x.begin();
-		for (auto iy = y.begin(); ix != x.end() && iy != y.end(); ++ix, ++iy) { _data.insert({*ix, *iy}); }
+		if (x.size() != y.size()) { throw std::invalid_argument("X and Y vectors must have the same size"); }
+
+		for (size_t i = 0; i < x.size(); ++i) { _data.insert({static_cast<double>(x[i]), static_cast<double>(y[i])}); }
 	}
 
-	RealType InterpSetData::value(const RealType x)
+	template <RealConcept T>
+	std::optional<T> InterpSetData::value(T x) const
 	{
-		if (_data.empty()) { throw std::logic_error("Interpolation on an empty list in InterpSet"); }
-		const auto iter = _data.lower_bound(x);
-		if (iter == _data.begin()) { return iter->second; }
-		auto prev = iter;
-		--prev;
-		if (iter == _data.end()) { return prev->second; }
-		if (iter->first == x) { return iter->second; }
-		const RealType x1 = prev->first;
-		const RealType x2 = iter->first;
-		const RealType y1 = prev->second;
-		const RealType y2 = iter->second;
-		return y2 * (x - x1) / (x2 - x1) + y1 * (x2 - x) / (x2 - x1);
+		if (_data.empty()) { return std::nullopt; }
+
+		const auto iter = _data.lower_bound(static_cast<double>(x));
+
+		if (iter == _data.begin()) { return static_cast<T>(iter->second); }
+		if (iter == _data.end())
+		{
+			const auto prev = std::prev(iter);
+			return static_cast<T>(prev->second);
+		}
+		if (iter->first == static_cast<double>(x)) { return static_cast<T>(iter->second); }
+
+		auto prev = std::prev(iter);
+		const auto [x1, y1] = *prev;
+		const auto [x2, y2] = *iter;
+
+		return static_cast<T>(y2 * (x - x1) / (x2 - x1) + y1 * (x2 - x) / (x2 - x1));
 	}
 
-	RealType InterpSetData::max() const
+	// Returns the maximum absolute value as a double
+	double InterpSetData::max() const
 	{
-		// Use views::values to access the second elements in the map
 		auto values = _data | std::views::values;
 
-		// Find the maximum of the absolute values
-		const auto max_element = std::ranges::max_element(values, [](const RealType a, const RealType b)
+		const auto max_element = std::ranges::max_element(values, [](const double a, const double b)
 		{
-			return std::fabs(a) < std::fabs(b);
+			return std::abs(a) < std::abs(b);
 		});
 
-		return max_element != values.end() ? std::fabs(*max_element) : 0.0f;
+		return max_element != values.end() ? std::abs(*max_element) : 0.0;
 	}
 
-	void InterpSetData::divide(const RealType a)
+	template <RealConcept T>
+	void InterpSetData::divide(T a)
 	{
-		// Use views::values to directly modify the second elements in the map
-		auto values = _data | std::views::values;
-		std::ranges::for_each(values, [a](RealType& val) { val /= a; });
+		if (a == 0) { throw std::invalid_argument("Division by zero is not allowed."); }
+
+		for (auto& value : _data | std::views::values) { value /= static_cast<double>(a); }
 	}
+
+	// Explicit instantiations for double and float (or any other type you want)
+	template void InterpSetData::loadSamples<double>(const std::vector<double>&, const std::vector<double>&);
+
+	template std::optional<double> InterpSetData::value<double>(double) const;
+
+	template void InterpSetData::divide<double>(double);
+
+	template void InterpSetData::loadSamples<float>(const std::vector<float>&, const std::vector<float>&);
+
+	template std::optional<float> InterpSetData::value<float>(float) const;
+
+	template void InterpSetData::divide<float>(float);
 }

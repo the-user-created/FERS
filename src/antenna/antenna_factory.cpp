@@ -125,9 +125,20 @@ namespace antenna
 	RealType XmlAntenna::getGain(const SVec3& angle, const SVec3& refangle, RealType wavelength) const
 	{
 		const SVec3 delta_angle = angle - refangle;
-		return _azi_samples->getValueAt(std::abs(delta_angle.azimuth)) *
-			_elev_samples->getValueAt(std::abs(delta_angle.elevation)) *
-			_max_gain * getEfficiencyFactor();
+
+		// Get the optional values from _azi_samples and _elev_samples
+		const std::optional<RealType> azi_value = _azi_samples->getValueAt(std::abs(delta_angle.azimuth));
+
+		// Check if both optional values are valid
+		if (const std::optional<RealType> elev_value = _elev_samples->getValueAt(std::abs(delta_angle.elevation));
+			azi_value && elev_value)
+		{
+			// Safely unwrap the optional values and multiply them
+			return *azi_value * *elev_value * _max_gain * getEfficiencyFactor();
+		}
+
+		LOG(Level::FATAL, "Could not get antenna gain value");
+		throw std::runtime_error("Could not get antenna gain value");
 	}
 
 	void XmlAntenna::loadAntennaDescription(const std::string_view filename)

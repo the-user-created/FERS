@@ -6,31 +6,41 @@
 #ifndef INTERPOLATION_SET_H
 #define INTERPOLATION_SET_H
 
+#include <cmath>
 #include <map>
 #include <memory>
+#include <optional>
 #include <vector>
 
 #include "config.h"
 
 namespace interp
 {
+	// Concept to constrain types to arithmetic types (e.g., float, double)
+	template <typename T>
+	concept RealConcept = std::is_arithmetic_v<T>;
+
 	class InterpSetData
 	{
 	public:
-		///Load samples into the set
-		void loadSamples(const std::vector<RealType>& x, const std::vector<RealType>& y);
+		/// Load samples into the set
+		template <RealConcept T>
+		void loadSamples(const std::vector<T>& x, const std::vector<T>& y);
 
-		///Load a single sample into the set
-		void insertSample(RealType x, RealType y) { _data.insert({x, y}); }
+		/// Load a single sample into the set
+		template <RealConcept T>
+		void insertSample(T x, T y) { _data.insert({x, y}); }
 
-		///Get the interpolated value at a given point
-		RealType value(RealType x);
+		/// Get the interpolated value at a given point
+		template <RealConcept T>
+		[[nodiscard]] std::optional<T> value(T x) const;
 
-		/// Get the maximum value in the set
-		[[nodiscard]] RealType max() const;
+		/// Get the maximum value in the set (always returning a double)
+		[[nodiscard]] double max() const;
 
 		/// Divide the set by a given number
-		void divide(RealType a);
+		template <RealConcept T>
+		void divide(T a);
 
 	private:
 		std::map<RealType, RealType> _data;
@@ -39,23 +49,24 @@ namespace interp
 	class InterpSet
 	{
 	public:
-		InterpSet() { _data = std::make_unique<InterpSetData>(); }
+		constexpr InterpSet() : _data(std::make_unique<InterpSetData>()) {}
 
-		~InterpSet() = default;
+		// Rule of five compliance handled implicitly by smart pointers
+		constexpr ~InterpSet() = default;
 
-		// Note: This function is not used in the codebase
-		void loadSamples(const std::vector<RealType>& x, const std::vector<RealType>& y) const
-		{
-			_data->loadSamples(x, y);
-		}
+		template <RealConcept T>
+		void loadSamples(const std::vector<T>& x, const std::vector<T>& y) const { _data->loadSamples(x, y); }
 
-		void insertSample(const RealType x, const RealType y) const { _data->insertSample(x, y); }
+		template <RealConcept T>
+		void insertSample(T x, T y) const { _data->insertSample(x, y); }
 
-		[[nodiscard]] RealType getValueAt(const RealType x) const { return _data->value(x); }
+		template <RealConcept T>
+		[[nodiscard]] std::optional<T> getValueAt(T x) const { return _data->value(x); }
 
-		[[nodiscard]] RealType getMax() const { return _data->max(); }
+		[[nodiscard]] double getMax() const { return _data->max(); }
 
-		void divide(const RealType a) const { _data->divide(a); }
+		template <RealConcept T>
+		void divide(T a) const { _data->divide(a); }
 
 	private:
 		std::unique_ptr<InterpSetData> _data;
