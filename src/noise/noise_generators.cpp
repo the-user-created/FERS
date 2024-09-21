@@ -169,7 +169,7 @@ namespace noise
 		for (size_t i = 0; i < _generators.size(); ++i) { sample += _generators[i]->getSample() * _weights[i]; }
 
 		sample += _phase_offset;
-		sample += 2 * M_PI * _freq_offset * static_cast<double>(_count) / params::rate();
+		sample += 2 * PI * _freq_offset * static_cast<double>(_count) / params::rate();
 		++_count;
 
 		return sample;

@@ -16,7 +16,7 @@ constexpr RealType BLACKMAN_A2 = 0.08;
 
 namespace
 {
-	RealType sinc(const RealType x) { return x == 0 ? 1.0 : std::sin(x * M_PI) / (x * M_PI); }
+	RealType sinc(const RealType x) { return x == 0 ? 1.0 : std::sin(x * PI) / (x * PI); }
 
 	std::vector<RealType> blackmanFir(const RealType cutoff, unsigned& filtLength)
 	{
@@ -28,7 +28,7 @@ namespace
 			// We use the Blackman window, for a suitable tradeoff between rolloff and stopband attenuation
 			// Equivalent Kaiser beta = 7.04 (Oppenhiem and Schaffer, Hamming)
 			const RealType filt = sinc(cutoff * (i - n));
-			const RealType window = BLACKMAN_A0 - BLACKMAN_A1 * cos(M_PI * i / n) + BLACKMAN_A2 * cos(2 * M_PI * i / n);
+			const RealType window = BLACKMAN_A0 - BLACKMAN_A1 * cos(PI * i / n) + BLACKMAN_A2 * cos(2 * PI * i / n);
 			coeffs[i] = filt * window;
 		}
 		return coeffs;
@@ -246,7 +246,7 @@ namespace signal
 
 		for (int i = 0; i < _filter_size; i++)
 		{
-			const RealType window_value = 0.54 - 0.46 * std::cos(2 * M_PI * i / static_cast<RealType>(_filter_size));
+			const RealType window_value = 0.54 - 0.46 * std::cos(2 * PI * i / static_cast<RealType>(_filter_size));
 			const RealType filter_value = sinc(1.0 / static_cast<RealType>(ratio) * (i - _filter_size / 2.0));
 			_filterbank[i] = filter_value * window_value;
 		}

@@ -40,8 +40,8 @@ namespace math
 		case InterpType::INTERP_CUBIC: getPositionCubic(t, coord, _coords, _dd);
 			break;
 		case InterpType::INTERP_CONSTANT: coord.t = t;
-			coord.azimuth = std::fmod(t * _rate.azimuth + _start.azimuth, 2 * M_PI);
-			coord.elevation = std::fmod(t * _rate.elevation + _start.elevation, 2 * M_PI);
+			coord.azimuth = std::fmod(t * _rate.azimuth + _start.azimuth, 2 * PI);
+			coord.elevation = std::fmod(t * _rate.elevation + _start.elevation, 2 * PI);
 			break;
 		}
 		return {1, coord.azimuth, coord.elevation};

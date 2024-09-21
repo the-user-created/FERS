@@ -62,7 +62,7 @@ namespace serial
 		attachRsFloatNode(element.get(), "Qamplitude",
 		                  std::sin(point.phase) * std::sqrt(point.power * _wave->getPower()));
 		attachRsFloatNode(element.get(), "noise_temperature", point.noise_temperature);
-		attachRsFloatNode(element.get(), "phasedeg", point.phase / M_PI * 180);
+		attachRsFloatNode(element.get(), "phasedeg", point.phase / PI * 180);
 
 		element.release(); // TODO: this is a bad practice
 	}
