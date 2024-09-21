@@ -11,10 +11,10 @@ using logging::Level;
 
 namespace interp
 {
-	InterpFilter* InterpFilter::getInstance()
+	InterpFilter& InterpFilter::getInstance()
 	{
 		static InterpFilter instance; // Meyers' Singleton
-		return &instance;
+		return instance;
 	}
 
 	RealType InterpFilter::besselI0(const RealType x)
@@ -40,38 +40,35 @@ namespace interp
 	InterpFilter::InterpFilter()
 	{
 		_length = static_cast<int>(params::renderFilterLength());
-		//Size of the table to use for interpolation
 		_table_filters = 1000;
-		//Allocate memory for the table
 		_filter_table = std::vector<RealType>(_table_filters * _length);
-		//Alpha is half the filter length
+
 		_alpha = std::floor(params::renderFilterLength() / 2.0);
 		_bessel_beta = besselI0(_beta);
+
 		const int hfilt = _table_filters / 2;
+
 		LOG(Level::DEBUG, "Building table of {} filters", _table_filters);
-		//Fill the table of filters
-		//C Tong: delay appears to be the fraction of time ellapsed between samples
-		for (int i = -hfilt; i < hfilt; i++)
-		{
+
+		for (int i = -hfilt; i < hfilt; ++i) {
 			const RealType delay = i / static_cast<RealType>(hfilt);
-			for (int j = static_cast<int>(-_alpha); j < _alpha; j++)
-			{
-				_filter_table[static_cast<int>((i + hfilt) * _length + j + _alpha)] = interpFilter(j - delay);
+			for (int j = static_cast<int>(-_alpha); j < _alpha; ++j) {
+				_filter_table[(i + hfilt) * _length + j + static_cast<int>(_alpha)] = interpFilter(j - delay);
 			}
 		}
+
 		LOG(Level::DEBUG, "Filter table complete");
 	}
 
-	const RealType* InterpFilter::getFilter(const RealType delay) const
+	std::span<const RealType> InterpFilter::getFilter(RealType delay) const
 	{
-		const auto filt = static_cast<unsigned>((delay + 1) * (_table_filters / 2.0));
-
-		if (delay <= -1 || delay >= 1)
+		if (delay < -1 || delay > 1)
 		{
-			LOG(Level::DEBUG, "GetFilter {} {}", delay, filt);
-			throw std::runtime_error("[BUG] Requested delay filter value out of range");
+			LOG(Level::FATAL, "Invalid delay value: {}", delay);
+			throw std::runtime_error("Requested delay filter value out of range");
 		}
 
-		return &_filter_table[filt * _length];
+		const auto filt = static_cast<unsigned>((delay + 1) * (_table_filters / 2.0));
+		return std::span{&_filter_table[filt * _length], static_cast<size_t>(_length)};
 	}
 }

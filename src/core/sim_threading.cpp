@@ -195,9 +195,15 @@ namespace
 				core::ReResults results{};
 				solveReDirect(trans, recv, current_time, sample_time, signal->wave, results);
 
-				// Add interpolation point
-				interp::InterpPoint point(results.power, results.delay + current_time.count(), results.delay,
-				                          results.doppler, results.phase, results.noise_temperature);
+				// Add interpolation point with designated initializers
+				interp::InterpPoint point{
+					.power = results.power,
+					.time = current_time.count() + results.delay,
+					.delay = results.delay,
+					.doppler = results.doppler,
+					.phase = results.phase,
+					.noise_temperature = results.noise_temperature
+				};
 				response->addInterpPoint(point);
 			}
 		}
@@ -236,10 +242,15 @@ namespace
 				core::ReResults results{};
 				solveRe(trans, recv, targ, current_time, sample_time, signal->wave, results);
 
-				// Add interpolation point to the response
-				interp::InterpPoint point(results.power, current_time.count() + results.delay,
-				                          results.delay, results.doppler, results.phase,
-				                          results.noise_temperature);
+				// Adding interpolation point with designated initializers
+				interp::InterpPoint point{
+					.power = results.power,
+					.time = current_time.count() + results.delay,
+					.delay = results.delay,
+					.doppler = results.doppler,
+					.phase = results.phase,
+					.noise_temperature = results.noise_temperature
+				};
 				response->addInterpPoint(point);
 			}
 		}

@@ -9,6 +9,8 @@
 
 #include <tinyxml.h>
 
+#include "core/logging.h"
+
 using math::SVec3;
 
 RealType getNodeFloat(const TiXmlHandle& node);
@@ -39,9 +41,23 @@ namespace radar
 	RealType FileTarget::getRcs(SVec3& inAngle, SVec3& outAngle) const
 	{
 		const SVec3 t_angle = inAngle + outAngle;
-		const RealType rcs = std::sqrt(
-			_azi_samples->getValueAt(t_angle.azimuth / 2.0) * _elev_samples->getValueAt(t_angle.elevation / 2.0));
-		return _model ? rcs * _model->sampleModel() : rcs;
+
+		// Get the optional values from _azi_samples and _elev_samples
+		const std::optional<RealType> azi_value = _azi_samples->getValueAt(t_angle.azimuth / 2.0);
+
+		// Check if both values are valid
+		if (const std::optional<RealType> elev_value = _elev_samples->getValueAt(t_angle.elevation / 2.0); azi_value &&
+			elev_value)
+		{
+			// Safely unwrap the optional values and multiply them
+			const RealType rcs = std::sqrt((*azi_value) * (*elev_value));
+
+			// Return rcs, adjusted by _model->sampleModel() if _model is valid
+			return _model ? rcs * _model->sampleModel() : rcs;
+		}
+
+		LOG(logging::Level::FATAL, "Could not get RCS value for target");
+		throw std::runtime_error("Could not get RCS value for target");
 	}
 
 	void FileTarget::loadRcsDescription(const std::string& filename) const
