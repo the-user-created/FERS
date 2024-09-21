@@ -29,7 +29,7 @@ void Timing::initializeModel(const PrototypeTiming* timing)
 	if (timing->getFrequency() == 0.0f)
 	{
 		LOG(logging::Level::INFO,
-		                "Timing source frequency not set, results could be incorrect.");
+		    "Timing source frequency not set, results could be incorrect.");
 	}
 
 	_frequency = timing->getFrequency();

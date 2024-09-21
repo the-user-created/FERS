@@ -90,7 +90,7 @@ void Receiver::render()
 	{
 		std::unique_lock lock(_responses_mutex, std::try_to_lock);
 		if (!lock.owns_lock()) { throw std::runtime_error("[BUG] Responses lock is locked during Render()"); }
-		std::sort(_responses.begin(), _responses.end(), compareTimes);
+		std::ranges::sort(_responses, compareTimes);
 		if (parameters::exportXml()) { receiver_export::exportReceiverXml(_responses, getName() + "_results"); }
 		if (parameters::exportBinary())
 		{

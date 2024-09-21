@@ -5,8 +5,10 @@
 
 #include "interpolation_set.h"
 
+#include <algorithm>
 #include <cmath>
 #include <map>
+#include <ranges>
 #include <stdexcept>
 #include <utility>
 
@@ -42,9 +44,21 @@ RS_FLOAT InterpSetData::value(const RS_FLOAT x)
 
 RS_FLOAT InterpSetData::max() const
 {
-	RS_FLOAT max = 0;
-	for (const auto& [fst, snd] : _data) { if (std::fabs(snd) > max) { max = std::fabs(snd); } }
-	return max;
+	// Use views::values to access the second elements in the map
+	auto values = _data | std::views::values;
+
+	// Find the maximum of the absolute values
+	const auto max_element = std::ranges::max_element(values, [](const RS_FLOAT a, const RS_FLOAT b)
+	{
+		return std::fabs(a) < std::fabs(b);
+	});
+
+	return max_element != values.end() ? std::fabs(*max_element) : 0.0f;
 }
 
-void InterpSetData::divide(const RS_FLOAT a) { for (auto& [fst, snd] : _data) { snd /= a; } }
+void InterpSetData::divide(const RS_FLOAT a)
+{
+	// Use views::values to directly modify the second elements in the map
+	auto values = _data | std::views::values;
+	std::ranges::for_each(values, [a](RS_FLOAT& val) { val /= a; });
+}

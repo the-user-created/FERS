@@ -126,7 +126,10 @@ namespace
 
 		results.power = transmitter_gain * receiver_gain * wavelength * wavelength / (4 * M_PI);
 
-		if (!recv->checkFlag(rs::Receiver::RecvFlag::FLAG_NOPROPLOSS)) { results.power /= 4 * M_PI * distance * distance; }
+		if (!recv->checkFlag(rs::Receiver::RecvFlag::FLAG_NOPROPLOSS))
+		{
+			results.power /= 4 * M_PI * distance * distance;
+		}
 
 		// Doppler shift calculation
 		const auto trpos_end = trans->getPosition(time + length) - recv->getPosition(time + length);
@@ -290,7 +293,7 @@ namespace
 		for (const auto& receiver : receivers)
 		{
 			LOG(logging::Level::DEBUG, "{} responses added to receiver '{}'",
-			                receiver->countResponses(), receiver->getName().c_str());
+			    receiver->countResponses(), receiver->getName().c_str());
 		}
 	}
 
@@ -338,14 +341,14 @@ namespace rs::threaded_sim
 	void SimThread::operator()() const
 	{
 		LOG(logging::Level::DEBUG,
-		                "Created simulator thread for transmitter '{}' and receiver '{}'",
-		                _trans->getName().c_str(), _recv->getName().c_str());
+		    "Created simulator thread for transmitter '{}' and receiver '{}'",
+		    _trans->getName().c_str(), _recv->getName().c_str());
 		try { simulatePair(_trans, _recv, _world); }
 		catch (std::exception& ex)
 		{
 			LOG(logging::Level::ERROR,
-			                "First pass thread terminated with unexpected error:\t{}\nSimulator will terminate",
-			                ex.what());
+			    "First pass thread terminated with unexpected error:\t{}\nSimulator will terminate",
+			    ex.what());
 			setError();
 		}
 		decThreads();
@@ -360,13 +363,13 @@ namespace rs::threaded_sim
 	void RenderThread::operator()() const
 	{
 		LOG(logging::Level::DEBUG, "Created render thread for receiver '{}'",
-		                _recv->getName().c_str());
+		    _recv->getName().c_str());
 		try { _recv->render(); }
 		catch (std::exception& ex)
 		{
 			LOG(logging::Level::INFO,
-			                "Render thread terminated with unexpected error:\t{}Simulator will terminate",
-			                ex.what());
+			    "Render thread terminated with unexpected error:\t{}Simulator will terminate",
+			    ex.what());
 			setError();
 		}
 		decThreads();

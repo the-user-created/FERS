@@ -8,7 +8,6 @@
 #include "arg_parser.h"
 #include "logging.h"
 #include "parameters.h"
-#include "portable_utils.h"
 #include "noise/noise_generators.h"
 #include "noise/noise_utils.h"
 #include "serialization/xmlimport.h"

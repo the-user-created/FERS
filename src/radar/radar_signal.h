@@ -46,7 +46,7 @@ namespace rs
 			std::vector<InterpPoint>::const_iterator iter, std::vector<InterpPoint>::const_iterator next,
 			double sampleTime, double idelay, double fracWinDelay) const;
 
-		std::complex<double> performConvolution(int i, const double* filt, int filtLength, double amplitude,
+		RS_COMPLEX performConvolution(int i, const double* filt, int filtLength, double amplitude,
 		                                        int iSampleUnwrap) const;
 	};
 

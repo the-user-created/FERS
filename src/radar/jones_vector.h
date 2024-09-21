@@ -16,7 +16,7 @@ namespace rs
 	class JonesVector
 	{
 	public:
-		JonesVector(const std::complex<RS_FLOAT> h, const std::complex<RS_FLOAT> v) : _h(h), _v(v)
+		JonesVector(const RS_COMPLEX h, const RS_COMPLEX v) : _h(h), _v(v)
 		{
 		}
 
@@ -29,23 +29,23 @@ namespace rs
 			return {_h * mat.s[0] + _v * mat.s[1], _h * mat.s[2] + _v * mat.s[3]};
 		}
 
-		[[nodiscard]] std::complex<RS_FLOAT> getH() const
+		[[nodiscard]] RS_COMPLEX getH() const
 		{
 			return _h;
 		}
 
-		[[nodiscard]] std::complex<RS_FLOAT> getV() const
+		[[nodiscard]] RS_COMPLEX getV() const
 		{
 			return _v;
 		}
 
 	private:
-		std::complex<RS_FLOAT> _h;
-		std::complex<RS_FLOAT> _v;
+		RS_COMPLEX _h;
+		RS_COMPLEX _v;
 	};
 
 	// Note: This function is not used in the codebase
-	inline std::complex<RS_FLOAT> dot(const JonesVector& a, const JonesVector& b)
+	inline RS_COMPLEX dot(const JonesVector& a, const JonesVector& b)
 	{
 		return a.getV() * b.getV() + a.getH() * b.getH();
 	}

@@ -2,7 +2,8 @@
 // Created by David Young on 9/20/24.
 //
 
-#pragma once
+#ifndef LOGGING_H
+#define LOGGING_H
 
 #include <format>
 #include <fstream>
@@ -68,3 +69,5 @@ namespace logging
 		logger.log(level, location, formatStr, std::forward<Args>(args)...);
 	}
 }
+
+#endif //LOGGING_H
