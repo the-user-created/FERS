@@ -8,7 +8,6 @@
 
 #include <complex>
 #include <functional>
-#include <memory>
 #include "config.h"
 
 namespace interp_filt
@@ -37,7 +36,7 @@ namespace interp_filt
 		InterpFilter();
 
 		RS_FLOAT _alpha;
-		RS_FLOAT _beta;
+		RS_FLOAT _beta = 5; // Beta sets the window shape
 		RS_FLOAT _bessel_beta;
 		int _length;
 		int _table_filters;

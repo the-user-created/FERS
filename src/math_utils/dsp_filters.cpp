@@ -185,12 +185,12 @@ void FirFilter::filter(std::vector<RS_FLOAT>& samples, const int size)
 
 void FirFilter::filter(std::vector<RS_COMPLEX>& samples, const unsigned size) const
 {
-	std::vector<std::complex<RS_FLOAT>> line(_order, {0.0, 0.0}); // Zero-initialize the line buffer
+	std::vector<RS_COMPLEX> line(_order, {0.0, 0.0}); // Zero-initialize the line buffer
 
 	for (unsigned i = 0; i < size; i++)
 	{
 		line[0] = samples[i]; // New complex sample input at the start of the line
-		std::complex<RS_FLOAT> res(0.0, 0.0); // Result accumulator
+		RS_COMPLEX res(0.0, 0.0); // Result accumulator
 
 		// Convolve the current line with the filter coefficients
 		for (unsigned j = 0; j < _order; j++) { res += line[_order - j - 1] * _filter[j]; }
@@ -291,13 +291,13 @@ void Upsampler::upsample(const RS_FLOAT* inSamples, const int inSize, RS_FLOAT* 
 DecadeUpsampler::DecadeUpsampler()
 {
 	/// 11th order elliptic lowpass at 0.1fs
-	constexpr std::array<RS_FLOAT, 12> den_coeffs = {
+	constexpr std::array den_coeffs = {
 		1.0, -10.301102119865, 48.5214567642597, -137.934509572412, 262.914952985445,
 		-352.788381841481, 340.027874008585, -235.39260470286, 114.698499845697,
 		-37.4634653062448, 7.38208765922137, -0.664807695826097
 	};
 
-	constexpr std::array<RS_FLOAT, 12> num_coeffs = {
+	constexpr std::array num_coeffs = {
 		2.7301694322809e-06, -1.8508123430239e-05, 5.75739466753894e-05, -0.000104348734423658,
 		0.000111949190289715, -4.9384188225528e-05, -4.9384188225522e-05, 0.00011194919028971,
 		-0.000104348734423656, 5.75739466753884e-05, -1.85081234302388e-05, 2.73016943228086e-06

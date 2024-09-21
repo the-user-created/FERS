@@ -12,7 +12,7 @@ namespace interp_filt
 {
 	InterpFilter* InterpFilter::getInstance()
 	{
-		static InterpFilter instance;  // Meyers' Singleton
+		static InterpFilter instance; // Meyers' Singleton
 		return &instance;
 	}
 
@@ -20,10 +20,7 @@ namespace interp_filt
 	{
 		// Use the polynomial approximation from section 9.8 of
 		// "Handbook of Mathematical Functions" by Abramowitz and Stegun
-		if (x < 0.0)
-		{
-			throw std::logic_error("Modified Bessel approximation only valid for x > 0");
-		}
+		if (x < 0.0) { throw std::logic_error("Modified Bessel approximation only valid for x > 0"); }
 		if (RS_FLOAT t = x / 3.75; t <= 1.0)
 		{
 			t *= t;
@@ -48,8 +45,6 @@ namespace interp_filt
 		_filter_table = std::vector<RS_FLOAT>(_table_filters * _length);
 		//Alpha is half the filter length
 		_alpha = std::floor(parameters::renderFilterLength() / 2.0);
-		//Beta sets the window shape
-		_beta = 5;
 		_bessel_beta = besselI0(_beta);
 		const int hfilt = _table_filters / 2;
 		LOG(logging::Level::DEBUG, "Building table of {} filters", _table_filters);

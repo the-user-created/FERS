@@ -23,7 +23,7 @@ namespace rs
 
 		PsMatrix& operator=(const PsMatrix& im);
 
-		std::complex<RS_FLOAT> s[4];
+		RS_COMPLEX s[4];
 	};
 }
 
