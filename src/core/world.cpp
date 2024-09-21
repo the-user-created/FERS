@@ -5,6 +5,8 @@
 
 #include "world.h"
 
+#include <ranges>
+
 #include "antenna/antenna_factory.h"
 #include "radar/radar_system.h"
 #include "signal_processing/radar_signal.h"
@@ -21,6 +23,8 @@ using radar::Target;
 
 namespace core
 {
+	using namespace std::string_literals;
+
 	void World::add(std::unique_ptr<Platform> plat) { _platforms.push_back(std::move(plat)); }
 
 	void World::add(std::unique_ptr<Transmitter> trans) { _transmitters.push_back(std::move(trans)); }
@@ -31,7 +35,7 @@ namespace core
 
 	void World::add(std::unique_ptr<RadarSignal> pulse)
 	{
-		if (findSignal(pulse->getName()))
+		if (_pulses.contains(pulse->getName()))
 		{
 			throw std::runtime_error("A pulse with the name " + pulse->getName() + " already exists.");
 		}
@@ -40,7 +44,7 @@ namespace core
 
 	void World::add(std::unique_ptr<Antenna> antenna)
 	{
-		if (findAntenna(antenna->getName()))
+		if (_antennas.contains(antenna->getName()))
 		{
 			throw std::runtime_error("An antenna with the name " + antenna->getName() + " already exists.");
 		}
@@ -49,7 +53,7 @@ namespace core
 
 	void World::add(std::unique_ptr<PrototypeTiming> timing)
 	{
-		if (findTiming(timing->getName()))
+		if (_timings.contains(timing->getName()))
 		{
 			throw std::runtime_error("A timing source with the name " + timing->getName() + " already exists.");
 		}
@@ -58,47 +62,43 @@ namespace core
 
 	void World::addMultipathSurface(std::unique_ptr<MultipathSurface> surface)
 	{
-		if (_multipath_surface) { throw std::runtime_error("Only one multipath surface per simulation is supported"); }
+		if (_multipath_surface) { throw std::runtime_error("Only one multipath surface per simulation is supported."); }
 		_multipath_surface = std::move(surface);
 	}
 
-	RadarSignal* World::findSignal(const std::string& name) { return _pulses[name].get(); }
+	RadarSignal* World::findSignal(const std::string& name)
+	{
+		return _pulses.contains(name) ? _pulses[name].get() : nullptr;
+	}
 
-	Antenna* World::findAntenna(const std::string& name) { return _antennas[name].get(); }
+	Antenna* World::findAntenna(const std::string& name)
+	{
+		return _antennas.contains(name) ? _antennas[name].get() : nullptr;
+	}
 
-	PrototypeTiming* World::findTiming(const std::string& name) { return _timings[name].get(); }
+	PrototypeTiming* World::findTiming(const std::string& name)
+	{
+		return _timings.contains(name) ? _timings[name].get() : nullptr;
+	}
 
 	void World::processMultipath()
 	{
 		if (_multipath_surface)
 		{
-			// Store the original sizes of the vectors before modification
-			const size_t platform_count = _platforms.size();
-			const size_t receiver_count = _receivers.size();
-			const size_t transmitter_count = _transmitters.size();
-
-			// Reserve space to avoid multiple reallocations
-			_platforms.reserve(platform_count * 2);
-			_receivers.reserve(receiver_count * 2);
-			_transmitters.reserve(transmitter_count * 2);
-
-			// Create and append new duals for platforms
-			for (size_t i = 0; i < platform_count; ++i)
+			const auto append_multipath_duals = [this](auto& collection)
 			{
-				_platforms.emplace_back(createMultipathDual(_platforms[i].get(), _multipath_surface.get()));
-			}
+				const size_t initial_size = collection.size();
+				collection.reserve(initial_size * 2);
+				for (size_t i = 0; i < initial_size; ++i)
+				{
+					collection.push_back(std::unique_ptr<typename std::decay_t<decltype(collection[i])>::element_type>(
+						createMultipathDual(collection[i].get(), _multipath_surface.get())));
+				}
+			};
 
-			// Create and append new duals for receivers
-			for (size_t i = 0; i < receiver_count; ++i)
-			{
-				_receivers.emplace_back(createMultipathDual(_receivers[i].get(), _multipath_surface.get()));
-			}
-
-			// Create and append new duals for transmitters
-			for (size_t i = 0; i < transmitter_count; ++i)
-			{
-				_transmitters.emplace_back(createMultipathDual(_transmitters[i].get(), _multipath_surface.get()));
-			}
+			append_multipath_duals(_platforms);
+			append_multipath_duals(_receivers);
+			append_multipath_duals(_transmitters);
 
 			_multipath_surface.reset();
 		}

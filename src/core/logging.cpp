@@ -9,14 +9,16 @@
 
 namespace logging
 {
-	Logger logger; // Initialize global logger
+	/**
+	 * @brief Global logger object.
+	 */
+	Logger logger;
 
-	Logger::Logger() : _log_level(Level::DEBUG) {}
-
-	Logger::~Logger() { if (_log_file.is_open()) { _log_file.close(); } }
-
-	void Logger::setLevel(const Level level) { _log_level = level; }
-
+	/**
+	 * @brief Converts a log level to its string representation.
+	 * @param level The log level.
+	 * @return The string representation of the log level.
+	 */
 	std::string Logger::getLevelString(const Level level)
 	{
 		switch (level)
@@ -31,6 +33,10 @@ namespace logging
 		}
 	}
 
+	/**
+	 * @brief Gets the current timestamp as a string.
+	 * @return The current timestamp.
+	 */
 	std::string Logger::getCurrentTimestamp()
 	{
 		const auto now = std::chrono::system_clock::now();
@@ -43,6 +49,12 @@ namespace logging
 		return oss.str();
 	}
 
+	/**
+	 * @brief Logs a message with a specific log level and source location.
+	 * @param level The log level.
+	 * @param message The message to log.
+	 * @param location The source location of the log call.
+	 */
 	void Logger::log(const Level level, const std::string& message, const std::source_location location)
 	{
 		if (level >= _log_level)
@@ -69,6 +81,10 @@ namespace logging
 		}
 	}
 
+	/**
+	 * @brief Sets the log file path to log messages to a file.
+	 * @param filePath The path to the log file.
+	 */
 	void Logger::logToFile(const std::string& filePath)
 	{
 		std::scoped_lock lock(_log_mutex);
@@ -77,6 +93,9 @@ namespace logging
 		if (!_log_file) { throw std::runtime_error("Unable to open log file: " + filePath); }
 	}
 
+	/**
+	 * @brief Stops logging to the file.
+	 */
 	void Logger::stopLoggingToFile()
 	{
 		std::scoped_lock lock(_log_mutex);

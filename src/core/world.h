@@ -7,8 +7,8 @@
 #ifndef WORLD_H
 #define WORLD_H
 
-#include <map>
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 #include "math_utils/multipath_surface.h"
@@ -42,20 +42,23 @@ namespace core
 
 		void addMultipathSurface(std::unique_ptr<math::MultipathSurface> surface);
 
-		signal::RadarSignal* findSignal(const std::string& name);
+		[[nodiscard]] signal::RadarSignal* findSignal(const std::string& name);
 
-		antenna::Antenna* findAntenna(const std::string& name);
+		[[nodiscard]] antenna::Antenna* findAntenna(const std::string& name);
 
-		timing::PrototypeTiming* findTiming(const std::string& name);
+		[[nodiscard]] timing::PrototypeTiming* findTiming(const std::string& name);
 
-		[[nodiscard]] const std::vector<std::unique_ptr<radar::Target>>& getTargets() const { return _targets; }
+		[[nodiscard]] const std::vector<std::unique_ptr<radar::Target>>& getTargets() const noexcept
+		{
+			return _targets;
+		}
 
-		[[nodiscard]] const std::vector<std::unique_ptr<radar::Receiver>>& getReceivers() const
+		[[nodiscard]] const std::vector<std::unique_ptr<radar::Receiver>>& getReceivers() const noexcept
 		{
 			return _receivers;
 		}
 
-		[[nodiscard]] const std::vector<std::unique_ptr<radar::Transmitter>>& getTransmitters() const
+		[[nodiscard]] const std::vector<std::unique_ptr<radar::Transmitter>>& getTransmitters() const noexcept
 		{
 			return _transmitters;
 		}
@@ -67,9 +70,9 @@ namespace core
 		std::vector<std::unique_ptr<radar::Transmitter>> _transmitters;
 		std::vector<std::unique_ptr<radar::Receiver>> _receivers;
 		std::vector<std::unique_ptr<radar::Target>> _targets;
-		std::map<std::string, std::unique_ptr<signal::RadarSignal>> _pulses;
-		std::map<std::string, std::unique_ptr<antenna::Antenna>> _antennas;
-		std::map<std::string, std::unique_ptr<timing::PrototypeTiming>> _timings;
+		std::unordered_map<std::string, std::unique_ptr<signal::RadarSignal>> _pulses;
+		std::unordered_map<std::string, std::unique_ptr<antenna::Antenna>> _antennas;
+		std::unordered_map<std::string, std::unique_ptr<timing::PrototypeTiming>> _timings;
 		std::unique_ptr<math::MultipathSurface> _multipath_surface;
 	};
 }

@@ -1,4 +1,4 @@
-//
+// arg_parser.cpp
 // Created by David Young on 9/20/24.
 //
 
@@ -11,26 +11,39 @@ using logging::Level;
 
 namespace core
 {
+	/**
+	 * @brief Displays the help message.
+	 *
+	 * @param programName The name of the program.
+	 */
 	void showHelp(const char* programName)
 	{
-		std::cout << "/------------------------------------------------\\" << std::endl;
-		std::cout << "| FERS - The Flexible Extensible Radar Simulator |" << std::endl;
-		std::cout << "| Version 0.28                                   |" << std::endl;
-		std::cout << "\\------------------------------------------------/" << std::endl;
-		std::cout << "Usage: " << programName << " <scriptfile> [options]" << std::endl;
-		std::cout << "\nOptions:\n";
-		std::cout << "  --help, -h              Show this help message and exit\n";
-		std::cout << "  --version, -v           Show version information and exit\n";
-		std::cout << "  --log-level=<level>     Set the logging level (TRACE, DEBUG, INFO, WARNING, ERROR, FATAL)\n";
-		std::cout << "  -n=<threads>            Number of threads to use\n";
-		std::cout << "\nArguments:\n";
-		std::cout << "  <scriptfile>            Path to the simulation script file (XML)\n";
-		std::cout << "\nExample:\n";
-		std::cout << "  " << programName << " simulation.xml --log-level=DEBUG -n=4\n";
-		std::cout << "\nThis program runs radar simulations based on an XML script file.\n";
-		std::cout << "Make sure the script file follows the correct format to avoid errors.\n";
+		std::cout << R"(/------------------------------------------------\
+| FERS - The Flexible Extensible Radar Simulator |
+| Version 0.28                                   |
+\------------------------------------------------/
+Usage: )" << programName << R"( <scriptfile> [options]
+
+Options:
+  --help, -h              Show this help message and exit
+  --version, -v           Show version information and exit
+  --log-level=<level>     Set the logging level (TRACE, DEBUG, INFO, WARNING, ERROR, FATAL)
+  -n=<threads>            Number of threads to use
+
+Arguments:
+  <scriptfile>            Path to the simulation script file (XML)
+
+Example:
+  )" << programName << R"( simulation.xml --log-level=DEBUG -n=4
+
+This program runs radar simulations based on an XML script file.
+Make sure the script file follows the correct format to avoid errors.
+)";
 	}
 
+	/**
+	 * @brief Displays the version information.
+	 */
 	void showVersion()
 	{
 		std::cout << "FERS - The Flexible Extensible Radar Simulator\n";
@@ -38,6 +51,12 @@ namespace core
 		std::cout << "Author: Marc Brooker\n";
 	}
 
+	/**
+	 * @brief Parses the logging level from a string.
+	 *
+	 * @param level The logging level as a string.
+	 * @return std::optional<Level> The corresponding logging level, or std::nullopt if invalid.
+	 */
 	std::optional<Level> parseLogLevel(const std::string& level)
 	{
 		static const std::unordered_map<std::string, Level> LEVEL_MAP = {
@@ -53,7 +72,13 @@ namespace core
 		return std::nullopt;
 	}
 
-	// Function to parse the command-line arguments
+	/**
+	 * @brief Parses command-line arguments.
+	 *
+	 * @param argc Argument count.
+	 * @param argv Argument vector.
+	 * @return std::optional<Config> Parsed configuration or std::nullopt if parsing failed.
+	 */
 	std::optional<Config> parseArguments(const int argc, char* argv[])
 	{
 		Config config;
@@ -136,24 +161,5 @@ namespace core
 		}
 
 		return config;
-	}
-
-	void setLogLevel(const Level level)
-	{
-		switch (level)
-		{
-		case Level::TRACE: logging::logger.setLevel(Level::TRACE);
-			break;
-		case Level::DEBUG: logging::logger.setLevel(Level::DEBUG);
-			break;
-		case Level::INFO: logging::logger.setLevel(Level::INFO);
-			break;
-		case Level::WARNING: logging::logger.setLevel(Level::WARNING);
-			break;
-		case Level::ERROR: logging::logger.setLevel(Level::ERROR);
-			break;
-		case Level::FATAL: logging::logger.setLevel(Level::FATAL);
-			break;
-		}
 	}
 }

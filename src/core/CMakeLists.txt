@@ -1,7 +1,6 @@
 set(SRCS
 	logging.cpp
 	main.cpp
-	parameters.cpp
 	world.cpp
 	arg_parser.cpp
 	sim_threading.cpp
