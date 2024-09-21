@@ -31,15 +31,7 @@ namespace core
 		[[nodiscard]] const char* what() const noexcept override { return "Range error in RE calculations"; }
 	};
 
-	class Thread
-	{
-	public:
-		static void decThreads();
-
-		static void setError();
-	};
-
-	class SimThread : public Thread
+	class SimThread
 	{
 	public:
 		SimThread(const radar::Transmitter* transmitter, radar::Receiver* receiver, const World* world)
@@ -53,7 +45,7 @@ namespace core
 		const World* _world;
 	};
 
-	class RenderThread : public Thread
+	class RenderThread
 	{
 	public:
 		explicit RenderThread(radar::Receiver* recv) : _recv(recv) {}

@@ -14,28 +14,58 @@
 
 namespace logging
 {
+	/**
+	 * @brief Enum class representing the log levels.
+	 */
 	enum class Level
 	{
-		TRACE,
-		DEBUG,
-		INFO,
-		WARNING,
-		ERROR,
-		FATAL
+		TRACE, ///< Trace level for detailed debugging information.
+		DEBUG, ///< Debug level for general debugging information.
+		INFO, ///< Info level for informational messages.
+		WARNING, ///< Warning level for potentially harmful situations.
+		ERROR, ///< Error level for error events.
+		FATAL ///< Fatal level for severe error events.
 	};
 
+	/**
+	 * @brief Logger class for handling logging operations.
+	 */
 	class Logger
 	{
 	public:
-		Logger();
+		/**
+		 * @brief Default constructor.
+		 */
+		Logger() = default;
 
-		~Logger();
+		/**
+		 * @brief Destructor that closes the log file if it is open.
+		 */
+		~Logger() { if (_log_file.is_open()) { _log_file.close(); } }
 
-		void setLevel(Level level);
+		/**
+		 * @brief Sets the logging level.
+		 * @param level The logging level to set.
+		 */
+		void setLevel(const Level level) { _log_level = level; }
 
+		/**
+		 * @brief Logs a message with a specific log level and source location.
+		 * @param level The log level.
+		 * @param message The message to log.
+		 * @param location The source location of the log call.
+		 */
 		void log(Level level, const std::string& message,
 		         std::source_location location = std::source_location::current());
 
+		/**
+		 * @brief Logs a formatted message with a specific log level and source location.
+		 * @tparam Args Variadic template for format arguments.
+		 * @param level The log level.
+		 * @param location The source location of the log call.
+		 * @param formatStr The format string.
+		 * @param args The format arguments.
+		 */
 		template <typename... Args>
 		void log(const Level level, const std::source_location location, const std::string& formatStr, Args&&... args)
 		{
@@ -46,22 +76,49 @@ namespace logging
 			}
 		}
 
+		/**
+		 * @brief Sets the log file path to log messages to a file.
+		 * @param filePath The path to the log file.
+		 */
 		void logToFile(const std::string& filePath);
 
+		/**
+		 * @brief Stops logging to the file.
+		 */
 		void stopLoggingToFile();
 
 	private:
-		Level _log_level;
-		std::ofstream _log_file;
-		std::mutex _log_mutex;
+		Level _log_level = Level::INFO; ///< Current log level.
+		std::ofstream _log_file; ///< Output file stream for logging to a file.
+		std::mutex _log_mutex; ///< Mutex for thread-safe logging.
 
+		/**
+		 * @brief Converts a log level to its string representation.
+		 * @param level The log level.
+		 * @return The string representation of the log level.
+		 */
 		static std::string getLevelString(Level level);
 
+		/**
+		 * @brief Gets the current timestamp as a string.
+		 * @return The current timestamp.
+		 */
 		static std::string getCurrentTimestamp();
 	};
 
-	extern Logger logger; // Externally available logger object
+	/**
+	 * @brief Externally available logger object.
+	 */
+	extern Logger logger;
 
+	/**
+	 * @brief Logs a formatted message with a specific log level and source location.
+	 * @tparam Args Variadic template for format arguments.
+	 * @param level The log level.
+	 * @param location The source location of the log call.
+	 * @param formatStr The format string.
+	 * @param args The format arguments.
+	 */
 	template <typename... Args>
 	void log(Level level, const std::source_location location, const std::string& formatStr, Args&&... args)
 	{
