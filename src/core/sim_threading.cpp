@@ -141,8 +141,9 @@ namespace
 		// Calculate gains and wavelength
 		const RealType wavelength = params::c() / wave->getCarrier();
 		const RealType transmitter_gain = trans->getGain(transvec, trans->getRotation(time.count()), wavelength);
-		const RealType receiver_gain = recv->getGain(SVec3(rpos - tpos), recv->getRotation(time.count() + results.delay),
-		                                            wavelength);
+		const RealType receiver_gain = recv->getGain(SVec3(rpos - tpos),
+		                                             recv->getRotation(time.count() + results.delay),
+		                                             wavelength);
 
 		// Power calculation
 		results.power = transmitter_gain * receiver_gain * wavelength * wavelength / (4 * pi);
@@ -268,8 +269,8 @@ namespace
 			trans->getPulse(&pulse, i);
 
 			// Simulate target interactions for each target in the world
-			std::for_each(std::execution::par, world->getTargets().begin(), world->getTargets().end(),
-			              [&](const auto& target) { simulateTarget(trans, recv, target.get(), &pulse); });
+			std::ranges::for_each(world->getTargets(),
+			                      [&](const auto& target) { simulateTarget(trans, recv, target.get(), &pulse); });
 
 			// Add direct response unless the flag FLAG_NODIRECT is set
 			if (!recv->checkFlag(flag_nodirect)) { addDirect(trans, recv, &pulse); }
