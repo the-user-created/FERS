@@ -7,7 +7,7 @@
 #define RESPONSE_H
 
 #include "config.h"
-#include "radar/radar_signal.h"
+#include "signal_processing/radar_signal.h"
 
 class TiXmlElement;
 

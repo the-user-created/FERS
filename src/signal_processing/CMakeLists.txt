@@ -1,11 +1,13 @@
 set(SRCS
-	sim_threading.cpp
-	response.cpp
+	radar_signal.cpp
+	dsp_filters.cpp
 )
 
+
 set(HEADERS
-	sim_threading.h
-	response.h
+	jones_vector.h
+	radar_signal.h
+	dsp_filters.h
 )
 
 target_sources(${PROJECT_NAME} PRIVATE ${SRCS} ${HEADERS})

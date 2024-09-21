@@ -11,7 +11,7 @@
 #include <map>
 #include <tinyxml.h>
 
-#include "hdf5_export.h"
+#include "hdf5_handler.h"
 #include "response_renderer.h"
 #include "core/parameters.h"
 #include "core/portable_utils.h"
@@ -27,7 +27,7 @@ namespace
 		{
 			std::ostringstream b_oss;
 			b_oss << std::scientific << recvName << ".h5";
-			hdf5_file = hdf5_export::createFile(b_oss.str());
+			hdf5_file = hdf5_handler::createFile(b_oss.str());
 		}
 		return hdf5_file;
 	}
@@ -238,12 +238,12 @@ namespace
 			// Export the binary format if enabled
 			if (parameters::exportBinary())
 			{
-				hdf5_export::addChunkToFile(out_bin, window, size, start, parameters::rate(), fullscale, i);
+				hdf5_handler::addChunkToFile(out_bin, window, size, start, parameters::rate(), fullscale, i);
 			}
 		}
 
 		// Close the binary file
-		if (out_bin) { hdf5_export::closeFile(out_bin); }
+		if (out_bin) { hdf5_handler::closeFile(out_bin); }
 	}
 }
 

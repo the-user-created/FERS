@@ -8,8 +8,8 @@
 #include <fstream>
 #include <memory>
 
-#include "hdf5_export.h"
-#include "radar/radar_signal.h"
+#include "hdf5_handler.h"
+#include "signal_processing/radar_signal.h"
 
 // =====================================================================================================================
 //
@@ -22,7 +22,7 @@ std::unique_ptr<rs::RadarSignal> loadPulseFromHdf5File(const std::string& name, 
 {
 	RS_FLOAT rate;
 	std::vector<RS_COMPLEX> data;
-	hdf5_export::readPulseData(filename, data, rate);
+	hdf5_handler::readPulseData(filename, data, rate);
 
 	auto signal = std::make_unique<rs::Signal>();
 	signal->load(data.data(), data.size(), rate);

@@ -13,10 +13,10 @@
 #include <tinyxml.h>
 #include <utility>
 
-#include "radar_signal.h"
 #include "core/logging.h"
 #include "core/portable_utils.h"
 #include "interpolation/interpolation_set.h"
+#include "signal_processing/radar_signal.h"
 
 using namespace rs;
 using namespace rs_antenna;

@@ -8,10 +8,10 @@
 
 #include <mutex>
 
-#include "antenna_factory.h"
 #include "config.h"
+#include "antenna/antenna_factory.h"
 #include "core/object.h"
-#include "simulation/response.h"
+#include "serialization/response.h"
 #include "timing/timing.h"
 
 namespace rs

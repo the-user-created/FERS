@@ -8,7 +8,7 @@
 #include <cmath>
 
 #include "config.h"
-#include "serialization/hdf5_export.h"
+#include "serialization/hdf5_handler.h"
 
 using namespace rs;
 

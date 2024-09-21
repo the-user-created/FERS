@@ -9,7 +9,7 @@
 #include <config.h>
 #include <memory>
 
-#include "math_utils/dsp_filters.h"
+#include "signal_processing/dsp_filters.h"
 
 namespace rs
 {
