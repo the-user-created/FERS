@@ -6,29 +6,34 @@
 #ifndef RADAR_SYSTEM_H
 #define RADAR_SYSTEM_H
 
-#include <mutex>
+#include <memory>
+#include <stdexcept>
 
 #include "config.h"
+#include "object.h"
 #include "antenna/antenna_factory.h"
-#include "core/object.h"
 #include "serialization/response.h"
-#include "timing/timing.h"
 
-namespace rs
+namespace math
+{
+	class MultipathSurface;
+}
+
+namespace timing
+{
+	class Timing;
+}
+
+namespace signal
 {
 	class RadarSignal;
-	class Response;
-	class Antenna;
-	class SVec3;
-	class Vec3;
-	class Timing;
-	class Receiver;
-	class Transmitter;
-	class MultipathSurface;
+}
 
+namespace radar
+{
 	struct TransmitterPulse
 	{
-		RadarSignal* wave;
+		signal::RadarSignal* wave;
 		RS_FLOAT time;
 	};
 
@@ -41,17 +46,18 @@ namespace rs
 
 		~Radar() override = default;
 
-		void setAntenna(const Antenna* ant)
+		void setAntenna(const antenna::Antenna* ant)
 		{
 			!ant ? throw std::logic_error("[BUG] Transmitter's antenna set to null") : _antenna = ant;
 		}
 
-		[[nodiscard]] RS_FLOAT getGain(const SVec3& angle, const SVec3& refangle, const RS_FLOAT wavelength) const
+		[[nodiscard]] RS_FLOAT getGain(const math::SVec3& angle, const math::SVec3& refangle,
+		                               const RS_FLOAT wavelength) const
 		{
 			return _antenna->getGain(angle, refangle, wavelength);
 		}
 
-		[[nodiscard]] virtual RS_FLOAT getNoiseTemperature(const SVec3& angle) const
+		[[nodiscard]] virtual RS_FLOAT getNoiseTemperature(const math::SVec3& angle) const
 		{
 			return _antenna->getNoiseTemperature(angle);
 		}
@@ -67,12 +73,12 @@ namespace rs
 
 		[[nodiscard]] bool isMonostatic() const { return _attached; }
 
-		void setTiming(const std::shared_ptr<Timing>& tim)
+		void setTiming(const std::shared_ptr<timing::Timing>& tim)
 		{
 			!tim ? throw std::runtime_error("[BUG] Radar timing source must not be set to NULL") : _timing = tim;
 		}
 
-		[[nodiscard]] std::shared_ptr<Timing> getTiming() const;
+		[[nodiscard]] std::shared_ptr<timing::Timing> getTiming() const;
 
 		[[nodiscard]] bool getMultipathDual() const { return _multipath_dual; }
 
@@ -80,15 +86,15 @@ namespace rs
 
 		[[nodiscard]] RS_FLOAT getMultipathFactor() const { return _multipath_factor; }
 
-		[[nodiscard]] const Antenna* getAntenna() const { return _antenna; }
+		[[nodiscard]] const antenna::Antenna* getAntenna() const { return _antenna; }
 
 		void setAttached(const Radar* obj) { _attached = obj; }
 
 	protected:
-		std::shared_ptr<Timing> _timing;
+		std::shared_ptr<timing::Timing> _timing;
 
 	private:
-		const Antenna* _antenna;
+		const antenna::Antenna* _antenna;
 		const Radar* _attached;
 		bool _multipath_dual;
 		RS_FLOAT _multipath_factor;
@@ -102,7 +108,7 @@ namespace rs
 
 		~Transmitter() override = default;
 
-		void setWave(RadarSignal* pulse) { _signal = pulse; }
+		void setWave(signal::RadarSignal* pulse) { _signal = pulse; }
 
 		[[nodiscard]] int getPulseCount() const;
 
@@ -120,12 +126,12 @@ namespace rs
 
 		[[nodiscard]] RS_FLOAT getPrf() const { return _prf; }
 
-		[[nodiscard]] RadarSignal* getSignal() const { return _signal; }
+		[[nodiscard]] signal::RadarSignal* getSignal() const { return _signal; }
 
-		void setSignal(RadarSignal* signal) { _signal = signal; }
+		void setSignal(signal::RadarSignal* signal) { _signal = signal; }
 
 	private:
-		RadarSignal* _signal;
+		signal::RadarSignal* _signal;
 		RS_FLOAT _prf{};
 		bool _pulsed;
 		Transmitter* _dual;
@@ -141,11 +147,11 @@ namespace rs
 
 		~Receiver() override = default;
 
-		void addResponse(std::unique_ptr<Response> response);
+		void addResponse(std::unique_ptr<serial::Response> response);
 
 		void render();
 
-		[[nodiscard]] RS_FLOAT getNoiseTemperature(const SVec3& angle) const override
+		[[nodiscard]] RS_FLOAT getNoiseTemperature(const math::SVec3& angle) const override
 		{
 			return _noise_temperature + Radar::getNoiseTemperature(angle);
 		}
@@ -182,7 +188,7 @@ namespace rs
 		void setDual(Receiver* dual) { _dual = dual; }
 
 	private:
-		std::vector<std::unique_ptr<Response>> _responses;
+		std::vector<std::unique_ptr<serial::Response>> _responses;
 		std::mutex _responses_mutex;
 		RS_FLOAT _noise_temperature;
 		RS_FLOAT _window_length{};
@@ -192,11 +198,14 @@ namespace rs
 		int _flags;
 	};
 
-	Receiver* createMultipathDual(Receiver* recv, const MultipathSurface* surf);
+	Receiver* createMultipathDual(Receiver* recv, const math::MultipathSurface* surf);
 
-	Transmitter* createMultipathDual(Transmitter* trans, const MultipathSurface* surf);
+	Transmitter* createMultipathDual(Transmitter* trans, const math::MultipathSurface* surf);
 
-	inline bool compareTimes(const std::unique_ptr<Response>& a, const std::unique_ptr<Response>& b) { return a->startTime() < b->startTime(); }
+	inline bool compareTimes(const std::unique_ptr<serial::Response>& a, const std::unique_ptr<serial::Response>& b)
+	{
+		return a->startTime() < b->startTime();
+	}
 }
 
 #endif

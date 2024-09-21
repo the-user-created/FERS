@@ -5,15 +5,17 @@
 
 #include "rotation_path.h"
 
+#include <cmath>
+
 #include "multipath_surface.h"
 #include "path_utils.h"
 
-namespace path
+namespace math
 {
 	RotationPath::RotationPath(const InterpType type):
 		_final(false), _start(0), _rate(0), _type(type) {}
 
-	void RotationPath::addCoord(const coord::RotationCoord& coord)
+	void RotationPath::addCoord(const RotationCoord& coord)
 	{
 		//Find the position to insert the coordinate, preserving sort
 		const auto iter = lower_bound(_coords.begin(), _coords.end(), coord);
@@ -24,9 +26,9 @@ namespace path
 	}
 
 	// Get the position of the path object at a specified time
-	rs::SVec3 RotationPath::getPosition(const RS_FLOAT t) const
+	SVec3 RotationPath::getPosition(const RS_FLOAT t) const
 	{
-		coord::RotationCoord coord;
+		RotationCoord coord;
 		if (!_final) { throw PathException("Finalize not called before GetPosition in Rotation"); }
 		// Call the interpolation function relevant to the type
 		switch (_type)
@@ -55,7 +57,7 @@ namespace path
 			case InterpType::INTERP_STATIC:
 			case InterpType::INTERP_LINEAR:
 			case InterpType::INTERP_CONSTANT: break;
-			case InterpType::INTERP_CUBIC: finalizeCubic<coord::RotationCoord>(_coords, _dd);
+			case InterpType::INTERP_CUBIC: finalizeCubic<RotationCoord>(_coords, _dd);
 				break;
 			}
 			_final = true;
@@ -70,7 +72,7 @@ namespace path
 	}
 
 	//Set properties for fixed rate motion
-	void RotationPath::setConstantRate(const coord::RotationCoord& setstart, const coord::RotationCoord& setrate)
+	void RotationPath::setConstantRate(const RotationCoord& setstart, const RotationCoord& setrate)
 	{
 		_start = setstart;
 		_rate = setrate;
@@ -79,7 +81,7 @@ namespace path
 	}
 
 	/// Create a new path which is a reflection of this one around the given plane
-	std::unique_ptr<RotationPath> reflectPath(const RotationPath* path, const rs::MultipathSurface* surf)
+	std::unique_ptr<RotationPath> reflectPath(const RotationPath* path, const MultipathSurface* surf)
 	{
 		//Create the new RotationPath object
 		auto dual_path = std::make_unique<RotationPath>(path->getType());
@@ -89,14 +91,14 @@ namespace path
 		//Copy the coords, reflecting them in the surface
 		for (const auto& coord : path->getCoords())
 		{
-			coord::RotationCoord rc;
+			RotationCoord rc;
 			//Time copies directly
 			rc.t = coord.t;
-			rs::SVec3 sv(1, coord.azimuth, coord.elevation);
-			rs::Vec3 v(sv);
+			SVec3 sv(1, coord.azimuth, coord.elevation);
+			Vec3 v(sv);
 			//Reflect the point in the given plane
 			v = surf->reflectPoint(v);
-			const rs::SVec3 refl(v);
+			const SVec3 refl(v);
 			rc.azimuth = refl.azimuth;
 			rc.elevation = refl.elevation;
 			dual_path->addCoord(rc);

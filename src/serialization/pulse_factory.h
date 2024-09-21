@@ -7,19 +7,18 @@
 #define PULSE_FACTORY_H
 
 #include <memory>
-#include <string>
 
 #include "config.h"
 
-namespace rs
+namespace signal
 {
-	// Forward declaration
 	class RadarSignal;
 }
 
-namespace pulse_factory
+namespace serial
 {
-	std::unique_ptr<rs::RadarSignal> loadPulseFromFile(const std::string& name, const std::string& filename, RS_FLOAT power, RS_FLOAT carrierFreq);
+	std::unique_ptr<signal::RadarSignal> loadPulseFromFile(const std::string& name, const std::string& filename,
+	                                                       RS_FLOAT power, RS_FLOAT carrierFreq);
 }
 
 #endif //PULSE_FACTORY_H

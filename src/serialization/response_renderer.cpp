@@ -7,13 +7,15 @@
 
 #include "response_renderer.h"
 
+#include <thread>
+
+#include "response.h"
 #include "core/parameters.h"
-#include "core/portable_utils.h"
-#include "radar/radar_system.h"
 
 namespace
 {
-	void addArrayToWindow(const RS_FLOAT wStart, std::vector<RS_COMPLEX>& window, const unsigned wSize, const RS_FLOAT rate,
+	void addArrayToWindow(const RS_FLOAT wStart, std::vector<RS_COMPLEX>& window, const unsigned wSize,
+	                      const RS_FLOAT rate,
 	                      const RS_FLOAT rStart, const std::vector<RS_COMPLEX>& resp, const unsigned rSize)
 	{
 		int start_sample = static_cast<int>(round(rate * (rStart - wStart)));
@@ -27,19 +29,20 @@ namespace
 	}
 }
 
-// =====================================================================================================================
-//
-// THREADED RENDERER CLASS
-//
-// =====================================================================================================================
-
-namespace response_renderer
+namespace serial
 {
-	void ThreadedResponseRenderer::renderWindow(std::vector<RS_COMPLEX>& window, const RS_FLOAT length, const RS_FLOAT start,
+	// =================================================================================================================
+	//
+	// THREADED RENDERER CLASS
+	//
+	// =================================================================================================================
+
+	void ThreadedResponseRenderer::renderWindow(std::vector<RS_COMPLEX>& window, const RS_FLOAT length,
+	                                            const RS_FLOAT start,
 	                                            const RS_FLOAT fracDelay) const
 	{
 		const RS_FLOAT end = start + length;
-		std::queue<rs::Response*> work_list;
+		std::queue<Response*> work_list;
 		for (const auto& response : _responses)
 		{
 			const RS_FLOAT resp_start = response->startTime();
@@ -57,7 +60,8 @@ namespace response_renderer
 			{
 				threads.emplace_back([&, i]
 				{
-					const RenderThread thr(i, &window_mutex, window, length, start, fracDelay, &work_list_mutex, &work_list);
+					const RenderThread thr(i, &window_mutex, window, length, start, fracDelay, &work_list_mutex,
+					                       &work_list);
 					thr();
 				});
 			}
@@ -66,18 +70,18 @@ namespace response_renderer
 		for (auto& th : threads) { if (th.joinable()) { th.join(); } }
 	}
 
-	// =====================================================================================================================
+	// =================================================================================================================
 	//
 	// RENDER THREAD CLASS
 	//
-	// =====================================================================================================================
+	// =================================================================================================================
 
 	void RenderThread::operator()() const
 	{
-		const RS_FLOAT rate = parameters::rate() * parameters::oversampleRatio();
+		const RS_FLOAT rate = params::rate() * params::oversampleRatio();
 		const auto size = static_cast<unsigned>(std::ceil(_length * rate));
 		std::vector local_window(size, RS_COMPLEX{});
-		const rs::Response* resp = getWork();
+		const Response* resp = getWork();
 		while (resp)
 		{
 			unsigned psize;
@@ -92,16 +96,17 @@ namespace response_renderer
 		}
 	}
 
-	void RenderThread::addWindow(const std::vector<RS_COMPLEX>& array, std::vector<RS_COMPLEX>& localWindow, const RS_FLOAT startTime, const unsigned arraySize) const
+	void RenderThread::addWindow(const std::vector<RS_COMPLEX>& array, std::vector<RS_COMPLEX>& localWindow,
+	                             const RS_FLOAT startTime, const unsigned arraySize) const
 	{
-		const RS_FLOAT rate = parameters::rate() * parameters::oversampleRatio();
+		const RS_FLOAT rate = params::rate() * params::oversampleRatio();
 		const auto size = static_cast<unsigned>(std::ceil(_length * rate));
 		addArrayToWindow(_start, localWindow, size, rate, startTime, array, arraySize);
 	}
 
-	rs::Response* RenderThread::getWork() const
+	Response* RenderThread::getWork() const
 	{
-		rs::Response* ret;
+		Response* ret;
 		{
 			std::lock_guard lock(*_work_list_mutex);
 			if (_work_list->empty()) { return nullptr; }

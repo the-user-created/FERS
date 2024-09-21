@@ -5,4 +5,4 @@
 #include "parameters.h"
 
 // Initialize the global parameters instance
-parameters::Parameters parameters::params;
+params::Parameters params::params;

@@ -6,15 +6,10 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
-#include <string>
+#include "platform.h"
 
-#include "config.h"
-#include "radar/platform.h"
-
-namespace rs
+namespace radar
 {
-	class Platform;
-
 	class Object
 	{
 	public:
@@ -27,9 +22,9 @@ namespace rs
 
 		Object& operator=(const Object&) = delete;
 
-		[[nodiscard]] Vec3 getPosition(const RS_FLOAT time) const { return _platform->getPosition(time); }
+		[[nodiscard]] math::Vec3 getPosition(const RS_FLOAT time) const { return _platform->getPosition(time); }
 
-		[[nodiscard]] SVec3 getRotation(const RS_FLOAT time) const { return _platform->getRotation(time); }
+		[[nodiscard]] math::SVec3 getRotation(const RS_FLOAT time) const { return _platform->getRotation(time); }
 
 		[[nodiscard]] const Platform* getPlatform() const { return _platform; }
 

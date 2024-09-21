@@ -9,15 +9,14 @@
 #include <memory>
 #include <vector>
 
+#include "config.h"
 #include "coord.h"
+#include "geometry_ops.h"
 
-namespace rs
+namespace math
 {
 	class MultipathSurface;
-}
 
-namespace path
-{
 	class RotationPath
 	{
 	public:
@@ -25,38 +24,38 @@ namespace path
 
 		explicit RotationPath(InterpType type = InterpType::INTERP_STATIC);
 
-		void addCoord(const coord::RotationCoord& coord);
+		void addCoord(const RotationCoord& coord);
 
 		void finalize();
 
-		[[nodiscard]] rs::SVec3 getPosition(RS_FLOAT t) const;
+		[[nodiscard]] SVec3 getPosition(RS_FLOAT t) const;
 
 		void setInterp(InterpType setinterp);
 
-		void setConstantRate(const coord::RotationCoord& setstart, const coord::RotationCoord& setrate);
+		void setConstantRate(const RotationCoord& setstart, const RotationCoord& setrate);
 
-		[[nodiscard]] std::vector<coord::RotationCoord> getCoords() const { return _coords; }
+		[[nodiscard]] std::vector<RotationCoord> getCoords() const { return _coords; }
 
-		[[nodiscard]] coord::RotationCoord getStart() const { return _start; }
+		[[nodiscard]] RotationCoord getStart() const { return _start; }
 
-		[[nodiscard]] coord::RotationCoord getRate() const { return _rate; }
+		[[nodiscard]] RotationCoord getRate() const { return _rate; }
 
 		[[nodiscard]] InterpType getType() const { return _type; }
 
-		void setStart(const coord::RotationCoord& start) { _start = start; }
+		void setStart(const RotationCoord& start) { _start = start; }
 
-		void setRate(const coord::RotationCoord& rate) { _rate = rate; }
+		void setRate(const RotationCoord& rate) { _rate = rate; }
 
 	private:
-		std::vector<coord::RotationCoord> _coords;
-		std::vector<coord::RotationCoord> _dd;
+		std::vector<RotationCoord> _coords;
+		std::vector<RotationCoord> _dd;
 		bool _final;
-		coord::RotationCoord _start;
-		coord::RotationCoord _rate;
+		RotationCoord _start;
+		RotationCoord _rate;
 		InterpType _type;
 	};
 
-	std::unique_ptr<RotationPath> reflectPath(const RotationPath* path, const rs::MultipathSurface* surf);
+	std::unique_ptr<RotationPath> reflectPath(const RotationPath* path, const MultipathSurface* surf);
 }
 
 #endif //ROTATION_PATH_H

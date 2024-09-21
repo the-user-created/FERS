@@ -9,34 +9,34 @@
 
 #include "core/parameters.h"
 
-namespace rs
+namespace noise
 {
-	// =====================================================================================================================
+	// =================================================================================================================
 	//
 	// GAMMA GENERATOR CLASS
 	//
-	// =====================================================================================================================
+	// =================================================================================================================
 
-	GammaGenerator::GammaGenerator(const RS_FLOAT k) : _rng(std::make_unique<std::mt19937>(parameters::randomSeed())),
+	GammaGenerator::GammaGenerator(const RS_FLOAT k) : _rng(std::make_unique<std::mt19937>(params::randomSeed())),
 	                                                   _dist(k, 1.0) {}
 
-	// =====================================================================================================================
+	// =================================================================================================================
 	//
 	// WGN GENERATOR CLASS
 	//
-	// =====================================================================================================================
+	// =================================================================================================================
 
-	WgnGenerator::WgnGenerator(const RS_FLOAT stddev) : _rng(std::make_unique<std::mt19937>(parameters::randomSeed())),
+	WgnGenerator::WgnGenerator(const RS_FLOAT stddev) : _rng(std::make_unique<std::mt19937>(params::randomSeed())),
 	                                                    _dist(0.0, stddev), _stddev(stddev) {}
 
-	WgnGenerator::WgnGenerator() : _rng(std::make_unique<std::mt19937>(parameters::randomSeed())),
+	WgnGenerator::WgnGenerator() : _rng(std::make_unique<std::mt19937>(params::randomSeed())),
 	                               _dist(0.0, 1.0), _stddev(1.0) {}
 
-	// =====================================================================================================================
+	// =================================================================================================================
 	//
 	// MULTI-RATE GENERATOR CLASS
 	//
-	// =====================================================================================================================
+	// =================================================================================================================
 
 	MultirateGenerator::MultirateGenerator(const RS_FLOAT alpha, const unsigned branches)
 	{
@@ -124,11 +124,11 @@ namespace rs
 		for (const auto& flush_branche : std::ranges::reverse_view(flush_branches)) { flush_branche->flush(1.0); }
 	}
 
-	// =====================================================================================================================
+	// =================================================================================================================
 	//
 	// CLOCK MODEL GENERATOR CLASS
 	//
-	// =====================================================================================================================
+	// =================================================================================================================
 
 
 	ClockModelGenerator::ClockModelGenerator(const std::vector<RS_FLOAT>& alpha, const std::vector<RS_FLOAT>& inWeights,
@@ -169,7 +169,7 @@ namespace rs
 		for (size_t i = 0; i < _generators.size(); ++i) { sample += _generators[i]->getSample() * _weights[i]; }
 
 		sample += _phase_offset;
-		sample += 2 * M_PI * _freq_offset * static_cast<double>(_count) / parameters::rate();
+		sample += 2 * M_PI * _freq_offset * static_cast<double>(_count) / params::rate();
 		++_count;
 
 		return sample;

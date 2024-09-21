@@ -12,7 +12,7 @@
 
 #include "config.h"
 
-namespace rs
+namespace signal
 {
 	void upsample(const RS_COMPLEX* in, unsigned size, RS_COMPLEX* out, unsigned ratio);
 
@@ -31,6 +31,7 @@ namespace rs
 
 		// Disable copy constructor and copy assignment operator
 		DspFilter(const DspFilter&) = delete;
+
 		DspFilter& operator=(const DspFilter&) = delete;
 	};
 
@@ -59,7 +60,7 @@ namespace rs
 	public:
 		// Constructor accepting a std::vector of coefficients
 		explicit FirFilter(const std::vector<RS_FLOAT>& coeffs) : _filter(coeffs), _w(coeffs.size(), 0),
-		_order(coeffs.size()) {}
+		                                                          _order(coeffs.size()) {}
 
 		~FirFilter() override = default;
 
@@ -143,6 +144,7 @@ namespace rs
 
 		// Disable copy constructor and copy assignment operator
 		DecadeUpsampler(const DecadeUpsampler&) = delete;
+
 		DecadeUpsampler& operator=(const DecadeUpsampler&) = delete;
 
 	private:

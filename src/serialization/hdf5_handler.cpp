@@ -5,23 +5,14 @@
 
 #include "hdf5_handler.h"
 
+#include <H5Gpublic.h>
+#include <H5LTpublic.h>
+#include <H5Ppublic.h>
 #include <iomanip>
-#include <memory>
-#include <sstream>
-#include <stdexcept>
-#include <string>
-#include <vector>
 
-#include "config.h"
 #include "core/parameters.h"
 
-extern "C"
-{
-#include <hdf5.h>
-#include <H5LTpublic.h>
-}
-
-namespace hdf5_handler
+namespace serial
 {
 	hid_t openFile(const std::string& name)
 	{
@@ -34,7 +25,7 @@ namespace hdf5_handler
 	void readPulseData(const std::string& name, std::vector<RS_COMPLEX>& data, RS_FLOAT& rate)
 	{
 		// Set rate from parameters
-		rate = parameters::rate();
+		rate = params::rate();
 
 		// Open the HDF5 file
 		const hid_t file = openFile(name);

@@ -14,7 +14,7 @@
 #include "config.h"
 #include "logging.h"
 
-namespace parameters
+namespace params
 {
 	enum class BinaryFileType { RS_FILE_CSV, RS_FILE_FERSBIN, RS_FILE_RAW };
 

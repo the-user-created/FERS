@@ -12,7 +12,7 @@
 
 #include "config.h"
 
-namespace portable_utils
+namespace core
 {
 	// strcasecmp is a GNU extension
 	inline int stricmp(const char* one, const char* two)

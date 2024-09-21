@@ -6,16 +6,14 @@
 #ifndef FALPHA_BRANCH_H
 #define FALPHA_BRANCH_H
 
-#include <config.h>
 #include <memory>
+#include <vector>
 
+#include "config.h"
 #include "signal_processing/dsp_filters.h"
 
-namespace rs
+namespace noise
 {
-	class DecadeUpsampler;
-	class IirFilter;
-
 	class FAlphaBranch
 	{
 	public:
@@ -43,15 +41,15 @@ namespace rs
 
 		RS_FLOAT calcSample();
 
-		std::unique_ptr<IirFilter> _shape_filter;
+		std::unique_ptr<signal::IirFilter> _shape_filter;
 		RS_FLOAT _shape_gain{};
-		std::unique_ptr<IirFilter> _integ_filter;
+		std::unique_ptr<signal::IirFilter> _integ_filter;
 		RS_FLOAT _integ_gain{};
 		RS_FLOAT _upsample_scale;
-		std::unique_ptr<IirFilter> _highpass;
+		std::unique_ptr<signal::IirFilter> _highpass;
 		std::unique_ptr<FAlphaBranch> _pre;
 		bool _last;
-		std::unique_ptr<DecadeUpsampler> _upsampler;
+		std::unique_ptr<signal::DecadeUpsampler> _upsampler;
 		std::vector<RS_FLOAT> _buffer;
 		unsigned _buffer_samples{};
 		RS_FLOAT _ffrac;

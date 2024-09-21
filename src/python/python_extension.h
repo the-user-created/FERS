@@ -11,9 +11,14 @@
 #include <string>
 
 #include "config.h"
-#include "math_utils/geometry_ops.h"
 
-namespace rs_python
+namespace math
+{
+	struct Vec3;
+	struct SVec3;
+}
+
+namespace python
 {
 	void initPython();
 
@@ -38,21 +43,17 @@ namespace rs_python
 	class PythonPath : public PythonExtension
 	{
 	public:
-		PythonPath(const std::string& module, const std::string& function) : PythonExtension(module, function)
-		{
-		}
+		PythonPath(const std::string& module, const std::string& function) : PythonExtension(module, function) {}
 
 		~PythonPath() = default;
 
-		[[nodiscard]] rs::Vec3 getPosition(RS_FLOAT t) const;
+		[[nodiscard]] math::Vec3 getPosition(RS_FLOAT t) const;
 	};
 
 	class PythonNoise : public PythonExtension
 	{
 	public:
-		PythonNoise(const std::string& module, const std::string& function) : PythonExtension(module, function)
-		{
-		}
+		PythonNoise(const std::string& module, const std::string& function) : PythonExtension(module, function) {}
 
 		~PythonNoise() = default;
 
@@ -62,13 +63,11 @@ namespace rs_python
 	class PythonAntennaMod : public PythonExtension
 	{
 	public:
-		PythonAntennaMod(const std::string& module, const std::string& function) : PythonExtension(module, function)
-		{
-		}
+		PythonAntennaMod(const std::string& module, const std::string& function) : PythonExtension(module, function) {}
 
 		~PythonAntennaMod() = default;
 
-		[[nodiscard]] RS_FLOAT getGain(const rs::SVec3& direction) const;
+		[[nodiscard]] RS_FLOAT getGain(const math::SVec3& direction) const;
 	};
 }
 

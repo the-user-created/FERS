@@ -14,10 +14,21 @@
 #include <functional>
 #include <thread>
 
-#include "core/logging.h"
-#include "core/parameters.h"
-#include "core/world.h"
+#include "parameters.h"
+#include "world.h"
+#include "math_utils/geometry_ops.h"
+#include "radar/radar_system.h"
 #include "radar/target.h"
+#include "signal_processing/radar_signal.h"
+
+using radar::Transmitter;
+using radar::Receiver;
+using radar::Target;
+using math::SVec3;
+using signal::RadarSignal;
+using radar::TransmitterPulse;
+using serial::Response;
+using logging::Level;
 
 // Counter of currently running threads
 std::atomic threads{0};
@@ -35,34 +46,31 @@ namespace
 	//
 	// =================================================================================================================
 
-	void solveRe(const rs::Transmitter* trans, const rs::Receiver* recv, const rs::Target* targ, const RS_FLOAT time,
-	             const RS_FLOAT length, const rs::RadarSignal* wave, rs::threaded_sim::ReResults& results)
+	void solveRe(const Transmitter* trans, const Receiver* recv, const Target* targ, const RS_FLOAT time,
+	             const RS_FLOAT length, const RadarSignal* wave, core::ReResults& results)
 	{
 		// Get initial positions and distance vectors
 		const auto transmitter_position = trans->getPosition(time);
 		const auto receiver_position = recv->getPosition(time);
 		const auto target_position = targ->getPosition(time);
 
-		auto transmitter_to_target_vector = rs::SVec3(target_position - transmitter_position);
-		auto receiver_to_target_vector = rs::SVec3(target_position - receiver_position);
+		auto transmitter_to_target_vector = SVec3(target_position - transmitter_position);
+		auto receiver_to_target_vector = SVec3(target_position - receiver_position);
 
 		const auto transmitter_to_target_distance = transmitter_to_target_vector.length;
 		const auto receiver_to_target_distance = receiver_to_target_vector.length;
 
 		if (transmitter_to_target_distance <= std::numeric_limits<RS_FLOAT>::epsilon() ||
-			receiver_to_target_distance <= std::numeric_limits<RS_FLOAT>::epsilon())
-		{
-			throw rs::threaded_sim::RangeError();
-		}
+			receiver_to_target_distance <= std::numeric_limits<RS_FLOAT>::epsilon()) { throw core::RangeError(); }
 
 		// Normalize distance vectors
 		transmitter_to_target_vector.length = 1;
 		receiver_to_target_vector.length = 1;
 
-		results.delay = (transmitter_to_target_distance + receiver_to_target_distance) / parameters::c();
+		results.delay = (transmitter_to_target_distance + receiver_to_target_distance) / params::c();
 
 		const auto rcs = targ->getRcs(transmitter_to_target_vector, receiver_to_target_vector);
-		const auto wavelength = parameters::c() / wave->getCarrier();
+		const auto wavelength = params::c() / wave->getCarrier();
 
 		const auto transmitter_gain = trans->
 			getGain(transmitter_to_target_vector, trans->getRotation(time), wavelength);
@@ -72,7 +80,7 @@ namespace
 		results.power = transmitter_gain * receiver_gain * rcs / (4 * M_PI);
 
 		// Propagation loss calculation
-		if (!recv->checkFlag(rs::Receiver::RecvFlag::FLAG_NOPROPLOSS))
+		if (!recv->checkFlag(Receiver::RecvFlag::FLAG_NOPROPLOSS))
 		{
 			const RS_FLOAT distance_product = transmitter_to_target_distance * receiver_to_target_distance;
 			results.power *= wavelength * wavelength / (pow(4 * M_PI, 2) * distance_product * distance_product);
@@ -85,8 +93,8 @@ namespace
 		results.phase = -results.delay * 2 * M_PI * wave->getCarrier();
 
 		// End position and Doppler calculation
-		const auto transvec_end = rs::SVec3(targ->getPosition(time + length) - trans->getPosition(time + length));
-		const auto recvvec_end = rs::SVec3(targ->getPosition(time + length) - recv->getPosition(time + length));
+		const auto transvec_end = SVec3(targ->getPosition(time + length) - trans->getPosition(time + length));
+		const auto recvvec_end = SVec3(targ->getPosition(time + length) - recv->getPosition(time + length));
 
 		const RS_FLOAT rt_end = transvec_end.length;
 		const RS_FLOAT rr_end = recvvec_end.length;
@@ -99,43 +107,40 @@ namespace
 		const RS_FLOAT v_r = (rr_end - receiver_to_target_distance) / length;
 		const RS_FLOAT v_t = (rt_end - transmitter_to_target_distance) / length;
 
-		results.doppler = std::sqrt((1 + v_r / parameters::c()) / (1 - v_r / parameters::c())) *
-			std::sqrt((1 + v_t / parameters::c()) / (1 - v_t / parameters::c()));
+		results.doppler = std::sqrt((1 + v_r / params::c()) / (1 - v_r / params::c())) *
+			std::sqrt((1 + v_t / params::c()) / (1 - v_t / params::c()));
 
 		// Set noise temperature
 		results.noise_temperature = recv->getNoiseTemperature(recv->getRotation(time + results.delay));
 	}
 
-	void solveReDirect(const rs::Transmitter* trans, const rs::Receiver* recv, const RS_FLOAT time,
-	                   const RS_FLOAT length, const rs::RadarSignal* wave, rs::threaded_sim::ReResults& results)
+	void solveReDirect(const Transmitter* trans, const Receiver* recv, const RS_FLOAT time,
+	                   const RS_FLOAT length, const RadarSignal* wave, core::ReResults& results)
 	{
 		const auto tpos = trans->getPosition(time);
 		const auto rpos = recv->getPosition(time);
 
-		const auto transvec = rs::SVec3(tpos - rpos);
+		const auto transvec = SVec3(tpos - rpos);
 		const RS_FLOAT distance = transvec.length;
 
-		if (distance <= std::numeric_limits<RS_FLOAT>::epsilon()) { throw rs::threaded_sim::RangeError(); }
+		if (distance <= std::numeric_limits<RS_FLOAT>::epsilon()) { throw core::RangeError(); }
 
-		results.delay = distance / parameters::c();
+		results.delay = distance / params::c();
 
-		const RS_FLOAT wavelength = parameters::c() / wave->getCarrier();
+		const RS_FLOAT wavelength = params::c() / wave->getCarrier();
 		const RS_FLOAT transmitter_gain = trans->getGain(transvec, trans->getRotation(time), wavelength);
-		const RS_FLOAT receiver_gain = recv->getGain(rs::SVec3(rpos - tpos), recv->getRotation(time + results.delay),
+		const RS_FLOAT receiver_gain = recv->getGain(SVec3(rpos - tpos), recv->getRotation(time + results.delay),
 		                                             wavelength);
 
 		results.power = transmitter_gain * receiver_gain * wavelength * wavelength / (4 * M_PI);
 
-		if (!recv->checkFlag(rs::Receiver::RecvFlag::FLAG_NOPROPLOSS))
-		{
-			results.power /= 4 * M_PI * distance * distance;
-		}
+		if (!recv->checkFlag(Receiver::RecvFlag::FLAG_NOPROPLOSS)) { results.power /= 4 * M_PI * distance * distance; }
 
 		// Doppler shift calculation
 		const auto trpos_end = trans->getPosition(time + length) - recv->getPosition(time + length);
 		const RS_FLOAT r_end = trpos_end.length();
 		const RS_FLOAT doppler_shift = (r_end - distance) / length;
-		results.doppler = (parameters::c() + doppler_shift) / (parameters::c() - doppler_shift);
+		results.doppler = (params::c() + doppler_shift) / (params::c() - doppler_shift);
 
 		// Multipath conditions
 		if (trans->getMultipathDual() || recv->getMultipathDual()) { results.power = 0; }
@@ -144,18 +149,18 @@ namespace
 		results.noise_temperature = recv->getNoiseTemperature(recv->getRotation(time + results.delay));
 	}
 
-	void addDirect(const rs::Transmitter* trans, rs::Receiver* recv, const rs::TransmitterPulse* signal)
+	void addDirect(const Transmitter* trans, Receiver* recv, const TransmitterPulse* signal)
 	{
 		// Exit early if monostatic and the transmitter is attached to the receiver
 		if (trans->isMonostatic() && trans->getAttached() == recv) { return; }
 
 		const RS_FLOAT start_time = signal->time;
 		const RS_FLOAT end_time = start_time + signal->wave->getLength();
-		const RS_FLOAT sample_time = 1.0 / parameters::cwSampleRate();
+		const RS_FLOAT sample_time = 1.0 / params::cwSampleRate();
 		const int point_count = static_cast<int>(std::ceil(signal->wave->getLength() / sample_time));
 
 		// Create a response object for this signal
-		auto response = std::make_unique<rs::Response>(signal->wave, trans);
+		auto response = std::make_unique<Response>(signal->wave, trans);
 
 		try
 		{
@@ -165,16 +170,16 @@ namespace
 				const RS_FLOAT current_time = i < point_count ? start_time + i * sample_time : end_time;
 
 				// Compute simulation results
-				rs::threaded_sim::ReResults results{};
+				core::ReResults results{};
 				solveReDirect(trans, recv, current_time, sample_time, signal->wave, results);
 
 				// Add interpolation point
-				rs::InterpPoint point(results.power, results.delay + current_time, results.delay, results.doppler,
-				                      results.phase, results.noise_temperature);
+				interp::InterpPoint point(results.power, results.delay + current_time, results.delay, results.doppler,
+				                          results.phase, results.noise_temperature);
 				response->addInterpPoint(point);
 			}
 		}
-		catch (rs::threaded_sim::RangeError&)
+		catch (core::RangeError&)
 		{
 			throw std::runtime_error("Receiver or Transmitter too close to Target for accurate simulation");
 		}
@@ -183,15 +188,15 @@ namespace
 		recv->addResponse(std::move(response));
 	}
 
-	void simulateTarget(const rs::Transmitter* trans, rs::Receiver* recv, const rs::Target* targ,
-	                    const rs::TransmitterPulse* signal)
+	void simulateTarget(const Transmitter* trans, Receiver* recv, const Target* targ,
+	                    const TransmitterPulse* signal)
 	{
 		const RS_FLOAT start_time = signal->time;
 		const RS_FLOAT end_time = start_time + signal->wave->getLength();
-		const RS_FLOAT sample_time = 1.0 / parameters::cwSampleRate();
+		const RS_FLOAT sample_time = 1.0 / params::cwSampleRate();
 		const int point_count = static_cast<int>(std::ceil(signal->wave->getLength() / sample_time));
 
-		auto response = std::make_unique<rs::Response>(signal->wave, trans);
+		auto response = std::make_unique<Response>(signal->wave, trans);
 
 		try
 		{
@@ -201,16 +206,16 @@ namespace
 				const RS_FLOAT current_time = i < point_count ? start_time + i * sample_time : end_time;
 
 				// Simulate the results for each time step
-				rs::threaded_sim::ReResults results{};
+				core::ReResults results{};
 				solveRe(trans, recv, targ, current_time, sample_time, signal->wave, results);
 
 				// Add interpolation point to the response
-				rs::InterpPoint point(results.power, current_time + results.delay, results.delay, results.doppler,
-				                      results.phase, results.noise_temperature);
+				interp::InterpPoint point(results.power, current_time + results.delay, results.delay, results.doppler,
+				                          results.phase, results.noise_temperature);
 				response->addInterpPoint(point);
 			}
 		}
-		catch (rs::threaded_sim::RangeError&)
+		catch (core::RangeError&)
 		{
 			throw std::runtime_error("Receiver or Transmitter too close to Target for accurate simulation");
 		}
@@ -219,15 +224,15 @@ namespace
 		recv->addResponse(std::move(response));
 	}
 
-	void simulatePair(const rs::Transmitter* trans, rs::Receiver* recv, const rs::World* world)
+	void simulatePair(const Transmitter* trans, Receiver* recv, const core::World* world)
 	{
 		const int pulses = trans->getPulseCount();
-		const auto pulse = std::make_unique<rs::TransmitterPulse>();
+		const auto pulse = std::make_unique<TransmitterPulse>();
 		for (int i = 0; i < pulses; i++)
 		{
 			trans->getPulse(pulse.get(), i);
 			for (const auto& target : world->getTargets()) { simulateTarget(trans, recv, target.get(), pulse.get()); }
-			if (!recv->checkFlag(rs::Receiver::RecvFlag::FLAG_NODIRECT)) { addDirect(trans, recv, pulse.get()); }
+			if (!recv->checkFlag(Receiver::RecvFlag::FLAG_NODIRECT)) { addDirect(trans, recv, pulse.get()); }
 		}
 	}
 
@@ -268,8 +273,8 @@ namespace
 	}
 
 	// Helper function to run simulation for receiver-transmitter pairs
-	void runSimForReceiverTransmitterPairs(const unsigned threadLimit, const rs::World* world,
-	                                       const std::vector<std::unique_ptr<rs::Receiver>>& receivers,
+	void runSimForReceiverTransmitterPairs(const unsigned threadLimit, const core::World* world,
+	                                       const std::vector<std::unique_ptr<Receiver>>& receivers,
 	                                       std::vector<std::unique_ptr<std::thread>>& running)
 	{
 		const auto& transmitters = world->getTransmitters();
@@ -280,7 +285,7 @@ namespace
 				startSimThread(threadLimit, running, [&]
 				{
 					return std::make_unique<std::thread>(
-						rs::threaded_sim::SimThread(transmitter.get(), receiver.get(), world));
+						core::SimThread(transmitter.get(), receiver.get(), world));
 				});
 			}
 		}
@@ -288,31 +293,31 @@ namespace
 	}
 
 	// Helper function to finalize receiver responses and log
-	void finalizeReceiverResponses(const std::vector<std::unique_ptr<rs::Receiver>>& receivers)
+	void finalizeReceiverResponses(const std::vector<std::unique_ptr<Receiver>>& receivers)
 	{
 		for (const auto& receiver : receivers)
 		{
-			LOG(logging::Level::DEBUG, "{} responses added to receiver '{}'",
+			LOG(Level::DEBUG, "{} responses added to receiver '{}'",
 			    receiver->countResponses(), receiver->getName().c_str());
 		}
 	}
 
 	// Helper function to run rendering threads for receivers
-	void runRenderThreads(const unsigned threadLimit, const std::vector<std::unique_ptr<rs::Receiver>>& receivers,
+	void runRenderThreads(const unsigned threadLimit, const std::vector<std::unique_ptr<Receiver>>& receivers,
 	                      std::vector<std::unique_ptr<std::thread>>& running)
 	{
 		for (const auto& receiver : receivers)
 		{
 			startSimThread(threadLimit, running, [&]
 			{
-				return std::make_unique<std::thread>(rs::threaded_sim::RenderThread(receiver.get()));
+				return std::make_unique<std::thread>(core::RenderThread(receiver.get()));
 			});
 		}
 		waitForThreadsToFinish(running);
 	}
 }
 
-namespace rs::threaded_sim
+namespace core
 {
 	// =================================================================================================================
 	//
@@ -340,13 +345,13 @@ namespace rs::threaded_sim
 
 	void SimThread::operator()() const
 	{
-		LOG(logging::Level::DEBUG,
+		LOG(Level::DEBUG,
 		    "Created simulator thread for transmitter '{}' and receiver '{}'",
 		    _trans->getName().c_str(), _recv->getName().c_str());
 		try { simulatePair(_trans, _recv, _world); }
 		catch (std::exception& ex)
 		{
-			LOG(logging::Level::ERROR,
+			LOG(Level::ERROR,
 			    "First pass thread terminated with unexpected error:\t{}\nSimulator will terminate",
 			    ex.what());
 			setError();
@@ -362,12 +367,12 @@ namespace rs::threaded_sim
 
 	void RenderThread::operator()() const
 	{
-		LOG(logging::Level::DEBUG, "Created render thread for receiver '{}'",
+		LOG(Level::DEBUG, "Created render thread for receiver '{}'",
 		    _recv->getName().c_str());
 		try { _recv->render(); }
 		catch (std::exception& ex)
 		{
-			LOG(logging::Level::INFO,
+			LOG(Level::INFO,
 			    "Render thread terminated with unexpected error:\t{}Simulator will terminate",
 			    ex.what());
 			setError();
@@ -384,7 +389,7 @@ namespace rs::threaded_sim
 	void runThreadedSim(const unsigned threadLimit, const World* world)
 	{
 		std::vector<std::unique_ptr<std::thread>> running;
-		LOG(logging::Level::INFO, "Using threaded simulation with {} threads.", threadLimit);
+		LOG(Level::INFO, "Using threaded simulation with {} threads.", threadLimit);
 
 		// Get receivers from the world
 		const auto& receivers = world->getReceivers();

@@ -5,13 +5,12 @@
 #ifndef LOGGING_H
 #define LOGGING_H
 
+#define LOG(level, ...) log(level, std::source_location::current(), __VA_ARGS__)
+
 #include <format>
 #include <fstream>
 #include <mutex>
 #include <source_location>
-#include <string>
-
-#define LOG(level, ...) logging::log(level, std::source_location::current(), __VA_ARGS__)
 
 namespace logging
 {

@@ -6,14 +6,14 @@
 #ifndef PROTOTYPE_TIMING_H
 #define PROTOTYPE_TIMING_H
 
-#include <config.h>
 #include <optional>
 #include <string>
 #include <vector>
 
+#include "config.h"
 #include "noise/noise_utils.h"
 
-namespace rs
+namespace timing
 {
 	class PrototypeTiming
 	{
@@ -26,12 +26,12 @@ namespace rs
 
 		[[nodiscard]] RS_FLOAT getPhaseOffset() const
 		{
-			return _random_phase.has_value() ? noise_utils::wgnSample(*_random_phase) : _phase_offset.value_or(0);
+			return _random_phase.has_value() ? noise::wgnSample(*_random_phase) : _phase_offset.value_or(0);
 		}
 
 		[[nodiscard]] RS_FLOAT getFreqOffset() const
 		{
-			return _random_freq.has_value() ? noise_utils::wgnSample(*_random_freq) : _freq_offset.value_or(0);
+			return _random_freq.has_value() ? noise::wgnSample(*_random_freq) : _freq_offset.value_or(0);
 		}
 
 		[[nodiscard]] RS_FLOAT getFrequency() const { return _frequency; }

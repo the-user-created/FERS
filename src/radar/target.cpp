@@ -7,19 +7,15 @@
 
 #include "target.h"
 
-#include <cmath>
 #include <tinyxml.h>
 
-#include "interpolation/interpolation_set.h"
-#include "noise/noise_generators.h"
-
-using namespace rs;
+using math::SVec3;
 
 RS_FLOAT getNodeFloat(const TiXmlHandle& node);
 
 namespace
 {
-	void loadTargetGainAxis(const InterpSet* set, const TiXmlHandle& axisXml)
+	void loadTargetGainAxis(const interp::InterpSet* set, const TiXmlHandle& axisXml)
 	{
 		TiXmlHandle tmp = axisXml.ChildElement("rcssample", 0);
 		for (int i = 0; tmp.Element() != nullptr; i++)
@@ -32,38 +28,38 @@ namespace
 	}
 }
 
-// =====================================================================================================================
-//
-// FILE TARGET CLASS
-//
-// =====================================================================================================================
-
-RS_FLOAT FileTarget::getRcs(SVec3& inAngle, SVec3& outAngle) const
+namespace radar
 {
-	const SVec3 t_angle = inAngle + outAngle;
-	const RS_FLOAT rcs = std::sqrt(
-		_azi_samples->getValueAt(t_angle.azimuth / 2.0) * _elev_samples->getValueAt(t_angle.elevation / 2.0));
-	return _model ? rcs * _model->sampleModel() : rcs;
-}
+	// =================================================================================================================
+	//
+	// FILE TARGET CLASS
+	//
+	// =================================================================================================================
 
-void FileTarget::loadRcsDescription(const std::string& filename) const
-{
-	TiXmlDocument doc(filename.c_str());
-	if (!doc.LoadFile())
+	RS_FLOAT FileTarget::getRcs(SVec3& inAngle, SVec3& outAngle) const
 	{
-		throw std::runtime_error("Could not load target description from " + filename);
+		const SVec3 t_angle = inAngle + outAngle;
+		const RS_FLOAT rcs = std::sqrt(
+			_azi_samples->getValueAt(t_angle.azimuth / 2.0) * _elev_samples->getValueAt(t_angle.elevation / 2.0));
+		return _model ? rcs * _model->sampleModel() : rcs;
 	}
-	const TiXmlHandle root(doc.RootElement());
-	TiXmlHandle tmp = root.ChildElement("elevation", 0);
-	if (!tmp.Element())
+
+	void FileTarget::loadRcsDescription(const std::string& filename) const
 	{
-		throw std::runtime_error("Malformed XML in target description: No elevation pattern definition");
+		TiXmlDocument doc(filename.c_str());
+		if (!doc.LoadFile()) { throw std::runtime_error("Could not load target description from " + filename); }
+		const TiXmlHandle root(doc.RootElement());
+		TiXmlHandle tmp = root.ChildElement("elevation", 0);
+		if (!tmp.Element())
+		{
+			throw std::runtime_error("Malformed XML in target description: No elevation pattern definition");
+		}
+		loadTargetGainAxis(_elev_samples.get(), tmp);
+		tmp = root.ChildElement("azimuth", 0);
+		if (!tmp.Element())
+		{
+			throw std::runtime_error("Malformed XML in target description: No azimuth pattern definition");
+		}
+		loadTargetGainAxis(_azi_samples.get(), tmp);
 	}
-	loadTargetGainAxis(_elev_samples.get(), tmp);
-	tmp = root.ChildElement("azimuth", 0);
-	if (!tmp.Element())
-	{
-		throw std::runtime_error("Malformed XML in target description: No azimuth pattern definition");
-	}
-	loadTargetGainAxis(_azi_samples.get(), tmp);
 }

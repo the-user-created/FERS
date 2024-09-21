@@ -10,7 +10,7 @@
 
 #include "config.h"
 
-namespace rs
+namespace math
 {
 	class PsMatrix
 	{

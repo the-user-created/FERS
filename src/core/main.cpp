@@ -3,19 +3,20 @@
 // Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 // Started: 25 April 2006
 
-#include <iostream>
+#include <memory>
 
 #include "arg_parser.h"
-#include "logging.h"
 #include "parameters.h"
 #include "sim_threading.h"
-#include "noise/noise_generators.h"
+#include "world.h"
 #include "noise/noise_utils.h"
 #include "serialization/xmlimport.h"
 
+using logging::Level;
+
 int main(const int argc, char* argv[])
 {
-	const auto config_opt = arg_parser::parseArguments(argc, argv);
+	const auto config_opt = core::parseArguments(argc, argv);
 	if (!config_opt)
 	{
 		return 1; // Invalid arguments or help/version shown
@@ -28,25 +29,25 @@ int main(const int argc, char* argv[])
 
 	try
 	{
-		parameters::setThreads(num_threads);
-		const auto world = std::make_unique<rs::World>();
-		noise_utils::initializeNoise();
+		params::setThreads(num_threads);
+		const auto world = std::make_unique<core::World>();
+		noise::initializeNoise();
 
-		xml::loadXmlFile(script_file, world.get());
+		serial::loadXmlFile(script_file, world.get());
 
-		rs::threaded_sim::runThreadedSim(parameters::renderThreads(), world.get());
+		runThreadedSim(params::renderThreads(), world.get());
 
-		LOG(logging::Level::INFO, "Cleaning up");
+		LOG(Level::INFO, "Cleaning up");
 
-		noise_utils::cleanUpNoise();
+		noise::cleanUpNoise();
 
-		LOG(logging::Level::INFO, "Simulation completed successfully!");
+		LOG(Level::INFO, "Simulation completed successfully!");
 
 		return 0;
 	}
 	catch (std::exception& ex)
 	{
-		LOG(logging::Level::FATAL, "Simulation encountered unexpected error:\t{}\nSimulator will terminate.",
+		LOG(Level::FATAL, "Simulation encountered unexpected error:\t{}\nSimulator will terminate.",
 		    ex.what());
 		return 1;
 	}

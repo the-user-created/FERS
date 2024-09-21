@@ -12,7 +12,7 @@
 
 #include "config.h"
 
-namespace rs
+namespace interp
 {
 	class InterpSetData
 	{

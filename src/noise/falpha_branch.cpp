@@ -5,24 +5,28 @@
 
 #include "falpha_branch.h"
 
-#include <array>
 #include <cmath>
 
 #include "noise_utils.h"
 #include "core/logging.h"
+#include "signal_processing/dsp_filters.h"
 
-// =====================================================================================================================
-//
-// FALPHA BRANCH CLASS
-//
-// =====================================================================================================================
+using logging::Level;
+using signal::IirFilter;
+using signal::DecadeUpsampler;
 
-namespace rs
+namespace noise
 {
+	// =================================================================================================================
+	//
+	// FALPHA BRANCH CLASS
+	//
+	// =================================================================================================================
+
 	FAlphaBranch::FAlphaBranch(const RS_FLOAT ffrac, const unsigned fint, std::unique_ptr<FAlphaBranch> pre,
 	                           const bool last) : _pre(std::move(pre)), _last(last), _ffrac(ffrac), _fint(fint)
 	{
-		LOG(logging::Level::DEBUG, "Making branch ffrac={} fint={}", ffrac, fint);
+		LOG(Level::DEBUG, "Making branch ffrac={} fint={}", ffrac, fint);
 		_upsample_scale = std::pow(10, ffrac + fint + 0.5);
 		init();
 		_buffer = std::vector<RS_FLOAT>(10);
@@ -67,7 +71,7 @@ namespace rs
 		}
 		else if (_ffrac != 0.0f)
 		{
-			LOG(logging::Level::INFO, "Value of ffrac is {}", _ffrac);
+			LOG(Level::INFO, "Value of ffrac is {}", _ffrac);
 			throw std::runtime_error("Fractional integrator values other than 0.5 are not supported");
 		}
 
@@ -120,7 +124,7 @@ namespace rs
 
 	RS_FLOAT FAlphaBranch::calcSample() // NOLINT(misc-no-recursion)
 	{
-		RS_FLOAT sample = noise_utils::wgnSample(1);
+		RS_FLOAT sample = wgnSample(1);
 
 		if (_shape_filter) { sample = _shape_filter->filter(sample) / _shape_gain; }
 

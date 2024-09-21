@@ -7,7 +7,7 @@
 
 #include "config.h"
 
-namespace noise_utils
+namespace noise
 {
 	void initializeNoise();
 
