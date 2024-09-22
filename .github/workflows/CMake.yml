@@ -15,36 +15,40 @@ jobs:
 
       - name: Set up environment  # Update package lists and install required packages
         run: |
-          add-apt-repository ppa:deadsnakes/ppa
           apt-get update && apt-get install -y \
           libhdf5-dev \
           libhdf5-serial-dev \
           build-essential \
           cmake \
           cmake-qt-gui \
-          python3.11-dev \
-          python3-pip \
-          python3.11-venv \
           libtinyxml-dev \
           libxerces-c-dev
+
+      - name: Set up Python  # Install Python 3.11, pip, and venv
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+          cache: 'pip'
+
+      - name: Install dependencies  # Install dependencies using pip
+        run: |
+          pip install -r requirements.txt
 
       - name: Generate and Build FERS
         run: |
           mkdir -p build
           cd build
           cmake -S .. -B . \
+            -D Python_EXECUTABLE=/usr/bin/python3.11 \
             -D CMAKE_BUILD_TYPE=Release \
             -D FERS_LIB_HDF5="/usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5.so" \
             -D FERS_LIB_HDF5_HL="/usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5_hl.so" \
             -D CMAKE_CXX_FLAGS="-I/usr/include/hdf5/serial/"
           make -j$(nproc)
 
-      - name: Run tests # Create a virtual environment, install dependencies, and run tests
+      - name: Run tests # Run the simulation tests
         run: |
           set -e
-          python3 -m venv venv
-          . venv/bin/activate
-          pip install -r requirements.txt
           python3 run_sim_tests.py
           echo "Exit code: $?"
 
