@@ -11,7 +11,6 @@
 #include <vector>
 
 #include "config.h"
-#include "noise/noise_utils.h"
 
 namespace timing
 {
@@ -20,21 +19,17 @@ namespace timing
 	public:
 		explicit PrototypeTiming(std::string name) : _name(std::move(name)) {}
 
-		[[nodiscard]] RealType getPhaseOffset() const noexcept
-		{
-			return _random_phase ? noise::wgnSample(*_random_phase) : _phase_offset.value_or(0);
-		}
-
-		[[nodiscard]] RealType getFreqOffset() const noexcept
-		{
-			return _random_freq ? noise::wgnSample(*_random_freq) : _freq_offset.value_or(0);
-		}
+		~PrototypeTiming() = default;
 
 		void copyAlphas(std::vector<RealType>& alphas, std::vector<RealType>& weights) const;
 
 		[[nodiscard]] RealType getFrequency() const noexcept { return _frequency; }
 		[[nodiscard]] std::string getName() const { return _name; }
 		[[nodiscard]] bool getSyncOnPulse() const noexcept { return _sync_on_pulse; }
+
+		[[nodiscard]] RealType getPhaseOffset() const noexcept;
+
+		[[nodiscard]] RealType getFreqOffset() const noexcept;
 
 		void setFrequency(const RealType freq) noexcept { _frequency = freq; }
 		void setSyncOnPulse() noexcept { _sync_on_pulse = true; }

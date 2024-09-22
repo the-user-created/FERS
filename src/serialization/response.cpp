@@ -49,36 +49,32 @@ namespace serial
 
 	void Response::renderResponseXml(TiXmlElement* root, const InterpPoint& point) const
 	{
-		auto element = std::make_unique<TiXmlElement>("InterpolationPoint");
-		root->LinkEndChild(element.get());
+		auto* element = new TiXmlElement("InterpolationPoint");
+		root->LinkEndChild(element);
 
-		attachRsFloatNode(element.get(), "time", point.time, false);
-		attachRsFloatNode(element.get(), "amplitude", std::sqrt(point.power * _wave->getPower()), false);
-		attachRsFloatNode(element.get(), "phase", point.phase, false);
-		attachRsFloatNode(element.get(), "doppler", _wave->getCarrier() * (1 - point.doppler), false);
-		attachRsFloatNode(element.get(), "power", point.power * _wave->getPower());
-		attachRsFloatNode(element.get(), "Iamplitude",
-		                  std::cos(point.phase) * std::sqrt(point.power * _wave->getPower()));
-		attachRsFloatNode(element.get(), "Qamplitude",
-		                  std::sin(point.phase) * std::sqrt(point.power * _wave->getPower()));
-		attachRsFloatNode(element.get(), "noise_temperature", point.noise_temperature);
-		attachRsFloatNode(element.get(), "phasedeg", point.phase / PI * 180);
-
-		element.release(); // TODO: this is a bad practice
+		attachRsFloatNode(element, "time", point.time, false);
+		attachRsFloatNode(element, "amplitude", std::sqrt(point.power * _wave->getPower()), false);
+		attachRsFloatNode(element, "phase", point.phase, false);
+		attachRsFloatNode(element, "doppler", _wave->getCarrier() * (1 - point.doppler), false);
+		attachRsFloatNode(element, "power", point.power * _wave->getPower());
+		attachRsFloatNode(element, "Iamplitude",
+						  std::cos(point.phase) * std::sqrt(point.power * _wave->getPower()));
+		attachRsFloatNode(element, "Qamplitude",
+						  std::sin(point.phase) * std::sqrt(point.power * _wave->getPower()));
+		attachRsFloatNode(element, "noise_temperature", point.noise_temperature);
+		attachRsFloatNode(element, "phasedeg", point.phase / PI * 180);
 	}
 
 	void Response::renderXml(TiXmlElement* root)
 	{
-		auto element = std::make_unique<TiXmlElement>("Response");
-		root->LinkEndChild(element.get());
+		auto* element = new TiXmlElement("Response");
+		root->LinkEndChild(element);
 
 		element->SetAttribute("transmitter", getTransmitterName());
-		attachRsFloatNode(element.get(), "start", startTime(), false);
-		attachTextNode(element.get(), "name", _wave->getName());
+		attachRsFloatNode(element, "start", startTime(), false);
+		attachTextNode(element, "name", _wave->getName());
 
-		for (const auto& point : _points) { renderResponseXml(element.get(), point); }
-
-		element.release(); // TODO: this is a bad practice
+		for (const auto& point : _points) { renderResponseXml(element, point); }
 	}
 
 	void Response::renderResponseCsv(std::ofstream& of, const InterpPoint& point) const

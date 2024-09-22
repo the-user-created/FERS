@@ -30,21 +30,14 @@ namespace timing
 
 		Timing& operator=(const Timing&) = delete;
 
-		[[nodiscard]] RealType getPulseTimeError() const noexcept
-		{
-			return _enabled && _model ? _model->getSample() : 0.0f;
-		}
-
 		[[nodiscard]] RealType getNextSample() const noexcept { return _enabled ? _model->getSample() : 0.0f; }
 		[[nodiscard]] std::string getName() const noexcept { return _name; }
 		[[nodiscard]] bool getSyncOnPulse() const noexcept { return _sync_on_pulse; }
 		[[nodiscard]] RealType getFrequency() const noexcept { return _frequency; }
 		[[nodiscard]] bool isEnabled() const noexcept { return _enabled && _model && _model->enabled(); }
 
-		void skipSamples(const long long samples) const noexcept
-		{
-			if (_enabled && _model) { _model->skipSamples(samples); }
-		}
+		[[nodiscard]] RealType getPulseTimeError() const noexcept;
+		void skipSamples(long long samples) const noexcept;
 
 		void initializeModel(const PrototypeTiming* timing);
 

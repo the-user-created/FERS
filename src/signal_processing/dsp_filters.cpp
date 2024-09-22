@@ -214,8 +214,8 @@ namespace signal
 	//
 	// =================================================================================================================
 
-	// TODO: can extract common code between these two filter methods
-	RealType ArFilter::filter(const RealType sample)
+	// Private helper method to apply the filter logic
+	RealType ArFilter::applyFilter(const RealType sample)
 	{
 		// Manually shift the delay line (_w) right by one position
 		for (unsigned j = _order - 1; j > 0; --j) { _w[j] = _w[j - 1]; }
@@ -227,18 +227,16 @@ namespace signal
 		return _w[0];
 	}
 
+	RealType ArFilter::filter(const RealType sample)
+	{
+		return applyFilter(sample);
+	}
+
 	void ArFilter::filter(std::span<RealType> samples)
 	{
 		for (auto& sample : samples)
 		{
-			// Manually shift the delay line (_w) right by one position
-			for (unsigned j = _order - 1; j > 0; --j) { _w[j] = _w[j - 1]; }
-			_w[0] = sample;
-
-			// Apply the filter using the coefficients
-			for (unsigned j = 1; j < _order; ++j) { _w[0] -= _filter[j] * _w[j]; }
-
-			sample = _w[0]; // Store the result back in the sample array
+			sample = applyFilter(sample); // Use the helper method
 		}
 	}
 

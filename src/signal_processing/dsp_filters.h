@@ -96,6 +96,8 @@ namespace signal
 		std::vector<RealType> _w; // Internal state
 		std::vector<RealType> _filter; // Coefficients
 		unsigned _order{};
+
+		RealType applyFilter(RealType sample);
 	};
 
 	class Upsampler

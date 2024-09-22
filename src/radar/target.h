@@ -56,34 +56,31 @@ namespace radar
 	class Target : public Object
 	{
 	public:
-		Target(Platform* platform, std::string name) : Object(platform, std::move(name)), _model(nullptr) {}
+		Target(Platform* platform, std::string name) : Object(platform, std::move(name)) {}
 
 		~Target() override = default;
 
 		virtual RealType getRcs(math::SVec3& inAngle, math::SVec3& outAngle) const = 0;
 
 		[[nodiscard]] virtual math::PsMatrix getPolarization() const { return _psm; }
-		virtual void setPolarization(const math::PsMatrix& in) { _psm = in; }
 
+		virtual void setPolarization(const math::PsMatrix& in) { _psm = in; }
 		void setFluctuationModel(std::unique_ptr<RcsModel> in) { _model = std::move(in); }
 
 	protected:
 		math::PsMatrix _psm;
-		std::unique_ptr<RcsModel> _model;
+		std::unique_ptr<RcsModel> _model{nullptr};
 	};
 
 	class IsoTarget final : public Target
 	{
 	public:
-		IsoTarget(Platform* platform, std::string name, const RealType rcs) :
-			Target(platform, std::move(name)), _rcs(rcs) {}
+		IsoTarget(Platform* platform, std::string name, const RealType rcs) : Target(platform, std::move(name)),
+		                                                                      _rcs(rcs) {}
 
 		~IsoTarget() override = default;
 
-		RealType getRcs(math::SVec3& inAngle, math::SVec3& outAngle) const override
-		{
-			return _model ? _rcs * _model->sampleModel() : _rcs;
-		}
+		RealType getRcs(math::SVec3& inAngle, math::SVec3& outAngle) const override;
 
 	private:
 		RealType _rcs;
@@ -92,10 +89,7 @@ namespace radar
 	class FileTarget final : public Target
 	{
 	public:
-		FileTarget(Platform* platform, std::string name, const std::string& filename) :
-			Target(platform, std::move(name)),
-			_azi_samples(std::make_unique_for_overwrite<interp::InterpSet>()),
-			_elev_samples(std::make_unique_for_overwrite<interp::InterpSet>()) { loadRcsDescription(filename); }
+		FileTarget(Platform* platform, std::string name, const std::string& filename);
 
 		~FileTarget() override = default;
 

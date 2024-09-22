@@ -40,8 +40,9 @@ namespace serial
 		Response& operator=(const Response&) = delete;
 
 		[[nodiscard]] RealType startTime() const { return _points.empty() ? 0.0 : _points.front().time; }
-
 		[[nodiscard]] RealType endTime() const { return _points.empty() ? 0.0 : _points.back().time; }
+
+		void addInterpPoint(const interp::InterpPoint& point);
 
 		void renderXml(TiXmlElement* root);
 
@@ -50,13 +51,9 @@ namespace serial
 		std::vector<ComplexType> renderBinary(RealType& rate, unsigned& size, RealType fracWinDelay) const;
 
 		[[nodiscard]] RealType getLength() const { return endTime() - startTime(); }
-
-		// Note: This function is not used in the codebase
-		[[nodiscard]] const signal::RadarSignal* getWave() const { return _wave; }
+		[[nodiscard]] const signal::RadarSignal* getWave() const { return _wave; } // Note: This function is not used in the codebase
 
 		[[nodiscard]] std::string getTransmitterName() const;
-
-		void addInterpPoint(const interp::InterpPoint& point);
 
 	private:
 		const radar::Transmitter* _transmitter;

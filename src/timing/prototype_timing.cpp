@@ -6,11 +6,22 @@
 #include "prototype_timing.h"
 
 #include "core/logging.h"
+#include "noise/noise_utils.h"
 
 using logging::Level;
 
 namespace timing
 {
+	RealType PrototypeTiming::getPhaseOffset() const noexcept
+	{
+		return _random_phase ? noise::wgnSample(*_random_phase) : _phase_offset.value_or(0);
+	}
+
+	RealType PrototypeTiming::getFreqOffset() const noexcept
+	{
+		return _random_freq ? noise::wgnSample(*_random_freq) : _freq_offset.value_or(0);
+	}
+
 	void PrototypeTiming::setAlpha(const RealType alpha, const RealType weight)
 	{
 		_alphas.emplace_back(alpha);

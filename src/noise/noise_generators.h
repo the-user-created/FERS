@@ -18,12 +18,14 @@ namespace noise
 	{
 	public:
 		NoiseGenerator() = default;
+
 		virtual ~NoiseGenerator() = default;
 
 		// Pure virtual method to generate a sample
 		virtual RealType getSample() = 0;
 
 		NoiseGenerator(const NoiseGenerator&) = delete;
+
 		NoiseGenerator& operator=(const NoiseGenerator&) = delete;
 	};
 
@@ -49,7 +51,7 @@ namespace noise
 
 	private:
 		std::default_random_engine _rng;
-		std::gamma_distribution<RealType> _dist;
+		std::gamma_distribution<> _dist;
 	};
 
 	class MultirateGenerator final : public NoiseGenerator
@@ -60,6 +62,7 @@ namespace noise
 		RealType getSample() override { return _topbranch->getSample() * _scale; }
 
 		void skipSamples(long long samples) const;
+
 		void reset() const;
 
 	private:
@@ -76,8 +79,11 @@ namespace noise
 		                    RealType frequency, RealType phaseOffset, RealType freqOffset, int branches);
 
 		RealType getSample() override;
+
 		void skipSamples(long long samples);
+
 		void reset();
+
 		[[nodiscard]] bool enabled() const;
 
 	private:
@@ -93,8 +99,7 @@ namespace noise
 	class PythonNoiseGenerator final : public NoiseGenerator
 	{
 	public:
-		PythonNoiseGenerator(const std::string& module, const std::string& function)
-		    : _generator(module, function) {}
+		PythonNoiseGenerator(const std::string& module, const std::string& function) : _generator(module, function) {}
 
 		RealType getSample() override { return _generator.getSample(); }
 

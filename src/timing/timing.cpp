@@ -12,6 +12,16 @@ using logging::Level;
 
 namespace timing
 {
+	RealType Timing::getPulseTimeError() const noexcept
+	{
+		return _enabled && _model ? _model->getSample() : 0.0f;
+	}
+
+	void Timing::skipSamples(const long long samples) const noexcept
+	{
+		if (_enabled && _model) { _model->skipSamples(samples); }
+	}
+
 	void Timing::initializeModel(const PrototypeTiming* timing)
 	{
 		if (!_alphas.empty())

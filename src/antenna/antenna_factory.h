@@ -31,14 +31,12 @@ namespace antenna
 		[[nodiscard]] virtual RealType getGain(const math::SVec3& angle, const math::SVec3& refangle,
 		                                       RealType wavelength) const = 0;
 
+		[[nodiscard]] RealType getEfficiencyFactor() const { return _loss_factor; }
+		[[nodiscard]] std::string getName() const { return _name; }
 		// TODO: Implement noise temperature calculation
 		[[nodiscard]] virtual RealType getNoiseTemperature(const math::SVec3& angle) const { return 0; }
 
 		void setEfficiencyFactor(RealType loss);
-
-		[[nodiscard]] RealType getEfficiencyFactor() const { return _loss_factor; }
-
-		[[nodiscard]] std::string getName() const { return _name; }
 
 	protected:
 		static RealType getAngle(const math::SVec3& angle, const math::SVec3& refangle);
@@ -65,8 +63,8 @@ namespace antenna
 	class Sinc final : public Antenna
 	{
 	public:
-		Sinc(const std::string_view name, const RealType alpha, const RealType beta, const RealType gamma) : Antenna(name.data()),
-		                                                                                                     _alpha(alpha), _beta(beta), _gamma(gamma) {}
+		Sinc(const std::string_view name, const RealType alpha, const RealType beta, const RealType gamma) :
+			Antenna(name.data()), _alpha(alpha), _beta(beta), _gamma(gamma) {}
 
 		~Sinc() override = default;
 
@@ -83,8 +81,7 @@ namespace antenna
 	{
 	public:
 		Gaussian(const std::string_view name, const RealType azscale, const RealType elscale) : Antenna(name.data()),
-		                                                                                        _azscale(azscale),
-		                                                                                        _elscale(elscale) {}
+			_azscale(azscale), _elscale(elscale) {}
 
 		~Gaussian() override = default;
 
@@ -99,7 +96,8 @@ namespace antenna
 	class SquareHorn final : public Antenna
 	{
 	public:
-		SquareHorn(const std::string_view name, const RealType dimension) : Antenna(name.data()), _dimension(dimension) {}
+		SquareHorn(const std::string_view name, const RealType dimension) : Antenna(name.data()),
+		                                                                    _dimension(dimension) {}
 
 		~SquareHorn() override = default;
 
@@ -113,7 +111,8 @@ namespace antenna
 	class ParabolicReflector final : public Antenna
 	{
 	public:
-		ParabolicReflector(const std::string_view name, const RealType diameter) : Antenna(name.data()), _diameter(diameter) {}
+		ParabolicReflector(const std::string_view name, const RealType diameter) : Antenna(name.data()),
+			_diameter(diameter) {}
 
 		~ParabolicReflector() override = default;
 
@@ -127,10 +126,9 @@ namespace antenna
 	class XmlAntenna final : public Antenna
 	{
 	public:
-		XmlAntenna(const std::string_view name, const std::string_view filename) : Antenna(name.data()), _azi_samples(std::make_unique<interp::InterpSet>()), _elev_samples(std::make_unique<interp::InterpSet>())
-		{
-			loadAntennaDescription(filename);
-		}
+		XmlAntenna(const std::string_view name, const std::string_view filename) : Antenna(name.data()),
+			_azi_samples(std::make_unique<interp::InterpSet>()),
+			_elev_samples(std::make_unique<interp::InterpSet>()) { loadAntennaDescription(filename); }
 
 		~XmlAntenna() override = default;
 
@@ -148,7 +146,8 @@ namespace antenna
 	class FileAntenna final : public Antenna
 	{
 	public:
-		FileAntenna(const std::string_view name, const std::string_view filename) : Antenna(name.data()), _pattern(std::make_unique<Pattern>(filename.data())) {}
+		FileAntenna(const std::string_view name, const std::string_view filename) : Antenna(name.data()),
+			_pattern(std::make_unique<Pattern>(filename.data())) {}
 
 		~FileAntenna() override = default;
 
@@ -165,7 +164,8 @@ namespace antenna
 	class PythonAntenna final : public Antenna
 	{
 	public:
-		PythonAntenna(const std::string_view name, const std::string_view module, const std::string_view function) : Antenna(name.data()), _py_antenna(module.data(), function.data()) {}
+		PythonAntenna(const std::string_view name, const std::string_view module, const std::string_view function) :
+			Antenna(name.data()), _py_antenna(module.data(), function.data()) {}
 
 		~PythonAntenna() override = default;
 
