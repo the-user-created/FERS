@@ -16,13 +16,14 @@ jobs:
 
       - name: Set up environment  # Update package lists and install required packages
         run: |
+          add-apt-repository ppa:deadsnakes/ppa
           apt-get update && apt-get install -y \
           libhdf5-dev \
           libhdf5-serial-dev \
           build-essential \
           cmake \
           cmake-qt-gui \
-          python3-dev \
+          python3.11-dev \
           libtinyxml-dev \
           libxerces-c-dev
 
