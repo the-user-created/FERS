@@ -5,8 +5,8 @@
 
 #include "pulse_factory.h"
 
+#include <filesystem>
 #include <fstream>
-#include <vector>
 
 #include "config.h"
 #include "hdf5_handler.h"
@@ -17,18 +17,12 @@ using signal::RadarSignal;
 
 namespace
 {
-	// =================================================================================================================
-	//
-	// FUNCTIONS TO LOAD SIGNAL DATA FROM FILES
-	//
-	// =================================================================================================================
-
-	std::unique_ptr<RadarSignal> loadPulseFromHdf5File(const std::string& name, const std::string& filename,
+	std::unique_ptr<RadarSignal> loadPulseFromHdf5File(const std::string& name, const std::filesystem::path& filepath,
 	                                                   const RealType power, const RealType carrierFreq)
 	{
 		RealType rate;
 		std::vector<ComplexType> data;
-		serial::readPulseData(filename, data, rate);
+		serial::readPulseData(filepath, data, rate);
 
 		auto signal = std::make_unique<Signal>();
 		signal->load(data, data.size(), rate);
@@ -36,21 +30,37 @@ namespace
 		                                     std::move(signal));
 	}
 
-	std::unique_ptr<RadarSignal> loadPulseFromCsvFile(const std::string& name, const std::string& filename,
+	std::unique_ptr<RadarSignal> loadPulseFromCsvFile(const std::string& name, const std::filesystem::path& filepath,
 	                                                  const RealType power, const RealType carrierFreq)
 	{
-		std::ifstream ifile(filename.c_str());
-		if (!ifile) { throw std::runtime_error("Could not open " + filename + " to read pulse waveform"); }
+		std::ifstream ifile(filepath);
+		if (!ifile)
+		{
+			throw std::runtime_error("Could not open file '" + filepath.string() + "' to read pulse waveform");
+		}
+
 		RealType rlength, rate;
 		ifile >> rlength >> rate;
-		const unsigned length = static_cast<int>(rlength);
+
+		const auto length = static_cast<std::size_t>(rlength);
 		std::vector<ComplexType> data(length);
-		unsigned done = 0;
-		while (!ifile.eof() && done < length) { ifile >> data[done++]; }
-		if (done != length) { throw std::runtime_error("Could not read pulse waveform from file " + filename); }
+
+		// Read the file data
+		for (std::size_t done = 0; done < length && ifile >> data[done]; ++done) {}
+
+		if (ifile.fail() || data.size() != length)
+		{
+			throw std::runtime_error("Could not read full pulse waveform from file '" + filepath.string() + "'");
+		}
+
 		auto signal = std::make_unique<Signal>();
 		signal->load(data, length, rate);
 		return std::make_unique<RadarSignal>(name, power, carrierFreq, rlength / rate, std::move(signal));
+	}
+
+	constexpr bool hasExtension(const std::string_view filename, const std::string_view ext)
+	{
+		return filename.ends_with(ext);
 	}
 }
 
@@ -59,16 +69,11 @@ namespace serial
 	std::unique_ptr<RadarSignal> loadPulseFromFile(const std::string& name, const std::string& filename,
 	                                               const RealType power, const RealType carrierFreq)
 	{
-		if (const unsigned long ln = filename.length() - 1; tolower(filename[ln]) == 'v' && tolower(filename[ln - 1]) ==
-			's'
-			&& tolower(filename[ln - 2]) == 'c') { return loadPulseFromCsvFile(name, filename, power, carrierFreq); }
-		else
-		{
-			if (tolower(filename[ln]) == '5' && tolower(filename[ln - 1]) == 'h')
-			{
-				return loadPulseFromHdf5File(name, filename, power, carrierFreq);
-			}
-			throw std::runtime_error("Unrecognised extension while trying to load " + filename);
-		}
+		const std::filesystem::path filepath = filename;
+		const auto extension = filepath.extension().string();
+
+		if (hasExtension(extension, ".csv")) { return loadPulseFromCsvFile(name, filepath, power, carrierFreq); }
+		if (hasExtension(extension, ".h5")) { return loadPulseFromHdf5File(name, filepath, power, carrierFreq); }
+		throw std::runtime_error("Unrecognized file extension '" + extension + "' for file: " + filename);
 	}
 }

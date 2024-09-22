@@ -8,7 +8,7 @@
 #define RECEIVER_EXPORT_H
 
 #include <memory>
-#include <vector>
+#include <span>
 
 namespace radar
 {
@@ -19,12 +19,11 @@ namespace serial
 {
 	class Response;
 
-	void exportReceiverXml(const std::vector<std::unique_ptr<Response>>& responses, const std::string& filename);
+	void exportReceiverXml(std::span<const std::unique_ptr<Response>> responses, const std::string& filename);
 
-	void exportReceiverBinary(const std::vector<std::unique_ptr<Response>>& responses, const radar::Receiver* recv,
-	                          const std::string& recvName);
+	void exportReceiverBinary(std::span<const std::unique_ptr<Response>> responses, const radar::Receiver* recv, const std::string& recvName);
 
-	void exportReceiverCsv(const std::vector<std::unique_ptr<Response>>& responses, const std::string& filename);
+	void exportReceiverCsv(std::span<const std::unique_ptr<Response>> responses, const std::string& filename);
 }
 
 #endif //RECEIVER_EXPORT_H
