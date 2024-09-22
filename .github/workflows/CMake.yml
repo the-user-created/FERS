@@ -22,16 +22,19 @@ jobs:
           cmake \
           cmake-qt-gui \
           libtinyxml-dev \
-          libxerces-c-dev
+          libxerces-c-dev \
+          lsb-release
 
       - name: Set up Python  # Install Python 3.11, pip, and venv
         uses: actions/setup-python@v5
         with:
           python-version: 3.11
-          cache: 'pip'
 
-      - name: Install dependencies  # Install dependencies using pip
+      - name: Install dependencies in virtual environment  # Create venv and install dependencies
         run: |
+          python3 -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: Generate and Build FERS
@@ -49,6 +52,7 @@ jobs:
       - name: Run tests # Run the simulation tests
         run: |
           set -e
+          source venv/bin/activate
           python3 run_sim_tests.py
           echo "Exit code: $?"
 
