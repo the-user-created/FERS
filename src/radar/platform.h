@@ -6,52 +6,57 @@
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
-#include <string>
-#include <boost/utility.hpp>
+#include <memory>                      // for unique_ptr, make_unique
+#include <optional>                    // for optional, nullopt, nullopt_t
+#include <string>                      // for string
+#include <utility>                     // for move
 
-#include "config.h"
-#include "math_utils/path.h"
-#include "math_utils/rotation_path.h"
+#include "config.h"                    // for RealType
+#include "math_utils/geometry_ops.h"   // for Vec3, SVec3
+#include "math_utils/path.h"           // for Path
+#include "math_utils/rotation_path.h"  // for RotationPath
 
-namespace rs
+namespace math
 {
 	class MultipathSurface;
+}
 
-	class Platform : boost::noncopyable
+namespace radar
+{
+	class Platform
 	{
 	public:
-		explicit Platform(std::string name) : _motion_path(new path::Path()), _rotation_path(new path::RotationPath()),
-		                                      _name(std::move(name)), _dual(nullptr) {}
+		explicit Platform(std::string name) : _motion_path(std::make_unique<math::Path>()),
+		                                      _rotation_path(std::make_unique<math::RotationPath>()),
+		                                      _name(std::move(name)) {}
 
-		~Platform();
+		// Delete copy constructor and assignment operator to prevent copying
+		Platform(const Platform&) = delete;
 
-		[[nodiscard]] path::Path* getMotionPath() const { return _motion_path; }
+		Platform& operator=(const Platform&) = delete;
 
-		void setMotionPath(path::Path* path) { _motion_path = path; }
+		// Defaulted destructor
+		~Platform() = default;
 
-		[[nodiscard]] path::RotationPath* getRotationPath() const { return _rotation_path; }
+		[[nodiscard]] math::Path* getMotionPath() const { return _motion_path.get(); }
+		[[nodiscard]] math::RotationPath* getRotationPath() const { return _rotation_path.get(); }
+		[[nodiscard]] math::Vec3 getPosition(const RealType time) const { return _motion_path->getPosition(time); }
+		[[nodiscard]] math::SVec3 getRotation(const RealType time) const { return _rotation_path->getPosition(time); }
+		[[nodiscard]] const std::string& getName() const { return _name; }
+		[[nodiscard]] std::optional<Platform*> getDual() const { return _dual ? std::optional{_dual} : std::nullopt; }
 
-		void setRotationPath(path::RotationPath* path) { _rotation_path = path; }
-
-		[[nodiscard]] Vec3 getPosition(const RS_FLOAT time) const { return _motion_path->getPosition(time); }
-
-		[[nodiscard]] SVec3 getRotation(const RS_FLOAT time) const { return _rotation_path->getPosition(time); }
-
-		[[nodiscard]] std::string getName() const { return _name; }
-
-		[[nodiscard]] Platform* getDual() const { return _dual; }
-
+		void setRotationPath(std::unique_ptr<math::RotationPath> path) { _rotation_path = std::move(path); }
+		void setMotionPath(std::unique_ptr<math::Path> path) { _motion_path = std::move(path); }
 		void setDual(Platform* dual) { _dual = dual; }
 
 	private:
-		// TODO: use unique_ptr
-		path::Path* _motion_path;
-		path::RotationPath* _rotation_path;
+		std::unique_ptr<math::Path> _motion_path;
+		std::unique_ptr<math::RotationPath> _rotation_path;
 		std::string _name;
-		Platform* _dual;
+		Platform* _dual = nullptr;
 	};
 
-	Platform* createMultipathDual(const Platform* plat, const MultipathSurface* surf);
+	Platform* createMultipathDual(Platform* plat, const math::MultipathSurface* surf);
 }
 
 #endif

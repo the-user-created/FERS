@@ -5,96 +5,104 @@
 
 #include "world.h"
 
-#include "math_utils/multipath_surface.h"
-#include "radar/radar_system.h"
-#include "radar/target.h"
+#include <stdexcept>                         // for runtime_error
+#include <type_traits>                       // for decay, decay_t
+#include <utility>                           // for move
 
-using namespace rs;
+#include "antenna/antenna_factory.h"         // for Antenna
+#include "radar/radar_system.h"              // for Receiver, Transmitter
+#include "signal_processing/radar_signal.h"  // for RadarSignal
+#include "timing/prototype_timing.h"         // for PrototypeTiming
 
-template <typename T>
-struct ObjDel
+using signal::RadarSignal;
+using antenna::Antenna;
+using timing::PrototypeTiming;
+using math::MultipathSurface;
+using radar::Platform;
+using radar::Receiver;
+using radar::Transmitter;
+using radar::Target;
+
+namespace core
 {
-	void operator()(T x)
-	{
-		delete x;
-	}
-};
+	using namespace std::string_literals;
 
-World::~World()
-{
-	for (auto& [_, snd] : _pulses)
-	{
-		delete snd;
-	}
-	for (auto& [_, snd] : _antennas)
-	{
-		delete snd;
-	}
-	for (auto& [_, snd] : _timings)
-	{
-		delete snd;
-	}
+	void World::add(std::unique_ptr<Platform> plat) { _platforms.push_back(std::move(plat)); }
 
-	// TODO: These should all be moved to smart pointers
-	std::for_each(_receivers.begin(), _receivers.end(), ObjDel<Receiver*>());
-	std::for_each(_transmitters.begin(), _transmitters.end(), ObjDel<Transmitter*>());
-	std::for_each(_targets.begin(), _targets.end(), ObjDel<Target*>());
-	std::for_each(_platforms.begin(), _platforms.end(), ObjDel<Platform*>());
-}
+	void World::add(std::unique_ptr<Transmitter> trans) { _transmitters.push_back(std::move(trans)); }
 
-void World::add(RadarSignal* pulse)
-{
-	if (findSignal(pulse->getName()))
-	{
-		throw std::runtime_error("[ERROR] A pulse with the name " + pulse->getName() + " already exists.");
-	}
-	_pulses[pulse->getName()] = pulse;
-}
+	void World::add(std::unique_ptr<Receiver> recv) { _receivers.push_back(std::move(recv)); }
 
-void World::add(Antenna* antenna)
-{
-	if (findAntenna(antenna->getName()))
-	{
-		throw std::runtime_error("[ERROR] An antenna with the name " + antenna->getName() + " already exists.");
-	}
-	_antennas[antenna->getName()] = antenna;
-}
+	void World::add(std::unique_ptr<Target> target) { _targets.push_back(std::move(target)); }
 
-void World::add(PrototypeTiming* timing)
-{
-	if (findTiming(timing->getName()))
+	void World::add(std::unique_ptr<RadarSignal> pulse)
 	{
-		throw std::runtime_error("[ERROR] A timing source with the name " + timing->getName() + " already exists.");
-	}
-	_timings[timing->getName()] = timing;
-}
-
-void World::addMultipathSurface(MultipathSurface* surface)
-{
-	if (_multipath_surface)
-	{
-		throw std::runtime_error("[ERROR] Only one multipath surface per simulation is supported");
-	}
-	_multipath_surface = surface;
-}
-
-void World::processMultipath()
-{
-	if (_multipath_surface)
-	{
-		for (const auto plat : _platforms)
+		if (_pulses.contains(pulse->getName()))
 		{
-			_platforms.push_back(createMultipathDual(plat, _multipath_surface));
+			throw std::runtime_error("A pulse with the name " + pulse->getName() + " already exists.");
 		}
-		for (const auto recv : _receivers)
+		_pulses[pulse->getName()] = std::move(pulse);
+	}
+
+	void World::add(std::unique_ptr<Antenna> antenna)
+	{
+		if (_antennas.contains(antenna->getName()))
 		{
-			_receivers.push_back(createMultipathDual(recv, _multipath_surface));
+			throw std::runtime_error("An antenna with the name " + antenna->getName() + " already exists.");
 		}
-		for (const auto trans : _transmitters)
+		_antennas[antenna->getName()] = std::move(antenna);
+	}
+
+	void World::add(std::unique_ptr<PrototypeTiming> timing)
+	{
+		if (_timings.contains(timing->getName()))
 		{
-			_transmitters.push_back(createMultipathDual(trans, _multipath_surface));
+			throw std::runtime_error("A timing source with the name " + timing->getName() + " already exists.");
 		}
-		delete _multipath_surface;
-		_multipath_surface = nullptr;
+		_timings[timing->getName()] = std::move(timing);
+	}
+
+	void World::addMultipathSurface(std::unique_ptr<MultipathSurface> surface)
+	{
+		if (_multipath_surface) { throw std::runtime_error("Only one multipath surface per simulation is supported."); }
+		_multipath_surface = std::move(surface);
+	}
+
+	RadarSignal* World::findSignal(const std::string& name)
+	{
+		return _pulses.contains(name) ? _pulses[name].get() : nullptr;
+	}
+
+	Antenna* World::findAntenna(const std::string& name)
+	{
+		return _antennas.contains(name) ? _antennas[name].get() : nullptr;
+	}
+
+	PrototypeTiming* World::findTiming(const std::string& name)
+	{
+		return _timings.contains(name) ? _timings[name].get() : nullptr;
+	}
+
+	void World::processMultipath()
+	{
+		if (_multipath_surface)
+		{
+			const auto append_multipath_duals = [this](auto& collection)
+			{
+				const size_t initial_size = collection.size();
+				collection.reserve(initial_size * 2);
+				for (size_t i = 0; i < initial_size; ++i)
+				{
+					collection.push_back(std::unique_ptr<typename std::decay_t<decltype(collection[i])>::element_type>(
+						createMultipathDual(collection[i].get(), _multipath_surface.get())));
+				}
+			};
+
+			append_multipath_duals(_platforms);
+			append_multipath_duals(_receivers);
+			append_multipath_duals(_transmitters);
+
+			_multipath_surface.reset();
+		}
 	}
 }

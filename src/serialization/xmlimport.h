@@ -8,11 +8,13 @@
 
 #include <string>
 
-#include "core/world.h"
+namespace core {
+	class World;
+}
 
-namespace xml
+namespace serial
 {
-	void loadXmlFile(const std::string& filename, rs::World* world);
+	void loadXmlFile(const std::string& filename, core::World* world);
 }
 
 #endif

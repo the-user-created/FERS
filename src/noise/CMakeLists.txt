@@ -1,15 +1,13 @@
 set(SRCS
-	sim_threading.cpp
-	response.cpp
 	noise_generators.cpp
-	timing.cpp
+	noise_utils.cpp
+	falpha_branch.cpp
 )
 
 set(HEADERS
-	sim_threading.h
-	response.h
 	noise_generators.h
-	timing.h
+	noise_utils.h
+	falpha_branch.h
 )
 
 target_sources(${PROJECT_NAME} PRIVATE ${SRCS} ${HEADERS})

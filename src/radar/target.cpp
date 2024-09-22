@@ -7,97 +7,85 @@
 
 #include "target.h"
 
-#include <cmath>
-#include <tinyxml.h>
+#include <cmath>                      // for sqrt
+#include <optional>                   // for optional
+#include <stdexcept>                  // for runtime_error
+#include <tinyxml.h>                  // for TiXmlHandle, TiXmlDocument, TiX...
 
-#include "interpolation/interpolation_set.h"
-#include "simulation/noise_generators.h"
+#include "core/logging.h"             // for log, LOG, Level
+#include "math_utils/geometry_ops.h"  // for SVec3, operator+
 
-using namespace rs;
+using math::SVec3;
 
-RS_FLOAT getNodeFloat(const TiXmlHandle& node);
+RealType getNodeFloat(const TiXmlHandle& node);
 
 namespace
 {
-	void loadTargetGainAxis(const InterpSet* set, const TiXmlHandle& axisXml)
+	void loadTargetGainAxis(const interp::InterpSet* set, const TiXmlHandle& axisXml)
 	{
-		TiXmlHandle tmp = axisXml.ChildElement("rcssample", 0);
-		for (int i = 0; tmp.Element() != nullptr; i++)
+		auto insert_sample_from_xml = [&](const int i)
 		{
-			const RS_FLOAT angle = getNodeFloat(tmp.ChildElement("angle", 0));
-			const RS_FLOAT gain = getNodeFloat(tmp.ChildElement("rcs", 0));
+			const TiXmlHandle sample_xml = axisXml.ChildElement("rcssample", i);
+			if (!sample_xml.Element()) { return false; }
+
+			const RealType angle = getNodeFloat(sample_xml.ChildElement("angle", 0));
+			const RealType gain = getNodeFloat(sample_xml.ChildElement("rcs", 0));
 			set->insertSample(angle, gain);
-			tmp = axisXml.ChildElement("rcssample", i);
+			return true;
+		};
+
+		for (int i = 0; insert_sample_from_xml(i); ++i) {}
+	}
+}
+
+namespace radar
+{
+	class Platform;
+
+	RealType IsoTarget::getRcs(SVec3& inAngle, SVec3& outAngle) const
+	{
+		return _model ? _rcs * _model->sampleModel() : _rcs;
+	}
+
+	FileTarget::FileTarget(Platform* platform, std::string name, const std::string& filename) :
+		Target(platform, std::move(name)), _azi_samples(std::make_unique_for_overwrite<interp::InterpSet>()),
+		_elev_samples(std::make_unique_for_overwrite<interp::InterpSet>()) { loadRcsDescription(filename); }
+
+	RealType FileTarget::getRcs(SVec3& inAngle, SVec3& outAngle) const
+	{
+		const SVec3 t_angle = inAngle + outAngle;
+
+		const auto azi_value = _azi_samples->getValueAt(t_angle.azimuth / 2.0);
+
+		if (const auto elev_value = _elev_samples->getValueAt(t_angle.elevation / 2.0); azi_value && elev_value)
+		{
+			const RealType rcs = std::sqrt(*azi_value * *elev_value);
+			return _model ? rcs * _model->sampleModel() : rcs;
 		}
+
+		LOG(logging::Level::FATAL, "Could not get RCS value for target");
+		throw std::runtime_error("Could not get RCS value for target");
 	}
-}
 
-// =====================================================================================================================
-//
-// RCS CHI SQUARE CLASS
-//
-// =====================================================================================================================
-
-RcsChiSquare::RcsChiSquare(const RS_FLOAT k) : _gen(new GammaGenerator(k))
-{
-}
-
-
-RcsChiSquare::~RcsChiSquare()
-{
-	delete _gen;
-}
-
-RS_FLOAT RcsChiSquare::sampleModel()
-{
-	return _gen->getSample();
-}
-
-// =====================================================================================================================
-//
-// FILE TARGET CLASS
-//
-// =====================================================================================================================
-
-FileTarget::FileTarget(const Platform* platform, const std::string& name, const std::string& filename)
-	: Target(platform, name), _azi_samples(new InterpSet()), _elev_samples(new InterpSet())
-{
-	loadRcsDescription(filename);
-}
-
-FileTarget::~FileTarget()
-{
-	delete _azi_samples;
-	delete _elev_samples;
-}
-
-
-RS_FLOAT FileTarget::getRcs(SVec3& inAngle, SVec3& outAngle) const
-{
-	const SVec3 t_angle = inAngle + outAngle;
-	const RS_FLOAT rcs = std::sqrt(
-		_azi_samples->value(t_angle.azimuth / 2.0) * _elev_samples->value(t_angle.elevation / 2.0));
-	return _model ? rcs * _model->sampleModel() : rcs;
-}
-
-void FileTarget::loadRcsDescription(const std::string& filename) const
-{
-	TiXmlDocument doc(filename.c_str());
-	if (!doc.LoadFile())
+	void FileTarget::loadRcsDescription(const std::string& filename) const
 	{
-		throw std::runtime_error("[ERROR] Could not load target description from " + filename);
+		TiXmlDocument doc(filename.c_str());
+		if (!doc.LoadFile()) { throw std::runtime_error("Could not load target description from " + filename); }
+
+		const TiXmlHandle root(doc.RootElement());
+		const auto elev_xml = root.ChildElement("elevation", 0);
+		const auto azi_xml = root.ChildElement("azimuth", 0);
+
+		if (!elev_xml.Element())
+		{
+			throw std::runtime_error("Malformed XML in target description: No elevation pattern definition");
+		}
+		loadTargetGainAxis(_elev_samples.get(), elev_xml);
+
+		if (!azi_xml.Element())
+		{
+			throw std::runtime_error("Malformed XML in target description: No azimuth pattern definition");
+		}
+		loadTargetGainAxis(_azi_samples.get(), azi_xml);
 	}
-	const TiXmlHandle root(doc.RootElement());
-	TiXmlHandle tmp = root.ChildElement("elevation", 0);
-	if (!tmp.Element())
-	{
-		throw std::runtime_error("[ERROR] Malformed XML in target description: No elevation pattern definition");
-	}
-	loadTargetGainAxis(_elev_samples, tmp);
-	tmp = root.ChildElement("azimuth", 0);
-	if (!tmp.Element())
-	{
-		throw std::runtime_error("[ERROR] Malformed XML in target description: No azimuth pattern definition");
-	}
-	loadTargetGainAxis(_azi_samples, tmp);
 }

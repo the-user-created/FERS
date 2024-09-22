@@ -6,20 +6,20 @@
 #ifndef PULSE_FACTORY_H
 #define PULSE_FACTORY_H
 
-#include <string>
+#include <memory>    // for unique_ptr
+#include <string>    // for string
 
-#include "config.h"
+#include "config.h"  // for RealType
 
-namespace rs
+namespace signal
 {
-	// Forward declaration
 	class RadarSignal;
 }
 
-namespace pulse_factory
+namespace serial
 {
-	rs::RadarSignal* loadPulseFromFile(const std::string& name, const std::string& filename, RS_FLOAT power,
-	                                   RS_FLOAT carrierFreq);
+	[[nodiscard]] std::unique_ptr<signal::RadarSignal> loadPulseFromFile(
+		const std::string& name, const std::string& filename, RealType power, RealType carrierFreq);
 }
 
 #endif //PULSE_FACTORY_H

@@ -6,68 +6,65 @@
 #ifndef PYTHON_EXTENSION_H
 #define PYTHON_EXTENSION_H
 
-#include <Python.h>
-#include <string>
+#include <memory>        // for unique_ptr
+#include <pytypedefs.h>  // for PyObject
+#include <string>        // for string
+#include <string_view>   // for string_view
 
-#include "config.h"
-#include "math_utils/geometry_ops.h"
+#include "config.h"      // for RealType
 
-namespace rs_python
+namespace math
+{
+	class Vec3;
+	class SVec3;
+}
+
+namespace python
 {
 	void initPython();
 
 	struct PythonExtensionData
 	{
-		PyObject *p_module, *p_func;
+		PyObject *p_module = nullptr;
+		PyObject *p_func = nullptr;
 	};
 
 	class PythonExtension
 	{
 	public:
-		PythonExtension(const std::string& module, const std::string& function);
+		PythonExtension(std::string_view module, std::string_view function);
 
-		~PythonExtension();
+		virtual ~PythonExtension();
 
 	protected:
-		PythonExtensionData* _data;
+		std::unique_ptr<PythonExtensionData> _data;
 		std::string _module;
 		std::string _function;
 	};
 
-	class PythonPath : public PythonExtension
+	class PythonPath final : public PythonExtension
 	{
 	public:
-		PythonPath(const std::string& module, const std::string& function) : PythonExtension(module, function)
-		{
-		}
+		using PythonExtension::PythonExtension;
 
-		~PythonPath() = default;
-
-		[[nodiscard]] rs::Vec3 getPosition(RS_FLOAT t) const;
+		[[nodiscard]] math::Vec3 getPosition(RealType t) const;
 	};
 
-	class PythonNoise : public PythonExtension
+	// NOTE: This class is not used in the current version of FERS
+	class PythonNoise final : public PythonExtension
 	{
 	public:
-		PythonNoise(const std::string& module, const std::string& function) : PythonExtension(module, function)
-		{
-		}
+		using PythonExtension::PythonExtension;
 
-		~PythonNoise() = default;
-
-		[[nodiscard]] RS_FLOAT getSample() const;
+		[[nodiscard]] RealType getSample() const;
 	};
 
-	class PythonAntennaMod : public PythonExtension
+	class PythonAntennaMod final : public PythonExtension
 	{
 	public:
-		PythonAntennaMod(const std::string& module, const std::string& function) : PythonExtension(module, function)
-		{
-		}
+		using PythonExtension::PythonExtension;
 
-		~PythonAntennaMod() = default;
-
-		[[nodiscard]] RS_FLOAT getGain(const rs::SVec3& direction) const;
+		[[nodiscard]] RealType getGain(const math::SVec3& direction) const;
 	};
 }
 

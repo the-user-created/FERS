@@ -6,21 +6,39 @@
 #ifndef TARGET_H
 #define TARGET_H
 
-#include "config.h"
-#include "core/object.h"
-#include "math_utils/polarization_matrix.h"
+#include <concepts>                           // for convertible_to
+#include <memory>                             // for unique_ptr, make_unique
+#include <string>                             // for string
+#include <utility>                            // for move
 
-namespace rs
+#include "config.h"                           // for RealType
+#include "object.h"                           // for Object
+#include "interpolation/interpolation_set.h"  // for InterpSet
+#include "math_utils/polarization_matrix.h"   // for PsMatrix
+#include "noise/noise_generators.h"           // for GammaGenerator
+
+namespace math
 {
-	class InterpSet;
-	class GammaGenerator;
+	class SVec3;
+}
+
+namespace radar
+{
+	class Platform;
+
+	// C++20 Concept for RcsModel to enforce `sampleModel` existence
+	template <typename T>
+	concept RcsModelConcept = requires(T a)
+	{
+		{ a.sampleModel() } -> std::convertible_to<RealType>;
+	};
 
 	class RcsModel
 	{
 	public:
 		virtual ~RcsModel() = default;
 
-		virtual RS_FLOAT sampleModel() = 0;
+		virtual RealType sampleModel() = 0;
 	};
 
 	class RcsConst final : public RcsModel
@@ -28,105 +46,80 @@ namespace rs
 	public:
 		~RcsConst() override = default;
 
-		RS_FLOAT sampleModel() override
-		{
-			return 1.0;
-		}
+		RealType sampleModel() override { return 1.0; }
 	};
 
 	class RcsChiSquare final : public RcsModel
 	{
 	public:
-		explicit RcsChiSquare(RS_FLOAT k);
+		explicit RcsChiSquare(RealType k) : _gen(std::make_unique<noise::GammaGenerator>(k)) {}
 
-		~RcsChiSquare() override;
+		~RcsChiSquare() override = default;
 
-		RS_FLOAT sampleModel() override;
+		RealType sampleModel() override { return _gen->getSample(); }
 
 	private:
-		GammaGenerator* _gen;
+		std::unique_ptr<noise::GammaGenerator> _gen;
 	};
 
 	class Target : public Object
 	{
 	public:
-		Target(const Platform* platform, const std::string& name) : Object(platform, name)
-		{
-			_model = nullptr;
-		}
+		Target(Platform* platform, std::string name) : Object(platform, std::move(name)) {}
 
-		~Target() override
-		{
-			delete _model;
-		}
+		~Target() override = default;
 
-		virtual RS_FLOAT getRcs(SVec3& inAngle, SVec3& outAngle) const = 0;
+		virtual RealType getRcs(math::SVec3& inAngle, math::SVec3& outAngle) const = 0;
 
-		// Note: This function is not used in the codebase
-		[[nodiscard]] virtual PsMatrix getPolarization() const
-		{
-			return _psm;
-		}
+		[[nodiscard]] virtual math::PsMatrix getPolarization() const { return _psm; }
 
-		// Note: This function is not used in the codebase
-		virtual void setPolarization(const PsMatrix& in)
-		{
-			_psm = in;
-		}
-
-		virtual void setFluctuationModel(RcsModel* in)
-		{
-			_model = in;
-		}
+		virtual void setPolarization(const math::PsMatrix& in) { _psm = in; }
+		void setFluctuationModel(std::unique_ptr<RcsModel> in) { _model = std::move(in); }
 
 	protected:
-		PsMatrix _psm;
-		RcsModel* _model;
+		math::PsMatrix _psm;
+		std::unique_ptr<RcsModel> _model{nullptr};
 	};
 
 	class IsoTarget final : public Target
 	{
 	public:
-		IsoTarget(const Platform* platform, const std::string& name, const RS_FLOAT rcs) :
-			Target(platform, name), _rcs(rcs)
-		{
-		}
+		IsoTarget(Platform* platform, std::string name, const RealType rcs) : Target(platform, std::move(name)),
+		                                                                      _rcs(rcs) {}
 
 		~IsoTarget() override = default;
 
-		RS_FLOAT getRcs(SVec3& inAngle, SVec3& outAngle) const override
-		{
-			return _model ? _rcs * _model->sampleModel() : _rcs;
-		}
+		RealType getRcs(math::SVec3& inAngle, math::SVec3& outAngle) const override;
 
 	private:
-		RS_FLOAT _rcs;
+		RealType _rcs;
 	};
 
 	class FileTarget final : public Target
 	{
 	public:
-		FileTarget(const Platform* platform, const std::string& name, const std::string& filename);
+		FileTarget(Platform* platform, std::string name, const std::string& filename);
 
-		~FileTarget() override;
+		~FileTarget() override = default;
 
-		RS_FLOAT getRcs(SVec3& inAngle, SVec3& outAngle) const override;
+		RealType getRcs(math::SVec3& inAngle, math::SVec3& outAngle) const override;
 
 	private:
-		InterpSet* _azi_samples;
-		InterpSet* _elev_samples;
+		std::unique_ptr<interp::InterpSet> _azi_samples;
+		std::unique_ptr<interp::InterpSet> _elev_samples;
 
 		void loadRcsDescription(const std::string& filename) const;
 	};
 
-	inline Target* createIsoTarget(const Platform* platform, const std::string& name, const RS_FLOAT rcs)
+	// Factory functions
+	inline std::unique_ptr<Target> createIsoTarget(Platform* platform, std::string name, RealType rcs)
 	{
-		return new IsoTarget(platform, name, rcs);
+		return std::make_unique<IsoTarget>(platform, std::move(name), rcs);
 	}
 
-	inline Target* createFileTarget(const Platform* platform, const std::string& name, const std::string& filename)
+	inline std::unique_ptr<Target> createFileTarget(Platform* platform, std::string name, const std::string& filename)
 	{
-		return new FileTarget(platform, name, filename);
+		return std::make_unique<FileTarget>(platform, std::move(name), filename);
 	}
 }
 

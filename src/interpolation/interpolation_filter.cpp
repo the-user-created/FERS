@@ -5,30 +5,27 @@
 
 #include "interpolation_filter.h"
 
-#include "core/logging.h"
-#include "core/parameters.h"
+#include <stdexcept>          // for logic_error, runtime_error
 
-namespace interp_filt
+#include "core/logging.h"     // for log, LOG, Level
+#include "core/parameters.h"  // for renderFilterLength
+
+using logging::Level;
+
+namespace interp
 {
-	InterpFilter* InterpFilter::getInstance()
+	InterpFilter& InterpFilter::getInstance()
 	{
-		boost::mutex::scoped_lock lock(interp_mutex);
-		if (!_instance)
-		{
-			_instance = new InterpFilter();
-		}
-		return _instance;
+		static InterpFilter instance; // Meyers' Singleton
+		return instance;
 	}
 
-	RS_FLOAT InterpFilter::besselI0(const RS_FLOAT x)
+	RealType InterpFilter::besselI0(const RealType x)
 	{
 		// Use the polynomial approximation from section 9.8 of
 		// "Handbook of Mathematical Functions" by Abramowitz and Stegun
-		if (x < 0.0)
-		{
-			throw std::logic_error("Modified Bessel approximation only valid for x > 0");
-		}
-		if (RS_FLOAT t = x / 3.75; t <= 1.0)
+		if (x < 0.0) { throw std::logic_error("Modified Bessel approximation only valid for x > 0"); }
+		if (RealType t = x / 3.75; t <= 1.0)
 		{
 			t *= t;
 			return 1.0 + t * (
@@ -36,50 +33,57 @@ namespace interp_filt
 		}
 		else
 		{
-			const RS_FLOAT i0 = 0.39894228 + t * (0.01328592 + t * (
+			const RealType i0 = 0.39894228 + t * (0.01328592 + t * (
 				0.00225319 + t * (-0.00157565 + t * (0.00916281 + t * (
 					-0.02057706 + t * (0.02635537 + t * (-0.01647633 + t * 0.00392377)))))));
 			return i0 * std::exp(x) / std::sqrt(x);
 		}
 	}
 
-	InterpFilter::InterpFilter()
+	RealType InterpFilter::kaiserWinCompute(const RealType x) const noexcept
 	{
-		_length = static_cast<int>(parameters::renderFilterLength());
-		//Size of the table to use for interpolation
-		_table_filters = 1000;
-		//Allocate memory for the table
-		_filter_table = new RS_FLOAT[_table_filters * _length];
-		//Alpha is half the filter length
-		_alpha = std::floor(parameters::renderFilterLength() / 2.0);
-		//Beta sets the window shape
-		_beta = 5;
-		_bessel_beta = besselI0(_beta);
-		const int hfilt = _table_filters / 2;
-		logging::printf(logging::RS_VERY_VERBOSE, "[VV] Building table of %d filters\n", _table_filters);
-		//Fill the table of filters
-		//C Tong: delay appears to be the fraction of time ellapsed between samples
-		for (int i = -hfilt; i < hfilt; i++)
-		{
-			const RS_FLOAT delay = i / static_cast<RS_FLOAT>(hfilt);
-			for (int j = static_cast<int>(-_alpha); j < _alpha; j++)
-			{
-				_filter_table[static_cast<int>((i + hfilt) * _length + j + _alpha)] = interpFilter(j - delay);
-			}
-		}
-		logging::printf(logging::RS_VERY_VERBOSE, "[VV] Filter table complete.\n");
+		return x < 0 || x > _alpha * 2
+				   ? 0
+				   : besselI0(_beta * std::sqrt(1 - std::pow((x - _alpha) / _alpha, 2))) / _bessel_beta;
 	}
 
-	const RS_FLOAT* InterpFilter::getFilter(const RS_FLOAT delay) const
+	RealType InterpFilter::interpFilter(const RealType x) const noexcept
 	{
-		const auto filt = static_cast<unsigned>((delay + 1) * (_table_filters / 2.0));
+		return kaiserWinCompute(x + _alpha) * sinc(x);
+	}
 
-		if (delay <= -1 || delay >= 1)
-		{
-			logging::printf(logging::RS_VERY_VERBOSE, "GetFilter %f %d\n", delay, filt);
-			throw std::runtime_error("[BUG] Requested delay filter value out of range");
+	InterpFilter::InterpFilter()
+	{
+		_length = static_cast<int>(params::renderFilterLength());
+		_table_filters = 1000;
+		_filter_table = std::vector<RealType>(_table_filters * _length);
+
+		_alpha = std::floor(params::renderFilterLength() / 2.0);
+		_bessel_beta = besselI0(_beta);
+
+		const int hfilt = _table_filters / 2;
+
+		LOG(Level::DEBUG, "Building table of {} filters", _table_filters);
+
+		for (int i = -hfilt; i < hfilt; ++i) {
+			const RealType delay = i / static_cast<RealType>(hfilt);
+			for (int j = static_cast<int>(-_alpha); j < _alpha; ++j) {
+				_filter_table[(i + hfilt) * _length + j + static_cast<int>(_alpha)] = interpFilter(j - delay);
+			}
 		}
 
-		return &_filter_table[filt * _length];
+		LOG(Level::DEBUG, "Filter table complete");
+	}
+
+	std::span<const RealType> InterpFilter::getFilter(RealType delay) const
+	{
+		if (delay < -1 || delay > 1)
+		{
+			LOG(Level::FATAL, "Invalid delay value: {}", delay);
+			throw std::runtime_error("Requested delay filter value out of range");
+		}
+
+		const auto filt = static_cast<unsigned>((delay + 1) * (_table_filters / 2.0));
+		return std::span{&_filter_table[filt * _length], static_cast<size_t>(_length)};
 	}
 }

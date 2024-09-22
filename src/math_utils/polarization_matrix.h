@@ -6,24 +6,26 @@
 #ifndef POLARIZATION_MATRIX_H
 #define POLARIZATION_MATRIX_H
 
-#include <complex>
+#include <array>
 
 #include "config.h"
 
-namespace rs
+namespace math
 {
 	class PsMatrix
 	{
 	public:
-		PsMatrix();
+		PsMatrix() noexcept;
 
-		PsMatrix(RS_FLOAT s11, RS_FLOAT s12, RS_FLOAT s21, RS_FLOAT s22);
+		PsMatrix(RealType s11, RealType s12, RealType s21, RealType s22) noexcept;
 
-		PsMatrix(const PsMatrix& im);
+		PsMatrix(const PsMatrix&) = default;
 
-		PsMatrix& operator=(const PsMatrix& im);
+		PsMatrix& operator=(const PsMatrix&) = default;
 
-		std::complex<RS_FLOAT> s[4];
+		~PsMatrix() = default;
+
+		std::array<ComplexType, 4> s{};
 	};
 }
 

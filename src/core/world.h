@@ -7,84 +7,61 @@
 #ifndef WORLD_H
 #define WORLD_H
 
-#include <map>
-#include <string>
-#include <vector>
+#include <memory>                            // for unique_ptr
+#include <string>                            // for hash, string
+#include <unordered_map>                     // for unordered_map
+#include <vector>                            // for vector
 
-namespace rs
+#include "antenna/antenna_factory.h"         // for Antenna
+#include "math_utils/multipath_surface.h"    // for MultipathSurface
+#include "radar/platform.h"                  // for Platform
+#include "radar/radar_system.h"              // for Receiver, Transmitter
+#include "radar/target.h"                    // for Target
+#include "signal_processing/radar_signal.h"  // for RadarSignal
+#include "timing/prototype_timing.h"         // for PrototypeTiming
+
+namespace core
 {
-	class Receiver;
-	class Transmitter;
-	class RadarSignal;
-	class Antenna;
-	class Target;
-	class Platform;
-	class PrototypeTiming;
-	class MultipathSurface;
-
 	class World
 	{
 	public:
-		World() : _multipath_surface(nullptr)
-		{
-		}
+		World() = default;
 
-		~World();
+		~World() = default;
 
-		void add(Platform* plat)
-		{
-			_platforms.push_back(plat);
-		}
+		void add(std::unique_ptr<radar::Platform> plat);
 
-		void add(Transmitter* trans)
-		{
-			_transmitters.push_back(trans);
-		}
+		void add(std::unique_ptr<radar::Transmitter> trans);
 
-		void add(Receiver* recv)
-		{
-			_receivers.push_back(recv);
-		}
+		void add(std::unique_ptr<radar::Receiver> recv);
 
-		void add(Target* target)
-		{
-			_targets.push_back(target);
-		}
+		void add(std::unique_ptr<radar::Target> target);
 
-		void add(RadarSignal* pulse);
+		void add(std::unique_ptr<signal::RadarSignal> pulse);
 
-		void add(Antenna* antenna);
+		void add(std::unique_ptr<antenna::Antenna> antenna);
 
-		void add(PrototypeTiming* timing);
+		void add(std::unique_ptr<timing::PrototypeTiming> timing);
 
-		void addMultipathSurface(MultipathSurface* surface);
+		void addMultipathSurface(std::unique_ptr<math::MultipathSurface> surface);
 
-		RadarSignal* findSignal(const std::string& name)
-		{
-			return _pulses[name];
-		}
+		[[nodiscard]] signal::RadarSignal* findSignal(const std::string& name);
 
-		Antenna* findAntenna(const std::string& name)
-		{
-			return _antennas[name];
-		}
+		[[nodiscard]] antenna::Antenna* findAntenna(const std::string& name);
 
-		PrototypeTiming* findTiming(const std::string& name)
-		{
-			return _timings[name];
-		}
+		[[nodiscard]] timing::PrototypeTiming* findTiming(const std::string& name);
 
-		[[nodiscard]] std::vector<Target*> getTargets() const
+		[[nodiscard]] const std::vector<std::unique_ptr<radar::Target>>& getTargets() const noexcept
 		{
 			return _targets;
 		}
 
-		[[nodiscard]] std::vector<Receiver*> getReceivers() const
+		[[nodiscard]] const std::vector<std::unique_ptr<radar::Receiver>>& getReceivers() const noexcept
 		{
 			return _receivers;
 		}
 
-		[[nodiscard]] std::vector<Transmitter*> getTransmitters() const
+		[[nodiscard]] const std::vector<std::unique_ptr<radar::Transmitter>>& getTransmitters() const noexcept
 		{
 			return _transmitters;
 		}
@@ -92,14 +69,14 @@ namespace rs
 		void processMultipath();
 
 	private:
-		std::vector<Platform*> _platforms;
-		std::vector<Transmitter*> _transmitters;
-		std::vector<Receiver*> _receivers;
-		std::vector<Target*> _targets;
-		std::map<std::string, RadarSignal*> _pulses;
-		std::map<std::string, Antenna*> _antennas;
-		std::map<std::string, PrototypeTiming*> _timings;
-		MultipathSurface* _multipath_surface;
+		std::vector<std::unique_ptr<radar::Platform>> _platforms;
+		std::vector<std::unique_ptr<radar::Transmitter>> _transmitters;
+		std::vector<std::unique_ptr<radar::Receiver>> _receivers;
+		std::vector<std::unique_ptr<radar::Target>> _targets;
+		std::unordered_map<std::string, std::unique_ptr<signal::RadarSignal>> _pulses;
+		std::unordered_map<std::string, std::unique_ptr<antenna::Antenna>> _antennas;
+		std::unordered_map<std::string, std::unique_ptr<timing::PrototypeTiming>> _timings;
+		std::unique_ptr<math::MultipathSurface> _multipath_surface;
 	};
 }
 

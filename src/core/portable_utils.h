@@ -7,31 +7,41 @@
 #define PORTABLE_UTILS_H
 
 #include <cmath>
-#include <cstring>
 #include <thread>
 
-namespace portable_utils
+#include "config.h"
+
+namespace core
 {
-	// strcasecmp is a GNU extension
-	inline int stricmp(const char* one, const char* two)
+	/**
+	 * \brief Computes the Bessel function of the first kind (order 1) for a given value.
+	 *
+	 * This function uses the standardized C++20 <cmath> library function std::cyl_bessel_j.
+	 *
+	 * \param x The value for which the Bessel function is to be computed.
+	 * \return The computed value of the Bessel function of the first kind (order 1).
+	 */
+	inline RealType besselJ1(const RealType x)
 	{
-		// Note: This function is not used in the codebase
-		return strcasecmp(one, two);
+		return std::cyl_bessel_j(1, x);
 	}
 
-	// j1 is non-standard, but found on many platforms
-	inline RS_FLOAT besselJ1(const RS_FLOAT x) // TODO: only used in antenna_factory.cpp
+	/**
+	 * \brief Detects the number of CPUs in the machine.
+	 *
+	 * This function attempts to detect the number of hardware threads (CPUs) available on the machine.
+	 * If the detection fails, it logs an error and returns 1 as a fallback.
+	 *
+	 * \return The number of CPUs detected, or 1 if detection fails.
+	 */
+	inline unsigned countProcessors()
 	{
-		return j1(x);
-	}
-
-	// Detect the number of CPUs in the machine
-	inline unsigned countProcessors() // TODO: only used in main.cpp
-	{
-		const unsigned hardware_threads = std::thread::hardware_concurrency();
-		return hardware_threads
-			       ? hardware_threads
-			       : (logging::printf(logging::RS_IMPORTANT, "[IMPORTANT] Unable to get CPU count, assuming 1.\n"), 1);
+		if (const unsigned hardware_threads = std::thread::hardware_concurrency(); hardware_threads > 0)
+		{
+			return hardware_threads;
+		}
+		LOG(logging::Level::ERROR, "Unable to get CPU count, assuming 1.");
+		return 1;
 	}
 }
 

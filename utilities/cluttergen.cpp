@@ -1,8 +1,9 @@
 /// One dimensional clutter generator, this is an extremely over-simplified program
 
-#include <fstream>
-#include <iostream>
-#include <boost/random.hpp>
+#include <fstream>   // for operator<<, basic_ostream, char_traits, basic_of...
+#include <iostream>  // for cin, cout
+#include <random>    // for normal_distribution, random_device, uniform_real...
+#include <string>    // for operator>>, string
 
 using namespace std;
 
@@ -26,29 +27,30 @@ int main()
 	double time = 0;
 	if (spread != 0)
 	{
-		cout << "Simulation end time";
+		cout << "Simulation end time: ";
 		cin >> time;
 	}
 	string filename;
-	cout << "Filename:";
+	cout << "Filename: ";
 	cin >> filename;
-	//Open the file
+	// Open the file
 	ofstream fo(filename.c_str());
-	//Create the rng
-	boost::mt19937 rng;
-	boost::uniform_real ud(start_range, start_range + range);
-	boost::normal_distribution<> nd(0, spread);
-	boost::variate_generator<boost::mt19937&, boost::uniform_real<>> gen(rng, ud);
-	boost::variate_generator<boost::mt19937&, boost::normal_distribution<>> sprgen(rng, nd);
+	// Create the rng
+	random_device rd;
+	mt19937 rng(rd());
+
+	uniform_real_distribution ud(start_range, start_range + range);
+	normal_distribution<> nd(0, spread);
+
 	fo << "<incblock>";
 	for (int i = 0; i < samples; i++)
 	{
 		fo << "<platform name=\"clutter\">\n";
 		fo << "<motionpath interpolation=\"cubic\">\n";
-		double pos = gen();
+		double pos = ud(rng);
 		fo << "<positionwaypoint>\n<x>" << pos <<
 			"</x>\n<y>0</y>\n<altitude>0</altitude>\n<time>0</time>\n</positionwaypoint>\n";
-		fo << "<positionwaypoint>\n<x>" << pos + time * sprgen() << "</x>\n<y>0</y>\n<altitude>0</altitude>\n<time>" <<
+		fo << "<positionwaypoint>\n<x>" << pos + time * nd(rng) << "</x>\n<y>0</y>\n<altitude>0</altitude>\n<time>" <<
 			time << "</time>\n</positionwaypoint>\n";
 		fo << "</motionpath>\n";
 		fo <<

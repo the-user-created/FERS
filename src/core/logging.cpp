@@ -1,46 +1,109 @@
 // logging.cpp
-// Message support functions and debug levels
-// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-// 20 March 2006
+// Created by David Young on 9/20/24.
+//
 
 #include "logging.h"
 
-#include <cstdarg>
-#include <cstdio>
-#include <iostream>
-#include <sstream>
-#include <boost/thread/mutex.hpp>
+#include <ctime>          // for localtime_r, time_t, tm
+#include <filesystem>     // for path
+#include <iomanip>        // for operator<<, setw, put_time
+#include <iostream>       // for cerr
+#include <sstream>        // for basic_ostringstream
+#include <stdexcept>      // for runtime_error
+#include <bits/chrono.h>  // for system_clock
 
 namespace logging
 {
-	Level debug_level = RS_VERY_VERBOSE;
-	boost::mutex debug_mutex;
+	/**
+	 * @brief Global logger object.
+	 */
+	Logger logger;
 
-	void print(const Level level, const std::string& str, const std::string& file, const int line)
+	/**
+	 * @brief Converts a log level to its string representation.
+	 * @param level The log level.
+	 * @return The string representation of the log level.
+	 */
+	std::string Logger::getLevelString(const Level level)
 	{
-		if (level >= debug_level)
+		switch (level)
 		{
-			boost::mutex::scoped_lock lock(debug_mutex);
+		case Level::TRACE: return "TRACE";
+		case Level::DEBUG: return "DEBUG";
+		case Level::INFO: return "INFO";
+		case Level::WARNING: return "WARNING";
+		case Level::ERROR: return "ERROR";
+		case Level::FATAL: return "FATAL";
+		default: return "UNKNOWN";
+		}
+	}
+
+	/**
+	 * @brief Gets the current timestamp as a string.
+	 * @return The current timestamp.
+	 */
+	std::string Logger::getCurrentTimestamp()
+	{
+		const auto now = std::chrono::system_clock::now();
+		const std::time_t time = std::chrono::system_clock::to_time_t(now);
+		std::tm tm{};
+		localtime_r(&time, &tm);
+
+		std::ostringstream oss;
+		oss << std::put_time(&tm, "%Y-%m-%d %H:%M:%S");
+		return oss.str();
+	}
+
+	/**
+	 * @brief Logs a message with a specific log level and source location.
+	 * @param level The log level.
+	 * @param message The message to log.
+	 * @param location The source location of the log call.
+	 */
+	void Logger::log(const Level level, const std::string& message, const std::source_location location)
+	{
+		if (level >= _log_level)
+		{
+			std::scoped_lock lock(_log_mutex);
+
+			// Extract only the filename from the full path
+			const std::string filename = std::filesystem::path(location.file_name()).filename().string();
+
+			const std::string file_line = filename + ":" + std::to_string(location.line());
+
 			std::ostringstream oss;
-			oss << "[" << file << " " << line << "] " << str << "\n";
+			// Format each component with fixed width
+			oss << "[" << getCurrentTimestamp() << "] "
+				<< "[" << std::setw(7) << std::left << getLevelString(level) << "] " // Log level (fixed width of 8)
+				<< "[" << std::setw(30) << std::left << file_line << "] " // Filename:Line (fixed width)
+				<< message << std::endl;
+
+			// Log to console
 			std::cerr << oss.str();
+
+			// Log to file if opened
+			if (_log_file.is_open()) { _log_file << oss.str(); }
 		}
 	}
 
-	void printf(const Level level, const char* format, ...)
+	/**
+	 * @brief Sets the log file path to log messages to a file.
+	 * @param filePath The path to the log file.
+	 */
+	void Logger::logToFile(const std::string& filePath)
 	{
-		if (level >= debug_level)
-		{
-			boost::mutex::scoped_lock lock(debug_mutex);
-			va_list ap;
-			va_start(ap, format);
-			vfprintf(stderr, format, ap);
-			va_end(ap);
-		}
+		std::scoped_lock lock(_log_mutex);
+		if (_log_file.is_open()) { _log_file.close(); }
+		_log_file.open(filePath, std::ios::out | std::ios::app);
+		if (!_log_file) { throw std::runtime_error("Unable to open log file: " + filePath); }
 	}
 
-	void setDebugLevel(const Level level)
+	/**
+	 * @brief Stops logging to the file.
+	 */
+	void Logger::stopLoggingToFile()
 	{
-		if (level <= RS_EXTREMELY_CRITICAL) { debug_level = level; }
+		std::scoped_lock lock(_log_mutex);
+		if (_log_file.is_open()) { _log_file.close(); }
 	}
 }

@@ -5,20 +5,30 @@
 
 #include "platform.h"
 
-using namespace rs;
+#include "core/logging.h"  // for log, LOG, Level
 
-Platform::~Platform()
+namespace math
 {
-	delete _motion_path;
-	delete _rotation_path;
+	class MultipathSurface;
 }
 
-Platform* rs::createMultipathDual(const Platform* plat, const MultipathSurface* surf)
+namespace radar
 {
-	if (plat->getDual()) { return plat->getDual(); }
-	auto* dual = new Platform(plat->getName() + "_dual");
-	const_cast<Platform*>(plat)->setDual(dual);
-	dual->setMotionPath(reflectPath(plat->getMotionPath(), surf));
-	dual->setRotationPath(reflectPath(plat->getRotationPath(), surf));
-	return dual;
+	Platform* createMultipathDual(Platform* plat, const math::MultipathSurface* surf)
+	{
+		if (const auto dual = plat->getDual(); dual.has_value())
+		{
+			LOG(logging::Level::TRACE, "Dual platform already exists. Returning existing dual platform.");
+			return *dual;
+		}
+
+		auto dual = std::make_unique<Platform>(plat->getName() + "_dual");
+
+		dual->setMotionPath(reflectPath(plat->getMotionPath(), surf));
+		dual->setRotationPath(reflectPath(plat->getRotationPath(), surf));
+
+		plat->setDual(dual.get());
+
+		return dual.release(); // Transfer ownership of dual
+	}
 }

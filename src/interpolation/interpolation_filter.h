@@ -6,44 +6,42 @@
 #ifndef INTERPOLATION_FILTER_H
 #define INTERPOLATION_FILTER_H
 
-#include <boost/thread/mutex.hpp>
+#include <cmath>
+#include <span>
+#include <vector>
+
 #include "config.h"
 
-inline boost::mutex interp_mutex;
-
-namespace interp_filt
+namespace interp
 {
 	class InterpFilter
 	{
 	public:
-		static RS_FLOAT sinc(const RS_FLOAT x) { return x == 0.0 ? 1.0 : std::sin(x * M_PI) / (x * M_PI); }
-
-		[[nodiscard]] RS_FLOAT kaiserWinCompute(const RS_FLOAT x) const
+		// constexpr for compile-time evaluation
+		static constexpr RealType sinc(const RealType x) noexcept
 		{
-			return x < 0 || x > _alpha * 2
-				       ? 0
-				       : besselI0(_beta * std::sqrt(1 - std::pow((x - _alpha) / _alpha, 2))) / _bessel_beta;
+			return x == 0.0 ? 1.0 : std::sin(x * PI) / (x * PI);
 		}
 
-		[[nodiscard]] RS_FLOAT interpFilter(const RS_FLOAT x) const { return kaiserWinCompute(x + _alpha) * sinc(x); }
+		[[nodiscard]] RealType kaiserWinCompute(RealType x) const noexcept;
 
-		[[nodiscard]] const RS_FLOAT* getFilter(RS_FLOAT delay) const;
+		[[nodiscard]] RealType interpFilter(RealType x) const noexcept;
 
-		static InterpFilter* getInstance();
+		[[nodiscard]] std::span<const RealType> getFilter(RealType delay) const;
+
+		static InterpFilter& getInstance();
 
 	private:
-		static RS_FLOAT besselI0(RS_FLOAT x);
+		static RealType besselI0(RealType x);
 
 		InterpFilter();
 
-		static InterpFilter* _instance;
-
-		RS_FLOAT _alpha;
-		RS_FLOAT _beta;
-		RS_FLOAT _bessel_beta;
+		RealType _alpha;
+		RealType _beta = 5; // Beta sets the window shape
+		RealType _bessel_beta;
 		int _length;
 		int _table_filters;
-		RS_FLOAT* _filter_table;
+		std::vector<RealType> _filter_table;
 	};
 }
 

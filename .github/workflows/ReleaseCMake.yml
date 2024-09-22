@@ -17,21 +17,35 @@ jobs:
       - name: Set up environment  # Update package lists and install required packages
         run: |
           apt-get update && apt-get install -y \
-          libboost-all-dev \
           libhdf5-dev \
           libhdf5-serial-dev \
           build-essential \
           cmake \
           cmake-qt-gui \
-          python3-dev \
           libtinyxml-dev \
-          libxerces-c-dev
+          libxerces-c-dev \
+          lsb-release
+
+      - name: Set up Python  # Install Python 3.11, pip, and venv
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Install dependencies in virtual environment  # Create venv and install dependencies
+        run: |
+          python3 -m venv venv
+          . ../venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
 
       - name: Generate and Build FERS
         run: |
           mkdir -p build
           cd build
+          . ../venv/bin/activate
           cmake -S .. -B . \
+            -D Python_EXECUTABLE=$(which python3) \
+            -D CMAKE_BUILD_TYPE=Release \
             -D FERS_LIB_HDF5="/usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5.so" \
             -D FERS_LIB_HDF5_HL="/usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5_hl.so" \
             -D CMAKE_CXX_FLAGS="-I/usr/include/hdf5/serial/"
