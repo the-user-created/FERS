@@ -5,16 +5,29 @@
 
 #include "radar_system.h"
 
-#include <algorithm>
-#include <stack>
+#include <algorithm>                        // for __sort_fn, sort
+#include <cmath>                            // for floor, ceil
+#include <limits>                           // for numeric_limits
+#include <span>                             // for span
+#include <stack>                            // for stack
+#include <stdexcept>                        // for runtime_error, logic_error
+#include <system_error>                     // for system_error
+#include <typeinfo>                         // for type_info
 
-#include "core/logging.h"
-#include "core/parameters.h"
-#include "math_utils/multipath_surface.h"
-#include "serialization/receiver_export.h"
+#include "antenna/antenna_factory.h"        // for Antenna
+#include "core/logging.h"                   // for log, LOG, Level
+#include "core/parameters.h"                // for endTime, oversampleRatio
+#include "math_utils/multipath_surface.h"   // for MultipathSurface
+#include "radar/platform.h"                 // for createMultipathDual, Plat...
+#include "serialization/receiver_export.h"  // for exportReceiverBinary, exp...
 
 using logging::Level;
 using math::MultipathSurface;
+
+namespace math
+{
+	class SVec3;
+}
 
 namespace radar
 {
@@ -24,15 +37,9 @@ namespace radar
 	//
 	// =================================================================================================================
 	RealType Radar::getGain(const math::SVec3& angle, const math::SVec3& refangle,
-									   const RealType wavelength) const
-	{
-		return _antenna->getGain(angle, refangle, wavelength);
-	}
+	                        const RealType wavelength) const { return _antenna->getGain(angle, refangle, wavelength); }
 
-	RealType Radar::getNoiseTemperature(const math::SVec3& angle) const
-	{
-		return _antenna->getNoiseTemperature(angle);
-	}
+	RealType Radar::getNoiseTemperature(const math::SVec3& angle) const { return _antenna->getNoiseTemperature(angle); }
 
 	void Radar::setTiming(const std::shared_ptr<timing::Timing>& tim)
 	{
@@ -183,7 +190,8 @@ namespace radar
 	// =================================================================================================================
 
 	template <typename T>
-	T* createMultipathDualBase(T* obj, const MultipathSurface* surf, const std::string& dualNameSuffix) // NOLINT(misc-no-recursion)
+	T* createMultipathDualBase(T* obj, const MultipathSurface* surf, const std::string& dualNameSuffix)
+	// NOLINT(misc-no-recursion)
 	{
 		if (obj->getDual())
 		{

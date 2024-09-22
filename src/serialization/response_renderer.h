@@ -6,13 +6,14 @@
 #ifndef RESPONSE_RENDERER_H
 #define RESPONSE_RENDERER_H
 
-#include <memory>
-#include <optional>
-#include <queue>
-#include <span>
-#include <vector>
+#include <memory>    // for unique_ptr
+#include <mutex>     // for mutex
+#include <optional>  // for optional
+#include <queue>     // for queue
+#include <span>      // for span
+#include <vector>    // for vector
 
-#include "config.h"
+#include "config.h"  // for RealType, ComplexType
 
 namespace radar
 {

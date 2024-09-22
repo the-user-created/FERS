@@ -6,11 +6,12 @@
 #ifndef PROTOTYPE_TIMING_H
 #define PROTOTYPE_TIMING_H
 
-#include <optional>
-#include <string>
-#include <vector>
+#include <optional>  // for optional
+#include <string>    // for string
+#include <utility>   // for move
+#include <vector>    // for vector
 
-#include "config.h"
+#include "config.h"  // for RealType
 
 namespace timing
 {

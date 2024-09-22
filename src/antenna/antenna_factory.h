@@ -6,13 +6,16 @@
 #ifndef ANTENNA_FACTORY_H
 #define ANTENNA_FACTORY_H
 
-#include <memory>
-#include <string>
+#include <memory>                             // for make_unique, unique_ptr
+#include <string>                             // for string
+#include <string_view>                        // for string_view
+#include <utility>                            // for move
 
-#include "antenna_pattern.h"
-#include "interpolation/interpolation_set.h"
-#include "math_utils/geometry_ops.h"
-#include "python/python_extension.h"
+#include "antenna_pattern.h"                  // for Pattern
+#include "config.h"                           // for RealType
+#include "interpolation/interpolation_set.h"  // for InterpSet
+#include "math_utils/geometry_ops.h"          // for operator-, SVec3
+#include "python/python_extension.h"          // for PythonAntennaMod
 
 namespace antenna
 {

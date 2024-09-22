@@ -5,8 +5,13 @@
 
 #include "interpolation_set.h"
 
-#include <algorithm>
-#include <ranges>
+#include <algorithm>       // for __max_element_fn, max_element
+#include <cstddef>        // for size_t
+#include <iterator>        // for prev
+#include <ranges>          // for operator==, operator|, elements_view, values
+#include <stdexcept>       // for invalid_argument
+#include <utility>         // for pair
+#include <bits/std_abs.h>  // for abs
 
 namespace interp
 {

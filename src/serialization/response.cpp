@@ -7,12 +7,15 @@
 
 #include "response.h"
 
-#include <iomanip>
-#include <memory>
-#include <tinyxml.h>
+#include <cmath>                             // for sqrt, cos, sin
+#include <iomanip>                           // for operator<<, setprecision
+#include <memory>                            // for make_unique, unique_ptr
+#include <sstream>                           // for basic_ostringstream
+#include <stdexcept>                         // for logic_error
+#include <tinyxml.h>                         // for TiXmlElement, TiXmlText
 
-#include "radar/radar_system.h"
-#include "signal_processing/radar_signal.h"
+#include "radar/radar_system.h"              // for Transmitter
+#include "signal_processing/radar_signal.h"  // for RadarSignal
 
 using interp::InterpPoint;
 

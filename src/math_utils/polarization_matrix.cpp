@@ -5,6 +5,8 @@
 
 #include "polarization_matrix.h"
 
+#include <complex>  // for complex
+
 namespace math
 {
 	// Default constructor

@@ -5,8 +5,10 @@
 
 #include "python_extension.h"
 
-#include "core/logging.h"
-#include "math_utils/geometry_ops.h"
+#include <Python.h>
+
+#include "core/logging.h"             // for log, LOG, Level
+#include "math_utils/geometry_ops.h"  // for Vec3, SVec3
 
 using logging::Level;
 using math::Vec3;

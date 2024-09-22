@@ -5,6 +5,7 @@
 
 #ifndef COORD_H
 #define COORD_H
+
 #include "geometry_ops.h"
 
 namespace math

@@ -7,15 +7,18 @@
 #ifndef WORLD_H
 #define WORLD_H
 
-#include <memory>
-#include <unordered_map>
-#include <vector>
+#include <memory>                            // for unique_ptr
+#include <string>                            // for hash, string
+#include <unordered_map>                     // for unordered_map
+#include <vector>                            // for vector
 
-#include "math_utils/multipath_surface.h"
-#include "radar/radar_system.h"
-#include "radar/target.h"
-#include "signal_processing/radar_signal.h"
-#include "timing/prototype_timing.h"
+#include "antenna/antenna_factory.h"         // for Antenna
+#include "math_utils/multipath_surface.h"    // for MultipathSurface
+#include "radar/platform.h"                  // for Platform
+#include "radar/radar_system.h"              // for Receiver, Transmitter
+#include "radar/target.h"                    // for Target
+#include "signal_processing/radar_signal.h"  // for RadarSignal
+#include "timing/prototype_timing.h"         // for PrototypeTiming
 
 namespace core
 {

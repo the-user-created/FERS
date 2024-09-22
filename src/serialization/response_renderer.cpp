@@ -7,10 +7,12 @@
 
 #include "response_renderer.h"
 
-#include <thread>
+#include <cmath>              // for ceil, round
+#include <complex>            // for complex
+#include <thread>             // for jthread
 
-#include "response.h"
-#include "core/parameters.h"
+#include "response.h"         // for Response
+#include "core/parameters.h"  // for oversampleRatio, rate
 
 namespace
 {

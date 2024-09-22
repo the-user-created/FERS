@@ -6,16 +6,17 @@
 #ifndef PYTHON_EXTENSION_H
 #define PYTHON_EXTENSION_H
 
-#include <memory>
-#include <Python.h>
-#include <string>
+#include <memory>        // for unique_ptr
+#include <pytypedefs.h>  // for PyObject
+#include <string>        // for string
+#include <string_view>   // for string_view
 
-#include "config.h"
+#include "config.h"      // for RealType
 
 namespace math
 {
-	struct Vec3;
-	struct SVec3;
+	class Vec3;
+	class SVec3;
 }
 
 namespace python

@@ -19,7 +19,7 @@ endif ()
 
 if (CMAKE_COMPILER_IS_GNUCXX)
 	message(STATUS "Setting compiler flags for GNU C++ compiler")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pthread -ffast-math")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pthread -ffast-math -fno-finite-math-only")
 
 	if (CMAKE_BUILD_TYPE MATCHES "Release")
 		message(STATUS "Setting compiler flags for Release")
@@ -37,4 +37,3 @@ endif ()
 add_definitions(-D_REENTRANT)
 
 add_subdirectory(src)
-add_subdirectory(utilities)

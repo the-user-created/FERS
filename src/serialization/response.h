@@ -6,11 +6,12 @@
 #ifndef RESPONSE_H
 #define RESPONSE_H
 
-#include <fstream>
-#include <vector>
+#include <fstream>                              // for ofstream
+#include <string>                               // for string
+#include <vector>                               // for vector
 
-#include "config.h"
-#include "interpolation/interpolation_point.h"
+#include "config.h"                             // for RealType, ComplexType
+#include "interpolation/interpolation_point.h"  // for InterpPoint
 
 class TiXmlElement;
 

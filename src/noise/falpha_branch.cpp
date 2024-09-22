@@ -5,11 +5,15 @@
 
 #include "falpha_branch.h"
 
-#include <cmath>
+#include <array>                            // for array
+#include <cmath>                            // for pow
+#include <span>                             // for span
+#include <stdexcept>                        // for runtime_error
+#include <utility>                          // for move
 
-#include "noise_utils.h"
-#include "core/logging.h"
-#include "signal_processing/dsp_filters.h"
+#include "noise_utils.h"                    // for wgnSample
+#include "core/logging.h"                   // for log, LOG, Level
+#include "signal_processing/dsp_filters.h"  // for IirFilter, DecadeUpsampler
 
 using logging::Level;
 using signal::IirFilter;

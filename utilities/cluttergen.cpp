@@ -1,8 +1,9 @@
 /// One dimensional clutter generator, this is an extremely over-simplified program
 
-#include <fstream>
-#include <iostream>
-#include <random>
+#include <fstream>   // for operator<<, basic_ostream, char_traits, basic_of...
+#include <iostream>  // for cin, cout
+#include <random>    // for normal_distribution, random_device, uniform_real...
+#include <string>    // for operator>>, string
 
 using namespace std;
 

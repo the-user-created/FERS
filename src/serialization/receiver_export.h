@@ -7,8 +7,9 @@
 #ifndef RECEIVER_EXPORT_H
 #define RECEIVER_EXPORT_H
 
-#include <memory>
-#include <span>
+#include <memory>  // for unique_ptr
+#include <span>    // for span
+#include <string>  // for string
 
 namespace radar
 {

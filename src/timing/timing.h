@@ -6,12 +6,13 @@
 #ifndef TIMING_H
 #define TIMING_H
 
-#include <memory>
-#include <string>
-#include <vector>
+#include <memory>                    // for unique_ptr
+#include <string>                    // for string
+#include <utility>                   // for move
+#include <vector>                    // for vector
 
-#include "config.h"
-#include "noise/noise_generators.h"
+#include "config.h"                  // for RealType
+#include "noise/noise_generators.h"  // for ClockModelGenerator
 
 namespace timing
 {

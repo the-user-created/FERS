@@ -5,7 +5,11 @@
 
 #include "antenna_pattern.h"
 
-#include "math_utils/geometry_ops.h"
+#include <algorithm>                  // for min
+#include <cmath>                      // for floor
+#include <utility>                    // for pair
+
+#include "math_utils/geometry_ops.h"  // for SVec3
 
 constexpr RealType TWO_PI = 2.0 * PI; // Constant for 2*π
 

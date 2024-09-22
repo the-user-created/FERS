@@ -6,11 +6,14 @@
 #ifndef NOISE_GENERATORS_H
 #define NOISE_GENERATORS_H
 
-#include <memory>
-#include <random>
+#include <memory>                     // for unique_ptr
+#include <random>                     // for normal_distribution, default_ra...
+#include <string>                     // for char_traits, string
+#include <vector>                     // for vector
 
-#include "falpha_branch.h"
-#include "python/python_extension.h"
+#include "config.h"                   // for RealType
+#include "falpha_branch.h"            // for FAlphaBranch
+#include "python/python_extension.h"  // for PythonNoise
 
 namespace noise
 {

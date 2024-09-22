@@ -4,8 +4,13 @@
 
 #include "logging.h"
 
-#include <filesystem>
-#include <iostream>
+#include <ctime>          // for localtime_r, time_t, tm
+#include <filesystem>     // for path
+#include <iomanip>        // for operator<<, setw, put_time
+#include <iostream>       // for cerr
+#include <sstream>        // for basic_ostringstream
+#include <stdexcept>      // for runtime_error
+#include <bits/chrono.h>  // for system_clock
 
 namespace logging
 {

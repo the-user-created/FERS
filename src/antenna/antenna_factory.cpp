@@ -7,11 +7,18 @@
 
 #include "antenna_factory.h"
 
-#include <tinyxml.h>
+#include <algorithm>                  // for max
+#include <cmath>                      // for pow, sin, exp, acos
+#include <complex>                    // for operator*, abs, complex, pow
+#include <limits>                     // for numeric_limits
+#include <optional>                   // for optional
+#include <stdexcept>                  // for runtime_error
+#include <tinyxml.h>                  // for TiXmlHandle, TiXmlDocument, TiX...
+#include <bits/std_abs.h>             // for abs
 
-#include "core/logging.h"
-#include "core/portable_utils.h"
-#include "math_utils/geometry_ops.h"
+#include "core/logging.h"             // for log, LOG, Level
+#include "core/portable_utils.h"      // for besselJ1
+#include "math_utils/geometry_ops.h"  // for SVec3, Vec3, operator-, dotProduct
 
 using logging::Level;
 using math::SVec3;

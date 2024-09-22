@@ -7,9 +7,13 @@
 
 #include "target.h"
 
-#include <tinyxml.h>
+#include <cmath>                      // for sqrt
+#include <optional>                   // for optional
+#include <stdexcept>                  // for runtime_error
+#include <tinyxml.h>                  // for TiXmlHandle, TiXmlDocument, TiX...
 
-#include "core/logging.h"
+#include "core/logging.h"             // for log, LOG, Level
+#include "math_utils/geometry_ops.h"  // for SVec3, operator+
 
 using math::SVec3;
 
@@ -36,6 +40,8 @@ namespace
 
 namespace radar
 {
+	class Platform;
+
 	RealType IsoTarget::getRcs(SVec3& inAngle, SVec3& outAngle) const
 	{
 		return _model ? _rcs * _model->sampleModel() : _rcs;
