@@ -6,12 +6,14 @@
 #ifndef RADAR_SIGNAL_H
 #define RADAR_SIGNAL_H
 
-#include <memory>
-#include <span>
-#include <vector>
+#include <memory>          // for unique_ptr
+#include <span>            // for span
+#include <string>          // for string
+#include <tuple>           // for tuple
+#include <vector>          // for vector
 
-#include "config.h"
-#include "jones_vector.h"
+#include "config.h"        // for RealType, ComplexType
+#include "jones_vector.h"  // for JonesVector
 
 namespace interp
 {

@@ -5,12 +5,19 @@
 
 #include "hdf5_handler.h"
 
-#include <H5Gpublic.h>
-#include <H5LTpublic.h>
-#include <H5Ppublic.h>
-#include <iomanip>
+#include <complex>            // for complex
+#include <cstddef>            // for size_t
+#include <H5Gpublic.h>        // for H5Gclose, H5Gopen1
+#include <H5LTpublic.h>       // for H5LTget_dataset_info, H5LTget_dataset_n...
+#include <H5Ppublic.h>        // for H5Fclose, H5Fopen, H5P_DEFAULT, H5F_ACC...
+#include <iomanip>            // for operator<<, setfill, setw
+#include <sstream>            // for basic_ostream, basic_ostringstream, ope...
+#include <stdexcept>          // for runtime_error
 
-#include "core/parameters.h"
+#include "H5Ipublic.h"        // for hid_t
+#include "H5public.h"         // for hsize_t
+#include "H5Tpublic.h"        // for H5T_class_t
+#include "core/parameters.h"  // for rate
 
 namespace serial
 {

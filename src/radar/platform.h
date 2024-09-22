@@ -6,10 +6,20 @@
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
-#include <optional>
+#include <memory>                      // for unique_ptr, make_unique
+#include <optional>                    // for optional, nullopt, nullopt_t
+#include <string>                      // for string
+#include <utility>                     // for move
 
-#include "math_utils/path.h"
-#include "math_utils/rotation_path.h"
+#include "config.h"                    // for RealType
+#include "math_utils/geometry_ops.h"   // for Vec3, SVec3
+#include "math_utils/path.h"           // for Path
+#include "math_utils/rotation_path.h"  // for RotationPath
+
+namespace math
+{
+	class MultipathSurface;
+}
 
 namespace radar
 {

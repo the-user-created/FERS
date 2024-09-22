@@ -6,17 +6,26 @@
 #ifndef TARGET_H
 #define TARGET_H
 
-#include <concepts>
-#include <memory>
+#include <concepts>                           // for convertible_to
+#include <memory>                             // for unique_ptr, make_unique
+#include <string>                             // for string
+#include <utility>                            // for move
 
-#include "config.h"
-#include "object.h"
-#include "interpolation/interpolation_set.h"
-#include "math_utils/polarization_matrix.h"
-#include "noise/noise_generators.h"
+#include "config.h"                           // for RealType
+#include "object.h"                           // for Object
+#include "interpolation/interpolation_set.h"  // for InterpSet
+#include "math_utils/polarization_matrix.h"   // for PsMatrix
+#include "noise/noise_generators.h"           // for GammaGenerator
+
+namespace math
+{
+	class SVec3;
+}
 
 namespace radar
 {
+	class Platform;
+
 	// C++20 Concept for RcsModel to enforce `sampleModel` existence
 	template <typename T>
 	concept RcsModelConcept = requires(T a)

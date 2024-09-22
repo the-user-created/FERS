@@ -11,11 +11,28 @@
 
 #include "sim_threading.h"
 
-#include <execution>
-#include <thread>
+#include <algorithm>                            // for __for_each_fn, for_each
+#include <atomic>                               // for atomic, __atomic_base
+#include <cmath>                                // for ceil, pow, sqrt, fmod
+#include <functional>                           // for function
+#include <limits>                               // for numeric_limits
+#include <memory>                               // for unique_ptr, make_unique
+#include <ratio>                                // for ratio
+#include <stdexcept>                            // for runtime_error
+#include <thread>                               // for jthread, yield
+#include <utility>                              // for move
+#include <vector>                               // for vector
+#include <bits/chrono.h>                        // for duration, operator+
 
-#include "parameters.h"
-#include "world.h"
+#include "parameters.h"                         // for c, cwSampleRate
+#include "world.h"                              // for World
+#include "core/logging.h"                       // for log, LOG, Level
+#include "interpolation/interpolation_point.h"  // for InterpPoint
+#include "math_utils/geometry_ops.h"            // for SVec3, operator-, Vec3
+#include "radar/radar_system.h"                 // for Receiver, Transmitter
+#include "radar/target.h"                       // for Target
+#include "serialization/response.h"             // for Response
+#include "signal_processing/radar_signal.h"     // for RadarSignal
 
 using radar::Transmitter;
 using radar::Receiver;
@@ -130,7 +147,10 @@ namespace
 		const SVec3 transvec{tpos - rpos};
 		const RealType distance = transvec.length;
 
-		if (constexpr RealType epsilon = std::numeric_limits<RealType>::epsilon(); distance <= epsilon) { throw core::RangeError(); }
+		if (constexpr RealType epsilon = std::numeric_limits<RealType>::epsilon(); distance <= epsilon)
+		{
+			throw core::RangeError();
+		}
 
 		// Time delay calculation
 		results.delay = distance / params::c();

@@ -4,11 +4,16 @@
 //
 
 #include "path.h"
-#include "coord.h"
-#include "multipath_surface.h"
-#include "path_utils.h"
-#include "core/logging.h"
-#include "python/python_extension.h"
+
+#include <algorithm>                  // for __lower_bound_fn, lower_bound
+#include <stdexcept>                  // for logic_error, runtime_error
+
+#include "coord.h"                    // for Coord, operator*, operator+
+#include "multipath_surface.h"        // for MultipathSurface
+#include "path_utils.h"               // for PathException, finalizeCubic
+#include "core/logging.h"             // for log, LOG, Level
+#include "math_utils/geometry_ops.h"  // for Vec3
+#include "python/python_extension.h"  // for PythonPath
 
 using logging::Level;
 

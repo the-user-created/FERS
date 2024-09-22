@@ -6,13 +6,12 @@
 #ifndef INTERPOLATION_SET_H
 #define INTERPOLATION_SET_H
 
-#include <cmath>
-#include <map>
-#include <memory>
-#include <optional>
-#include <vector>
+#include <map>       // for map
+#include <memory>    // for unique_ptr, make_unique
+#include <optional>  // for optional
+#include <vector>    // for vector
 
-#include "config.h"
+#include "config.h"  // for RealType
 
 namespace interp
 {

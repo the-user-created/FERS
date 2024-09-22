@@ -6,21 +6,25 @@
 #ifndef RADAR_SYSTEM_H
 #define RADAR_SYSTEM_H
 
-#include <memory>
+#include <memory>                    // for unique_ptr, shared_ptr
+#include <mutex>                     // for mutex
+#include <string>                    // for string
+#include <utility>                   // for move
+#include <vector>                    // for vector
 
-#include "config.h"
-#include "object.h"
-#include "antenna/antenna_factory.h"
-#include "serialization/response.h"
+#include "config.h"                  // for RealType
+#include "object.h"                  // for Object
+#include "serialization/response.h"  // for Response
+
+namespace antenna
+{
+	class Antenna;
+}
 
 namespace math
 {
 	class MultipathSurface;
-}
-
-namespace timing
-{
-	class Timing;
+	class SVec3;
 }
 
 namespace signal
@@ -28,8 +32,15 @@ namespace signal
 	class RadarSignal;
 }
 
+namespace timing
+{
+	class Timing;
+}
+
 namespace radar
 {
+	class Platform;
+
 	struct TransmitterPulse
 	{
 		signal::RadarSignal* wave;

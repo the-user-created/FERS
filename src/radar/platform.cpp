@@ -5,7 +5,12 @@
 
 #include "platform.h"
 
-#include "core/logging.h"
+#include "core/logging.h"  // for log, LOG, Level
+
+namespace math
+{
+	class MultipathSurface;
+}
 
 namespace radar
 {

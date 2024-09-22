@@ -6,18 +6,18 @@
 #ifndef PATH_H
 #define PATH_H
 
-#include <memory>
-#include <string>
-#include <vector>
+#include <memory>                     // for unique_ptr
+#include <string_view>                // for string_view
+#include <vector>                     // for vector
 
-#include "config.h"
-#include "python/python_extension.h"
+#include "config.h"                   // for RealType
+#include "coord.h"                    // for Coord
+#include "python/python_extension.h"  // for PythonPath
 
 namespace math
 {
 	class MultipathSurface;
-	struct Coord;
-	struct Vec3;
+	class Vec3;
 
 	class Path
 	{

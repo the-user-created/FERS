@@ -5,6 +5,8 @@
 
 #include "multipath_surface.h"
 
+#include "math_utils/geometry_ops.h"  // for Vec3, Matrix3
+
 namespace math
 {
 	MultipathSurface::MultipathSurface(const RealType a, const RealType b, const RealType c, const RealType d,

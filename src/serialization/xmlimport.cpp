@@ -7,21 +7,32 @@
 
 #include "xmlimport.h"
 
-#include <functional>
-#include <stdexcept>
-#include <tinyxml.h>
+#include <cmath>                             // for floor, fabs
+#include <functional>                        // for function
+#include <memory>                            // for unique_ptr, make_unique
+#include <sstream>                           // for basic_istringstream, ope...
+#include <stdexcept>                         // for runtime_error
+#include <tinyxml.h>                         // for TiXmlHandle, TiXmlElement
+#include <utility>                           // for move
+#include <vector>                            // for vector
 
-#include "config.h"
-#include "core/logging.h"
-#include "core/parameters.h"
-#include "core/world.h"
-#include "math_utils/multipath_surface.h"
-#include "radar/platform.h"
-#include "radar/radar_system.h"
-#include "radar/target.h"
-#include "serialization/pulse_factory.h"
-#include "timing/prototype_timing.h"
-#include "timing/timing.h"
+#include "config.h"                          // for RealType
+#include "antenna/antenna_factory.h"         // for Antenna, FileAntenna
+#include "core/logging.h"                    // for log, LOG, Level
+#include "core/parameters.h"                 // for rate, adcBits, c, cwSamp...
+#include "core/world.h"                      // for World
+#include "math_utils/coord.h"                // for RotationCoord, Coord
+#include "math_utils/geometry_ops.h"         // for Vec3
+#include "math_utils/multipath_surface.h"    // for MultipathSurface
+#include "math_utils/path.h"                 // for Path
+#include "math_utils/rotation_path.h"        // for RotationPath
+#include "radar/platform.h"                  // for Platform
+#include "radar/radar_system.h"              // for Transmitter, Receiver
+#include "radar/target.h"                    // for RcsChiSquare, RcsConst
+#include "serialization/pulse_factory.h"     // for loadPulseFromFile
+#include "signal_processing/radar_signal.h"  // for RadarSignal
+#include "timing/prototype_timing.h"         // for PrototypeTiming
+#include "timing/timing.h"                   // for Timing
 
 using radar::Platform;
 using radar::Receiver;

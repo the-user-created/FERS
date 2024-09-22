@@ -7,10 +7,12 @@
 
 #define LOG(level, ...) log(level, std::source_location::current(), __VA_ARGS__)
 
-#include <format>
-#include <fstream>
-#include <mutex>
-#include <source_location>
+#include <format>           // for make_format_args, vformat
+#include <fstream>          // for basic_ofstream, ofstream
+#include <mutex>            // for mutex
+#include <source_location>  // for source_location
+#include <string>           // for string
+#include <utility>          // for forward
 
 namespace logging
 {

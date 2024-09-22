@@ -5,12 +5,19 @@
 
 #include "pulse_factory.h"
 
-#include <filesystem>
-#include <fstream>
+#include <complex>                           // for operator>>
+#include <cstddef>                           // for size_t
+#include <filesystem>                        // for path
+#include <fstream>                           // for char_traits, basic_istream
+#include <span>                              // for span
+#include <stdexcept>                         // for runtime_error
+#include <string_view>                       // for string_view
+#include <utility>                           // for move
+#include <vector>                            // for vector
 
-#include "config.h"
-#include "hdf5_handler.h"
-#include "signal_processing/radar_signal.h"
+#include "config.h"                          // for RealType, ComplexType
+#include "hdf5_handler.h"                    // for readPulseData
+#include "signal_processing/radar_signal.h"  // for Signal, RadarSignal
 
 using signal::Signal;
 using signal::RadarSignal;

@@ -5,12 +5,18 @@
 
 #include "radar_signal.h"
 
-#include <algorithm>
+#include <algorithm>                             // for __transform_fn, max
+#include <cmath>                                 // for sqrt, lerp, floor
+#include <compare>                               // for operator<
+#include <complex>                               // for complex, operator*, exp
+#include <iterator>                              // for next
+#include <stdexcept>                             // for runtime_error
+#include <utility>                               // for move
 
-#include "dsp_filters.h"
-#include "core/parameters.h"
-#include "interpolation/interpolation_filter.h"
-#include "interpolation/interpolation_point.h"
+#include "dsp_filters.h"                         // for upsample
+#include "core/parameters.h"                     // for oversampleRatio, ren...
+#include "interpolation/interpolation_filter.h"  // for InterpFilter
+#include "interpolation/interpolation_point.h"   // for InterpPoint
 
 namespace signal
 {

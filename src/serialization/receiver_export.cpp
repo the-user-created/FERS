@@ -6,17 +6,32 @@
 
 #include "receiver_export.h"
 
-#include <algorithm>
-#include <filesystem>
-#include <ranges>
-#include <tinyxml.h>
+#include <algorithm>                        // for clamp, max, __fill_fn
+#include <cmath>                            // for isnan, floor, fabs, round
+#include <complex>                          // for complex, polar
+#include <filesystem>                       // for path
+#include <format>                           // for format
+#include <fstream>                          // for basic_ofstream, basic_ios
+#include <map>                              // for map, _Rb_tree_iterator
+#include <numbers>                          // for pi
+#include <optional>                         // for optional
+#include <ranges>                           // for _Zip, views, zip, zip_view
+#include <stdexcept>                        // for runtime_error
+#include <tinyxml.h>                        // for TiXmlDeclaration, TiXmlDo...
+#include <tuple>                            // for tuple
+#include <utility>                          // for move, pair
+#include <vector>                           // for vector
 
-#include "hdf5_handler.h"
-#include "response_renderer.h"
-#include "core/parameters.h"
-#include "noise/noise_utils.h"
-#include "radar/radar_system.h"
-#include "timing/timing.h"
+#include "config.h"                         // for RealType, ComplexType
+#include "hdf5_handler.h"                   // for addChunkToFile, closeFile
+#include "response_renderer.h"              // for ThreadedResponseRenderer
+#include "core/parameters.h"                // for oversampleRatio, rate
+#include "noise/noise_generators.h"         // for WgnGenerator
+#include "noise/noise_utils.h"              // for noiseTemperatureToPower
+#include "radar/radar_system.h"             // for Receiver
+#include "serialization/response.h"         // for Response
+#include "signal_processing/dsp_filters.h"  // for downsample
+#include "timing/timing.h"                  // for Timing
 
 namespace fs = std::filesystem;
 

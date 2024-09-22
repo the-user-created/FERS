@@ -6,9 +6,10 @@
 #ifndef PULSE_FACTORY_H
 #define PULSE_FACTORY_H
 
-#include <memory>
+#include <memory>    // for unique_ptr
+#include <string>    // for string
 
-#include "config.h"
+#include "config.h"  // for RealType
 
 namespace signal
 {

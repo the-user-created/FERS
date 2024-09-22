@@ -5,10 +5,15 @@
 
 #include "dsp_filters.h"
 
-#include <algorithm>
-#include <numeric>
+#include <algorithm>          // for fill, copy_n, __rotate_fn, move, rotate
+#include <array>              // for array
+#include <cmath>              // for cos, sin
+#include <complex>            // for complex, operator*, operator/
+#include <cstddef>            // for ptrdiff_t, size_t
+#include <numeric>            // for inner_product
+#include <stdexcept>          // for invalid_argument, logic_error, runtime_...
 
-#include "core/parameters.h"
+#include "core/parameters.h"  // for renderFilterLength
 
 constexpr RealType BLACKMAN_A0 = 0.42;
 constexpr RealType BLACKMAN_A1 = 0.5;

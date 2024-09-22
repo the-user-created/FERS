@@ -5,10 +5,13 @@
 
 #include "rotation_path.h"
 
-#include <cmath>
+#include <algorithm>                  // for lower_bound
+#include <cmath>                      // for fmod
 
-#include "multipath_surface.h"
-#include "path_utils.h"
+#include "multipath_surface.h"        // for MultipathSurface
+#include "path_utils.h"               // for PathException, finalizeCubic
+#include "math_utils/coord.h"         // for RotationCoord, operator*, opera...
+#include "math_utils/geometry_ops.h"  // for SVec3, Vec3
 
 namespace math
 {
