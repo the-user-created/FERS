@@ -5,122 +5,106 @@
 
 #include "path.h"
 
-#include <stdexcept>
+#include <algorithm>                  // for __lower_bound_fn, lower_bound
+#include <stdexcept>                  // for logic_error, runtime_error
 
-#include "multipath_surface.h"
-#include "path_utils.h"
-#include "core/logging.h"
-#include "python/python_extension.h"
+#include "coord.h"                    // for Coord, operator*, operator+
+#include "multipath_surface.h"        // for MultipathSurface
+#include "path_utils.h"               // for PathException, finalizeCubic
+#include "core/logging.h"             // for log, LOG, Level
+#include "math_utils/geometry_ops.h"  // for Vec3
+#include "python/python_extension.h"  // for PythonPath
 
-namespace path
+using logging::Level;
+
+namespace math
 {
-	Path::Path(const InterpType type):
-		_final(false), _type(type)
+	void Path::addCoord(const Coord& coord)
 	{
-		_pythonpath = nullptr; //No python path, until loaded
-	}
+		// Custom comparator to compare Coord objects based on the member pointer &Coord::t
+		auto comp = [](const Coord& a, const Coord& b) { return a.t < b.t; };
 
-	void Path::addCoord(const coord::Coord& coord)
-	{
-		//Find the position to insert the coordinate, preserving sort
-		const auto iter = lower_bound(_coords.begin(), _coords.end(), coord);
-		//Insert the new coordinate
+		// Insert the new coordinate while preserving sort order using std::ranges
+		const auto iter = std::ranges::lower_bound(_coords, coord, comp);
 		_coords.insert(iter, coord);
-		//We are not finalized if we have inserted a coord
-		_final = false;
+		_final = false; // Invalidate the finalization after inserting a new coordinate
 	}
 
-	//Get the position of the path object at a specified time
-	rs::Vec3 Path::getPosition(const RS_FLOAT t) const
+	Vec3 Path::getPosition(const RealType t) const
 	{
-		coord::Coord coord;
 		if (!_final) { throw PathException("Finalize not called before GetPosition"); }
-		//Call the interpolation function relevant to the type
+
+		Coord coord{};
+		// Call the appropriate interpolation function based on _type
 		switch (_type)
 		{
-		case RS_INTERP_STATIC: getPositionStatic<coord::Coord>(coord, _coords);
+		case InterpType::INTERP_STATIC: getPositionStatic(coord, _coords);
 			break;
-		case RS_INTERP_LINEAR: getPositionLinear<coord::Coord>(t, coord, _coords);
+		case InterpType::INTERP_LINEAR: getPositionLinear(t, coord, _coords);
 			break;
-		case RS_INTERP_CUBIC: getPositionCubic<coord::Coord>(t, coord, _coords, _dd);
+		case InterpType::INTERP_CUBIC: getPositionCubic(t, coord, _coords, _dd);
 			break;
-		case RS_INTERP_PYTHON: if (!_pythonpath)
+		case InterpType::INTERP_PYTHON: if (!_pythonpath)
 			{
 				throw std::logic_error("Python path GetPosition called before module loaded");
 			}
 			return _pythonpath->getPosition(t);
 		}
-		//Return the position part of the result
-		return coord.pos;
+		return coord.pos; // Return the position part of the coordinate
 	}
 
-	//Finalize the path - doing some once-per-path calculations if necessary
 	void Path::finalize()
 	{
 		if (!_final)
 		{
 			switch (_type)
 			{
-			case RS_INTERP_STATIC:
-			case RS_INTERP_LINEAR:
-			case RS_INTERP_PYTHON: break;
-			case RS_INTERP_CUBIC: finalizeCubic<coord::Coord>(_coords, _dd);
+			case InterpType::INTERP_STATIC:
+			case InterpType::INTERP_LINEAR:
+			case InterpType::INTERP_PYTHON: break;
+			case InterpType::INTERP_CUBIC: finalizeCubic<Coord>(_coords, _dd);
 				break;
 			}
-			_final = true;
+			_final = true; // Mark as finalized
 		}
 	}
 
-	//Set the interpolation type of the path
-	void Path::setInterp(const InterpType settype)
+	void Path::setInterp(const InterpType settype) noexcept
 	{
-		_final = false;
 		_type = settype;
+		_final = false; // Invalidate the finalization after changing interpolation type
 	}
 
-	//Compares two paths at the same time and returns a vector with the distance and angle
-	// Note: This function is not used in the codebase
-	rs::SVec3 compare(const RS_FLOAT time, const Path& start, const Path& end)
+	void Path::setPythonPath(const std::string_view modname, const std::string_view pathname)
 	{
-		const rs::Vec3 difference = end.getPosition(time) - start.getPosition(time);
-		const rs::SVec3 result(difference); //Get the result in spherical co-ordinates
-		return result;
+		_pythonpath = std::make_unique<python::PythonPath>(modname.data(), pathname.data());
 	}
 
-	/// Load a python path function
-	void Path::loadPythonPath(const std::string& modname, const std::string& pathname)
+	std::unique_ptr<Path> reflectPath(const Path* path, const MultipathSurface* surf)
 	{
-		//If we have one already, delete it
-		delete _pythonpath;
-
-		//Load the new python path
-		_pythonpath = new rs_python::PythonPath(modname, pathname);
-	}
-
-	/// Create a new path which is a reflection of this one around the given plane
-	Path* reflectPath(const Path* path, const rs::MultipathSurface* surf)
-	{
-		//Don't support multipath on python paths for now
-		if (path->getPythonPath())
+		if (path->getType() == Path::InterpType::INTERP_PYTHON)
 		{
-			throw std::runtime_error("[ERROR] Multipath surfaces are not currently supported for Python paths");
+			throw std::runtime_error("Multipath surfaces are not currently supported for Python paths");
 		}
-		//Create a new path object
-		const auto dual = new Path(path->getType());
-		//Add all the coords from the current path to the old path, reflecting about the multipath plane
+
+		// Create a new path object
+		auto dual_path = std::make_unique<Path>(path->getType());
+
+		// Reflect all coordinates and add them to the new path
 		for (const auto& [pos, t] : path->getCoords())
 		{
-			coord::Coord refl;
+			Coord refl{};
 			refl.t = t;
-			//Reflect the point in the plane
-			refl.pos = surf->reflectPoint(pos);
-			logging::printf(logging::RS_VERBOSE, "Reflected (%g, %g, %g) to (%g, %g, %g)\n", pos.x, pos.y,
-			                pos.z, refl.pos.x, refl.pos.y, refl.pos.z);
-			dual->addCoord(refl);
+			refl.pos = surf->reflectPoint(pos); // Reflect the point in the plane
+
+			LOG(Level::DEBUG, "Reflected ({}, {}, {}) to ({}, {}, {})",
+			    pos.x, pos.y, pos.z,
+			    refl.pos.x, refl.pos.y, refl.pos.z);
+
+			dual_path->addCoord(refl);
 		}
-		//Finalize the new path
-		dual->finalize();
-		//Done, return the new path
-		return dual;
+
+		dual_path->finalize(); // Finalize the new path
+		return dual_path; // Return the new path
 	}
 }

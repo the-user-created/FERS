@@ -10,7 +10,6 @@
         <c>299792458</c> <!-- Speed of light (m/s) -->
         <rate>1e8</rate> <!-- Sampling rate (Hz) -->
         <export csv="true" xml="true" binary="false"/> <!-- Do not export binary to save space -->
-        <adcbits>16</adcbits> <!-- ADC resolution -->
     </parameters>
 
     <!-- Pulsed Radar Pulse Definition -->

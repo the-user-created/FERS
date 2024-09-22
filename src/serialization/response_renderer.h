@@ -6,71 +6,69 @@
 #ifndef RESPONSE_RENDERER_H
 #define RESPONSE_RENDERER_H
 
-#include <complex>
-#include <queue>
-#include <vector>
+#include <memory>    // for unique_ptr
+#include <mutex>     // for mutex
+#include <optional>  // for optional
+#include <queue>     // for queue
+#include <span>      // for span
+#include <vector>    // for vector
 
-#include "config.h"
+#include "config.h"  // for RealType, ComplexType
 
-namespace boost
+namespace radar
 {
-	class mutex; // NOLINT
-}
-
-namespace rs
-{
-	class Response;
 	class Receiver;
 }
 
-namespace response_renderer
+namespace serial
 {
+	class Response;
+
 	class ThreadedResponseRenderer
 	{
 	public:
-		ThreadedResponseRenderer(const std::vector<rs::Response*>* responses, const rs::Receiver* recv,
+		ThreadedResponseRenderer(const std::span<const std::unique_ptr<Response>> responses, const radar::Receiver* recv,
 		                         const unsigned maxThreads) : _responses(responses), _recv(recv),
 		                                                      _max_threads(maxThreads) {}
 
 		~ThreadedResponseRenderer() = default;
 
-		void renderWindow(RS_COMPLEX* window, RS_FLOAT length, RS_FLOAT start, RS_FLOAT fracDelay) const;
+		void renderWindow(std::vector<ComplexType>& window, RealType length, RealType start, RealType fracDelay) const;
 
 	private:
-		const std::vector<rs::Response*>* _responses;
-		const rs::Receiver* _recv;
+		const std::span<const std::unique_ptr<Response>> _responses;
+		const radar::Receiver* _recv;
 		unsigned _max_threads;
 	};
 
 	class RenderThread
 	{
 	public:
-		RenderThread(const int serial, boost::mutex* windowMutex, RS_COMPLEX* window, const RS_FLOAT length,
-		             const RS_FLOAT start, const RS_FLOAT fracDelay, boost::mutex* workListMutex,
-		             std::queue<rs::Response*>* workList) :
-			_serial(serial), _window_mutex(windowMutex), _window(window), _length(length), _start(start),
-			_frac_delay(fracDelay), _work_list_mutex(workListMutex), _work_list(workList) {}
+		RenderThread(const unsigned serial, std::mutex& windowMutex, std::vector<ComplexType>& window,
+		             const RealType length, const RealType start, const RealType fracDelay, std::mutex& workListMutex,
+		             std::queue<Response*>& workList) : _serial(serial), _window_mutex(windowMutex), _window(window),
+		                                                _length(length), _start(start), _frac_delay(fracDelay),
+		                                                _work_list_mutex(workListMutex), _work_list(workList) {}
 
 		~RenderThread() = default;
 
-		void operator()();
+		void operator()() const;
 
 	private:
-		[[nodiscard]] rs::Response* getWork() const;
+		[[nodiscard]] std::optional<Response*> getWork() const;
 
-		void addWindow(const RS_COMPLEX* array, RS_FLOAT startTime, unsigned arraySize) const;
+		void addWindow(const std::vector<ComplexType>& array, std::vector<ComplexType>& localWindow, RealType startTime,
+		               unsigned arraySize) const;
 
-		int _serial;
-		boost::mutex* _window_mutex;
-		RS_COMPLEX* _window;
-		RS_FLOAT _length;
-		RS_FLOAT _start;
-		RS_FLOAT _frac_delay;
-		boost::mutex* _work_list_mutex;
-		std::queue<rs::Response*>* _work_list;
-		RS_COMPLEX* _local_window{};
+		unsigned _serial;
+		std::mutex& _window_mutex;
+		std::vector<ComplexType>& _window;
+		RealType _length;
+		RealType _start;
+		RealType _frac_delay;
+		std::mutex& _work_list_mutex;
+		std::queue<Response*>& _work_list;
 	};
 }
-
 
 #endif

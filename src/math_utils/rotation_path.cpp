@@ -5,105 +5,92 @@
 
 #include "rotation_path.h"
 
-#include "multipath_surface.h"
-#include "path_utils.h"
+#include <algorithm>                  // for lower_bound
+#include <cmath>                      // for fmod
 
-namespace path
+#include "multipath_surface.h"        // for MultipathSurface
+#include "path_utils.h"               // for PathException, finalizeCubic
+#include "math_utils/coord.h"         // for RotationCoord, operator*, opera...
+#include "math_utils/geometry_ops.h"  // for SVec3, Vec3
+
+namespace math
 {
-	RotationPath::RotationPath(const InterpType type):
-		_final(false), _start(0), _rate(0), _type(type) {}
-
-	void RotationPath::addCoord(const coord::RotationCoord& coord)
+	void RotationPath::addCoord(const RotationCoord& coord)
 	{
-		//Find the position to insert the coordinate, preserving sort
-		const auto iter = lower_bound(_coords.begin(), _coords.end(), coord);
-		//Insert the new coordinate
+		const auto iter = std::lower_bound(_coords.begin(), _coords.end(), coord);
 		_coords.insert(iter, coord);
-		//We are not finalized if we have inserted a coord
-		_final = false;
+		_final = false; // Invalidate finalization after insertion
 	}
 
-	// Get the position of the path object at a specified time
-	rs::SVec3 RotationPath::getPosition(const RS_FLOAT t) const
+	SVec3 RotationPath::getPosition(const RealType t) const
 	{
-		coord::RotationCoord coord;
-		if (!_final) { throw PathException("Finalize not called before GetPosition in Rotation"); }
-		// Call the interpolation function relevant to the type
+		if (!_final) { throw PathException("Finalize not called before getPosition in RotationPath."); }
+		RotationCoord coord{};
+
 		switch (_type)
 		{
-		case RS_INTERP_STATIC: getPositionStatic<coord::RotationCoord>(coord, _coords);
+		case InterpType::INTERP_STATIC: getPositionStatic(coord, _coords);
 			break;
-		case RS_INTERP_LINEAR: getPositionLinear<coord::RotationCoord>(t, coord, _coords);
+		case InterpType::INTERP_LINEAR: getPositionLinear(t, coord, _coords);
 			break;
-		case RS_INTERP_CUBIC: getPositionCubic<coord::RotationCoord>(t, coord, _coords, _dd);
+		case InterpType::INTERP_CUBIC: getPositionCubic(t, coord, _coords, _dd);
 			break;
-		case RS_INTERP_CONSTANT: coord.t = t;
-			coord.azimuth = std::fmod(t * _rate.azimuth + _start.azimuth, 2 * M_PI);
-			coord.elevation = std::fmod(t * _rate.elevation + _start.elevation, 2 * M_PI);
+		case InterpType::INTERP_CONSTANT: coord.t = t;
+			coord.azimuth = std::fmod(t * _rate.azimuth + _start.azimuth, 2 * PI);
+			coord.elevation = std::fmod(t * _rate.elevation + _start.elevation, 2 * PI);
 			break;
+		default: throw PathException("Unknown interpolation type.");
 		}
+
 		return {1, coord.azimuth, coord.elevation};
 	}
 
-	//Finalize the path - doing some once-per-path calculations if necessary
 	void RotationPath::finalize()
 	{
 		if (!_final)
 		{
-			switch (_type)
-			{
-			case RS_INTERP_STATIC:
-			case RS_INTERP_LINEAR:
-			case RS_INTERP_CONSTANT: break;
-			case RS_INTERP_CUBIC: finalizeCubic<coord::RotationCoord>(_coords, _dd);
-				break;
-			}
-			_final = true;
+			if (_type == InterpType::INTERP_CUBIC) { finalizeCubic(_coords, _dd); }
+			_final = true; // Mark as finalized
 		}
 	}
 
-	//Set the interpolation type
-	void RotationPath::setInterp(const InterpType setinterp)
+	void RotationPath::setInterp(const InterpType setinterp) noexcept
 	{
 		_type = setinterp;
-		_final = false;
+		_final = false; // Requiring re-finalization
 	}
 
-	//Set properties for fixed rate motion
-	void RotationPath::setConstantRate(const coord::RotationCoord& setstart, const coord::RotationCoord& setrate)
+	void RotationPath::setConstantRate(const RotationCoord& setstart, const RotationCoord& setrate) noexcept
 	{
 		_start = setstart;
 		_rate = setrate;
-		_type = RS_INTERP_CONSTANT;
-		_final = true;
+		_type = InterpType::INTERP_CONSTANT;
+		_final = true; // Pre-finalized for constant rate motion
 	}
 
-	/// Create a new path which is a reflection of this one around the given plane
-	RotationPath* reflectPath(const RotationPath* path, const rs::MultipathSurface* surf)
+	std::unique_ptr<RotationPath> reflectPath(const RotationPath* path, const MultipathSurface* surf)
 	{
-		//Create the new RotationPath object
-		auto* dual = new RotationPath(path->getType());
-		//Copy constant rotation params
-		dual->setStart(path->getStart());
-		dual->setRate(path->getRate());
-		//Copy the coords, reflecting them in the surface
+		auto dual_path = std::make_unique<RotationPath>(path->getType());
+
+		dual_path->setStart(path->getStart());
+		dual_path->setRate(path->getRate());
+
 		for (const auto& coord : path->getCoords())
 		{
-			coord::RotationCoord rc;
-			//Time copies directly
+			RotationCoord rc;
 			rc.t = coord.t;
-			rs::SVec3 sv(1, coord.azimuth, coord.elevation);
-			rs::Vec3 v(sv);
-			//Reflect the point in the given plane
+
+			SVec3 sv{1, coord.azimuth, coord.elevation};
+			auto v = Vec3(sv);
 			v = surf->reflectPoint(v);
-			const rs::SVec3 refl(v);
+			const SVec3 refl(v);
+
 			rc.azimuth = refl.azimuth;
 			rc.elevation = refl.elevation;
-			dual->addCoord(rc);
+			dual_path->addCoord(rc);
 		}
-		//Finalize the copied path
-		dual->finalize();
-		//Done, return the created object
-		return dual;
+
+		dual_path->finalize();
+		return dual_path;
 	}
 }

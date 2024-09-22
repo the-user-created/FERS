@@ -3,55 +3,73 @@
 // Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 // Started: 25 April 2006
 
-#include <cstring>
-#include <stdexcept>
+#include <exception>                  // for exception
+#include <memory>                     // for make_unique
+#include <optional>                   // for optional
 
-#include "parameters.h"
-#include "portable_utils.h"
-#include "serialization/xmlimport.h"
-#include "simulation/noise_generators.h"
-#include "simulation/sim_threading.h"
+#include "arg_parser.h"               // for Config, parseArguments
+#include "parameters.h"               // for renderThreads, setThreads
+#include "sim_threading.h"            // for runThreadedSim
+#include "world.h"                    // for World
+#include "core/logging.h"             // for log, LOG, Level, Logger, logger
+#include "serialization/xmlimport.h"  // for loadXmlFile
 
+using logging::Level;
+
+/**
+ * \brief Entry point for the FERS simulation application.
+ *
+ * This function initializes the simulation environment, parses command-line arguments,
+ * sets up logging, and runs the simulation using a multithreaded approach.
+ *
+ * \param argc The number of command-line arguments.
+ * \param argv The array of command-line arguments.
+ * \return int Returns 0 on successful completion, 1 on error.
+ */
 int main(const int argc, char* argv[])
 {
-	logging::printf(logging::RS_CRITICAL, "/------------------------------------------------\\\n");
-	logging::printf(logging::RS_CRITICAL, "| FERS - The Flexible Extensible Radar Simulator |\n");
-	logging::printf(logging::RS_CRITICAL, "| Version 0.28                                   |\n");
-	logging::printf(logging::RS_CRITICAL, "\\------------------------------------------------/\n\n");
-
-	if (argc != 2 || !strncmp(argv[1], "--help", 6))
+	// Parse arguments
+	const auto config_opt = core::parseArguments(argc, argv);
+	if (!config_opt)
 	{
-		logging::printf(logging::RS_CRITICAL, "Usage: %s <scriptfile> (Run simulation specified by script file)\n",
-		                argv[0]);
-		logging::printf(logging::RS_CRITICAL, "Usage: %s --help (Show this message)\n\n", argv[0]);
-		return 2;
+		return 1; // Invalid arguments or help/version shown
 	}
+
+	// Structured bindings for the configuration options
+	const auto& [script_file, log_level, num_threads] = *config_opt;
+
+	// Set the logging level
+	logging::logger.setLevel(log_level);
 
 	try
 	{
-		parameters::setThreads(portable_utils::countProcessors());
-		auto* world = new rs::World();
-		rs_noise::initializeNoise();
+		// Set the number of threads to use for the simulation
+		params::setThreads(num_threads);
 
-		logging::printf(logging::RS_VERBOSE, "[VERBOSE] Loading XML Script File.\n");
-		xml::loadXmlFile(argv[1], world);
+		// Create the world object
+		const auto world = std::make_unique<core::World>();
 
-		rs::threaded_sim::runThreadedSim(parameters::renderThreads(), world);
-		logging::printf(logging::RS_VERBOSE, "[VERBOSE] Cleaning up.\n");
+		// Load the XML file and deserialize it into the world object
+		serial::loadXmlFile(script_file, world.get());
 
-		delete world;
-		rs_noise::cleanUpNoise();
+		// Run the simulation using the threading mechanism
+		runThreadedSim(params::renderThreads(), world.get());
 
-		logging::printf(logging::RS_CRITICAL, "------------------------------------------------\n");
-		logging::printf(logging::RS_CRITICAL, "Simulation completed successfully...\n\n");
+		LOG(Level::INFO, "Simulation completed successfully!");
 
 		return 0;
 	}
-	catch (std::exception& ex)
+	catch (const std::exception& ex)
 	{
-		logging::printf(logging::RS_CRITICAL,
-		                "[ERROR] Simulation encountered unexpected error:\n\t%s\nSimulator will terminate.\n",
-		                ex.what());
+		// Catch-all for std::exception errors
+		LOG(Level::FATAL, "Simulation encountered unexpected error:{}\nSimulator will terminate.",
+		    ex.what());
+		return 1;
+	}
+	catch (...)
+	{
+		// Catch-all for any non-std::exception errors
+		LOG(Level::FATAL, "An unknown error occurred.\nSimulator will terminate.");
 		return 1;
 	}
 }

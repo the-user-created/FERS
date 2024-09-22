@@ -9,7 +9,6 @@
         <endtime>1.0</endtime>
         <rate>1e8</rate> <!-- Sampling rate in Hz -->
         <export csv="true" binary="true" xml="true"/>
-        <adcbits>16</adcbits>
     </parameters>
 
     <!-- Pulse Definition -->

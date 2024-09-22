@@ -3,17 +3,19 @@
 // Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 // 18 April 2008
 
-#include <cstdio>
-#include <iomanip>
-#include <iostream>
-#include <sstream>
-#include <stdexcept>
-#include <string>
+#include <cstdio>        // for size_t, FILE, fclose, fopen, fwrite
+#include <H5LTpublic.h>  // for H5LTget_attribute_double, H5LTfind_dataset
+#include <iomanip>       // for operator<<, setfill, setw
+#include <iostream>      // for basic_ostream, operator<<, endl, cerr, cout
+#include <sstream>       // for basic_ostringstream
+#include <stdexcept>     // for runtime_error
+#include <string>        // for char_traits, allocator, operator+, string
 
-extern "C" {
-#include <hdf5.h>
-#include <H5LTpublic.h>
-}
+#include "H5Gpublic.h"   // for H5Gopen1
+#include "H5Ipublic.h"   // for hid_t
+#include "H5Ppublic.h"   // for H5Fclose, H5Fopen, H5F_ACC_RDONLY, H5P_DEFAULT
+#include "H5public.h"    // for hsize_t
+#include "H5Tpublic.h"   // for H5T_class_t
 
 ///Open the HDF5 file for reading
 hid_t openFile(const std::string& name)

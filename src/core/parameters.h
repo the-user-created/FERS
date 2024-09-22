@@ -8,37 +8,53 @@
 #ifndef PARAMETERS_H
 #define PARAMETERS_H
 
-#include <ctime>
+#include <chrono>
+#include <optional>
 #include <stdexcept>
 
 #include "config.h"
 #include "logging.h"
 
-namespace parameters
+namespace params
 {
-	enum BinaryFileType { RS_FILE_CSV, RS_FILE_FERSBIN, RS_FILE_RAW };
+	/**
+	 * @brief Enum class for different types of binary files.
+	 */
+	enum class BinaryFileType { RS_FILE_CSV, RS_FILE_FERSBIN, RS_FILE_RAW };
 
+	/**
+	 * @brief Struct to hold simulation parameters.
+	 */
 	struct Parameters
 	{
-		RS_FLOAT c = 299792458.0; // Speed of light in a vacuum
-		RS_FLOAT boltzmann_k = 1.3806503e-23; // Boltzmann's constant
-		RS_FLOAT start = 0; // Simulation start time
-		RS_FLOAT end = 0; // Simulation end time
-		RS_FLOAT cw_sample_rate = 1000; // CW interpolation rate
-		RS_FLOAT rate = 0; // Sample rate for rendering
-		unsigned random_seed = static_cast<unsigned>(time(nullptr)); // Random seed initialized to current time
-		unsigned adc_bits = 0; // ADC quantization bits
-		unsigned filter_length = 33; // Render filter length
-		BinaryFileType filetype = RS_FILE_FERSBIN; // Binary file type
-		bool export_xml = false; // Export XML format
-		bool export_csv = false; // Export CSV format
-		bool export_binary = true; // Export a binary format
-		unsigned render_threads = 1; // Number of rendering threads
-		unsigned oversample_ratio = 1; // Oversampling ratio
+		constexpr static RealType DEFAULT_C = 299792458.0; ///< Speed of light (m/s)
+		constexpr static RealType DEFAULT_BOLTZMANN_K = 1.3806503e-23; ///< Boltzmann constant
+		constexpr static unsigned MIN_FILTER_LENGTH = 16; ///< Minimum render filter length
+
+		RealType c = DEFAULT_C; ///< Speed of light
+		RealType boltzmann_k = DEFAULT_BOLTZMANN_K; ///< Boltzmann constant
+		RealType start = 0; ///< Start time for simulation
+		RealType end = 0; ///< End time for simulation
+		RealType cw_sample_rate = 1000; ///< CW interpolation rate
+		RealType rate = 0; ///< Sample rate for rendering
+
+		unsigned random_seed = std::chrono::system_clock::now().time_since_epoch().count(); ///< Random seed using current time
+		unsigned adc_bits = 0; ///< ADC quantization bits
+		unsigned filter_length = 33; ///< Default filter length
+		BinaryFileType filetype = BinaryFileType::RS_FILE_FERSBIN; ///< Default binary file type
+
+		bool export_xml = false; ///< Export XML flag
+		bool export_csv = false; ///< Export CSV flag
+		bool export_binary = true; ///< Export binary flag
+
+		unsigned render_threads = 1; ///< Number of rendering threads
+		unsigned oversample_ratio = 1; ///< Oversampling ratio
+
+		std::optional<RealType> optional_rate = std::nullopt; ///< Optional sample rate
 	};
 
-	// Global instance of SimParameters
-	extern Parameters params;
+	/// Global instance of SimParameters
+	inline Parameters params;
 
 	// =================================================================================================================
 	//
@@ -46,35 +62,95 @@ namespace parameters
 	//
 	// =================================================================================================================
 
-	inline RS_FLOAT c() { return params.c; }
+	/**
+	 * @brief Get the speed of light.
+	 * @return Speed of light.
+	 */
+	inline RealType c() noexcept { return params.c; }
 
-	inline RS_FLOAT boltzmannK() { return params.boltzmann_k; }
+	/**
+	 * @brief Get the Boltzmann constant.
+	 * @return Boltzmann constant.
+	 */
+	inline RealType boltzmannK() noexcept { return params.boltzmann_k; }
 
-	inline RS_FLOAT startTime() { return params.start; }
+	/**
+	 * @brief Get the start time for simulation.
+	 * @return Start time.
+	 */
+	inline RealType startTime() noexcept { return params.start; }
 
-	inline RS_FLOAT endTime() { return params.end; }
+	/**
+	 * @brief Get the end time for simulation.
+	 * @return End time.
+	 */
+	inline RealType endTime() noexcept { return params.end; }
 
-	inline RS_FLOAT cwSampleRate() { return params.cw_sample_rate; }
+	/**
+	 * @brief Get the CW interpolation rate.
+	 * @return CW interpolation rate.
+	 */
+	inline RealType cwSampleRate() noexcept { return params.cw_sample_rate; }
 
-	inline RS_FLOAT rate() { return params.rate; }
+	/**
+	 * @brief Get the sample rate for rendering.
+	 * @return Sample rate.
+	 */
+	inline RealType rate() noexcept { return params.rate; }
 
-	inline unsigned randomSeed() { return params.random_seed; }
+	/**
+	 * @brief Get the random seed.
+	 * @return Random seed.
+	 */
+	inline unsigned randomSeed() noexcept { return params.random_seed; }
 
-	inline unsigned adcBits() { return params.adc_bits; }
+	/**
+	 * @brief Get the ADC quantization bits.
+	 * @return ADC quantization bits.
+	 */
+	inline unsigned adcBits() noexcept { return params.adc_bits; }
 
-	inline BinaryFileType binaryFileType() { return params.filetype; }
+	/**
+	 * @brief Get the binary file type.
+	 * @return Binary file type.
+	 */
+	inline BinaryFileType binaryFileType() noexcept { return params.filetype; }
 
-	inline bool exportXml() { return params.export_xml; }
+	/**
+	 * @brief Check if XML export is enabled.
+	 * @return True if XML export is enabled, false otherwise.
+	 */
+	inline bool exportXml() noexcept { return params.export_xml; }
 
-	inline bool exportCsv() { return params.export_csv; }
+	/**
+	 * @brief Check if CSV export is enabled.
+	 * @return True if CSV export is enabled, false otherwise.
+	 */
+	inline bool exportCsv() noexcept { return params.export_csv; }
 
-	inline bool exportBinary() { return params.export_binary; }
+	/**
+	 * @brief Check if binary export is enabled.
+	 * @return True if binary export is enabled, false otherwise.
+	 */
+	inline bool exportBinary() noexcept { return params.export_binary; }
 
-	inline unsigned renderFilterLength() { return params.filter_length; }
+	/**
+	 * @brief Get the render filter length.
+	 * @return Render filter length.
+	 */
+	inline unsigned renderFilterLength() noexcept { return params.filter_length; }
 
-	inline unsigned renderThreads() { return params.render_threads; }
+	/**
+	 * @brief Get the number of rendering threads.
+	 * @return Number of rendering threads.
+	 */
+	inline unsigned renderThreads() noexcept { return params.render_threads; }
 
-	inline unsigned oversampleRatio() { return params.oversample_ratio; }
+	/**
+	 * @brief Get the oversampling ratio.
+	 * @return Oversampling ratio.
+	 */
+	inline unsigned oversampleRatio() noexcept { return params.oversample_ratio; }
 
 	// =================================================================================================================
 	//
@@ -82,62 +158,125 @@ namespace parameters
 	//
 	// =================================================================================================================
 
-	// NOTE: These SETTERS are not thread-safe, but since they are only set by
-	//		 main.cpp and xmlimport.cpp, this is not a concern for now
-
-	inline void setC(const RS_FLOAT c)
+	/**
+	 * @brief Set the speed of light.
+	 * @param cValue Speed of light.
+	 */
+	inline void setC(RealType cValue) noexcept
 	{
-		params.c = c;
-		logging::printf(logging::RS_CRITICAL, "[CRITICAL] Propagation speed (c) set to custom value: %8.5f\n", c);
+		params.c = cValue;
+		LOG(logging::Level::INFO, "Propagation speed (c) set to: {:.5f}", cValue);
 	}
 
-	inline void setTime(const RS_FLOAT start, const RS_FLOAT end)
+	/**
+	 * @brief Set the start and end time for simulation.
+	 * @param startTime Start time.
+	 * @param endTime End time.
+	 */
+	inline void setTime(const RealType startTime, const RealType endTime) noexcept
 	{
-		params.start = start;
-		params.end = end;
+		params.start = startTime;
+		params.end = endTime;
+		LOG(logging::Level::INFO, "Simulation time set from {:.5f} to {:.5f} seconds", startTime, endTime);
 	}
 
-	inline void setCwSampleRate(const RS_FLOAT rate) { params.cw_sample_rate = rate; }
-
-	inline void setRate(const RS_FLOAT rate)
+	/**
+	 * @brief Set the CW interpolation rate.
+	 * @param rate CW interpolation rate.
+	 */
+	inline void setCwSampleRate(const RealType rate) noexcept
 	{
-		params.rate = rate;
-		logging::printf(logging::RS_VERY_VERBOSE, "[VV] System sample rate set to custom value: %8.5f\n", rate);
+		params.cw_sample_rate = rate;
+		LOG(logging::Level::DEBUG, "CW interpolation rate set to: {:.5f} Hz", rate);
 	}
 
-	inline void setRandomSeed(const unsigned seed) { params.random_seed = seed; }
-
-	inline void setBinaryFileType(const BinaryFileType type)
+	/**
+	 * @brief Set the sample rate for rendering.
+	 * @param rateValue Sample rate.
+	 */
+	inline void setRate(RealType rateValue) noexcept
 	{
-		// Note: This function is not used in the codebase
+		params.rate = rateValue;
+		LOG(logging::Level::DEBUG, "Sample rate set to: {:.5f}", rateValue);
+	}
+
+	/**
+	 * @brief Set the random seed.
+	 * @param seed Random seed.
+	 */
+	inline void setRandomSeed(const unsigned seed) noexcept
+	{
+		params.random_seed = seed;
+		LOG(logging::Level::DEBUG, "Random seed set to: {}", seed);
+	}
+
+	/**
+	 * @brief Set the binary file type.
+	 * @param type Binary file type.
+	 */
+	inline void setBinaryFileType(const BinaryFileType type) noexcept
+	{
 		params.filetype = type;
+		LOG(logging::Level::DEBUG, "Binary file type set to: {}", static_cast<int>(type));
 	}
 
-	inline void setExporters(const bool xml, const bool csv, const bool binary)
+	/**
+	 * @brief Set the export flags for XML, CSV, and binary.
+	 * @param xml Export XML flag.
+	 * @param csv Export CSV flag.
+	 * @param binary Export binary flag.
+	 */
+	inline void setExporters(const bool xml, const bool csv, const bool binary) noexcept
 	{
 		params.export_xml = xml;
 		params.export_csv = csv;
 		params.export_binary = binary;
+		LOG(logging::Level::DEBUG, "Export flags set - XML: {}, CSV: {}, Binary: {}", xml, csv, binary);
 	}
 
-	inline void setAdcBits(const unsigned bits) { params.adc_bits = bits; }
-
-	inline void setRenderFilterLength(const unsigned length)
+	/**
+	 * @brief Set the ADC quantization bits.
+	 * @param bits ADC quantization bits.
+	 */
+	inline void setAdcBits(const unsigned bits) noexcept
 	{
-		// Note: This function is not used in the codebase
-		if (length < 16) { throw std::runtime_error("[ERROR] Render filter length must be > 16"); }
+		params.adc_bits = bits;
+		LOG(logging::Level::DEBUG, "ADC quantization bits set to: {}", bits);
+	}
+
+	/**
+	 * @brief Set the render filter length.
+	 * @param length Render filter length.
+	 * @throws std::runtime_error if length is less than MIN_FILTER_LENGTH.
+	 */
+	inline void setRenderFilterLength(unsigned length)
+	{
+		if (length < Parameters::MIN_FILTER_LENGTH) { throw std::runtime_error("Render filter length must be >= 16"); }
 		params.filter_length = length;
-		logging::printf(logging::RS_VERY_VERBOSE, "[VV] Render filter length set to custom value: %d\n", length);
+		LOG(logging::Level::DEBUG, "Render filter length set to: {}", length);
 	}
 
-	inline void setOversampleRatio(const unsigned ratio)
+	/**
+	 * @brief Set the oversampling ratio.
+	 * @param ratio Oversampling ratio.
+	 * @throws std::runtime_error if ratio is zero.
+	 */
+	inline void setOversampleRatio(unsigned ratio)
 	{
-		if (ratio == 0) { throw std::runtime_error("[ERROR] Oversample ratio must be >= 1"); }
+		if (ratio == 0) { throw std::runtime_error("Oversample ratio must be >= 1"); }
 		params.oversample_ratio = ratio;
-		logging::printf(logging::RS_VERY_VERBOSE, "[VV] Oversampling enabled with ratio %d\n", ratio);
+		LOG(logging::Level::DEBUG, "Oversampling enabled with ratio: {}", ratio);
 	}
 
-	inline void setThreads(const unsigned threads) { params.render_threads = threads; }
+	/**
+	 * @brief Set the number of rendering threads.
+	 * @param threads Number of rendering threads.
+	 */
+	inline void setThreads(const unsigned threads) noexcept
+	{
+		params.render_threads = threads;
+		LOG(logging::Level::INFO, "Number of rendering threads set to: {}", threads);
+	}
 }
 
 #endif

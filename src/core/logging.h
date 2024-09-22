@@ -1,36 +1,131 @@
 // logging.h
-// Message support functions and debug levels
-// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-// 20 March 2006
+// Created by David Young on 9/20/24.
+//
 
 #ifndef LOGGING_H
 #define LOGGING_H
 
-#include <string>
+#define LOG(level, ...) log(level, std::source_location::current(), __VA_ARGS__)
 
-#define DEBUG_PRINT(level, str) logging::print(level, str, __FILE__, __LINE__)
+#include <format>           // for make_format_args, vformat
+#include <fstream>          // for basic_ofstream, ofstream
+#include <mutex>            // for mutex
+#include <source_location>  // for source_location
+#include <string>           // for string
+#include <utility>          // for forward
 
 namespace logging
 {
-	enum Level
+	/**
+	 * @brief Enum class representing the log levels.
+	 */
+	enum class Level
 	{
-		RS_VERY_VERBOSE,
-		RS_VERBOSE,
-		RS_INFORMATIVE,
-		RS_IMPORTANT,
-		RS_CRITICAL,
-		RS_EXTREMELY_CRITICAL
+		TRACE, ///< Trace level for detailed debugging information.
+		DEBUG, ///< Debug level for general debugging information.
+		INFO, ///< Info level for informational messages.
+		WARNING, ///< Warning level for potentially harmful situations.
+		ERROR, ///< Error level for error events.
+		FATAL ///< Fatal level for severe error events.
 	};
 
-	void print(Level level, const std::string& str, const std::string& file, int line);
+	/**
+	 * @brief Logger class for handling logging operations.
+	 */
+	class Logger
+	{
+	public:
+		/**
+		 * @brief Default constructor.
+		 */
+		Logger() = default;
 
-	void printf(Level level, const char* format, ...);
+		/**
+		 * @brief Destructor that closes the log file if it is open.
+		 */
+		~Logger() { if (_log_file.is_open()) { _log_file.close(); } }
 
-	// Note: This function is not used in the codebase
-	void printf(Level level, const std::string& format, ...);
+		/**
+		 * @brief Sets the logging level.
+		 * @param level The logging level to set.
+		 */
+		void setLevel(const Level level) { _log_level = level; }
 
-	// Note: This function is not used in the codebase
-	void setDebugLevel(Level level);
+		/**
+		 * @brief Logs a message with a specific log level and source location.
+		 * @param level The log level.
+		 * @param message The message to log.
+		 * @param location The source location of the log call.
+		 */
+		void log(Level level, const std::string& message,
+		         std::source_location location = std::source_location::current());
+
+		/**
+		 * @brief Logs a formatted message with a specific log level and source location.
+		 * @tparam Args Variadic template for format arguments.
+		 * @param level The log level.
+		 * @param location The source location of the log call.
+		 * @param formatStr The format string.
+		 * @param args The format arguments.
+		 */
+		template <typename... Args>
+		void log(const Level level, const std::source_location location, const std::string& formatStr, Args&&... args)
+		{
+			if (level >= _log_level)
+			{
+				const std::string message = std::vformat(formatStr, std::make_format_args(args...));
+				log(level, message, location);
+			}
+		}
+
+		/**
+		 * @brief Sets the log file path to log messages to a file.
+		 * @param filePath The path to the log file.
+		 */
+		void logToFile(const std::string& filePath);
+
+		/**
+		 * @brief Stops logging to the file.
+		 */
+		void stopLoggingToFile();
+
+	private:
+		Level _log_level = Level::INFO; ///< Current log level.
+		std::ofstream _log_file; ///< Output file stream for logging to a file.
+		std::mutex _log_mutex; ///< Mutex for thread-safe logging.
+
+		/**
+		 * @brief Converts a log level to its string representation.
+		 * @param level The log level.
+		 * @return The string representation of the log level.
+		 */
+		static std::string getLevelString(Level level);
+
+		/**
+		 * @brief Gets the current timestamp as a string.
+		 * @return The current timestamp.
+		 */
+		static std::string getCurrentTimestamp();
+	};
+
+	/**
+	 * @brief Externally available logger object.
+	 */
+	extern Logger logger;
+
+	/**
+	 * @brief Logs a formatted message with a specific log level and source location.
+	 * @tparam Args Variadic template for format arguments.
+	 * @param level The log level.
+	 * @param location The source location of the log call.
+	 * @param formatStr The format string.
+	 * @param args The format arguments.
+	 */
+	template <typename... Args>
+	void log(Level level, const std::source_location location, const std::string& formatStr, Args&&... args)
+	{
+		logger.log(level, location, formatStr, std::forward<Args>(args)...);
+	}
 }
 
-#endif
+#endif //LOGGING_H

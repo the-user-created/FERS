@@ -6,19 +6,18 @@
 #ifndef COORD_H
 #define COORD_H
 
-#include "config.h"
 #include "geometry_ops.h"
 
-namespace coord
+namespace math
 {
 	struct Coord
 	{
-		rs::Vec3 pos;
-		RS_FLOAT t;
+		Vec3 pos;
+		RealType t;
 
-		bool operator<(const Coord& b) const { return t < b.t; }
+		bool operator<(const Coord& b) const noexcept { return t < b.t; }
 
-		Coord& operator=(RS_FLOAT a)
+		Coord& operator=(RealType a) noexcept
 		{
 			t = a;
 			pos = {a, a, a};
@@ -26,78 +25,69 @@ namespace coord
 		}
 	};
 
-	inline Coord operator*(const Coord& a, const Coord& b) { return {a.pos * b.pos, a.t}; }
-
-	inline Coord operator+(const Coord& a, const Coord& b) { return {a.pos + b.pos, a.t}; }
-
-	inline Coord operator-(const Coord& a, const Coord& b) { return {a.pos - b.pos, a.t}; }
-
-	inline Coord operator/(const Coord& a, const Coord& b) { return {a.pos / b.pos, a.t}; }
-
-	inline Coord operator+(const Coord& a, const RS_FLOAT b) { return {a.pos + b, a.t}; }
-
-	inline Coord operator*(const Coord& a, const RS_FLOAT b) { return {a.pos * b, a.t}; }
-
-	inline Coord operator/(const RS_FLOAT a, const Coord& b) { return {a / b.pos, b.t}; }
-
-	inline Coord operator/(const Coord& b, const RS_FLOAT a) { return {b.pos / a, b.t}; }
+	inline Coord operator*(const Coord& a, const Coord& b) noexcept { return {a.pos * b.pos, a.t}; }
+	inline Coord operator+(const Coord& a, const Coord& b) noexcept { return {a.pos + b.pos, a.t}; }
+	inline Coord operator-(const Coord& a, const Coord& b) noexcept { return {a.pos - b.pos, a.t}; }
+	inline Coord operator/(const Coord& a, const Coord& b) noexcept { return {a.pos / b.pos, a.t}; }
+	inline Coord operator+(const Coord& a, const RealType b) noexcept { return {a.pos + b, a.t}; }
+	inline Coord operator*(const Coord& a, const RealType b) noexcept { return {a.pos * b, a.t}; }
+	inline Coord operator/(const RealType a, const Coord& b) noexcept { return {a / b.pos, b.t}; }
+	inline Coord operator/(const Coord& b, const RealType a) noexcept { return {b.pos / a, b.t}; }
 
 	struct RotationCoord
 	{
-		RS_FLOAT azimuth;
-		RS_FLOAT elevation;
-		RS_FLOAT t;
+		RealType azimuth{}, elevation{}, t{};
 
-		bool operator<(const RotationCoord b) const { return t < b.t; }
+		bool operator<(const RotationCoord& b) const noexcept { return t < b.t; }
 
-		RotationCoord& operator=(const RS_FLOAT a)
+		RotationCoord& operator=(const RealType a) noexcept
 		{
 			azimuth = elevation = t = a;
 			return *this;
 		}
 
-		RotationCoord(const RS_FLOAT a = 0) : azimuth(a), elevation(a), t(a) {} // NOLINT
+		constexpr explicit RotationCoord(const RealType a = 0) noexcept : azimuth(a), elevation(a), t(a) {}
 
-		RotationCoord(const RS_FLOAT az, const RS_FLOAT el,
-		              const RS_FLOAT time) : azimuth(az), elevation(el), t(time) {}
+		RotationCoord(const RealType az, const RealType el, const RealType time) noexcept
+			: azimuth(az), elevation(el), t(time) {}
 	};
 
-	inline RotationCoord operator*(const RotationCoord& a, const RotationCoord& b)
+	inline RotationCoord operator*(const RotationCoord& a, const RotationCoord& b) noexcept
 	{
 		return {a.azimuth * b.azimuth, a.elevation * b.elevation, a.t};
 	}
 
-	inline RotationCoord operator+(const RotationCoord& a, const RotationCoord& b)
+	inline RotationCoord operator+(const RotationCoord& a, const RotationCoord& b) noexcept
 	{
 		return {a.azimuth + b.azimuth, a.elevation + b.elevation, a.t};
 	}
 
-	inline RotationCoord operator-(const RotationCoord& a, const RotationCoord& b)
+	inline RotationCoord operator-(const RotationCoord& a, const RotationCoord& b) noexcept
 	{
 		return {a.azimuth - b.azimuth, a.elevation - b.elevation, a.t};
 	}
 
-	inline RotationCoord operator/(const RotationCoord& a, const RotationCoord& b)
+	inline RotationCoord operator/(const RotationCoord& a, const RotationCoord& b) noexcept
 	{
 		return {a.azimuth / b.azimuth, a.elevation / b.elevation, a.t};
 	}
 
-	inline RotationCoord operator+(const RotationCoord& a, const RS_FLOAT b)
+	inline RotationCoord operator+(const RotationCoord& a, const RealType b) noexcept
 	{
 		return {a.azimuth + b, a.elevation + b, a.t};
 	}
 
-	inline RotationCoord operator*(const RotationCoord& a, const RS_FLOAT b)
+	inline RotationCoord operator*(const RotationCoord& a, const RealType b) noexcept
 	{
 		return {a.azimuth * b, a.elevation * b, a.t};
 	}
 
-	inline RotationCoord operator/(const RS_FLOAT a, const RotationCoord& b)
+	inline RotationCoord operator/(const RealType a, const RotationCoord& b) noexcept
 	{
 		return {a / b.azimuth, a / b.elevation, b.t};
 	}
 
-	inline RotationCoord operator/(const RotationCoord& b, const RS_FLOAT a)
+	inline RotationCoord operator/(const RotationCoord& b, const RealType a) noexcept
 	{
 		return {b.azimuth / a, b.elevation / a, b.t};
 	}

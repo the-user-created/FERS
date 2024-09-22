@@ -6,56 +6,52 @@
 #ifndef ROTATION_PATH_H
 #define ROTATION_PATH_H
 
+#include <memory>
 #include <vector>
 
+#include "config.h"
 #include "coord.h"
+#include "geometry_ops.h"
 
-namespace rs
+namespace math
 {
 	class MultipathSurface;
-}
 
-namespace path
-{
 	class RotationPath
 	{
 	public:
-		enum InterpType { RS_INTERP_STATIC, RS_INTERP_CONSTANT, RS_INTERP_LINEAR, RS_INTERP_CUBIC };
+		enum class InterpType { INTERP_STATIC, INTERP_CONSTANT, INTERP_LINEAR, INTERP_CUBIC };
 
-		explicit RotationPath(InterpType type = RS_INTERP_STATIC);
+		explicit RotationPath(const InterpType type = InterpType::INTERP_STATIC) noexcept : _type(type) {}
 
-		void addCoord(const coord::RotationCoord& coord);
+		void addCoord(const RotationCoord& coord);
 
 		void finalize();
 
-		[[nodiscard]] rs::SVec3 getPosition(RS_FLOAT t) const;
+		[[nodiscard]] const std::vector<RotationCoord>& getCoords() const noexcept { return _coords; }
+		[[nodiscard]] RotationCoord getStart() const noexcept { return _start; }
+		[[nodiscard]] RotationCoord getRate() const noexcept { return _rate; }
+		[[nodiscard]] InterpType getType() const noexcept { return _type; }
 
-		void setInterp(InterpType setinterp);
+		[[nodiscard]] SVec3 getPosition(RealType t) const;
 
-		void setConstantRate(const coord::RotationCoord& setstart, const coord::RotationCoord& setrate);
+		void setStart(const RotationCoord& start) noexcept { _start = start; }
+		void setRate(const RotationCoord& rate) noexcept { _rate = rate; }
 
-		[[nodiscard]] std::vector<coord::RotationCoord> getCoords() const { return _coords; }
+		void setInterp(InterpType setinterp) noexcept;
 
-		[[nodiscard]] coord::RotationCoord getStart() const { return _start; }
-
-		[[nodiscard]] coord::RotationCoord getRate() const { return _rate; }
-
-		[[nodiscard]] InterpType getType() const { return _type; }
-
-		void setStart(const coord::RotationCoord& start) { _start = start; }
-
-		void setRate(const coord::RotationCoord& rate) { _rate = rate; }
+		void setConstantRate(const RotationCoord& setstart, const RotationCoord& setrate) noexcept;
 
 	private:
-		std::vector<coord::RotationCoord> _coords;
-		std::vector<coord::RotationCoord> _dd;
-		bool _final;
-		coord::RotationCoord _start;
-		coord::RotationCoord _rate;
-		InterpType _type;
+		std::vector<RotationCoord> _coords;
+		std::vector<RotationCoord> _dd;
+		bool _final{false};
+		RotationCoord _start{};
+		RotationCoord _rate{};
+		InterpType _type{InterpType::INTERP_STATIC};
 	};
 
-	RotationPath* reflectPath(const RotationPath* path, const rs::MultipathSurface* surf);
+	std::unique_ptr<RotationPath> reflectPath(const RotationPath* path, const MultipathSurface* surf);
 }
 
 #endif //ROTATION_PATH_H

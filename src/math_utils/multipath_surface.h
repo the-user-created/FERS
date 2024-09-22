@@ -6,25 +6,26 @@
 #ifndef MULTIPATH_SURFACE_H
 #define MULTIPATH_SURFACE_H
 
+#include "config.h"
 #include "geometry_ops.h"
 
-namespace rs
+namespace math
 {
 	class MultipathSurface
 	{
 	public:
-		MultipathSurface(RS_FLOAT a, RS_FLOAT b, RS_FLOAT c, RS_FLOAT d, RS_FLOAT factor);
+		MultipathSurface(RealType a, RealType b, RealType c, RealType d, RealType factor) noexcept;
 
 		~MultipathSurface() = default;
 
-		[[nodiscard]] Vec3 reflectPoint(const Vec3& b) const;
+		[[nodiscard]] Vec3 reflectPoint(const Vec3& b) const noexcept;
 
-		[[nodiscard]] RS_FLOAT getFactor() const { return _factor; }
+		[[nodiscard]] RealType getFactor() const noexcept { return _factor; }
 
 	private:
-		RS_FLOAT _factor;
+		RealType _factor;
 		Matrix3 _reflection;
-		RS_FLOAT _norm_factor;
+		RealType _norm_factor;
 		Vec3 _translation_vector;
 	};
 }

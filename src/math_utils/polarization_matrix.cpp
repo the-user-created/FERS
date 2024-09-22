@@ -5,38 +5,25 @@
 
 #include "polarization_matrix.h"
 
-using namespace rs;
+#include <complex>  // for complex
 
-PsMatrix::PsMatrix()
+namespace math
 {
-	s[0] = s[3] = 1;
-	s[1] = s[2] = 0;
-}
-
-PsMatrix::PsMatrix(const RS_FLOAT s11, const RS_FLOAT s12, const RS_FLOAT s21, const RS_FLOAT s22)
-{
-	s[0] = s11;
-	s[1] = s12;
-	s[2] = s21;
-	s[3] = s22;
-}
-
-PsMatrix::PsMatrix(const PsMatrix& im)
-{
-	for (int i = 0; i < 4; i++)
+	// Default constructor
+	PsMatrix::PsMatrix() noexcept
 	{
-		s[i] = im.s[i];
+		s[0] = {1, 0}; // Initialize as (1 + 0i)
+		s[1] = {0, 0};
+		s[2] = {0, 0};
+		s[3] = {1, 0};
 	}
-}
 
-PsMatrix& PsMatrix::operator=(const PsMatrix& im)
-{
-	if (this != &im)
+	// Parameterized constructor
+	PsMatrix::PsMatrix(RealType s11, RealType s12, RealType s21, RealType s22) noexcept
 	{
-		for (int i = 0; i < 4; i++)
-		{
-			s[i] = im.s[i];
-		}
+		s[0] = {s11, 0};
+		s[1] = {s12, 0};
+		s[2] = {s21, 0};
+		s[3] = {s22, 0};
 	}
-	return *this;
 }

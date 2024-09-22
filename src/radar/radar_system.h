@@ -6,199 +6,174 @@
 #ifndef RADAR_SYSTEM_H
 #define RADAR_SYSTEM_H
 
-#include <boost/thread/pthread/mutex.hpp>
+#include <memory>                    // for unique_ptr, shared_ptr
+#include <mutex>                     // for mutex
+#include <string>                    // for string
+#include <utility>                   // for move
+#include <vector>                    // for vector
 
-#include "antenna_factory.h"
-#include "config.h"
-#include "core/object.h"
-#include "simulation/response.h"
-#include "simulation/timing.h"
+#include "config.h"                  // for RealType
+#include "object.h"                  // for Object
+#include "serialization/response.h"  // for Response
 
-namespace rs
+namespace antenna
+{
+	class Antenna;
+}
+
+namespace math
+{
+	class MultipathSurface;
+	class SVec3;
+}
+
+namespace signal
 {
 	class RadarSignal;
-	class Response;
-	class Antenna;
-	class SVec3;
-	class Vec3;
+}
+
+namespace timing
+{
 	class Timing;
-	class Receiver;
-	class Transmitter;
-	class MultipathSurface;
+}
+
+namespace radar
+{
+	class Platform;
 
 	struct TransmitterPulse
 	{
-		RadarSignal* wave;
-		RS_FLOAT time;
+		signal::RadarSignal* wave;
+		RealType time;
 	};
 
 	class Radar : public Object
 	{
 	public:
-		Radar(const Platform* platform, const std::string& name) :
-			Object(platform, name), _timing(nullptr), _antenna(nullptr), _attached(nullptr), _multipath_dual(false),
-			_multipath_factor(0) {}
+		Radar(Platform* platform, std::string name) : Object(platform, std::move(name)) {}
 
 		~Radar() override = default;
 
-		void setAntenna(const Antenna* ant)
-		{
-			!ant ? throw std::logic_error("[BUG] Transmitter's antenna set to null") : _antenna = ant;
-		}
-
-		[[nodiscard]] RS_FLOAT getGain(const SVec3& angle, const SVec3& refangle, const RS_FLOAT wavelength) const
-		{
-			return _antenna->getGain(angle, refangle, wavelength);
-		}
-
-		[[nodiscard]] virtual RS_FLOAT getNoiseTemperature(const SVec3& angle) const
-		{
-			return _antenna->getNoiseTemperature(angle);
-		}
-
-		void makeMonostatic(const Radar* recv)
-		{
-			_attached
-				? throw std::runtime_error("[BUG] Attempted to attach second receiver to transmitter")
-				: _attached = recv;
-		}
-
-		[[nodiscard]] const Radar* getAttached() const { return _attached; }
-
-		[[nodiscard]] bool isMonostatic() const { return _attached; }
-
-		void setTiming(Timing* tim)
-		{
-			!tim ? throw std::runtime_error("[BUG] Radar timing source must not be set to NULL") : _timing = tim;
-		}
-
-		[[nodiscard]] Timing* getTiming() const;
-
 		[[nodiscard]] bool getMultipathDual() const { return _multipath_dual; }
+		[[nodiscard]] const Radar* getAttached() const { return _attached; }
+		[[nodiscard]] RealType getMultipathFactor() const { return _multipath_factor; }
+		[[nodiscard]] const antenna::Antenna* getAntenna() const { return _antenna; }
 
-		void setMultipathDual(RS_FLOAT reflect);
+		[[nodiscard]] RealType getGain(const math::SVec3& angle, const math::SVec3& refangle,
+		                               RealType wavelength) const;
 
-		[[nodiscard]] RS_FLOAT getMultipathFactor() const { return _multipath_factor; }
+		[[nodiscard]] virtual RealType getNoiseTemperature(const math::SVec3& angle) const;
 
-		[[nodiscard]] const Antenna* getAntenna() const { return _antenna; }
+		[[nodiscard]] std::shared_ptr<timing::Timing> getTiming() const;
 
-		void setAttached(const Radar* obj) { _attached = obj; }
+		void setTiming(const std::shared_ptr<timing::Timing>& tim);
+
+		void setAntenna(const antenna::Antenna* ant);
+
+		void setMultipathDual(RealType reflect);
+
+		void setAttached(const Radar* obj);
 
 	protected:
-		Timing* _timing;
+		std::shared_ptr<timing::Timing> _timing;
 
 	private:
-		const Antenna* _antenna;
-		const Radar* _attached;
-		bool _multipath_dual;
-		RS_FLOAT _multipath_factor;
+		const antenna::Antenna* _antenna{nullptr};
+		const Radar* _attached{nullptr};
+		bool _multipath_dual{false};
+		RealType _multipath_factor{0};
 	};
 
+	// Transmitter Class
 	class Transmitter final : public Radar
 	{
 	public:
-		Transmitter(const Platform* platform, const std::string& name, const bool pulsed) : Radar(platform, name),
-			_signal(nullptr), _pulsed(pulsed), _dual(nullptr) {}
+		Transmitter(Platform* platform, std::string name, const bool pulsed)
+			: Radar(platform, std::move(name)), _pulsed(pulsed) {}
 
-		~Transmitter() override { delete getTiming(); }
+		~Transmitter() override = default;
 
-		void setWave(RadarSignal* pulse) { _signal = pulse; }
+		[[nodiscard]] RealType getPrf() const { return _prf; }
+		[[nodiscard]] signal::RadarSignal* getSignal() const { return _signal; }
+		[[nodiscard]] Transmitter* getDual() const { return _dual; }
+		[[nodiscard]] bool getPulsed() const { return _pulsed; }
 
 		[[nodiscard]] int getPulseCount() const;
 
-		void getPulse(TransmitterPulse* pulse, int number) const;
-
-		void setPrf(RS_FLOAT mprf);
-
-		[[nodiscard]] Transmitter* getDual() const { return _dual; }
-
-		[[nodiscard]] bool getPulsed() const { return _pulsed; }
-
+		void setWave(signal::RadarSignal* pulse) { _signal = pulse; }
+		void setDual(Transmitter* dual) { _dual = dual; }
+		void setSignal(signal::RadarSignal* signal) { _signal = signal; }
 		void setPulsed(const bool pulsed) { _pulsed = pulsed; }
 
-		void setDual(Transmitter* dual) { _dual = dual; }
+		void setPulse(TransmitterPulse* pulse, int number) const;
 
-		[[nodiscard]] RS_FLOAT getPrf() const { return _prf; }
-
-		[[nodiscard]] RadarSignal* getSignal() const { return _signal; }
-
-		void setSignal(RadarSignal* signal) { _signal = signal; }
+		void setPrf(RealType mprf);
 
 	private:
-		RadarSignal* _signal;
-		RS_FLOAT _prf{};
+		signal::RadarSignal* _signal = nullptr;
+		RealType _prf = {};
 		bool _pulsed;
-		Transmitter* _dual;
+		Transmitter* _dual = nullptr;
 	};
 
+	// Receiver Class
 	class Receiver final : public Radar
 	{
 	public:
-		enum RecvFlag { FLAG_NODIRECT = 1, FLAG_NOPROPLOSS = 2 };
+		enum class RecvFlag { FLAG_NODIRECT = 1, FLAG_NOPROPLOSS = 2 };
 
-		explicit Receiver(const Platform* platform, const std::string& name = "defRecv") : Radar(platform, name),
-			_noise_temperature(0), _dual(nullptr), _flags(0) {}
+		explicit Receiver(Platform* platform, std::string name = "defRecv") : Radar(platform, std::move(name)) {}
 
-		~Receiver() override;
+		~Receiver() override = default;
 
-		void addResponse(Response* response);
+		void addResponse(std::unique_ptr<serial::Response> response);
 
-		void clearResponses();
+		[[nodiscard]] bool checkFlag(RecvFlag flag) const { return _flags & static_cast<int>(flag); }
 
 		void render();
 
-		[[nodiscard]] RS_FLOAT getNoiseTemperature(const SVec3& angle) const override
-		{
-			return _noise_temperature + Radar::getNoiseTemperature(angle);
-		}
+		[[nodiscard]] RealType getNoiseTemperature() const { return _noise_temperature; }
+		[[nodiscard]] RealType getWindowLength() const { return _window_length; }
+		[[nodiscard]] RealType getWindowPrf() const { return _window_prf; }
+		[[nodiscard]] RealType getWindowSkip() const { return _window_skip; }
+		[[nodiscard]] Receiver* getDual() const { return _dual; }
 
-		[[nodiscard]] RS_FLOAT getNoiseTemperature() const { return _noise_temperature; }
+		[[nodiscard]] RealType getNoiseTemperature(const math::SVec3& angle) const override;
 
-		void setNoiseTemperature(const RS_FLOAT temp)
-		{
-			temp < -std::numeric_limits<RS_FLOAT>::epsilon()
-				? throw std::runtime_error("[BUG] Noise temperature must be positive")
-				: _noise_temperature = temp;
-		}
-
-		void setWindowProperties(RS_FLOAT length, RS_FLOAT prf, RS_FLOAT skip);
-
-		[[nodiscard]] int countResponses() const { return static_cast<int>(_responses.size()); }
+		[[nodiscard]] RealType getWindowStart(int window) const;
 
 		[[nodiscard]] int getWindowCount() const;
 
-		[[nodiscard]] RS_FLOAT getWindowStart(int window) const;
+		[[nodiscard]] int getResponseCount() const;
 
-		[[nodiscard]] RS_FLOAT getWindowLength() const { return _window_length; }
+		void setWindowProperties(RealType length, RealType prf, RealType skip);
 
-		[[nodiscard]] RS_FLOAT getWindowSkip() const { return _window_skip; }
-
-		[[nodiscard]] RS_FLOAT getWindowPrf() const { return _window_prf; }
-
-		void setFlag(const RecvFlag flag) { _flags |= flag; }
-
-		[[nodiscard]] bool checkFlag(const RecvFlag flag) const { return _flags & flag; }
-
-		[[nodiscard]] Receiver* getDual() const { return _dual; }
-
+		void setFlag(RecvFlag flag) { _flags |= static_cast<int>(flag); }
 		void setDual(Receiver* dual) { _dual = dual; }
 
+		void setNoiseTemperature(RealType temp);
+
 	private:
-		std::vector<Response*> _responses;
-		boost::try_mutex _responses_mutex;
-		RS_FLOAT _noise_temperature;
-		RS_FLOAT _window_length{};
-		RS_FLOAT _window_prf{};
-		RS_FLOAT _window_skip{};
-		Receiver* _dual;
-		int _flags;
+		std::vector<std::unique_ptr<serial::Response>> _responses;
+		mutable std::mutex _responses_mutex;
+		RealType _noise_temperature = 0;
+		RealType _window_length = 0;
+		RealType _window_prf = 0;
+		RealType _window_skip = 0;
+		Receiver* _dual = nullptr;
+		int _flags = 0;
 	};
 
-	Receiver* createMultipathDual(Receiver* recv, const MultipathSurface* surf);
+	// Factory functions
+	Receiver* createMultipathDual(Receiver* recv, const math::MultipathSurface* surf);
 
-	Transmitter* createMultipathDual(Transmitter* trans, const MultipathSurface* surf);
+	Transmitter* createMultipathDual(Transmitter* trans, const math::MultipathSurface* surf);
 
-	inline bool compareTimes(const Response* a, const Response* b) { return a->startTime() < b->startTime(); }
+	// Compare function for responses
+	inline bool compareTimes(const std::unique_ptr<serial::Response>& a, const std::unique_ptr<serial::Response>& b)
+	{
+		return a->startTime() < b->startTime();
+	}
 }
 
 #endif
