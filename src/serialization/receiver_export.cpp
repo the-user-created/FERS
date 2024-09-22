@@ -7,7 +7,8 @@
 #include "receiver_export.h"
 
 #include <algorithm>
-#include <map>
+#include <filesystem>
+#include <ranges>
 #include <tinyxml.h>
 
 #include "hdf5_handler.h"
@@ -17,21 +18,19 @@
 #include "radar/radar_system.h"
 #include "timing/timing.h"
 
+namespace fs = std::filesystem;
+
 namespace
 {
 	long openHdf5File(const std::string& recvName)
 	{
-		long hdf5_file = 0;
-		if (params::exportBinary())
-		{
-			std::ostringstream b_oss;
-			b_oss << std::scientific << recvName << ".h5";
-			hdf5_file = serial::createFile(b_oss.str());
-		}
-		return hdf5_file;
+		if (!params::exportBinary()) { return 0; }
+
+		const auto hdf5_filename = std::format("{}.h5", recvName);
+		return serial::createFile(hdf5_filename);
 	}
 
-	void addNoiseToWindow(std::vector<ComplexType>& data, const unsigned size, const RealType temperature)
+	void addNoiseToWindow(std::span<ComplexType> data, const RealType temperature)
 	{
 		if (temperature == 0) { return; }
 
@@ -42,41 +41,37 @@ namespace
 
 		noise::WgnGenerator generator(std::sqrt(power) / 2.0);
 
-		for (unsigned i = 0; i < size; ++i)
+		for (auto& sample : data)
 		{
-			const ComplexType noise(generator.getSample(), generator.getSample());
-			data[i] += noise;
+			const ComplexType noise_sample(generator.getSample(), generator.getSample());
+			sample += noise_sample;
 		}
 	}
 
-	void adcSimulate(std::vector<ComplexType>& data, const unsigned size, const unsigned bits, RealType fullscale)
+	void adcSimulate(std::span<ComplexType> data, const unsigned bits, RealType fullscale)
 	{
 		const RealType levels = std::pow(2, bits - 1);
 
-		for (unsigned it = 0; it < size; ++it)
+		for (auto& sample : data)
 		{
-			// Normalize and quantize the real and imaginary parts
-			RealType i = std::floor(levels * data[it].real() / fullscale) / levels;
-			RealType q = std::floor(levels * data[it].imag() / fullscale) / levels;
+			auto [i, q] = std::tuple{
+				std::clamp(std::floor(levels * sample.real() / fullscale) / levels, -1.0, 1.0),
+				std::clamp(std::floor(levels * sample.imag() / fullscale) / levels, -1.0, 1.0)
+			};
 
-			// Use std::clamp to ensure the values are within the range [-1, 1]
-			i = std::clamp(i, -1.0, 1.0);
-			q = std::clamp(q, -1.0, 1.0);
-
-			data[it] = ComplexType(i, q);
+			sample = ComplexType(i, q);
 		}
 	}
 
-	RealType quantizeWindow(std::vector<ComplexType>& data, const unsigned size)
+	RealType quantizeWindow(std::span<ComplexType> data)
 	{
 		// Find the maximum absolute value across real and imaginary parts
 		RealType max_value = 0;
 
-		// Loop through the data to calculate the maximum and check for NaNs
-		for (unsigned i = 0; i < size; ++i)
+		for (const auto& sample : data)
 		{
-			RealType real_abs = std::fabs(data[i].real());
-			RealType imag_abs = std::fabs(data[i].imag());
+			const RealType real_abs = std::fabs(sample.real());
+			const RealType imag_abs = std::fabs(sample.imag());
 
 			max_value = std::max({max_value, real_abs, imag_abs});
 
@@ -88,16 +83,15 @@ namespace
 		}
 
 		// Simulate ADC if adcBits parameter is greater than 0
-		if (params::adcBits() > 0) { adcSimulate(data, size, params::adcBits(), max_value); }
+		if (const auto adc_bits = params::adcBits(); adc_bits > 0) { adcSimulate(data, adc_bits, max_value); }
 		else if (max_value != 0)
 		{
-			// Normalize the data if max_value is not zero
-			for (unsigned i = 0; i < size; ++i)
+			for (auto& sample : data)
 			{
-				data[i] /= max_value;
+				sample /= max_value;
 
 				// Re-check for NaN after normalization
-				if (std::isnan(data[i].real()) || std::isnan(data[i].imag()))
+				if (std::isnan(sample.real()) || std::isnan(sample.imag()))
 				{
 					throw std::runtime_error("NaN encountered in QuantizeWindow -- late");
 				}
@@ -110,82 +104,127 @@ namespace
 	std::vector<RealType> generatePhaseNoise(const radar::Receiver* recv, const unsigned wSize, const RealType rate,
 	                                         RealType& carrier, bool& enabled)
 	{
-		// Get the timing model from the receiver
 		const auto timing = recv->getTiming();
 		if (!timing) { throw std::runtime_error("[BUG] Could not cast receiver->GetTiming() to ClockModelTiming"); }
 
-		// Use a smart pointer for memory safety; can be released later if raw pointer is required
-		auto noise = std::vector<RealType>(wSize);
-
+		std::vector<RealType> noise(wSize);
 		enabled = timing->isEnabled();
 
 		if (enabled)
 		{
-			for (unsigned i = 0; i < wSize; ++i) { noise[i] = timing->getNextSample(); }
+			std::ranges::generate(noise, [&] { return timing->getNextSample(); });
 
 			if (timing->getSyncOnPulse())
 			{
 				timing->reset();
-				const int skip = static_cast<int>(std::floor(rate * recv->getWindowSkip()));
-				timing->skipSamples(skip);
+				timing->skipSamples(static_cast<int>(std::floor(rate * recv->getWindowSkip())));
 			}
 			else
 			{
-				const long skip = static_cast<long>(std::floor(
-					rate / recv->getWindowPrf() - rate * recv->getWindowLength()));
-				timing->skipSamples(skip);
+				timing->skipSamples(static_cast<long>(std::floor(
+					rate / recv->getWindowPrf() - rate * recv->getWindowLength())));
 			}
 
 			carrier = timing->getFrequency();
 		}
 		else
 		{
-			// Use std::fill for setting noise to 0
-			std::fill_n(noise.data(), wSize, 0);
+			std::ranges::fill(noise, 0);
 			carrier = 1;
 		}
 
 		return noise;
 	}
 
-	void addPhaseNoiseToWindow(const std::vector<RealType>& noise, std::vector<ComplexType>& window,
-	                           const unsigned wSize)
+	void addPhaseNoiseToWindow(std::span<const RealType> noise, std::span<ComplexType> window)
 	{
-		for (unsigned i = 0; i < wSize; ++i)
+		for (auto [n, w] : std::views::zip(noise, window))
 		{
-			if (std::isnan(noise[i])) { throw std::runtime_error("[BUG] Noise is NaN in addPhaseNoiseToWindow"); }
+			if (std::isnan(n)) { throw std::runtime_error("[BUG] Noise is NaN in addPhaseNoiseToWindow"); }
 
-			// Generate the phase noise multiplier using std::polar for efficiency and clarity
-			const ComplexType phase_noise = std::polar(1.0, noise[i]);
+			const ComplexType phase_noise = std::polar(1.0, n);
+			w *= phase_noise;
 
-			// Apply the phase noise to the window element
-			window[i] *= phase_noise;
-
-			// Check for NaN in the result
-			if (std::isnan(window[i].real()) || std::isnan(window[i].imag()))
+			if (std::isnan(w.real()) || std::isnan(w.imag()))
 			{
 				throw std::runtime_error("[BUG] NaN encountered in addPhaseNoiseToWindow");
 			}
 		}
 	}
+}
 
-	void exportResponseFersBin(const std::vector<std::unique_ptr<serial::Response>>& responses,
-	                           const radar::Receiver* recv,
-	                           const std::string& recvName)
+namespace serial
+{
+	void exportReceiverXml(std::span<const std::unique_ptr<Response>> responses, const std::string& filename)
+	{
+		TiXmlDocument doc;
+
+		// Use a smart pointer directly with release later for better ownership management
+		auto decl = std::make_unique<TiXmlDeclaration>("1.0", "", "");
+		doc.LinkEndChild(decl.release());
+
+		// No smart pointer because TiXml handles the memory
+		auto* root = new TiXmlElement("receiver");
+		doc.LinkEndChild(root);
+
+		// Modern range-based for loop
+		for (const auto& response : responses) { response->renderXml(root); }
+
+		// Using std::filesystem to work with the path
+		if (const fs::path file_path = fs::path(filename).replace_extension(".fersxml"); !doc.
+			SaveFile(file_path.string()))
+		{
+			throw std::runtime_error("Failed to save XML file: " + file_path.string());
+		}
+	}
+
+	void exportReceiverCsv(const std::span<const std::unique_ptr<Response>> responses, const std::string& filename)
+	{
+		std::map<std::string, std::unique_ptr<std::ofstream>> streams;
+
+		// Iterate over each response in the vector, using structured bindings and ranges
+		for (const auto& response : responses)
+		{
+			const std::string& transmitter_name = response->getTransmitterName();
+
+			// Use `std::map::try_emplace` to simplify checking and insertion
+			auto [it, inserted] = streams.try_emplace(transmitter_name, nullptr);
+
+			// If the stream for this transmitter is being inserted, open a new file
+			if (inserted)
+			{
+				fs::path file_path = fs::path(filename).concat("_").concat(transmitter_name).replace_extension(".csv");
+
+				auto of = std::make_unique<std::ofstream>(file_path.string());
+				of->setf(std::ios::scientific);
+
+				if (!*of) { throw std::runtime_error("Could not open file " + file_path.string() + " for writing"); }
+
+				// Assign the opened file stream to the map entry
+				it->second = std::move(of);
+			}
+
+			// Render the CSV for the current response
+			response->renderCsv(*it->second);
+		}
+	}
+
+	void exportReceiverBinary(const std::span<const std::unique_ptr<Response>> responses, const radar::Receiver* recv,
+	                          const std::string& recvName)
 	{
 		// Bail if there are no responses to export
 		if (responses.empty()) { return; }
 
-		// Open HDF5 file for writing
-		const long out_bin = openHdf5File(recvName);
+		// Open HDF5 file for writing, using optional to handle a file open/close more safely
+		const std::optional out_bin = openHdf5File(recvName);
 
 		// Create a threaded render object to manage the rendering process
-		const serial::ThreadedResponseRenderer thr_renderer(responses, recv, params::renderThreads());
+		const ThreadedResponseRenderer thr_renderer(responses, recv, params::renderThreads());
 
 		// Retrieve the window count from the receiver
 		const int window_count = recv->getWindowCount();
 
-		// Loop through each window
+		// Loop through each window, using a more modern range-based for loop when possible
 		for (int i = 0; i < window_count; ++i)
 		{
 			const RealType length = recv->getWindowLength();
@@ -195,108 +234,58 @@ namespace
 			// Generate phase noise samples for the window
 			RealType carrier;
 			bool pn_enabled;
-			std::vector<RealType> pnoise(generatePhaseNoise(recv, size, rate, carrier, pn_enabled));
+			auto pnoise = generatePhaseNoise(recv, size, rate, carrier, pn_enabled);
 
 			// Get the window start time, including clock drift effects
-			RealType start = recv->getWindowStart(i) + pnoise[0] / (2 * PI * carrier);
+			RealType start = recv->getWindowStart(i) + pnoise[0] / (2 * std::numbers::pi * carrier);
 
-			// Calculate the fractional delay
-			const RealType frac_delay = start * rate - std::round(start * rate);
-			start = std::round(start * rate) / rate;
+			// Calculate the fractional delay using structured bindings for clarity
+			const auto [round_start, frac_delay] = [&start, rate]
+			{
+				RealType rounded_start = std::round(start * rate) / rate;
+				RealType fractional_delay = start * rate - std::round(start * rate);
+				return std::tuple{rounded_start, fractional_delay};
+			}();
+			start = round_start;
 
-			// Allocate memory for the window using smart pointers
-			std::vector<ComplexType> window = std::vector<ComplexType>(size);
+			// Allocate memory for the window using std::vector with default initialization
+			std::vector<ComplexType> window(size);
 
 			// Add noise to the window
-			addNoiseToWindow(window, size, recv->getNoiseTemperature());
+			addNoiseToWindow(window, recv->getNoiseTemperature());
 
 			// Render the window using the threaded renderer
 			thr_renderer.renderWindow(window, length, start, frac_delay);
 
 			// Downsample the window if the oversample ratio is greater than 1
-			if (params::oversampleRatio() != 1)
+			if (params::oversampleRatio() > 1)
 			{
 				// Calculate the new size after downsampling
 				const unsigned new_size = size / params::oversampleRatio();
 
-				// Allocate memory for the downsampled window
-				auto tmp = std::vector<ComplexType>(new_size);
-
-				// Perform downsampling
+				// Perform downsampling directly in place if possible, otherwise move to a new vector
+				std::vector<ComplexType> tmp(new_size);
 				signal::downsample(window, tmp, params::oversampleRatio());
 
 				// Replace the window with the downsampled one
 				size = new_size;
-				window = tmp;
+				window = std::move(tmp);
 			}
 
 			// Add phase noise to the window if enabled
-			if (pn_enabled) { addPhaseNoiseToWindow(pnoise, window, size); }
+			if (pn_enabled) { addPhaseNoiseToWindow(pnoise, window); }
 
 			// Normalize and quantize the window
-			const RealType fullscale = quantizeWindow(window, size);
+			const RealType fullscale = quantizeWindow(window);
 
-			// Export the binary format if enabled
-			if (params::exportBinary())
+			// Export the binary format if enabled, using the HDF5 file handle if it exists
+			if (params::exportBinary() && out_bin)
 			{
-				serial::addChunkToFile(out_bin, window, size, start, params::rate(), fullscale, i);
+				serial::addChunkToFile(*out_bin, window, size, start, params::rate(), fullscale, i);
 			}
 		}
 
-		// Close the binary file
-		if (out_bin) { serial::closeFile(out_bin); }
+		// Close the binary file if it was opened
+		if (out_bin) { closeFile(*out_bin); }
 	}
-}
-
-namespace serial
-{
-	void exportReceiverXml(const std::vector<std::unique_ptr<Response>>& responses, const std::string& filename)
-	{
-		TiXmlDocument doc;
-		auto decl = std::make_unique<TiXmlDeclaration>("1.0", "", "");
-		doc.LinkEndChild(decl.release());
-		// TODO: Can't make this a smart pointer...
-		auto* root = new TiXmlElement("receiver");
-		doc.LinkEndChild(root);
-		for (const auto& response : responses) { response->renderXml(root); }
-		if (!doc.SaveFile(filename + ".fersxml"))
-		{
-			throw std::runtime_error("Failed to save XML file: " + filename + ".fersxml");
-		}
-	}
-
-	void exportReceiverCsv(const std::vector<std::unique_ptr<Response>>& responses, const std::string& filename)
-	{
-		// Use std::unique_ptr to handle automatic cleanup of the streams
-		std::map<std::string, std::unique_ptr<std::ofstream>> streams;
-
-		// Iterate over each response in the vector
-		for (const auto& response : responses)
-		{
-			// Get the transmitter name from the response
-			const std::string& transmitter_name = response->getTransmitterName();
-
-			// Check if a stream for this transmitter already exists
-			if (auto it = streams.find(transmitter_name); it == streams.end())
-			{
-				// If not found, create a new output file stream
-				std::ostringstream oss;
-				oss << filename << "_" << transmitter_name << ".csv";
-
-				auto of = std::make_unique<std::ofstream>(oss.str());
-				of->setf(std::ios::scientific);
-
-				if (!*of) { throw std::runtime_error("Could not open file " + oss.str() + " for writing"); }
-
-				// Add the new stream to the map
-				streams[transmitter_name] = std::move(of);
-			}
-
-			// Render the CSV for the current response
-			response->renderCsv(*streams[transmitter_name]);
-		}
-	}
-
-	void exportReceiverBinary(const std::vector<std::unique_ptr<Response>>& responses, const radar::Receiver* recv,
-	                          const std::string& recvName) { exportResponseFersBin(responses, recv, recvName); }
 }
