@@ -23,6 +23,34 @@ namespace radar
 	// RADAR CLASS
 	//
 	// =================================================================================================================
+	RealType Radar::getGain(const math::SVec3& angle, const math::SVec3& refangle,
+									   const RealType wavelength) const
+	{
+		return _antenna->getGain(angle, refangle, wavelength);
+	}
+
+	RealType Radar::getNoiseTemperature(const math::SVec3& angle) const
+	{
+		return _antenna->getNoiseTemperature(angle);
+	}
+
+	void Radar::setTiming(const std::shared_ptr<timing::Timing>& tim)
+	{
+		if (!tim) { throw std::runtime_error("[BUG] Radar timing source must not be null"); }
+		_timing = tim;
+	}
+
+	void Radar::setAntenna(const antenna::Antenna* ant)
+	{
+		if (!ant) { throw std::logic_error("[BUG] Transmitter's antenna set to null"); }
+		_antenna = ant;
+	}
+
+	void Radar::setAttached(const Radar* obj)
+	{
+		if (_attached) { throw std::runtime_error("[BUG] Attempted to attach second object to transmitter"); }
+		_attached = obj;
+	}
 
 	std::shared_ptr<timing::Timing> Radar::getTiming() const
 	{
@@ -80,6 +108,32 @@ namespace radar
 	// RECEIVER CLASS
 	//
 	// =================================================================================================================
+
+	void Receiver::addResponse(std::unique_ptr<serial::Response> response)
+	{
+		std::lock_guard lock(_responses_mutex);
+		_responses.push_back(std::move(response));
+	}
+
+	RealType Receiver::getNoiseTemperature(const math::SVec3& angle) const
+	{
+		return _noise_temperature + Radar::getNoiseTemperature(angle);
+	}
+
+	int Receiver::getResponseCount() const
+	{
+		std::lock_guard lock(_responses_mutex);
+		return static_cast<int>(_responses.size());
+	}
+
+	void Receiver::setNoiseTemperature(const RealType temp)
+	{
+		if (temp < -std::numeric_limits<RealType>::epsilon())
+		{
+			throw std::runtime_error("[BUG] Noise temperature must be positive");
+		}
+		_noise_temperature = temp;
+	}
 
 	void Receiver::render()
 	{

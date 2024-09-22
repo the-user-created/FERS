@@ -28,23 +28,19 @@ namespace math
 
 		void finalize();
 
+		[[nodiscard]] const std::vector<RotationCoord>& getCoords() const noexcept { return _coords; }
+		[[nodiscard]] RotationCoord getStart() const noexcept { return _start; }
+		[[nodiscard]] RotationCoord getRate() const noexcept { return _rate; }
+		[[nodiscard]] InterpType getType() const noexcept { return _type; }
+
 		[[nodiscard]] SVec3 getPosition(RealType t) const;
+
+		void setStart(const RotationCoord& start) noexcept { _start = start; }
+		void setRate(const RotationCoord& rate) noexcept { _rate = rate; }
 
 		void setInterp(InterpType setinterp) noexcept;
 
 		void setConstantRate(const RotationCoord& setstart, const RotationCoord& setrate) noexcept;
-
-		[[nodiscard]] const std::vector<RotationCoord>& getCoords() const noexcept { return _coords; }
-
-		[[nodiscard]] RotationCoord getStart() const noexcept { return _start; }
-
-		[[nodiscard]] RotationCoord getRate() const noexcept { return _rate; }
-
-		[[nodiscard]] InterpType getType() const noexcept { return _type; }
-
-		void setStart(const RotationCoord& start) noexcept { _start = start; }
-
-		void setRate(const RotationCoord& rate) noexcept { _rate = rate; }
 
 	private:
 		std::vector<RotationCoord> _coords;

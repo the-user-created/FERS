@@ -19,7 +19,7 @@ namespace noise
 	public:
 		FAlphaBranch(RealType ffrac, unsigned fint, std::unique_ptr<FAlphaBranch> pre, bool last);
 
-		~FAlphaBranch() = default; // Default destructor as modern C++ handles cleanup automatically
+		~FAlphaBranch() = default;
 
 		// Delete copy constructor and assignment operator to make the class noncopyable
 		FAlphaBranch(const FAlphaBranch&) = delete;

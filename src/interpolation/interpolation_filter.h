@@ -20,20 +20,12 @@ namespace interp
 		// constexpr for compile-time evaluation
 		static constexpr RealType sinc(const RealType x) noexcept
 		{
-			return x == 0.0 ? 1.0 : std::sin(x * PI) / (x * std::numbers::pi_v<RealType>);
+			return x == 0.0 ? 1.0 : std::sin(x * PI) / (x * PI);
 		}
 
-		[[nodiscard]] RealType kaiserWinCompute(const RealType x) const noexcept
-		{
-			return x < 0 || x > _alpha * 2
-				       ? 0
-				       : besselI0(_beta * std::sqrt(1 - std::pow((x - _alpha) / _alpha, 2))) / _bessel_beta;
-		}
+		[[nodiscard]] RealType kaiserWinCompute(RealType x) const noexcept;
 
-		[[nodiscard]] RealType interpFilter(const RealType x) const noexcept
-		{
-			return kaiserWinCompute(x + _alpha) * sinc(x);
-		}
+		[[nodiscard]] RealType interpFilter(RealType x) const noexcept;
 
 		[[nodiscard]] std::span<const RealType> getFilter(RealType delay) const;
 

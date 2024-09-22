@@ -36,6 +36,15 @@ namespace
 
 namespace radar
 {
+	RealType IsoTarget::getRcs(SVec3& inAngle, SVec3& outAngle) const
+	{
+		return _model ? _rcs * _model->sampleModel() : _rcs;
+	}
+
+	FileTarget::FileTarget(Platform* platform, std::string name, const std::string& filename) :
+		Target(platform, std::move(name)), _azi_samples(std::make_unique_for_overwrite<interp::InterpSet>()),
+		_elev_samples(std::make_unique_for_overwrite<interp::InterpSet>()) { loadRcsDescription(filename); }
+
 	RealType FileTarget::getRcs(SVec3& inAngle, SVec3& outAngle) const
 	{
 		const SVec3 t_angle = inAngle + outAngle;

@@ -7,7 +7,6 @@
 #define RADAR_SYSTEM_H
 
 #include <memory>
-#include <stdexcept>
 
 #include "config.h"
 #include "object.h"
@@ -40,59 +39,38 @@ namespace radar
 	class Radar : public Object
 	{
 	public:
-		Radar(Platform* platform, std::string name) : Object(platform, std::move(name)), _multipath_dual(false),
-		                                              _multipath_factor(0) {}
+		Radar(Platform* platform, std::string name) : Object(platform, std::move(name)) {}
 
 		~Radar() override = default;
 
-		[[nodiscard]] const Radar* getAttached() const { return _attached; }
-
-		[[nodiscard]] std::shared_ptr<timing::Timing> getTiming() const;
-
 		[[nodiscard]] bool getMultipathDual() const { return _multipath_dual; }
-		[[nodiscard]] bool isMonostatic() const { return _attached; }
+		[[nodiscard]] const Radar* getAttached() const { return _attached; }
 		[[nodiscard]] RealType getMultipathFactor() const { return _multipath_factor; }
 		[[nodiscard]] const antenna::Antenna* getAntenna() const { return _antenna; }
 
 		[[nodiscard]] RealType getGain(const math::SVec3& angle, const math::SVec3& refangle,
-		                               const RealType wavelength) const
-		{
-			return _antenna->getGain(angle, refangle, wavelength);
-		}
+		                               RealType wavelength) const;
 
-		[[nodiscard]] virtual RealType getNoiseTemperature(const math::SVec3& angle) const
-		{
-			return _antenna->getNoiseTemperature(angle);
-		}
+		[[nodiscard]] virtual RealType getNoiseTemperature(const math::SVec3& angle) const;
 
-		void setTiming(const std::shared_ptr<timing::Timing>& tim)
-		{
-			if (!tim) { throw std::runtime_error("[BUG] Radar timing source must not be null"); }
-			_timing = tim;
-		}
+		[[nodiscard]] std::shared_ptr<timing::Timing> getTiming() const;
 
-		void setAntenna(const antenna::Antenna* ant)
-		{
-			if (!ant) { throw std::logic_error("[BUG] Transmitter's antenna set to null"); }
-			_antenna = ant;
-		}
+		void setTiming(const std::shared_ptr<timing::Timing>& tim);
 
-		void setAttached(const Radar* obj)
-		{
-			if (_attached) { throw std::runtime_error("[BUG] Attempted to attach second object to transmitter"); }
-			_attached = obj;
-		}
+		void setAntenna(const antenna::Antenna* ant);
 
 		void setMultipathDual(RealType reflect);
+
+		void setAttached(const Radar* obj);
 
 	protected:
 		std::shared_ptr<timing::Timing> _timing;
 
 	private:
-		const antenna::Antenna* _antenna = nullptr;
-		const Radar* _attached = nullptr;
-		bool _multipath_dual;
-		RealType _multipath_factor;
+		const antenna::Antenna* _antenna{nullptr};
+		const Radar* _attached{nullptr};
+		bool _multipath_dual{false};
+		RealType _multipath_factor{0};
 	};
 
 	// Transmitter Class
@@ -137,26 +115,11 @@ namespace radar
 
 		~Receiver() override = default;
 
-		void addResponse(std::unique_ptr<serial::Response> response)
-		{
-			std::lock_guard lock(_responses_mutex);
-			_responses.push_back(std::move(response));
-		}
+		void addResponse(std::unique_ptr<serial::Response> response);
 
 		[[nodiscard]] bool checkFlag(RecvFlag flag) const { return _flags & static_cast<int>(flag); }
 
 		void render();
-
-		[[nodiscard]] RealType getNoiseTemperature(const math::SVec3& angle) const override
-		{
-			return _noise_temperature + Radar::getNoiseTemperature(angle);
-		}
-
-		[[nodiscard]] int getResponseCount() const
-		{
-			std::lock_guard lock(_responses_mutex);
-			return static_cast<int>(_responses.size());
-		}
 
 		[[nodiscard]] RealType getNoiseTemperature() const { return _noise_temperature; }
 		[[nodiscard]] RealType getWindowLength() const { return _window_length; }
@@ -164,23 +127,20 @@ namespace radar
 		[[nodiscard]] RealType getWindowSkip() const { return _window_skip; }
 		[[nodiscard]] Receiver* getDual() const { return _dual; }
 
+		[[nodiscard]] RealType getNoiseTemperature(const math::SVec3& angle) const override;
+
 		[[nodiscard]] RealType getWindowStart(int window) const;
 
 		[[nodiscard]] int getWindowCount() const;
 
-		void setNoiseTemperature(const RealType temp)
-		{
-			if (temp < -std::numeric_limits<RealType>::epsilon())
-			{
-				throw std::runtime_error("[BUG] Noise temperature must be positive");
-			}
-			_noise_temperature = temp;
-		}
+		[[nodiscard]] int getResponseCount() const;
 
 		void setWindowProperties(RealType length, RealType prf, RealType skip);
 
 		void setFlag(RecvFlag flag) { _flags |= static_cast<int>(flag); }
 		void setDual(Receiver* dual) { _dual = dual; }
+
+		void setNoiseTemperature(RealType temp);
 
 	private:
 		std::vector<std::unique_ptr<serial::Response>> _responses;

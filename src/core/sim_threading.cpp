@@ -130,9 +130,7 @@ namespace
 		const SVec3 transvec{tpos - rpos};
 		const RealType distance = transvec.length;
 
-		constexpr RealType epsilon = std::numeric_limits<RealType>::epsilon();
-
-		if (distance <= epsilon) { throw core::RangeError(); }
+		if (constexpr RealType epsilon = std::numeric_limits<RealType>::epsilon(); distance <= epsilon) { throw core::RangeError(); }
 
 		// Time delay calculation
 		results.delay = distance / params::c();
@@ -170,8 +168,8 @@ namespace
 
 	void addDirect(const Transmitter* trans, Receiver* recv, const TransmitterPulse* signal)
 	{
-		// Exit early if monostatic and the transmitter is attached to the receiver
-		if (trans->isMonostatic() && trans->getAttached() == recv) { return; }
+		// Exit early if the transmitter is attached to the receiver
+		if (trans->getAttached() == recv) { return; }
 
 		// Convert time variables to std::chrono for better type safety
 		const auto start_time = std::chrono::duration<RealType>(signal->time);

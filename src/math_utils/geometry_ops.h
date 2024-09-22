@@ -38,21 +38,13 @@ namespace math
 		constexpr SVec3(const RealType length, const RealType azimuth, const RealType elevation) noexcept
 			: length(length), azimuth(azimuth), elevation(elevation) {}
 
-		explicit SVec3(const Vec3& vec);
+		explicit SVec3(const Vec3& vec) noexcept;
 
 		~SVec3() = default;
 
-		SVec3& operator*=(const RealType b) noexcept
-		{
-			length *= b;
-			return *this;
-		}
+		SVec3& operator*=(RealType b) noexcept;
 
-		SVec3& operator/=(const RealType b) noexcept
-		{
-			length /= b;
-			return *this;
-		}
+		SVec3& operator/=(RealType b) noexcept;
 	};
 
 	class Vec3
@@ -64,52 +56,19 @@ namespace math
 
 		constexpr Vec3(const RealType x, const RealType y, const RealType z) noexcept : x(x), y(y), z(z) {}
 
-		explicit Vec3(const SVec3& svec) noexcept
-			: x(svec.length * std::cos(svec.azimuth) * std::cos(svec.elevation)),
-			  y(svec.length * std::sin(svec.azimuth) * std::cos(svec.elevation)),
-			  z(svec.length * std::sin(svec.elevation)) {}
+		explicit Vec3(const SVec3& svec) noexcept;
 
-		Vec3& operator+=(const Vec3& b) noexcept
-		{
-			x += b.x;
-			y += b.y;
-			z += b.z;
-			return *this;
-		}
+		Vec3& operator+=(const Vec3& b) noexcept;
 
-		Vec3& operator-=(const Vec3& b) noexcept
-		{
-			x -= b.x;
-			y -= b.y;
-			z -= b.z;
-			return *this;
-		}
+		Vec3& operator-=(const Vec3& b) noexcept;
 
-		Vec3& operator*=(const Vec3& b) noexcept
-		{
-			x *= b.x;
-			y *= b.y;
-			z *= b.z;
-			return *this;
-		}
+		Vec3& operator*=(const Vec3& b) noexcept;
 
 		Vec3& operator*=(const Matrix3& m) noexcept;
 
-		Vec3& operator*=(const RealType b) noexcept
-		{
-			x *= b;
-			y *= b;
-			z *= b;
-			return *this;
-		}
+		Vec3& operator*=(RealType b) noexcept;
 
-		Vec3& operator/=(const RealType b) noexcept
-		{
-			x /= b;
-			y /= b;
-			z /= b;
-			return *this;
-		}
+		Vec3& operator/=(RealType b) noexcept;
 
 		Vec3 operator+(const RealType value) const { return {x + value, y + value, z + value}; }
 
@@ -135,21 +94,9 @@ namespace math
 	inline Vec3 operator/(const RealType a, const Vec3& b) noexcept { return {a / b.x, a / b.y, a / b.z}; }
 
 	// SVec3 operator overloads
-	inline SVec3 operator+(const SVec3& a, const SVec3& b) noexcept
-	{
-		RealType new_azimuth = fmod(a.azimuth + b.azimuth, 2 * PI);
-		if (new_azimuth < 0) { new_azimuth += 2 * PI; }
-		RealType new_elevation = fmod(a.elevation + b.elevation, PI);
-		return {a.length + b.length, new_azimuth, new_elevation};
-	}
+	SVec3 operator+(const SVec3& a, const SVec3& b) noexcept;
 
-	inline SVec3 operator-(const SVec3& a, const SVec3& b) noexcept
-	{
-		RealType new_azimuth = fmod(a.azimuth - b.azimuth, 2 * PI);
-		if (new_azimuth < 0) { new_azimuth += 2 * PI; }
-		RealType new_elevation = fmod(a.elevation - b.elevation, PI);
-		return {a.length - b.length, new_azimuth, new_elevation};
-	}
+	SVec3 operator-(const SVec3& a, const SVec3& b) noexcept;
 }
 
 #endif

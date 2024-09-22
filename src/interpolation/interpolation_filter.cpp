@@ -37,6 +37,18 @@ namespace interp
 		}
 	}
 
+	RealType InterpFilter::kaiserWinCompute(const RealType x) const noexcept
+	{
+		return x < 0 || x > _alpha * 2
+				   ? 0
+				   : besselI0(_beta * std::sqrt(1 - std::pow((x - _alpha) / _alpha, 2))) / _bessel_beta;
+	}
+
+	RealType InterpFilter::interpFilter(const RealType x) const noexcept
+	{
+		return kaiserWinCompute(x + _alpha) * sinc(x);
+	}
+
 	InterpFilter::InterpFilter()
 	{
 		_length = static_cast<int>(params::renderFilterLength());

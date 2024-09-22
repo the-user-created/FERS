@@ -315,7 +315,7 @@ namespace
 		try
 		{
 			const TiXmlHandle tmp = pathXml.FirstChildElement("pythonpath");
-			path->loadPythonPath(
+			path->setPythonPath(
 				getAttributeString(tmp, "module", "Attribute module missing"),
 				getAttributeString(tmp, "function", "Attribute function missing")
 			);

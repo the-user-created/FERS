@@ -70,7 +70,7 @@ namespace math
 		_final = false; // Invalidate the finalization after changing interpolation type
 	}
 
-	void Path::loadPythonPath(const std::string_view modname, const std::string_view pathname)
+	void Path::setPythonPath(const std::string_view modname, const std::string_view pathname)
 	{
 		_pythonpath = std::make_unique<python::PythonPath>(modname.data(), pathname.data());
 	}
