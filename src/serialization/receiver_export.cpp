@@ -223,7 +223,7 @@ namespace
 				auto tmp = std::vector<ComplexType>(new_size);
 
 				// Perform downsampling
-				signal::downsample(window, size, tmp, params::oversampleRatio());
+				signal::downsample(window, tmp, params::oversampleRatio());
 
 				// Replace the window with the downsampled one
 				size = new_size;

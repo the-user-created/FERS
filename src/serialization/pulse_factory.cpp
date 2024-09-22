@@ -31,7 +31,7 @@ namespace
 		serial::readPulseData(filename, data, rate);
 
 		auto signal = std::make_unique<Signal>();
-		signal->load(data.data(), data.size(), rate);
+		signal->load(data, data.size(), rate);
 		return std::make_unique<RadarSignal>(name, power, carrierFreq, static_cast<RealType>(data.size()) / rate,
 		                                     std::move(signal));
 	}
@@ -49,7 +49,7 @@ namespace
 		while (!ifile.eof() && done < length) { ifile >> data[done++]; }
 		if (done != length) { throw std::runtime_error("Could not read pulse waveform from file " + filename); }
 		auto signal = std::make_unique<Signal>();
-		signal->load(data.data(), length, rate);
+		signal->load(data, length, rate);
 		return std::make_unique<RadarSignal>(name, power, carrierFreq, rlength / rate, std::move(signal));
 	}
 }
