@@ -11,65 +11,46 @@ using logging::Level;
 
 namespace timing
 {
-	// =================================================================================================================
-	//
-	// PROTOTYPE TIMING CLASS
-	//
-	// =================================================================================================================
-
-	void PrototypeTiming::addAlpha(const RealType alpha, const RealType weight)
+	void PrototypeTiming::setAlpha(const RealType alpha, const RealType weight)
 	{
 		_alphas.emplace_back(alpha);
 		_weights.emplace_back(weight);
 	}
 
-	void PrototypeTiming::getAlphas(std::vector<RealType>& getAlphas, std::vector<RealType>& getWeights) const
+	void PrototypeTiming::copyAlphas(std::vector<RealType>& alphas, std::vector<RealType>& weights) const
 	{
-		getAlphas = _alphas;
-		getWeights = _weights;
+		alphas = _alphas;
+		weights = _weights;
 	}
 
-	void PrototypeTiming::addFreqOffset(const RealType offset)
+	void PrototypeTiming::setFreqOffset(const RealType offset)
 	{
-		if (_random_freq.has_value())
-		{
-			LOG(Level::ERROR,
-			    "Random frequency offset and constant frequency offset are set for timing source {}. Only the random offset will be used.",
-			    getName().c_str());
-		}
+		if (_random_freq) { logOffsetConflict("frequency"); }
 		_freq_offset = offset;
 	}
 
-	void PrototypeTiming::addPhaseOffset(const RealType offset)
+	void PrototypeTiming::setPhaseOffset(const RealType offset)
 	{
-		if (_random_phase.has_value())
-		{
-			LOG(Level::ERROR,
-			    "Random phase offset and constant phase offset are set for timing source {}. Only the random offset will be used.",
-			    getName().c_str());
-		}
+		if (_random_phase) { logOffsetConflict("phase"); }
 		_phase_offset = offset;
 	}
 
-	void PrototypeTiming::addRandomFreqOffset(const RealType stdev)
+	void PrototypeTiming::setRandomFreqOffset(const RealType stdev)
 	{
-		if (_freq_offset.has_value())
-		{
-			LOG(Level::ERROR,
-			    "Random frequency offset and constant frequency offset are set for timing source {}. Only the random offset will be used.",
-			    getName().c_str());
-		}
+		if (_freq_offset) { logOffsetConflict("frequency"); }
 		_random_freq = stdev;
 	}
 
-	void PrototypeTiming::addRandomPhaseOffset(const RealType stdev)
+	void PrototypeTiming::setRandomPhaseOffset(const RealType stdev)
 	{
-		if (_phase_offset.has_value())
-		{
-			LOG(Level::ERROR,
-			    "Random phase offset and constant phase offset are set for timing source {}. Only the random offset will be used.",
-			    getName().c_str());
-		}
+		if (_phase_offset) { logOffsetConflict("phase"); }
 		_random_phase = stdev;
+	}
+
+	void PrototypeTiming::logOffsetConflict(const std::string& offsetType) const
+	{
+		LOG(Level::ERROR,
+		    "Random {0} offset and constant {0} offset are set for timing source {1}. Only the random offset will be used.",
+		    offsetType.c_str(), _name.c_str());
 	}
 }

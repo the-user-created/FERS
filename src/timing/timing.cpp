@@ -12,12 +12,6 @@ using logging::Level;
 
 namespace timing
 {
-	// =================================================================================================================
-	//
-	// CLOCK MODEL TIMING CLASS
-	//
-	// =================================================================================================================
-
 	void Timing::initializeModel(const PrototypeTiming* timing)
 	{
 		if (!_alphas.empty())
@@ -25,15 +19,14 @@ namespace timing
 			throw std::logic_error("[BUG] ClockModelTiming::initializeModel called more than once");
 		}
 
-		timing->getAlphas(_alphas, _weights);
+		timing->copyAlphas(_alphas, _weights);
 
 		_model = std::make_unique<noise::ClockModelGenerator>(_alphas, _weights, timing->getFrequency(),
 		                                                      timing->getPhaseOffset(), timing->getFreqOffset(), 15);
 
 		if (timing->getFrequency() == 0.0f)
 		{
-			LOG(Level::INFO,
-			    "Timing source frequency not set, results could be incorrect.");
+			LOG(Level::INFO, "Timing source frequency not set, results could be incorrect.");
 		}
 
 		_frequency = timing->getFrequency();

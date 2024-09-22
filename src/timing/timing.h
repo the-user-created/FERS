@@ -20,10 +20,9 @@ namespace timing
 	class Timing final
 	{
 	public:
-		explicit Timing(std::string name)
-			: _name(std::move(name)), _enabled(false), _model(nullptr) {}
+		explicit Timing(std::string name) : _name(std::move(name)) {}
 
-		// Virtual destructor ensures proper cleanup in derived classes
+		// Defaulted destructor is sufficient
 		~Timing() = default;
 
 		// Deleted copy constructor and assignment operator to prevent copying
@@ -36,30 +35,29 @@ namespace timing
 			return _enabled && _model ? _model->getSample() : 0.0f;
 		}
 
-		[[nodiscard]] RealType nextNoiseSample() const { return _enabled ? _model->getSample() : 0.0f; }
-
-		void skipSamples(const long long samples) const { if (_enabled && _model) { _model->skipSamples(samples); } }
-
+		[[nodiscard]] RealType getNextSample() const noexcept { return _enabled ? _model->getSample() : 0.0f; }
 		[[nodiscard]] std::string getName() const noexcept { return _name; }
-
 		[[nodiscard]] bool getSyncOnPulse() const noexcept { return _sync_on_pulse; }
+		[[nodiscard]] RealType getFrequency() const noexcept { return _frequency; }
+		[[nodiscard]] bool isEnabled() const noexcept { return _enabled && _model && _model->enabled(); }
+
+		void skipSamples(const long long samples) const noexcept
+		{
+			if (_enabled && _model) { _model->skipSamples(samples); }
+		}
 
 		void initializeModel(const PrototypeTiming* timing);
 
-		void reset() const { if (_model) { _model->reset(); } }
-
-		[[nodiscard]] RealType getFrequency() const noexcept { return _frequency; }
-
-		[[nodiscard]] bool enabled() const noexcept { return _enabled && _model && _model->enabled(); }
+		void reset() const noexcept { if (_model) { _model->reset(); } }
 
 	private:
 		std::string _name;
-		bool _enabled;
-		std::unique_ptr<noise::ClockModelGenerator> _model; // Use a smart pointer for automatic memory management
+		bool _enabled{false};
+		std::unique_ptr<noise::ClockModelGenerator> _model{nullptr};
 		std::vector<RealType> _alphas;
 		std::vector<RealType> _weights;
 		RealType _frequency{};
-		bool _sync_on_pulse{};
+		bool _sync_on_pulse{false};
 	};
 }
 

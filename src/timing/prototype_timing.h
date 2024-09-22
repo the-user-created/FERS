@@ -18,39 +18,36 @@ namespace timing
 	class PrototypeTiming
 	{
 	public:
-		explicit PrototypeTiming(std::string name) : _name(std::move(name)), _frequency(0), _sync_on_pulse(false) {}
+		explicit PrototypeTiming(std::string name) : _name(std::move(name)) {}
 
-		void addAlpha(RealType alpha, RealType weight);
-
-		void getAlphas(std::vector<RealType>& getAlphas, std::vector<RealType>& getWeights) const;
-
-		[[nodiscard]] RealType getPhaseOffset() const
+		[[nodiscard]] RealType getPhaseOffset() const noexcept
 		{
-			return _random_phase.has_value() ? noise::wgnSample(*_random_phase) : _phase_offset.value_or(0);
+			return _random_phase ? noise::wgnSample(*_random_phase) : _phase_offset.value_or(0);
 		}
 
-		[[nodiscard]] RealType getFreqOffset() const
+		[[nodiscard]] RealType getFreqOffset() const noexcept
 		{
-			return _random_freq.has_value() ? noise::wgnSample(*_random_freq) : _freq_offset.value_or(0);
+			return _random_freq ? noise::wgnSample(*_random_freq) : _freq_offset.value_or(0);
 		}
 
-		[[nodiscard]] RealType getFrequency() const { return _frequency; }
+		void copyAlphas(std::vector<RealType>& alphas, std::vector<RealType>& weights) const;
 
-		[[nodiscard]] bool getSyncOnPulse() const { return _sync_on_pulse; }
-
-		void addFreqOffset(RealType offset);
-
-		void addPhaseOffset(RealType offset);
-
-		void addRandomFreqOffset(RealType stdev);
-
-		void addRandomPhaseOffset(RealType stdev);
-
-		void setFrequency(const RealType freq) { _frequency = freq; }
-
+		[[nodiscard]] RealType getFrequency() const noexcept { return _frequency; }
 		[[nodiscard]] std::string getName() const { return _name; }
+		[[nodiscard]] bool getSyncOnPulse() const noexcept { return _sync_on_pulse; }
 
-		void setSyncOnPulse() { _sync_on_pulse = true; }
+		void setFrequency(const RealType freq) noexcept { _frequency = freq; }
+		void setSyncOnPulse() noexcept { _sync_on_pulse = true; }
+
+		void setAlpha(RealType alpha, RealType weight);
+
+		void setFreqOffset(RealType offset);
+
+		void setPhaseOffset(RealType offset);
+
+		void setRandomFreqOffset(RealType stdev);
+
+		void setRandomPhaseOffset(RealType stdev);
 
 	private:
 		std::string _name;
@@ -60,8 +57,10 @@ namespace timing
 		std::optional<RealType> _phase_offset;
 		std::optional<RealType> _random_phase;
 		std::optional<RealType> _random_freq;
-		RealType _frequency;
-		bool _sync_on_pulse;
+		RealType _frequency{0};
+		bool _sync_on_pulse{false};
+
+		void logOffsetConflict(const std::string& offsetType) const;
 	};
 }
 
