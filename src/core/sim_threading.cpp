@@ -275,8 +275,8 @@ namespace
 		// Loop through all pulses
 		for (int i = 0; i < pulses; ++i)
 		{
-			// Fetch the pulse
-			trans->getPulse(&pulse, i);
+			// Set the pulse
+			trans->setPulse(&pulse, i);
 
 			// Simulate target interactions for each target in the world
 			std::ranges::for_each(world->getTargets(),
@@ -387,7 +387,7 @@ namespace core
 		// Clear running threads and log responses
 		for (const auto& receiver : receivers)
 		{
-			LOG(Level::DEBUG, "{} responses added to receiver '{}'", receiver->countResponses(),
+			LOG(Level::DEBUG, "{} responses added to receiver '{}'", receiver->getResponseCount(),
 			    receiver->getName().c_str());
 		}
 

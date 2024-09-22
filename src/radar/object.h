@@ -13,25 +13,28 @@ namespace radar
 	class Object
 	{
 	public:
-		Object(const Platform* platform, std::string name) : _platform(platform), _name(std::move(name)) {}
+		Object(Platform* platform, std::string name) : _platform(platform), _name(std::move(name)) {}
 
+		// Default virtual destructor
 		virtual ~Object() = default;
 
-		// Delete the copy constructor and copy assignment operator
+		// Delete copy constructor and copy assignment operator
 		Object(const Object&) = delete;
 
 		Object& operator=(const Object&) = delete;
 
+		// Default move constructor and move assignment operator
+		Object(Object&&) noexcept = default;
+
+		Object& operator=(Object&&) noexcept = default;
+
 		[[nodiscard]] math::Vec3 getPosition(const RealType time) const { return _platform->getPosition(time); }
-
 		[[nodiscard]] math::SVec3 getRotation(const RealType time) const { return _platform->getRotation(time); }
-
-		[[nodiscard]] const Platform* getPlatform() const { return _platform; }
-
-		[[nodiscard]] std::string getName() const { return _name; }
+		[[nodiscard]] Platform* getPlatform() const { return _platform; }
+		[[nodiscard]] const std::string& getName() const { return _name; }
 
 	private:
-		const Platform* _platform;
+		Platform* _platform;
 		std::string _name;
 	};
 }

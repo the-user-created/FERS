@@ -38,7 +38,7 @@ namespace radar
 		{
 			LOG(Level::ERROR,
 			    "Multipath reflection factor greater than 1 (={}) for radar {}, results are likely to be incorrect",
-			    reflect, getName().c_str());
+			    reflect, getName());
 		}
 	}
 
@@ -59,7 +59,7 @@ namespace radar
 		return 1; // CW systems only have one 'pulse'
 	}
 
-	void Transmitter::getPulse(TransmitterPulse* pulse, const int number) const
+	void Transmitter::setPulse(TransmitterPulse* pulse, const int number) const
 	{
 		pulse->wave = _signal;
 		pulse->time = _pulsed ? static_cast<RealType>(number) / _prf : 0;
@@ -81,22 +81,20 @@ namespace radar
 	//
 	// =================================================================================================================
 
-	void Receiver::addResponse(std::unique_ptr<serial::Response> response)
-	{
-		std::unique_lock lock(_responses_mutex);
-		_responses.push_back(std::move(response));
-	}
-
 	void Receiver::render()
 	{
 		try
 		{
 			std::unique_lock lock(_responses_mutex, std::try_to_lock);
 			if (!lock.owns_lock()) { throw std::runtime_error("[BUG] Responses lock is locked during Render()"); }
+
 			std::ranges::sort(_responses, compareTimes);
+
+			// Export based on user preferences
 			if (params::exportXml()) { exportReceiverXml(_responses, getName() + "_results"); }
 			if (params::exportBinary()) { exportReceiverBinary(_responses, this, getName() + "_results"); }
 			if (params::exportCsv()) { exportReceiverCsv(_responses, getName() + "_results"); }
+
 			lock.unlock();
 		}
 		catch (const std::system_error&) { throw std::runtime_error("[BUG] Responses lock is locked during Render()"); }
@@ -104,12 +102,10 @@ namespace radar
 
 	void Receiver::setWindowProperties(const RealType length, const RealType prf, const RealType skip)
 	{
-		const RealType rate = params::rate() * params::oversampleRatio();
+		const auto rate = params::rate() * params::oversampleRatio();
 		_window_length = length;
-		_window_prf = prf;
-		_window_skip = skip;
-		_window_prf = 1 / (std::floor(rate / _window_prf) / rate);
-		_window_skip = std::floor(rate * _window_skip) / rate;
+		_window_prf = 1 / (std::floor(rate / prf) / rate); // Update prf to precise value
+		_window_skip = std::floor(rate * skip) / rate; // Update skip with better precision
 	}
 
 	int Receiver::getWindowCount() const
@@ -133,27 +129,29 @@ namespace radar
 	// =================================================================================================================
 
 	template <typename T>
-	T* createMultipathDualBase(T* obj, const MultipathSurface* surf, const std::string& dualNameSuffix)
-	// NOLINT(misc-no-recursion)
+	T* createMultipathDualBase(T* obj, const MultipathSurface* surf, const std::string& dualNameSuffix) // NOLINT(misc-no-recursion)
 	{
-		if (obj->getDual()) { return obj->getDual(); }
+		if (obj->getDual())
+		{
+			return obj->getDual(); // Return existing dual if already created
+		}
 
 		LOG(Level::DEBUG, "[{}.createMultipathDual] Creating dual for {}",
-		    typeid(T).name(), obj->getName().c_str());
+		    typeid(T).name(), obj->getName());
 
 		// Create or retrieve the dual platform
 		Platform* dual_platform = createMultipathDual(obj->getPlatform(), surf);
 
-		// Handle the specific case for Transmitter that needs an extra 'pulsed' parameter
-		T* dual = nullptr;
+		// Create the dual object
+		std::unique_ptr<T> dual;
 		if constexpr (std::is_same_v<T, Transmitter>)
 		{
-			dual = new Transmitter(dual_platform, obj->getName() + dualNameSuffix, obj->getPulsed());
+			dual = std::make_unique<Transmitter>(dual_platform, obj->getName() + dualNameSuffix, obj->getPulsed());
 		}
-		else { dual = new T(dual_platform, obj->getName() + dualNameSuffix); }
+		else { dual = std::make_unique<T>(dual_platform, obj->getName() + dualNameSuffix); }
 
 		// Link the dual to the original
-		obj->setDual(dual);
+		obj->setDual(dual.get());
 
 		// Set shared properties
 		dual->setAntenna(obj->getAntenna());
@@ -175,18 +173,20 @@ namespace radar
 		dual->setMultipathDual(surf->getFactor());
 
 		// Use a stack to iteratively process attached objects
-		std::stack<Radar*> stack;
+		std::stack<Radar*> radar_stack;
 
-		// If the object has an attached component, push it onto the stack for further processing
-		if (obj->getAttached()) { stack.push(const_cast<Radar*>(obj->getAttached())); }
-
-		while (!stack.empty())
+		if (auto* attached = obj->getAttached(); attached != nullptr)
 		{
-			// print stack size
+			radar_stack.push(const_cast<Radar*>(attached)); // Push the attached object for further processing
+		}
+
+		while (!radar_stack.empty())
+		{
 			LOG(Level::DEBUG, "[{}.createMultipathDual] Stack size: {}",
-			    typeid(T).name(), stack.size());
-			Radar* attached = stack.top();
-			stack.pop();
+			    typeid(T).name(), radar_stack.size());
+
+			Radar* attached = radar_stack.top();
+			radar_stack.pop();
 
 			if (auto* trans = dynamic_cast<Transmitter*>(attached))
 			{
@@ -200,7 +200,7 @@ namespace radar
 			}
 		}
 
-		return dual;
+		return dual.release(); // Return the raw pointer and release ownership
 	}
 
 	Receiver* createMultipathDual(Receiver* recv, const MultipathSurface* surf)

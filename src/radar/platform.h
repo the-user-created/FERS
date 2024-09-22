@@ -17,47 +17,36 @@ namespace radar
 	{
 	public:
 		explicit Platform(std::string name) : _motion_path(std::make_unique<math::Path>()),
-		_rotation_path(std::make_unique<math::RotationPath>()), _name(std::move(name)), _dual(nullptr) {}
-
-		~Platform() = default;
+		                                      _rotation_path(std::make_unique<math::RotationPath>()),
+		                                      _name(std::move(name)) {}
 
 		// Delete copy constructor and assignment operator to prevent copying
 		Platform(const Platform&) = delete;
+
 		Platform& operator=(const Platform&) = delete;
 
+		// Defaulted destructor
+		~Platform() = default;
+
 		[[nodiscard]] math::Path* getMotionPath() const { return _motion_path.get(); }
-
-		void setMotionPath(std::unique_ptr<math::Path> path) { _motion_path = std::move(path); }
-
 		[[nodiscard]] math::RotationPath* getRotationPath() const { return _rotation_path.get(); }
+		[[nodiscard]] math::Vec3 getPosition(const RealType time) const { return _motion_path->getPosition(time); }
+		[[nodiscard]] math::SVec3 getRotation(const RealType time) const { return _rotation_path->getPosition(time); }
+		[[nodiscard]] const std::string& getName() const { return _name; }
+		[[nodiscard]] std::optional<Platform*> getDual() const { return _dual ? std::optional{_dual} : std::nullopt; }
 
 		void setRotationPath(std::unique_ptr<math::RotationPath> path) { _rotation_path = std::move(path); }
-
-		[[nodiscard]] math::Vec3 getPosition(const RealType time) const { return _motion_path->getPosition(time); }
-
-		[[nodiscard]] math::SVec3 getRotation(const RealType time) const { return _rotation_path->getPosition(time); }
-
-		[[nodiscard]] std::string getName() const { return _name; }
-
-		[[nodiscard]] std::optional<Platform*> getDual() const
-		{
-			if (!_dual)
-			{
-				return std::nullopt;
-			}
-			return _dual;
-		}
-
+		void setMotionPath(std::unique_ptr<math::Path> path) { _motion_path = std::move(path); }
 		void setDual(Platform* dual) { _dual = dual; }
 
 	private:
 		std::unique_ptr<math::Path> _motion_path;
 		std::unique_ptr<math::RotationPath> _rotation_path;
 		std::string _name;
-		Platform* _dual;
+		Platform* _dual = nullptr;
 	};
 
-	Platform* createMultipathDual(const Platform* plat, const math::MultipathSurface* surf);
+	Platform* createMultipathDual(Platform* plat, const math::MultipathSurface* surf);
 }
 
 #endif
