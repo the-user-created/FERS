@@ -24,15 +24,16 @@ namespace python
 
 	struct PythonExtensionData
 	{
-		PyObject *p_module, *p_func;
+		PyObject *p_module = nullptr;
+		PyObject *p_func = nullptr;
 	};
 
 	class PythonExtension
 	{
 	public:
-		PythonExtension(const std::string& module, const std::string& function);
+		PythonExtension(std::string_view module, std::string_view function);
 
-		~PythonExtension();
+		virtual ~PythonExtension();
 
 	protected:
 		std::unique_ptr<PythonExtensionData> _data;
@@ -40,32 +41,27 @@ namespace python
 		std::string _function;
 	};
 
-	class PythonPath : public PythonExtension
+	class PythonPath final : public PythonExtension
 	{
 	public:
-		PythonPath(const std::string& module, const std::string& function) : PythonExtension(module, function) {}
-
-		~PythonPath() = default;
+		using PythonExtension::PythonExtension;
 
 		[[nodiscard]] math::Vec3 getPosition(RealType t) const;
 	};
 
-	class PythonNoise : public PythonExtension
+	// NOTE: This class is not used in the current version of FERS
+	class PythonNoise final : public PythonExtension
 	{
 	public:
-		PythonNoise(const std::string& module, const std::string& function) : PythonExtension(module, function) {}
-
-		~PythonNoise() = default;
+		using PythonExtension::PythonExtension;
 
 		[[nodiscard]] RealType getSample() const;
 	};
 
-	class PythonAntennaMod : public PythonExtension
+	class PythonAntennaMod final : public PythonExtension
 	{
 	public:
-		PythonAntennaMod(const std::string& module, const std::string& function) : PythonExtension(module, function) {}
-
-		~PythonAntennaMod() = default;
+		using PythonExtension::PythonExtension;
 
 		[[nodiscard]] RealType getGain(const math::SVec3& direction) const;
 	};
