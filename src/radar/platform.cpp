@@ -9,19 +9,21 @@
 
 namespace radar
 {
-	Platform* createMultipathDual(const Platform* plat, const math::MultipathSurface* surf)
+	Platform* createMultipathDual(Platform* plat, const math::MultipathSurface* surf)
 	{
-		if (plat->getDual().has_value())
+		if (const auto dual = plat->getDual(); dual.has_value())
 		{
-			LOG(logging::Level::DEBUG, "[Platform.createMultipathDual] Dual platform already exists");
-			return plat->getDual().value();
+			LOG(logging::Level::TRACE, "Dual platform already exists. Returning existing dual platform.");
+			return *dual;
 		}
+
 		auto dual = std::make_unique<Platform>(plat->getName() + "_dual");
-		const_cast<Platform*>(plat)->setDual(dual.get());
 
 		dual->setMotionPath(reflectPath(plat->getMotionPath(), surf));
 		dual->setRotationPath(reflectPath(plat->getRotationPath(), surf));
 
-		return dual.release();
+		plat->setDual(dual.get());
+
+		return dual.release(); // Transfer ownership of dual
 	}
 }

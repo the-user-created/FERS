@@ -6,6 +6,7 @@
 #ifndef TARGET_H
 #define TARGET_H
 
+#include <concepts>
 #include <memory>
 
 #include "config.h"
@@ -16,6 +17,13 @@
 
 namespace radar
 {
+	// C++20 Concept for RcsModel to enforce `sampleModel` existence
+	template <typename T>
+	concept RcsModelConcept = requires(T a)
+	{
+		{ a.sampleModel() } -> std::convertible_to<RealType>;
+	};
+
 	class RcsModel
 	{
 	public:
@@ -48,16 +56,13 @@ namespace radar
 	class Target : public Object
 	{
 	public:
-		Target(const Platform* platform, const std::string& name) : Object(platform, name), _model(nullptr) {}
+		Target(Platform* platform, std::string name) : Object(platform, std::move(name)), _model(nullptr) {}
 
 		~Target() override = default;
 
 		virtual RealType getRcs(math::SVec3& inAngle, math::SVec3& outAngle) const = 0;
 
-		// Note: This function is not used in the codebase
 		[[nodiscard]] virtual math::PsMatrix getPolarization() const { return _psm; }
-
-		// Note: This function is not used in the codebase
 		virtual void setPolarization(const math::PsMatrix& in) { _psm = in; }
 
 		void setFluctuationModel(std::unique_ptr<RcsModel> in) { _model = std::move(in); }
@@ -70,8 +75,8 @@ namespace radar
 	class IsoTarget final : public Target
 	{
 	public:
-		IsoTarget(const Platform* platform, const std::string& name, const RealType rcs) :
-			Target(platform, name), _rcs(rcs) {}
+		IsoTarget(Platform* platform, std::string name, const RealType rcs) :
+			Target(platform, std::move(name)), _rcs(rcs) {}
 
 		~IsoTarget() override = default;
 
@@ -87,9 +92,10 @@ namespace radar
 	class FileTarget final : public Target
 	{
 	public:
-		FileTarget(const Platform* platform, const std::string& name, const std::string& filename) :
-			Target(platform, name), _azi_samples(std::make_unique<interp::InterpSet>()),
-			_elev_samples(std::make_unique<interp::InterpSet>()) { loadRcsDescription(filename); }
+		FileTarget(Platform* platform, std::string name, const std::string& filename) :
+			Target(platform, std::move(name)),
+			_azi_samples(std::make_unique_for_overwrite<interp::InterpSet>()),
+			_elev_samples(std::make_unique_for_overwrite<interp::InterpSet>()) { loadRcsDescription(filename); }
 
 		~FileTarget() override = default;
 
@@ -102,16 +108,15 @@ namespace radar
 		void loadRcsDescription(const std::string& filename) const;
 	};
 
-	inline std::unique_ptr<Target> createIsoTarget(const Platform* platform, const std::string& name,
-	                                               const RealType rcs)
+	// Factory functions
+	inline std::unique_ptr<Target> createIsoTarget(Platform* platform, std::string name, RealType rcs)
 	{
-		return std::make_unique<IsoTarget>(platform, name, rcs);
+		return std::make_unique<IsoTarget>(platform, std::move(name), rcs);
 	}
 
-	inline std::unique_ptr<Target> createFileTarget(const Platform* platform, const std::string& name,
-	                                                const std::string& filename)
+	inline std::unique_ptr<Target> createFileTarget(Platform* platform, std::string name, const std::string& filename)
 	{
-		return std::make_unique<FileTarget>(platform, name, filename);
+		return std::make_unique<FileTarget>(platform, std::move(name), filename);
 	}
 }
 

@@ -106,7 +106,7 @@ bool getAttributeBool(const TiXmlHandle& handle, const std::string& name, const 
 namespace
 {
 	/// Process a target XML entry
-	void processTarget(const TiXmlHandle& targXml, const Platform* platform, World* world)
+	void processTarget(const TiXmlHandle& targXml, Platform* platform, World* world)
 	{
 		const std::string name = getAttributeString(targXml, "name", "Target does not specify a name");
 		const TiXmlHandle rcs_xml = targXml.ChildElement("rcs", 0);
@@ -151,7 +151,7 @@ namespace
 	}
 
 	/// Process a receiver XML entry
-	Receiver* processReceiver(const TiXmlHandle& recvXml, const Platform* platform, World* world)
+	Receiver* processReceiver(const TiXmlHandle& recvXml, Platform* platform, World* world)
 	{
 		const std::string name = getAttributeString(recvXml, "name", "Receiver does not specify a name");
 		auto receiver = std::make_unique<Receiver>(platform, name);
@@ -212,9 +212,7 @@ namespace
 	}
 
 	/// Create a PulseTransmitter object and process XML entry
-	std::unique_ptr<Transmitter> processPulseTransmitter(const TiXmlHandle& transXml, const std::string& name,
-	                                                     const Platform* platform,
-	                                                     World* world)
+	std::unique_ptr<Transmitter> processPulseTransmitter(const TiXmlHandle& transXml, const std::string& name, Platform* platform, World* world)
 	{
 		auto transmitter = std::make_unique<Transmitter>(platform, name, true);
 		const std::string pulse_name = getAttributeString(transXml, "pulse",
@@ -227,9 +225,7 @@ namespace
 	}
 
 	/// Create a PulseTransmitter object and process XML entry
-	std::unique_ptr<Transmitter> processCwTransmitter(const TiXmlHandle& transXml, const std::string& name,
-	                                                  const Platform* platform,
-	                                                  World* world)
+	std::unique_ptr<Transmitter> processCwTransmitter(const TiXmlHandle& transXml, const std::string& name, Platform* platform, World* world)
 	{
 		auto transmitter = std::make_unique<Transmitter>(platform, name, true);
 		const std::string pulse_name = getAttributeString(transXml, "pulse",
@@ -243,7 +239,7 @@ namespace
 	}
 
 	/// Process a transmitter XML entry
-	Transmitter* processTransmitter(const TiXmlHandle& transXml, const Platform* platform, World* world)
+	Transmitter* processTransmitter(const TiXmlHandle& transXml, Platform* platform, World* world)
 	{
 		const std::string name = getAttributeString(transXml, "name", "Transmitter does not specify a name");
 		const std::string type = getAttributeString(transXml, "type",
@@ -285,12 +281,12 @@ namespace
 	}
 
 	/// Process a monostatic (Receiver and Transmitter sharing an antenna)
-	void processMonostatic(const TiXmlHandle& transXml, const Platform* platform, World* world)
+	void processMonostatic(const TiXmlHandle& transXml, Platform* platform, World* world)
 	{
 		Transmitter* trans = processTransmitter(transXml, platform, world);
 		Receiver* recv = processReceiver(transXml, platform, world);
-		trans->makeMonostatic(recv);
-		recv->makeMonostatic(trans);
+		trans->setAttached(recv);
+		recv->setAttached(trans);
 	}
 
 	/// Process a motion path waypoint
