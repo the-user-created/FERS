@@ -33,7 +33,7 @@ jobs:
       - name: Install dependencies in virtual environment  # Create venv and install dependencies
         run: |
           python3 -m venv venv
-          source venv/bin/activate
+          . venv/bin/activate
           pip install --upgrade pip
           pip install -r requirements.txt
 
@@ -52,7 +52,7 @@ jobs:
       - name: Run tests # Run the simulation tests
         run: |
           set -e
-          source venv/bin/activate
+          . venv/bin/activate
           python3 run_sim_tests.py
           echo "Exit code: $?"
 
