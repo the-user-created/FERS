@@ -316,7 +316,6 @@ namespace
 	/// Process the path's python attributes
 	void processPythonPath(const TiXmlHandle& pathXml, math::Path* path)
 	{
-		python::initPython();
 		try
 		{
 			const TiXmlHandle tmp = pathXml.FirstChildElement("pythonpath");

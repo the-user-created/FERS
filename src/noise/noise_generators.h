@@ -89,6 +89,7 @@ namespace noise
 		unsigned long _count = 0;
 	};
 
+	// NOTE: This class is not used
 	class PythonNoiseGenerator final : public NoiseGenerator
 	{
 	public:
