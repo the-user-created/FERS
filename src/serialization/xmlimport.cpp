@@ -593,31 +593,31 @@ namespace
 		for (TiXmlHandle plat = antXml.ChildElement("noise_entry", 0); plat.Element(); plat = antXml.
 		     ChildElement("noise_entry", ++i))
 		{
-			timing->addAlpha(getChildRsFloat(plat, "alpha"), getChildRsFloat(plat, "weight"));
+			timing->setAlpha(getChildRsFloat(plat, "alpha"), getChildRsFloat(plat, "weight"));
 		}
 
-		try { timing->addFreqOffset(getChildRsFloat(antXml, "freq_offset")); }
+		try { timing->setFreqOffset(getChildRsFloat(antXml, "freq_offset")); }
 		catch (XmlImportException&)
 		{
 			LOG(Level::DEBUG, "Clock section '{}' does not specify frequency offset.",
 			    name.c_str());
 		}
 
-		try { timing->addRandomFreqOffset(getChildRsFloat(antXml, "random_freq_offset")); }
+		try { timing->setRandomFreqOffset(getChildRsFloat(antXml, "random_freq_offset")); }
 		catch (XmlImportException&)
 		{
 			LOG(Level::DEBUG,
 			    "Clock section '{}' does not specify random frequency offset.", name.c_str());
 		}
 
-		try { timing->addPhaseOffset(getChildRsFloat(antXml, "phase_offset")); }
+		try { timing->setPhaseOffset(getChildRsFloat(antXml, "phase_offset")); }
 		catch (XmlImportException&)
 		{
 			LOG(Level::DEBUG, "Clock section '{}' does not specify phase offset.",
 			    name.c_str());
 		}
 
-		try { timing->addRandomPhaseOffset(getChildRsFloat(antXml, "random_phase_offset")); }
+		try { timing->setRandomPhaseOffset(getChildRsFloat(antXml, "random_phase_offset")); }
 		catch (XmlImportException&)
 		{
 			LOG(Level::DEBUG, "Clock section '{}' does not specify random phase offset.",

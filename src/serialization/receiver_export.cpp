@@ -117,11 +117,11 @@ namespace
 		// Use a smart pointer for memory safety; can be released later if raw pointer is required
 		auto noise = std::vector<RealType>(wSize);
 
-		enabled = timing->enabled();
+		enabled = timing->isEnabled();
 
 		if (enabled)
 		{
-			for (unsigned i = 0; i < wSize; ++i) { noise[i] = timing->nextNoiseSample(); }
+			for (unsigned i = 0; i < wSize; ++i) { noise[i] = timing->getNextSample(); }
 
 			if (timing->getSyncOnPulse())
 			{
