@@ -13,7 +13,7 @@
 
 namespace serial
 {
-	std::vector<std::vector<RealType>> readPattern(const std::string& name, const std::string& datasetName, unsigned& aziSize, unsigned& elevSize);
+	std::vector<std::vector<RealType>> readPattern(const std::string& name, const std::string& datasetName);
 }
 
 namespace math {
@@ -27,7 +27,7 @@ namespace antenna
 	public:
 		explicit Pattern(const std::string& filename)
 		{
-			_pattern = serial::readPattern(filename, "antenna", _size_azi, _size_elev);
+			_pattern = serial::readPattern(filename, "antenna");
 		}
 
 		~Pattern() = default;
@@ -35,7 +35,6 @@ namespace antenna
 		[[nodiscard]] RealType getGain(const math::SVec3& angle) const;
 
 	private:
-		unsigned _size_elev{}, _size_azi{};
 		std::vector<std::vector<RealType>> _pattern;
 	};
 }
