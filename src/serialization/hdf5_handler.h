@@ -11,19 +11,19 @@
 
 #include "config.h"
 
+namespace HighFive
+{
+	class File;
+}
+
 namespace serial
 {
-	long createFile(const std::string& name);
+	void addChunkToFile(HighFive::File& file, const std::vector<ComplexType>& data, unsigned size, RealType time,
+	                    RealType rate, RealType fullscale, unsigned count);
 
-	void addChunkToFile(long file, const std::vector<ComplexType>& data, unsigned size, RealType time, RealType rate,
-	                    RealType fullscale, unsigned count);
+	void readPulseData(const std::string& name, std::vector<ComplexType>& data);
 
-	void closeFile(long file);
-
-	void readPulseData(const std::string& name, std::vector<ComplexType>& data, RealType& rate);
-
-	std::vector<std::vector<RealType>> readPattern(const std::string& name, const std::string& datasetName, unsigned& aziSize,
-	                                               unsigned& elevSize);
+	std::vector<std::vector<RealType>> readPattern(const std::string& name, const std::string& datasetName);
 }
 
 #endif

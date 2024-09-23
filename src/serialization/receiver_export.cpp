@@ -9,23 +9,26 @@
 #include <algorithm>                        // for clamp, max, __fill_fn
 #include <cmath>                            // for isnan, floor, fabs, round
 #include <complex>                          // for complex, polar
+#include <exception>                        // for exception
 #include <filesystem>                       // for path
 #include <format>                           // for format
 #include <fstream>                          // for basic_ofstream, basic_ios
 #include <map>                              // for map, _Rb_tree_iterator
 #include <numbers>                          // for pi
-#include <optional>                         // for optional
+#include <optional>                         // for optional, nullopt, nullopt_t
 #include <ranges>                           // for _Zip, views, zip, zip_view
 #include <stdexcept>                        // for runtime_error
 #include <tinyxml.h>                        // for TiXmlDeclaration, TiXmlDo...
 #include <tuple>                            // for tuple
 #include <utility>                          // for move, pair
 #include <vector>                           // for vector
+#include <highfive/H5File.hpp>              // for File
 
 #include "config.h"                         // for RealType, ComplexType
-#include "hdf5_handler.h"                   // for addChunkToFile, closeFile
+#include "hdf5_handler.h"                   // for addChunkToFile
 #include "response_renderer.h"              // for ThreadedResponseRenderer
 #include "core/parameters.h"                // for oversampleRatio, rate
+#include "highfive/H5Exception.hpp"         // for Exception
 #include "noise/noise_generators.h"         // for WgnGenerator
 #include "noise/noise_utils.h"              // for noiseTemperatureToPower
 #include "radar/radar_system.h"             // for Receiver
@@ -37,12 +40,22 @@ namespace fs = std::filesystem;
 
 namespace
 {
-	long openHdf5File(const std::string& recvName)
+	std::optional<HighFive::File> openHdf5File(const std::string& recvName)
 	{
-		if (!params::exportBinary()) { return 0; }
+		if (!params::exportBinary()) { return std::nullopt; }
 
 		const auto hdf5_filename = std::format("{}.h5", recvName);
-		return serial::createFile(hdf5_filename);
+
+		try
+		{
+			// HighFive::File::Truncate will overwrite the file if it already exists
+			HighFive::File file(hdf5_filename, HighFive::File::Overwrite);
+			return file;
+		}
+		catch (const HighFive::Exception& err)
+		{
+			throw std::runtime_error("Error opening HDF5 file: " + std::string(err.what()));
+		}
 	}
 
 	void addNoiseToWindow(std::span<ComplexType> data, const RealType temperature)
@@ -230,8 +243,8 @@ namespace serial
 		// Bail if there are no responses to export
 		if (responses.empty()) { return; }
 
-		// Open HDF5 file for writing, using optional to handle a file open/close more safely
-		const std::optional out_bin = openHdf5File(recvName);
+		// Open HDF5 file for writing
+		std::optional<HighFive::File> out_bin = openHdf5File(recvName);
 
 		// Create a threaded render object to manage the rendering process
 		const ThreadedResponseRenderer thr_renderer(responses, recv, params::renderThreads());
@@ -239,7 +252,7 @@ namespace serial
 		// Retrieve the window count from the receiver
 		const int window_count = recv->getWindowCount();
 
-		// Loop through each window, using a more modern range-based for loop when possible
+		// Loop through each window
 		for (int i = 0; i < window_count; ++i)
 		{
 			const RealType length = recv->getWindowLength();
@@ -254,7 +267,7 @@ namespace serial
 			// Get the window start time, including clock drift effects
 			RealType start = recv->getWindowStart(i) + pnoise[0] / (2 * std::numbers::pi * carrier);
 
-			// Calculate the fractional delay using structured bindings for clarity
+			// Calculate the fractional delay using structured bindings
 			const auto [round_start, frac_delay] = [&start, rate]
 			{
 				RealType rounded_start = std::round(start * rate) / rate;
@@ -263,7 +276,7 @@ namespace serial
 			}();
 			start = round_start;
 
-			// Allocate memory for the window using std::vector with default initialization
+			// Allocate memory for the window using std::vector
 			std::vector<ComplexType> window(size);
 
 			// Add noise to the window
@@ -278,7 +291,7 @@ namespace serial
 				// Calculate the new size after downsampling
 				const unsigned new_size = size / params::oversampleRatio();
 
-				// Perform downsampling directly in place if possible, otherwise move to a new vector
+				// Perform downsampling
 				std::vector<ComplexType> tmp(new_size);
 				signal::downsample(window, tmp, params::oversampleRatio());
 
@@ -293,14 +306,19 @@ namespace serial
 			// Normalize and quantize the window
 			const RealType fullscale = quantizeWindow(window);
 
-			// Export the binary format if enabled, using the HDF5 file handle if it exists
+			// Export the binary format if enabled, using HighFive to write to the HDF5 file
 			if (params::exportBinary() && out_bin)
 			{
-				serial::addChunkToFile(*out_bin, window, size, start, params::rate(), fullscale, i);
+				try
+				{
+					// Use HighFive to add the data chunks to the HDF5 file
+					serial::addChunkToFile(*out_bin, window, size, start, params::rate(), fullscale, i);
+				}
+				catch (const std::exception& e)
+				{
+					throw std::runtime_error("Error writing chunk to HDF5 file: " + std::string(e.what()));
+				}
 			}
 		}
-
-		// Close the binary file if it was opened
-		if (out_bin) { closeFile(*out_bin); }
 	}
 }
