@@ -37,3 +37,6 @@ endif ()
 add_definitions(-D_REENTRANT)
 
 add_subdirectory(src)
+add_subdirectory(third_party/HighFive)
+
+target_link_libraries(${PROJECT_NAME} HighFive)
