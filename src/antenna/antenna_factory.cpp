@@ -28,8 +28,6 @@ RealType getNodeFloat(const TiXmlHandle& node);
 
 namespace
 {
-	constexpr RealType EPSILON = std::numeric_limits<RealType>::epsilon();
-
 	RealType sinc(const RealType theta) { return std::sin(theta) / (theta + EPSILON); }
 
 	RealType j1C(const RealType x) { return x == 0 ? 1.0 : core::besselJ1(x) / x; }

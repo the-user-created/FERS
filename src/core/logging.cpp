@@ -60,7 +60,7 @@ namespace logging
 	 * @param message The message to log.
 	 * @param location The source location of the log call.
 	 */
-	void Logger::log(const Level level, const std::string& message, const std::source_location location)
+	void Logger::log(const Level level, const std::string& message, const std::source_location& location)
 	{
 		if (level >= _log_level)
 		{
