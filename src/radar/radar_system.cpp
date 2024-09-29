@@ -135,7 +135,7 @@ namespace radar
 
 	void Receiver::setNoiseTemperature(const RealType temp)
 	{
-		if (temp < -std::numeric_limits<RealType>::epsilon())
+		if (temp < -EPSILON)
 		{
 			throw std::runtime_error("[BUG] Noise temperature must be positive");
 		}

@@ -58,7 +58,7 @@ namespace logging
 		 * @param location The source location of the log call.
 		 */
 		void log(Level level, const std::string& message,
-		         std::source_location location = std::source_location::current());
+		         const std::source_location& location = std::source_location::current());
 
 		/**
 		 * @brief Logs a formatted message with a specific log level and source location.
@@ -69,7 +69,7 @@ namespace logging
 		 * @param args The format arguments.
 		 */
 		template <typename... Args>
-		void log(const Level level, const std::source_location location, const std::string& formatStr, Args&&... args)
+		void log(const Level level, const std::source_location& location, const std::string& formatStr, Args&&... args)
 		{
 			if (level >= _log_level)
 			{
@@ -122,7 +122,7 @@ namespace logging
 	 * @param args The format arguments.
 	 */
 	template <typename... Args>
-	void log(Level level, const std::source_location location, const std::string& formatStr, Args&&... args)
+	void log(Level level, const std::source_location& location, const std::string& formatStr, Args&&... args)
 	{
 		logger.log(level, location, formatStr, std::forward<Args>(args)...);
 	}

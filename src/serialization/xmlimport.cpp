@@ -222,46 +222,18 @@ namespace
 		return world->getReceivers().back().get();
 	}
 
-	/// Create a PulseTransmitter object and process XML entry
-	std::unique_ptr<Transmitter> processPulseTransmitter(const TiXmlHandle& transXml, const std::string& name, Platform* platform, World* world)
-	{
-		auto transmitter = std::make_unique<Transmitter>(platform, name, true);
-		const std::string pulse_name = getAttributeString(transXml, "pulse",
-		                                                  "Transmitter '" + name + "' does not specify a pulse");
-		RadarSignal* wave = world->findSignal(pulse_name);
-		if (!wave) { throw XmlImportException("Pulse with name '" + pulse_name + "' does not exist"); }
-		transmitter->setWave(wave);
-		transmitter->setPrf(getChildRsFloat(transXml, "prf"));
-		return transmitter;
-	}
-
-	/// Create a PulseTransmitter object and process XML entry
-	std::unique_ptr<Transmitter> processCwTransmitter(const TiXmlHandle& transXml, const std::string& name, Platform* platform, World* world)
-	{
-		auto transmitter = std::make_unique<Transmitter>(platform, name, true);
-		const std::string pulse_name = getAttributeString(transXml, "pulse",
-		                                                  "Transmitter '" + name + "' does not specify a pulse");
-		RadarSignal* wave = world->findSignal(pulse_name);
-		if (!wave) { throw XmlImportException("Pulse with name '" + pulse_name + "' does not exist"); }
-		transmitter->setWave(wave);
-		// TODO: without setting the PRF, a continuous wave transmitter will get 0 responses
-		transmitter->setPrf(getChildRsFloat(transXml, "prf"));
-		return transmitter;
-	}
-
 	/// Process a transmitter XML entry
 	Transmitter* processTransmitter(const TiXmlHandle& transXml, Platform* platform, World* world)
 	{
 		const std::string name = getAttributeString(transXml, "name", "Transmitter does not specify a name");
-		const std::string type = getAttributeString(transXml, "type",
-		                                            "Transmitter '" + name + "' does not specify type");
 
-		auto transmitter = type == "pulsed"
-			                   ? processPulseTransmitter(transXml, name, platform, world)
-			                   : type == "continuous"
-			                   ? processCwTransmitter(transXml, name, platform, world)
-			                   : throw XmlImportException(
-				                   "Invalid transmitter type specified in transmitter " + name);
+		auto transmitter = std::make_unique<Transmitter>(platform, name, true);
+		const std::string pulse_name = getAttributeString(transXml, "pulse",
+		                                                  "Transmitter '" + name + "' does not specify a pulse");
+		RadarSignal* wave = world->findSignal(pulse_name);
+		if (!wave) { throw XmlImportException("Pulse with name '" + pulse_name + "' does not exist"); }
+		transmitter->setWave(wave);
+		transmitter->setPrf(getChildRsFloat(transXml, "prf"));
 
 		const std::string ant_name = getAttributeString(transXml, "antenna",
 		                                                "Transmitter '" + name + "' does not specify an antenna");

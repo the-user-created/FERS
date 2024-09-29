@@ -35,7 +35,7 @@ namespace noise
 	// Generate a white Gaussian noise sample with the specified standard deviation
 	RealType wgnSample(const RealType stddev)
 	{
-		if (stddev <= std::numeric_limits<RealType>::epsilon()) { return 0.0; }
+		if (stddev <= EPSILON) { return 0.0; }
 
 		ensureInitialized(); // Ensure RNG is initialized
 		return normal_dist(*rng) * stddev;
