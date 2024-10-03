@@ -18,7 +18,6 @@
 #include <optional>                         // for optional, nullopt, nullopt_t
 #include <ranges>                           // for _Zip, views, zip, zip_view
 #include <stdexcept>                        // for runtime_error
-#include <tinyxml.h>                        // for TiXmlDeclaration, TiXmlDo...
 #include <tuple>                            // for tuple
 #include <utility>                          // for move, pair
 #include <vector>                           // for vector
@@ -26,6 +25,7 @@
 
 #include "config.h"                         // for RealType, ComplexType
 #include "hdf5_handler.h"                   // for addChunkToFile
+#include "libxml_wrapper.h" 			    // for XmlDocument, XmlElement, ...
 #include "response_renderer.h"              // for ThreadedResponseRenderer
 #include "core/parameters.h"                // for oversampleRatio, rate
 #include "highfive/H5Exception.hpp"         // for Exception
@@ -185,22 +185,25 @@ namespace serial
 {
 	void exportReceiverXml(std::span<const std::unique_ptr<Response>> responses, const std::string& filename)
 	{
-		TiXmlDocument doc;
+		// Create a new XML document
+		const XmlDocument doc;
 
-		// Use a smart pointer directly with release later for better ownership management
-		auto decl = std::make_unique<TiXmlDeclaration>("1.0", "", "");
-		doc.LinkEndChild(decl.release());
+		// Create the root element for the document
+		xmlNodePtr root_node = xmlNewNode(nullptr, reinterpret_cast<const xmlChar*>("receiver"));
+		XmlElement root(root_node);
 
-		// No smart pointer because TiXml handles the memory
-		auto* root = new TiXmlElement("receiver");
-		doc.LinkEndChild(root);
+		// Set the root element for the document
+		doc.setRootElement(root);
 
-		// Modern range-based for loop
-		for (const auto& response : responses) { response->renderXml(root); }
+		// Iterate over the responses and call renderXml on each, passing the root element
+		for (const auto& response : responses)
+		{
+			response->renderXml(root); // Assuming renderXml modifies the XML tree
+		}
 
-		// Using std::filesystem to work with the path
+		// Save the document to file
 		if (const fs::path file_path = fs::path(filename).replace_extension(".fersxml"); !doc.
-			SaveFile(file_path.string()))
+			saveFile(file_path.string()))
 		{
 			throw std::runtime_error("Failed to save XML file: " + file_path.string());
 		}

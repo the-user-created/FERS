@@ -12,8 +12,8 @@
 #include <memory>                            // for make_unique, unique_ptr
 #include <sstream>                           // for basic_ostringstream
 #include <stdexcept>                         // for logic_error
-#include <tinyxml.h>                         // for TiXmlElement, TiXmlText
 
+#include "libxml_wrapper.h"
 #include "radar/radar_system.h"              // for Transmitter
 #include "signal_processing/radar_signal.h"  // for RadarSignal
 
@@ -21,21 +21,25 @@ using interp::InterpPoint;
 
 namespace
 {
-	void attachTextNode(TiXmlElement* root, const std::string& name, const std::string& text)
+	void attachTextNode(XmlElement& root, const std::string& name, const std::string& text)
 	{
-		auto element = std::make_unique<TiXmlElement>(name);
-		auto xtext = std::make_unique<TiXmlText>(text);
-		element->LinkEndChild(xtext.release());
-		root->LinkEndChild(element.release());
+		// Create a child element with the given name
+		XmlElement element = root.addChild(name);
+
+		// Set the text content of the element
+		element.setText(text);
 	}
 
-	void attachRsFloatNode(TiXmlElement* root, const std::string& name, const RealType data,
-	                       const bool scientific = true)
+	void attachRsFloatNode(XmlElement& root, const std::string& name, const RealType data, bool scientific = true)
 	{
 		std::ostringstream oss;
-		if (scientific) { oss.setf(std::ios::scientific); }
+		if (scientific) {
+			oss.setf(std::ios::scientific);
+		}
 		constexpr int precision = 10;
 		oss << std::setprecision(precision) << data;
+
+		// Attach the text node with the formatted float value
 		attachTextNode(root, name, oss.str());
 	}
 }
@@ -50,11 +54,12 @@ namespace serial
 
 	std::string Response::getTransmitterName() const { return _transmitter->getName(); }
 
-	void Response::renderResponseXml(TiXmlElement* root, const InterpPoint& point) const
+	void Response::renderResponseXml(XmlElement& root, const InterpPoint& point) const
 	{
-		auto* element = new TiXmlElement("InterpolationPoint");
-		root->LinkEndChild(element);
+		// Create an "InterpolationPoint" element and link it to the root
+		XmlElement element = root.addChild("InterpolationPoint");
 
+		// Attach the various float nodes, using point data
 		attachRsFloatNode(element, "time", point.time, false);
 		attachRsFloatNode(element, "amplitude", std::sqrt(point.power * _wave->getPower()), false);
 		attachRsFloatNode(element, "phase", point.phase, false);
@@ -68,16 +73,22 @@ namespace serial
 		attachRsFloatNode(element, "phasedeg", point.phase / PI * 180);
 	}
 
-	void Response::renderXml(TiXmlElement* root)
+	void Response::renderXml(XmlElement& root)
 	{
-		auto* element = new TiXmlElement("Response");
-		root->LinkEndChild(element);
+		// Create a "Response" element and link it to the root
+		XmlElement element = root.addChild("Response");
 
-		element->SetAttribute("transmitter", getTransmitterName());
+		// Set the "transmitter" attribute
+		element.setAttribute("transmitter", getTransmitterName());
+
+		// Attach various properties
 		attachRsFloatNode(element, "start", startTime(), false);
 		attachTextNode(element, "name", _wave->getName());
 
-		for (const auto& point : _points) { renderResponseXml(element, point); }
+		// Iterate over points and render their XML representation
+		for (const auto& point : _points) {
+			renderResponseXml(element, point);
+		}
 	}
 
 	void Response::renderResponseCsv(std::ofstream& of, const InterpPoint& point) const

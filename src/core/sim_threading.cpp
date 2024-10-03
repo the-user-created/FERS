@@ -374,7 +374,7 @@ namespace core
 		try { _recv->render(); }
 		catch (const std::exception& ex)
 		{
-			LOG(Level::INFO, "Render thread terminated with unexpected error:\t{}\nSimulator will terminate",
+			LOG(Level::FATAL, "Render thread terminated with unexpected error:\t{}\nSimulator will terminate",
 			    ex.what());
 			error.store(true);
 		}
