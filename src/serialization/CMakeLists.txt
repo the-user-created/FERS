@@ -14,6 +14,7 @@ set(HEADERS
 	pulse_factory.h
 	receiver_export.h
 	response.h
+	libxml_wrapper.h
 )
 
 target_sources(${PROJECT_NAME} PRIVATE ${SRCS} ${HEADERS})

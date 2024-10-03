@@ -32,6 +32,13 @@ if (FERS_LIB_TINYXML)
 	target_link_libraries(${PROJECT_NAME} ${FERS_LIB_TINYXML})
 endif ()
 
+find_package(LibXml2 REQUIRED)
+if (LIBXML2_FOUND)
+	message(STATUS "Found libxml2: ${LIBXML2_INCLUDE_DIR}")
+	include_directories(${LIBXML2_INCLUDE_DIR})
+	target_link_libraries(${PROJECT_NAME} ${LIBXML2_LIBRARIES})
+endif ()
+
 set(Python3_EXECUTABLE ${Python_EXECUTABLE})
 
 # Tested Python versions: 3.11.10, 3.10.15, 3.9.20, 3.8.20, 3.7.10
