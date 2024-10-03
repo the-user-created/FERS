@@ -10,31 +10,33 @@
 #include <cmath>                      // for sqrt
 #include <optional>                   // for optional
 #include <stdexcept>                  // for runtime_error
-#include <tinyxml.h>                  // for TiXmlHandle, TiXmlDocument, TiX...
 
 #include "core/logging.h"             // for log, LOG, Level
 #include "math_utils/geometry_ops.h"  // for SVec3, operator+
+#include "serialization/libxml_wrapper.h"
 
 using math::SVec3;
 
-RealType getNodeFloat(const TiXmlHandle& node);
-
 namespace
 {
-	void loadTargetGainAxis(const interp::InterpSet* set, const TiXmlHandle& axisXml)
+	void loadTargetGainAxis(const interp::InterpSet* set, const XmlHandle& axisXml)
 	{
-		auto insert_sample_from_xml = [&](const int i)
+		XmlElement tmp = axisXml.firstChildElement("rcssample"); // Get the first gainsample
+		while (tmp.isValid()) // Continue while the element is valid
 		{
-			const TiXmlHandle sample_xml = axisXml.ChildElement("rcssample", i);
-			if (!sample_xml.Element()) { return false; }
+			XmlElement angle_element = tmp.childElement("angle", 0);
 
-			const RealType angle = getNodeFloat(sample_xml.ChildElement("angle", 0));
-			const RealType gain = getNodeFloat(sample_xml.ChildElement("rcs", 0));
-			set->insertSample(angle, gain);
-			return true;
-		};
+			if (XmlElement gain_element = tmp.childElement("rcs", 0); angle_element.isValid() && gain_element.
+				isValid())
+			{
+				const RealType angle = std::stof(angle_element.getText());
+				const RealType gain = std::stof(gain_element.getText());
+				set->insertSample(angle, gain);
+			}
 
-		for (int i = 0; insert_sample_from_xml(i); ++i) {}
+			// Move to the next sibling gainsample
+			tmp = XmlElement(tmp.getNode()->next);
+		}
 	}
 }
 
@@ -69,23 +71,12 @@ namespace radar
 
 	void FileTarget::loadRcsDescription(const std::string& filename) const
 	{
-		TiXmlDocument doc(filename.c_str());
-		if (!doc.LoadFile()) { throw std::runtime_error("Could not load target description from " + filename); }
+		XmlDocument doc;
+		if (!doc.loadFile(filename)) { throw std::runtime_error("Could not load target description from " + filename); }
 
-		const TiXmlHandle root(doc.RootElement());
-		const auto elev_xml = root.ChildElement("elevation", 0);
-		const auto azi_xml = root.ChildElement("azimuth", 0);
+		const XmlHandle root(doc.getRootElement());
 
-		if (!elev_xml.Element())
-		{
-			throw std::runtime_error("Malformed XML in target description: No elevation pattern definition");
-		}
-		loadTargetGainAxis(_elev_samples.get(), elev_xml);
-
-		if (!azi_xml.Element())
-		{
-			throw std::runtime_error("Malformed XML in target description: No azimuth pattern definition");
-		}
-		loadTargetGainAxis(_azi_samples.get(), azi_xml);
+		loadTargetGainAxis(_elev_samples.get(), root.childElement("elevation", 0));
+		loadTargetGainAxis(_azi_samples.get(), root.childElement("azimuth", 0));
 	}
 }
