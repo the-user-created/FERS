@@ -4,7 +4,7 @@ w/ h5 antenna gain pattern, oversampling, noise, conflicting offsets, target mod
 <!DOCTYPE simulation SYSTEM "../../xml_schema/fers-xml.dtd">
 <simulation name="code_coverage">
     <parameters>
-        <starttime>0</starttime>s
+        <starttime>0</starttime>
         <endtime>0.01</endtime>
         <rate>10e6</rate>
         <export binary="true" csv="true" xml="true"/>
