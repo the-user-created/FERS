@@ -22,7 +22,7 @@ jobs:
           build-essential \
           cmake \
           cmake-qt-gui \
-          libtinyxml-dev \
+          libxml2-dev \
           libxerces-c-dev \
           lsb-release
 
