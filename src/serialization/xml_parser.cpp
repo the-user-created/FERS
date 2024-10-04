@@ -641,6 +641,22 @@ namespace
 				continue;
 			}
 
+			// Validate the included XML file against the DTD
+			if (!include_doc.validateWithDtd("xml_schema/fers-xml.dtd"))
+			{
+				LOG(Level::FATAL, "Included XML file failed DTD validation!");
+				throw XmlException("Included XML file failed DTD validation!");
+			}
+			LOG(Level::DEBUG, "Included XML file passed DTD validation.");
+
+			// Validate the included XML file against the XSD
+			if (!include_doc.validateWithXsd("xml_schema/fers-xml.xsd"))
+			{
+				LOG(Level::FATAL, "Included XML file failed XSD validation!");
+				throw XmlException("Included XML file failed XSD validation!");
+			}
+			LOG(Level::DEBUG, "Included XML file passed XSD validation.");
+
 			std::cout << "Adding included file to process stack: " << include_path << std::endl;
 
 			// Add the included file to the stack (isMainFile = false)
@@ -665,14 +681,32 @@ namespace serial
 			return;
 		}
 
+		// Validate the main XML file against the DTD
+		if (!main_doc.validateWithDtd("xml_schema/fers-xml.dtd"))
+		{
+			LOG(Level::FATAL, "Main XML file failed DTD validation!");
+			throw XmlException("Main XML file failed DTD validation!");
+		}
+		LOG(Level::DEBUG, "Main XML file passed DTD validation.");
+
+		// Validate the main XML file against the XSD
+		if (!main_doc.validateWithXsd("xml_schema/fers-xml.xsd"))
+		{
+			LOG(Level::FATAL, "Main XML file failed XSD validation!");
+			throw XmlException("Main XML file failed XSD validation!");
+		}
+		LOG(Level::DEBUG, "Main XML file passed XSD validation.");
+
 		// Get the directory of the main XML file to resolve include paths
 		const fs::path main_dir = fs::path(filename).parent_path();
 		files_to_process.push({(std::move(main_doc)), main_dir, true});
-		// Add the main file to the stack (isMainFile = true)
+		// Add the main file to the stack (is_main_file = true)
 
 		// Process each file in the stack
 		while (!files_to_process.empty())
 		{
+			// TODO: Modify the validation logic to combine all included files
+			//		into a single document and validate that instead of validating each file individually
 			// Get the next file to process
 			auto [doc, directory, is_main_file] = std::move(files_to_process.top());
 			files_to_process.pop();

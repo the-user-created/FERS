@@ -282,24 +282,28 @@
     <!-- Target -->
     <xs:element name="target">
         <xs:complexType>
-            <xs:complexContent>
-                <xs:extension base="rcs">
-                    <xs:attribute name="name" use="required"/>
-                </xs:extension>
-            </xs:complexContent>
+            <xs:sequence>
+                <xs:element ref="rcs"/>
+                <xs:element ref="model" minOccurs="0"/> <!-- model is optional -->
+            </xs:sequence>
+            <xs:attribute name="name" use="required"/>
         </xs:complexType>
     </xs:element>
-
-    <xs:complexType name="rcs">
-        <xs:sequence>
-            <xs:element ref="rcs"/>
-        </xs:sequence>
-    </xs:complexType>
 
     <xs:element name="rcs">
         <xs:complexType>
             <xs:sequence>
-                <xs:element minOccurs="0" name="value" type="xs:string"/>
+                <xs:element name="value" type="xs:string" minOccurs="0"/> <!-- value is optional -->
+            </xs:sequence>
+            <xs:attribute name="type" use="required"/>
+            <xs:attribute name="filename" type="xs:string"/> <!-- filename is optional -->
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="model">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="k" type="xs:string" minOccurs="0"/> <!-- k is optional -->
             </xs:sequence>
             <xs:attribute name="type" use="required"/>
         </xs:complexType>

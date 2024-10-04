@@ -11,6 +11,8 @@
 #include <string>
 #include <libxml/parser.h>
 #include <libxml/tree.h>
+#include <libxml/valid.h>
+#include <libxml/xmlschemas.h>
 
 class XmlException final : public std::runtime_error
 {
@@ -53,10 +55,7 @@ public:
 			value = reinterpret_cast<const char*>(attr);
 			xmlFree(attr); // Always free the attribute after use
 		}
-		else
-		{
-			throw XmlException("Attribute not found: " + name);
-		}
+		else { throw XmlException("Attribute not found: " + name); }
 		return value;
 	}
 
@@ -169,6 +168,12 @@ public:
 		}
 		return "unknown";
 	}
+
+	// DTD Validation
+	[[nodiscard]] bool validateWithDtd(const std::string& dtdFilename) const;
+
+	// XSD Validation
+	[[nodiscard]] bool validateWithXsd(const std::string& xsdFilename) const;
 };
 
 class XmlHandle

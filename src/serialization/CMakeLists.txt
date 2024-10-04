@@ -4,6 +4,7 @@ set(SRCS
 	pulse_factory.cpp
 	receiver_export.cpp
 	response.cpp
+	libxml_wrapper.cpp
 	xml_parser.cpp
 )
 
