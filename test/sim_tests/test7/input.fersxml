@@ -23,7 +23,6 @@
     <!-- Timing Definition -->
     <timing name="clock_1">
         <frequency>1e7</frequency> <!-- 10 MHz clock -->
-        <jitter>1e-12</jitter> <!-- Low jitter -->
     </timing>
 
     <!-- Antenna Definition -->
@@ -43,16 +42,16 @@
         </motionpath>
         <fixedrotation>
             <startazimuth>0.0</startazimuth>
-            <azimuthrate>0.0</azimuthrate>
             <startelevation>0.0</startelevation>
+            <azimuthrate>0.0</azimuthrate>
             <elevationrate>0.0</elevationrate>
         </fixedrotation>
         <monostatic name="monostatic_radar" type="continuous" antenna="mono_antenna" pulse="cw_pulse" timing="clock_1">
             <window_skip>0</window_skip>
             <window_length>0.1</window_length>
-            <noise_temp>0</noise_temp> <!-- Receiver noise temperature in K -->
             <prf>1</prf> <!-- FERS throws an error if PRF is not set (even for a continuous wave),
             so we set it to 1 so that the system behaves almost like a continuous wave -->
+            <noise_temp>0</noise_temp> <!-- Receiver noise temperature in K -->
         </monostatic>
     </platform>
 
@@ -80,8 +79,8 @@
         </motionpath>
         <fixedrotation>
             <startazimuth>0.0</startazimuth>
-            <azimuthrate>0.0</azimuthrate>
             <startelevation>0.0</startelevation>
+            <azimuthrate>0.0</azimuthrate>
             <elevationrate>0.0</elevationrate>
         </fixedrotation>
         <target name="moving_target">

@@ -6,8 +6,8 @@
         <starttime>0</starttime>
         <endtime>10e-3</endtime>
         <rate>10e6</rate>
-        <export binary="true" csv="true" xml="true"/>
         <randomseed>12345</randomseed>
+        <export binary="true" csv="true" xml="true"/>
     </parameters>
 
     <pulse name="chirp" type="file" filename="chirp.h5">
@@ -36,8 +36,8 @@
 
         <fixedrotation>
             <startazimuth>0.0</startazimuth>
-            <azimuthrate>0</azimuthrate>
             <startelevation>0</startelevation>
+            <azimuthrate>0</azimuthrate>
             <elevationrate>0</elevationrate>
         </fixedrotation>
 

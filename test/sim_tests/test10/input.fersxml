@@ -13,7 +13,6 @@
 
     <!-- Pulse Definition -->
     <pulse name="high_prf_pulse" type="file" filename="waveform.csv">
-        <length>1e-6</length> <!-- Pulse length of 50 microseconds -->
         <power>1000</power> <!-- Pulse power of 1000 watts -->
         <carrier>1e9</carrier> <!-- Carrier frequency of 1 GHz -->
     </pulse>
@@ -21,7 +20,6 @@
     <!-- Timing Source -->
     <timing name="timing_source" synconpulse="true">
         <frequency>1e8</frequency> <!-- 100 MHz clock frequency -->
-        <jitter>0</jitter> <!-- No jitter -->
     </timing>
 
     <!-- Antenna Definition -->
@@ -48,8 +46,8 @@
 
         <fixedrotation>
             <startazimuth>0</startazimuth>
-            <azimuthrate>0</azimuthrate>
             <startelevation>0</startelevation>
+            <azimuthrate>0</azimuthrate>
             <elevationrate>0</elevationrate>
         </fixedrotation>
 
@@ -77,8 +75,8 @@
 
         <fixedrotation>
             <startazimuth>0</startazimuth>
-            <azimuthrate>0</azimuthrate>
             <startelevation>0</startelevation>
+            <azimuthrate>0</azimuthrate>
             <elevationrate>0</elevationrate>
         </fixedrotation>
 
@@ -99,6 +97,13 @@
                 <time>0</time>
             </positionwaypoint>
         </motionpath>
+
+        <fixedrotation>
+            <startazimuth>0</startazimuth>
+            <startelevation>0</startelevation>
+            <azimuthrate>0</azimuthrate>
+            <elevationrate>0</elevationrate>
+        </fixedrotation>
 
         <target name="stationary_target">
             <rcs type="isotropic">
