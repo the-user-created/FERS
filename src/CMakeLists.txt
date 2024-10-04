@@ -26,12 +26,6 @@ if (FERS_LIB_HDF5_HL)
 	target_link_libraries(${PROJECT_NAME} ${FERS_LIB_HDF5_HL})
 endif ()
 
-find_library(FERS_LIB_TINYXML NAMES tinyxml)
-
-if (FERS_LIB_TINYXML)
-	target_link_libraries(${PROJECT_NAME} ${FERS_LIB_TINYXML})
-endif ()
-
 find_package(LibXml2 REQUIRED)
 if (LIBXML2_FOUND)
 	message(STATUS "Found libxml2: ${LIBXML2_INCLUDE_DIR}")

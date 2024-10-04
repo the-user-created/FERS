@@ -59,8 +59,6 @@ namespace
 	             const std::chrono::duration<RealType>& time, const std::chrono::duration<RealType>& length,
 	             const RadarSignal* wave, core::ReResults& results)
 	{
-		LOG(Level::TRACE, "Solving RE for transmitter '{}', receiver '{}' and target '{}'", trans->getName(),
-		    recv->getName(), targ->getName());
 		// Get initial positions and distance vectors
 		const auto transmitter_position = trans->getPosition(time.count());
 		const auto receiver_position = recv->getPosition(time.count());
@@ -355,7 +353,7 @@ namespace core
 		try { simulatePair(_trans, _recv, _world); }
 		catch (const std::exception& ex)
 		{
-			LOG(Level::ERROR, "First pass thread terminated with unexpected error:\t{}\nSimulator will terminate",
+			LOG(Level::FATAL, "First pass thread terminated with unexpected error:\t{}\nSimulator will terminate",
 			    ex.what());
 			error.store(true);
 		}

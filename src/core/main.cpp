@@ -12,7 +12,8 @@
 #include "sim_threading.h"            // for runThreadedSim
 #include "world.h"                    // for World
 #include "core/logging.h"             // for log, LOG, Level, Logger, logger
-#include "serialization/xmlimport.h"  // for loadXmlFile
+//#include "serialization/xmlimport.h"  // for loadXmlFile
+#include "serialization/xml_parser.h" // for loadXmlFile
 
 using logging::Level;
 
@@ -50,7 +51,14 @@ int main(const int argc, char* argv[])
 		const auto world = std::make_unique<core::World>();
 
 		// Load the XML file and deserialize it into the world object
-		serial::loadXmlFile(script_file, world.get());
+		try
+		{
+			serial::parseSimulation(script_file, world.get());
+		} catch (const std::exception& ex)
+		{
+			LOG(Level::FATAL, "Failed to load simulation file: {}\n{}", script_file, ex.what());
+			return 1;
+		}
 
 		// Run the simulation using the threading mechanism
 		runThreadedSim(params::renderThreads(), world.get());

@@ -13,7 +13,6 @@
 #include <limits>                     // for numeric_limits
 #include <optional>                   // for optional
 #include <stdexcept>                  // for runtime_error
-#include <tinyxml.h>                  // for TiXmlHandle, TiXmlDocument, TiX...
 #include <bits/std_abs.h>             // for abs
 
 #include "core/logging.h"             // for log, LOG, Level
