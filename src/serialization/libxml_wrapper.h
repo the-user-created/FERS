@@ -12,6 +12,12 @@
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 
+class XmlException final : public std::runtime_error
+{
+public:
+	explicit XmlException(const std::string& message) : std::runtime_error(message) {}
+};
+
 class XmlElement
 {
 	xmlNodePtr _node;
@@ -49,7 +55,7 @@ public:
 		}
 		else
 		{
-			value = ""; // Attribute does not exist, return an empty string or handle as needed
+			throw XmlException("Attribute not found: " + name);
 		}
 		return value;
 	}
@@ -90,7 +96,7 @@ public:
 			}
 			child = child->next;
 		}
-		return XmlElement(nullptr); // Return an invalid XmlElement if index is out of bounds
+		return XmlElement(nullptr); // Return an invalid XmlElement if the index is out of bounds
 	}
 
 	// Check if the element is valid
@@ -111,7 +117,7 @@ public:
 		if (!_doc) { throw std::runtime_error("Failed to create XML document"); }
 	}
 
-	// Load XML from file
+	// Load XML from a file
 	bool loadFile(const std::string& filename)
 	{
 		_doc.reset(xmlReadFile(filename.c_str(), nullptr, 0));

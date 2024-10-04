@@ -9,7 +9,6 @@
 
 #include <cmath>                             // for sqrt, cos, sin
 #include <iomanip>                           // for operator<<, setprecision
-#include <memory>                            // for make_unique, unique_ptr
 #include <sstream>                           // for basic_ostringstream
 #include <stdexcept>                         // for logic_error
 
@@ -30,7 +29,7 @@ namespace
 		element.setText(text);
 	}
 
-	void attachRsFloatNode(XmlElement& root, const std::string& name, const RealType data, bool scientific = true)
+	void attachRsFloatNode(XmlElement& root, const std::string& name, const RealType data, const bool scientific = true)
 	{
 		std::ostringstream oss;
 		if (scientific) {

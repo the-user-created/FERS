@@ -14,7 +14,6 @@
 #include "interpolation/interpolation_point.h"  // for InterpPoint
 
 class XmlElement;
-class TiXmlElement;
 
 namespace signal
 {
