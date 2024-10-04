@@ -139,9 +139,6 @@ namespace
 		const std::string type = XmlElement::getSafeAttribute(pulse, "type");
 		const std::string filename = XmlElement::getSafeAttribute(pulse, "filename");
 
-		//printOptionalElement(pulse, "length", "  Length (seconds)");  // TODO: unused element in XSD??
-		//printOptionalElement(pulse, "rate", "  Rate (Hz)");  // TODO: unused element in XSD??
-
 		if (const XmlElement power_element = pulse.childElement("power", 0); !power_element.isValid())
 		{
 			std::cerr << "  <power> element is missing in <pulse>!" << std::endl;
@@ -168,7 +165,6 @@ namespace
 	// Function to parse individual <timing> elements
 	void parseTiming(const XmlElement& timing, World* world)
 	{
-		// TODO: jitter is unused in XML
 		// Extract required attribute: name
 		const std::string name = XmlElement::getSafeAttribute(timing, "name");
 		auto timing_obj = std::make_unique<PrototypeTiming>(name);
@@ -587,15 +583,18 @@ namespace
 		}
 
 		// Parse either <rotationpath> or <fixedrotation>
-		// TODO: This should be mutually exclusive?, but the XSD and code allows both
-		if (const XmlElement rot_path = platform.childElement("rotationpath", 0); rot_path.isValid())
+		const XmlElement rot_path = platform.childElement("rotationpath", 0);
+
+		if (const XmlElement fixed_rot = platform.childElement("fixedrotation", 0); rot_path.isValid() && fixed_rot.
+			isValid())
 		{
+			LOG(Level::ERROR,
+			    "Both <rotationpath> and <fixedrotation> are declared for platform {}. Only <rotationpath> will be used.",
+			    plat->getName());
 			parseRotationPath(rot_path, plat.get());
 		}
-		if (const XmlElement fixed_rot = platform.childElement("fixedrotation", 0); fixed_rot.isValid())
-		{
-			parseFixedRotation(fixed_rot, plat.get());
-		}
+		else if (rot_path.isValid()) { parseRotationPath(rot_path, plat.get()); }
+		else if (fixed_rot.isValid()) { parseFixedRotation(fixed_rot, plat.get()); }
 
 		world->add(std::move(plat));
 	}
@@ -681,9 +680,8 @@ namespace serial
 			XmlElement root = doc.getRootElement();
 			if (root.name() != "simulation")
 			{
-				std::cerr << "Root element is not <simulation>!" << std::endl;
-				// TODO: should be fatal
-				continue;
+				LOG(Level::FATAL, "Root element is not <simulation>!");
+				throw XmlException("Root element is not <simulation>!");
 			}
 
 			// If this is the main file, parse <parameters>, otherwise skip
@@ -707,7 +705,6 @@ namespace serial
 
 			// Parse all <antenna> elements inside <simulation>
 			parseElements(root, "antenna", world, parseAntenna);
-			// TODO: XSD doesn't include filename if pattern is "file"
 
 			// Parse all <platform> elements inside <simulation>
 			parseElements(root, "platform", world, parsePlatform);

@@ -54,9 +54,9 @@ int main(const int argc, char* argv[])
 		try
 		{
 			serial::parseSimulation(script_file, world.get());
-		} catch (const std::exception& ex)
+		} catch (const std::exception&)
 		{
-			LOG(Level::FATAL, "Failed to load simulation file: {}\n{}", script_file, ex.what());
+			LOG(Level::FATAL, "Failed to load simulation file: {}", script_file);
 			return 1;
 		}
 
