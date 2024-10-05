@@ -19,6 +19,11 @@ include_directories(${CMAKE_SOURCE_DIR})
 include_directories(${SCHEMA_HEADERS_DIR})
 
 if (NOT CMAKE_BUILD_TYPE)
+	# You can set the build type you would like to use by passing the -DCMAKE_BUILD_TYPE flag to cmake, e.g.,
+	# 	-D CMAKE_BUILD_TYPE=Debug
+	# Note: Because the Release build type is using -O2 optimization, some accuracy is lost
+	# 		which will affect the results (the regression tests in test/sim_tests/ will fail).
+	# 		Therefore, when using run_sim_tests.py, make sure to use the Release build type.
 	message(STATUS "No build type specified, defaulting to Release")
 	set(CMAKE_BUILD_TYPE "Release")
 endif ()
