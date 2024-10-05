@@ -17,6 +17,7 @@
 
 #include "config.h"                          // for RealType, ComplexType
 #include "hdf5_handler.h"                    // for readPulseData
+#include "core/parameters.h"
 #include "signal_processing/radar_signal.h"  // for Signal, RadarSignal
 
 using signal::Signal;
@@ -27,14 +28,13 @@ namespace
 	std::unique_ptr<RadarSignal> loadPulseFromHdf5File(const std::string& name, const std::filesystem::path& filepath,
 	                                                   const RealType power, const RealType carrierFreq)
 	{
-		RealType rate;
 		std::vector<ComplexType> data;
-		serial::readPulseData(filepath, data, rate);
+		serial::readPulseData(filepath, data);
 
 		auto signal = std::make_unique<Signal>();
-		signal->load(data, data.size(), rate);
-		return std::make_unique<RadarSignal>(name, power, carrierFreq, static_cast<RealType>(data.size()) / rate,
-		                                     std::move(signal));
+		signal->load(data, data.size(), params::rate());
+		return std::make_unique<RadarSignal>(name, power, carrierFreq,
+			static_cast<RealType>(data.size()) / params::rate(),std::move(signal));
 	}
 
 	std::unique_ptr<RadarSignal> loadPulseFromCsvFile(const std::string& name, const std::filesystem::path& filepath,

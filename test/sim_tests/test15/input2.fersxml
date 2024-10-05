@@ -2,7 +2,6 @@
 <!-- Test pulsed radar. One Monostatic radar and one moving target -->
 <!DOCTYPE simulation SYSTEM "../../xml_schema/fers-xml.dtd">
 <simulation name="sim1">
-
     <pulse name="pulse2" type="file" filename="waveform.csv">
         <power>1000</power>
         <carrier>1e9</carrier>
@@ -66,5 +65,4 @@
             </rcs>
         </target>
     </platform>
-
 </simulation>

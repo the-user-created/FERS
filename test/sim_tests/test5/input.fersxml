@@ -18,7 +18,6 @@
 
     <timing name="clock">
         <frequency>10e6</frequency>
-        <jitter>1e-9</jitter>
     </timing>
 
     <antenna name="trantenna" pattern="isotropic">

@@ -5,192 +5,165 @@
 
 #include "hdf5_handler.h"
 
-#include <complex>            // for complex
-#include <cstddef>            // for size_t
-#include <H5Gpublic.h>        // for H5Gclose, H5Gopen1
-#include <H5LTpublic.h>       // for H5LTget_dataset_info, H5LTget_dataset_n...
-#include <H5Ppublic.h>        // for H5Fclose, H5Fopen, H5P_DEFAULT, H5F_ACC...
-#include <iomanip>            // for operator<<, setfill, setw
-#include <sstream>            // for basic_ostream, basic_ostringstream, ope...
-#include <stdexcept>          // for runtime_error
+#include <algorithm>                                 // for __transform_fn
+#include <complex>                                   // for complex
+#include <filesystem>                                // for exists, path
+#include <format>                                    // for format
+#include <stdexcept>                                 // for runtime_error
+#include <highfive/H5File.hpp>                       // for File
 
-#include "H5Ipublic.h"        // for hid_t
-#include "H5public.h"         // for hsize_t
-#include "H5Tpublic.h"        // for H5T_class_t
-#include "core/parameters.h"  // for rate
+#include "core/logging.h"                            // for log, LOG, Level
+#include "highfive/H5DataSet.hpp"                    // for DataSet
+#include "highfive/H5DataSpace.hpp"                  // for DataSpace
+#include "highfive/H5Exception.hpp"                  // for Exception
+#include "highfive/H5Group.hpp"                      // for Group
+#include "highfive/bits/H5Annotate_traits_misc.hpp"  // for AnnotateTraits::...
+#include "highfive/bits/H5Node_traits_misc.hpp"      // for NodeTraits::getD...
+
+using logging::Level;
 
 namespace serial
 {
-	hid_t openFile(const std::string& name)
+	void readPulseData(const std::string& name, std::vector<ComplexType>& data)
 	{
-		const hid_t file = H5Fopen(name.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
-		if (file < 0) { throw std::runtime_error("Could not open HDF5 file " + name + " to read pulse"); }
-		return file;
-	}
+		// Check if the file exists
+		if (!std::filesystem::exists(name))
+		{
+			LOG(Level::FATAL, "File '{}' not found", name);
+			throw std::runtime_error("File " + name + " not found.");
+		}
 
-
-	void readPulseData(const std::string& name, std::vector<ComplexType>& data, RealType& rate)
-	{
-		// Set rate from parameters
-		rate = params::rate();
-
-		// Open the HDF5 file
-		const hid_t file = openFile(name);
-		const hid_t slash = H5Gopen1(file, "/");
-		if (slash < 0) { throw std::runtime_error("HDF5 file " + name + " does not have top level group \"/\""); }
+		// Open the HDF5 file in read-only mode
+		LOG(Level::TRACE, "Opening file '{}'", name);
+		const HighFive::File file(name, HighFive::File::ReadOnly);
 
 		// Helper lambda to open group and read dataset
-		auto read_dataset = [&](const std::string& groupName, std::vector<double>& buffer)
+		auto read_dataset = [&file](const std::string& groupName, std::vector<double>& buffer) -> size_t
 		{
-			const hid_t group = H5Gopen1(slash, groupName.c_str());
-			if (group < 0)
-			{
-				throw std::runtime_error("HDF5 file " + name + " does not have group \"" + groupName + "\"");
-			}
+			// Open the group
+			const auto group = file.getGroup("/" + groupName);
 
-			// Get dataset info
-			H5T_class_t class_id;
-			size_t type_size;
-			hsize_t dims[1];
-			if (H5LTget_dataset_info(group, "value", dims, &class_id, &type_size) < 0)
-			{
-				throw std::runtime_error("HDF5 file " + name + " does not have dataset \"" + groupName + "\"");
-			}
+			// Read the dataset named "value" into the buffer
+			const auto dataset = group.getDataSet("value");
 
-			buffer.resize(dims[0]);
-			if (H5LTread_dataset_double(group, "value", buffer.data()) < 0)
-			{
-				throw std::runtime_error("Error reading dataset " + groupName + " of file " + name);
-			}
+			// Get dataset dimensions using structured bindings
+			const auto dimensions = dataset.getSpace().getDimensions();
+			const auto size = dimensions[0];
 
-			H5Gclose(group);
-			return dims[0];
+			buffer.resize(size);
+			dataset.read(buffer);
+
+			return size;
 		};
 
-		// Read I dataset
+		// Read the I dataset
+		LOG(Level::TRACE, "Reading dataset 'I' from file '{}'", name);
 		std::vector<double> buffer_i;
-		const unsigned size = read_dataset("I", buffer_i);
+		const auto size = read_dataset("I", buffer_i);
 
-		// Read Q dataset and ensure it has the same size as I
+		// Read the Q dataset and ensure it has the same size as I
 		std::vector<double> buffer_q;
+		LOG(Level::TRACE, "Reading dataset 'Q' from file '{}'", name);
 		if (read_dataset("Q", buffer_q) != size)
 		{
 			throw std::runtime_error(R"(Dataset "Q" is not the same size as dataset "I" in file )" + name);
 		}
 
-		// Close HDF5 handles
-		H5Gclose(slash);
-		H5Fclose(file);
-
 		// Allocate and populate the complex data using std::vector
 		data.resize(size);
-		for (unsigned i = 0; i < size; ++i) { data[i] = ComplexType(buffer_i[i], buffer_q[i]); }
+		for (size_t i = 0; i < size; ++i) { data[i] = ComplexType(buffer_i[i], buffer_q[i]); }
+		LOG(Level::TRACE, "Read dataset successfully");
 	}
 
-	long createFile(const std::string& name)
-	{
-		const hid_t file = H5Fcreate(name.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-		if (file < 0) { throw std::runtime_error("Could not create HDF5 file " + name + " for export"); }
-		return file;
-	}
-
-	void addChunkToFile(const long file, const std::vector<ComplexType>& data, const unsigned size,
-	                    const RealType time, const RealType rate, const RealType fullscale,
-	                    const unsigned count)
+	void addChunkToFile(HighFive::File& file, const std::vector<ComplexType>& data, const unsigned size,
+	                    const RealType time, const RealType rate, const RealType fullscale, const unsigned count)
 	{
 		// Generate chunk names
-		std::ostringstream oss;
-		oss << "chunk_" << std::setw(6) << std::setfill('0') << count;
-		const std::string i_chunk_name = oss.str() + "_I";
-		const std::string q_chunk_name = oss.str() + "_Q";
-		const hsize_t datasize = size;
+		LOG(Level::TRACE, "Adding chunk {} to file", count);
+		const std::string base_chunk_name = "chunk_" + std::format("{:06}", count);
+		const std::string i_chunk_name = base_chunk_name + "_I";
+		const std::string q_chunk_name = base_chunk_name + "_Q";
 
-		// Allocate arrays for real and imaginary parts using std::vector (automatically manages memory)
+		// Prepare data for I (real) and Q (imaginary) parts using ranges
 		std::vector<double> i(size), q(size);
-		for (unsigned it = 0; it < size; ++it)
-		{
-			i[it] = data[it].real();
-			q[it] = data[it].imag();
-		}
+		std::ranges::transform(data, i.begin(), [](const ComplexType& c) { return c.real(); });
+		std::ranges::transform(data, q.begin(), [](const ComplexType& c) { return c.imag(); });
 
-		// Write data to HDF5 file
+		// Function to write a dataset to the HDF5 file
 		auto write_chunk = [&](const std::string& chunkName, const std::vector<double>& chunkData)
 		{
-			if (H5LTmake_dataset_double(file, chunkName.c_str(), 1, &datasize, chunkData.data()) < 0)
+			try
 			{
-				throw std::runtime_error("Error while writing data to HDF5 file: " + chunkName);
+				HighFive::DataSet dataset = file.createDataSet<double>(chunkName, HighFive::DataSpace::From(chunkData));
+				dataset.write(chunkData);
+			}
+			catch (const HighFive::Exception& err)
+			{
+				throw std::runtime_error("Error while writing data to HDF5 file: " + chunkName + " - " + err.what());
 			}
 		};
 
-		// Set attributes for chunk
+		// Function to set attributes on the dataset
 		auto set_chunk_attributes = [&](const std::string& chunkName)
 		{
-			const std::vector attributes = {time, rate, fullscale};
-			const std::vector<std::string> attr_names = {"time", "rate", "fullscale"};
-
-			for (int it = 0; it < 3; ++it)
+			try
 			{
-				if (H5LTset_attribute_double(file, chunkName.c_str(), attr_names[it].c_str(), &attributes[it], 1) < 0)
-				{
-					throw std::runtime_error(
-						"Error while setting attribute \"" + std::string(attr_names[it]) + "\" on chunk " +
-						chunkName);
-				}
+				HighFive::DataSet dataset = file.getDataSet(chunkName);
+				dataset.createAttribute("time", time);
+				dataset.createAttribute("rate", rate);
+				dataset.createAttribute("fullscale", fullscale);
+			}
+			catch (const HighFive::Exception& err)
+			{
+				throw std::runtime_error("Error while setting attributes on chunk: " + chunkName + " - " + err.what());
 			}
 		};
 
-		// Write the I and Q chunks
+		// Write the I and Q chunks and set their attributes
+		LOG(Level::TRACE, "Writing chunks to file");
 		write_chunk(i_chunk_name, i);
 		write_chunk(q_chunk_name, q);
 
-		// Set attributes for both I and Q chunks
 		set_chunk_attributes(i_chunk_name);
 		set_chunk_attributes(q_chunk_name);
 	}
 
-	void closeFile(const long file)
+	std::vector<std::vector<RealType>> readPattern(const std::string& name, const std::string& datasetName)
 	{
-		if (H5Fclose(file) < 0) { throw std::runtime_error("Error while closing HDF5 file"); }
-	}
-
-	std::vector<std::vector<RealType>> readPattern(const std::string& name, const std::string& datasetName,
-	                                               unsigned& aziSize,
-	                                               unsigned& elevSize)
-	{
-		hsize_t dims[2];
-		const hid_t file_id = H5Fopen(name.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
-		if (file_id < 0) { throw std::runtime_error("Cannot open HDF5 file " + name + " to read antenna data"); }
-
-		int rank;
-		size_t type_size;
-		H5T_class_t data_class;
-		if (H5LTget_dataset_ndims(file_id, datasetName.c_str(), &rank) < 0 || rank != 2 ||
-			H5LTget_dataset_info(file_id, datasetName.c_str(), dims, &data_class, &type_size) < 0 || type_size != sizeof
-			(
-				float))
+		try
 		{
-			H5Fclose(file_id);
-			throw std::runtime_error("Invalid dataset \"" + datasetName + "\" in file " + name);
-		}
+			LOG(Level::TRACE, "Reading dataset '{}' from file '{}'", datasetName, name);
+			// Open the file in read-only mode using HighFive
+			const HighFive::File file(name, HighFive::File::ReadOnly);
 
-		std::vector<float> data(dims[0] * dims[1]);
-		if (H5LTread_dataset_float(file_id, datasetName.c_str(), data.data()) < 0)
+			// Open the dataset
+			const auto dataset = file.getDataSet(datasetName);
+
+			// Get the dataset's dataspace and its dimensions
+			const auto dataspace = dataset.getSpace();
+			const auto dims = dataspace.getDimensions();
+
+			// Verify the dataset dimensions
+			if (dims.size() != 2)
+			{
+				throw std::runtime_error(std::format(R"(Invalid dataset dimensions for "{}" in file "{}")", datasetName,
+				                                     name));
+			}
+
+			LOG(Level::TRACE, "Reading dataset with dimensions {}x{}", dims[0], dims[1]);
+
+			// Read the data into a 2D vector
+			std::vector data(dims[0], std::vector<RealType>(dims[1]));
+			dataset.read(data);
+
+			LOG(Level::TRACE, "Read dataset successfully");
+
+			return data;
+		}
+		catch (const HighFive::Exception& err)
 		{
-			H5Fclose(file_id);
-			throw std::runtime_error(
-				"Could not read float data from dataset \"" + datasetName + "\" in file " + name);
+			LOG(Level::FATAL, "Error handling HDF5 file: {}", err.what());
+			throw std::runtime_error("Error handling HDF5 file: " + std::string(err.what()));
 		}
-
-		if (H5Fclose(file_id) < 0) { throw std::runtime_error("Error while closing HDF5 file " + name); }
-
-		aziSize = dims[0];
-		elevSize = dims[1];
-
-		std::vector ret(aziSize, std::vector<RealType>(elevSize));
-		for (unsigned i = 0; i < aziSize; ++i)
-		{
-			for (unsigned j = 0; j < elevSize; ++j) { ret[i][j] = data[i * elevSize + j]; }
-		}
-		return ret;
 	}
 }

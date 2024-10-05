@@ -111,13 +111,13 @@ namespace antenna
 		RealType _dimension;
 	};
 
-	class ParabolicReflector final : public Antenna
+	class Parabolic final : public Antenna
 	{
 	public:
-		ParabolicReflector(const std::string_view name, const RealType diameter) : Antenna(name.data()),
+		Parabolic(const std::string_view name, const RealType diameter) : Antenna(name.data()),
 			_diameter(diameter) {}
 
-		~ParabolicReflector() override = default;
+		~Parabolic() override = default;
 
 		[[nodiscard]] RealType getGain(const math::SVec3& angle, const math::SVec3& refangle,
 		                               RealType wavelength) const override;

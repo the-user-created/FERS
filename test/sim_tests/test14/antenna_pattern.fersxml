@@ -16,7 +16,7 @@
             <angle>90.0</angle>
             <gain>0.4</gain>
         </gainsample>
-        <!-- Add more gainsamples as needed -->
+        <!-- Add more gain samples as needed -->
     </elevation>
 
     <azimuth>
@@ -36,6 +36,6 @@
             <angle>135.0</angle>
             <gain>0.5</gain>
         </gainsample>
-        <!-- Add more gainsamples as needed -->
+        <!-- Add more gain samples as needed -->
     </azimuth>
 </antenna>

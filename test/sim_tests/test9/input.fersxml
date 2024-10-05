@@ -14,7 +14,6 @@
 
     <!-- Pulsed Radar Pulse Definition -->
     <pulse name="pulse1" type="file" filename="waveform.csv">
-        <length>1e-6</length> <!-- Pulse length (1 microsecond) -->
         <power>1000</power> <!-- Pulse power (1000 watts) -->
         <carrier>1e9</carrier> <!-- Carrier frequency (1 GHz) -->
     </pulse>
@@ -22,7 +21,6 @@
     <!-- Timing Source -->
     <timing name="radar_clock" synconpulse="true">
         <frequency>1e8</frequency> <!-- Clock frequency -->
-        <jitter>0.01</jitter> <!-- Jitter in seconds -->
     </timing>
 
     <!-- Parabolic Antenna Definition -->
@@ -51,8 +49,8 @@
 
         <!-- Monostatic Radar Configuration -->
         <monostatic name="monostatic_radar" type="pulsed" antenna="parabolic_antenna" pulse="pulse1" timing="radar_clock">
-            <window_length>0.001</window_length>
             <window_skip>0.0001</window_skip>
+            <window_length>0.001</window_length>
             <prf>1000</prf> <!-- Pulse repetition frequency (1000 Hz) -->
         </monostatic>
     </platform>

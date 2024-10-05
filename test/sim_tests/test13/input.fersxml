@@ -16,7 +16,6 @@
 
     <timing name="clock">
         <frequency>10e6</frequency>
-        <jitter>0</jitter>
     </timing>
 
     <antenna name="ant1" pattern="gaussian">
@@ -55,12 +54,6 @@
                 <time>0</time>
             </positionwaypoint>
         </motionpath>
-        <fixedrotation>
-            <startazimuth>0.0</startazimuth>
-            <startelevation>0.0</startelevation>
-            <azimuthrate>0</azimuthrate>
-            <elevationrate>0</elevationrate>
-        </fixedrotation>
         <rotationpath interpolation="static">
             <rotationwaypoint>
                 <azimuth>0</azimuth>

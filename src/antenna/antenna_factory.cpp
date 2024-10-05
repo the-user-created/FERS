@@ -13,36 +13,40 @@
 #include <limits>                     // for numeric_limits
 #include <optional>                   // for optional
 #include <stdexcept>                  // for runtime_error
-#include <tinyxml.h>                  // for TiXmlHandle, TiXmlDocument, TiX...
 #include <bits/std_abs.h>             // for abs
 
 #include "core/logging.h"             // for log, LOG, Level
 #include "core/portable_utils.h"      // for besselJ1
 #include "math_utils/geometry_ops.h"  // for SVec3, Vec3, operator-, dotProduct
+#include "serialization/libxml_wrapper.h"
 
 using logging::Level;
 using math::SVec3;
 using math::Vec3;
 
-RealType getNodeFloat(const TiXmlHandle& node);
-
 namespace
 {
-	constexpr RealType EPSILON = std::numeric_limits<RealType>::epsilon();
-
 	RealType sinc(const RealType theta) { return std::sin(theta) / (theta + EPSILON); }
 
 	RealType j1C(const RealType x) { return x == 0 ? 1.0 : core::besselJ1(x) / x; }
 
-	void loadAntennaGainAxis(const interp::InterpSet* set, const TiXmlHandle& axisXml)
+	void loadAntennaGainAxis(const interp::InterpSet* set, const XmlElement& axisXml)
 	{
-		TiXmlHandle tmp = axisXml.ChildElement("gainsample", 0);
-		for (int i = 0; tmp.Element() != nullptr; i++)
+		XmlElement tmp = axisXml.childElement("gainsample"); // Get the first gainsample
+		while (tmp.isValid()) // Continue while the element is valid
 		{
-			const RealType angle = getNodeFloat(tmp.ChildElement("angle", 0));
-			const RealType gain = getNodeFloat(tmp.ChildElement("gain", 0));
-			set->insertSample(angle, gain);
-			tmp = axisXml.ChildElement("gainsample", i);
+			XmlElement angle_element = tmp.childElement("angle", 0);
+
+			if (XmlElement gain_element = tmp.childElement("gain", 0); angle_element.isValid() && gain_element.
+				isValid())
+			{
+				const RealType angle = std::stof(angle_element.getText());
+				const RealType gain = std::stof(gain_element.getText());
+				set->insertSample(angle, gain);
+			}
+
+			// Move to the next sibling gainsample
+			tmp = XmlElement(tmp.getNode()->next);
 		}
 	}
 }
@@ -114,7 +118,7 @@ namespace antenna
 	//
 	// =================================================================================================================
 
-	RealType ParabolicReflector::getGain(const SVec3& angle, const SVec3& refangle, const RealType wavelength) const
+	RealType Parabolic::getGain(const SVec3& angle, const SVec3& refangle, const RealType wavelength) const
 	{
 		const RealType ge = std::pow(PI * _diameter / wavelength, 2);
 		const RealType x = PI * _diameter * std::sin(getAngle(angle, refangle)) / wavelength;
@@ -148,15 +152,17 @@ namespace antenna
 
 	void XmlAntenna::loadAntennaDescription(const std::string_view filename)
 	{
-		TiXmlDocument doc((filename.data()));
-		if (!doc.LoadFile())
+		XmlDocument doc;
+		if (!doc.loadFile(std::string(filename)))
 		{
 			LOG(Level::FATAL, "Could not load antenna description {}", filename.data());
 			throw std::runtime_error("Could not load antenna description");
 		}
-		const TiXmlHandle root(doc.RootElement());
-		loadAntennaGainAxis(_elev_samples.get(), root.ChildElement("elevation", 0));
-		loadAntennaGainAxis(_azi_samples.get(), root.ChildElement("azimuth", 0));
+
+		const XmlElement root(doc.getRootElement());
+		loadAntennaGainAxis(_elev_samples.get(), root.childElement("elevation", 0));
+		loadAntennaGainAxis(_azi_samples.get(), root.childElement("azimuth", 0));
+
 		_max_gain = std::max(_azi_samples->getMax(), _elev_samples->getMax());
 		_elev_samples->divide(_max_gain);
 		_azi_samples->divide(_max_gain);

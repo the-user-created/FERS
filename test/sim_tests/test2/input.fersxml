@@ -16,7 +16,6 @@
 
     <timing name="clock">
         <frequency>10e6</frequency>
-        <jitter>0</jitter>
     </timing>
 
     <antenna name="ant1" pattern="isotropic">

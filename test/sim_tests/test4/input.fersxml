@@ -16,7 +16,6 @@
 
     <timing name="clock">
         <frequency>10e6</frequency>
-        <jitter>0</jitter>
     </timing>
 
     <antenna name="ant1" pattern="isotropic">
@@ -57,7 +56,7 @@
             <azimuthrate>0</azimuthrate>
             <elevationrate>0</elevationrate>
         </fixedrotation>
-        <receiver name="recv1" type="pulsed" antenna="ant1" timing="clock">
+        <receiver name="recv1" antenna="ant1" timing="clock">
             <window_skip>5e-6</window_skip>
             <window_length>1e-5</window_length>
             <prf>10</prf>

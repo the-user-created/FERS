@@ -1,16 +1,16 @@
 <?xml version="1.0" ?>
 <!-- Test pulsed radar. One Monostatic radar and one target
-w/ h5 antenna gain pattern, oversampling, noise, conflicting offsets, target model -->
+w/ h5 antenna gain pattern, oversampling, conflicting offsets, target model -->
 <!DOCTYPE simulation SYSTEM "../../xml_schema/fers-xml.dtd">
 <simulation name="code_coverage">
     <parameters>
-        <starttime>0</starttime>s
+        <starttime>0</starttime>
         <endtime>0.01</endtime>
         <rate>10e6</rate>
-        <export binary="true" csv="true" xml="true"/>
-        <adc_bits>12</adc_bits> <!-- 12-bit ADC resolution -->
         <randomseed>12345</randomseed> <!-- Random seed -->
+        <adc_bits>12</adc_bits> <!-- 12-bit ADC resolution -->
         <oversample>1</oversample> <!-- Oversample factor -->
+        <export binary="true" csv="true" xml="true"/>
     </parameters>
 
     <pulse name="pulse1" type="file" filename="waveform.csv">
@@ -20,14 +20,9 @@ w/ h5 antenna gain pattern, oversampling, noise, conflicting offsets, target mod
 
     <timing name="clock">
         <frequency>10e6</frequency>
-        <jitter>0</jitter>
-        <!--<noise_entry>
-            <alpha>1</alpha>
-            <weight>1</weight>
-        </noise_entry>-->
         <freq_offset>0</freq_offset>
-        <phase_offset>0</phase_offset>
         <random_freq_offset>0</random_freq_offset>
+        <phase_offset>0</phase_offset>
         <random_phase_offset>0</random_phase_offset>
     </timing>
 
@@ -54,7 +49,6 @@ w/ h5 antenna gain pattern, oversampling, noise, conflicting offsets, target mod
             <window_skip>0</window_skip>
             <window_length>20e-5</window_length>
             <prf>1000</prf>
-            <!--<noise_temp>10</noise_temp>-->
         </monostatic>
     </platform>
 
@@ -73,25 +67,9 @@ w/ h5 antenna gain pattern, oversampling, noise, conflicting offsets, target mod
             <azimuthrate>0</azimuthrate>
             <elevationrate>0</elevationrate>
         </fixedrotation>
-        <rotationpath interpolation="linear">
-            <rotationwaypoint>
-                <azimuth>0</azimuth>
-                <elevation>0</elevation>
-                <time>0</time>
-            </rotationwaypoint>
-        </rotationpath>
         <target name="TestFileTarget">
             <rcs type="file" filename="rcs_data.fersxml"/>
             <model type="constant"/>
         </target>
     </platform>
-
-    <!-- Uncomment the following multipath block to enable multipath - CURRENTLY CAUSES SIGSEGV -->
-    <!--<multipath>
-        <factor>0.5</factor>
-        <nx>1.0</nx>
-        <ny>0.0</ny>
-        <nz>0.0</nz>
-        <d>100.0</d>
-    </multipath>-->
 </simulation>

@@ -30,7 +30,7 @@ def run_simulation(test_path: str) -> bool:
     os.chdir(original_dir)
 
     if result.returncode != 0:
-        raise RuntimeError(f"Test {test_path} failed during execution: {result.stderr}")
+        return False
     return True
 
 
