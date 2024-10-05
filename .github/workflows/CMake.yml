@@ -30,7 +30,8 @@ jobs:
           cmake-qt-gui \
           libxml2-dev \
           libxerces-c-dev \
-          lsb-release
+          lsb-release \
+          vim-common
 
       - name: Set up Python  # Install Python 3.11, pip, and venv
         uses: actions/setup-python@v5
