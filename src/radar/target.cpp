@@ -19,9 +19,9 @@ using math::SVec3;
 
 namespace
 {
-	void loadTargetGainAxis(const interp::InterpSet* set, const XmlHandle& axisXml)
+	void loadTargetGainAxis(const interp::InterpSet* set, const XmlElement& axisXml)
 	{
-		XmlElement tmp = axisXml.firstChildElement("rcssample"); // Get the first gainsample
+		XmlElement tmp = axisXml.childElement("rcssample"); // Get the first gainsample
 		while (tmp.isValid()) // Continue while the element is valid
 		{
 			XmlElement angle_element = tmp.childElement("angle", 0);
@@ -74,7 +74,7 @@ namespace radar
 		XmlDocument doc;
 		if (!doc.loadFile(filename)) { throw std::runtime_error("Could not load target description from " + filename); }
 
-		const XmlHandle root(doc.getRootElement());
+		const XmlElement root(doc.getRootElement());
 
 		loadTargetGainAxis(_elev_samples.get(), root.childElement("elevation", 0));
 		loadTargetGainAxis(_azi_samples.get(), root.childElement("azimuth", 0));

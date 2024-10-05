@@ -79,14 +79,6 @@ auto get_child_bool = [](const XmlElement& element, const std::string& elementNa
 	}
 };
 
-// Struct to hold information about an XML file to be processed
-struct XmlFileInfo
-{
-	XmlDocument doc;
-	fs::path directory;
-	bool is_main_file; // True if this is the main simulation file, false for included files
-};
-
 namespace
 {
 	// Function to parse the <parameters> element
@@ -245,9 +237,7 @@ namespace
 		}
 		else if (pattern == "parabolic")
 		{
-			// TODO: Rename ParabolicReflector to Parabolic
-			ant = std::make_unique<antenna::ParabolicReflector>(name,
-			                                                    get_child_real_type(antenna, "diameter")
+			ant = std::make_unique<antenna::Parabolic>(name, get_child_real_type(antenna, "diameter")
 			);
 		}
 		else if (pattern == "xml")
@@ -613,7 +603,7 @@ namespace
 		world->addMultipathSurface(std::move(mps));
 	}
 
-	// Function to collect all include elements from the main document and included documents
+	// Function to collect all includes elements from the main document and included documents
 	void collectIncludeElements(const XmlDocument& doc, const fs::path& currentDir, std::vector<fs::path>& includePaths)
 	{
 		unsigned index = 0;
@@ -699,7 +689,7 @@ namespace serial
 		addIncludeFilesToMainDocument(main_doc, main_dir);
 
 		// Validate the combined document using in-memory schema data - DTD validation is less strict than XSD
-		if (!main_doc.validateWithDtd(fers_xml_dtd, fers_xml_dtd_len))
+		if (!main_doc.validateWithDtd(fers_xml_dtd))
 		{
 			LOG(Level::FATAL, "Combined XML file failed DTD validation!");
 			throw XmlException("Combined XML file failed DTD validation!");
@@ -707,14 +697,14 @@ namespace serial
 		LOG(Level::DEBUG, "Combined XML file passed DTD validation.");
 
 		// Validate the combined document using in-memory schema data - XSD validation is stricter than DTD
-		if (!main_doc.validateWithXsd(fers_xml_xsd, fers_xml_xsd_len))
+		if (!main_doc.validateWithXsd(fers_xml_xsd))
 		{
 			LOG(Level::FATAL, "Combined XML file failed XSD validation!");
 			throw XmlException("Combined XML file failed XSD validation!");
 		}
 		LOG(Level::DEBUG, "Combined XML file passed XSD validation.");
 
-		// Now you can proceed with parsing the main document's contents
+		// Proceed with parsing the main document's contents
 		parseParameters(root.childElement("parameters", 0));
 		parseElements(root, "pulse", world, parsePulse);
 		parseElements(root, "timing", world, parseTiming);
