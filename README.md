@@ -35,7 +35,8 @@ FERS depends on a number of external libraries, which you need to install before
 The libraries you need to have installed are:
 
 * libhdf5
-* TinyXML, which is available freely from http://sourceforge.net/projects/tinyxml/
+* libxml2-dev
+* HighFive (included as a git submodule)
 
 On a Debian or Ubuntu system (or pretty much any other decent GNU/Linux distribution),
 these libraries should be available pre-packaged for your installing pleasure.
@@ -73,11 +74,12 @@ so we can improve the software and make it more portable.
 Documentation is available in the doc/ directory. Highlights include:
 
 doc/equations/equations.tex - All equations used by FERS in convenient LaTeX form
-fersxml.dtd—Document Type Definition for the XML script file format
+fers-xml.dtd—DTD for the XML script file format
+fers-xml.xsd—XML Schema for the XML script file format
 
 #### THANKS
 
-The authors of TinyXML for making excellent software freely available.
+The authors of HighFive for making excellent software freely available.
 
 #### COPYRIGHT NOTICE
 
