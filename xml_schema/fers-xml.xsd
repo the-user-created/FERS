@@ -6,13 +6,25 @@
     <xs:element name="simulation">
         <xs:complexType>
             <xs:sequence>
+                <!-- First element must always be parameters, and only 1 allowed -->
                 <xs:element ref="parameters"/>
-                <xs:element maxOccurs="unbounded" ref="pulse"/>
-                <xs:element maxOccurs="unbounded" ref="timing"/>
-                <xs:element maxOccurs="unbounded" ref="antenna"/>
-                <xs:element maxOccurs="unbounded" ref="platform"/>
-                <xs:element minOccurs="0" maxOccurs="unbounded" ref="multipath"/>
-                <xs:element minOccurs="0" maxOccurs="unbounded" ref="include"/>
+
+                <!-- After parameters, the following elements can appear in any order -->
+                <xs:choice maxOccurs="unbounded">
+                    <!-- At least 1 pulse is required -->
+                    <xs:element ref="pulse"/>
+                    <!-- At least 1 timing is required -->
+                    <xs:element ref="timing"/>
+                    <!-- At least 1 antenna is required -->
+                    <xs:element ref="antenna"/>
+                    <!-- At least 1 platform is required -->
+                    <xs:element ref="platform"/>
+                    <!-- Any number of include elements is allowed -->
+                    <xs:element ref="include" minOccurs="0"/>
+                </xs:choice>
+
+                <!-- multipath can only occur once, and its order doesn't matter -->
+                <xs:element minOccurs="0" ref="multipath"/>
             </xs:sequence>
             <xs:attribute name="name" use="required"/>
         </xs:complexType>
@@ -152,21 +164,27 @@
     <!-- Motion paths and Position Waypoints -->
     <xs:element name="motionpath">
         <xs:complexType>
-            <xs:sequence>
+            <xs:choice>
+                <!-- At least 1 positionwaypoint, no max limit -->
                 <xs:element maxOccurs="unbounded" ref="positionwaypoint"/>
-            </xs:sequence>
+
+                <!-- Exactly 1 pythonpath element -->
+                <xs:element ref="pythonpath"/>
+            </xs:choice>
             <xs:attribute name="interpolation" default="static">
                 <xs:simpleType>
                     <xs:restriction base="xs:token">
                         <xs:enumeration value="static"/>
                         <xs:enumeration value="linear"/>
                         <xs:enumeration value="cubic"/>
+                        <xs:enumeration value="python"/>
                     </xs:restriction>
                 </xs:simpleType>
             </xs:attribute>
         </xs:complexType>
     </xs:element>
 
+    <!-- Definition for positionwaypoint element -->
     <xs:element name="positionwaypoint">
         <xs:complexType>
             <xs:sequence>
@@ -175,6 +193,14 @@
                 <xs:element name="altitude" type="xs:string"/>
                 <xs:element name="time" type="xs:string"/>
             </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- Definition for pythonpath element -->
+    <xs:element name="pythonpath">
+        <xs:complexType>
+            <xs:attribute name="module" type="xs:string" use="required"/>
+            <xs:attribute name="function" type="xs:string" use="required"/>
         </xs:complexType>
     </xs:element>
 
@@ -199,6 +225,7 @@
             <xs:attribute name="interpolation" use="required">
                 <xs:simpleType>
                     <xs:restriction base="xs:token">
+                        <xs:enumeration value="static"/>
                         <xs:enumeration value="linear"/>
                         <xs:enumeration value="cubic"/>
                     </xs:restriction>
@@ -273,9 +300,10 @@
                 <xs:element minOccurs="0" name="noise_temp" type="xs:string"/>
             </xs:sequence>
             <xs:attribute name="name" use="required"/>
-            <xs:attribute name="type" use="required"/>
             <xs:attribute name="antenna" use="required"/>
             <xs:attribute name="timing" use="required"/>
+            <xs:attribute name="nodirect" type="xs:boolean" default="false"/>
+            <xs:attribute name="nopropagationloss" type="xs:boolean" default="false"/>
         </xs:complexType>
     </xs:element>
 

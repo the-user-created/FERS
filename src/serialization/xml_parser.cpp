@@ -9,11 +9,12 @@
 #include <functional>                        // for function
 #include <iostream>                          // for basic_ostream, operator<<
 #include <memory>                            // for unique_ptr, make_unique
-#include <stack>                             // for stack
 #include <utility>                           // for move
 #include <vector>                            // for vector
 
 #include "config.h"                          // for RealType
+#include "fers_xml_dtd.h"
+#include "fers_xml_xsd.h"
 #include "libxml_wrapper.h"                  // for XmlElement, XmlException
 #include "antenna/antenna_factory.h"         // for Antenna, FileAntenna
 #include "core/logging.h"                    // for log, LOG, Level
@@ -612,17 +613,16 @@ namespace
 		world->addMultipathSurface(std::move(mps));
 	}
 
-	// Function to parse <include> elements and add to the stack
-	void addIncludeFilesToStack(const XmlElement& root, const fs::path& currentDir,
-	                            std::stack<XmlFileInfo>& filesToProcess)
+	// Function to collect all include elements from the main document and included documents
+	void collectIncludeElements(const XmlDocument& doc, const fs::path& currentDir, std::vector<fs::path>& includePaths)
 	{
 		unsigned index = 0;
 		while (true)
 		{
-			XmlElement include_element = root.childElement("include", index++);
+			XmlElement include_element = doc.getRootElement().childElement("include", index++);
 			if (!include_element.isValid()) { break; }
 
-			// Get the filename from the <include> element's text
+			// Get the filename from the <include> element
 			std::string include_filename = include_element.getText();
 			if (include_filename.empty())
 			{
@@ -632,36 +632,42 @@ namespace
 
 			// Construct the full path to the included file
 			fs::path include_path = currentDir / include_filename;
+			includePaths.push_back(include_path);
 
 			// Load the included XML file
-			XmlDocument include_doc;
-			if (!include_doc.loadFile(include_path.string()))
+			XmlDocument included_doc;
+			if (!included_doc.loadFile(include_path.string()))
 			{
 				std::cerr << "Failed to load included XML file: " << include_path << std::endl;
 				continue;
 			}
 
-			// Validate the included XML file against the DTD
-			if (!include_doc.validateWithDtd("xml_schema/fers-xml.dtd"))
-			{
-				LOG(Level::FATAL, "Included XML file failed DTD validation!");
-				throw XmlException("Included XML file failed DTD validation!");
-			}
-			LOG(Level::DEBUG, "Included XML file passed DTD validation.");
-
-			// Validate the included XML file against the XSD
-			if (!include_doc.validateWithXsd("xml_schema/fers-xml.xsd"))
-			{
-				LOG(Level::FATAL, "Included XML file failed XSD validation!");
-				throw XmlException("Included XML file failed XSD validation!");
-			}
-			LOG(Level::DEBUG, "Included XML file passed XSD validation.");
-
-			std::cout << "Adding included file to process stack: " << include_path << std::endl;
-
-			// Add the included file to the stack (isMainFile = false)
-			filesToProcess.push({(std::move(include_doc)), include_path.parent_path(), false});
+			// Recursively collect include elements from the included document
+			collectIncludeElements(included_doc, include_path.parent_path(), includePaths);
 		}
+	}
+
+	void addIncludeFilesToMainDocument(const XmlDocument& mainDoc, const fs::path& currentDir)
+	{
+		std::vector<fs::path> include_paths;
+		collectIncludeElements(mainDoc, currentDir, include_paths);
+
+		for (const auto& include_path : include_paths)
+		{
+			// Load the included XML file
+			XmlDocument included_doc;
+			if (!included_doc.loadFile(include_path.string()))
+			{
+				std::cerr << "Failed to load included XML file: " << include_path << std::endl;
+				continue;
+			}
+
+			// Merge the included document into the main document
+			mergeXmlDocuments(mainDoc, included_doc);
+		}
+
+		// Remove all include elements from the main document
+		removeIncludeElements(mainDoc);
 	}
 }
 
@@ -670,9 +676,6 @@ namespace serial
 	// Function to parse the entire <simulation> element
 	void parseSimulation(const std::string& filename, World* world)
 	{
-		// Stack of XML files to process
-		std::stack<XmlFileInfo> files_to_process;
-
 		// Load the main simulation XML file
 		XmlDocument main_doc;
 		if (!main_doc.loadFile(filename))
@@ -681,71 +684,43 @@ namespace serial
 			return;
 		}
 
-		// Validate the main XML file against the DTD
-		if (!main_doc.validateWithDtd("xml_schema/fers-xml.dtd"))
-		{
-			LOG(Level::FATAL, "Main XML file failed DTD validation!");
-			throw XmlException("Main XML file failed DTD validation!");
-		}
-		LOG(Level::DEBUG, "Main XML file passed DTD validation.");
-
-		// Validate the main XML file against the XSD
-		if (!main_doc.validateWithXsd("xml_schema/fers-xml.xsd"))
-		{
-			LOG(Level::FATAL, "Main XML file failed XSD validation!");
-			throw XmlException("Main XML file failed XSD validation!");
-		}
-		LOG(Level::DEBUG, "Main XML file passed XSD validation.");
-
 		// Get the directory of the main XML file to resolve include paths
 		const fs::path main_dir = fs::path(filename).parent_path();
-		files_to_process.push({(std::move(main_doc)), main_dir, true});
-		// Add the main file to the stack (is_main_file = true)
 
-		// Process each file in the stack
-		while (!files_to_process.empty())
+		// Add all included files into the main document
+		const XmlElement root = main_doc.getRootElement();
+		if (root.name() != "simulation")
 		{
-			// TODO: Modify the validation logic to combine all included files
-			//		into a single document and validate that instead of validating each file individually
-			// Get the next file to process
-			auto [doc, directory, is_main_file] = std::move(files_to_process.top());
-			files_to_process.pop();
-
-			XmlElement root = doc.getRootElement();
-			if (root.name() != "simulation")
-			{
-				LOG(Level::FATAL, "Root element is not <simulation>!");
-				throw XmlException("Root element is not <simulation>!");
-			}
-
-			// If this is the main file, parse <parameters>, otherwise skip
-			if (is_main_file)
-			{
-				if (XmlElement parameters = root.childElement("parameters", 0); !parameters.isValid())
-				{
-					std::cerr << "<parameters> element not found in <simulation>!" << std::endl;
-				}
-				else { parseParameters(parameters); }
-			}
-
-			// Parse <include> elements and adds them to the stack
-			addIncludeFilesToStack(root, directory, files_to_process);
-
-			// Parse all <pulse> elements inside <simulation>
-			parseElements(root, "pulse", world, parsePulse);
-
-			// Parse all <timing> elements inside <simulation>
-			parseElements(root, "timing", world, parseTiming);
-
-			// Parse all <antenna> elements inside <simulation>
-			parseElements(root, "antenna", world, parseAntenna);
-
-			// Parse all <platform> elements inside <simulation>
-			parseElements(root, "platform", world, parsePlatform);
-
-			// Parse <multipath> element inside <simulation>
-			parseElements(root, "multipath", world, parseMultipathSurface);
+			LOG(Level::FATAL, "Root element is not <simulation>!");
+			throw XmlException("Root element is not <simulation>!");
 		}
+
+		// Process <include> elements and merge their contents into the main document
+		addIncludeFilesToMainDocument(main_doc, main_dir);
+
+		// Validate the combined document using in-memory schema data - DTD validation is less strict than XSD
+		if (!main_doc.validateWithDtd(fers_xml_dtd, fers_xml_dtd_len))
+		{
+			LOG(Level::FATAL, "Combined XML file failed DTD validation!");
+			throw XmlException("Combined XML file failed DTD validation!");
+		}
+		LOG(Level::DEBUG, "Combined XML file passed DTD validation.");
+
+		// Validate the combined document using in-memory schema data - XSD validation is stricter than DTD
+		if (!main_doc.validateWithXsd(fers_xml_xsd, fers_xml_xsd_len))
+		{
+			LOG(Level::FATAL, "Combined XML file failed XSD validation!");
+			throw XmlException("Combined XML file failed XSD validation!");
+		}
+		LOG(Level::DEBUG, "Combined XML file passed XSD validation.");
+
+		// Now you can proceed with parsing the main document's contents
+		parseParameters(root.childElement("parameters", 0));
+		parseElements(root, "pulse", world, parsePulse);
+		parseElements(root, "timing", world, parseTiming);
+		parseElements(root, "antenna", world, parseAntenna);
+		parseElements(root, "platform", world, parsePlatform);
+		parseElements(root, "multipath", world, parseMultipathSurface);
 
 		world->processMultipath();
 	}

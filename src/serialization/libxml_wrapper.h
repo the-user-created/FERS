@@ -170,10 +170,10 @@ public:
 	}
 
 	// DTD Validation
-	[[nodiscard]] bool validateWithDtd(const std::string& dtdFilename) const;
+	[[nodiscard]] bool validateWithDtd(const unsigned char* dtdData, size_t dtdLength) const;
 
 	// XSD Validation
-	[[nodiscard]] bool validateWithXsd(const std::string& xsdFilename) const;
+	[[nodiscard]] bool validateWithXsd(const unsigned char* xsdData, size_t xsdLength) const;
 };
 
 class XmlHandle
@@ -200,5 +200,11 @@ public:
 
 	[[nodiscard]] bool isValid() const { return _element.isValid(); }
 };
+
+// Function to merge the contents of an included XML file into the main document
+void mergeXmlDocuments(const XmlDocument& mainDoc, const XmlDocument& includedDoc);
+
+// Function to remove all includes elements from the main document
+void removeIncludeElements(const XmlDocument& doc);
 
 #endif //LIBXML_WRAPPER_H

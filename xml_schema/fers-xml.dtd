@@ -1,5 +1,5 @@
 <!-- DTD for FERS XML simulation script files with include element handling. -->
-        <!ELEMENT simulation (parameters?,pulse*,timing*,antenna*,platform*,multipath?,include*)>
+        <!ELEMENT simulation (parameters?, (pulse | timing | antenna | platform | include | multipath)*)>
         <!ATTLIST simulation name CDATA #REQUIRED>
 
         <!-- Simulation Parameters -->

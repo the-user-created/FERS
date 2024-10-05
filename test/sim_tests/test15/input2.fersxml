@@ -2,11 +2,6 @@
 <!-- Test pulsed radar. One Monostatic radar and one moving target -->
 <!DOCTYPE simulation SYSTEM "../../xml_schema/fers-xml.dtd">
 <simulation name="sim1">
-    <parameters>
-        <starttime>0</starttime>
-        <endtime>0.01</endtime>
-    </parameters>
-
     <pulse name="pulse2" type="file" filename="waveform.csv">
         <power>1000</power>
         <carrier>1e9</carrier>
