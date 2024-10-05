@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <memory>
+#include <span>
 #include <stdexcept>
 #include <string>
 #include <libxml/parser.h>
@@ -17,7 +18,7 @@
 class XmlException final : public std::runtime_error
 {
 public:
-	explicit XmlException(const std::string& message) : std::runtime_error(message) {}
+	explicit XmlException(const std::string_view message) : std::runtime_error(std::string(message)) {}
 };
 
 class XmlElement
@@ -27,10 +28,8 @@ class XmlElement
 public:
 	explicit XmlElement(xmlNodePtr node) : _node(node) {}
 
-	// Get the name of the element
-	[[nodiscard]] std::string name() const { return reinterpret_cast<const char*>(_node->name); }
+	[[nodiscard]] std::string_view name() const noexcept { return reinterpret_cast<const char*>(_node->name); }
 
-	// Get the text content of the element
 	[[nodiscard]] std::string getText() const
 	{
 		if (!_node) { return ""; }
@@ -40,69 +39,54 @@ public:
 		return result;
 	}
 
-	// Set text content of the element
-	void setText(const std::string& text) const
+	void setText(const std::string_view text) const
 	{
-		xmlNodeSetContent(_node, reinterpret_cast<const xmlChar*>(text.c_str()));
+		xmlNodeSetContent(_node, reinterpret_cast<const xmlChar*>(text.data()));
 	}
 
-	// Get an attribute
-	static std::string getSafeAttribute(const XmlElement& element, const std::string& name)
+	static std::string getSafeAttribute(const XmlElement& element, const std::string_view name)
 	{
 		std::string value;
-		if (xmlChar* attr = xmlGetProp(element.getNode(), reinterpret_cast<const xmlChar*>(name.c_str())))
+		if (xmlChar* attr = xmlGetProp(element.getNode(), reinterpret_cast<const xmlChar*>(name.data())))
 		{
 			value = reinterpret_cast<const char*>(attr);
 			xmlFree(attr); // Always free the attribute after use
 		}
-		else { throw XmlException("Attribute not found: " + name); }
+		else { throw XmlException("Attribute not found: " + std::string(name)); }
 		return value;
 	}
 
-	// Set an attribute
-	void setAttribute(const std::string& name, const std::string& value) const
+	void setAttribute(const std::string_view name, const std::string_view value) const
 	{
-		xmlSetProp(_node, reinterpret_cast<const xmlChar*>(name.c_str()),
-		           reinterpret_cast<const xmlChar*>(value.c_str()));
+		xmlSetProp(_node, reinterpret_cast<const xmlChar*>(name.data()),
+		           reinterpret_cast<const xmlChar*>(value.data()));
 	}
 
-	// Add a child element
-	[[nodiscard]] XmlElement linkEndChild(const XmlElement& child) const
+	[[nodiscard]] XmlElement addChild(const std::string_view name) const noexcept
 	{
-		return XmlElement(xmlAddChild(_node, child._node));
-	}
-
-	// Add a new child element
-	[[nodiscard]] XmlElement addChild(const std::string& name) const
-	{
-		xmlNodePtr child = xmlNewNode(nullptr, reinterpret_cast<const xmlChar*>(name.c_str()));
+		xmlNodePtr child = xmlNewNode(nullptr, reinterpret_cast<const xmlChar*>(name.data()));
 		xmlAddChild(_node, child);
 		return XmlElement(child);
 	}
 
-	// Get the first child element
-	[[nodiscard]] XmlElement childElement(const std::string& name, const unsigned index) const
+	[[nodiscard]] XmlElement childElement(const std::string_view name = "", const unsigned index = 0) const noexcept
 	{
 		if (!_node) { return XmlElement(nullptr); }
 		unsigned count = 0;
-		xmlNodePtr child = _node->children;
-		while (child)
+		for (auto* child = _node->children; child; child = child->next)
 		{
 			if (child->type == XML_ELEMENT_NODE && (name.empty() || name == reinterpret_cast<const char*>(child->name)))
 			{
 				if (count == index) { return XmlElement(child); }
 				++count;
 			}
-			child = child->next;
 		}
 		return XmlElement(nullptr); // Return an invalid XmlElement if the index is out of bounds
 	}
 
-	// Check if the element is valid
-	[[nodiscard]] bool isValid() const { return _node != nullptr; }
+	[[nodiscard]] bool isValid() const noexcept { return _node != nullptr; }
 
-	// Get the underlying xmlNodePtr
-	[[nodiscard]] xmlNodePtr getNode() const { return _node; }
+	[[nodiscard]] xmlNodePtr getNode() const noexcept { return _node; }
 };
 
 class XmlDocument
@@ -110,45 +94,33 @@ class XmlDocument
 	std::unique_ptr<xmlDoc, decltype(&xmlFreeDoc)> _doc;
 
 public:
-	// Constructor to initialize the document
-	XmlDocument() : _doc(xmlNewDoc(reinterpret_cast<const xmlChar*>("1.0")), xmlFreeDoc)
+	XmlDocument() : _doc(xmlNewDoc(reinterpret_cast<const xmlChar*>("1.0")), &xmlFreeDoc)
 	{
 		if (!_doc) { throw std::runtime_error("Failed to create XML document"); }
 	}
 
-	// Load XML from a file
-	bool loadFile(const std::string& filename)
+	[[nodiscard]] bool loadFile(const std::string_view filename)
 	{
-		_doc.reset(xmlReadFile(filename.c_str(), nullptr, 0));
+		_doc.reset(xmlReadFile(filename.data(), nullptr, 0));
 		return _doc != nullptr;
 	}
 
-	// Save XML to file
-	[[nodiscard]] bool saveFile(const std::string& filename) const
+	[[nodiscard]] bool saveFile(const std::string_view filename) const
 	{
 		if (!_doc)
 		{
 			std::cerr << "Document is null, cannot save." << std::endl;
 			return false;
 		}
-
-		if (const int result = xmlSaveFormatFileEnc(filename.c_str(), _doc.get(), "UTF-8", 1); result == -1)
-		{
-			std::cerr << "Failed to save XML to file: " << filename << std::endl;
-			return false;
-		}
-
-		return true;
+		return xmlSaveFormatFileEnc(filename.data(), _doc.get(), "UTF-8", 1) != -1;
 	}
 
-	// Set root element
 	void setRootElement(const XmlElement& root) const
 	{
 		if (!_doc) { throw std::runtime_error("Document not created"); }
 		xmlDocSetRootElement(_doc.get(), root.getNode());
 	}
 
-	// Get root element
 	[[nodiscard]] XmlElement getRootElement() const
 	{
 		if (!_doc) { throw std::runtime_error("Document not loaded"); }
@@ -157,54 +129,13 @@ public:
 		return XmlElement(root);
 	}
 
-	// Expose the underlying xmlDocPtr for direct access
-	[[nodiscard]] xmlDocPtr getDoc() const { return _doc.get(); }
+	[[nodiscard]] bool validateWithDtd(std::span<const unsigned char> dtdData) const;
 
-	static std::string getXmlVersion(const XmlDocument& doc)
-	{
-		if (xmlDocPtr docPtr = doc.getDoc(); docPtr && docPtr->version)
-		{
-			return reinterpret_cast<const char*>(docPtr->version);
-		}
-		return "unknown";
-	}
-
-	// DTD Validation
-	[[nodiscard]] bool validateWithDtd(const unsigned char* dtdData, size_t dtdLength) const;
-
-	// XSD Validation
-	[[nodiscard]] bool validateWithXsd(const unsigned char* xsdData, size_t xsdLength) const;
+	[[nodiscard]] bool validateWithXsd(std::span<const unsigned char> xsdData) const;
 };
 
-class XmlHandle
-{
-	XmlElement _element;
-
-public:
-	explicit XmlHandle(const XmlElement element) : _element(element) {}
-
-	// Return the current element
-	[[nodiscard]] XmlElement element() const { return _element; }
-
-	// Return the first child element
-	[[nodiscard]] XmlElement firstChildElement(const std::string& name = "") const
-	{
-		return _element.childElement(name, 0);
-	}
-
-	// Navigate to the child element
-	[[nodiscard]] XmlHandle childElement(const std::string& name, const unsigned index) const
-	{
-		return XmlHandle(_element.childElement(name, index));
-	}
-
-	[[nodiscard]] bool isValid() const { return _element.isValid(); }
-};
-
-// Function to merge the contents of an included XML file into the main document
 void mergeXmlDocuments(const XmlDocument& mainDoc, const XmlDocument& includedDoc);
 
-// Function to remove all includes elements from the main document
 void removeIncludeElements(const XmlDocument& doc);
 
 #endif //LIBXML_WRAPPER_H

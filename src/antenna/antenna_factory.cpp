@@ -30,9 +30,9 @@ namespace
 
 	RealType j1C(const RealType x) { return x == 0 ? 1.0 : core::besselJ1(x) / x; }
 
-	void loadAntennaGainAxis(const interp::InterpSet* set, const XmlHandle& axisXml)
+	void loadAntennaGainAxis(const interp::InterpSet* set, const XmlElement& axisXml)
 	{
-		XmlElement tmp = axisXml.firstChildElement("gainsample"); // Get the first gainsample
+		XmlElement tmp = axisXml.childElement("gainsample"); // Get the first gainsample
 		while (tmp.isValid()) // Continue while the element is valid
 		{
 			XmlElement angle_element = tmp.childElement("angle", 0);
@@ -118,7 +118,7 @@ namespace antenna
 	//
 	// =================================================================================================================
 
-	RealType ParabolicReflector::getGain(const SVec3& angle, const SVec3& refangle, const RealType wavelength) const
+	RealType Parabolic::getGain(const SVec3& angle, const SVec3& refangle, const RealType wavelength) const
 	{
 		const RealType ge = std::pow(PI * _diameter / wavelength, 2);
 		const RealType x = PI * _diameter * std::sin(getAngle(angle, refangle)) / wavelength;
@@ -159,7 +159,7 @@ namespace antenna
 			throw std::runtime_error("Could not load antenna description");
 		}
 
-		const XmlHandle root(doc.getRootElement());
+		const XmlElement root(doc.getRootElement());
 		loadAntennaGainAxis(_elev_samples.get(), root.childElement("elevation", 0));
 		loadAntennaGainAxis(_azi_samples.get(), root.childElement("azimuth", 0));
 
