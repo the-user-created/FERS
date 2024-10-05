@@ -12,7 +12,7 @@ jobs:
     steps:
       - name: Update Git
         run: |
-          apt-get update && apt-get install -y --no-install-recommends git
+          apt-get update && apt-get install -y --no-install-recommends git ca-certificates
           git --version
 
       - name: Checkout project
