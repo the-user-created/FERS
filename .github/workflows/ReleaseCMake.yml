@@ -13,14 +13,13 @@ jobs:
     steps:
       - name: Update Git
         run: |
-          apt-get update && apt-get install -y --no-install-recommends git
+          apt-get update && apt-get install -y --no-install-recommends git ca-certificates
           git --version
 
       - name: Checkout project
         uses: actions/checkout@v4  # Checkout the repository
         with:
           submodules: 'true'  # Fetch submodules
-          fetch-depth: '0'  # Fetch all history for the repository
 
       - name: Set up environment  # Update package lists and install required packages
         run: |
