@@ -32,7 +32,7 @@ jobs:
           libxml2-dev \
           libxerces-c-dev \
           lsb-release \
-          vim-common
+          xxd
 
       - name: Set up Python  # Install Python 3.11, pip, and venv
         uses: actions/setup-python@v5
