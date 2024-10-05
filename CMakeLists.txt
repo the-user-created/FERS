@@ -9,17 +9,28 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Schema files
+set(SCHEMA_DIR ${CMAKE_SOURCE_DIR}/xml_schema)
+set(SCHEMA_HEADERS_DIR ${CMAKE_BINARY_DIR}/generated)
+
 # Add the directory where config.h is located to the include path
 include_directories(${CMAKE_SOURCE_DIR})
+# Ensure that the generated headers are included in the include path
+include_directories(${SCHEMA_HEADERS_DIR})
 
 if (NOT CMAKE_BUILD_TYPE)
+	# You can set the build type you would like to use by passing the -DCMAKE_BUILD_TYPE flag to cmake, e.g.,
+	# 	-D CMAKE_BUILD_TYPE=Debug
+	# Note: Because the Release build type is using -O2 optimization, some accuracy is lost
+	# 		which will affect the results (the regression tests in test/sim_tests/ will fail).
+	# 		Therefore, when using run_sim_tests.py, make sure to use the Release build type.
 	message(STATUS "No build type specified, defaulting to Release")
 	set(CMAKE_BUILD_TYPE "Release")
 endif ()
 
 if (CMAKE_COMPILER_IS_GNUCXX)
 	message(STATUS "Setting compiler flags for GNU C++ compiler")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pthread -ffast-math -fno-finite-math-only")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pthread -ffast-math -fno-finite-math-only -D_REENTRANT")
 
 	if (CMAKE_BUILD_TYPE MATCHES "Release")
 		message(STATUS "Setting compiler flags for Release")
@@ -34,6 +45,37 @@ if (CMAKE_COMPILER_IS_GNUCXX)
 	endif ()
 endif ()
 
-add_definitions(-D_REENTRANT)
-
+# Add subdirectories for source and third-party libraries
 add_subdirectory(src)
+add_subdirectory(third_party/HighFive)
+
+# Ensure the output directory for generated headers exists
+file(MAKE_DIRECTORY ${SCHEMA_HEADERS_DIR})
+
+# DTD and XSD files to be embedded
+set(SCHEMA_FILES
+	${SCHEMA_DIR}/fers-xml.dtd
+	${SCHEMA_DIR}/fers-xml.xsd
+)
+
+# Define the generated headers
+set(GENERATED_HEADERS
+	${SCHEMA_HEADERS_DIR}/fers_xml_dtd.h
+	${SCHEMA_HEADERS_DIR}/fers_xml_xsd.h
+)
+
+# Command to convert schema files to C arrays using xxd
+add_custom_command(
+		OUTPUT ${SCHEMA_HEADERS_DIR}/fers_xml_dtd.h ${SCHEMA_HEADERS_DIR}/fers_xml_xsd.h
+		COMMAND xxd -i fers-xml.dtd > ${SCHEMA_HEADERS_DIR}/fers_xml_dtd.h
+		COMMAND xxd -i fers-xml.xsd > ${SCHEMA_HEADERS_DIR}/fers_xml_xsd.h
+		WORKING_DIRECTORY ${SCHEMA_DIR}
+		DEPENDS ${SCHEMA_FILES}
+		COMMENT "Converting XML schema files to C headers"
+)
+
+# Make sure that the generated headers are included when building your src folder
+add_custom_target(generate_schemas ALL DEPENDS ${GENERATED_HEADERS})
+add_dependencies(${PROJECT_NAME} generate_schemas)
+
+target_link_libraries(${PROJECT_NAME} HighFive)

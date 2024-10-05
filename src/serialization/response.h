@@ -13,7 +13,7 @@
 #include "config.h"                             // for RealType, ComplexType
 #include "interpolation/interpolation_point.h"  // for InterpPoint
 
-class TiXmlElement;
+class XmlElement;
 
 namespace signal
 {
@@ -45,7 +45,7 @@ namespace serial
 
 		void addInterpPoint(const interp::InterpPoint& point);
 
-		void renderXml(TiXmlElement* root);
+		void renderXml(XmlElement& root);
 
 		void renderCsv(std::ofstream& of) const;
 
@@ -61,7 +61,7 @@ namespace serial
 		const signal::RadarSignal* _wave;
 		std::vector<interp::InterpPoint> _points;
 
-		void renderResponseXml(TiXmlElement* root, const interp::InterpPoint& point) const;
+		void renderResponseXml(XmlElement& root, const interp::InterpPoint& point) const;
 
 		void renderResponseCsv(std::ofstream& of, const interp::InterpPoint& point) const;
 	};

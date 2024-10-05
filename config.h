@@ -11,5 +11,6 @@
 using RealType = double; // Type for real numbers
 using ComplexType = std::complex<RealType>; // Type for complex numbers
 constexpr RealType PI = std::numbers::pi_v<RealType>; // Constant for π
+constexpr RealType EPSILON = std::numeric_limits<RealType>::epsilon(); // Machine epsilon
 
 #endif //CONFIG_H

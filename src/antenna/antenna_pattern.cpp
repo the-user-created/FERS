@@ -9,6 +9,7 @@
 #include <cmath>                      // for floor
 #include <utility>                    // for pair
 
+#include "core/logging.h"
 #include "math_utils/geometry_ops.h"  // for SVec3
 
 constexpr RealType TWO_PI = 2.0 * PI; // Constant for 2*π
@@ -29,8 +30,13 @@ namespace antenna
 			return std::pair{x1, x2};
 		};
 
-		const auto [x1, x2] = calc_grid_point(ex1, _size_azi);
-		const auto [y1, y2] = calc_grid_point(ey1, _size_elev);
+		unsigned size_azi = _pattern.size();
+		unsigned size_elev = _pattern[0].size();
+
+		LOG(logging::Level::TRACE, "Size of pattern: {} x {}", size_azi, size_elev);
+
+		const auto [x1, x2] = calc_grid_point(ex1, size_azi);
+		const auto [y1, y2] = calc_grid_point(ey1, size_elev);
 
 		// Interpolation weights
 		const double t = (ex1 - x1) / (x2 - x1);
@@ -42,15 +48,15 @@ namespace antenna
 			return std::min(static_cast<unsigned>(std::floor(value * size)), size - 1);
 		};
 
-		const unsigned arr_x = calc_array_index(x1, _size_azi);
-		const unsigned arr_y = calc_array_index(y1, _size_elev);
+		const unsigned arr_x = calc_array_index(x1, size_azi);
+		const unsigned arr_y = calc_array_index(y1, size_elev);
 
 		// Bilinear interpolation using precomputed indices and weights
 		const RealType interp =
 			(1.0 - t) * (1.0 - u) * _pattern[arr_x][arr_y] +
-			t * (1.0 - u) * _pattern[(arr_x + 1) % _size_azi][arr_y] +
-			t * u * _pattern[(arr_x + 1) % _size_azi][(arr_y + 1) % _size_elev] +
-			(1.0 - t) * u * _pattern[arr_x][(arr_y + 1) % _size_elev];
+			t * (1.0 - u) * _pattern[(arr_x + 1) % size_azi][arr_y] +
+			t * u * _pattern[(arr_x + 1) % size_azi][(arr_y + 1) % size_elev] +
+			(1.0 - t) * u * _pattern[arr_x][(arr_y + 1) % size_elev];
 
 		return interp;
 	}

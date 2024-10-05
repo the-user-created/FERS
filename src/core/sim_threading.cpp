@@ -15,9 +15,7 @@
 #include <atomic>                               // for atomic, __atomic_base
 #include <cmath>                                // for ceil, pow, sqrt, fmod
 #include <functional>                           // for function
-#include <limits>                               // for numeric_limits
 #include <memory>                               // for unique_ptr, make_unique
-#include <ratio>                                // for ratio
 #include <stdexcept>                            // for runtime_error
 #include <thread>                               // for jthread, yield
 #include <utility>                              // for move
@@ -58,11 +56,9 @@ namespace
 	// =================================================================================================================
 
 	void solveRe(const Transmitter* trans, const Receiver* recv, const Target* targ,
-	             const std::chrono::duration<RealType> time, const std::chrono::duration<RealType> length,
+	             const std::chrono::duration<RealType>& time, const std::chrono::duration<RealType>& length,
 	             const RadarSignal* wave, core::ReResults& results)
 	{
-		LOG(Level::TRACE, "Solving RE for transmitter '{}', receiver '{}' and target '{}'", trans->getName(),
-		    recv->getName(), targ->getName());
 		// Get initial positions and distance vectors
 		const auto transmitter_position = trans->getPosition(time.count());
 		const auto receiver_position = recv->getPosition(time.count());
@@ -74,9 +70,7 @@ namespace
 		const auto transmitter_to_target_distance = transmitter_to_target_vector.length;
 		const auto receiver_to_target_distance = receiver_to_target_vector.length;
 
-		constexpr RealType epsilon = std::numeric_limits<RealType>::epsilon();
-
-		if (transmitter_to_target_distance <= epsilon || receiver_to_target_distance <= epsilon)
+		if (transmitter_to_target_distance <= EPSILON || receiver_to_target_distance <= EPSILON)
 		{
 			throw core::RangeError();
 		}
@@ -121,7 +115,7 @@ namespace
 		const RealType rt_end = transvec_end.length;
 		const RealType rr_end = recvvec_end.length;
 
-		if (rt_end <= epsilon || rr_end <= epsilon)
+		if (rt_end <= EPSILON || rr_end <= EPSILON)
 		{
 			throw std::runtime_error("Target is too close to transmitter or receiver for accurate simulation");
 		}
@@ -136,8 +130,8 @@ namespace
 		results.noise_temperature = recv->getNoiseTemperature(recv->getRotation(time.count() + results.delay));
 	}
 
-	void solveReDirect(const Transmitter* trans, const Receiver* recv, const std::chrono::duration<RealType> time,
-	                   const std::chrono::duration<RealType> length, const RadarSignal* wave, core::ReResults& results)
+	void solveReDirect(const Transmitter* trans, const Receiver* recv, const std::chrono::duration<RealType>& time,
+	                   const std::chrono::duration<RealType>& length, const RadarSignal* wave, core::ReResults& results)
 	{
 		// Get positions
 		const auto tpos = trans->getPosition(time.count());
@@ -147,7 +141,7 @@ namespace
 		const SVec3 transvec{tpos - rpos};
 		const RealType distance = transvec.length;
 
-		if (constexpr RealType epsilon = std::numeric_limits<RealType>::epsilon(); distance <= epsilon)
+		if (distance <= EPSILON)
 		{
 			throw core::RangeError();
 		}
@@ -359,7 +353,7 @@ namespace core
 		try { simulatePair(_trans, _recv, _world); }
 		catch (const std::exception& ex)
 		{
-			LOG(Level::ERROR, "First pass thread terminated with unexpected error:\t{}\nSimulator will terminate",
+			LOG(Level::FATAL, "First pass thread terminated with unexpected error:\t{}\nSimulator will terminate",
 			    ex.what());
 			error.store(true);
 		}
@@ -378,7 +372,7 @@ namespace core
 		try { _recv->render(); }
 		catch (const std::exception& ex)
 		{
-			LOG(Level::INFO, "Render thread terminated with unexpected error:\t{}\nSimulator will terminate",
+			LOG(Level::FATAL, "Render thread terminated with unexpected error:\t{}\nSimulator will terminate",
 			    ex.what());
 			error.store(true);
 		}
