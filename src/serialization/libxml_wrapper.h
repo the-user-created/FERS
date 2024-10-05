@@ -26,7 +26,7 @@ class XmlElement
 	xmlNodePtr _node;
 
 public:
-	explicit XmlElement(xmlNodePtr node) : _node(node) {}
+	explicit XmlElement(const xmlNode* node) : _node(const_cast<xmlNode*>(node)) {}
 
 	[[nodiscard]] std::string_view name() const noexcept { return reinterpret_cast<const char*>(_node->name); }
 
@@ -64,8 +64,8 @@ public:
 
 	[[nodiscard]] XmlElement addChild(const std::string_view name) const noexcept
 	{
-		xmlNodePtr child = xmlNewNode(nullptr, reinterpret_cast<const xmlChar*>(name.data()));
-		xmlAddChild(_node, child);
+		const xmlNode* child = xmlNewNode(nullptr, reinterpret_cast<const xmlChar*>(name.data()));
+		xmlAddChild(_node, const_cast<xmlNode*>(child));
 		return XmlElement(child);
 	}
 
@@ -124,7 +124,7 @@ public:
 	[[nodiscard]] XmlElement getRootElement() const
 	{
 		if (!_doc) { throw std::runtime_error("Document not loaded"); }
-		xmlNodePtr root = xmlDocGetRootElement(_doc.get());
+		const xmlNode* root = xmlDocGetRootElement(_doc.get());
 		if (!root) { throw std::runtime_error("Root element not found"); }
 		return XmlElement(root);
 	}
