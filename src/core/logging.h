@@ -112,6 +112,20 @@ namespace logging
 	 */
 	extern Logger logger;
 
+	inline std::string logLevelToString(const Level level)
+	{
+		switch (level)
+		{
+		case Level::TRACE: return "TRACE";
+		case Level::DEBUG: return "DEBUG";
+		case Level::INFO: return "INFO";
+		case Level::WARNING: return "WARNING";
+		case Level::ERROR: return "ERROR";
+		case Level::FATAL: return "FATAL";
+		default: return "UNKNOWN";
+		}
+	}
+
 	/**
 	 * @brief Logs a formatted message with a specific log level and source location.
 	 * @tparam Args Variadic template for format arguments.

@@ -12,5 +12,5 @@ namespace core {
 
 namespace serial
 {
-	void parseSimulation(const std::string& filename, core::World* world);
+	void parseSimulation(const std::string& filename, core::World* world, bool validate);
 }

@@ -20,6 +20,7 @@ namespace core
 		std::string script_file; ///< Path to the script file.
 		logging::Level log_level = logging::Level::INFO; ///< Logging level.
 		unsigned num_threads = countProcessors(); ///< Number of threads to use, defaults to the number of processors.
+		bool validate = false; ///< Validate the input .fersxml file.
 	};
 
 	/**

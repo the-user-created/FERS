@@ -36,10 +36,13 @@ int main(const int argc, char* argv[])
 	}
 
 	// Structured bindings for the configuration options
-	const auto& [script_file, log_level, num_threads] = *config_opt;
+	const auto& [script_file, log_level, num_threads, validate] = *config_opt;
 
 	// Set the logging level
 	logging::logger.setLevel(log_level);
+
+	LOG(Level::DEBUG, "Running FERS with arguments: script_file={}, log_level={}, num_threads={}, validate={}",
+	    script_file, logging::logLevelToString(log_level), num_threads, validate);
 
 	try
 	{
@@ -52,7 +55,7 @@ int main(const int argc, char* argv[])
 		// Load the XML file and deserialize it into the world object
 		try
 		{
-			serial::parseSimulation(script_file, world.get());
+			serial::parseSimulation(script_file, world.get(), validate);
 		} catch (const std::exception&)
 		{
 			LOG(Level::FATAL, "Failed to load simulation file: {}", script_file);
