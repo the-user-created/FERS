@@ -9,7 +9,7 @@
 #include <vector>
 
 #include "config.h"
-#include "signal_processing/dsp_filters.h"
+#include "signal/dsp_filters.h"
 
 namespace noise
 {

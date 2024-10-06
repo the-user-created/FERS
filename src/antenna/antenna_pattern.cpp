@@ -10,7 +10,7 @@
 #include <utility>                    // for pair
 
 #include "core/logging.h"
-#include "math_utils/geometry_ops.h"  // for SVec3
+#include "math/geometry_ops.h"  // for SVec3
 
 constexpr RealType TWO_PI = 2.0 * PI; // Constant for 2*π
 

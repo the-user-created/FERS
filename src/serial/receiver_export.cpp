@@ -32,8 +32,8 @@
 #include "noise/noise_generators.h"         // for WgnGenerator
 #include "noise/noise_utils.h"              // for noiseTemperatureToPower
 #include "radar/radar_system.h"             // for Receiver
-#include "serialization/response.h"         // for Response
-#include "signal_processing/dsp_filters.h"  // for downsample
+#include "serial/response.h"         // for Response
+#include "signal/dsp_filters.h"  // for downsample
 #include "timing/timing.h"                  // for Timing
 
 namespace fs = std::filesystem;

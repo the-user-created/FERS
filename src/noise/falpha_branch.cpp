@@ -13,7 +13,7 @@
 
 #include "noise_utils.h"                    // for wgnSample
 #include "core/logging.h"                   // for log, LOG, Level
-#include "signal_processing/dsp_filters.h"  // for IirFilter, DecadeUpsampler
+#include "signal/dsp_filters.h"  // for IirFilter, DecadeUpsampler
 
 using logging::Level;
 using signal::IirFilter;

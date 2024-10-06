@@ -10,8 +10,8 @@
 
 #include "multipath_surface.h"        // for MultipathSurface
 #include "path_utils.h"               // for PathException, finalizeCubic
-#include "math_utils/coord.h"         // for RotationCoord, operator*, opera...
-#include "math_utils/geometry_ops.h"  // for SVec3, Vec3
+#include "math/coord.h"         // for RotationCoord, operator*, opera...
+#include "math/geometry_ops.h"  // for SVec3, Vec3
 
 namespace math
 {

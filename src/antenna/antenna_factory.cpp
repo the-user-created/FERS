@@ -17,8 +17,8 @@
 
 #include "core/logging.h"             // for log, LOG, Level
 #include "core/portable_utils.h"      // for besselJ1
-#include "math_utils/geometry_ops.h"  // for SVec3, Vec3, operator-, dotProduct
-#include "serialization/libxml_wrapper.h"
+#include "math/geometry_ops.h"  // for SVec3, Vec3, operator-, dotProduct
+#include "serial/libxml_wrapper.h"
 
 using logging::Level;
 using math::SVec3;

@@ -12,7 +12,7 @@
 #include "core/parameters.h"               // for renderThreads, setThreads
 #include "core/sim_threading.h"            // for runThreadedSim
 #include "core/world.h"                    // for World
-#include "serialization/xml_parser.h" // for loadXmlFile
+#include "serial/xml_parser.h" // for loadXmlFile
 
 using logging::Level;
 

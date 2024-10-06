@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "math_utils/polarization_matrix.h"
+#include "math/polarization_matrix.h"
 
 namespace signal
 {

@@ -5,7 +5,7 @@
 
 #include "multipath_surface.h"
 
-#include "math_utils/geometry_ops.h"  // for Vec3, Matrix3
+#include "math/geometry_ops.h"  // for Vec3, Matrix3
 
 namespace math
 {

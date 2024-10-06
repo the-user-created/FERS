@@ -11,9 +11,9 @@
 #include <utility>                     // for move
 
 #include "config.h"                    // for RealType
-#include "math_utils/geometry_ops.h"   // for Vec3, SVec3
-#include "math_utils/path.h"           // for Path
-#include "math_utils/rotation_path.h"  // for RotationPath
+#include "math/geometry_ops.h"   // for Vec3, SVec3
+#include "math/path.h"           // for Path
+#include "math/rotation_path.h"  // for RotationPath
 
 namespace math
 {

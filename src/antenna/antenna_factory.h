@@ -13,7 +13,7 @@
 #include "antenna_pattern.h"                  // for Pattern
 #include "config.h"                           // for RealType
 #include "interpolation/interpolation_set.h"  // for InterpSet
-#include "math_utils/geometry_ops.h"          // for operator-, SVec3
+#include "math/geometry_ops.h"          // for operator-, SVec3
 #include "python/python_extension.h"          // for PythonAntennaMod
 
 namespace antenna

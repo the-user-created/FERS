@@ -18,7 +18,7 @@
 #include "config.h"                          // for RealType, ComplexType
 #include "hdf5_handler.h"                    // for readPulseData
 #include "core/parameters.h"
-#include "signal_processing/radar_signal.h"  // for Signal, RadarSignal
+#include "signal/radar_signal.h"  // for Signal, RadarSignal
 
 using signal::Signal;
 using signal::RadarSignal;

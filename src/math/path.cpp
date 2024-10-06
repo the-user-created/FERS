@@ -12,7 +12,7 @@
 #include "multipath_surface.h"        // for MultipathSurface
 #include "path_utils.h"               // for PathException, finalizeCubic
 #include "core/logging.h"             // for log, LOG, Level
-#include "math_utils/geometry_ops.h"  // for Vec3
+#include "math/geometry_ops.h"  // for Vec3
 #include "python/python_extension.h"  // for PythonPath
 
 using logging::Level;

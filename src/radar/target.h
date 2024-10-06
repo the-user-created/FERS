@@ -13,7 +13,7 @@
 #include "config.h"                           // for RealType
 #include "object.h"                           // for Object
 #include "interpolation/interpolation_set.h"  // for InterpSet
-#include "math_utils/polarization_matrix.h"   // for PsMatrix
+#include "math/polarization_matrix.h"   // for PsMatrix
 #include "noise/noise_generators.h"           // for GammaGenerator
 
 namespace math
