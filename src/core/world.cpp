@@ -11,7 +11,7 @@
 
 #include "antenna/antenna_factory.h"         // for Antenna
 #include "radar/radar_system.h"              // for Receiver, Transmitter
-#include "signal_processing/radar_signal.h"  // for RadarSignal
+#include "signal/radar_signal.h"  // for RadarSignal
 #include "timing/prototype_timing.h"         // for PrototypeTiming
 
 using signal::RadarSignal;

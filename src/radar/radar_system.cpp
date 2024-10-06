@@ -16,9 +16,9 @@
 #include "antenna/antenna_factory.h"        // for Antenna
 #include "core/logging.h"                   // for log, LOG, Level
 #include "core/parameters.h"                // for endTime, oversampleRatio
-#include "math_utils/multipath_surface.h"   // for MultipathSurface
+#include "math/multipath_surface.h"   // for MultipathSurface
 #include "radar/platform.h"                 // for createMultipathDual, Plat...
-#include "serialization/receiver_export.h"  // for exportReceiverBinary, exp...
+#include "serial/receiver_export.h"  // for exportReceiverBinary, exp...
 
 using logging::Level;
 using math::MultipathSurface;

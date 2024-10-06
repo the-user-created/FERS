@@ -12,11 +12,11 @@
 #include <vector>                            // for vector
 
 #include "antenna/antenna_factory.h"         // for Antenna
-#include "math_utils/multipath_surface.h"    // for MultipathSurface
+#include "math/multipath_surface.h"    // for MultipathSurface
 #include "radar/platform.h"                  // for Platform
 #include "radar/radar_system.h"              // for Receiver, Transmitter
 #include "radar/target.h"                    // for Target
-#include "signal_processing/radar_signal.h"  // for RadarSignal
+#include "signal/radar_signal.h"  // for RadarSignal
 #include "timing/prototype_timing.h"         // for PrototypeTiming
 
 namespace core

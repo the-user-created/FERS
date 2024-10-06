@@ -12,8 +12,8 @@
 #include <stdexcept>                  // for runtime_error
 
 #include "core/logging.h"             // for log, LOG, Level
-#include "math_utils/geometry_ops.h"  // for SVec3, operator+
-#include "serialization/libxml_wrapper.h"
+#include "math/geometry_ops.h"  // for SVec3, operator+
+#include "serial/libxml_wrapper.h"
 
 using math::SVec3;
 

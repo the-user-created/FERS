@@ -13,7 +13,7 @@
 
 #include "config.h"                  // for RealType
 #include "object.h"                  // for Object
-#include "serialization/response.h"  // for Response
+#include "serial/response.h"  // for Response
 
 namespace antenna
 {

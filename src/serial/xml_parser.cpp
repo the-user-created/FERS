@@ -20,15 +20,15 @@
 #include "core/logging.h"                    // for log, LOG, Level
 #include "core/parameters.h"                 // for rate, adcBits, c, cwSamp...
 #include "core/world.h"                      // for World
-#include "math_utils/coord.h"                // for RotationCoord, Coord
-#include "math_utils/geometry_ops.h"         // for Vec3
-#include "math_utils/multipath_surface.h"    // for MultipathSurface
-#include "math_utils/path.h"                 // for Path
-#include "math_utils/rotation_path.h"        // for RotationPath
+#include "math/coord.h"                // for RotationCoord, Coord
+#include "math/geometry_ops.h"         // for Vec3
+#include "math/multipath_surface.h"    // for MultipathSurface
+#include "math/path.h"                 // for Path
+#include "math/rotation_path.h"        // for RotationPath
 #include "radar/platform.h"                  // for Platform
 #include "radar/radar_system.h"              // for Receiver, Transmitter
 #include "radar/target.h"                    // for RcsChiSquare, RcsConst
-#include "serialization/pulse_factory.h"     // for loadPulseFromFile
+#include "serial/pulse_factory.h"     // for loadPulseFromFile
 #include "timing/prototype_timing.h"         // for PrototypeTiming
 #include "timing/timing.h"                   // for Timing
 

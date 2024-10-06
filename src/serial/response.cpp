@@ -14,7 +14,7 @@
 
 #include "libxml_wrapper.h"
 #include "radar/radar_system.h"              // for Transmitter
-#include "signal_processing/radar_signal.h"  // for RadarSignal
+#include "signal/radar_signal.h"  // for RadarSignal
 
 using interp::InterpPoint;
 

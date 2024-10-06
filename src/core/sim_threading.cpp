@@ -26,11 +26,11 @@
 #include "world.h"                              // for World
 #include "core/logging.h"                       // for log, LOG, Level
 #include "interpolation/interpolation_point.h"  // for InterpPoint
-#include "math_utils/geometry_ops.h"            // for SVec3, operator-, Vec3
+#include "math/geometry_ops.h"            // for SVec3, operator-, Vec3
 #include "radar/radar_system.h"                 // for Receiver, Transmitter
 #include "radar/target.h"                       // for Target
-#include "serialization/response.h"             // for Response
-#include "signal_processing/radar_signal.h"     // for RadarSignal
+#include "serial/response.h"             // for Response
+#include "signal/radar_signal.h"     // for RadarSignal
 
 using radar::Transmitter;
 using radar::Receiver;
