@@ -5,13 +5,13 @@
 
 #pragma once
 
-#include <memory>          // for unique_ptr
-#include <span>            // for span
-#include <string>          // for string
-#include <tuple>           // for tuple
-#include <vector>          // for vector
+#include <memory>
+#include <span>
+#include <string>
+#include <tuple>
+#include <vector>
 
-#include "config.h"        // for RealType, ComplexType
+#include "config.h"
 
 namespace interp
 {

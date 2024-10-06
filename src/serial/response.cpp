@@ -7,14 +7,14 @@
 
 #include "response.h"
 
-#include <cmath>                             // for sqrt, cos, sin
-#include <iomanip>                           // for operator<<, setprecision
-#include <sstream>                           // for basic_ostringstream
-#include <stdexcept>                         // for logic_error
+#include <cmath>
+#include <iomanip>
+#include <sstream>
+#include <stdexcept>
 
 #include "libxml_wrapper.h"
-#include "radar/radar_system.h"              // for Transmitter
-#include "signal/radar_signal.h"  // for RadarSignal
+#include "radar/radar_system.h"
+#include "signal/radar_signal.h"
 
 using interp::InterpPoint;
 

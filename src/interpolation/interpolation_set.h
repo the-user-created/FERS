@@ -5,12 +5,12 @@
 
 #pragma once
 
-#include <map>       // for map
-#include <memory>    // for unique_ptr, make_unique
-#include <optional>  // for optional
-#include <vector>    // for vector
+#include <map>
+#include <memory>
+#include <optional>
+#include <vector>
 
-#include "config.h"  // for RealType
+#include "config.h"
 
 namespace interp
 {

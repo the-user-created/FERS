@@ -5,13 +5,13 @@
 
 #pragma once
 
-#include <memory>                    // for unique_ptr
-#include <string>                    // for string
-#include <utility>                   // for move
-#include <vector>                    // for vector
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
-#include "config.h"                  // for RealType
-#include "noise/noise_generators.h"  // for ClockModelGenerator
+#include "config.h"
+#include "noise/noise_generators.h"
 
 namespace timing
 {

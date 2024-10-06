@@ -5,7 +5,7 @@
 
 #include "polarization_matrix.h"
 
-#include <complex>  // for complex
+#include <complex>
 
 namespace math
 {

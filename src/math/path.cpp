@@ -5,15 +5,15 @@
 
 #include "path.h"
 
-#include <algorithm>                  // for __lower_bound_fn, lower_bound
-#include <stdexcept>                  // for logic_error, runtime_error
+#include <algorithm>
+#include <stdexcept>
 
-#include "coord.h"                    // for Coord, operator*, operator+
-#include "multipath_surface.h"        // for MultipathSurface
-#include "path_utils.h"               // for PathException, finalizeCubic
-#include "core/logging.h"             // for log, LOG, Level
-#include "math/geometry_ops.h"  // for Vec3
-#include "python/python_extension.h"  // for PythonPath
+#include "coord.h"
+#include "multipath_surface.h"
+#include "path_utils.h"
+#include "core/logging.h"
+#include "math/geometry_ops.h"
+#include "python/python_extension.h"
 
 using logging::Level;
 

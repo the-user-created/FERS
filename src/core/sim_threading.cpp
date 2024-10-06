@@ -11,26 +11,26 @@
 
 #include "sim_threading.h"
 
-#include <algorithm>                            // for __for_each_fn, for_each
-#include <atomic>                               // for atomic, __atomic_base
-#include <cmath>                                // for ceil, pow, sqrt, fmod
-#include <functional>                           // for function
-#include <memory>                               // for unique_ptr, make_unique
-#include <stdexcept>                            // for runtime_error
-#include <thread>                               // for jthread, yield
-#include <utility>                              // for move
-#include <vector>                               // for vector
-#include <bits/chrono.h>                        // for duration, operator+
+#include <algorithm>
+#include <atomic>
+#include <cmath>
+#include <functional>
+#include <memory>
+#include <stdexcept>
+#include <thread>
+#include <utility>
+#include <vector>
+#include <bits/chrono.h>
 
-#include "parameters.h"                         // for c, cwSampleRate
-#include "world.h"                              // for World
-#include "core/logging.h"                       // for log, LOG, Level
-#include "interpolation/interpolation_point.h"  // for InterpPoint
-#include "math/geometry_ops.h"            // for SVec3, operator-, Vec3
-#include "radar/radar_system.h"                 // for Receiver, Transmitter
-#include "radar/target.h"                       // for Target
-#include "serial/response.h"             // for Response
-#include "signal/radar_signal.h"     // for RadarSignal
+#include "parameters.h"
+#include "world.h"
+#include "core/logging.h"
+#include "interpolation/interpolation_point.h"
+#include "math/geometry_ops.h"
+#include "radar/radar_system.h"
+#include "radar/target.h"
+#include "serial/response.h"
+#include "signal/radar_signal.h"
 
 using radar::Transmitter;
 using radar::Receiver;

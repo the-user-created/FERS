@@ -5,12 +5,12 @@
 
 #pragma once
 
-#include <memory>                     // for unique_ptr
-#include <random>                     // for normal_distribution, default_ra...
-#include <vector>                     // for vector
+#include <memory>
+#include <random>
+#include <vector>
 
-#include "config.h"                   // for RealType
-#include "falpha_branch.h"            // for FAlphaBranch
+#include "config.h"
+#include "falpha_branch.h"
 
 namespace noise
 {

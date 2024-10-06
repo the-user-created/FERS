@@ -6,18 +6,18 @@
 
 #pragma once
 
-#include <memory>                            // for unique_ptr
-#include <string>                            // for hash, string
-#include <unordered_map>                     // for unordered_map
-#include <vector>                            // for vector
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
-#include "antenna/antenna_factory.h"         // for Antenna
-#include "math/multipath_surface.h"    // for MultipathSurface
-#include "radar/platform.h"                  // for Platform
-#include "radar/radar_system.h"              // for Receiver, Transmitter
-#include "radar/target.h"                    // for Target
-#include "signal/radar_signal.h"  // for RadarSignal
-#include "timing/prototype_timing.h"         // for PrototypeTiming
+#include "antenna/antenna_factory.h"
+#include "math/multipath_surface.h"
+#include "radar/platform.h"
+#include "radar/radar_system.h"
+#include "radar/target.h"
+#include "signal/radar_signal.h"
+#include "timing/prototype_timing.h"
 
 namespace core
 {

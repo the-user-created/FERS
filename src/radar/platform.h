@@ -5,15 +5,15 @@
 
 #pragma once
 
-#include <memory>                      // for unique_ptr, make_unique
-#include <optional>                    // for optional, nullopt, nullopt_t
-#include <string>                      // for string
-#include <utility>                     // for move
+#include <memory>
+#include <optional>
+#include <string>
+#include <utility>
 
-#include "config.h"                    // for RealType
-#include "math/geometry_ops.h"   // for Vec3, SVec3
-#include "math/path.h"           // for Path
-#include "math/rotation_path.h"  // for RotationPath
+#include "config.h"
+#include "math/geometry_ops.h"
+#include "math/path.h"
+#include "math/rotation_path.h"
 
 namespace math
 {

@@ -5,20 +5,20 @@
 
 #include "hdf5_handler.h"
 
-#include <algorithm>                                 // for __transform_fn
-#include <complex>                                   // for complex
-#include <filesystem>                                // for exists, path
-#include <format>                                    // for format
-#include <stdexcept>                                 // for runtime_error
-#include <highfive/H5File.hpp>                       // for File
+#include <algorithm>
+#include <complex>
+#include <filesystem>
+#include <format>
+#include <stdexcept>
+#include <highfive/H5File.hpp>
 
-#include "core/logging.h"                            // for log, LOG, Level
-#include "highfive/H5DataSet.hpp"                    // for DataSet
-#include "highfive/H5DataSpace.hpp"                  // for DataSpace
-#include "highfive/H5Exception.hpp"                  // for Exception
-#include "highfive/H5Group.hpp"                      // for Group
-#include "highfive/bits/H5Annotate_traits_misc.hpp"  // for AnnotateTraits::...
-#include "highfive/bits/H5Node_traits_misc.hpp"      // for NodeTraits::getD...
+#include "core/logging.h"
+#include "highfive/H5DataSet.hpp"
+#include "highfive/H5DataSpace.hpp"
+#include "highfive/H5Exception.hpp"
+#include "highfive/H5Group.hpp"
+#include "highfive/bits/H5Annotate_traits_misc.hpp"
+#include "highfive/bits/H5Node_traits_misc.hpp"
 
 using logging::Level;
 

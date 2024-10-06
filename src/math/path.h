@@ -5,13 +5,13 @@
 
 #pragma once
 
-#include <memory>                     // for unique_ptr
-#include <string_view>                // for string_view
-#include <vector>                     // for vector
+#include <memory>
+#include <string_view>
+#include <vector>
 
-#include "config.h"                   // for RealType
-#include "coord.h"                    // for Coord
-#include "python/python_extension.h"  // for PythonPath
+#include "config.h"
+#include "coord.h"
+#include "python/python_extension.h"
 
 namespace math
 {

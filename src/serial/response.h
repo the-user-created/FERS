@@ -5,12 +5,12 @@
 
 #pragma once
 
-#include <fstream>                              // for ofstream
-#include <string>                               // for string
-#include <vector>                               // for vector
+#include <fstream>
+#include <string>
+#include <vector>
 
-#include "config.h"                             // for RealType, ComplexType
-#include "interpolation/interpolation_point.h"  // for InterpPoint
+#include "config.h"
+#include "interpolation/interpolation_point.h"
 
 class XmlElement;
 

@@ -4,6 +4,12 @@
 
 #include "libxml_wrapper.h"
 
+#include "libxml/encoding.h"
+#include "libxml/parser.h"
+#include "libxml/valid.h"
+#include "libxml/xmlIO.h"
+#include "libxml/xmlschemas.h"
+
 bool XmlDocument::validateWithDtd(const std::span<const unsigned char> dtdData) const
 {
 	// Parse the DTD from memory using span

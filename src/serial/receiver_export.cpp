@@ -6,35 +6,37 @@
 
 #include "receiver_export.h"
 
-#include <algorithm>                        // for clamp, max, __fill_fn
-#include <cmath>                            // for isnan, floor, fabs, round
-#include <complex>                          // for complex, polar
-#include <exception>                        // for exception
-#include <filesystem>                       // for path
-#include <format>                           // for format
-#include <fstream>                          // for basic_ofstream, basic_ios
-#include <map>                              // for map, _Rb_tree_iterator
-#include <numbers>                          // for pi
-#include <optional>                         // for optional, nullopt, nullopt_t
-#include <ranges>                           // for _Zip, views, zip, zip_view
-#include <stdexcept>                        // for runtime_error
-#include <tuple>                            // for tuple
-#include <utility>                          // for move, pair
-#include <vector>                           // for vector
-#include <highfive/H5File.hpp>              // for File
+#include <algorithm>
+#include <cmath>
+#include <complex>
+#include <exception>
+#include <filesystem>
+#include <format>
+#include <fstream>
+#include <map>
+#include <numbers>
+#include <optional>
+#include <ranges>
+#include <stdexcept>
+#include <tuple>
+#include <utility>
+#include <vector>
+#include <highfive/H5File.hpp>
+#include <libxml/parser.h>
 
-#include "config.h"                         // for RealType, ComplexType
-#include "hdf5_handler.h"                   // for addChunkToFile
-#include "libxml_wrapper.h" 			    // for XmlDocument, XmlElement, ...
-#include "response_renderer.h"              // for ThreadedResponseRenderer
-#include "core/parameters.h"                // for oversampleRatio, rate
-#include "highfive/H5Exception.hpp"         // for Exception
-#include "noise/noise_generators.h"         // for WgnGenerator
-#include "noise/noise_utils.h"              // for noiseTemperatureToPower
-#include "radar/radar_system.h"             // for Receiver
-#include "serial/response.h"         // for Response
-#include "signal/dsp_filters.h"  // for downsample
-#include "timing/timing.h"                  // for Timing
+#include "config.h"
+#include "hdf5_handler.h"
+#include "libxml_wrapper.h"
+#include "response_renderer.h"
+#include "core/parameters.h"
+#include "highfive/H5Exception.hpp"
+#include "libxml/xmlstring.h"
+#include "noise/noise_generators.h"
+#include "noise/noise_utils.h"
+#include "radar/radar_system.h"
+#include "serial/response.h"
+#include "signal/dsp_filters.h"
+#include "timing/timing.h"
 
 namespace fs = std::filesystem;
 

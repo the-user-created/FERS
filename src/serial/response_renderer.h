@@ -5,14 +5,14 @@
 
 #pragma once
 
-#include <memory>    // for unique_ptr
-#include <mutex>     // for mutex
-#include <optional>  // for optional
-#include <queue>     // for queue
-#include <span>      // for span
-#include <vector>    // for vector
+#include <memory>
+#include <mutex>
+#include <optional>
+#include <queue>
+#include <span>
+#include <vector>
 
-#include "config.h"  // for RealType, ComplexType
+#include "config.h"
 
 namespace radar
 {
