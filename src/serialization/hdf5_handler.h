@@ -3,8 +3,7 @@
 // Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 // 03 November 2006
 
-#ifndef HDF5_EXPORT_H
-#define HDF5_EXPORT_H
+#pragma once
 
 #include <string>
 #include <vector>
@@ -25,5 +24,3 @@ namespace serial
 
 	std::vector<std::vector<RealType>> readPattern(const std::string& name, const std::string& datasetName);
 }
-
-#endif

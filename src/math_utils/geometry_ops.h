@@ -3,8 +3,7 @@
 // Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 // 26 May 2006
 
-#ifndef GEOMETRY_OPS_H
-#define GEOMETRY_OPS_H
+#pragma once
 
 #include <array>
 #include <cmath>
@@ -98,5 +97,3 @@ namespace math
 
 	SVec3 operator-(const SVec3& a, const SVec3& b) noexcept;
 }
-
-#endif

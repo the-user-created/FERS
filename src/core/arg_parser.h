@@ -2,8 +2,7 @@
 // Created by David Young on 9/20/24.
 //
 
-#ifndef ARG_PARSER_H
-#define ARG_PARSER_H
+#pragma once
 
 #include <optional>
 #include <string>
@@ -44,5 +43,3 @@ namespace core
 	 */
 	std::optional<Config> parseArguments(int argc, char* argv[]);
 }
-
-#endif //ARG_PARSER_H

@@ -3,8 +3,7 @@
 // Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 // Started: 21 April 2006
 
-#ifndef PLATFORM_H
-#define PLATFORM_H
+#pragma once
 
 #include <memory>                      // for unique_ptr, make_unique
 #include <optional>                    // for optional, nullopt, nullopt_t
@@ -58,5 +57,3 @@ namespace radar
 
 	Platform* createMultipathDual(Platform* plat, const math::MultipathSurface* surf);
 }
-
-#endif

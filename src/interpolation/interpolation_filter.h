@@ -3,8 +3,7 @@
 // Original code by Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //
 
-#ifndef INTERPOLATION_FILTER_H
-#define INTERPOLATION_FILTER_H
+#pragma once
 
 #include <cmath>
 #include <span>
@@ -44,5 +43,3 @@ namespace interp
 		std::vector<RealType> _filter_table;
 	};
 }
-
-#endif //INTERPOLATION_FILTER_H

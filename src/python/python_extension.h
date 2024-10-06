@@ -3,8 +3,7 @@
 // Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 // 7 March 2007
 
-#ifndef PYTHON_EXTENSION_H
-#define PYTHON_EXTENSION_H
+#pragma once
 
 #include <memory>        // for unique_ptr
 #include <pytypedefs.h>  // for PyObject
@@ -67,5 +66,3 @@ namespace python
 		[[nodiscard]] RealType getGain(const math::SVec3& direction) const;
 	};
 }
-
-#endif

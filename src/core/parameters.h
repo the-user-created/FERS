@@ -5,8 +5,7 @@
 // Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 // 11 June 2006
 
-#ifndef PARAMETERS_H
-#define PARAMETERS_H
+#pragma once
 
 #include <chrono>
 #include <optional>
@@ -278,5 +277,3 @@ namespace params
 		LOG(logging::Level::INFO, "Number of rendering threads set to: {}", threads);
 	}
 }
-
-#endif

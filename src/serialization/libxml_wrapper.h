@@ -2,8 +2,7 @@
 // Created by David Young on 9/29/24.
 //
 
-#ifndef LIBXML_WRAPPER_H
-#define LIBXML_WRAPPER_H
+#pragma once
 
 #include <iostream>
 #include <memory>
@@ -137,5 +136,3 @@ public:
 void mergeXmlDocuments(const XmlDocument& mainDoc, const XmlDocument& includedDoc);
 
 void removeIncludeElements(const XmlDocument& doc);
-
-#endif //LIBXML_WRAPPER_H

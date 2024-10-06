@@ -3,8 +3,7 @@
 // Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 // 11 June 2007
 
-#ifndef INTERPOLATION_SET_H
-#define INTERPOLATION_SET_H
+#pragma once
 
 #include <map>       // for map
 #include <memory>    // for unique_ptr, make_unique
@@ -71,5 +70,3 @@ namespace interp
 		std::unique_ptr<InterpSetData> _data;
 	};
 }
-
-#endif

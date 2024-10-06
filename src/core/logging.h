@@ -2,8 +2,7 @@
 // Created by David Young on 9/20/24.
 //
 
-#ifndef LOGGING_H
-#define LOGGING_H
+#pragma once
 
 #define LOG(level, ...) log(level, std::source_location::current(), __VA_ARGS__)
 
@@ -127,5 +126,3 @@ namespace logging
 		logger.log(level, location, formatStr, std::forward<Args>(args)...);
 	}
 }
-
-#endif //LOGGING_H

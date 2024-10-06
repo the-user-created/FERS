@@ -3,8 +3,7 @@
 // Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 // 3 August 2006
 
-#ifndef RESPONSE_H
-#define RESPONSE_H
+#pragma once
 
 #include <fstream>                              // for ofstream
 #include <string>                               // for string
@@ -66,5 +65,3 @@ namespace serial
 		void renderResponseCsv(std::ofstream& of, const interp::InterpPoint& point) const;
 	};
 }
-
-#endif

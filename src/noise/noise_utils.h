@@ -2,8 +2,7 @@
 // Created by David Young on 9/17/24.
 //
 
-#ifndef NOISE_UTILS_H
-#define NOISE_UTILS_H
+#pragma once
 
 #include "config.h"
 
@@ -16,5 +15,3 @@ namespace noise
 
 	RealType noiseTemperatureToPower(RealType temperature, RealType bandwidth);
 }
-
-#endif //NOISE_UTILS_H

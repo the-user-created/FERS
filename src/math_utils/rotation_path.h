@@ -3,8 +3,7 @@
 // Original code by Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //
 
-#ifndef ROTATION_PATH_H
-#define ROTATION_PATH_H
+#pragma once
 
 #include <memory>
 #include <vector>
@@ -53,5 +52,3 @@ namespace math
 
 	std::unique_ptr<RotationPath> reflectPath(const RotationPath* path, const MultipathSurface* surf);
 }
-
-#endif //ROTATION_PATH_H

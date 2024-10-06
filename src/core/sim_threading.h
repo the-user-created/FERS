@@ -3,8 +3,7 @@
 // Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 // 19 July 2006
 
-#ifndef SIM_THREADING_H
-#define SIM_THREADING_H
+#pragma once
 
 #include <exception>
 
@@ -58,5 +57,3 @@ namespace core
 
 	void runThreadedSim(unsigned threadLimit, const World* world);
 }
-
-#endif

@@ -3,8 +3,7 @@
 // Original code by Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //
 
-#ifndef JONES_VECTOR_H
-#define JONES_VECTOR_H
+#pragma once
 
 #include "math_utils/polarization_matrix.h"
 
@@ -38,5 +37,3 @@ namespace signal
 		return a.getV() * b.getV() + a.getH() * b.getH();
 	}
 }
-
-#endif //JONES_VECTOR_H

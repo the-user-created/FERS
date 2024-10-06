@@ -3,8 +3,7 @@
 // Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 // 8 June 2006
 
-#ifndef RADAR_SIGNAL_H
-#define RADAR_SIGNAL_H
+#pragma once
 
 #include <memory>          // for unique_ptr
 #include <span>            // for span
@@ -96,5 +95,3 @@ namespace signal
 		JonesVector _polar;
 	};
 }
-
-#endif

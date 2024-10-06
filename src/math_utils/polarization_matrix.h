@@ -3,8 +3,7 @@
 // Original code by Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //
 
-#ifndef POLARIZATION_MATRIX_H
-#define POLARIZATION_MATRIX_H
+#pragma once
 
 #include <array>
 
@@ -28,5 +27,3 @@ namespace math
 		std::array<ComplexType, 4> s{};
 	};
 }
-
-#endif //POLARIZATION_MATRIX_H

@@ -3,8 +3,7 @@
 // Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 // 30 July 2007
 
-#ifndef DSP_FILTERS_H
-#define DSP_FILTERS_H
+#pragma once
 
 #include <memory>
 #include <span>
@@ -156,5 +155,3 @@ namespace signal
 		std::unique_ptr<IirFilter> _filter;
 	};
 }
-
-#endif

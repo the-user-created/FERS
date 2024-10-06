@@ -3,8 +3,7 @@
 // Original code by Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //
 
-#ifndef PATH_UTILS_H
-#define PATH_UTILS_H
+#pragma once
 
 #include <algorithm>
 
@@ -124,5 +123,3 @@ void finalizeCubic(std::vector<T>& coords, std::vector<T>& dd)
 
 	for (int i = size - 2; i >= 0; --i) { dd[i] = dd[i] * dd[i + 1] + tmp[i]; }
 }
-
-#endif //PATH_UTILS_H
