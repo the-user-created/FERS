@@ -36,13 +36,19 @@ int main(const int argc, char* argv[])
 	}
 
 	// Structured bindings for the configuration options
-	const auto& [script_file, log_level, num_threads, validate] = *config_opt;
+	const auto& [script_file, log_level, num_threads, validate, log_file] = *config_opt;
 
 	// Set the logging level
 	logging::logger.setLevel(log_level);
 
-	LOG(Level::DEBUG, "Running FERS with arguments: script_file={}, log_level={}, num_threads={}, validate={}",
-	    script_file, logging::logLevelToString(log_level), num_threads, validate);
+	// Check if the log file was specified and set logging to file
+	if (log_file)
+	{
+		logging::logger.logToFile(*log_file);
+	}
+
+	LOG(Level::DEBUG, "Running FERS with arguments: script_file={}, log_level={}, num_threads={}, validate={}, log_file={}",
+	    script_file, logging::logLevelToString(log_level), num_threads, validate, log_file.value_or("None"));
 
 	try
 	{
@@ -53,10 +59,8 @@ int main(const int argc, char* argv[])
 		const auto world = std::make_unique<core::World>();
 
 		// Load the XML file and deserialize it into the world object
-		try
-		{
-			serial::parseSimulation(script_file, world.get(), validate);
-		} catch (const std::exception&)
+		try { serial::parseSimulation(script_file, world.get(), validate); }
+		catch (const std::exception&)
 		{
 			LOG(Level::FATAL, "Failed to load simulation file: {}", script_file);
 			return 1;

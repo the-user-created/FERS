@@ -4,16 +4,31 @@
 
 #include "arg_parser.h"
 
+#include <algorithm>
 #include <exception>
+#include <filesystem>
 #include <iostream>
 #include <stdexcept>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
 #include "core/logging.h"
 #include "core/portable_utils.h"
 
 using logging::Level;
+
+namespace
+{
+	// Function to check if the file has a valid log extension
+	bool isValidLogFileExtension(const std::string& filePath)
+	{
+		static const std::vector<std::string> VALID_EXTENSIONS = {".log", ".txt"};
+		std::string extension = std::filesystem::path(filePath).extension().string();
+		std::ranges::transform(extension, extension.begin(), ::tolower);
+		return std::ranges::find(VALID_EXTENSIONS, extension) != VALID_EXTENSIONS.end();
+	}
+}
 
 namespace core
 {
@@ -33,15 +48,16 @@ Usage: )" << programName << R"( <scriptfile> [options]
 Options:
   --help, -h              Show this help message and exit
   --version, -v           Show version information and exit
+  --validate, -val		  Validate the input .fersxml file and run the simulation.
   --log-level=<level>     Set the logging level (TRACE, DEBUG, INFO, WARNING, ERROR, FATAL)
+  --log-file=<file>       Log output to the specified .log or .txt file as well as the console.
   -n=<threads>            Number of threads to use
-  -val, --validate		  Validate the input .fersxml file and exit
 
 Arguments:
   <scriptfile>            Path to the simulation script file (XML)
 
 Example:
-  )" << programName << R"( simulation.xml --log-level=DEBUG -n=4
+  )" << programName << R"( simulation.fersxml --log-level=DEBUG --log-file=output.log -n=4
 
 This program runs radar simulations based on an XML script file.
 Make sure the script file follows the correct format to avoid errors.
@@ -122,6 +138,19 @@ Make sure the script file follows the correct format to avoid errors.
 						return std::nullopt;
 					}
 				}
+				else if (arg.rfind("--log-file=", 0) == 0)
+				{
+					// Parse log file path
+					if (std::string log_file_path = arg.substr(11); isValidLogFileExtension(log_file_path))
+					{
+						config.log_file = log_file_path;
+					}
+					else
+					{
+						LOG(Level::ERROR, "Invalid log file extension. Log file must have .log or .txt extension.");
+						return std::nullopt;
+					}
+				}
 				else if (arg.rfind("-n=", 0) == 0)
 				{
 					// starts with -n=
@@ -153,10 +182,7 @@ Make sure the script file follows the correct format to avoid errors.
 					config.script_file = arg;
 					script_file_set = true;
 				}
-				else if (arg == "--validate" || arg == "-val")
-				{
-					config.validate = true;
-				}
+				else if (arg == "--validate" || arg == "-val") { config.validate = true; }
 				else
 				{
 					std::cerr << "Error: Unrecognized option or argument '" << arg << "'\n";
