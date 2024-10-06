@@ -63,9 +63,8 @@ namespace math
 	}
 
 	// Constructor with a rectangular vector
-	SVec3::SVec3(const Vec3& vec) noexcept
+	SVec3::SVec3(const Vec3& vec) noexcept : length(vec.length())
 	{
-		length = vec.length();
 		if (length != 0)
 		{
 			elevation = std::asin(vec.z / length);

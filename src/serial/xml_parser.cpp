@@ -604,7 +604,7 @@ namespace
 	}
 
 	// Function to collect all includes elements from the main document and included documents
-	void collectIncludeElements(const XmlDocument& doc, const fs::path& currentDir, std::vector<fs::path>& includePaths)
+	void collectIncludeElements(const XmlDocument& doc, const fs::path& currentDir, std::vector<fs::path>& includePaths) // NOLINT(misc-no-recursion)
 	{
 		unsigned index = 0;
 		while (true)

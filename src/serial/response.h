@@ -44,7 +44,7 @@ namespace serial
 
 		void addInterpPoint(const interp::InterpPoint& point);
 
-		void renderXml(XmlElement& root);
+		void renderXml(const XmlElement& root);
 
 		void renderCsv(std::ofstream& of) const;
 
@@ -59,7 +59,7 @@ namespace serial
 		const signal::RadarSignal* _wave;
 		std::vector<interp::InterpPoint> _points;
 
-		void renderResponseXml(XmlElement& root, const interp::InterpPoint& point) const;
+		void renderResponseXml(const XmlElement& root, const interp::InterpPoint& point) const;
 
 		void renderResponseCsv(std::ofstream& of, const interp::InterpPoint& point) const;
 	};

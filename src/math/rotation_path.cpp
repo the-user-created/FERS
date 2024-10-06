@@ -35,7 +35,7 @@ namespace math
 			break;
 		case InterpType::INTERP_CUBIC: getPositionCubic(t, coord, _coords, _dd);
 			break;
-		case InterpType::INTERP_CONSTANT: coord.t = t;
+		case InterpType::INTERP_CONSTANT:
 			coord.azimuth = std::fmod(t * _rate.azimuth + _start.azimuth, 2 * PI);
 			coord.elevation = std::fmod(t * _rate.elevation + _start.elevation, 2 * PI);
 			break;

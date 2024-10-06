@@ -241,6 +241,11 @@ namespace
 
 		try
 		{
+			if (point_count == 0)
+			{
+				LOG(Level::FATAL, "No time points are available for execution!");
+				throw std::runtime_error("No time points are available for execution!");
+			}
 			// Loop over all time points, including the final one
 			for (int i = 0; i <= point_count; ++i)
 			{

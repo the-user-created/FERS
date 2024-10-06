@@ -69,7 +69,7 @@ namespace interp
 	{
 		if (a == 0) { throw std::invalid_argument("Division by zero is not allowed."); }
 
-		for (auto& value : _data | std::views::values) { value /= static_cast<double>(a); }
+		std::ranges::for_each(_data | std::views::values, [a](auto& value) { value /= static_cast<double>(a); });
 	}
 
 	// Explicit instantiations for double and float (or any other type you want)

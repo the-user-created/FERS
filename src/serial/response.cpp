@@ -20,16 +20,16 @@ using interp::InterpPoint;
 
 namespace
 {
-	void attachTextNode(XmlElement& root, const std::string& name, const std::string& text)
+	void attachTextNode(const XmlElement& root, const std::string& name, const std::string& text)
 	{
 		// Create a child element with the given name
-		XmlElement element = root.addChild(name);
+		const XmlElement element = root.addChild(name);
 
 		// Set the text content of the element
 		element.setText(text);
 	}
 
-	void attachRsFloatNode(XmlElement& root, const std::string& name, const RealType data, const bool scientific = true)
+	void attachRsFloatNode(const XmlElement& root, const std::string& name, const RealType data, const bool scientific = true)
 	{
 		std::ostringstream oss;
 		if (scientific) {
@@ -53,10 +53,10 @@ namespace serial
 
 	std::string Response::getTransmitterName() const { return _transmitter->getName(); }
 
-	void Response::renderResponseXml(XmlElement& root, const InterpPoint& point) const
+	void Response::renderResponseXml(const XmlElement& root, const InterpPoint& point) const
 	{
 		// Create an "InterpolationPoint" element and link it to the root
-		XmlElement element = root.addChild("InterpolationPoint");
+		const XmlElement element = root.addChild("InterpolationPoint");
 
 		// Attach the various float nodes, using point data
 		attachRsFloatNode(element, "time", point.time, false);
@@ -72,10 +72,10 @@ namespace serial
 		attachRsFloatNode(element, "phasedeg", point.phase / PI * 180);
 	}
 
-	void Response::renderXml(XmlElement& root)
+	void Response::renderXml(const XmlElement& root)
 	{
 		// Create a "Response" element and link it to the root
-		XmlElement element = root.addChild("Response");
+		const XmlElement element = root.addChild("Response");
 
 		// Set the "transmitter" attribute
 		element.setAttribute("transmitter", getTransmitterName());

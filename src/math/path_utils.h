@@ -97,7 +97,7 @@ void getPositionCubic(RealType t, T& coord, const std::vector<T>& coords, const 
 // The method used (but not the code) is from
 // Numerical Recipes in C, Second Edition by Press, et al. pages 114-116
 template <Interpolatable T>
-void finalizeCubic(std::vector<T>& coords, std::vector<T>& dd)
+void finalizeCubic(const std::vector<T>& coords, std::vector<T>& dd)
 {
 	const int size = static_cast<int>(coords.size());
 	if (size < 2) { throw math::PathException("Not enough points for cubic interpolation"); }
