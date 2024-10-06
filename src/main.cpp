@@ -7,12 +7,11 @@
 #include <memory>                     // for make_unique
 #include <optional>                   // for optional
 
-#include "arg_parser.h"               // for Config, parseArguments
-#include "parameters.h"               // for renderThreads, setThreads
-#include "sim_threading.h"            // for runThreadedSim
-#include "world.h"                    // for World
+#include "core/arg_parser.h"               // for Config, parseArguments
 #include "core/logging.h"             // for log, LOG, Level, Logger, logger
-//#include "serialization/xmlimport.h"  // for loadXmlFile
+#include "core/parameters.h"               // for renderThreads, setThreads
+#include "core/sim_threading.h"            // for runThreadedSim
+#include "core/world.h"                    // for World
 #include "serialization/xml_parser.h" // for loadXmlFile
 
 using logging::Level;

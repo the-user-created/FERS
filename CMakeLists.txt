@@ -13,8 +13,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(SCHEMA_DIR ${CMAKE_SOURCE_DIR}/xml_schema)
 set(SCHEMA_HEADERS_DIR ${CMAKE_BINARY_DIR}/generated)
 
-# Add the directory where config.h is located to the include path
-include_directories(${CMAKE_SOURCE_DIR})
 # Ensure that the generated headers are included in the include path
 include_directories(${SCHEMA_HEADERS_DIR})
 
