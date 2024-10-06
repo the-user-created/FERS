@@ -87,14 +87,14 @@ namespace logging
 	}
 
 	/**
-	 * @brief Sets the log file path to log messages to a file.
+	 * @brief Sets the log file path to log messages to a file. This will overwrite the existing log file.
 	 * @param filePath The path to the log file.
 	 */
 	void Logger::logToFile(const std::string& filePath)
 	{
 		std::scoped_lock lock(_log_mutex);
 		if (_log_file.is_open()) { _log_file.close(); }
-		_log_file.open(filePath, std::ios::out | std::ios::app);
+		_log_file.open(filePath, std::ios::out | std::ios::trunc);
 		if (!_log_file) { throw std::runtime_error("Unable to open log file: " + filePath); }
 	}
 

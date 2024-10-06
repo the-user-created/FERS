@@ -21,6 +21,7 @@ namespace core
 		logging::Level log_level = logging::Level::INFO; ///< Logging level.
 		unsigned num_threads = countProcessors(); ///< Number of threads to use, defaults to the number of processors.
 		bool validate = false; ///< Validate the input .fersxml file.
+		std::optional<std::string> log_file; ///< Optional log file path for logging output.
 	};
 
 	/**
