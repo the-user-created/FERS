@@ -36,7 +36,10 @@ namespace timing
 		[[nodiscard]] RealType getFrequency() const noexcept { return _frequency; }
 		[[nodiscard]] bool isEnabled() const noexcept { return _enabled && _model && _model->enabled(); }
 
-		[[nodiscard]] RealType getPulseTimeError() const noexcept;
+		// Note: This function is not used in the codebase
+		/*[[nodiscard]] RealType getPulseTimeError() const noexcept {
+			return _enabled && _model ? _model->getSample() : 0.0f;
+		}*/
 		void skipSamples(long long samples) const noexcept;
 
 		void initializeModel(const PrototypeTiming* timing);

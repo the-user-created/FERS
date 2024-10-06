@@ -189,8 +189,7 @@ namespace radar
 	// =================================================================================================================
 
 	template <typename T>
-	T* createMultipathDualBase(T* obj, const MultipathSurface* surf, const std::string& dualNameSuffix)
-	// NOLINT(misc-no-recursion)
+	T* createMultipathDualBase(T* obj, const MultipathSurface* surf, const std::string& dualNameSuffix) // NOLINT(misc-no-recursion)
 	{
 		if (obj->getDual())
 		{

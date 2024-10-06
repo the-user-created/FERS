@@ -49,15 +49,6 @@ namespace python
 		[[nodiscard]] math::Vec3 getPosition(RealType t) const;
 	};
 
-	// NOTE: This class is not used in the current version of FERS
-	class PythonNoise final : public PythonExtension
-	{
-	public:
-		using PythonExtension::PythonExtension;
-
-		[[nodiscard]] RealType getSample() const;
-	};
-
 	class PythonAntennaMod final : public PythonExtension
 	{
 	public:

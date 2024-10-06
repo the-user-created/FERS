@@ -78,7 +78,7 @@ namespace antenna
 	//
 	// =================================================================================================================
 
-	RealType Gaussian::getGain(const SVec3& angle, const SVec3& refangle, RealType wavelength) const
+	RealType Gaussian::getGain(const SVec3& angle, const SVec3& refangle, RealType /*wavelength*/) const
 	{
 		const SVec3 a = angle - refangle;
 		return std::exp(-a.azimuth * a.azimuth * _azscale) * std::exp(-a.elevation * a.elevation * _elscale);
@@ -90,7 +90,7 @@ namespace antenna
 	//
 	// =================================================================================================================
 
-	RealType Sinc::getGain(const SVec3& angle, const SVec3& refangle, RealType wavelength) const
+	RealType Sinc::getGain(const SVec3& angle, const SVec3& refangle, RealType /*wavelength*/) const
 	{
 		const RealType theta = getAngle(angle, refangle);
 		const ComplexType complex_sinc(sinc(_beta * theta), 0.0);
@@ -131,7 +131,7 @@ namespace antenna
 	//
 	// =================================================================================================================
 
-	RealType XmlAntenna::getGain(const SVec3& angle, const SVec3& refangle, RealType wavelength) const
+	RealType XmlAntenna::getGain(const SVec3& angle, const SVec3& refangle, RealType /*wavelength*/) const
 	{
 		const SVec3 delta_angle = angle - refangle;
 

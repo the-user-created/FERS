@@ -127,7 +127,7 @@ Make sure the script file follows the correct format to avoid errors.
 					try
 					{
 						config.num_threads = std::stoi(arg.substr(3));
-						if (config.num_threads <= 0)
+						if (config.num_threads == 0)
 						{
 							throw std::invalid_argument("Number of threads must be greater than 0");
 						}

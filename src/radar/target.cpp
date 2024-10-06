@@ -44,7 +44,7 @@ namespace radar
 {
 	class Platform;
 
-	RealType IsoTarget::getRcs(SVec3& inAngle, SVec3& outAngle) const
+	RealType IsoTarget::getRcs(SVec3& /*inAngle*/, SVec3& /*outAngle*/) const
 	{
 		return _model ? _rcs * _model->sampleModel() : _rcs;
 	}

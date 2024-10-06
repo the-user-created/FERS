@@ -129,35 +129,6 @@ namespace python
 
 	// =================================================================================================================
 	//
-	// PYTHON NOISE CLASS
-	//
-	// =================================================================================================================
-
-	RealType PythonNoise::getSample() const
-	{
-		// Call the Python function with no arguments
-		PyObject* p_value = PyObject_CallObject(_data->p_func, nullptr);
-
-		if (!p_value) {
-			PyErr_Print();
-			throw std::runtime_error("Error calling Python function for getSample");
-		}
-
-		// Extract the result, assuming it is a float
-		const RealType result = PyFloat_AsDouble(p_value);
-		if (PyErr_Occurred()) {
-			PyErr_Print();
-			Py_DECREF(p_value);
-			throw std::runtime_error("Error converting Python result to RealType");
-		}
-
-		Py_DECREF(p_value);
-		LOG(Level::TRACE, "PythonNoise::getSample: {}", result);
-		return result;
-	}
-
-	// =================================================================================================================
-	//
 	// PYTHON ANTENNA MOD CLASS
 	//
 	// =================================================================================================================

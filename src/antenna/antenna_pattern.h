@@ -15,7 +15,8 @@ namespace serial
 	std::vector<std::vector<RealType>> readPattern(const std::string& name, const std::string& datasetName);
 }
 
-namespace math {
+namespace math
+{
 	class SVec3;
 }
 
@@ -25,9 +26,7 @@ namespace antenna
 	{
 	public:
 		explicit Pattern(const std::string& filename)
-		{
-			_pattern = serial::readPattern(filename, "antenna");
-		}
+			: _pattern(serial::readPattern(filename, "antenna")) {}
 
 		~Pattern() = default;
 

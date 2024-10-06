@@ -78,10 +78,11 @@ namespace math
 	inline RealType dotProduct(const Vec3& a, const Vec3& b) noexcept { return a.x * b.x + a.y * b.y + a.z * b.z; }
 
 	// Cross product
-	inline Vec3 crossProduct(const Vec3& a, const Vec3& b) noexcept
+	// Note: This function is not used in the codebase
+	/*inline Vec3 crossProduct(const Vec3& a, const Vec3& b) noexcept
 	{
 		return {a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x};
-	}
+	}*/
 
 	// Operator overloads for Vec3
 	inline Vec3 operator*(const Vec3& a, const Vec3& b) noexcept { return {a.x * b.x, a.y * b.y, a.z * b.z}; }

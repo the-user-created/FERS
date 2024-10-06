@@ -7,7 +7,6 @@
 
 #include <algorithm>                             // for __transform_fn, max
 #include <cmath>                                 // for sqrt, lerp, floor
-#include <compare>                               // for operator<
 #include <complex>                               // for complex, operator*, exp
 #include <iterator>                              // for next
 #include <stdexcept>                             // for runtime_error
@@ -28,8 +27,7 @@ namespace signal
 
 	RadarSignal::RadarSignal(std::string name, const RealType power, const RealType carrierfreq, const RealType length,
 	                         std::unique_ptr<Signal> signal)
-		: _name(std::move(name)), _power(power), _carrierfreq(carrierfreq), _length(length), _signal(std::move(signal)),
-		  _polar(std::complex(1.0, 0.0), std::complex(0.0, 0.0))
+		: _name(std::move(name)), _power(power), _carrierfreq(carrierfreq), _length(length), _signal(std::move(signal))
 	{
 		// Check if the signal is empty
 		if (!_signal) { throw std::runtime_error("Signal is empty"); }
@@ -58,14 +56,15 @@ namespace signal
 		_rate = 0;
 	}
 
-	void Signal::load(std::span<const RealType> inData, const unsigned samples, const RealType sampleRate)
+	// Note: This function is not used in the codebase
+	/*void Signal::load(std::span<const RealType> inData, const unsigned samples, const RealType sampleRate)
 	{
 		clear();
 		_size = samples;
 		_rate = sampleRate;
 		_data.resize(samples);
 		std::ranges::transform(inData, _data.begin(), [](const RealType value) { return ComplexType(value, 0.0); });
-	}
+	}*/
 
 	void Signal::load(std::span<const ComplexType> inData, const unsigned samples, const RealType sampleRate)
 	{
@@ -77,13 +76,6 @@ namespace signal
 
 		if (ratio == 1) { std::ranges::copy(inData, _data.begin()); }
 		else { upsample(inData, _data, ratio); }
-	}
-
-	std::vector<RealType> Signal::copyData() const
-	{
-		std::vector<RealType> result(_size);
-		std::ranges::transform(_data, result.begin(), [](const ComplexType& value) { return value.real(); });
-		return result;
 	}
 
 	std::vector<ComplexType> Signal::render(const std::vector<interp::InterpPoint>& points, unsigned& size,

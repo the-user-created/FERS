@@ -36,7 +36,7 @@ namespace antenna
 		[[nodiscard]] RealType getEfficiencyFactor() const { return _loss_factor; }
 		[[nodiscard]] std::string getName() const { return _name; }
 		// TODO: Implement noise temperature calculation
-		[[nodiscard]] virtual RealType getNoiseTemperature(const math::SVec3& angle) const { return 0; }
+		[[nodiscard]] virtual RealType getNoiseTemperature(const math::SVec3& /*angle*/) const { return 0; }
 
 		void setEfficiencyFactor(RealType loss);
 
@@ -56,8 +56,10 @@ namespace antenna
 		~Isotropic() override = default;
 
 		[[nodiscard]] RealType
-		getGain(const math::SVec3& angle, const math::SVec3& refangle, RealType wavelength) const override
+		getGain(const math::SVec3& /*angle*/, const math::SVec3& /*refangle*/, RealType /*wavelength*/) const override
 		{
+			// David Young: Isotropic antennas have a directivity of 1 (or 0 dB),
+			// therefore, the gain of the antenna is the efficiency factor
 			return getEfficiencyFactor();
 		}
 	};
@@ -154,7 +156,7 @@ namespace antenna
 		~FileAntenna() override = default;
 
 		[[nodiscard]] RealType
-		getGain(const math::SVec3& angle, const math::SVec3& refangle, RealType wavelength) const override
+		getGain(const math::SVec3& angle, const math::SVec3& refangle, RealType /*wavelength*/) const override
 		{
 			return _pattern->getGain(angle - refangle) * getEfficiencyFactor();
 		}
@@ -172,7 +174,7 @@ namespace antenna
 		~PythonAntenna() override = default;
 
 		[[nodiscard]] RealType
-		getGain(const math::SVec3& angle, const math::SVec3& refangle, RealType wavelength) const override
+		getGain(const math::SVec3& angle, const math::SVec3& refangle, RealType /*wavelength*/) const override
 		{
 			return _py_antenna.getGain(angle - refangle) * getEfficiencyFactor();
 		}

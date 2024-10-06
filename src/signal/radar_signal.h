@@ -12,7 +12,6 @@
 #include <vector>          // for vector
 
 #include "config.h"        // for RealType, ComplexType
-#include "jones_vector.h"  // for JonesVector
 
 namespace interp
 {
@@ -33,13 +32,11 @@ namespace signal
 		void load(std::span<const ComplexType> inData, unsigned samples, RealType sampleRate);
 
 		// Note: This function is not used in the codebase
-		void load(std::span<const RealType> inData, unsigned samples, RealType sampleRate);
+		//void load(std::span<const RealType> inData, unsigned samples, RealType sampleRate);
 
 		[[nodiscard]] RealType getRate() const noexcept { return _rate; }
-		[[nodiscard]] unsigned getSize() const noexcept { return _size; }
-
 		// Note: This function is not used in the codebase
-		[[nodiscard]] std::vector<RealType> copyData() const;
+		// [[nodiscard]] unsigned getSize() const noexcept { return _size; }
 
 		std::vector<ComplexType> render(const std::vector<interp::InterpPoint>& points, unsigned& size,
 		                                double fracWinDelay) const;
@@ -80,18 +77,11 @@ namespace signal
 		std::vector<ComplexType> render(const std::vector<interp::InterpPoint>& points, unsigned& size,
 		                                RealType fracWinDelay) const;
 
-		// Note: This function is not used in the codebase
-		[[nodiscard]] JonesVector getPolarization() const noexcept { return _polar; }
-
-		// Note: This function is not used in the codebase
-		void setPolarization(const JonesVector& in) noexcept { _polar = in; }
-
 	private:
 		std::string _name;
 		RealType _power;
 		RealType _carrierfreq;
 		RealType _length;
 		std::unique_ptr<Signal> _signal;
-		JonesVector _polar;
 	};
 }
