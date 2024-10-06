@@ -35,6 +35,7 @@ Options:
   --version, -v           Show version information and exit
   --log-level=<level>     Set the logging level (TRACE, DEBUG, INFO, WARNING, ERROR, FATAL)
   -n=<threads>            Number of threads to use
+  -val, --validate		  Validate the input .fersxml file and exit
 
 Arguments:
   <scriptfile>            Path to the simulation script file (XML)
@@ -151,6 +152,10 @@ Make sure the script file follows the correct format to avoid errors.
 					// Assume it's the script file if it's not an option
 					config.script_file = arg;
 					script_file_set = true;
+				}
+				else if (arg == "--validate" || arg == "-val")
+				{
+					config.validate = true;
 				}
 				else
 				{

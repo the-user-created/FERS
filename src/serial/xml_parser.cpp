@@ -148,6 +148,8 @@ namespace
 
 		if (type == "file")
 		{
+			// TODO: Add error handling for invalid file paths
+			//		 should default to searching the same directory as the XML file
 			auto wave = serial::loadPulseFromFile(name, filename,
 			                                      get_child_real_type(pulse, "power"),
 			                                      get_child_real_type(pulse, "carrier")
@@ -639,11 +641,13 @@ namespace
 		}
 	}
 
-	void addIncludeFilesToMainDocument(const XmlDocument& mainDoc, const fs::path& currentDir)
+	bool addIncludeFilesToMainDocument(const XmlDocument& mainDoc, const fs::path& currentDir)
 	{
 		std::vector<fs::path> include_paths;
 		collectIncludeElements(mainDoc, currentDir, include_paths);
+		bool did_combine = false;
 
+		// TODO: Add error handling for invalid includes
 		for (const auto& include_path : include_paths)
 		{
 			// Load the included XML file
@@ -656,17 +660,20 @@ namespace
 
 			// Merge the included document into the main document
 			mergeXmlDocuments(mainDoc, included_doc);
+			did_combine = true;
 		}
 
 		// Remove all include elements from the main document
 		removeIncludeElements(mainDoc);
+
+		return did_combine;
 	}
 }
 
 namespace serial
 {
 	// Function to parse the entire <simulation> element
-	void parseSimulation(const std::string& filename, World* world)
+	void parseSimulation(const std::string& filename, World* world, const bool validate)
 	{
 		// Load the main simulation XML file
 		XmlDocument main_doc;
@@ -679,6 +686,9 @@ namespace serial
 		// Get the directory of the main XML file to resolve include paths
 		const fs::path main_dir = fs::path(filename).parent_path();
 
+		// Process <include> elements and merge their contents into the main document
+		const bool did_combine = addIncludeFilesToMainDocument(main_doc, main_dir);
+
 		// Add all included files into the main document
 		const XmlElement root = main_doc.getRootElement();
 		if (root.name() != "simulation")
@@ -687,24 +697,25 @@ namespace serial
 			throw XmlException("Root element is not <simulation>!");
 		}
 
-		// Process <include> elements and merge their contents into the main document
-		addIncludeFilesToMainDocument(main_doc, main_dir);
-
-		// Validate the combined document using in-memory schema data - DTD validation is less strict than XSD
-		if (!main_doc.validateWithDtd(fers_xml_dtd))
+		if (validate)
 		{
-			LOG(Level::FATAL, "Combined XML file failed DTD validation!");
-			throw XmlException("Combined XML file failed DTD validation!");
-		}
-		LOG(Level::DEBUG, "Combined XML file passed DTD validation.");
+			LOG(Level::DEBUG, "Validating the{}XML file...", did_combine ? " combined " : " ");
+			// Validate the combined document using in-memory schema data - DTD validation is less strict than XSD
+			if (!main_doc.validateWithDtd(fers_xml_dtd))
+			{
+				LOG(Level::FATAL, "Combined XML file failed DTD validation!");
+				throw XmlException("Combined XML file failed DTD validation!");
+			}
+			LOG(Level::DEBUG, "{} XML file passed DTD validation.", did_combine ? "Combined" : "Main");
 
-		// Validate the combined document using in-memory schema data - XSD validation is stricter than DTD
-		if (!main_doc.validateWithXsd(fers_xml_xsd))
-		{
-			LOG(Level::FATAL, "Combined XML file failed XSD validation!");
-			throw XmlException("Combined XML file failed XSD validation!");
-		}
-		LOG(Level::DEBUG, "Combined XML file passed XSD validation.");
+			// Validate the combined document using in-memory schema data - XSD validation is stricter than DTD
+			if (!main_doc.validateWithXsd(fers_xml_xsd))
+			{
+				LOG(Level::FATAL, "{} XML file failed XSD validation!", did_combine ? "Combined" : "Main");
+				throw XmlException("XML file failed XSD validation!");
+			}
+			LOG(Level::DEBUG, "{} XML file passed XSD validation.", did_combine ? "Combined" : "Main");
+		} else { LOG(Level::DEBUG, "Skipping XML validation."); }
 
 		// Proceed with parsing the main document's contents
 		parseParameters(root.childElement("parameters", 0));
