@@ -70,9 +70,9 @@ namespace radar
 
 		virtual RealType getRcs(math::SVec3& inAngle, math::SVec3& outAngle) const = 0;
 
-		[[nodiscard]] virtual math::PsMatrix getPolarization() const { return _psm; }
+		// [[nodiscard]] virtual math::PsMatrix getPolarization() const { return _psm; }
 
-		virtual void setPolarization(const math::PsMatrix& in) { _psm = in; }
+		// virtual void setPolarization(const math::PsMatrix& in) { _psm = in; }
 		void setFluctuationModel(std::unique_ptr<RcsModel> in) { _model = std::move(in); }
 
 	protected:
@@ -88,7 +88,7 @@ namespace radar
 
 		~IsoTarget() override = default;
 
-		RealType getRcs(math::SVec3& inAngle, math::SVec3& outAngle) const override;
+		RealType getRcs(math::SVec3& /*inAngle*/, math::SVec3& /*outAngle*/) const override;
 
 	private:
 		RealType _rcs;

@@ -7,12 +7,10 @@
 
 #include <memory>                     // for unique_ptr
 #include <random>                     // for normal_distribution, default_ra...
-#include <string>                     // for char_traits, string
 #include <vector>                     // for vector
 
 #include "config.h"                   // for RealType
 #include "falpha_branch.h"            // for FAlphaBranch
-#include "python/python_extension.h"  // for PythonNoise
 
 namespace noise
 {
@@ -95,17 +93,5 @@ namespace noise
 		RealType _freq_offset;
 		RealType _frequency;
 		unsigned long _count = 0;
-	};
-
-	// NOTE: This class is not used
-	class PythonNoiseGenerator final : public NoiseGenerator
-	{
-	public:
-		PythonNoiseGenerator(const std::string& module, const std::string& function) : _generator(module, function) {}
-
-		RealType getSample() override { return _generator.getSample(); }
-
-	private:
-		python::PythonNoise _generator;
 	};
 }

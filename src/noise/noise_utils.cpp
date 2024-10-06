@@ -16,7 +16,6 @@ namespace
 
 	// Predefined normal and uniform distributions
 	std::normal_distribution normal_dist{0.0, 1.0};
-	std::uniform_real_distribution uniform_dist{0.0, 1.0};
 
 	// Get the seed either from params or use a random_device for better entropy
 	unsigned int getSeed()
@@ -38,13 +37,6 @@ namespace noise
 
 		ensureInitialized(); // Ensure RNG is initialized
 		return normal_dist(*rng) * stddev;
-	}
-
-	// Generate a sample from a uniform distribution between 0 and 1
-	RealType uniformSample()
-	{
-		ensureInitialized(); // Ensure RNG is initialized
-		return uniform_dist(*rng);
 	}
 
 	// Compute noise power given temperature and bandwidth

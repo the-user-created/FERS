@@ -51,7 +51,6 @@ namespace serial
 		std::vector<ComplexType> renderBinary(RealType& rate, unsigned& size, RealType fracWinDelay) const;
 
 		[[nodiscard]] RealType getLength() const { return endTime() - startTime(); }
-		[[nodiscard]] const signal::RadarSignal* getWave() const { return _wave; } // Note: This function is not used in the codebase
 
 		[[nodiscard]] std::string getTransmitterName() const;
 

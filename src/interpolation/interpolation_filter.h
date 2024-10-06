@@ -22,9 +22,9 @@ namespace interp
 			return x == 0.0 ? 1.0 : std::sin(x * PI) / (x * PI);
 		}
 
-		[[nodiscard]] RealType kaiserWinCompute(RealType x) const noexcept;
+		[[nodiscard]] RealType kaiserWinCompute(RealType x) const;
 
-		[[nodiscard]] RealType interpFilter(RealType x) const noexcept;
+		[[nodiscard]] RealType interpFilter(RealType x) const;
 
 		[[nodiscard]] std::span<const RealType> getFilter(RealType delay) const;
 

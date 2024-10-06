@@ -17,18 +17,13 @@
 namespace params
 {
 	/**
-	 * @brief Enum class for different types of binary files.
-	 */
-	enum class BinaryFileType { RS_FILE_CSV, RS_FILE_FERSBIN, RS_FILE_RAW };
-
-	/**
 	 * @brief Struct to hold simulation parameters.
 	 */
 	struct Parameters
 	{
 		constexpr static RealType DEFAULT_C = 299792458.0; ///< Speed of light (m/s)
 		constexpr static RealType DEFAULT_BOLTZMANN_K = 1.3806503e-23; ///< Boltzmann constant
-		constexpr static unsigned MIN_FILTER_LENGTH = 16; ///< Minimum render filter length
+		//constexpr static unsigned MIN_FILTER_LENGTH = 16; ///< Minimum render filter length
 
 		RealType c = DEFAULT_C; ///< Speed of light
 		RealType boltzmann_k = DEFAULT_BOLTZMANN_K; ///< Boltzmann constant
@@ -40,7 +35,6 @@ namespace params
 		unsigned random_seed = std::chrono::system_clock::now().time_since_epoch().count(); ///< Random seed using current time
 		unsigned adc_bits = 0; ///< ADC quantization bits
 		unsigned filter_length = 33; ///< Default filter length
-		BinaryFileType filetype = BinaryFileType::RS_FILE_FERSBIN; ///< Default binary file type
 
 		bool export_xml = false; ///< Export XML flag
 		bool export_csv = false; ///< Export CSV flag
@@ -108,12 +102,6 @@ namespace params
 	 * @return ADC quantization bits.
 	 */
 	inline unsigned adcBits() noexcept { return params.adc_bits; }
-
-	/**
-	 * @brief Get the binary file type.
-	 * @return Binary file type.
-	 */
-	inline BinaryFileType binaryFileType() noexcept { return params.filetype; }
 
 	/**
 	 * @brief Check if XML export is enabled.
@@ -210,16 +198,6 @@ namespace params
 	}
 
 	/**
-	 * @brief Set the binary file type.
-	 * @param type Binary file type.
-	 */
-	inline void setBinaryFileType(const BinaryFileType type) noexcept
-	{
-		params.filetype = type;
-		LOG(logging::Level::DEBUG, "Binary file type set to: {}", static_cast<int>(type));
-	}
-
-	/**
 	 * @brief Set the export flags for XML, CSV, and binary.
 	 * @param xml Export XML flag.
 	 * @param csv Export CSV flag.
@@ -243,17 +221,12 @@ namespace params
 		LOG(logging::Level::DEBUG, "ADC quantization bits set to: {}", bits);
 	}
 
-	/**
-	 * @brief Set the render filter length.
-	 * @param length Render filter length.
-	 * @throws std::runtime_error if length is less than MIN_FILTER_LENGTH.
-	 */
-	inline void setRenderFilterLength(unsigned length)
+	/*inline void setRenderFilterLength(unsigned length)
 	{
 		if (length < Parameters::MIN_FILTER_LENGTH) { throw std::runtime_error("Render filter length must be >= 16"); }
 		params.filter_length = length;
 		LOG(logging::Level::DEBUG, "Render filter length set to: {}", length);
-	}
+	}*/
 
 	/**
 	 * @brief Set the oversampling ratio.

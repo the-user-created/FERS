@@ -5,7 +5,6 @@ set(SRCS
 
 
 set(HEADERS
-	jones_vector.h
 	radar_signal.h
 	dsp_filters.h
 )

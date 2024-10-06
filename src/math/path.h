@@ -31,7 +31,7 @@ namespace math
 
 		void finalize();
 
-		[[nodiscard]] python::PythonPath* getPythonPath() const noexcept { return _pythonpath.get(); }
+		// [[nodiscard]] python::PythonPath* getPythonPath() const noexcept { return _pythonpath.get(); }
 		[[nodiscard]] InterpType getType() const noexcept { return _type; }
 		[[nodiscard]] const std::vector<Coord>& getCoords() const noexcept { return _coords; }
 
