@@ -3,8 +3,7 @@
 // Marc Brooker
 // 19 July 2006
 
-#ifndef OBJECT_H
-#define OBJECT_H
+#pragma once
 
 #include "platform.h"
 
@@ -38,5 +37,3 @@ namespace radar
 		std::string _name;
 	};
 }
-
-#endif

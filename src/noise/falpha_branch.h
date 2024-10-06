@@ -3,8 +3,7 @@
 // Original code by Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //
 
-#ifndef FALPHA_BRANCH_H
-#define FALPHA_BRANCH_H
+#pragma once
 
 #include <memory>
 #include <vector>
@@ -58,5 +57,3 @@ namespace noise
 		bool _last;
 	};
 }
-
-#endif //FALPHA_BRANCH_H

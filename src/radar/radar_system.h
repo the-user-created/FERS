@@ -3,8 +3,7 @@
 // Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 // Started: 21 April 2006
 
-#ifndef RADAR_SYSTEM_H
-#define RADAR_SYSTEM_H
+#pragma once
 
 #include <memory>                    // for unique_ptr, shared_ptr
 #include <mutex>                     // for mutex
@@ -175,5 +174,3 @@ namespace radar
 		return a->startTime() < b->startTime();
 	}
 }
-
-#endif

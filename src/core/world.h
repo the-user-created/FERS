@@ -4,8 +4,7 @@
 // Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 // Started: 25 April 2006
 
-#ifndef WORLD_H
-#define WORLD_H
+#pragma once
 
 #include <memory>                            // for unique_ptr
 #include <string>                            // for hash, string
@@ -79,5 +78,3 @@ namespace core
 		std::unique_ptr<math::MultipathSurface> _multipath_surface;
 	};
 }
-
-#endif

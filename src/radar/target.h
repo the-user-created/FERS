@@ -3,8 +3,7 @@
 // Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 // Started: 26 April 2006
 
-#ifndef TARGET_H
-#define TARGET_H
+#pragma once
 
 #include <concepts>                           // for convertible_to
 #include <memory>                             // for unique_ptr, make_unique
@@ -122,5 +121,3 @@ namespace radar
 		return std::make_unique<FileTarget>(platform, std::move(name), filename);
 	}
 }
-
-#endif

@@ -3,8 +3,7 @@
 // Original code by Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //
 
-#ifndef PULSE_FACTORY_H
-#define PULSE_FACTORY_H
+#pragma once
 
 #include <memory>    // for unique_ptr
 #include <string>    // for string
@@ -21,5 +20,3 @@ namespace serial
 	[[nodiscard]] std::unique_ptr<signal::RadarSignal> loadPulseFromFile(
 		const std::string& name, const std::string& filename, RealType power, RealType carrierFreq);
 }
-
-#endif //PULSE_FACTORY_H

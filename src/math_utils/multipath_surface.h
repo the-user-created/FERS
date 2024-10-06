@@ -3,8 +3,7 @@
 // Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 // 9 September 2007
 
-#ifndef MULTIPATH_SURFACE_H
-#define MULTIPATH_SURFACE_H
+#pragma once
 
 #include "config.h"
 #include "geometry_ops.h"
@@ -29,5 +28,3 @@ namespace math
 		Vec3 _translation_vector;
 	};
 }
-
-#endif

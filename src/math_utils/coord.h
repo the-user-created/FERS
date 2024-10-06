@@ -3,8 +3,7 @@
 // Original code by Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //
 
-#ifndef COORD_H
-#define COORD_H
+#pragma once
 
 #include "geometry_ops.h"
 
@@ -92,5 +91,3 @@ namespace math
 		return {b.azimuth / a, b.elevation / a, b.t};
 	}
 }
-
-#endif //COORD_H

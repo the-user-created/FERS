@@ -3,8 +3,7 @@
 // Original code by Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //
 
-#ifndef INTERPOLATION_POINT_H
-#define INTERPOLATION_POINT_H
+#pragma once
 
 namespace interp
 {
@@ -18,5 +17,3 @@ namespace interp
 		RealType noise_temperature;
 	};
 }
-
-#endif //INTERPOLATION_POINT_H

@@ -3,8 +3,7 @@
 // Original code by Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //
 
-#ifndef PROTOTYPE_TIMING_H
-#define PROTOTYPE_TIMING_H
+#pragma once
 
 #include <optional>  // for optional
 #include <string>    // for string
@@ -59,5 +58,3 @@ namespace timing
 		void logOffsetConflict(const std::string& offsetType) const;
 	};
 }
-
-#endif //PROTOTYPE_TIMING_H

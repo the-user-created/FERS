@@ -3,8 +3,7 @@
 // Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 // 7 June 2006
 
-#ifndef RESPONSE_RENDERER_H
-#define RESPONSE_RENDERER_H
+#pragma once
 
 #include <memory>    // for unique_ptr
 #include <mutex>     // for mutex
@@ -70,5 +69,3 @@ namespace serial
 		std::queue<Response*>& _work_list;
 	};
 }
-
-#endif

@@ -3,8 +3,7 @@
 // Original code by Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //
 
-#ifndef PATH_H
-#define PATH_H
+#pragma once
 
 #include <memory>                     // for unique_ptr
 #include <string_view>                // for string_view
@@ -52,5 +51,3 @@ namespace math
 
 	std::unique_ptr<Path> reflectPath(const Path* path, const MultipathSurface* surf);
 }
-
-#endif //PATH_H

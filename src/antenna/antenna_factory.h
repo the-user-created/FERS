@@ -3,8 +3,7 @@
 // Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 // 20 July 2006
 
-#ifndef ANTENNA_FACTORY_H
-#define ANTENNA_FACTORY_H
+#pragma once
 
 #include <memory>                             // for make_unique, unique_ptr
 #include <string>                             // for string
@@ -182,5 +181,3 @@ namespace antenna
 		python::PythonAntennaMod _py_antenna;
 	};
 }
-
-#endif

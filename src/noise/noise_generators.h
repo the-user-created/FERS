@@ -3,8 +3,7 @@
 // Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 // 14 August 2006
 
-#ifndef NOISE_GENERATORS_H
-#define NOISE_GENERATORS_H
+#pragma once
 
 #include <memory>                     // for unique_ptr
 #include <random>                     // for normal_distribution, default_ra...
@@ -110,5 +109,3 @@ namespace noise
 		python::PythonNoise _generator;
 	};
 }
-
-#endif

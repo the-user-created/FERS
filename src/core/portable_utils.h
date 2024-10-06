@@ -3,8 +3,7 @@
 // Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 // 29 May 2006
 
-#ifndef PORTABLE_UTILS_H
-#define PORTABLE_UTILS_H
+#pragma once
 
 #include <cmath>
 #include <thread>
@@ -44,5 +43,3 @@ namespace core
 		return 1;
 	}
 }
-
-#endif

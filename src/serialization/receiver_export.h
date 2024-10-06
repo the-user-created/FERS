@@ -4,8 +4,7 @@
 // Original code by Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 //
 
-#ifndef RECEIVER_EXPORT_H
-#define RECEIVER_EXPORT_H
+#pragma once
 
 #include <memory>  // for unique_ptr
 #include <span>    // for span
@@ -26,5 +25,3 @@ namespace serial
 
 	void exportReceiverCsv(std::span<const std::unique_ptr<Response>> responses, const std::string& filename);
 }
-
-#endif //RECEIVER_EXPORT_H

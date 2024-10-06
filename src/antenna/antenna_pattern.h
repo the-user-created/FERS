@@ -3,8 +3,7 @@
 // Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 // 11 September 2007
 
-#ifndef ANTENNA_PATTERN
-#define ANTENNA_PATTERN
+#pragma once
 
 #include <string>
 #include <vector>
@@ -38,5 +37,3 @@ namespace antenna
 		std::vector<std::vector<RealType>> _pattern;
 	};
 }
-
-#endif

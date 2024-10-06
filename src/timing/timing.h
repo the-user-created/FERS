@@ -3,8 +3,7 @@
 // Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 // 16 October 2006
 
-#ifndef TIMING_H
-#define TIMING_H
+#pragma once
 
 #include <memory>                    // for unique_ptr
 #include <string>                    // for string
@@ -54,5 +53,3 @@ namespace timing
 		bool _sync_on_pulse{false};
 	};
 }
-
-#endif
