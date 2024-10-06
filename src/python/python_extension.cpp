@@ -7,8 +7,8 @@
 
 #include <Python.h>
 
-#include "core/logging.h"             // for log, LOG, Level
-#include "math/geometry_ops.h"  // for Vec3, SVec3
+#include "core/logging.h"
+#include "math/geometry_ops.h"
 
 using logging::Level;
 using math::Vec3;

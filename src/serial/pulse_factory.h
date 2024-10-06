@@ -5,10 +5,10 @@
 
 #pragma once
 
-#include <memory>    // for unique_ptr
-#include <string>    // for string
+#include <memory>
+#include <string>
 
-#include "config.h"  // for RealType
+#include "config.h"
 
 namespace signal
 {

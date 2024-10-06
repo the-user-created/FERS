@@ -5,10 +5,10 @@
 
 #include "interpolation_filter.h"
 
-#include <stdexcept>          // for logic_error, runtime_error
+#include <stdexcept>
 
-#include "core/logging.h"     // for log, LOG, Level
-#include "core/parameters.h"  // for renderFilterLength
+#include "core/logging.h"
+#include "core/parameters.h"
 
 using logging::Level;
 

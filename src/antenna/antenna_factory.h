@@ -5,16 +5,16 @@
 
 #pragma once
 
-#include <memory>                             // for make_unique, unique_ptr
-#include <string>                             // for string
-#include <string_view>                        // for string_view
-#include <utility>                            // for move
+#include <memory>
+#include <string>
+#include <string_view>
+#include <utility>
 
-#include "antenna_pattern.h"                  // for Pattern
-#include "config.h"                           // for RealType
-#include "interpolation/interpolation_set.h"  // for InterpSet
-#include "math/geometry_ops.h"          // for operator-, SVec3
-#include "python/python_extension.h"          // for PythonAntennaMod
+#include "antenna_pattern.h"
+#include "config.h"
+#include "interpolation/interpolation_set.h"
+#include "math/geometry_ops.h"
+#include "python/python_extension.h"
 
 namespace antenna
 {

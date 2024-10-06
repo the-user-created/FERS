@@ -5,14 +5,14 @@
 
 #include "world.h"
 
-#include <stdexcept>                         // for runtime_error
-#include <type_traits>                       // for decay, decay_t
-#include <utility>                           // for move
+#include <stdexcept>
+#include <type_traits>
+#include <utility>
 
-#include "antenna/antenna_factory.h"         // for Antenna
-#include "radar/radar_system.h"              // for Receiver, Transmitter
-#include "signal/radar_signal.h"  // for RadarSignal
-#include "timing/prototype_timing.h"         // for PrototypeTiming
+#include "antenna/antenna_factory.h"
+#include "radar/radar_system.h"
+#include "signal/radar_signal.h"
+#include "timing/prototype_timing.h"
 
 using signal::RadarSignal;
 using antenna::Antenna;

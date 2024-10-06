@@ -5,15 +5,15 @@
 
 #pragma once
 
-#include <memory>                    // for unique_ptr, shared_ptr
-#include <mutex>                     // for mutex
-#include <string>                    // for string
-#include <utility>                   // for move
-#include <vector>                    // for vector
+#include <memory>
+#include <mutex>
+#include <string>
+#include <utility>
+#include <vector>
 
-#include "config.h"                  // for RealType
-#include "object.h"                  // for Object
-#include "serial/response.h"  // for Response
+#include "config.h"
+#include "object.h"
+#include "serial/response.h"
 
 namespace antenna
 {

@@ -4,13 +4,13 @@
 
 #include "logging.h"
 
-#include <ctime>          // for localtime_r, time_t, tm
-#include <filesystem>     // for path
-#include <iomanip>        // for operator<<, setw, put_time
-#include <iostream>       // for cerr
-#include <sstream>        // for basic_ostringstream
-#include <stdexcept>      // for runtime_error
-#include <bits/chrono.h>  // for system_clock
+#include <ctime>
+#include <filesystem>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+#include <stdexcept>
+#include <bits/chrono.h>
 
 namespace logging
 {
@@ -74,8 +74,8 @@ namespace logging
 			std::ostringstream oss;
 			// Format each component with fixed width
 			oss << "[" << getCurrentTimestamp() << "] "
-				<< "[" << std::setw(7) << std::left << getLevelString(level) << "] " // Log level (fixed width of 8)
-				<< "[" << std::setw(30) << std::left << file_line << "] " // Filename:Line (fixed width)
+				<< "[" << std::setw(7) << std::left << getLevelString(level) << "] "
+				<< "[" << std::setw(30) << std::left << file_line << "] "
 				<< message << std::endl;
 
 			// Log to console

@@ -4,14 +4,14 @@
 
 #include "arg_parser.h"
 
-#include <exception>              // for exception
-#include <iostream>               // for operator<<, basic_ostream, cerr, cout
-#include <stdexcept>              // for invalid_argument
-#include <unordered_map>          // for unordered_map, operator==, _Node_it...
-#include <utility>                // for pair
+#include <exception>
+#include <iostream>
+#include <stdexcept>
+#include <unordered_map>
+#include <utility>
 
-#include "core/logging.h"         // for Level, log, LOG
-#include "core/portable_utils.h"  // for countProcessors
+#include "core/logging.h"
+#include "core/portable_utils.h"
 
 using logging::Level;
 

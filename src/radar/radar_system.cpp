@@ -5,20 +5,20 @@
 
 #include "radar_system.h"
 
-#include <algorithm>                        // for __sort_fn, sort
-#include <cmath>                            // for floor, ceil
-#include <span>                             // for span
-#include <stack>                            // for stack
-#include <stdexcept>                        // for runtime_error, logic_error
-#include <system_error>                     // for system_error
-#include <typeinfo>                         // for type_info
+#include <algorithm>
+#include <cmath>
+#include <span>
+#include <stack>
+#include <stdexcept>
+#include <system_error>
+#include <typeinfo>
 
-#include "antenna/antenna_factory.h"        // for Antenna
-#include "core/logging.h"                   // for log, LOG, Level
-#include "core/parameters.h"                // for endTime, oversampleRatio
-#include "math/multipath_surface.h"   // for MultipathSurface
-#include "radar/platform.h"                 // for createMultipathDual, Plat...
-#include "serial/receiver_export.h"  // for exportReceiverBinary, exp...
+#include "antenna/antenna_factory.h"
+#include "core/logging.h"
+#include "core/parameters.h"
+#include "math/multipath_surface.h"
+#include "radar/platform.h"
+#include "serial/receiver_export.h"
 
 using logging::Level;
 using math::MultipathSurface;

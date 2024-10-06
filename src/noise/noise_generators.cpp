@@ -5,13 +5,13 @@
 
 #include "noise_generators.h"
 
-#include <cmath>                  // for pow, floor, fmod, log10
-#include <ranges>                 // for reverse_view, ref_view
-#include <stdexcept>              // for runtime_error
-#include <utility>                // for move
+#include <cmath>
+#include <ranges>
+#include <stdexcept>
+#include <utility>
 
-#include "core/parameters.h"      // for randomSeed, rate
-#include "noise/falpha_branch.h"  // for FAlphaBranch
+#include "core/parameters.h"
+#include "noise/falpha_branch.h"
 
 namespace noise
 {

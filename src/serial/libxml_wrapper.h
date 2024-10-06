@@ -9,10 +9,11 @@
 #include <span>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <libxml/parser.h>
-#include <libxml/tree.h>
-#include <libxml/valid.h>
-#include <libxml/xmlschemas.h>
+
+#include "libxml/globals.h"
+#include "libxml/xmlstring.h"
 
 class XmlException final : public std::runtime_error
 {

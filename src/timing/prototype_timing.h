@@ -5,12 +5,12 @@
 
 #pragma once
 
-#include <optional>  // for optional
-#include <string>    // for string
-#include <utility>   // for move
-#include <vector>    // for vector
+#include <optional>
+#include <string>
+#include <utility>
+#include <vector>
 
-#include "config.h"  // for RealType
+#include "config.h"
 
 namespace timing
 {

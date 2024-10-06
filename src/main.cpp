@@ -3,16 +3,16 @@
 // Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 // Started: 25 April 2006
 
-#include <exception>                  // for exception
-#include <memory>                     // for make_unique
-#include <optional>                   // for optional
+#include <exception>
+#include <memory>
+#include <optional>
 
-#include "core/arg_parser.h"               // for Config, parseArguments
-#include "core/logging.h"             // for log, LOG, Level, Logger, logger
-#include "core/parameters.h"               // for renderThreads, setThreads
-#include "core/sim_threading.h"            // for runThreadedSim
-#include "core/world.h"                    // for World
-#include "serial/xml_parser.h" // for loadXmlFile
+#include "core/arg_parser.h"
+#include "core/logging.h"
+#include "core/parameters.h"
+#include "core/sim_threading.h"
+#include "core/world.h"
+#include "serial/xml_parser.h"
 
 using logging::Level;
 

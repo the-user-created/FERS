@@ -4,33 +4,35 @@
 
 #include "xml_parser.h"
 
-#include <cmath>                             // for floor
-#include <filesystem>                        // for path, operator<<, operator/
-#include <functional>                        // for function
-#include <iostream>                          // for basic_ostream, operator<<
-#include <memory>                            // for unique_ptr, make_unique
-#include <utility>                           // for move
-#include <vector>                            // for vector
+#include <cmath>
+#include <filesystem>
+#include <functional>
+#include <iostream>
+#include <memory>
+#include <span>
+#include <string_view>
+#include <utility>
+#include <vector>
 
-#include "config.h"                          // for RealType
+#include "config.h"
 #include "fers_xml_dtd.h"
 #include "fers_xml_xsd.h"
-#include "libxml_wrapper.h"                  // for XmlElement, XmlException
-#include "antenna/antenna_factory.h"         // for Antenna, FileAntenna
-#include "core/logging.h"                    // for log, LOG, Level
-#include "core/parameters.h"                 // for rate, adcBits, c, cwSamp...
-#include "core/world.h"                      // for World
-#include "math/coord.h"                // for RotationCoord, Coord
-#include "math/geometry_ops.h"         // for Vec3
-#include "math/multipath_surface.h"    // for MultipathSurface
-#include "math/path.h"                 // for Path
-#include "math/rotation_path.h"        // for RotationPath
-#include "radar/platform.h"                  // for Platform
-#include "radar/radar_system.h"              // for Receiver, Transmitter
-#include "radar/target.h"                    // for RcsChiSquare, RcsConst
-#include "serial/pulse_factory.h"     // for loadPulseFromFile
-#include "timing/prototype_timing.h"         // for PrototypeTiming
-#include "timing/timing.h"                   // for Timing
+#include "libxml_wrapper.h"
+#include "antenna/antenna_factory.h"
+#include "core/logging.h"
+#include "core/parameters.h"
+#include "core/world.h"
+#include "math/coord.h"
+#include "math/geometry_ops.h"
+#include "math/multipath_surface.h"
+#include "math/path.h"
+#include "math/rotation_path.h"
+#include "radar/platform.h"
+#include "radar/radar_system.h"
+#include "radar/target.h"
+#include "serial/pulse_factory.h"
+#include "timing/prototype_timing.h"
+#include "timing/timing.h"
 
 namespace fs = std::filesystem;
 

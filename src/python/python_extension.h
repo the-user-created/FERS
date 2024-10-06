@@ -5,12 +5,12 @@
 
 #pragma once
 
-#include <memory>        // for unique_ptr
-#include <pytypedefs.h>  // for PyObject
-#include <string>        // for string
-#include <string_view>   // for string_view
+#include <memory>
+#include <pytypedefs.h>
+#include <string>
+#include <string_view>
 
-#include "config.h"      // for RealType
+#include "config.h"
 
 namespace math
 {

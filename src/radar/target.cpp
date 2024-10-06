@@ -7,12 +7,12 @@
 
 #include "target.h"
 
-#include <cmath>                      // for sqrt
-#include <optional>                   // for optional
-#include <stdexcept>                  // for runtime_error
+#include <cmath>
+#include <optional>
+#include <stdexcept>
 
-#include "core/logging.h"             // for log, LOG, Level
-#include "math/geometry_ops.h"  // for SVec3, operator+
+#include "core/logging.h"
+#include "math/geometry_ops.h"
 #include "serial/libxml_wrapper.h"
 
 using math::SVec3;

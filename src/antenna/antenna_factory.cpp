@@ -7,17 +7,16 @@
 
 #include "antenna_factory.h"
 
-#include <algorithm>                  // for max
-#include <cmath>                      // for pow, sin, exp, acos
-#include <complex>                    // for operator*, abs, complex, pow
-#include <limits>                     // for numeric_limits
-#include <optional>                   // for optional
-#include <stdexcept>                  // for runtime_error
-#include <bits/std_abs.h>             // for abs
+#include <algorithm>
+#include <cmath>
+#include <complex>
+#include <optional>
+#include <stdexcept>
+#include <bits/std_abs.h>
 
-#include "core/logging.h"             // for log, LOG, Level
-#include "core/portable_utils.h"      // for besselJ1
-#include "math/geometry_ops.h"  // for SVec3, Vec3, operator-, dotProduct
+#include "core/logging.h"
+#include "core/portable_utils.h"
+#include "math/geometry_ops.h"
 #include "serial/libxml_wrapper.h"
 
 using logging::Level;

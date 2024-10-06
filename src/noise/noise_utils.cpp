@@ -4,10 +4,10 @@
 
 #include "noise_utils.h"
 
-#include <optional>           // for optional
-#include <random>             // for mersenne_twister_engine, normal_distrib...
+#include <optional>
+#include <random>
 
-#include "core/parameters.h"  // for boltzmannK, randomSeed
+#include "core/parameters.h"
 
 namespace
 {

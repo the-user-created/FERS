@@ -5,15 +5,15 @@
 
 #include "dsp_filters.h"
 
-#include <algorithm>          // for fill, copy_n, __rotate_fn, move, rotate
-#include <array>              // for array
-#include <cmath>              // for cos, sin
-#include <complex>            // for complex, operator*, operator/
-#include <cstddef>            // for ptrdiff_t, size_t
-#include <numeric>            // for inner_product
-#include <stdexcept>          // for invalid_argument, logic_error, runtime_...
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <complex>
+#include <cstddef>
+#include <numeric>
+#include <stdexcept>
 
-#include "core/parameters.h"  // for renderFilterLength
+#include "core/parameters.h"
 
 constexpr RealType BLACKMAN_A0 = 0.42;
 constexpr RealType BLACKMAN_A1 = 0.5;
@@ -167,7 +167,6 @@ namespace signal
 	void FirFilter::filter(std::span<RealType> samples)
 	{
 		// See Oppenheim and Scaffer, section 6.5 "Basic Network Structures for FIR Systems"
-		// TODO: Implement one of the more efficient FIR filter forms
 		// FIR filter using direct form
 		// Temporary line buffer for delay line (reuse it across all samples)
 		std::vector<RealType> line(_order, 0);

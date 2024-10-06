@@ -6,9 +6,9 @@
 
 #pragma once
 
-#include <memory>  // for unique_ptr
-#include <span>    // for span
-#include <string>  // for string
+#include <memory>
+#include <span>
+#include <string>
 
 namespace radar
 {

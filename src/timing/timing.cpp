@@ -5,10 +5,10 @@
 
 #include "timing.h"
 
-#include <stdexcept>           // for logic_error
+#include <stdexcept>
 
-#include "prototype_timing.h"  // for PrototypeTiming
-#include "core/logging.h"      // for log, LOG, Level
+#include "prototype_timing.h"
+#include "core/logging.h"
 
 using logging::Level;
 

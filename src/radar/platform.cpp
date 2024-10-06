@@ -5,7 +5,7 @@
 
 #include "platform.h"
 
-#include "core/logging.h"  // for log, LOG, Level
+#include "core/logging.h"
 
 namespace math
 {
