@@ -2,6 +2,8 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_executable(${PROJECT_NAME})
 
+target_sources(${PROJECT_NAME} PRIVATE main.cpp config.h)
+
 add_subdirectory(core)
 add_subdirectory(radar)
 add_subdirectory(serialization)
