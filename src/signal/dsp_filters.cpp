@@ -232,17 +232,11 @@ namespace signal
 		return _w[0];
 	}
 
-	RealType ArFilter::filter(const RealType sample)
-	{
-		return applyFilter(sample);
-	}
+	RealType ArFilter::filter(const RealType sample) { return applyFilter(sample); }
 
 	void ArFilter::filter(std::span<RealType> samples)
 	{
-		for (auto& sample : samples)
-		{
-			sample = applyFilter(sample); // Use the helper method
-		}
+		std::ranges::transform(samples, samples.begin(), [this](const RealType sample) { return applyFilter(sample); });
 	}
 
 	// =================================================================================================================
