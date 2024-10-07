@@ -6,7 +6,7 @@
 #include "world.h"
 
 #include "antenna/antenna_factory.h"
-#include "radar/radar_system.h"
+#include "radar/radar_obj.h"
 #include "signal/radar_signal.h"
 #include "timing/prototype_timing.h"
 

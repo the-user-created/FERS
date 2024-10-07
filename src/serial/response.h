@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <fstream>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -63,4 +63,10 @@ namespace serial
 
 		void renderResponseCsv(std::ofstream& of, const interp::InterpPoint& point) const noexcept;
 	};
+
+	// Compare function for responses
+	inline bool compareTimes(const std::unique_ptr<Response>& a, const std::unique_ptr<Response>& b)
+	{
+		return a->startTime() < b->startTime();
+	}
 }

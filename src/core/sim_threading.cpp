@@ -27,7 +27,7 @@
 #include "core/logging.h"
 #include "interpolation/interpolation_point.h"
 #include "math/geometry_ops.h"
-#include "radar/radar_system.h"
+#include "radar/radar_obj.h"
 #include "radar/target.h"
 #include "serial/response.h"
 #include "signal/radar_signal.h"
