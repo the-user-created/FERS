@@ -14,8 +14,9 @@
 #include "antenna/antenna_factory.h"
 #include "math/multipath_surface.h"
 #include "radar/platform.h"
-#include "radar/radar_system.h"
+#include "radar/receiver.h"
 #include "radar/target.h"
+#include "radar/transmitter.h"
 #include "signal/radar_signal.h"
 #include "timing/prototype_timing.h"
 

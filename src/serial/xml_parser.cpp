@@ -28,7 +28,7 @@
 #include "math/path.h"
 #include "math/rotation_path.h"
 #include "radar/platform.h"
-#include "radar/radar_system.h"
+#include "radar/radar_obj.h"
 #include "radar/target.h"
 #include "serial/pulse_factory.h"
 #include "timing/prototype_timing.h"

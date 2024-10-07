@@ -8,12 +8,14 @@
 #include "response.h"
 
 #include <cmath>
+#include <fstream>
 #include <iomanip>
 #include <sstream>
 #include <stdexcept>
 
 #include "libxml_wrapper.h"
-#include "radar/radar_system.h"
+#include "radar/radar_obj.h"
+#include "radar/transmitter.h"
 #include "signal/radar_signal.h"
 
 using interp::InterpPoint;
@@ -29,12 +31,11 @@ namespace
 		element.setText(text);
 	}
 
-	void attachRsFloatNode(const XmlElement& root, const std::string& name, const RealType data, const bool scientific = true) noexcept
+	void attachRsFloatNode(const XmlElement& root, const std::string& name, const RealType data,
+	                       const bool scientific = true) noexcept
 	{
 		std::ostringstream oss;
-		if (scientific) {
-			oss.setf(std::ios::scientific);
-		}
+		if (scientific) { oss.setf(std::ios::scientific); }
 		constexpr int precision = 10;
 		oss << std::setprecision(precision) << data;
 
@@ -65,9 +66,9 @@ namespace serial
 		attachRsFloatNode(element, "doppler", _wave->getCarrier() * (1 - point.doppler), false);
 		attachRsFloatNode(element, "power", point.power * _wave->getPower());
 		attachRsFloatNode(element, "Iamplitude",
-						  std::cos(point.phase) * std::sqrt(point.power * _wave->getPower()));
+		                  std::cos(point.phase) * std::sqrt(point.power * _wave->getPower()));
 		attachRsFloatNode(element, "Qamplitude",
-						  std::sin(point.phase) * std::sqrt(point.power * _wave->getPower()));
+		                  std::sin(point.phase) * std::sqrt(point.power * _wave->getPower()));
 		attachRsFloatNode(element, "noise_temperature", point.noise_temperature);
 		attachRsFloatNode(element, "phasedeg", point.phase / PI * 180);
 	}
@@ -85,15 +86,13 @@ namespace serial
 		attachTextNode(element, "name", _wave->getName());
 
 		// Iterate over points and render their XML representation
-		for (const auto& point : _points) {
-			renderResponseXml(element, point);
-		}
+		for (const auto& point : _points) { renderResponseXml(element, point); }
 	}
 
 	void Response::renderResponseCsv(std::ofstream& of, const InterpPoint& point) const noexcept
 	{
-		of << point.time << ", " << point.power << ", " << point.phase << ", "
-			<< _wave->getCarrier() * (1 - point.doppler) << "\n";
+		of << point.time << ", " << point.power << ", " << point.phase << ", " << _wave->getCarrier() * (1 - point.
+			doppler) << "\n";
 	}
 
 	void Response::renderCsv(std::ofstream& of) const noexcept

@@ -33,7 +33,7 @@
 #include "libxml/xmlstring.h"
 #include "noise/noise_generators.h"
 #include "noise/noise_utils.h"
-#include "radar/radar_system.h"
+#include "radar/receiver.h"
 #include "serial/response.h"
 #include "signal/dsp_filters.h"
 #include "timing/timing.h"
