@@ -3,8 +3,6 @@
 // Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 // 7 June 2006
 
-#define TIXML_USE_STL
-
 #include "response_renderer.h"
 
 #include <cmath>

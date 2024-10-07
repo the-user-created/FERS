@@ -3,8 +3,6 @@
 // Marc Brooker mbrooker@rrsg.ee.uct.ac.za
 // 20 July 2006
 
-#define TIXML_USE_STL
-
 #include "antenna_factory.h"
 
 #include <algorithm>
