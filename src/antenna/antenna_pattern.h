@@ -30,7 +30,7 @@ namespace antenna
 
 		~Pattern() = default;
 
-		[[nodiscard]] RealType getGain(const math::SVec3& angle) const;
+		[[nodiscard]] RealType getGain(const math::SVec3& angle) const noexcept;
 
 	private:
 		std::vector<std::vector<RealType>> _pattern;

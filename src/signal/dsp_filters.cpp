@@ -23,7 +23,7 @@ namespace
 {
 	constexpr RealType sinc(const RealType x) noexcept { return x == 0 ? 1.0 : std::sin(x * PI) / (x * PI); }
 
-	std::vector<RealType> blackmanFir(const RealType cutoff, unsigned& filtLength)
+	std::vector<RealType> blackmanFir(const RealType cutoff, unsigned& filtLength) noexcept
 	{
 		filtLength = params::renderFilterLength() * 2;
 		std::vector<RealType> coeffs(filtLength); // Use vector for automatic memory management
@@ -76,8 +76,7 @@ namespace signal
 		// Early validation of arguments
 		if (ratio == 0 || in.empty() || out.empty() || in.size() < ratio)
 		{
-			throw std::invalid_argument(
-				"Invalid input arguments");
+			throw std::invalid_argument("Invalid input arguments");
 		}
 
 		// TODO: Replace with a more efficient multirate downsampling implementation.
@@ -122,10 +121,10 @@ namespace signal
 		_w.assign(_order, 0.0); // Initialize _w with zeros
 	}
 
-	IirFilter::IirFilter(const RealType* denCoeffs, const RealType* numCoeffs, const unsigned order) :
+	IirFilter::IirFilter(const RealType* denCoeffs, const RealType* numCoeffs, const unsigned order) noexcept :
 		_a(denCoeffs, denCoeffs + order), _b(numCoeffs, numCoeffs + order), _w(order, 0.0), _order(order) {}
 
-	RealType IirFilter::filter(const RealType sample)
+	RealType IirFilter::filter(const RealType sample) noexcept
 	{
 		// Shift the delay line to the right
 		std::ranges::rotate(_w, _w.end() - 1); // Rotate right by 1 element
@@ -140,7 +139,7 @@ namespace signal
 		return std::inner_product(_b.begin(), _b.end(), _w.begin(), 0.0);
 	}
 
-	void IirFilter::filter(std::span<RealType> samples)
+	void IirFilter::filter(std::span<RealType> samples) noexcept
 	{
 		for (auto& sample : samples)
 		{
@@ -164,7 +163,7 @@ namespace signal
 	//
 	// =================================================================================================================
 
-	void FirFilter::filter(std::span<RealType> samples)
+	void FirFilter::filter(std::span<RealType> samples) noexcept
 	{
 		// See Oppenheim and Scaffer, section 6.5 "Basic Network Structures for FIR Systems"
 		// FIR filter using direct form
@@ -189,7 +188,7 @@ namespace signal
 		}
 	}
 
-	void FirFilter::filter(std::span<ComplexType> samples) const
+	void FirFilter::filter(std::span<ComplexType> samples) const noexcept
 	{
 		// Temporary line buffer for delay line (reuse it across all samples)
 		std::vector line(_order, ComplexType{0.0, 0.0});
@@ -219,7 +218,7 @@ namespace signal
 	// =================================================================================================================
 
 	// Private helper method to apply the filter logic
-	RealType ArFilter::applyFilter(const RealType sample)
+	RealType ArFilter::applyFilter(const RealType sample) noexcept
 	{
 		// Manually shift the delay line (_w) right by one position
 		for (unsigned j = _order - 1; j > 0; --j) { _w[j] = _w[j - 1]; }
@@ -231,9 +230,9 @@ namespace signal
 		return _w[0];
 	}
 
-	RealType ArFilter::filter(const RealType sample) { return applyFilter(sample); }
+	RealType ArFilter::filter(const RealType sample) noexcept { return applyFilter(sample); }
 
-	void ArFilter::filter(std::span<RealType> samples)
+	void ArFilter::filter(std::span<RealType> samples) noexcept
 	{
 		std::ranges::transform(samples, samples.begin(), [this](const RealType sample) { return applyFilter(sample); });
 	}
@@ -244,8 +243,9 @@ namespace signal
 	//
 	// =================================================================================================================
 
-	Upsampler::Upsampler(const int ratio) : _ratio(ratio), _filter_size(8 * ratio + 1), _filterbank(_filter_size),
-	                                        _sample_memory(_filter_size / ratio + 1, 0.0)
+	Upsampler::Upsampler(const int ratio) noexcept : _ratio(ratio), _filter_size(8 * ratio + 1),
+	                                                 _filterbank(_filter_size),
+	                                                 _sample_memory(_filter_size / ratio + 1, 0.0)
 	{
 		_filterbank.resize(_filter_size);
 		_sample_memory.resize(_filter_size / ratio + 1, 0.0); // Initialize with zeros

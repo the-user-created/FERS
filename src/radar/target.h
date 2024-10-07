@@ -88,7 +88,7 @@ namespace radar
 
 		~IsoTarget() override = default;
 
-		RealType getRcs(math::SVec3& /*inAngle*/, math::SVec3& /*outAngle*/) const override;
+		RealType getRcs(math::SVec3& /*inAngle*/, math::SVec3& /*outAngle*/) const noexcept override;
 
 	private:
 		RealType _rcs;
@@ -106,8 +106,6 @@ namespace radar
 	private:
 		std::unique_ptr<interp::InterpSet> _azi_samples;
 		std::unique_ptr<interp::InterpSet> _elev_samples;
-
-		void loadRcsDescription(const std::string& filename) const;
 	};
 
 	// Factory functions

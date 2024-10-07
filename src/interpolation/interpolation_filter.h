@@ -6,6 +6,7 @@
 #pragma once
 
 #include <cmath>
+#include <expected>
 #include <span>
 #include <vector>
 
@@ -16,23 +17,20 @@ namespace interp
 	class InterpFilter
 	{
 	public:
-		// constexpr for compile-time evaluation
 		static constexpr RealType sinc(const RealType x) noexcept
 		{
 			return x == 0.0 ? 1.0 : std::sin(x * PI) / (x * PI);
 		}
 
-		[[nodiscard]] RealType kaiserWinCompute(RealType x) const;
+		[[nodiscard]] std::expected<RealType, std::string> kaiserWinCompute(RealType x) const noexcept;
 
-		[[nodiscard]] RealType interpFilter(RealType x) const;
+		[[nodiscard]] std::expected<RealType, std::string> interpFilter(RealType x) const noexcept;
 
 		[[nodiscard]] std::span<const RealType> getFilter(RealType delay) const;
 
-		static InterpFilter& getInstance();
+		static InterpFilter& getInstance() noexcept;
 
 	private:
-		static RealType besselI0(RealType x);
-
 		InterpFilter();
 
 		RealType _alpha;

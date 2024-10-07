@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <expected>
 #include <optional>
 #include <string>
 
@@ -29,19 +30,19 @@ namespace core
 	 *
 	 * @param programName The name of the program.
 	 */
-	void showHelp(const char* programName);
+	void showHelp(const char* programName) noexcept;
 
 	/**
 	 * @brief Displays the version information.
 	 */
-	void showVersion();
+	void showVersion() noexcept;
 
 	/**
 	 * @brief Parses command-line arguments.
 	 *
 	 * @param argc Argument count.
 	 * @param argv Argument vector.
-	 * @return std::optional<Config> Parsed configuration or std::nullopt if parsing failed.
+	 * @return std::expected<Config, std::string> Parsed configuration or error message.
 	 */
-	std::optional<Config> parseArguments(int argc, char* argv[]);
+	std::expected<Config, std::string> parseArguments(int argc, char* argv[]) noexcept;
 }

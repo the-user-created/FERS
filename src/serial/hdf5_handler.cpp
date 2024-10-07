@@ -66,6 +66,7 @@ namespace serial
 		LOG(Level::TRACE, "Reading dataset 'Q' from file '{}'", name);
 		if (read_dataset("Q", buffer_q) != size)
 		{
+			LOG(Level::FATAL, "Dataset 'Q' is not the same size as dataset 'I' in file '{}'", name);
 			throw std::runtime_error(R"(Dataset "Q" is not the same size as dataset "I" in file )" + name);
 		}
 
@@ -99,6 +100,7 @@ namespace serial
 			}
 			catch (const HighFive::Exception& err)
 			{
+				LOG(Level::FATAL, "Error while writing data to HDF5 file: {}", err.what());
 				throw std::runtime_error("Error while writing data to HDF5 file: " + chunkName + " - " + err.what());
 			}
 		};
@@ -115,6 +117,7 @@ namespace serial
 			}
 			catch (const HighFive::Exception& err)
 			{
+				LOG(Level::FATAL, "Error while setting attributes on chunk: {}", err.what());
 				throw std::runtime_error("Error while setting attributes on chunk: " + chunkName + " - " + err.what());
 			}
 		};
@@ -146,6 +149,7 @@ namespace serial
 			// Verify the dataset dimensions
 			if (dims.size() != 2)
 			{
+				LOG(Level::FATAL, "Invalid dataset dimensions for '{}' in file '{}'", datasetName, name);
 				throw std::runtime_error(std::format(R"(Invalid dataset dimensions for "{}" in file "{}")", datasetName,
 				                                     name));
 			}

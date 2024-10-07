@@ -17,7 +17,7 @@
 namespace
 {
 	void addArrayToWindow(const RealType wStart, std::vector<ComplexType>& window, unsigned wSize, const RealType rate,
-	                      const RealType rStart, const std::vector<ComplexType>& resp, const unsigned rSize)
+	                      const RealType rStart, const std::vector<ComplexType>& resp, const unsigned rSize) noexcept
 	{
 		int start_sample = static_cast<int>(std::round(rate * (rStart - wStart)));
 		unsigned roffset = 0;
@@ -97,14 +97,14 @@ namespace serial
 	}
 
 	void RenderThread::addWindow(const std::vector<ComplexType>& array, std::vector<ComplexType>& localWindow,
-	                             const RealType startTime, const unsigned arraySize) const
+	                             const RealType startTime, const unsigned arraySize) const noexcept
 	{
 		const RealType rate = params::rate() * params::oversampleRatio();
 		const auto size = static_cast<unsigned>(std::ceil(_length * rate));
 		addArrayToWindow(_start, localWindow, size, rate, startTime, array, arraySize);
 	}
 
-	std::optional<Response*> RenderThread::getWork() const
+	std::optional<Response*> RenderThread::getWork() const noexcept
 	{
 		std::scoped_lock lock(_work_list_mutex);
 		if (_work_list.empty()) { return std::nullopt; }

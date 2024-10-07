@@ -12,6 +12,7 @@
 
 #include "antenna_pattern.h"
 #include "config.h"
+#include "core/logging.h"
 #include "interpolation/interpolation_set.h"
 #include "math/geometry_ops.h"
 #include "python/python_extension.h"
@@ -21,7 +22,7 @@ namespace antenna
 	class Antenna
 	{
 	public:
-		explicit Antenna(std::string name) : _loss_factor(1), _name(std::move(name)) {}
+		explicit Antenna(std::string name) noexcept : _loss_factor(1), _name(std::move(name)) {}
 
 		virtual ~Antenna() = default;
 
@@ -33,15 +34,15 @@ namespace antenna
 		[[nodiscard]] virtual RealType getGain(const math::SVec3& angle, const math::SVec3& refangle,
 		                                       RealType wavelength) const = 0;
 
-		[[nodiscard]] RealType getEfficiencyFactor() const { return _loss_factor; }
-		[[nodiscard]] std::string getName() const { return _name; }
+		[[nodiscard]] RealType getEfficiencyFactor() const noexcept { return _loss_factor; }
+		[[nodiscard]] std::string getName() const noexcept { return _name; }
 		// TODO: Implement noise temperature calculation
-		[[nodiscard]] virtual RealType getNoiseTemperature(const math::SVec3& /*angle*/) const { return 0; }
+		[[nodiscard]] virtual RealType getNoiseTemperature(const math::SVec3& /*angle*/) const noexcept { return 0; }
 
-		void setEfficiencyFactor(RealType loss);
+		void setEfficiencyFactor(RealType loss) noexcept;
 
 	protected:
-		static RealType getAngle(const math::SVec3& angle, const math::SVec3& refangle);
+		static RealType getAngle(const math::SVec3& angle, const math::SVec3& refangle) noexcept;
 
 	private:
 		RealType _loss_factor;
@@ -55,8 +56,8 @@ namespace antenna
 
 		~Isotropic() override = default;
 
-		[[nodiscard]] RealType
-		getGain(const math::SVec3& /*angle*/, const math::SVec3& /*refangle*/, RealType /*wavelength*/) const override
+		[[nodiscard]] RealType getGain(const math::SVec3& /*angle*/, const math::SVec3& /*refangle*/,
+		                               RealType /*wavelength*/) const override
 		{
 			// David Young: Isotropic antennas have a directivity of 1 (or 0 dB),
 			// therefore, the gain of the antenna is the efficiency factor
@@ -73,7 +74,7 @@ namespace antenna
 		~Sinc() override = default;
 
 		[[nodiscard]] RealType getGain(const math::SVec3& angle, const math::SVec3& refangle,
-		                               RealType wavelength) const override;
+		                               RealType wavelength) const noexcept override;
 
 	private:
 		RealType _alpha;
@@ -90,7 +91,7 @@ namespace antenna
 		~Gaussian() override = default;
 
 		[[nodiscard]] RealType getGain(const math::SVec3& angle, const math::SVec3& refangle,
-		                               RealType wavelength) const override;
+		                               RealType wavelength) const noexcept override;
 
 	private:
 		RealType _azscale;
@@ -106,7 +107,7 @@ namespace antenna
 		~SquareHorn() override = default;
 
 		[[nodiscard]] RealType getGain(const math::SVec3& angle, const math::SVec3& refangle,
-		                               RealType wavelength) const override;
+		                               RealType wavelength) const noexcept override;
 
 	private:
 		RealType _dimension;
@@ -116,12 +117,12 @@ namespace antenna
 	{
 	public:
 		Parabolic(const std::string_view name, const RealType diameter) : Antenna(name.data()),
-			_diameter(diameter) {}
+		                                                                  _diameter(diameter) {}
 
 		~Parabolic() override = default;
 
 		[[nodiscard]] RealType getGain(const math::SVec3& angle, const math::SVec3& refangle,
-		                               RealType wavelength) const override;
+		                               RealType wavelength) const noexcept override;
 
 	private:
 		RealType _diameter;
@@ -155,8 +156,8 @@ namespace antenna
 
 		~FileAntenna() override = default;
 
-		[[nodiscard]] RealType
-		getGain(const math::SVec3& angle, const math::SVec3& refangle, RealType /*wavelength*/) const override
+		[[nodiscard]] RealType getGain(const math::SVec3& angle, const math::SVec3& refangle,
+		                               RealType /*wavelength*/) const override
 		{
 			return _pattern->getGain(angle - refangle) * getEfficiencyFactor();
 		}
@@ -173,8 +174,8 @@ namespace antenna
 
 		~PythonAntenna() override = default;
 
-		[[nodiscard]] RealType
-		getGain(const math::SVec3& angle, const math::SVec3& refangle, RealType /*wavelength*/) const override
+		[[nodiscard]] RealType getGain(const math::SVec3& angle, const math::SVec3& refangle,
+		                               RealType /*wavelength*/) const override
 		{
 			return _py_antenna.getGain(angle - refangle) * getEfficiencyFactor();
 		}

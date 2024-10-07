@@ -27,7 +27,7 @@ namespace signal
 
 		~Signal() = default;
 
-		void clear();
+		void clear() noexcept;
 
 		void load(std::span<const ComplexType> inData, unsigned samples, RealType sampleRate);
 
@@ -49,10 +49,10 @@ namespace signal
 		[[nodiscard]] constexpr std::tuple<double, double, double, int> calculateWeightsAndDelays(
 			std::vector<interp::InterpPoint>::const_iterator iter,
 			std::vector<interp::InterpPoint>::const_iterator next, double sampleTime, double idelay,
-			double fracWinDelay) const;
+			double fracWinDelay) const noexcept;
 
 		ComplexType performConvolution(int i, const double* filt, int filtLength, double amplitude,
-		                               int iSampleUnwrap) const;
+		                               int iSampleUnwrap) const noexcept;
 	};
 
 	class RadarSignal

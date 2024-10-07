@@ -23,7 +23,7 @@ namespace math
 
 		explicit RotationPath(const InterpType type = InterpType::INTERP_STATIC) noexcept : _type(type) {}
 
-		void addCoord(const RotationCoord& coord);
+		void addCoord(const RotationCoord& coord) noexcept;
 
 		void finalize();
 

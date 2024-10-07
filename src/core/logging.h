@@ -6,6 +6,7 @@
 
 #define LOG(level, ...) log(level, std::source_location::current(), __VA_ARGS__)
 
+#include <expected>
 #include <format>
 #include <fstream>
 #include <mutex>
@@ -40,15 +41,15 @@ namespace logging
 		Logger() = default;
 
 		/**
-		 * @brief Destructor that closes the log file if it is open.
+		 * @brief Destructor that Destructor that ensures the log file is closed using RAII.
 		 */
-		~Logger() { if (_log_file.is_open()) { _log_file.close(); } }
+		~Logger() noexcept = default;
 
 		/**
 		 * @brief Sets the logging level.
 		 * @param level The logging level to set.
 		 */
-		void setLevel(const Level level) { _log_level = level; }
+		void setLevel(const Level level) noexcept { _log_level = level; }
 
 		/**
 		 * @brief Logs a message with a specific log level and source location.
@@ -57,7 +58,7 @@ namespace logging
 		 * @param location The source location of the log call.
 		 */
 		void log(Level level, const std::string& message,
-		         const std::source_location& location = std::source_location::current());
+		         const std::source_location& location = std::source_location::current()) noexcept;
 
 		/**
 		 * @brief Logs a formatted message with a specific log level and source location.
@@ -68,7 +69,8 @@ namespace logging
 		 * @param args The format arguments.
 		 */
 		template <typename... Args>
-		void log(const Level level, const std::source_location& location, const std::string& formatStr, Args&&... args)
+		void log(const Level level, const std::source_location& location, const std::string& formatStr,
+		         Args&&... args) noexcept
 		{
 			if (level >= _log_level)
 			{
@@ -80,31 +82,20 @@ namespace logging
 		/**
 		 * @brief Sets the log file path to log messages to a file.
 		 * @param filePath The path to the log file.
+		 * @return std::expected indicating success or error message on failure.
 		 */
-		void logToFile(const std::string& filePath);
-
-		/**
-		 * @brief Stops logging to the file.
-		 */
-		void stopLoggingToFile();
+		std::expected<void, std::string> logToFile(const std::string& filePath) noexcept;
 
 	private:
 		Level _log_level = Level::INFO; ///< Current log level.
-		std::ofstream _log_file; ///< Output file stream for logging to a file.
+		std::optional<std::ofstream> _log_file; ///< Output file stream for logging to a file.
 		std::mutex _log_mutex; ///< Mutex for thread-safe logging.
-
-		/**
-		 * @brief Converts a log level to its string representation.
-		 * @param level The log level.
-		 * @return The string representation of the log level.
-		 */
-		static std::string getLevelString(Level level);
 
 		/**
 		 * @brief Gets the current timestamp as a string.
 		 * @return The current timestamp.
 		 */
-		static std::string getCurrentTimestamp();
+		static std::string getCurrentTimestamp() noexcept;
 	};
 
 	/**
@@ -112,7 +103,7 @@ namespace logging
 	 */
 	extern Logger logger;
 
-	inline std::string logLevelToString(const Level level)
+	inline std::string getLevelString(const Level level) noexcept
 	{
 		switch (level)
 		{
@@ -135,7 +126,7 @@ namespace logging
 	 * @param args The format arguments.
 	 */
 	template <typename... Args>
-	void log(Level level, const std::source_location& location, const std::string& formatStr, Args&&... args)
+	void log(Level level, const std::source_location& location, const std::string& formatStr, Args&&... args) noexcept
 	{
 		logger.log(level, location, formatStr, std::forward<Args>(args)...);
 	}

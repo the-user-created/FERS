@@ -17,11 +17,11 @@ namespace timing
 	class PrototypeTiming
 	{
 	public:
-		explicit PrototypeTiming(std::string name) : _name(std::move(name)) {}
+		explicit PrototypeTiming(std::string name) noexcept : _name(std::move(name)) {}
 
 		~PrototypeTiming() = default;
 
-		void copyAlphas(std::vector<RealType>& alphas, std::vector<RealType>& weights) const;
+		void copyAlphas(std::vector<RealType>& alphas, std::vector<RealType>& weights) const noexcept;
 
 		[[nodiscard]] RealType getFrequency() const noexcept { return _frequency; }
 		[[nodiscard]] std::string getName() const { return _name; }
@@ -34,15 +34,15 @@ namespace timing
 		void setFrequency(const RealType freq) noexcept { _frequency = freq; }
 		void setSyncOnPulse() noexcept { _sync_on_pulse = true; }
 
-		void setAlpha(RealType alpha, RealType weight);
+		void setAlpha(RealType alpha, RealType weight) noexcept;
 
-		void setFreqOffset(RealType offset);
+		void setFreqOffset(RealType offset) noexcept;
 
-		void setPhaseOffset(RealType offset);
+		void setPhaseOffset(RealType offset) noexcept;
 
-		void setRandomFreqOffset(RealType stdev);
+		void setRandomFreqOffset(RealType stdev) noexcept;
 
-		void setRandomPhaseOffset(RealType stdev);
+		void setRandomPhaseOffset(RealType stdev) noexcept;
 
 	private:
 		std::string _name;
@@ -55,6 +55,6 @@ namespace timing
 		RealType _frequency{0};
 		bool _sync_on_pulse{false};
 
-		void logOffsetConflict(const std::string& offsetType) const;
+		void logOffsetConflict(const std::string& offsetType) const noexcept;
 	};
 }

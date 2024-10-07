@@ -20,7 +20,7 @@ namespace core
 	 * \param x The value for which the Bessel function is to be computed.
 	 * \return The computed value of the Bessel function of the first kind (order 1).
 	 */
-	inline RealType besselJ1(const RealType x)
+	inline RealType besselJ1(const RealType x) noexcept
 	{
 		return std::cyl_bessel_j(1, x);
 	}
@@ -33,7 +33,7 @@ namespace core
 	 *
 	 * \return The number of CPUs detected, or 1 if detection fails.
 	 */
-	inline unsigned countProcessors()
+	inline unsigned countProcessors() noexcept
 	{
 		if (const unsigned hardware_threads = std::thread::hardware_concurrency(); hardware_threads > 0)
 		{

@@ -16,7 +16,7 @@ constexpr RealType TWO_PI = 2.0 * PI; // Constant for 2*π
 
 namespace antenna
 {
-	RealType Pattern::getGain(const math::SVec3& angle) const
+	RealType Pattern::getGain(const math::SVec3& angle) const noexcept
 	{
 		// Normalizing the azimuth and elevation angles between 0 and 1
 		const double ex1 = (angle.azimuth + PI) / TWO_PI;

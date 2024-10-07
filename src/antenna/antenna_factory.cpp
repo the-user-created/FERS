@@ -12,7 +12,6 @@
 #include <complex>
 #include <optional>
 #include <stdexcept>
-#include <bits/std_abs.h>
 
 #include "core/logging.h"
 #include "core/portable_utils.h"
@@ -25,11 +24,11 @@ using math::Vec3;
 
 namespace
 {
-	RealType sinc(const RealType theta) { return std::sin(theta) / (theta + EPSILON); }
+	RealType sinc(const RealType theta) noexcept { return std::sin(theta) / (theta + EPSILON); }
 
-	RealType j1C(const RealType x) { return x == 0 ? 1.0 : core::besselJ1(x) / x; }
+	RealType j1C(const RealType x) noexcept { return x == 0 ? 1.0 : core::besselJ1(x) / x; }
 
-	void loadAntennaGainAxis(const interp::InterpSet* set, const XmlElement& axisXml)
+	void loadAntennaGainAxis(const interp::InterpSet* set, const XmlElement& axisXml) noexcept
 	{
 		XmlElement tmp = axisXml.childElement("gainsample"); // Get the first gainsample
 		while (tmp.isValid()) // Continue while the element is valid
@@ -58,13 +57,13 @@ namespace antenna
 	//
 	// =================================================================================================================
 
-	void Antenna::setEfficiencyFactor(const RealType loss)
+	void Antenna::setEfficiencyFactor(const RealType loss) noexcept
 	{
 		if (loss > 1) { LOG(Level::INFO, "Using greater than unity antenna efficiency."); }
 		_loss_factor = loss;
 	}
 
-	RealType Antenna::getAngle(const SVec3& angle, const SVec3& refangle)
+	RealType Antenna::getAngle(const SVec3& angle, const SVec3& refangle) noexcept
 	{
 		SVec3 normangle(angle);
 		normangle.length = 1;
@@ -77,7 +76,7 @@ namespace antenna
 	//
 	// =================================================================================================================
 
-	RealType Gaussian::getGain(const SVec3& angle, const SVec3& refangle, RealType /*wavelength*/) const
+	RealType Gaussian::getGain(const SVec3& angle, const SVec3& refangle, RealType /*wavelength*/) const noexcept
 	{
 		const SVec3 a = angle - refangle;
 		return std::exp(-a.azimuth * a.azimuth * _azscale) * std::exp(-a.elevation * a.elevation * _elscale);
@@ -89,7 +88,7 @@ namespace antenna
 	//
 	// =================================================================================================================
 
-	RealType Sinc::getGain(const SVec3& angle, const SVec3& refangle, RealType /*wavelength*/) const
+	RealType Sinc::getGain(const SVec3& angle, const SVec3& refangle, RealType /*wavelength*/) const noexcept
 	{
 		const RealType theta = getAngle(angle, refangle);
 		const ComplexType complex_sinc(sinc(_beta * theta), 0.0);
@@ -104,7 +103,7 @@ namespace antenna
 	//
 	// =================================================================================================================
 
-	RealType SquareHorn::getGain(const SVec3& angle, const SVec3& refangle, const RealType wavelength) const
+	RealType SquareHorn::getGain(const SVec3& angle, const SVec3& refangle, const RealType wavelength) const noexcept
 	{
 		const RealType ge = 4 * PI * std::pow(_dimension, 2) / std::pow(wavelength, 2);
 		const RealType x = PI * _dimension * std::sin(getAngle(angle, refangle)) / wavelength;
@@ -117,7 +116,7 @@ namespace antenna
 	//
 	// =================================================================================================================
 
-	RealType Parabolic::getGain(const SVec3& angle, const SVec3& refangle, const RealType wavelength) const
+	RealType Parabolic::getGain(const SVec3& angle, const SVec3& refangle, const RealType wavelength) const noexcept
 	{
 		const RealType ge = std::pow(PI * _diameter / wavelength, 2);
 		const RealType x = PI * _diameter * std::sin(getAngle(angle, refangle)) / wavelength;

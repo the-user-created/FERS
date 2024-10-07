@@ -9,7 +9,6 @@
 
 #include <chrono>
 #include <optional>
-#include <stdexcept>
 
 #include "config.h"
 #include "logging.h"
@@ -32,7 +31,8 @@ namespace params
 		RealType cw_sample_rate = 1000; ///< CW interpolation rate
 		RealType rate = 0; ///< Sample rate for rendering
 
-		unsigned random_seed = std::chrono::system_clock::now().time_since_epoch().count(); ///< Random seed using current time
+		unsigned random_seed = std::chrono::system_clock::now().time_since_epoch().count();
+		///< Random seed using current time
 		unsigned adc_bits = 0; ///< ADC quantization bits
 		unsigned filter_length = 33; ///< Default filter length
 
@@ -221,11 +221,15 @@ namespace params
 		LOG(logging::Level::DEBUG, "ADC quantization bits set to: {}", bits);
 	}
 
-	/*inline void setRenderFilterLength(unsigned length)
+	/*inline std::expected<void, std::string> setRenderFilterLength(unsigned length) noexcept
 	{
-		if (length < Parameters::MIN_FILTER_LENGTH) { throw std::runtime_error("Render filter length must be >= 16"); }
+		constexpr unsigned MIN_FILTER_LENGTH = 16;
+		if (length < MIN_FILTER_LENGTH) {
+			return std::unexpected("Render filter length must be >= 16");
+		}
 		params.filter_length = length;
 		LOG(logging::Level::DEBUG, "Render filter length set to: {}", length);
+		return {};
 	}*/
 
 	/**
@@ -243,10 +247,13 @@ namespace params
 	/**
 	 * @brief Set the number of rendering threads.
 	 * @param threads Number of rendering threads.
+	 * @return std::expected<void, std::string> to indicate success or an error.
 	 */
-	inline void setThreads(const unsigned threads) noexcept
+	inline std::expected<void, std::string> setThreads(const unsigned threads) noexcept
 	{
+		if (threads == 0) { return std::unexpected("Thread count must be >= 1"); }
 		params.render_threads = threads;
 		LOG(logging::Level::INFO, "Number of rendering threads set to: {}", threads);
+		return {};
 	}
 }

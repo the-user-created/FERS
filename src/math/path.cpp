@@ -19,7 +19,7 @@ using logging::Level;
 
 namespace math
 {
-	void Path::addCoord(const Coord& coord)
+	void Path::addCoord(const Coord& coord) noexcept
 	{
 		// Custom comparator to compare Coord objects based on the member pointer &Coord::t
 		auto comp = [](const Coord& a, const Coord& b) { return a.t < b.t; };
@@ -32,7 +32,11 @@ namespace math
 
 	Vec3 Path::getPosition(const RealType t) const
 	{
-		if (!_final) { throw PathException("Finalize not called before GetPosition"); }
+		if (!_final)
+		{
+			LOG(Level::FATAL, "Finalize not called before GetPosition");
+			throw PathException("Finalize not called before GetPosition");
+		}
 
 		Coord coord{};
 		// Call the appropriate interpolation function based on _type
@@ -46,6 +50,7 @@ namespace math
 			break;
 		case InterpType::INTERP_PYTHON: if (!_pythonpath)
 			{
+				LOG(Level::FATAL, "Python path GetPosition called before module loaded");
 				throw std::logic_error("Python path GetPosition called before module loaded");
 			}
 			return _pythonpath->getPosition(t);
@@ -84,6 +89,7 @@ namespace math
 	{
 		if (path->getType() == Path::InterpType::INTERP_PYTHON)
 		{
+			LOG(Level::FATAL, "Multipath surfaces are not currently supported for Python paths");
 			throw std::runtime_error("Multipath surfaces are not currently supported for Python paths");
 		}
 
