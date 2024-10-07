@@ -26,7 +26,8 @@ namespace serial
 	class ThreadedResponseRenderer
 	{
 	public:
-		ThreadedResponseRenderer(const std::span<const std::unique_ptr<Response>> responses, const radar::Receiver* recv,
+		ThreadedResponseRenderer(const std::span<const std::unique_ptr<Response>> responses,
+		                         const radar::Receiver* recv,
 		                         const unsigned maxThreads) : _responses(responses), _recv(recv),
 		                                                      _max_threads(maxThreads) {}
 
@@ -45,19 +46,21 @@ namespace serial
 	public:
 		RenderThread(const unsigned serial, std::mutex& windowMutex, std::vector<ComplexType>& window,
 		             const RealType length, const RealType start, const RealType fracDelay, std::mutex& workListMutex,
-		             std::queue<Response*>& workList) : _serial(serial), _window_mutex(windowMutex), _window(window),
-		                                                _length(length), _start(start), _frac_delay(fracDelay),
-		                                                _work_list_mutex(workListMutex), _work_list(workList) {}
+		             std::queue<Response*>& workList) noexcept : _serial(serial), _window_mutex(windowMutex),
+		                                                         _window(window), _length(length), _start(start),
+		                                                         _frac_delay(fracDelay),
+		                                                         _work_list_mutex(workListMutex),
+		                                                         _work_list(workList) {}
 
 		~RenderThread() = default;
 
 		void operator()() const;
 
 	private:
-		[[nodiscard]] std::optional<Response*> getWork() const;
+		[[nodiscard]] std::optional<Response*> getWork() const noexcept;
 
 		void addWindow(const std::vector<ComplexType>& array, std::vector<ComplexType>& localWindow, RealType startTime,
-		               unsigned arraySize) const;
+		               unsigned arraySize) const noexcept;
 
 		unsigned _serial;
 		std::mutex& _window_mutex;

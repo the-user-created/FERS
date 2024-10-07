@@ -19,7 +19,7 @@ using math::SVec3;
 
 namespace
 {
-	void loadTargetGainAxis(const interp::InterpSet* set, const XmlElement& axisXml)
+	void loadTargetGainAxis(const interp::InterpSet* set, const XmlElement& axisXml) noexcept
 	{
 		XmlElement tmp = axisXml.childElement("rcssample"); // Get the first gainsample
 		while (tmp.isValid()) // Continue while the element is valid
@@ -42,16 +42,23 @@ namespace
 
 namespace radar
 {
-	class Platform;
-
-	RealType IsoTarget::getRcs(SVec3& /*inAngle*/, SVec3& /*outAngle*/) const
+	RealType IsoTarget::getRcs(SVec3& /*inAngle*/, SVec3& /*outAngle*/) const noexcept
 	{
 		return _model ? _rcs * _model->sampleModel() : _rcs;
 	}
 
 	FileTarget::FileTarget(Platform* platform, std::string name, const std::string& filename) :
 		Target(platform, std::move(name)), _azi_samples(std::make_unique_for_overwrite<interp::InterpSet>()),
-		_elev_samples(std::make_unique_for_overwrite<interp::InterpSet>()) { loadRcsDescription(filename); }
+		_elev_samples(std::make_unique_for_overwrite<interp::InterpSet>())
+	{
+		XmlDocument doc;
+		if (!doc.loadFile(filename)) { throw std::runtime_error("Could not load target description from " + filename); }
+
+		const XmlElement root(doc.getRootElement());
+
+		loadTargetGainAxis(_elev_samples.get(), root.childElement("elevation", 0));
+		loadTargetGainAxis(_azi_samples.get(), root.childElement("azimuth", 0));
+	}
 
 	RealType FileTarget::getRcs(SVec3& inAngle, SVec3& outAngle) const
 	{
@@ -67,16 +74,5 @@ namespace radar
 
 		LOG(logging::Level::FATAL, "Could not get RCS value for target");
 		throw std::runtime_error("Could not get RCS value for target");
-	}
-
-	void FileTarget::loadRcsDescription(const std::string& filename) const
-	{
-		XmlDocument doc;
-		if (!doc.loadFile(filename)) { throw std::runtime_error("Could not load target description from " + filename); }
-
-		const XmlElement root(doc.getRootElement());
-
-		loadTargetGainAxis(_elev_samples.get(), root.childElement("elevation", 0));
-		loadTargetGainAxis(_azi_samples.get(), root.childElement("azimuth", 0));
 	}
 }

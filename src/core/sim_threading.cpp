@@ -72,6 +72,7 @@ namespace
 
 		if (transmitter_to_target_distance <= EPSILON || receiver_to_target_distance <= EPSILON)
 		{
+			LOG(Level::FATAL, "Transmitter or Receiver too close to Target for accurate simulation");
 			throw core::RangeError();
 		}
 
@@ -117,7 +118,8 @@ namespace
 
 		if (rt_end <= EPSILON || rr_end <= EPSILON)
 		{
-			throw std::runtime_error("Target is too close to transmitter or receiver for accurate simulation");
+			LOG(Level::FATAL, "Transmitter or Receiver too close to Target for accurate simulation");
+			throw core::RangeError();
 		}
 
 		const RealType v_r = (rr_end - receiver_to_target_distance) / length.count();
@@ -143,6 +145,7 @@ namespace
 
 		if (distance <= EPSILON)
 		{
+			LOG(Level::FATAL, "Transmitter or Receiver too close to Target for accurate simulation");
 			throw core::RangeError();
 		}
 
@@ -220,6 +223,7 @@ namespace
 		}
 		catch (const core::RangeError&)
 		{
+			LOG(Level::FATAL, "Receiver or Transmitter too close to Target for accurate simulation");
 			throw std::runtime_error("Receiver or Transmitter too close to Target for accurate simulation");
 		}
 
@@ -272,6 +276,7 @@ namespace
 		}
 		catch (const core::RangeError&)
 		{
+			LOG(Level::FATAL, "Receiver or Transmitter too close to Target for accurate simulation");
 			throw std::runtime_error("Receiver or Transmitter too close to Target for accurate simulation");
 		}
 
@@ -286,7 +291,7 @@ namespace
 		// Use stack allocation instead of dynamic memory for pulse
 		TransmitterPulse pulse{};
 
-		// Get the pulse count
+		// Get the pulse counts
 		const int pulses = trans->getPulseCount();
 
 		// Loop through all pulses
@@ -319,7 +324,12 @@ namespace
 		{
 			std::this_thread::yield(); // Let other threads run if the limit is reached
 		}
-		if (error.load()) { throw std::runtime_error("Thread terminated with error. Aborting simulation."); }
+		if (error.load())
+		{
+			LOG(Level::FATAL, "A thread encountered an error. Terminating simulation.");
+			return;
+		}
+
 		running.emplace_back([task] { task(); });
 	}
 
@@ -393,22 +403,20 @@ namespace core
 	void runThreadedSim(const unsigned threadLimit, const World* world)
 	{
 		std::vector<std::jthread> running; // Use jthread to automatically join threads on destruction
-		LOG(Level::INFO, "Using threaded simulation with {} threads.", threadLimit);
 
-		// Get receivers from the world
+		LOG(Level::INFO, "Starting simulation with up to {} threads.", threadLimit);
 		const auto& receivers = world->getReceivers();
 
-		// Run simulation for receiver-transmitter pairs
 		runSimForReceiverTransmitterPairs(threadLimit, world, receivers, running);
 
-		// Clear running threads and log responses
+		// Log responses after the simulation is complete
 		for (const auto& receiver : receivers)
 		{
 			LOG(Level::DEBUG, "{} responses added to receiver '{}'", receiver->getResponseCount(),
 			    receiver->getName().c_str());
 		}
 
-		// Run rendering for receivers
+		// Render responses for each receiver
 		for (const auto& receiver : receivers)
 		{
 			startSimThread(threadLimit, running, [&] { RenderThread(receiver.get())(); });

@@ -5,10 +5,6 @@
 
 #include "world.h"
 
-#include <stdexcept>
-#include <type_traits>
-#include <utility>
-
 #include "antenna/antenna_factory.h"
 #include "radar/radar_system.h"
 #include "signal/radar_signal.h"
@@ -25,15 +21,13 @@ using radar::Target;
 
 namespace core
 {
-	using namespace std::string_literals;
+	void World::add(std::unique_ptr<Platform> plat) noexcept { _platforms.push_back(std::move(plat)); }
 
-	void World::add(std::unique_ptr<Platform> plat) { _platforms.push_back(std::move(plat)); }
+	void World::add(std::unique_ptr<Transmitter> trans) noexcept { _transmitters.push_back(std::move(trans)); }
 
-	void World::add(std::unique_ptr<Transmitter> trans) { _transmitters.push_back(std::move(trans)); }
+	void World::add(std::unique_ptr<Receiver> recv) noexcept { _receivers.push_back(std::move(recv)); }
 
-	void World::add(std::unique_ptr<Receiver> recv) { _receivers.push_back(std::move(recv)); }
-
-	void World::add(std::unique_ptr<Target> target) { _targets.push_back(std::move(target)); }
+	void World::add(std::unique_ptr<Target> target) noexcept { _targets.push_back(std::move(target)); }
 
 	void World::add(std::unique_ptr<RadarSignal> pulse)
 	{

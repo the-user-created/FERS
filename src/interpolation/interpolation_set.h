@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <expected>
 #include <map>
 #include <memory>
 #include <optional>
@@ -21,20 +22,16 @@ namespace interp
 	class InterpSetData
 	{
 	public:
-		/// Load samples into the set
-		template <RealConcept T>
-		void loadSamples(const std::vector<T>& x, const std::vector<T>& y);
-
 		/// Load a single sample into the set
 		template <RealConcept T>
-		void insertSample(T x, T y) { _data.insert({x, y}); }
+		void insertSample(T x, T y) noexcept { _data.insert({x, y}); }
 
 		/// Get the interpolated value at a given point
 		template <RealConcept T>
-		[[nodiscard]] std::optional<T> value(T x) const;
+		[[nodiscard]] std::optional<T> value(T x) const noexcept;
 
 		/// Get the maximum value in the set (always returning a double)
-		[[nodiscard]] double max() const;
+		[[nodiscard]] double max() const noexcept;
 
 		/// Divide the set by a given number
 		template <RealConcept T>
@@ -53,15 +50,12 @@ namespace interp
 		constexpr ~InterpSet() = default;
 
 		template <RealConcept T>
-		void loadSamples(const std::vector<T>& x, const std::vector<T>& y) const { _data->loadSamples(x, y); }
+		void insertSample(T x, T y) const noexcept { _data->insertSample(x, y); }
 
 		template <RealConcept T>
-		void insertSample(T x, T y) const { _data->insertSample(x, y); }
+		[[nodiscard]] std::optional<T> getValueAt(T x) const noexcept { return _data->value(x); }
 
-		template <RealConcept T>
-		[[nodiscard]] std::optional<T> getValueAt(T x) const { return _data->value(x); }
-
-		[[nodiscard]] double getMax() const { return _data->max(); }
+		[[nodiscard]] double getMax() const noexcept { return _data->max(); }
 
 		template <RealConcept T>
 		void divide(T a) const { _data->divide(a); }

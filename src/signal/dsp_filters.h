@@ -45,13 +45,13 @@ namespace signal
 	public:
 		IirFilter(std::span<const RealType> denCoeffs, std::span<const RealType> numCoeffs);
 
-		IirFilter(const RealType* denCoeffs, const RealType* numCoeffs, unsigned order);
+		IirFilter(const RealType* denCoeffs, const RealType* numCoeffs, unsigned order) noexcept;
 
 		~IirFilter() override = default;
 
-		RealType filter(RealType sample) override;
+		RealType filter(RealType sample) noexcept override;
 
-		void filter(std::span<RealType> samples) override;
+		void filter(std::span<RealType> samples) noexcept override;
 
 	private:
 		std::vector<RealType> _a; // Denominator coefficients
@@ -69,9 +69,9 @@ namespace signal
 		~FirFilter() override = default;
 
 		RealType filter(RealType) override { return 0; } // Not used
-		void filter(std::span<RealType> samples) override;
+		void filter(std::span<RealType> samples) noexcept override;
 
-		void filter(std::span<ComplexType> samples) const;
+		void filter(std::span<ComplexType> samples) const noexcept;
 
 	private:
 		std::vector<RealType> _filter; // FIR filter coefficients
@@ -82,27 +82,27 @@ namespace signal
 	class ArFilter final : public DspFilter
 	{
 	public:
-		explicit ArFilter(std::span<const RealType> coeffs)
+		explicit ArFilter(std::span<const RealType> coeffs) noexcept
 			: _w(coeffs.size()), _filter(coeffs.begin(), coeffs.end()), _order(coeffs.size()) {}
 
 		~ArFilter() override = default;
 
-		RealType filter(RealType sample) override;
+		RealType filter(RealType sample) noexcept override;
 
-		void filter(std::span<RealType> samples) override;
+		void filter(std::span<RealType> samples) noexcept override;
 
 	private:
 		std::vector<RealType> _w; // Internal state
 		std::vector<RealType> _filter; // Coefficients
 		unsigned _order{};
 
-		RealType applyFilter(RealType sample);
+		RealType applyFilter(RealType sample) noexcept;
 	};
 
 	class Upsampler
 	{
 	public:
-		explicit Upsampler(int ratio);
+		explicit Upsampler(int ratio) noexcept;
 
 		~Upsampler() = default;
 

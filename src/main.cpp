@@ -29,14 +29,19 @@ using logging::Level;
 int main(const int argc, char* argv[])
 {
 	// Parse arguments
-	const auto config_opt = core::parseArguments(argc, argv);
-	if (!config_opt)
+	const auto config_result = core::parseArguments(argc, argv);
+	if (!config_result) // Check if there is an error
 	{
+		// Log or display the error message
+		if (config_result.error() != "Help requested." && config_result.error() != "Version requested.")
+		{
+			LOG(Level::ERROR, "Argument parsing error: {}", config_result.error());
+		}
 		return 1; // Invalid arguments or help/version shown
 	}
 
 	// Structured bindings for the configuration options
-	const auto& [script_file, log_level, num_threads, validate, log_file] = *config_opt;
+	const auto& [script_file, log_level, num_threads, validate, log_file] = config_result.value();
 
 	// Set the logging level
 	logging::logger.setLevel(log_level);
@@ -44,16 +49,24 @@ int main(const int argc, char* argv[])
 	// Check if the log file was specified and set logging to file
 	if (log_file)
 	{
-		logging::logger.logToFile(*log_file);
+		if (const auto result = logging::logger.logToFile(*log_file); !result)
+		{
+			LOG(Level::ERROR, "Failed to open log file: {}", result.error());
+			return 1;
+		}
 	}
 
-	LOG(Level::DEBUG, "Running FERS with arguments: script_file={}, log_level={}, num_threads={}, validate={}, log_file={}",
-	    script_file, logging::logLevelToString(log_level), num_threads, validate, log_file.value_or("None"));
+	LOG(Level::DEBUG,
+	    "Running FERS with arguments: script_file={}, log_level={}, num_threads={}, validate={}, log_file={}",
+	    script_file, logging::getLevelString(log_level), num_threads, validate, log_file.value_or("None"));
 
 	try
 	{
 		// Set the number of threads to use for the simulation
-		params::setThreads(num_threads);
+		if (const auto result = params::setThreads(num_threads); !result)
+		{
+			LOG(Level::ERROR, "Failed to set number of threads: {}", result.error());
+		}
 
 		// Create the world object
 		const auto world = std::make_unique<core::World>();

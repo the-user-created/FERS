@@ -27,7 +27,7 @@ namespace math
 
 		~Path() = default;
 
-		void addCoord(const Coord& coord);
+		void addCoord(const Coord& coord) noexcept;
 
 		void finalize();
 

@@ -20,7 +20,7 @@ namespace timing
 	class Timing final
 	{
 	public:
-		explicit Timing(std::string name) : _name(std::move(name)) {}
+		explicit Timing(std::string name) noexcept : _name(std::move(name)) {}
 
 		// Defaulted destructor is sufficient
 		~Timing() = default;
@@ -42,7 +42,7 @@ namespace timing
 		}*/
 		void skipSamples(long long samples) const noexcept;
 
-		void initializeModel(const PrototypeTiming* timing);
+		void initializeModel(const PrototypeTiming* timing) noexcept;
 
 		void reset() const noexcept { if (_model) { _model->reset(); } }
 

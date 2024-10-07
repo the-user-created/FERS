@@ -32,9 +32,9 @@ namespace noise
 	class WgnGenerator final : public NoiseGenerator
 	{
 	public:
-		explicit WgnGenerator(RealType stddev = 1.0);
+		explicit WgnGenerator(RealType stddev = 1.0) noexcept;
 
-		RealType getSample() override { return _dist(_rng) * _stddev; }
+		RealType getSample() noexcept override { return _dist(_rng) * _stddev; }
 
 	private:
 		std::default_random_engine _rng;
@@ -45,9 +45,9 @@ namespace noise
 	class GammaGenerator final : public NoiseGenerator
 	{
 	public:
-		explicit GammaGenerator(RealType k);
+		explicit GammaGenerator(RealType k) noexcept;
 
-		RealType getSample() override { return _dist(_rng); }
+		RealType getSample() noexcept override { return _dist(_rng); }
 
 	private:
 		std::default_random_engine _rng;
@@ -61,9 +61,9 @@ namespace noise
 
 		RealType getSample() override { return _topbranch->getSample() * _scale; }
 
-		void skipSamples(long long samples) const;
+		void skipSamples(long long samples) const noexcept;
 
-		void reset() const;
+		void reset() const noexcept;
 
 	private:
 		RealType _scale;
@@ -76,7 +76,7 @@ namespace noise
 	{
 	public:
 		ClockModelGenerator(const std::vector<RealType>& alpha, const std::vector<RealType>& inWeights,
-		                    RealType frequency, RealType phaseOffset, RealType freqOffset, int branches);
+		                    RealType frequency, RealType phaseOffset, RealType freqOffset, int branches) noexcept;
 
 		RealType getSample() override;
 

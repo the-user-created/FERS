@@ -5,8 +5,6 @@
 
 #include "timing.h"
 
-#include <stdexcept>
-
 #include "prototype_timing.h"
 #include "core/logging.h"
 
@@ -19,11 +17,11 @@ namespace timing
 		if (_enabled && _model) { _model->skipSamples(samples); }
 	}
 
-	void Timing::initializeModel(const PrototypeTiming* timing)
+	void Timing::initializeModel(const PrototypeTiming* timing) noexcept
 	{
 		if (!_alphas.empty())
 		{
-			throw std::logic_error("[BUG] ClockModelTiming::initializeModel called more than once");
+			LOG(Level::ERROR, "Timing source already initialized.");
 		}
 
 		timing->copyAlphas(_alphas, _weights);

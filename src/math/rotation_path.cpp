@@ -15,7 +15,7 @@
 
 namespace math
 {
-	void RotationPath::addCoord(const RotationCoord& coord)
+	void RotationPath::addCoord(const RotationCoord& coord) noexcept
 	{
 		const auto iter = std::lower_bound(_coords.begin(), _coords.end(), coord);
 		_coords.insert(iter, coord);

@@ -715,7 +715,8 @@ namespace serial
 				throw XmlException("XML file failed XSD validation!");
 			}
 			LOG(Level::DEBUG, "{} XML file passed XSD validation.", did_combine ? "Combined" : "Main");
-		} else { LOG(Level::DEBUG, "Skipping XML validation."); }
+		}
+		else { LOG(Level::DEBUG, "Skipping XML validation."); }
 
 		// Proceed with parsing the main document's contents
 		parseParameters(root.childElement("parameters", 0));

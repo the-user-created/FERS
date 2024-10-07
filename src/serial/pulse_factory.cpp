@@ -43,6 +43,7 @@ namespace
 		std::ifstream ifile(filepath);
 		if (!ifile)
 		{
+			LOG(logging::Level::FATAL, "Could not open file '{}' to read pulse waveform", filepath.string());
 			throw std::runtime_error("Could not open file '" + filepath.string() + "' to read pulse waveform");
 		}
 
@@ -57,6 +58,7 @@ namespace
 
 		if (ifile.fail() || data.size() != length)
 		{
+			LOG(logging::Level::FATAL, "Could not read full pulse waveform from file '{}'", filepath.string());
 			throw std::runtime_error("Could not read full pulse waveform from file '" + filepath.string() + "'");
 		}
 
@@ -65,7 +67,7 @@ namespace
 		return std::make_unique<RadarSignal>(name, power, carrierFreq, rlength / rate, std::move(signal));
 	}
 
-	constexpr bool hasExtension(const std::string_view filename, const std::string_view ext)
+	constexpr bool hasExtension(const std::string_view filename, const std::string_view ext) noexcept
 	{
 		return filename.ends_with(ext);
 	}
@@ -81,6 +83,8 @@ namespace serial
 
 		if (hasExtension(extension, ".csv")) { return loadPulseFromCsvFile(name, filepath, power, carrierFreq); }
 		if (hasExtension(extension, ".h5")) { return loadPulseFromHdf5File(name, filepath, power, carrierFreq); }
+
+		LOG(logging::Level::FATAL, "Unrecognized file extension '{}' for file: '{}'", extension, filename);
 		throw std::runtime_error("Unrecognized file extension '" + extension + "' for file: " + filename);
 	}
 }

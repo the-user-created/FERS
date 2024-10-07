@@ -16,7 +16,7 @@ namespace noise
 	class FAlphaBranch
 	{
 	public:
-		FAlphaBranch(RealType ffrac, unsigned fint, std::unique_ptr<FAlphaBranch> pre, bool last);
+		FAlphaBranch(RealType ffrac, unsigned fint, std::unique_ptr<FAlphaBranch> pre, bool last) noexcept;
 
 		~FAlphaBranch() = default;
 
@@ -25,18 +25,18 @@ namespace noise
 
 		FAlphaBranch& operator=(const FAlphaBranch&) = delete;
 
-		RealType getSample();
+		RealType getSample() noexcept;
 
-		void flush(RealType scale);
+		void flush(RealType scale) noexcept;
 
-		[[nodiscard]] FAlphaBranch* getPre() const { return _pre.get(); }
+		[[nodiscard]] FAlphaBranch* getPre() const noexcept { return _pre.get(); }
 
 	private:
 		void init();
 
-		void refill();
+		void refill() noexcept;
 
-		RealType calcSample();
+		RealType calcSample() noexcept;
 
 		std::unique_ptr<signal::IirFilter> _shape_filter;
 		std::unique_ptr<signal::IirFilter> _integ_filter;

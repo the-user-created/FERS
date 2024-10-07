@@ -5,10 +5,14 @@
 #pragma once
 
 #include "config.h"
+#include "core/parameters.h"
 
 namespace noise
 {
-	RealType wgnSample(RealType stddev);
+	RealType wgnSample(RealType stddev) noexcept;
 
-	RealType noiseTemperatureToPower(RealType temperature, RealType bandwidth);
+	inline RealType noiseTemperatureToPower(const RealType temperature, const RealType bandwidth) noexcept
+	{
+		return params::boltzmannK() * temperature * bandwidth;
+	}
 }

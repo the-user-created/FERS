@@ -20,7 +20,7 @@ using interp::InterpPoint;
 
 namespace
 {
-	void attachTextNode(const XmlElement& root, const std::string& name, const std::string& text)
+	void attachTextNode(const XmlElement& root, const std::string& name, const std::string& text) noexcept
 	{
 		// Create a child element with the given name
 		const XmlElement element = root.addChild(name);
@@ -29,7 +29,7 @@ namespace
 		element.setText(text);
 	}
 
-	void attachRsFloatNode(const XmlElement& root, const std::string& name, const RealType data, const bool scientific = true)
+	void attachRsFloatNode(const XmlElement& root, const std::string& name, const RealType data, const bool scientific = true) noexcept
 	{
 		std::ostringstream oss;
 		if (scientific) {
@@ -51,9 +51,9 @@ namespace serial
 	//
 	// =================================================================================================================
 
-	std::string Response::getTransmitterName() const { return _transmitter->getName(); }
+	std::string Response::getTransmitterName() const noexcept { return _transmitter->getName(); }
 
-	void Response::renderResponseXml(const XmlElement& root, const InterpPoint& point) const
+	void Response::renderResponseXml(const XmlElement& root, const InterpPoint& point) const noexcept
 	{
 		// Create an "InterpolationPoint" element and link it to the root
 		const XmlElement element = root.addChild("InterpolationPoint");
@@ -72,7 +72,7 @@ namespace serial
 		attachRsFloatNode(element, "phasedeg", point.phase / PI * 180);
 	}
 
-	void Response::renderXml(const XmlElement& root)
+	void Response::renderXml(const XmlElement& root) noexcept
 	{
 		// Create a "Response" element and link it to the root
 		const XmlElement element = root.addChild("Response");
@@ -90,13 +90,13 @@ namespace serial
 		}
 	}
 
-	void Response::renderResponseCsv(std::ofstream& of, const InterpPoint& point) const
+	void Response::renderResponseCsv(std::ofstream& of, const InterpPoint& point) const noexcept
 	{
 		of << point.time << ", " << point.power << ", " << point.phase << ", "
 			<< _wave->getCarrier() * (1 - point.doppler) << "\n";
 	}
 
-	void Response::renderCsv(std::ofstream& of) const
+	void Response::renderCsv(std::ofstream& of) const noexcept
 	{
 		for (const auto& point : _points) { renderResponseCsv(of, point); }
 	}

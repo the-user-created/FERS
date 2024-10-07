@@ -60,13 +60,12 @@ namespace
 		}
 	}
 
-	void addNoiseToWindow(std::span<ComplexType> data, const RealType temperature)
+	void addNoiseToWindow(std::span<ComplexType> data, const RealType temperature) noexcept
 	{
 		if (temperature == 0) { return; }
 
 		const RealType power = noise::noiseTemperatureToPower(
-			temperature,
-			params::rate() * params::oversampleRatio() / 2
+			temperature, params::rate() * params::oversampleRatio() / 2
 		);
 
 		noise::WgnGenerator generator(std::sqrt(power) / 2.0);
@@ -78,7 +77,7 @@ namespace
 		}
 	}
 
-	void adcSimulate(std::span<ComplexType> data, const unsigned bits, RealType fullscale)
+	void adcSimulate(std::span<ComplexType> data, const unsigned bits, RealType fullscale) noexcept
 	{
 		const RealType levels = std::pow(2, bits - 1);
 
@@ -108,6 +107,7 @@ namespace
 			// Check for NaN in both real and imaginary parts
 			if (std::isnan(real_abs) || std::isnan(imag_abs))
 			{
+				LOG(logging::Level::FATAL, "NaN encountered in QuantizeWindow -- early");
 				throw std::runtime_error("NaN encountered in QuantizeWindow -- early");
 			}
 		}
@@ -123,6 +123,7 @@ namespace
 				// Re-check for NaN after normalization
 				if (std::isnan(sample.real()) || std::isnan(sample.imag()))
 				{
+					LOG(logging::Level::FATAL, "NaN encountered in QuantizeWindow -- late");
 					throw std::runtime_error("NaN encountered in QuantizeWindow -- late");
 				}
 			}
@@ -135,7 +136,11 @@ namespace
 	                                         RealType& carrier, bool& enabled)
 	{
 		const auto timing = recv->getTiming();
-		if (!timing) { throw std::runtime_error("[BUG] Could not cast receiver->GetTiming() to ClockModelTiming"); }
+		if (!timing)
+		{
+			LOG(logging::Level::FATAL, "Could not cast receiver->GetTiming() to ClockModelTiming");
+			throw std::runtime_error("Could not cast receiver->GetTiming() to ClockModelTiming");
+		}
 
 		std::vector<RealType> noise(wSize);
 		enabled = timing->isEnabled();
@@ -170,14 +175,19 @@ namespace
 	{
 		for (auto [n, w] : std::views::zip(noise, window))
 		{
-			if (std::isnan(n)) { throw std::runtime_error("[BUG] Noise is NaN in addPhaseNoiseToWindow"); }
+			if (std::isnan(n))
+			{
+				LOG(logging::Level::FATAL, "Noise is NaN in addPhaseNoiseToWindow");
+				throw std::runtime_error("Noise is NaN in addPhaseNoiseToWindow");
+			}
 
 			const ComplexType phase_noise = std::polar(1.0, n);
 			w *= phase_noise;
 
 			if (std::isnan(w.real()) || std::isnan(w.imag()))
 			{
-				throw std::runtime_error("[BUG] NaN encountered in addPhaseNoiseToWindow");
+				LOG(logging::Level::FATAL, "NaN encountered in addPhaseNoiseToWindow");
+				throw std::runtime_error("NaN encountered in addPhaseNoiseToWindow");
 			}
 		}
 	}
@@ -207,6 +217,7 @@ namespace serial
 		if (const fs::path file_path = fs::path(filename).replace_extension(".fersxml"); !doc.
 			saveFile(file_path.string()))
 		{
+			LOG(logging::Level::FATAL, "Failed to save XML file: {}", file_path.string());
 			throw std::runtime_error("Failed to save XML file: " + file_path.string());
 		}
 	}
@@ -231,7 +242,11 @@ namespace serial
 				auto of = std::make_unique<std::ofstream>(file_path.string());
 				of->setf(std::ios::scientific);
 
-				if (!*of) { throw std::runtime_error("Could not open file " + file_path.string() + " for writing"); }
+				if (!*of)
+				{
+					LOG(logging::Level::FATAL, "Could not open file {} for writing", file_path.string());
+					throw std::runtime_error("Could not open file " + file_path.string() + " for writing");
+				}
 
 				// Assign the opened file stream to the map entry
 				it->second = std::move(of);
@@ -321,6 +336,7 @@ namespace serial
 				}
 				catch (const std::exception& e)
 				{
+					LOG(logging::Level::FATAL, "Error writing chunk to HDF5 file: {}", e.what());
 					throw std::runtime_error("Error writing chunk to HDF5 file: " + std::string(e.what()));
 				}
 			}

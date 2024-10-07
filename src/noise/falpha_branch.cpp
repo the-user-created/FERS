@@ -21,7 +21,7 @@ using signal::DecadeUpsampler;
 
 namespace noise
 {
-	FAlphaBranch::FAlphaBranch(RealType ffrac, unsigned fint, std::unique_ptr<FAlphaBranch> pre, const bool last)
+	FAlphaBranch::FAlphaBranch(RealType ffrac, unsigned fint, std::unique_ptr<FAlphaBranch> pre, const bool last) noexcept
 		: _pre(std::move(pre)), _ffrac(ffrac), _fint(fint), _last(last)
 	{
 		LOG(Level::DEBUG, "Creating FAlphaBranch: ffrac={} fint={}", ffrac, fint);
@@ -97,7 +97,7 @@ namespace noise
 		if (!_last) { refill(); }
 	}
 
-	RealType FAlphaBranch::getSample() // NOLINT(misc-no-recursion)
+	RealType FAlphaBranch::getSample() noexcept // NOLINT(misc-no-recursion)
 	{
 		if (!_last)
 		{
@@ -108,7 +108,7 @@ namespace noise
 		return calcSample() + _offset_sample * _upsample_scale;
 	}
 
-	RealType FAlphaBranch::calcSample() // NOLINT(misc-no-recursion)
+	RealType FAlphaBranch::calcSample() noexcept // NOLINT(misc-no-recursion)
 	{
 		RealType sample = wgnSample(1);
 
@@ -130,7 +130,7 @@ namespace noise
 		return sample;
 	}
 
-	void FAlphaBranch::refill() // NOLINT(misc-no-recursion)
+	void FAlphaBranch::refill() noexcept // NOLINT(misc-no-recursion)
 	{
 		const RealType sample = calcSample();
 		_upsampler->upsample(sample, _buffer);
@@ -144,7 +144,7 @@ namespace noise
 		_buffer_samples = 0;
 	}
 
-	void FAlphaBranch::flush(const RealType scale)
+	void FAlphaBranch::flush(const RealType scale) noexcept
 	{
 		init(); // Reset everything with the new scale
 		_pre_scale = scale;

@@ -50,7 +50,7 @@ namespace signal
 	//
 	// =================================================================================================================
 
-	void Signal::clear()
+	void Signal::clear() noexcept
 	{
 		_size = 0;
 		_rate = 0;
@@ -116,7 +116,7 @@ namespace signal
 	constexpr std::tuple<RealType, RealType, RealType, int> Signal::calculateWeightsAndDelays(
 		const std::vector<interp::InterpPoint>::const_iterator iter,
 		const std::vector<interp::InterpPoint>::const_iterator next, const RealType sampleTime, const RealType idelay,
-		const RealType fracWinDelay) const
+		const RealType fracWinDelay) const noexcept
 	{
 		const RealType bw = iter < next ? (sampleTime - iter->time) / (next->time - iter->time) : 0.0;
 
@@ -131,8 +131,7 @@ namespace signal
 	}
 
 	ComplexType Signal::performConvolution(const int i, const RealType* filt, const int filtLength,
-	                                       const RealType amplitude,
-	                                       const int iSampleUnwrap) const
+	                                       const RealType amplitude, const int iSampleUnwrap) const noexcept
 	{
 		const int start = std::max(-filtLength / 2, -i);
 		const int end = std::min(filtLength / 2, static_cast<int>(_size) - i);

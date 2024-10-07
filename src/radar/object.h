@@ -12,7 +12,7 @@ namespace radar
 	class Object
 	{
 	public:
-		Object(Platform* platform, std::string name) : _platform(platform), _name(std::move(name)) {}
+		Object(Platform* platform, std::string name) noexcept : _platform(platform), _name(std::move(name)) {}
 
 		// Default virtual destructor
 		virtual ~Object() = default;
@@ -29,8 +29,8 @@ namespace radar
 
 		[[nodiscard]] math::Vec3 getPosition(const RealType time) const { return _platform->getPosition(time); }
 		[[nodiscard]] math::SVec3 getRotation(const RealType time) const { return _platform->getRotation(time); }
-		[[nodiscard]] Platform* getPlatform() const { return _platform; }
-		[[nodiscard]] const std::string& getName() const { return _name; }
+		[[nodiscard]] Platform* getPlatform() const noexcept { return _platform; }
+		[[nodiscard]] const std::string& getName() const noexcept { return _name; }
 
 	private:
 		Platform* _platform;

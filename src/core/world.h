@@ -26,15 +26,15 @@ namespace core
 	public:
 		World() = default;
 
-		~World() = default;
+		~World() noexcept = default;
 
-		void add(std::unique_ptr<radar::Platform> plat);
+		void add(std::unique_ptr<radar::Platform> plat) noexcept;
 
-		void add(std::unique_ptr<radar::Transmitter> trans);
+		void add(std::unique_ptr<radar::Transmitter> trans) noexcept;
 
-		void add(std::unique_ptr<radar::Receiver> recv);
+		void add(std::unique_ptr<radar::Receiver> recv) noexcept;
 
-		void add(std::unique_ptr<radar::Target> target);
+		void add(std::unique_ptr<radar::Target> target) noexcept;
 
 		void add(std::unique_ptr<signal::RadarSignal> pulse);
 
@@ -72,9 +72,11 @@ namespace core
 		std::vector<std::unique_ptr<radar::Transmitter>> _transmitters;
 		std::vector<std::unique_ptr<radar::Receiver>> _receivers;
 		std::vector<std::unique_ptr<radar::Target>> _targets;
+
 		std::unordered_map<std::string, std::unique_ptr<signal::RadarSignal>> _pulses;
 		std::unordered_map<std::string, std::unique_ptr<antenna::Antenna>> _antennas;
 		std::unordered_map<std::string, std::unique_ptr<timing::PrototypeTiming>> _timings;
+
 		std::unique_ptr<math::MultipathSurface> _multipath_surface;
 	};
 }

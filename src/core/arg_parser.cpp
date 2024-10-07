@@ -8,7 +8,6 @@
 #include <exception>
 #include <filesystem>
 #include <iostream>
-#include <stdexcept>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -21,12 +20,33 @@ using logging::Level;
 namespace
 {
 	// Function to check if the file has a valid log extension
-	bool isValidLogFileExtension(const std::string& filePath)
+	bool isValidLogFileExtension(const std::string& filePath) noexcept
 	{
 		static const std::vector<std::string> VALID_EXTENSIONS = {".log", ".txt"};
 		std::string extension = std::filesystem::path(filePath).extension().string();
 		std::ranges::transform(extension, extension.begin(), ::tolower);
 		return std::ranges::find(VALID_EXTENSIONS, extension) != VALID_EXTENSIONS.end();
+	}
+
+	/**
+	 * @brief Parses the logging level from a string.
+	 *
+	 * @param level The logging level as a string.
+	 * @return std::optional<Level> The corresponding logging level, or std::nullopt if invalid.
+	 */
+	std::optional<Level> parseLogLevel(const std::string& level) noexcept
+	{
+		static const std::unordered_map<std::string, Level> LEVEL_MAP = {
+			{"TRACE", Level::TRACE},
+			{"DEBUG", Level::DEBUG},
+			{"INFO", Level::INFO},
+			{"WARNING", Level::WARNING},
+			{"ERROR", Level::ERROR},
+			{"FATAL", Level::FATAL}
+		};
+
+		if (const auto it = LEVEL_MAP.find(level); it != LEVEL_MAP.end()) { return it->second; }
+		return std::nullopt;
 	}
 }
 
@@ -37,7 +57,7 @@ namespace core
 	 *
 	 * @param programName The name of the program.
 	 */
-	void showHelp(const char* programName)
+	void showHelp(const char* programName) noexcept
 	{
 		std::cout << R"(/------------------------------------------------\
 | FERS - The Flexible Extensible Radar Simulator |
@@ -67,32 +87,11 @@ Make sure the script file follows the correct format to avoid errors.
 	/**
 	 * @brief Displays the version information.
 	 */
-	void showVersion()
+	void showVersion() noexcept
 	{
 		std::cout << "FERS - The Flexible Extensible Radar Simulator\n";
 		std::cout << "Version 0.28\n";
 		std::cout << "Author: Marc Brooker\n";
-	}
-
-	/**
-	 * @brief Parses the logging level from a string.
-	 *
-	 * @param level The logging level as a string.
-	 * @return std::optional<Level> The corresponding logging level, or std::nullopt if invalid.
-	 */
-	std::optional<Level> parseLogLevel(const std::string& level)
-	{
-		static const std::unordered_map<std::string, Level> LEVEL_MAP = {
-			{"TRACE", Level::TRACE},
-			{"DEBUG", Level::DEBUG},
-			{"INFO", Level::INFO},
-			{"WARNING", Level::WARNING},
-			{"ERROR", Level::ERROR},
-			{"FATAL", Level::FATAL}
-		};
-
-		if (const auto it = LEVEL_MAP.find(level); it != LEVEL_MAP.end()) { return it->second; }
-		return std::nullopt;
 	}
 
 	/**
@@ -102,7 +101,7 @@ Make sure the script file follows the correct format to avoid errors.
 	 * @param argv Argument vector.
 	 * @return std::optional<Config> Parsed configuration or std::nullopt if parsing failed.
 	 */
-	std::optional<Config> parseArguments(const int argc, char* argv[])
+	std::expected<Config, std::string> parseArguments(const int argc, char* argv[]) noexcept
 	{
 		Config config;
 		bool script_file_set = false;
@@ -110,7 +109,7 @@ Make sure the script file follows the correct format to avoid errors.
 		if (argc < 2)
 		{
 			showHelp(argv[0]);
-			return std::nullopt;
+			return std::unexpected("No arguments provided.");
 		}
 
 		for (int i = 1; i < argc; ++i)
@@ -118,29 +117,27 @@ Make sure the script file follows the correct format to avoid errors.
 			if (std::string arg = argv[i]; arg == "--help" || arg == "-h")
 			{
 				showHelp(argv[0]);
-				return std::nullopt;
+				return std::unexpected("Help requested.");
 			}
 			else
 			{
 				if (arg == "--version" || arg == "-v")
 				{
 					showVersion();
-					return std::nullopt;
+					return std::unexpected("Version requested.");
 				}
 				if (arg.rfind("--log-level=", 0) == 0)
 				{
-					// starts with --log-level=
 					std::string level_str = arg.substr(12);
 					if (auto level = parseLogLevel(level_str)) { config.log_level = *level; }
 					else
 					{
-						std::cerr << "Error: Invalid log level '" << level_str << "'\n";
-						return std::nullopt;
+						LOG(Level::ERROR, "Invalid log level '" + level_str + "'");
+						return std::unexpected("Invalid log level: " + level_str);
 					}
 				}
 				else if (arg.rfind("--log-file=", 0) == 0)
 				{
-					// Parse log file path
 					if (std::string log_file_path = arg.substr(11); isValidLogFileExtension(log_file_path))
 					{
 						config.log_file = log_file_path;
@@ -148,54 +145,43 @@ Make sure the script file follows the correct format to avoid errors.
 					else
 					{
 						LOG(Level::ERROR, "Invalid log file extension. Log file must have .log or .txt extension.");
-						return std::nullopt;
+						return std::unexpected("Invalid log file extension: " + log_file_path);
 					}
 				}
 				else if (arg.rfind("-n=", 0) == 0)
 				{
-					// starts with -n=
 					try
 					{
 						config.num_threads = std::stoi(arg.substr(3));
 						if (config.num_threads == 0)
 						{
-							throw std::invalid_argument("Number of threads must be greater than 0");
+							return std::unexpected("Number of threads must be greater than 0");
 						}
 
-						if (const unsigned max_threads = countProcessors(); config.num_threads >
-							max_threads)
+						if (const unsigned max_threads = countProcessors(); config.num_threads > max_threads)
 						{
-							LOG(Level::ERROR,
-							    "Number of threads specified is greater than the number of processors. Defaulting to the number of processors.");
+							LOG(Level::WARNING,
+							    "Number of threads exceeds available processors. Defaulting to max processors.");
 							config.num_threads = max_threads;
 						}
 					}
-					catch (const std::exception&)
-					{
-						std::cerr << "Error: Invalid number of threads specified\n";
-						return std::nullopt;
-					}
+					catch (const std::exception&) { return std::unexpected("Invalid number of threads specified."); }
 				}
 				else if (arg[0] != '-' && !script_file_set)
 				{
-					// Assume it's the script file if it's not an option
 					config.script_file = arg;
 					script_file_set = true;
 				}
 				else if (arg == "--validate" || arg == "-val") { config.validate = true; }
 				else
 				{
-					std::cerr << "Error: Unrecognized option or argument '" << arg << "'\n";
-					return std::nullopt;
+					LOG(Level::ERROR, "Unrecognized option or argument: '" + arg + "'");
+					return std::unexpected("Unrecognized argument: " + arg);
 				}
 			}
 		}
 
-		if (!script_file_set)
-		{
-			std::cerr << "Error: No script file provided\n";
-			return std::nullopt;
-		}
+		if (!script_file_set) { return std::unexpected("No script file provided."); }
 
 		return config;
 	}

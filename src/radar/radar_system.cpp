@@ -196,9 +196,6 @@ namespace radar
 			return obj->getDual(); // Return existing dual if already created
 		}
 
-		LOG(Level::DEBUG, "[{}.createMultipathDual] Creating dual for {}",
-		    typeid(T).name(), obj->getName());
-
 		// Create or retrieve the dual platform
 		Platform* dual_platform = createMultipathDual(obj->getPlatform(), surf);
 
@@ -242,9 +239,6 @@ namespace radar
 
 		while (!radar_stack.empty())
 		{
-			LOG(Level::DEBUG, "[{}.createMultipathDual] Stack size: {}",
-			    typeid(T).name(), radar_stack.size());
-
 			Radar* attached = radar_stack.top();
 			radar_stack.pop();
 
