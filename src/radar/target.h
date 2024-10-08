@@ -151,7 +151,7 @@ namespace radar
 		void setFluctuationModel(std::unique_ptr<RcsModel> in) { _model = std::move(in); }
 
 	protected:
-		math::PsMatrix _psm; ///< The polarization matrix for the target.
+		// math::PsMatrix _psm; ///< The polarization matrix for the target.
 		std::unique_ptr<RcsModel> _model{nullptr}; ///< The RCS fluctuation model for the target.
 	};
 
