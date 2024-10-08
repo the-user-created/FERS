@@ -119,7 +119,7 @@ auto get_child_bool = [](const XmlElement& element, const std::string& elementNa
 	try { return XmlElement::getSafeAttribute(element, elementName) == "true"; }
 	catch (const XmlException&)
 	{
-		LOG(Level::DEBUG, "Failed to get boolean value for element {}. Defaulting to {}.", elementName, defaultVal);
+		LOG(Level::WARNING, "Failed to get boolean value for element {}. Defaulting to {}.", elementName, defaultVal);
 		return defaultVal;
 	}
 };
@@ -153,7 +153,7 @@ namespace
 			}
 			catch (const XmlException&)
 			{
-				LOG(Level::DEBUG, "Failed to set parameter {}. Using default value. {}", paramName, defaultValue);
+				LOG(Level::WARNING, "Failed to set parameter {}. Using default value. {}", paramName, defaultValue);
 			}
 		};
 
@@ -246,25 +246,25 @@ namespace
 		}
 
 		try { timing_obj->setFreqOffset(get_child_real_type(timing, "freq_offset")); }
-		catch (XmlException&) { LOG(Level::DEBUG, "Clock section '{}' does not specify frequency offset.", name); }
+		catch (XmlException&) { LOG(Level::WARNING, "Clock section '{}' does not specify frequency offset.", name); }
 
 		try { timing_obj->setRandomFreqOffset(get_child_real_type(timing, "random_freq_offset")); }
 		catch (XmlException&)
 		{
-			LOG(Level::DEBUG, "Clock section '{}' does not specify random frequency offset.", name);
+			LOG(Level::WARNING, "Clock section '{}' does not specify random frequency offset.", name);
 		}
 
 		try { timing_obj->setPhaseOffset(get_child_real_type(timing, "phase_offset")); }
-		catch (XmlException&) { LOG(Level::DEBUG, "Clock section '{}' does not specify phase offset.", name); }
+		catch (XmlException&) { LOG(Level::WARNING, "Clock section '{}' does not specify phase offset.", name); }
 
 		try { timing_obj->setRandomPhaseOffset(get_child_real_type(timing, "random_phase_offset")); }
-		catch (XmlException&) { LOG(Level::DEBUG, "Clock section '{}' does not specify random phase offset.", name); }
+		catch (XmlException&) { LOG(Level::WARNING, "Clock section '{}' does not specify random phase offset.", name); }
 
 		try { timing_obj->setFrequency(get_child_real_type(timing, "frequency")); }
 		catch (XmlException&)
 		{
 			timing_obj->setFrequency(params::rate());
-			LOG(Level::DEBUG, "Clock section '{}' does not specify frequency. Assuming {}.", name, params::rate());
+			LOG(Level::WARNING, "Clock section '{}' does not specify frequency. Assuming {}.", name, params::rate());
 		}
 
 		// Extract optional attribute: synconpulse (default is "true")
@@ -342,7 +342,7 @@ namespace
 
 		// Set the <efficiency> element (optional)
 		try { ant->setEfficiencyFactor(get_child_real_type(antenna, "efficiency")); }
-		catch (XmlException&) { LOG(Level::DEBUG, "Antenna '{}' does not specify efficiency, assuming unity.", name); }
+		catch (XmlException&) { LOG(Level::WARNING, "Antenna '{}' does not specify efficiency, assuming unity.", name); }
 
 		world->add(std::move(ant));
 	}
@@ -385,7 +385,7 @@ namespace
 		}
 		catch (XmlException&)
 		{
-			LOG(Level::ERROR, "Failed to set interpolation type for platform {}. Defaulting to static",
+			LOG(Level::ERROR, "Failed to set MotionPath interpolation type for platform {}. Defaulting to static",
 			    platform->getName());
 			path->setInterp(Path::InterpType::INTERP_STATIC);
 		}
@@ -450,7 +450,7 @@ namespace
 		}
 		catch (XmlException&)
 		{
-			LOG(Level::ERROR, "Failed to set interpolation type for platform {}. Defaulting to static",
+			LOG(Level::ERROR, "Failed to set RotationPath interpolation type for platform {}. Defaulting to static",
 			    platform->getName());
 			path->setInterp(RotationPath::InterpType::INTERP_STATIC);
 		}

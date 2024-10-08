@@ -83,7 +83,6 @@ namespace serial
 	                    const RealType time, const RealType rate, const RealType fullscale, const unsigned count)
 	{
 		// Generate chunk names
-		LOG(Level::TRACE, "Adding chunk {} to file", count);
 		const std::string base_chunk_name = "chunk_" + std::format("{:06}", count);
 		const std::string i_chunk_name = base_chunk_name + "_I";
 		const std::string q_chunk_name = base_chunk_name + "_Q";
@@ -126,7 +125,6 @@ namespace serial
 		};
 
 		// Write the I and Q chunks and set their attributes
-		LOG(Level::TRACE, "Writing chunks to file");
 		write_chunk(i_chunk_name, i);
 		write_chunk(q_chunk_name, q);
 
