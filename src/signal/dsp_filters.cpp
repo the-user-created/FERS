@@ -12,7 +12,6 @@
 #include <array>
 #include <cmath>
 #include <complex>
-#include <cstddef>
 #include <numeric>
 #include <stdexcept>
 
@@ -125,19 +124,6 @@ namespace signal
 	//
 	// =================================================================================================================
 
-	IirFilter::IirFilter(std::span<const RealType> denCoeffs, std::span<const RealType> numCoeffs)
-	{
-		if (denCoeffs.size() != numCoeffs.size())
-		{
-			throw std::logic_error("IIRFilter does not currently support mixed order filters");
-		}
-
-		_order = denCoeffs.size();
-		_a.assign(denCoeffs.begin(), denCoeffs.end());
-		_b.assign(numCoeffs.begin(), numCoeffs.end());
-		_w.assign(_order, 0.0); // Initialize _w with zeros
-	}
-
 	IirFilter::IirFilter(const RealType* denCoeffs, const RealType* numCoeffs, const unsigned order) noexcept :
 		_a(denCoeffs, denCoeffs + order), _b(numCoeffs, numCoeffs + order), _w(order, 0.0), _order(order) {}
 
@@ -180,7 +166,7 @@ namespace signal
 	//
 	// =================================================================================================================
 
-	void FirFilter::filter(std::span<RealType> samples) noexcept
+	/*void FirFilter::filter(std::span<RealType> samples) noexcept
 	{
 		// See Oppenheim and Scaffer, section 6.5 "Basic Network Structures for FIR Systems"
 		// FIR filter using direct form
@@ -203,7 +189,7 @@ namespace signal
 			// Shift the line buffer manually instead of using std::rotate
 			for (unsigned j = _order - 1; j > 0; --j) { line[j] = line[j - 1]; }
 		}
-	}
+	}*/
 
 	void FirFilter::filter(std::vector<ComplexType>& samples) const
 	{
@@ -236,7 +222,7 @@ namespace signal
 	// =================================================================================================================
 
 	// Private helper method to apply the filter logic
-	RealType ArFilter::applyFilter(const RealType sample) noexcept
+	/*RealType ArFilter::applyFilter(const RealType sample) noexcept
 	{
 		// Manually shift the delay line (_w) right by one position
 		for (unsigned j = _order - 1; j > 0; --j) { _w[j] = _w[j - 1]; }
@@ -253,7 +239,7 @@ namespace signal
 	void ArFilter::filter(std::span<RealType> samples) noexcept
 	{
 		std::ranges::transform(samples, samples.begin(), [this](const RealType sample) { return applyFilter(sample); });
-	}
+	}*/
 
 	// =================================================================================================================
 	//
@@ -261,7 +247,7 @@ namespace signal
 	//
 	// =================================================================================================================
 
-	Upsampler::Upsampler(const int ratio) noexcept : _ratio(ratio), _filter_size(8 * ratio + 1),
+	/*Upsampler::Upsampler(const int ratio) noexcept : _ratio(ratio), _filter_size(8 * ratio + 1),
 	                                                 _filterbank(_filter_size),
 	                                                 _sample_memory(_filter_size / ratio + 1, 0.0)
 	{
@@ -310,7 +296,7 @@ namespace signal
 			std::copy_n(inSamples.begin(), inSamples.size(),
 			            _sample_memory.begin() + (transfer_size - static_cast<std::ptrdiff_t>(inSamples.size())));
 		}
-	}
+	}*/
 
 	// =================================================================================================================
 	//
@@ -345,7 +331,7 @@ namespace signal
 		_filter->filter(out);
 	}
 
-	void DecadeUpsampler::upsample(const std::span<const RealType> in, std::span<RealType> out) const
+	/*void DecadeUpsampler::upsample(const std::span<const RealType> in, std::span<RealType> out) const
 	{
 		if (out.size() != in.size() * 10)
 		{
@@ -360,5 +346,5 @@ namespace signal
 			          out.begin() + (static_cast<std::ptrdiff_t>(i) + 1) * 10, 0);
 		}
 		_filter->filter(out);
-	}
+	}*/
 }
