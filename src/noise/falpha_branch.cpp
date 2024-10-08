@@ -26,9 +26,9 @@ namespace noise
 {
 	FAlphaBranch::FAlphaBranch(RealType ffrac, unsigned fint, std::unique_ptr<FAlphaBranch> pre,
 	                           const bool last) noexcept
-		: _pre(std::move(pre)), _ffrac(ffrac), _fint(fint), _last(last)
+		: _pre(std::move(pre)), _buffer(10), _ffrac(ffrac), _fint(fint), _last(last)
 	{
-		LOG(Level::DEBUG, "Creating FAlphaBranch: ffrac={} fint={}", ffrac, fint);
+		LOG(Level::TRACE, "Creating FAlphaBranch: ffrac={} fint={}", ffrac, fint);
 		_upsample_scale = std::pow(10, ffrac + fint + 0.5);
 		init();
 
@@ -73,8 +73,8 @@ namespace noise
 		}
 		else if (_ffrac != 0.0f)
 		{
-			LOG(Level::INFO, "ffrac is {}", _ffrac);
-			throw std::runtime_error("Fractional integrator values other than 0.5 are not supported");
+			LOG(Level::FATAL, "Fractional noise generation values other than 0.5 or 0 are not supported. ffrac={}", _ffrac);
+			throw std::runtime_error("Fractional integrator values other than 0.5 or 0 are not supported");
 		}
 
 		if (_fint > 0)
