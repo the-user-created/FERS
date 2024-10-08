@@ -24,101 +24,77 @@ constexpr RealType BLACKMAN_A2 = 0.08;
 
 namespace
 {
-	/**
-	 * @brief Sinc function for FIR filter design.
-	 *
-	 * The sinc function is used to design FIR filters. This implementation uses the normalized sinc function
-	 * sinc(x) = sin(PI * x) / (PI * x).
-	 *
-	 * @param x Input value.
-	 * @return Sinc value at x.
-	 */
-	constexpr RealType sinc(const RealType x) noexcept { return x == 0 ? 1.0 : std::sin(x * PI) / (x * PI); }
+	RealType sinc(const RealType x) { return x == 0 ? 1.0 : std::sin(x * PI) / (x * PI); }
 
-	/**
-	 * @brief Generates FIR filter coefficients using the Blackman window.
-	 *
-	 * This function generates FIR filter coefficients using the Blackman window. The
-	 * coefficients are designed to have a cutoff frequency of 'cutoff' and a length of 'filtLength'.
-	 *
-	 * @param cutoff Cutoff frequency for the filter.
-	 * @param filtLength Length of the filter.
-	 * @return Vector of FIR filter coefficients.
-	 */
-	std::vector<RealType> blackmanFir(const RealType cutoff, unsigned& filtLength) noexcept
+	std::vector<RealType> blackmanFir(const RealType cutoff, unsigned& filtLength)
 	{
 		filtLength = params::renderFilterLength() * 2;
 		std::vector<RealType> coeffs(filtLength); // Use vector for automatic memory management
 		const RealType n = filtLength / 2.0;
-		std::ranges::generate(coeffs, [&, i = 0]() mutable
+		for (unsigned i = 0; i < filtLength; i++)
 		{
 			// We use the Blackman window, for a suitable tradeoff between rolloff and stopband attenuation
 			// Equivalent Kaiser beta = 7.04 (Oppenhiem and Schaffer, Hamming)
 			const RealType filt = sinc(cutoff * (i - n));
-			const RealType window = BLACKMAN_A0 - BLACKMAN_A1 * std::cos(PI * i / n) + BLACKMAN_A2 * std::cos(
-				2 * PI * i / n);
-			return filt * window;
-		});
+			const RealType window = BLACKMAN_A0 - BLACKMAN_A1 * cos(PI * i / n) + BLACKMAN_A2 * cos(2 * PI * i / n);
+			coeffs[i] = filt * window;
+		}
 		return coeffs;
 	}
 }
 
 namespace signal
 {
-	void upsample(const std::span<const ComplexType> in, std::span<ComplexType> out, const unsigned ratio)
+	void upsample(const ComplexType* in, const unsigned size, ComplexType* out, const unsigned ratio)
 	{
 		// TODO: this would be better as a multirate upsampler
 		// This implementation is functional but suboptimal.
 		// Users requiring higher accuracy should oversample outside FERS until this is addressed.
-
-		// Early check for valid input/output buffer sizes
-		if (in.empty() || out.empty() || ratio == 0) { throw std::invalid_argument("Invalid input arguments"); }
-
-		// Compute FIR filter coefficients using Blackman window
-		unsigned filt_length = 0;
+		unsigned filt_length;
 		const auto coeffs = blackmanFir(1 / static_cast<RealType>(ratio), filt_length);
 
 		// Temporary buffer to hold upsampled and filtered data
-		std::vector<ComplexType> tmp(in.size() * ratio + filt_length);
+		std::vector<ComplexType> tmp(size * ratio + filt_length);
 
-		// Insert input samples at intervals of 'ratio', leaving zeroes in between
-		for (size_t i = 0; i < in.size(); ++i) { tmp[i * ratio] = in[i]; }
+		// Insert the input samples at intervals of 'ratio', leaving zeroes in between
+		for (unsigned i = 0; i < size; ++i) { tmp[i * ratio] = in[i]; }
 
-		// Create and apply the FIR filter
+		// Create the FIR filter and apply it
 		const FirFilter filt(coeffs);
-		filt.filter(tmp); // Automatically handles tmp.size()
+		filt.filter(tmp, size * ratio + filt_length);
 
-		// Output filtered result, correcting for filter delay (filt_length / 2 - 1)
-		const auto offset = static_cast<ptrdiff_t>(filt_length / 2 - 1);
-		std::ranges::copy_n(tmp.begin() + offset, static_cast<std::ptrdiff_t>(in.size() * ratio), out.begin());
+		// Output the filtered result with appropriate offset for the filter delay (filt_length / 2 - 1)
+		std::copy_n(tmp.begin() + filt_length / 2 - 1, size * ratio, out);
 	}
 
-	void downsample(std::span<const ComplexType> in, std::span<ComplexType> out, const unsigned ratio)
+	void downsample(const std::vector<ComplexType>& in, const unsigned size, std::vector<ComplexType>& out,
+					const unsigned ratio)
 	{
-		// Early validation of arguments
-		if (ratio == 0 || in.empty() || out.empty() || in.size() < ratio)
+		if (ratio == 0 || size == 0 || !in.data() || !out.data())
 		{
 			throw std::invalid_argument("Invalid input arguments");
 		}
 
 		// TODO: Replace with a more efficient multirate downsampling implementation.
-		// Compute FIR filter coefficients using Blackman window
 		unsigned filt_length = 0;
+
 		const auto coeffs = blackmanFir(1 / static_cast<RealType>(ratio), filt_length);
 
-		// Temporary buffer to hold filtered data, with padding for the filter length
-		std::vector<ComplexType> tmp(in.size() + filt_length);
+		// Use std::vector for temporary buffer allocation
+		std::vector<ComplexType> tmp(size + filt_length);
 
-		// Copy input data to temporary buffer, zero-padding the end
-		std::ranges::copy(in, tmp.begin());
-		std::fill(tmp.begin() + static_cast<std::ptrdiff_t>(in.size()), tmp.end(), ComplexType{0, 0});
+		// Initialize the tail of the temporary buffer with zeros (auto-handled by vector initialization).
+		std::fill(tmp.begin() + size, tmp.end(), ComplexType{0, 0});
 
-		// Create and apply the FIR filter
+		// Copy input data to the temporary buffer
+		std::copy_n(in.data(), size, tmp.begin());
+
+		// FirFilter class usage
 		const FirFilter filt(coeffs);
-		filt.filter(tmp); // Filter the entire tmp buffer
+		filt.filter(tmp, size + filt_length);
 
-		// Downsample the filtered data and normalize by ratio
-		for (size_t i = 0; i < out.size(); ++i)
+		// Downsample the filtered data
+		for (unsigned i = 0; i < size / ratio; ++i)
 		{
 			out[i] = tmp[i * ratio + filt_length / 2] / static_cast<RealType>(ratio);
 		}
@@ -210,26 +186,22 @@ namespace signal
 		}
 	}
 
-	void FirFilter::filter(std::span<ComplexType> samples) const noexcept
+	void FirFilter::filter(std::vector<ComplexType>& samples, const unsigned size) const
 	{
-		// Temporary line buffer for delay line (reuse it across all samples)
-		std::vector line(_order, ComplexType{0.0, 0.0});
+		std::vector<ComplexType> line(_order, {0.0, 0.0}); // Zero-initialize the line buffer
 
-		// Iterate over each complex sample
-		for (auto& sample : samples)
+		for (unsigned i = 0; i < size; i++)
 		{
-			// Insert the new sample at the start of the line
-			line[0] = sample;
-			ComplexType result(0.0, 0.0);
+			line[0] = samples[i]; // New complex sample input at the start of the line
+			ComplexType res(0.0, 0.0); // Result accumulator
 
-			// Perform the convolution (dot product) with the filter coefficients
-			for (unsigned j = 0; j < _order; ++j) { result += line[_order - j - 1] * _filter[j]; }
+			// Convolve the current line with the filter coefficients
+			for (unsigned j = 0; j < _order; j++) { res += line[_order - j - 1] * _filter[j]; }
 
-			// Store the result in the current sample
-			sample = result;
+			samples[i] = res; // Store the filtered result back to the samples
 
-			// Shift the line buffer manually
-			for (unsigned j = _order - 1; j > 0; --j) { line[j] = line[j - 1]; }
+			// Use std::rotate to shift the line buffer
+			std::rotate(line.rbegin(), line.rbegin() + 1, line.rend());
 		}
 	}
 
