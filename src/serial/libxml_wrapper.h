@@ -20,6 +20,7 @@
 #include <string_view>
 #include <libxml/parser.h>
 
+#include "core/logging.h"
 #include "libxml/globals.h"
 #include "libxml/xmlstring.h"
 
@@ -248,7 +249,7 @@ public:
 	{
 		if (!_doc)
 		{
-			std::cerr << "Document is null, cannot save." << std::endl;
+			LOG(logging::Level::ERROR, "Document is null; Cannot save to file");
 			return false;
 		}
 		return xmlSaveFormatFileEnc(filename.data(), _doc.get(), "UTF-8", 1) != -1;

@@ -194,13 +194,13 @@ namespace
 
 		if (const XmlElement power_element = pulse.childElement("power", 0); !power_element.isValid())
 		{
-			std::cerr << "  <power> element is missing in <pulse>!" << std::endl;
+			LOG(Level::ERROR, "<power> element is missing in <pulse>!");
 			return;
 		}
 
 		if (const XmlElement carrier_element = pulse.childElement("carrier", 0); !carrier_element.isValid())
 		{
-			std::cerr << "  <carrier> element is missing in <pulse>!" << std::endl;
+			LOG(Level::ERROR, "<carrier> element is missing in <pulse>!");
 			return;
 		}
 
@@ -214,7 +214,7 @@ namespace
 			);
 			world->add(std::move(wave));
 		}
-		else { std::cerr << "  Unsupported pulse type: " << type << std::endl; }
+		else { LOG(Level::ERROR, "Unsupported pulse type: {}", type); }
 	}
 
 	/**
@@ -336,7 +336,7 @@ namespace
 		}
 		else
 		{
-			std::cerr << "  Unsupported antenna pattern: " << pattern << std::endl;
+			LOG(Level::ERROR, "Unsupported antenna pattern: {}", pattern);
 			return;
 		}
 
@@ -783,7 +783,7 @@ namespace
 			std::string include_filename = include_element.getText();
 			if (include_filename.empty())
 			{
-				std::cerr << "<include> element is missing the filename!" << std::endl;
+				LOG(Level::ERROR, "<include> element is missing the filename!");
 				continue;
 			}
 
@@ -795,7 +795,7 @@ namespace
 			XmlDocument included_doc;
 			if (!included_doc.loadFile(include_path.string()))
 			{
-				std::cerr << "Failed to load included XML file: " << include_path << std::endl;
+				LOG(Level::ERROR, "Failed to load included XML file: {}", include_path.string());
 				continue;
 			}
 
