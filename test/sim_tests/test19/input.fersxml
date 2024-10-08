@@ -26,15 +26,27 @@
         <phase_offset>0</phase_offset>
         <random_phase_offset>0</random_phase_offset>
         <noise_entry>
-            <alpha>0</alpha>
-            <weight>0.5</weight>
+            <alpha>2</alpha>
+            <weight>0.8</weight>
         </noise_entry>
         <noise_entry>
             <alpha>1</alpha>
             <weight>0.2</weight>
         </noise_entry>
         <noise_entry>
-            <alpha>1</alpha>
+            <alpha>0</alpha>
+            <weight>0.5</weight>
+        </noise_entry>
+        <noise_entry>
+            <alpha>-1</alpha>
+            <weight>0.8</weight>
+        </noise_entry>
+        <noise_entry>
+            <alpha>-2</alpha>
+            <weight>0.8</weight>
+        </noise_entry>
+        <noise_entry>
+            <alpha>-3</alpha>
             <weight>0.8</weight>
         </noise_entry>
     </timing>
