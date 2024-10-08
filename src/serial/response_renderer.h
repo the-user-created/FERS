@@ -1,6 +1,7 @@
 // response_renderer.h
 // Definitions for response multi-threaded rendering classes
-// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
+// Original code by Marc Brooker mbrooker@rrsg.ee.uct.ac.za
+// Modified by: David Young
 // 7 June 2006
 
 #pragma once

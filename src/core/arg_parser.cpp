@@ -1,6 +1,15 @@
-// arg_parser.cpp
-// Created by David Young on 9/20/24.
-//
+/**
+ * @file arg_parser.cpp
+ * @brief Implementation of the command-line argument parser for the application.
+ *
+ * This file provides the implementation of functions that handle parsing command-line arguments,
+ * displaying help and version information, and validating input configurations.
+ * It supports setting options like logging level, number of threads,
+ * and script file input, with error handling and validation.
+ *
+ * @author David Young
+ * @date 2024-09-20
+ */
 
 #include "arg_parser.h"
 
@@ -19,7 +28,14 @@ using logging::Level;
 
 namespace
 {
-	// Function to check if the file has a valid log extension
+	/**
+	 * @brief Checks if the given file has a valid log file extension.
+	 *
+	 * This function ensures that the log file has a valid extension, either `.log` or `.txt`.
+	 *
+	 * @param filePath The path of the log file.
+	 * @return true if the file has a valid extension, false otherwise.
+	 */
 	bool isValidLogFileExtension(const std::string& filePath) noexcept
 	{
 		static const std::vector<std::string> VALID_EXTENSIONS = {".log", ".txt"};
@@ -29,10 +45,13 @@ namespace
 	}
 
 	/**
-	 * @brief Parses the logging level from a string.
+	 * @brief Parses the logging level from a string representation.
 	 *
-	 * @param level The logging level as a string.
-	 * @return std::optional<Level> The corresponding logging level, or std::nullopt if invalid.
+	 * This function converts a string to the corresponding logging level.
+	 * If the provided string does not match a valid logging level, it returns `std::nullopt`.
+	 *
+	 * @param level The string representation of the logging level.
+	 * @return std::optional<Level> The corresponding logging level, or `std::nullopt` if invalid.
 	 */
 	std::optional<Level> parseLogLevel(const std::string& level) noexcept
 	{
@@ -52,11 +71,6 @@ namespace
 
 namespace core
 {
-	/**
-	 * @brief Displays the help message.
-	 *
-	 * @param programName The name of the program.
-	 */
 	void showHelp(const char* programName) noexcept
 	{
 		std::cout << R"(/------------------------------------------------\
@@ -84,9 +98,6 @@ Make sure the script file follows the correct format to avoid errors.
 )";
 	}
 
-	/**
-	 * @brief Displays the version information.
-	 */
 	void showVersion() noexcept
 	{
 		std::cout << "FERS - The Flexible Extensible Radar Simulator\n";
@@ -94,13 +105,6 @@ Make sure the script file follows the correct format to avoid errors.
 		std::cout << "Author: Marc Brooker\n";
 	}
 
-	/**
-	 * @brief Parses command-line arguments.
-	 *
-	 * @param argc Argument count.
-	 * @param argv Argument vector.
-	 * @return std::optional<Config> Parsed configuration or std::nullopt if parsing failed.
-	 */
 	std::expected<Config, std::string> parseArguments(const int argc, char* argv[]) noexcept
 	{
 		Config config;

@@ -1,6 +1,15 @@
-// logging.cpp
-// Created by David Young on 9/20/24.
-//
+/**
+ * @file logging.cpp
+ * @brief Implementation of the logging system.
+ *
+ * This file contains the implementation of the logging system defined in `logging.h`.
+ * It handles logging messages with different log levels,
+ * thread-safe logging, and output to both console and optional file.
+ * The logger also includes timestamp generation and source location tracking for more detailed logs.
+ *
+ * @author David Young
+ * @date 2024-09-20
+ */
 
 #include "logging.h"
 
@@ -13,15 +22,8 @@
 
 namespace logging
 {
-	/**
-	 * @brief Global logger object.
-	 */
 	Logger logger;
 
-	/**
-	 * @brief Gets the current timestamp as a string.
-	 * @return The current timestamp.
-	 */
 	std::string Logger::getCurrentTimestamp() noexcept
 	{
 		const auto now = std::chrono::system_clock::now();
@@ -34,12 +36,6 @@ namespace logging
 		return oss.str();
 	}
 
-	/**
-	 * @brief Logs a message with a specific log level and source location.
-	 * @param level The log level.
-	 * @param message The message to log.
-	 * @param location The source location of the log call.
-	 */
 	void Logger::log(const Level level, const std::string& message, const std::source_location& location) noexcept
 	{
 		if (level >= _log_level)
@@ -64,11 +60,6 @@ namespace logging
 		}
 	}
 
-	/**
-	 * @brief Attempts to set the log file path to log messages to a file.
-	 * @param filePath The path to the log file.
-	 * @return std::expected indicating success or error message on failure.
-	 */
 	std::expected<void, std::string> Logger::logToFile(const std::string& filePath) noexcept
 	{
 		std::scoped_lock lock(_log_mutex);

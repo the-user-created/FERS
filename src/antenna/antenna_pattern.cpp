@@ -1,7 +1,16 @@
-// antenna_pattern.cpp
-// Implementation of interpolated 2D arrays for gain patterns and RCS patterns
-// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-// 19 September 2007
+/**
+ * @file antenna_pattern.cpp
+ * @brief Implementation of interpolated 2D arrays for gain patterns and RCS patterns.
+ *
+ * This file implements the `Pattern` class,
+ * which handles the loading and bilinear interpolation of antenna gain patterns.
+ * The gain pattern is read from a file and stored in a 2D array,
+ * and the class provides a method to calculate the interpolated gain at a given angle.
+ * The interpolation process ensures smooth transitions between data points.
+ *
+ * @authors David Young, Marc Brooker
+ * @date 2007-09-19
+ */
 
 #include "antenna_pattern.h"
 

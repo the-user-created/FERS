@@ -1,7 +1,12 @@
-// geometry_ops.cpp
-// Implementation of geometry classes
-// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-// 26 May 2006
+/**
+* @file geometry_ops.cpp
+* @brief Implementation of geometry classes.
+*
+* This file implements the Vec3, SVec3, and Matrix3 classes for handling 3D vector and matrix operations.
+*
+* @authors David Young, Marc Brooker
+* @date 2006-05-26
+*/
 
 #include "geometry_ops.h"
 

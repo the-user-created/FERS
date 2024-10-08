@@ -1,7 +1,10 @@
-// python_extension.cpp
-// Implementation of Python extensions
-// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-// 7 March 2007
+/**
+ * @file python_extension.cpp
+ * @brief Implementation of Python extensions for integrating with FERS.
+ *
+ * @authors David Young, Marc Brooker
+ * @date 2007-03-07
+ */
 
 #include "python_extension.h"
 

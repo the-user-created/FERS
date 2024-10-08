@@ -1,7 +1,10 @@
-// polarization_matrix.cpp
-// Created by David Young on 9/12/24.
-// Original code by Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-//
+/**
+ * @file polarization_matrix.cpp
+ * @brief Contains the implementation of the PsMatrix class.
+ *
+ * @authors David Young, Marc Brooker
+ * @date 2024-09-12
+ */
 
 #include "polarization_matrix.h"
 

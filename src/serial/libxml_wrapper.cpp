@@ -1,6 +1,10 @@
-//
-// Created by David Young on 10/4/24.
-//
+/**
+* @file libxml_wrapper.cpp
+* @brief Wrapper for managing XML documents and elements using libxml2.
+*
+* @author David Young
+* @date 2024-09-29
+*/
 
 #include "libxml_wrapper.h"
 

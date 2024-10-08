@@ -1,6 +1,7 @@
 // response_renderer.cpp
 // Performs the second phase of the simulation - rendering the result
-// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
+// Original code by Marc Brooker mbrooker@rrsg.ee.uct.ac.za
+// Modified by: David Young
 // 7 June 2006
 
 #include "response_renderer.h"

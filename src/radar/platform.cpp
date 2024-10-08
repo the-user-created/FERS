@@ -1,7 +1,10 @@
-// platform.cpp
-// Implementation of simulator platform class
-// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-// Started: 26 April 2006
+/**
+ * @file platform.cpp
+ * @brief Implementation of the Platform class.
+ *
+ * @authors David Young, Marc Brooker
+ * @date 2006-04-21
+ */
 
 #include "platform.h"
 

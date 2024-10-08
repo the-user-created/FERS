@@ -1,7 +1,10 @@
-// timing.cpp
-// Implementation of timing sources
-// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-// 16 October 2006
+/**
+ * @file timing.cpp
+ * @brief Implementation of timing sources.
+ *
+ * @authors David Young, Marc Brooker
+ * @date 2006-10-16
+ */
 
 #include "timing.h"
 
@@ -19,10 +22,7 @@ namespace timing
 
 	void Timing::initializeModel(const PrototypeTiming* timing) noexcept
 	{
-		if (!_alphas.empty())
-		{
-			LOG(Level::ERROR, "Timing source already initialized.");
-		}
+		if (!_alphas.empty()) { LOG(Level::ERROR, "Timing source already initialized."); }
 
 		timing->copyAlphas(_alphas, _weights);
 

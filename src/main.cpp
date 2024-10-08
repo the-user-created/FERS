@@ -1,7 +1,16 @@
-// main.cpp
-// Contains the main function and some support code for FERS
-// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-// Started: 25 April 2006
+/**
+* @file main.cpp
+* @brief Entry point and main logic for the FERS simulation application.
+*
+* This file contains the main function that initializes and runs the FERS
+* (Flexible Extensible Radar Simulator) simulation.
+* It handles command-line argument parsing, logging configuration,
+* simulation initialization, and execution using multithreading.
+* This is the central component of the simulation framework.
+*
+* @authors David Young, Marc Brooker
+* @date 2006-04-25
+*/
 
 #include <exception>
 #include <memory>
@@ -17,14 +26,16 @@
 using logging::Level;
 
 /**
- * \brief Entry point for the FERS simulation application.
+ * @brief Entry point for the FERS simulation application.
  *
  * This function initializes the simulation environment, parses command-line arguments,
- * sets up logging, and runs the simulation using a multithreaded approach.
+ * sets up logging based on user input, and runs the simulation using a multithreaded approach.
+ * It manages the execution of the simulation, and handles errors encountered during the initialization
+ * or simulation stages.
  *
- * \param argc The number of command-line arguments.
- * \param argv The array of command-line arguments.
- * \return int Returns 0 on successful completion, 1 on error.
+ * @param argc The number of command-line arguments passed to the program.
+ * @param argv The array of command-line arguments passed to the program.
+ * @return int Returns 0 on successful simulation execution, or 1 on error.
  */
 int main(const int argc, char* argv[])
 {
@@ -89,8 +100,7 @@ int main(const int argc, char* argv[])
 	catch (const std::exception& ex)
 	{
 		// Catch-all for std::exception errors
-		LOG(Level::FATAL, "Simulation encountered unexpected error:{}\nSimulator will terminate.",
-		    ex.what());
+		LOG(Level::FATAL, "Simulation encountered unexpected error: {}\nSimulator will terminate.", ex.what());
 		return 1;
 	}
 	catch (...)

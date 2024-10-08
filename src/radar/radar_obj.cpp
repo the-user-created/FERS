@@ -1,7 +1,11 @@
-// radar_obj.cpp
-// Implementation of classes defined in radar_obj.h
-// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-// Started 21 April 2006
+/**
+ * radar_obj.cpp
+ * @file
+ * @brief Implementation of classes defined in radar_obj.h
+ *
+ * @authors David Young, Marc Brooker
+ * @date 2006-04-21
+ */
 
 #include "radar_obj.h"
 
@@ -26,7 +30,10 @@ namespace radar
 	RealType Radar::getGain(const math::SVec3& angle, const math::SVec3& refangle,
 	                        const RealType wavelength) const { return _antenna->getGain(angle, refangle, wavelength); }
 
-	RealType Radar::getNoiseTemperature(const math::SVec3& angle) const noexcept { return _antenna->getNoiseTemperature(angle); }
+	RealType Radar::getNoiseTemperature(const math::SVec3& angle) const noexcept
+	{
+		return _antenna->getNoiseTemperature(angle);
+	}
 
 	void Radar::setTiming(const std::shared_ptr<timing::Timing>& tim)
 	{

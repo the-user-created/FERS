@@ -1,6 +1,7 @@
 // multipath_surface.h
 // Classes and definitions for multipath propagation
-// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
+// Original code by Marc Brooker mbrooker@rrsg.ee.uct.ac.za
+// Modified by: David Young
 // 9 September 2007
 
 #pragma once

@@ -1,7 +1,15 @@
-// antenna_factory.cpp
-// Implementation of Antenna Class
-// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-// 20 July 2006
+/**
+ * @file antenna_factory.cpp
+ * @brief Implementation of the Antenna class and its derived classes.
+ *
+ * This file contains the implementation of various antenna types including the base `Antenna` class and several
+ * derived classes like `Isotropic`, `Sinc`, `Gaussian`, `SquareHorn`, `Parabolic`, and others.
+ * The file also includes utility functions for mathematical operations
+ * used in gain computations and methods for loading antenna gain data from XML files.
+ *
+ * @authors David Young, Marc Brooker
+ * @date 2006-07-20
+ */
 
 #include "antenna_factory.h"
 
@@ -22,10 +30,35 @@ using math::Vec3;
 
 namespace
 {
+	/**
+	 * @brief Compute the sinc function.
+	 *
+	 * The sinc function is defined as sin(x) / x.
+	 * This function computes the sinc function for a given angle theta.
+	 *
+	 * @param theta The angle for which to compute the sinc function.
+	 * @return The value of the sinc function at the given angle theta.
+	 */
 	RealType sinc(const RealType theta) noexcept { return std::sin(theta) / (theta + EPSILON); }
 
+	/**
+	 * @brief Compute the Bessel function of the first kind.
+	 *
+	 * This function computes the Bessel function of the first kind for a given value x.
+	 *
+	 * @param x The value for which to compute the Bessel function.
+	 * @return The value of the Bessel function of the first kind at the given value x.
+	 */
 	RealType j1C(const RealType x) noexcept { return x == 0 ? 1.0 : core::besselJ1(x) / x; }
 
+	/**
+	 * @brief Load antenna gain axis data from an XML element.
+	 *
+	 * This function loads antenna gain axis data from an XML element and stores it in an interpolation set.
+	 *
+	 * @param set The interpolation set to store the gain axis data.
+	 * @param axisXml The XML element containing the gain axis data.
+	 */
 	void loadAntennaGainAxis(const interp::InterpSet* set, const XmlElement& axisXml) noexcept
 	{
 		XmlElement tmp = axisXml.childElement("gainsample"); // Get the first gainsample

@@ -1,7 +1,15 @@
-// interpolation_filter.cpp
-// Created by David Young on 9/12/24.
-// Original code by Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-//
+/**
+ * @file interpolation_filter.cpp
+ * @brief Implementation of the InterpFilter class.
+ *
+ * This file provides the implementation of the `InterpFilter` class, which is used for generating
+ * interpolation filters using the Kaiser window function.
+ * The class is a singleton and provides methods for filter computation,
+ * including the use of sinc and Kaiser window functions for interpolation.
+ *
+ * @author David Young
+ * @date 2024-09-12
+ */
 
 #include "interpolation_filter.h"
 
@@ -14,6 +22,15 @@ using logging::Level;
 
 namespace
 {
+	/**
+	 * @brief Computes the modified Bessel function of the first kind for x.
+	 *
+	 * This function calculates the modified Bessel function of the first kind for a given input x.
+	 * It uses a polynomial approximation for x values less than 3.75 and an exponential approximation for larger values.
+	 *
+	 * @param x The input value for which the Bessel function is computed.
+	 * @return The computed Bessel function value, or an error message if computation fails.
+	 */
 	std::expected<RealType, std::string> besselI0(const RealType x)
 	{
 		// Use the polynomial approximation from section 9.8 of

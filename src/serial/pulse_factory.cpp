@@ -1,7 +1,15 @@
-// pulse_factory.cpp
-// Created by David Young on 9/12/24.
-// Original code by Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-//
+/**
+ * @file pulse_factory.cpp
+ * @brief Implementation for loading pulse data into RadarSignal objects.
+ *
+ * This file provides the implementation of functions that load radar pulse data
+ * from different file formats and create RadarSignal objects. It supports
+ * loading pulse data from HDF5 and CSV files and handles their conversion
+ * into RadarSignal instances.
+ *
+ * @authors David Young, Marc Brooker
+ * @date 2024-09-12
+ */
 
 #include "pulse_factory.h"
 
@@ -25,6 +33,18 @@ using signal::RadarSignal;
 
 namespace
 {
+	/**
+	 * @brief Loads a radar pulse from an HDF5 file and returns a RadarSignal object.
+	 *
+	 * This function loads pulse waveform data from the specified HDF5 file and creates a RadarSignal object.
+	 *
+	 * @param name The name of the radar signal.
+	 * @param filepath The path to the HDF5 file containing the pulse data.
+	 * @param power The power of the radar signal in the pulse.
+	 * @param carrierFreq The carrier frequency of the radar signal.
+	 * @return A unique pointer to a RadarSignal object loaded with the pulse data.
+	 * @throws std::runtime_error If the file cannot be opened or the file format is unrecognized.
+	 */
 	std::unique_ptr<RadarSignal> loadPulseFromHdf5File(const std::string& name, const std::filesystem::path& filepath,
 	                                                   const RealType power, const RealType carrierFreq)
 	{
@@ -34,9 +54,21 @@ namespace
 		auto signal = std::make_unique<Signal>();
 		signal->load(data, data.size(), params::rate());
 		return std::make_unique<RadarSignal>(name, power, carrierFreq,
-			static_cast<RealType>(data.size()) / params::rate(),std::move(signal));
+		                                     static_cast<RealType>(data.size()) / params::rate(), std::move(signal));
 	}
 
+	/**
+	 * @brief Loads a radar pulse from a CSV file and returns a RadarSignal object.
+	 *
+	 * This function loads pulse waveform data from the specified CSV file and creates a RadarSignal object.
+	 *
+	 * @param name The name of the radar signal.
+	 * @param filepath The path to the CSV file containing the pulse data.
+	 * @param power The power of the radar signal in the pulse.
+	 * @param carrierFreq The carrier frequency of the radar signal.
+	 * @return A unique pointer to a RadarSignal object loaded with the pulse data.
+	 * @throws std::runtime_error If the file cannot be opened or the file format is unrecognized.
+	 */
 	std::unique_ptr<RadarSignal> loadPulseFromCsvFile(const std::string& name, const std::filesystem::path& filepath,
 	                                                  const RealType power, const RealType carrierFreq)
 	{
@@ -67,6 +99,15 @@ namespace
 		return std::make_unique<RadarSignal>(name, power, carrierFreq, rlength / rate, std::move(signal));
 	}
 
+	/**
+	 * @brief Checks if a filename has a specific extension.
+	 *
+	 * This function checks if the specified filename has the specified extension.
+	 *
+	 * @param filename The filename to check.
+	 * @param ext The extension to check for.
+	 * @return True if the filename has the specified extension, false otherwise.
+	 */
 	constexpr bool hasExtension(const std::string_view filename, const std::string_view ext) noexcept
 	{
 		return filename.ends_with(ext);

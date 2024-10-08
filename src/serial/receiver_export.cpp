@@ -1,8 +1,10 @@
-// received_export.cpp
-// Export receiver data to various formats
-// Created by David Young on 9/13/24.
-// Original code by Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-//
+/**
+ * @file receiver_export.cpp
+ * @brief Export receiver data to various formats.
+ *
+ * @authors David Young, Marc Brooker
+ * @date 2024-09-13
+ */
 
 #include "receiver_export.h"
 
@@ -42,6 +44,15 @@ namespace fs = std::filesystem;
 
 namespace
 {
+	/**
+	 * @brief Open an HDF5 file for writing.
+	 *
+	 * Opens an HDF5 file for writing, overwriting the file if it already exists.
+	 *
+	 * @param recvName The name of the receiver, which will be used as the filename for the HDF5 export.
+	 * @return An optional HighFive::File object representing the opened file, or std::nullopt if binary export is disabled.
+	 * @throws std::runtime_error If the file cannot be opened.
+	 */
 	std::optional<HighFive::File> openHdf5File(const std::string& recvName)
 	{
 		if (!params::exportBinary()) { return std::nullopt; }
@@ -60,6 +71,14 @@ namespace
 		}
 	}
 
+	/**
+	 * @brief Add noise to a window of complex samples.
+	 *
+	 * Adds white Gaussian noise to a window of complex samples based on the specified temperature.
+	 *
+	 * @param data A span of ComplexType objects representing the window of complex samples to add noise to.
+	 * @param temperature The noise temperature in Kelvin. If the temperature is 0, no noise is added.
+	 */
 	void addNoiseToWindow(std::span<ComplexType> data, const RealType temperature) noexcept
 	{
 		if (temperature == 0) { return; }
@@ -77,6 +96,16 @@ namespace
 		}
 	}
 
+	/**
+	 * @brief Simulate an ADC quantization process on a window of complex samples.
+	 *
+	 * Simulates an ADC quantization process on a window of complex samples, rounding each sample to the nearest
+	 * quantization level based on the number of bits and full-scale value.
+	 *
+	 * @param data A span of ComplexType objects representing the window of complex samples to quantize.
+	 * @param bits The number of bits used for quantization.
+	 * @param fullscale The full-scale value used for quantization.
+	 */
 	void adcSimulate(std::span<ComplexType> data, const unsigned bits, RealType fullscale) noexcept
 	{
 		const RealType levels = std::pow(2, bits - 1);
@@ -92,6 +121,16 @@ namespace
 		}
 	}
 
+	/**
+	 * @brief Quantize a window of complex samples to the nearest quantization level.
+	 *
+	 * Quantizes a window of complex samples to the nearest quantization level based on the maximum absolute value
+	 * across the real and imaginary parts of the samples. The samples are normalized to the full-scale value
+	 * before quantization.
+	 *
+	 * @param data A span of ComplexType objects representing the window of complex samples to quantize.
+	 * @return The full-scale value used for quantization.
+	 */
 	RealType quantizeWindow(std::span<ComplexType> data)
 	{
 		// Find the maximum absolute value across real and imaginary parts
@@ -132,6 +171,19 @@ namespace
 		return max_value;
 	}
 
+	/**
+	 * @brief Generate phase noise samples for a window.
+	 *
+	 * Generates phase noise samples for a window based on the receiver timing model, window size, and sample rate.
+	 * The phase noise samples are used to modulate the phase of the window samples.
+	 *
+	 * @param recv A pointer to the radar::Receiver object containing receiver data.
+	 * @param wSize The size of the window in samples.
+	 * @param rate The sample rate in Hz.
+	 * @param carrier The carrier frequency of the phase noise in Hz.
+	 * @param enabled A boolean flag indicating whether phase noise is enabled.
+	 * @return A vector of RealType objects representing the phase noise samples.
+	 */
 	std::vector<RealType> generatePhaseNoise(const radar::Receiver* recv, const unsigned wSize, const RealType rate,
 	                                         RealType& carrier, bool& enabled)
 	{
@@ -171,6 +223,15 @@ namespace
 		return noise;
 	}
 
+	/**
+	 * @brief Add phase noise to a window of complex samples.
+	 *
+	 * Adds phase noise to a window of complex samples by modulating the phase of each sample using the phase noise
+	 * samples. The phase noise samples are generated based on the receiver timing model and window size.
+	 *
+	 * @param noise A span of RealType objects representing the phase noise samples.
+	 * @param window A span of ComplexType objects representing the window of complex samples to add phase noise to.
+	 */
 	void addPhaseNoiseToWindow(std::span<const RealType> noise, std::span<ComplexType> window)
 	{
 		for (auto [n, w] : std::views::zip(noise, window))
