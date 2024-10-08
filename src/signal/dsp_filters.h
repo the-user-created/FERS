@@ -100,15 +100,6 @@ namespace signal
 	{
 	public:
 		/**
-		* @brief Constructs an IIR filter with given numerator and denominator coefficients.
-		*
-		* @param denCoeffs Span of denominator coefficients.
-		* @param numCoeffs Span of numerator coefficients.
-		* @throws std::logic_error if the coefficient sizes do not match.
-		*/
-		IirFilter(std::span<const RealType> denCoeffs, std::span<const RealType> numCoeffs);
-
-		/**
 		* @brief Constructs an IIR filter with given numerator and denominator coefficients and order.
 		*
 		* @param denCoeffs Pointer to the denominator coefficients array.
@@ -162,12 +153,7 @@ namespace signal
 
 		RealType filter(RealType) override { return 0; } // Not used
 
-		/**
-		 * @brief Filters a block of samples.
-		 *
-		 * @param samples Span of samples to be filtered.
-		 */
-		void filter(std::span<RealType> samples) noexcept override;
+		void filter(std::span<RealType> /*samples*/) noexcept override {}
 
 		/**
 		 * @brief Filters a block of complex samples.
@@ -182,38 +168,16 @@ namespace signal
 		unsigned _order{}; ///< Filter order
 	};
 
-	/**
-	* @class ArFilter
-	* @brief Implements an Autoregressive (AR) filter.
-	*
-	* The AR filter applies autoregressive filtering to real-valued signals based on the provided coefficients.
-	*/
-	class ArFilter final : public DspFilter
+	/*class ArFilter final : public DspFilter
 	{
 	public:
-		/**
-		* @brief Constructs an AR filter with the given coefficients.
-		*
-		* @param coeffs Span of AR filter coefficients.
-		*/
 		explicit ArFilter(std::span<const RealType> coeffs) noexcept
 			: _w(coeffs.size()), _filter(coeffs.begin(), coeffs.end()), _order(coeffs.size()) {}
 
 		~ArFilter() override = default;
 
-		/**
-		 * @brief Filters a single sample.
-		 *
-		 * @param sample The sample to be filtered.
-		 * @return The filtered sample.
-		 */
 		RealType filter(RealType sample) noexcept override;
 
-		/**
-		 * @brief Filters a block of samples.
-		 *
-		 * @param samples Span of samples to be filtered.
-		 */
 		void filter(std::span<RealType> samples) noexcept override;
 
 	private:
@@ -221,40 +185,16 @@ namespace signal
 		std::vector<RealType> _filter; ///< Filter coefficients
 		unsigned _order{}; ///< Filter order
 
-		/**
-		 * @brief Applies the AR filter to a single sample.
-		 *
-		 * @param sample The sample to be filtered.
-		 * @return The filtered sample.
-		 */
 		RealType applyFilter(RealType sample) noexcept;
-	};
+	};*/
 
-	/**
-	* @class Upsampler
-	* @brief Implements an upsampler for increasing the sample rate of a signal.
-	*
-	* The upsampler increases the sample rate by an integer ratio using polyphase filtering.
-	*/
-	class Upsampler
+	/*class Upsampler
 	{
 	public:
-		/**
-		* @brief Constructs an upsampler with the specified ratio.
-		*
-		* @param ratio Upsampling ratio.
-		*/
 		explicit Upsampler(int ratio) noexcept;
 
 		~Upsampler() = default;
 
-		/**
-		* @brief Upsamples a block of input samples.
-		*
-		* @param inSamples Span of input samples.
-		* @param outSamples Span of output samples.
-		* @throws std::runtime_error if the output span size does not match the expected upsampled size.
-		*/
 		void upsample(std::span<const RealType> inSamples, std::span<RealType> outSamples);
 
 		// Disable copy constructor and copy assignment operator
@@ -273,18 +213,11 @@ namespace signal
 		std::vector<RealType> _filterbank; ///< Coefficients of the polyphase filter.
 		std::vector<RealType> _sample_memory; ///< Memory for previous samples (used in filtering).
 
-		/**
-		* @brief Retrieves a sample from input or memory buffer.
-		*
-		* @param samples Span of input samples.
-		* @param n Index to retrieve.
-		* @return The retrieved sample.
-		*/
 		[[nodiscard]] RealType getSample(const std::span<const RealType> samples, const long n) const
 		{
 			return n >= 0 ? samples[n] : _sample_memory[n + _filter_size];
 		}
-	};
+	};*/
 
 	/**
 	 * @class DecadeUpsampler
@@ -307,13 +240,7 @@ namespace signal
 		 */
 		void upsample(RealType sample, std::span<RealType> out) const;
 
-		/**
-		 * @brief Upsamples a block of samples.
-		 *
-		 * @param in Span of input samples.
-		 * @param out Span of output samples.
-		 */
-		void upsample(std::span<const RealType> in, std::span<RealType> out) const;
+		//void upsample(std::span<const RealType> in, std::span<RealType> out) const;
 
 		// Disable copy constructor and copy assignment operator
 		DecadeUpsampler(const DecadeUpsampler&) = delete;
