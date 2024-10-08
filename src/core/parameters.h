@@ -42,7 +42,7 @@ namespace params
 		RealType cw_sample_rate = 1000; ///< CW interpolation sample rate.
 		RealType rate = 0; ///< Rendering sample rate.
 
-		unsigned random_seed = std::chrono::system_clock::now().time_since_epoch().count();
+		unsigned random_seed = 0;
 		///< Random seed for simulation.
 		unsigned adc_bits = 0; ///< ADC quantization bits.
 		unsigned filter_length = 33; ///< Default render filter length.

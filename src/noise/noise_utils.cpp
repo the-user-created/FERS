@@ -16,11 +16,6 @@
 namespace
 {
 	/**
-	 * @brief Global random engine wrapped in std::optional for lazy initialization.
-	 */
-	std::optional<std::mt19937> rng;
-
-	/**
 	 * @brief Normal distribution for generating white Gaussian noise samples.
 	 */
 	std::normal_distribution normal_dist{0.0, 1.0};
@@ -38,13 +33,6 @@ namespace
 		const unsigned int seed = params::randomSeed();
 		return seed != 0 ? seed : std::random_device{}();
 	}
-
-	/**
-	 * @brief Ensure the random number generator (RNG) is initialized.
-	 *
-	 * This function initializes the RNG lazily when it is first accessed.
-	 */
-	void ensureInitialized() noexcept { if (!rng) { rng.emplace(getSeed()); } }
 }
 
 namespace noise
@@ -57,4 +45,6 @@ namespace noise
 		ensureInitialized(); // Ensure RNG is initialized
 		return normal_dist(*rng) * stddev;
 	}
+
+	void ensureInitialized() noexcept { if (!rng) { rng.emplace(getSeed()); } }
 }

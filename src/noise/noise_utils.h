@@ -12,11 +12,18 @@
 
 #pragma once
 
+#include <random>
+
 #include "config.h"
 #include "core/parameters.h"
 
 namespace noise
 {
+	/**
+	 * @brief Global random engine wrapped in std::optional for lazy initialization.
+	 */
+	inline std::optional<std::mt19937> rng;
+
 	/**
 	 * @brief Generates a white Gaussian noise (WGN) sample.
 	 *
@@ -43,4 +50,11 @@ namespace noise
 	{
 		return params::boltzmannK() * temperature * bandwidth;
 	}
+
+	/**
+	 * @brief Ensure the random number generator (RNG) is initialized.
+	 *
+	 * This function initializes the RNG lazily when it is first accessed.
+	 */
+	void ensureInitialized() noexcept;
 }

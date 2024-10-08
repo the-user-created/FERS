@@ -19,6 +19,7 @@
 
 #include "config.h"
 #include "falpha_branch.h"
+#include "noise_utils.h"
 
 namespace noise
 {
@@ -73,18 +74,20 @@ namespace noise
 		*
 		* @param stddev The standard deviation of the generated Gaussian noise. Default is 1.0.
 		*/
-		explicit WgnGenerator(RealType stddev = 1.0) noexcept;
+		explicit WgnGenerator(const RealType stddev = 1.0) noexcept : _dist(0.0, stddev), _stddev(stddev)
+		{
+			ensureInitialized();
+		}
 
 		/**
 		* @brief Generates a sample of white Gaussian noise.
 		*
 		* @return A noise sample of type RealType.
 		*/
-		RealType getSample() noexcept override { return _dist(_rng) * _stddev; }
+		RealType getSample() noexcept override { return _dist(*rng) * _stddev; }
 
 	private:
-		std::default_random_engine _rng; ///< Random number generator.
-		std::normal_distribution<> _dist{0.0, 1.0}; ///< Normal distribution for generating Gaussian noise.
+		std::normal_distribution<> _dist; ///< Normal distribution for generating Gaussian noise.
 		RealType _stddev; ///< Standard deviation of the generated noise.
 	};
 
@@ -102,17 +105,16 @@ namespace noise
 		*
 		* @param k The shape parameter of the Gamma distribution.
 		*/
-		explicit GammaGenerator(RealType k) noexcept;
+		explicit GammaGenerator(const RealType k) noexcept : _dist(k, 1.0) { ensureInitialized(); }
 
 		/**
 		* @brief Generates a sample of Gamma noise.
 		*
 		* @return A noise sample of type RealType.
 		*/
-		RealType getSample() noexcept override { return _dist(_rng); }
+		RealType getSample() noexcept override { return _dist(*rng); }
 
 	private:
-		std::default_random_engine _rng; ///< Random number generator.
 		std::gamma_distribution<> _dist; ///< Gamma distribution for generating noise.
 	};
 
