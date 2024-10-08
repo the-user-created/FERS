@@ -30,11 +30,12 @@ namespace signal
 	* to reconstruct the signal at a higher sample rate.
 	*
 	* @param in Input span of complex samples.
+	* @param size Size of the input signal.
 	* @param out Output span for upsampled complex samples.
 	* @param ratio Upsampling ratio.
 	* @throws std::invalid_argument if the input or output spans are empty or the ratio is zero.
 	*/
-	void upsample(const ComplexType* in, unsigned size, ComplexType* out, unsigned ratio);
+	void upsample(std::span<const ComplexType> in, unsigned size, std::span<ComplexType> out, unsigned ratio);
 
 	/**
 	* @brief Downsamples a signal by a given ratio.
@@ -46,7 +47,7 @@ namespace signal
 	* @param ratio Downsampling ratio.
 	* @throws std::invalid_argument if the input or output spans are empty or the ratio is zero.
 	*/
-	void downsample(const std::vector<ComplexType>& in, unsigned size, std::vector<ComplexType>& out, unsigned ratio);
+	void downsample(std::span<const ComplexType> in, std::span<ComplexType> out, unsigned ratio);
 
 	/**
 	* @class DspFilter
@@ -173,7 +174,7 @@ namespace signal
 		 *
 		 * @param samples Span of complex samples to be filtered.
 		 */
-		void filter(std::vector<ComplexType>& samples, unsigned size) const;
+		void filter(std::vector<ComplexType>& samples) const;
 
 	private:
 		std::vector<RealType> _filter; ///< Filter coefficients

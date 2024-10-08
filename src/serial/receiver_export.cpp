@@ -374,7 +374,7 @@ namespace serial
 
 				// Perform downsampling
 				std::vector<ComplexType> tmp(new_size);
-				signal::downsample(window, new_size, tmp, params::oversampleRatio());
+				signal::downsample(window, tmp, params::oversampleRatio());
 
 				// Replace the window with the downsampled one
 				size = new_size;

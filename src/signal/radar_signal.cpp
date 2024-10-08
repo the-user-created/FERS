@@ -78,7 +78,7 @@ namespace signal
 		_rate = sampleRate * ratio;
 
 		if (ratio == 1) { std::ranges::copy(inData, _data.begin()); }
-		else { upsample(inData.data(), samples, _data.data(), ratio); }
+		else { upsample(inData, samples, _data, ratio); }
 	}
 
 	std::vector<ComplexType> Signal::render(const std::vector<interp::InterpPoint>& points, unsigned& size,
