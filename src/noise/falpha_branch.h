@@ -129,7 +129,7 @@ namespace noise
 		RealType _upsample_scale{};
 
 		/// Buffer for storing upsampled noise samples.
-		std::vector<RealType> _buffer{10}; // Initializing buffer to size 10
+		std::vector<RealType> _buffer{};
 
 		/// Number of samples currently in the buffer.
 		unsigned _buffer_samples{};
