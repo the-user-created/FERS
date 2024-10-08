@@ -106,7 +106,7 @@ namespace math
 			refl.t = t;
 			refl.pos = surf->reflectPoint(pos); // Reflect the point in the plane
 
-			LOG(Level::DEBUG, "Reflected ({}, {}, {}) to ({}, {}, {})",
+			LOG(Level::TRACE, "Reflected ({}, {}, {}) to ({}, {}, {})",
 			    pos.x, pos.y, pos.z,
 			    refl.pos.x, refl.pos.y, refl.pos.z);
 
