@@ -1,7 +1,10 @@
-// target.cpp
-// Classes for targets and target RCS
-// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-// 11 June 2007
+/**
+ * @file target.cpp
+ * @brief Defines classes for radar targets and their Radar Cross Section (RCS) models.
+ *
+ * @authors David Young, Marc Brooker
+ * @date 2007-06-11
+ */
 
 #include "target.h"
 
@@ -17,6 +20,13 @@ using math::SVec3;
 
 namespace
 {
+	/**
+	 * @brief Load the target gain axis from an XML element.
+	 *
+	 * This function reads the gain samples from an XML element and inserts them into an interpolation set.
+	 * @param set The interpolation set to insert the samples into.
+	 * @param axisXml The XML element containing the gain samples.
+	 */
 	void loadTargetGainAxis(const interp::InterpSet* set, const XmlElement& axisXml) noexcept
 	{
 		XmlElement tmp = axisXml.childElement("rcssample"); // Get the first gainsample

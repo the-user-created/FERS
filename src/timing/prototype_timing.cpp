@@ -1,7 +1,10 @@
-// prototype_timing.cpp
-// Created by David Young on 9/17/24.
-// Original code by Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-//
+/**
+ * @file prototype_timing.cpp
+ * @brief Implementation file for the PrototypeTiming class.
+ *
+ * @authors David Young, Marc Brooker
+ * @date 2024-09-17
+ */
 
 #include "prototype_timing.h"
 

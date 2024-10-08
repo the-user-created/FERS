@@ -1,7 +1,10 @@
-// radar_signal.cpp
-// Classes for different types of radar waveforms
-// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-// Started: 24 May 2006
+/**
+ * @file radar_signal.cpp
+ * @brief Classes for handling radar waveforms and signals.
+ *
+ * @authors David Young, Marc Brooker
+ * @date 2006-06-08
+ */
 
 #include "radar_signal.h"
 

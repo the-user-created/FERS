@@ -1,7 +1,10 @@
-// dsp_filters.cpp
-// Digital Signal Processing support functions
-// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-// 30 July 2007
+/**
+ * @file dsp_filters.cpp
+ * @brief Implementation file for Digital Signal Processing (DSP) filters and upsampling/downsampling functionality.
+ *
+ * @authors David Young, Marc Brooker
+ * @date 2007-07-30
+ */
 
 #include "dsp_filters.h"
 
@@ -21,8 +24,27 @@ constexpr RealType BLACKMAN_A2 = 0.08;
 
 namespace
 {
+	/**
+	 * @brief Sinc function for FIR filter design.
+	 *
+	 * The sinc function is used to design FIR filters. This implementation uses the normalized sinc function
+	 * sinc(x) = sin(PI * x) / (PI * x).
+	 *
+	 * @param x Input value.
+	 * @return Sinc value at x.
+	 */
 	constexpr RealType sinc(const RealType x) noexcept { return x == 0 ? 1.0 : std::sin(x * PI) / (x * PI); }
 
+	/**
+	 * @brief Generates FIR filter coefficients using the Blackman window.
+	 *
+	 * This function generates FIR filter coefficients using the Blackman window. The
+	 * coefficients are designed to have a cutoff frequency of 'cutoff' and a length of 'filtLength'.
+	 *
+	 * @param cutoff Cutoff frequency for the filter.
+	 * @param filtLength Length of the filter.
+	 * @return Vector of FIR filter coefficients.
+	 */
 	std::vector<RealType> blackmanFir(const RealType cutoff, unsigned& filtLength) noexcept
 	{
 		filtLength = params::renderFilterLength() * 2;

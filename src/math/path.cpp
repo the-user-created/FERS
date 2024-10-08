@@ -1,7 +1,10 @@
-// path.cpp
-// Created by David Young on 9/13/24.
-// Original code by Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-//
+/**
+ * @file path.cpp
+ * @brief Implementation of the Path class.
+ *
+ * @authors David Young, Marc Brooker
+ * @date 2024-09-13
+ */
 
 #include "path.h"
 

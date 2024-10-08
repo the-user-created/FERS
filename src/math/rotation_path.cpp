@@ -1,7 +1,10 @@
-// rotation_path.cpp
-// Created by David Young on 9/13/24.
-// Original code by Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-//
+/**
+ * @file rotation_path.cpp
+ * @brief Implementation of the RotationPath class.
+ *
+ * @authors David Young, Marc Brooker
+ * @date 2024-09-13
+ */
 
 #include "rotation_path.h"
 

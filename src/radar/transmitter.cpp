@@ -1,6 +1,10 @@
-//
-// Created by David Young on 10/7/24.
-//
+/**
+ * @file transmitter.cpp
+ * @brief Contains the implementation of the Transmitter class.
+ *
+ * @authors David Young, Marc Brooker
+ * @date 2024-10-07
+ */
 
 #include "transmitter.h"
 

@@ -1,6 +1,10 @@
-// noise_utils.cpp
-// Created by David Young on 9/17/24.
-//
+/**
+ * @file noise_utils.cpp
+ * @brief Utility functions for generating noise samples.
+ *
+ * @author David Young
+ * @date 2024-09-17
+ */
 
 #include "noise_utils.h"
 
@@ -11,20 +15,35 @@
 
 namespace
 {
-	// Global random engine wrapped in std::optional for lazy initialization
+	/**
+	 * @brief Global random engine wrapped in std::optional for lazy initialization.
+	 */
 	std::optional<std::mt19937> rng;
 
-	// Predefined normal and uniform distributions
+	/**
+	 * @brief Normal distribution for generating white Gaussian noise samples.
+	 */
 	std::normal_distribution normal_dist{0.0, 1.0};
 
-	// Get the seed either from params or use a random_device for better entropy
+	/**
+	 * @brief Get the random seed for the noise generator.
+	 *
+	 * This function retrieves the random seed from the global parameters.
+	 * If the seed is set to 0, it generates a new seed using std::random_device.
+	 *
+	 * @return The random seed for the noise generator.
+	 */
 	unsigned int getSeed() noexcept
 	{
 		const unsigned int seed = params::randomSeed();
 		return seed != 0 ? seed : std::random_device{}();
 	}
 
-	// Ensure the RNG is initialized lazily
+	/**
+	 * @brief Ensure the random number generator (RNG) is initialized.
+	 *
+	 * This function initializes the RNG lazily when it is first accessed.
+	 */
 	void ensureInitialized() noexcept { if (!rng) { rng.emplace(getSeed()); } }
 }
 

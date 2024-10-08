@@ -1,7 +1,10 @@
-// hdf5_export.cpp
-// Export binary data to the HDF5 file format
-// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-// 03 November 2006
+/**
+ * @file hdf5_handler.cpp
+ * @brief Source file for HDF5 data export and import functions.
+ *
+ * @authors David Young, Marc Brooker
+ * @date 2006-11-03
+ */
 
 #include "hdf5_handler.h"
 

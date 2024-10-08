@@ -1,7 +1,10 @@
-// response.cpp
-// Implementation of ResponseBase and derived classes
-// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-// 3 August 2006
+/**
+ * @file response.cpp
+ * @brief Implementation of the Response class
+ *
+ * @authors David Young, Marc Brooker
+ * @date 2006-08-03
+ */
 
 #include "response.h"
 
@@ -20,6 +23,15 @@ using interp::InterpPoint;
 
 namespace
 {
+	/**
+	 * @brief Attach a text node to an XML element.
+	 *
+	 * Creates a child element with the given name and sets its text content to the given string.
+	 *
+	 * @param root The parent XML element to attach the text node to.
+	 * @param name The name of the child element to create.
+	 * @param text The text content to set for the child element.
+	 */
 	void attachTextNode(const XmlElement& root, const std::string& name, const std::string& text) noexcept
 	{
 		// Create a child element with the given name
@@ -29,6 +41,16 @@ namespace
 		element.setText(text);
 	}
 
+	/**
+	 * @brief Attach a float node to an XML element.
+	 *
+	 * Creates a child element with the given name and sets its text content to the formatted float value.
+	 *
+	 * @param root The parent XML element to attach the float node to.
+	 * @param name The name of the child element to create.
+	 * @param data The float value to format and set as text content.
+	 * @param scientific Whether to use scientific notation for the float value.
+	 */
 	void attachRsFloatNode(const XmlElement& root, const std::string& name, const RealType data,
 	                       const bool scientific = true) noexcept
 	{

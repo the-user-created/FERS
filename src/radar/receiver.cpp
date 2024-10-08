@@ -1,6 +1,14 @@
-//
-// Created by David Young on 10/7/24.
-//
+/**
+ * @file receiver.cpp
+ * @brief Implementation of the Receiver class.
+ *
+ * The `Receiver` class extends the `Radar` class to provide additional features
+ * related to signal reception, such as noise temperature management, window properties, and response collection.
+ * It supports multiple configuration flags and the ability to work in dual receiver mode.
+ *
+ * @authors David Young, Marc Brooker
+ * @date 2024-10-07
+ */
 
 #include "receiver.h"
 

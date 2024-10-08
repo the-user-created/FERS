@@ -1,7 +1,14 @@
-// interpolation_set.cpp
-// Implements interpolation class
-// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-// 11 June 2007
+/**
+* @file interpolation_set.cpp
+* @brief Implementation file for interpolation of sets of data.
+*
+* This file contains the implementation of the InterpSetData and InterpSet classes. It includes
+* functions for linear interpolation, retrieving the maximum value, and dividing data points
+* by a scalar. The file leverages C++17 concepts to restrict templates to arithmetic types.
+*
+* @authors David Young, Marc Brooker
+* @date 2007-06-11
+*/
 
 #include "interpolation_set.h"
 

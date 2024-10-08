@@ -1,7 +1,10 @@
-// noise_generators.cpp
-// Functions for generating different types of noise
-// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-// 14 August 2006
+/**
+ * @file noise_generators.cpp
+ * @brief Implementation file for noise generator classes.
+ *
+ * @authors David Young, Marc Brooker
+ * @date 2006-08-14
+ */
 
 #include "noise_generators.h"
 

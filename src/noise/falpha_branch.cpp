@@ -1,7 +1,10 @@
-// falpha_branch.cpp
-// Created by David Young on 9/17/24.
-// Original code by Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-//
+/**
+ * @file falpha_branch.cpp
+ * @brief Implementation of the FAlphaBranch class for noise generation.
+ *
+ * @authors David Young, Marc Brooker
+ * @date 2024-09-17
+ */
 
 #include "falpha_branch.h"
 
@@ -21,7 +24,8 @@ using signal::DecadeUpsampler;
 
 namespace noise
 {
-	FAlphaBranch::FAlphaBranch(RealType ffrac, unsigned fint, std::unique_ptr<FAlphaBranch> pre, const bool last) noexcept
+	FAlphaBranch::FAlphaBranch(RealType ffrac, unsigned fint, std::unique_ptr<FAlphaBranch> pre,
+	                           const bool last) noexcept
 		: _pre(std::move(pre)), _ffrac(ffrac), _fint(fint), _last(last)
 	{
 		LOG(Level::DEBUG, "Creating FAlphaBranch: ffrac={} fint={}", ffrac, fint);
