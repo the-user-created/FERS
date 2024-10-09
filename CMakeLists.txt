@@ -39,7 +39,7 @@ if (CMAKE_COMPILER_IS_GNUCXX)
 	if (CMAKE_BUILD_TYPE MATCHES "Debug")
 		message(STATUS "Setting compiler flags for Debug")
 		# Include the -g flag for debugging information
-		set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0 -Wunused -Wall -Wextra")
+		set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0 -Wunused -Wall -Wextra -fprofile-arcs -ftest-coverage")
 	endif ()
 endif ()
 

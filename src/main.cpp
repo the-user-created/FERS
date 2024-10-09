@@ -30,7 +30,7 @@ using logging::Level;
  *
  * This function initializes the simulation environment, parses command-line arguments,
  * sets up logging based on user input, and runs the simulation using a multithreaded approach.
- * It manages the execution of the simulation, and handles errors encountered during the initialization
+ * It manages the execution of the simulation and handles errors encountered during the initialization
  * or simulation stages.
  *
  * @param argc The number of command-line arguments passed to the program.
@@ -44,11 +44,13 @@ int main(const int argc, char* argv[])
 	if (!config_result) // Check if there is an error
 	{
 		// Log or display the error message
-		if (config_result.error() != "Help requested." && config_result.error() != "Version requested.")
+		if (config_result.error() != "Help requested." && config_result.error() != "Version requested." &&
+		    config_result.error() != "No arguments provided.")
 		{
 			LOG(Level::ERROR, "Argument parsing error: {}", config_result.error());
+			return 1;
 		}
-		return 1; // Invalid arguments or help/version shown
+		return 0; // Exit if help, version, or no arguments provided
 	}
 
 	// Structured bindings for the configuration options
