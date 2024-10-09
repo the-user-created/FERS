@@ -1,12 +1,13 @@
 <?xml version="1.0" ?>
-<!-- Test pulsed radar. One Monostatic radar and one target -->
+<!-- Test pulsed radar. One Monostatic radar and one target. Gaussian antenna -->
 <!DOCTYPE simulation SYSTEM "../../xml_schema/fers-xml.dtd">
 <simulation name="sim1">
     <parameters>
         <starttime>0</starttime>
         <endtime>0.01</endtime>
         <rate>10e6</rate>
-        <export binary="true" csv="true" xml="true"/>
+        <randomseed>1</randomseed>
+        <export binary="true" csv="false" xml="true"/>
     </parameters>
 
     <pulse name="pulse1" type="file" filename="waveform.csv">
@@ -14,16 +15,47 @@
         <carrier>1e9</carrier>
     </pulse>
 
-    <timing name="clock">
+    <timing name="clock" synconpulse="false">
         <frequency>10e6</frequency>
+        <noise_entry>
+            <alpha>2</alpha>
+            <weight>0.8</weight>
+        </noise_entry>
+        <noise_entry>
+            <alpha>1</alpha>
+            <weight>0.2</weight>
+        </noise_entry>
+        <noise_entry>
+            <alpha>0</alpha>
+            <weight>0.5</weight>
+        </noise_entry>
+        <noise_entry>
+            <alpha>-1</alpha>
+            <weight>0.8</weight>
+        </noise_entry>
+        <noise_entry>
+            <alpha>-2</alpha>
+            <weight>0.8</weight>
+        </noise_entry>
+        <noise_entry>
+            <alpha>-3</alpha>
+            <weight>0.8</weight>
+        </noise_entry>
     </timing>
 
-    <antenna name="ant1" pattern="python" module="py_module" function="get_gain">
+    <antenna name="ant1" pattern="gaussian">
+        <azscale>1</azscale>
+        <elscale>1</elscale>
     </antenna>
 
     <platform name="radarsite">
-        <motionpath interpolation="python">
-            <pythonpath module="py_module" function="get_position"/>
+        <motionpath interpolation="malformed">
+            <positionwaypoint>
+                <x>0.00</x>
+                <y>0.0</y>
+                <altitude>0.0</altitude>
+                <time>0</time>
+            </positionwaypoint>
         </motionpath>
         <fixedrotation>
             <startazimuth>0.0</startazimuth>
@@ -32,9 +64,10 @@
             <elevationrate>0</elevationrate>
         </fixedrotation>
         <monostatic name="mono1" type="pulsed" antenna="ant1" pulse="pulse1" timing="clock">
-            <window_skip>0</window_skip>
+            <window_skip>1e-6</window_skip>
             <window_length>20e-5</window_length>
             <prf>1000</prf>
+            <noise_temp>100</noise_temp>
         </monostatic>
     </platform>
 
@@ -47,9 +80,16 @@
                 <time>0</time>
             </positionwaypoint>
         </motionpath>
+        <rotationpath interpolation="malformed">
+            <rotationwaypoint>
+                <azimuth>0</azimuth>
+                <elevation>0</elevation>
+                <time>0</time>
+            </rotationwaypoint>
+        </rotationpath>
         <fixedrotation>
-            <startazimuth>0.0</startazimuth>
-            <startelevation>0.0</startelevation>
+            <startazimuth>0</startazimuth>
+            <startelevation>0</startelevation>
             <azimuthrate>0</azimuthrate>
             <elevationrate>0</elevationrate>
         </fixedrotation>
