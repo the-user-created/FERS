@@ -2,41 +2,36 @@
 <!-- Test CW radar. One Monostatic radar and one moving non-linear target -->
 <!DOCTYPE simulation SYSTEM "../../xml_schema/fers-xml.dtd">
 <simulation name="CW_Monostatic_Moving_Target_Test">
-
-    <!-- Simulation Parameters -->
     <parameters>
         <starttime>0.0</starttime>
         <endtime>1.0</endtime>
-        <c>299792458.0</c> <!-- Speed of light in meters/second -->
-        <interprate>1e6</interprate> <!-- Interpolation rate for continuous wave -->
-        <rate>1e6</rate> <!-- Sample rate override -->
-        <randomseed>12345</randomseed> <!-- Random seed -->
-        <export csv="true" binary="true" xml="true"/> <!-- Export options -->
+        <c>299792458.0</c>
+        <interprate>1e6</interprate>
+        <rate>1e6</rate>
+        <randomseed>12345</randomseed>
+        <export csv="true" binary="true" xml="true"/>
     </parameters>
 
-    <!-- Pulse Definition using a waveform file for continuous wave simulation -->
     <pulse name="cw_pulse" type="file" filename="waveform.csv">
-        <power>100.0</power> <!-- Power in Watts -->
-        <carrier>10e9</carrier> <!-- Carrier frequency in Hz (10 GHz) -->
+        <power>100.0</power>
+        <carrier>10e9</carrier>
     </pulse>
 
-    <!-- Timing Definition -->
     <timing name="clock_1">
-        <frequency>1e7</frequency> <!-- 10 MHz clock -->
+        <frequency>1e7</frequency>
     </timing>
 
-    <!-- Antenna Definition -->
-    <antenna name="mono_antenna" pattern="isotropic">
-        <efficiency>0.9</efficiency> <!-- 90% efficient antenna -->
+    <antenna name="mono_antenna" pattern="parabolic">
+        <diameter>2</diameter>
+        <efficiency>0.85</efficiency>
     </antenna>
 
-    <!-- Platform Definition for the Monostatic Radar -->
     <platform name="monostatic_radar_platform">
         <motionpath interpolation="static">
             <positionwaypoint>
                 <x>0.0</x>
                 <y>0.0</y>
-                <altitude>10.0</altitude> <!-- Radar is at 10 meters height -->
+                <altitude>10.0</altitude>
                 <time>0.0</time>
             </positionwaypoint>
         </motionpath>
@@ -51,30 +46,29 @@
             <window_length>0.1</window_length>
             <prf>1</prf> <!-- FERS throws an error if PRF is not set (even for a continuous wave),
             so we set it to 1 so that the system behaves almost like a continuous wave -->
-            <noise_temp>0</noise_temp> <!-- Receiver noise temperature in K -->
+            <noise_temp>0</noise_temp>
         </monostatic>
     </platform>
 
-    <!-- Platform Definition for the Moving Target -->
     <platform name="moving_target_platform">
         <motionpath interpolation="cubic">
             <positionwaypoint>
                 <x>1000.0</x>
                 <y>0.0</y>
                 <altitude>5.0</altitude>
-                <time>0.0</time> <!-- Initial position of the target -->
+                <time>0.0</time>
             </positionwaypoint>
             <positionwaypoint>
                 <x>800.0</x>
                 <y>500.0</y>
                 <altitude>5.0</altitude>
-                <time>5.0</time> <!-- Non-linear motion at midpoint -->
+                <time>5.0</time>
             </positionwaypoint>
             <positionwaypoint>
                 <x>500.0</x>
                 <y>1000.0</y>
                 <altitude>5.0</altitude>
-                <time>1.0</time> <!-- Final position of the target -->
+                <time>1.0</time>
             </positionwaypoint>
         </motionpath>
         <fixedrotation>
@@ -85,9 +79,8 @@
         </fixedrotation>
         <target name="moving_target">
             <rcs type="isotropic">
-                <value>10.0</value> <!-- Radar cross-section of 10 square meters -->
+                <value>10.0</value>
             </rcs>
         </target>
     </platform>
-
 </simulation>

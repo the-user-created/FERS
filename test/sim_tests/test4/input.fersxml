@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<!-- Test pulsed radar. One Monostatic radar and one target. Sinc antenna -->
+<!-- Test pulsed radar. One Monostatic radar and one target -->
 <!DOCTYPE simulation SYSTEM "../../xml_schema/fers-xml.dtd">
 <simulation name="sim1">
     <parameters>
@@ -76,4 +76,7 @@
             </model>
         </target>
     </platform>
+
+    <include>input2.fersxml</include>
+
 </simulation>
