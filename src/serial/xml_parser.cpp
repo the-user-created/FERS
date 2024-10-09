@@ -16,7 +16,6 @@
 #include <cmath>
 #include <filesystem>
 #include <functional>
-#include <iostream>
 #include <memory>
 #include <span>
 #include <string_view>
@@ -194,14 +193,14 @@ namespace
 
 		if (const XmlElement power_element = pulse.childElement("power", 0); !power_element.isValid())
 		{
-			LOG(Level::ERROR, "<power> element is missing in <pulse>!");
-			return;
+			LOG(Level::FATAL, "<power> element is missing in <pulse>!");
+			throw XmlException("<power> element is missing in <pulse>!");
 		}
 
 		if (const XmlElement carrier_element = pulse.childElement("carrier", 0); !carrier_element.isValid())
 		{
-			LOG(Level::ERROR, "<carrier> element is missing in <pulse>!");
-			return;
+			LOG(Level::FATAL, "<carrier> element is missing in <pulse>!");
+			throw XmlException("<carrier> element is missing in <pulse>!");
 		}
 
 		if (type == "file")
@@ -214,7 +213,11 @@ namespace
 			);
 			world->add(std::move(wave));
 		}
-		else { LOG(Level::ERROR, "Unsupported pulse type: {}", type); }
+		else
+		{
+			LOG(Level::FATAL, "Unsupported pulse type: {}", type);
+			throw XmlException("Unsupported pulse type: " + type);
+		}
 	}
 
 	/**
@@ -228,8 +231,9 @@ namespace
 	 */
 	void parseTiming(const XmlElement& timing, World* world)
 	{
-		// Extract required attribute: name
+		// Extract required attributes: name, frequency
 		const std::string name = XmlElement::getSafeAttribute(timing, "name");
+		const RealType freq = get_child_real_type(timing, "frequency");
 		auto timing_obj = std::make_unique<PrototypeTiming>(name);
 
 		// Extract noise entries (optional)
@@ -260,12 +264,7 @@ namespace
 		try { timing_obj->setRandomPhaseOffset(get_child_real_type(timing, "random_phase_offset")); }
 		catch (XmlException&) { LOG(Level::WARNING, "Clock section '{}' does not specify random phase offset.", name); }
 
-		try { timing_obj->setFrequency(get_child_real_type(timing, "frequency")); }
-		catch (XmlException&)
-		{
-			timing_obj->setFrequency(params::rate());
-			LOG(Level::WARNING, "Clock section '{}' does not specify frequency. Assuming {}.", name, params::rate());
-		}
+		timing_obj->setFrequency(freq);
 
 		// Extract optional attribute: synconpulse (default is "true")
 		if (get_child_bool(timing, "synconpulse", true)) { timing_obj->setSyncOnPulse(); }
@@ -336,13 +335,16 @@ namespace
 		}
 		else
 		{
-			LOG(Level::ERROR, "Unsupported antenna pattern: {}", pattern);
-			return;
+			LOG(Level::FATAL, "Unsupported antenna pattern: {}", pattern);
+			throw XmlException("Unsupported antenna pattern: " + pattern);
 		}
 
 		// Set the <efficiency> element (optional)
 		try { ant->setEfficiencyFactor(get_child_real_type(antenna, "efficiency")); }
-		catch (XmlException&) { LOG(Level::WARNING, "Antenna '{}' does not specify efficiency, assuming unity.", name); }
+		catch (XmlException&)
+		{
+			LOG(Level::WARNING, "Antenna '{}' does not specify efficiency, assuming unity.", name);
+		}
 
 		world->add(std::move(ant));
 	}
@@ -435,7 +437,7 @@ namespace
 
 		try
 		{
-			if (std::string interp = XmlElement::getSafeAttribute(rotation, "interpolation"); interp == "linear")
+			if (const std::string interp = XmlElement::getSafeAttribute(rotation, "interpolation"); interp == "linear")
 			{
 				path->setInterp(RotationPath::InterpType::INTERP_LINEAR);
 			}
@@ -443,9 +445,7 @@ namespace
 			else if (interp == "static") { path->setInterp(RotationPath::InterpType::INTERP_STATIC); }
 			else
 			{
-				LOG(Level::ERROR, "Unsupported interpolation type: {} for platform {}. Defaulting to static", interp,
-				    platform->getName());
-				path->setInterp(RotationPath::InterpType::INTERP_STATIC);
+				throw XmlException("Unsupported interpolation type: " + interp);
 			}
 		}
 		catch (XmlException&)
@@ -506,7 +506,8 @@ namespace
 		}
 		catch (XmlException& e)
 		{
-			LOG(Level::ERROR, "Failed to set fixed rotation for platform {}. {}", platform->getName(), e.what());
+			LOG(Level::FATAL, "Failed to set fixed rotation for platform {}. {}", platform->getName(), e.what());
+			throw XmlException("Failed to set fixed rotation for platform " + platform->getName());
 		}
 	}
 
@@ -771,7 +772,7 @@ namespace
 	 * @param currentDir The current directory of the main XML file.
 	 * @param includePaths A vector to store the full paths to the included files.
 	 */
-	void collectIncludeElements(const XmlDocument& doc, const fs::path& currentDir, std::vector<fs::path>& includePaths) // NOLINT(misc-no-recursion)
+	void collectIncludeElements(const XmlDocument& doc, const fs::path& currentDir, std::vector<fs::path>& includePaths)
 	{
 		unsigned index = 0;
 		while (true)
