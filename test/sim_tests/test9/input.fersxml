@@ -1,12 +1,17 @@
 <?xml version="1.0" ?>
-<!-- Test pulsed radar. One Monostatic radar and one target -->
+<!-- Test pulsed radar. -->
 <!DOCTYPE simulation SYSTEM "../../xml_schema/fers-xml.dtd">
 <simulation name="sim1">
     <parameters>
         <starttime>0</starttime>
-        <endtime>0.01</endtime>
-        <rate>10e6</rate>
-        <export binary="true" csv="false" xml="true"/>
+        <endtime>10</endtime>
+        <c>299792458</c>
+        <interprate>1000</interprate>
+        <rate>1e8</rate>
+        <randomseed>4444</randomseed>
+        <adc_bits>12</adc_bits>
+        <oversample>1</oversample>
+        <export binary="true" xml="true" csv="true"/>
     </parameters>
 
     <pulse name="pulse1" type="file" filename="waveform.csv">
@@ -14,37 +19,104 @@
         <carrier>1e9</carrier>
     </pulse>
 
-    <timing name="clock">
+    <timing name="clock" synconpulse="true">
         <frequency>10e6</frequency>
+        <freq_offset>0</freq_offset>
+        <random_freq_offset>0</random_freq_offset>
+        <phase_offset>0</phase_offset>
+        <random_phase_offset>0</random_phase_offset>
+        <noise_entry>
+            <alpha>2</alpha>
+            <weight>0.8</weight>
+        </noise_entry>
+        <noise_entry>
+            <alpha>1</alpha>
+            <weight>0.2</weight>
+        </noise_entry>
+        <noise_entry>
+            <alpha>0</alpha>
+            <weight>0.5</weight>
+        </noise_entry>
+        <noise_entry>
+            <alpha>-1</alpha>
+            <weight>0.8</weight>
+        </noise_entry>
+        <noise_entry>
+            <alpha>-2</alpha>
+            <weight>0.8</weight>
+        </noise_entry>
+        <noise_entry>
+            <alpha>-3</alpha>
+            <weight>0.8</weight>
+        </noise_entry>
     </timing>
 
     <antenna name="ant1" pattern="isotropic">
+        <efficiency>0.9</efficiency>
     </antenna>
 
-    <platform name="radarsite">
-        <motionpath>
+    <platform name="transmitter_site">
+        <motionpath interpolation="static">
             <positionwaypoint>
-                <x>0.00</x>
+                <x>-500.00</x>
                 <y>0.0</y>
                 <altitude>0.0</altitude>
                 <time>0</time>
             </positionwaypoint>
         </motionpath>
-        <fixedrotation>
-            <startazimuth>0.0</startazimuth>
-            <startelevation>0</startelevation>
-            <azimuthrate>0</azimuthrate>
-            <elevationrate>0</elevationrate>
-        </fixedrotation>
-        <monostatic name="mono1" type="pulsed" antenna="ant1" pulse="pulse1" timing="clock">
-            <window_skip>0</window_skip>
-            <window_length>20e-5</window_length>
-            <prf>1000</prf>
-        </monostatic>
+        <rotationpath interpolation="cubic">
+            <rotationwaypoint>
+                <azimuth>1</azimuth>
+                <elevation>1</elevation>
+                <time>0</time>
+            </rotationwaypoint>
+            <rotationwaypoint>
+                <azimuth>1</azimuth>
+                <elevation>0</elevation>
+                <time>5</time>
+            </rotationwaypoint>
+            <rotationwaypoint>
+                <azimuth>0</azimuth>
+                <elevation>0</elevation>
+                <time>10</time>
+            </rotationwaypoint>
+        </rotationpath>
+        <transmitter name="trans1" type="pulsed" antenna="ant1" pulse="pulse1" timing="clock">
+            <prf>10</prf>
+        </transmitter>
+    </platform>
+
+    <platform name="receiver_site">
+        <motionpath interpolation="static">
+            <positionwaypoint>
+                <x>500.00</x>
+                <y>0.0</y>
+                <altitude>0.0</altitude>
+                <time>0</time>
+            </positionwaypoint>
+        </motionpath>
+        <rotationpath interpolation="static">
+            <rotationwaypoint>
+                <azimuth>0</azimuth>
+                <elevation>0</elevation>
+                <time>0</time>
+            </rotationwaypoint>
+            <rotationwaypoint>
+                <azimuth>0</azimuth>
+                <elevation>1</elevation>
+                <time>10</time>
+            </rotationwaypoint>
+        </rotationpath>
+        <receiver name="recv1" antenna="ant1" timing="clock" nodirect="true" nopropagationloss="true">
+            <window_skip>5e-6</window_skip>
+            <window_length>1e-5</window_length>
+            <prf>10</prf>
+            <noise_temp>100</noise_temp>
+        </receiver>
     </platform>
 
     <platform name="aeroplane">
-        <motionpath>
+        <motionpath interpolation="static">
             <positionwaypoint>
                 <x>10000.0</x>
                 <y>0.0</y>
@@ -52,19 +124,28 @@
                 <time>0</time>
             </positionwaypoint>
         </motionpath>
-        <fixedrotation>
-            <startazimuth>0.0</startazimuth>
-            <startelevation>0.0</startelevation>
-            <azimuthrate>0</azimuthrate>
-            <elevationrate>0</elevationrate>
-        </fixedrotation>
+        <rotationpath interpolation="linear">
+            <rotationwaypoint>
+                <azimuth>0</azimuth>
+                <elevation>0</elevation>
+                <time>0</time>
+            </rotationwaypoint>
+            <rotationwaypoint>
+                <azimuth>0</azimuth>
+                <elevation>1</elevation>
+                <time>4.50</time>
+            </rotationwaypoint>
+            <rotationwaypoint>
+                <azimuth>1</azimuth>
+                <elevation>1</elevation>
+                <time>9</time>
+            </rotationwaypoint>
+        </rotationpath>
         <target name="wings">
             <rcs type="isotropic">
                 <value>10</value>
             </rcs>
         </target>
     </platform>
-
-    <include>input2.fersxml</include>
 
 </simulation>

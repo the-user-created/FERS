@@ -1,0 +1,41 @@
+<antenna>
+    <elevation>
+        <gainsample>
+            <angle>0.0</angle>
+            <gain>1.0</gain>
+        </gainsample>
+        <gainsample>
+            <angle>30.0</angle>
+            <gain>0.8</gain>
+        </gainsample>
+        <gainsample>
+            <angle>60.0</angle>
+            <gain>0.6</gain>
+        </gainsample>
+        <gainsample>
+            <angle>90.0</angle>
+            <gain>0.4</gain>
+        </gainsample>
+        <!-- Add more gain samples as needed -->
+    </elevation>
+
+    <azimuth>
+        <gainsample>
+            <angle>0.0</angle>
+            <gain>1.0</gain>
+        </gainsample>
+        <gainsample>
+            <angle>45.0</angle>
+            <gain>0.9</gain>
+        </gainsample>
+        <gainsample>
+            <angle>90.0</angle>
+            <gain>0.7</gain>
+        </gainsample>
+        <gainsample>
+            <angle>135.0</angle>
+            <gain>0.5</gain>
+        </gainsample>
+        <!-- Add more gain samples as needed -->
+    </azimuth>
+</antenna>

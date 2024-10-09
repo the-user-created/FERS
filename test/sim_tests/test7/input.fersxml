@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<!-- Test pulsed radar. One Monostatic radar and one target. Gaussian antenna -->
+<!-- Test pulsed radar. One Monostatic radar and one target -->
 <!DOCTYPE simulation SYSTEM "../../xml_schema/fers-xml.dtd">
 <simulation name="sim1">
     <parameters>
@@ -18,19 +18,12 @@
         <frequency>10e6</frequency>
     </timing>
 
-    <antenna name="ant1" pattern="gaussian">
-        <azscale>1</azscale>
-        <elscale>1</elscale>
+    <antenna name="ant1" pattern="python" module="py_module" function="get_gain">
     </antenna>
 
     <platform name="radarsite">
-        <motionpath>
-            <positionwaypoint>
-                <x>0.00</x>
-                <y>0.0</y>
-                <altitude>0.0</altitude>
-                <time>0</time>
-            </positionwaypoint>
+        <motionpath interpolation="python">
+            <pythonpath module="py_module" function="get_position"/>
         </motionpath>
         <fixedrotation>
             <startazimuth>0.0</startazimuth>
@@ -54,13 +47,12 @@
                 <time>0</time>
             </positionwaypoint>
         </motionpath>
-        <rotationpath interpolation="static">
-            <rotationwaypoint>
-                <azimuth>0</azimuth>
-                <elevation>0</elevation>
-                <time>0</time>
-            </rotationwaypoint>
-        </rotationpath>
+        <fixedrotation>
+            <startazimuth>0.0</startazimuth>
+            <startelevation>0.0</startelevation>
+            <azimuthrate>0</azimuthrate>
+            <elevationrate>0</elevationrate>
+        </fixedrotation>
         <target name="wings">
             <rcs type="isotropic">
                 <value>10</value>

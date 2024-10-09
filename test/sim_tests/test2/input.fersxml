@@ -1,117 +1,87 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Test pulsed bistatic radar. recv and trans on separate moving platforms, one stationary target -->
+<!-- Test pulsed radar. One monostatic radar with parabolic gain and one moving target -->
 <!DOCTYPE simulation SYSTEM "../../xml_schema/fers-xml.dtd">
-<simulation name="Bistatic Pulsed Radar with Moving Platforms">
+<simulation name="Parabolic_Antenna_Pulsed_Monostatic_Test">
 
     <!-- Simulation Parameters -->
     <parameters>
         <starttime>0.0</starttime>
-        <endtime>1.0</endtime>
-        <rate>1e8</rate> <!-- Sampling rate in Hz -->
-        <export csv="true" binary="true" xml="true"/>
+        <endtime>0.1</endtime>
+        <c>299792458</c> <!-- Speed of light (m/s) -->
+        <rate>1e8</rate> <!-- Sampling rate (Hz) -->
+        <export csv="true" xml="true" binary="false"/> <!-- Do not export binary to save space -->
     </parameters>
 
-    <!-- Pulse Definition -->
+    <!-- Pulsed Radar Pulse Definition -->
     <pulse name="pulse1" type="file" filename="waveform.csv">
-        <power>1000</power> <!-- Pulse power in Watts -->
-        <carrier>1.0e9</carrier> <!-- Carrier frequency in Hz -->
+        <power>1000</power> <!-- Pulse power (1000 watts) -->
+        <carrier>1e9</carrier> <!-- Carrier frequency (1 GHz) -->
     </pulse>
 
     <!-- Timing Source -->
-    <timing name="tx_timing" synconpulse="true">
-        <frequency>1.0e7</frequency> <!-- Frequency in Hz -->
-        <freq_offset>0.0</freq_offset> <!-- No frequency offset -->
+    <timing name="radar_clock" synconpulse="true">
+        <frequency>1e8</frequency> <!-- Clock frequency -->
     </timing>
 
-    <timing name="rx_timing" synconpulse="true">
-        <frequency>1.0e7</frequency> <!-- Frequency in Hz -->
-        <freq_offset>0.0</freq_offset> <!-- No frequency offset -->
-    </timing>
-
-    <!-- Antenna Definitions -->
-    <antenna name="tx_antenna" pattern="isotropic">
-        <efficiency>0.9</efficiency> <!-- Transmitter antenna efficiency -->
+    <!-- Parabolic Antenna Definition -->
+    <antenna name="parabolic_antenna" pattern="parabolic">
+        <diameter>2</diameter> <!-- Antenna diameter (2 meters) -->
+        <efficiency>0.85</efficiency> <!-- Antenna efficiency (85%) -->
     </antenna>
 
-    <antenna name="rx_antenna" pattern="isotropic">
-        <efficiency>0.9</efficiency> <!-- Receiver antenna efficiency -->
-    </antenna>
-
-    <!-- Platform: Transmitter -->
-    <platform name="tx_platform">
-        <motionpath interpolation="linear">
+    <!-- Platform Definition for the Radar and Target -->
+    <platform name="radar_platform">
+        <motionpath>
             <positionwaypoint>
-                <x>0.0</x>
+                <x>0.00</x>
                 <y>0.0</y>
-                <altitude>10.0</altitude> <!-- Altitude in meters -->
-                <time>0.0</time>
-            </positionwaypoint>
-            <positionwaypoint>
-                <x>100.0</x>
-                <y>0.0</y>
-                <altitude>10.0</altitude>
-                <time>1.0</time>
-            </positionwaypoint>
-        </motionpath>
-        <fixedrotation>
-            <startazimuth>0.0</startazimuth>
-            <startelevation>0.0</startelevation>
-            <azimuthrate>0.0</azimuthrate>
-            <elevationrate>0.0</elevationrate>
-        </fixedrotation>
-        <transmitter name="tx1" type="pulsed" pulse="pulse1" antenna="tx_antenna" timing="tx_timing">
-            <prf>10</prf> <!-- Pulse Repetition Frequency -->
-        </transmitter>
-    </platform>
-
-    <!-- Platform: Receiver -->
-    <platform name="rx_platform">
-        <motionpath interpolation="linear">
-            <positionwaypoint>
-                <x>0.0</x>
-                <y>50.0</y>
-                <altitude>10.0</altitude>
-                <time>0.0</time>
-            </positionwaypoint>
-            <positionwaypoint>
-                <x>100.0</x>
-                <y>50.0</y>
-                <altitude>10.0</altitude>
-                <time>1.0</time>
-            </positionwaypoint>
-        </motionpath>
-        <fixedrotation>
-            <startazimuth>0.0</startazimuth>
-            <startelevation>0.0</startelevation>
-            <azimuthrate>0.0</azimuthrate>
-            <elevationrate>0.0</elevationrate>
-        </fixedrotation>
-        <receiver name="rx1" antenna="rx_antenna" timing="rx_timing">
-            <window_skip>1.0e-6</window_skip>
-            <window_length>1.0e-3</window_length>
-            <prf>10</prf>
-        </receiver>
-    </platform>
-
-    <!-- Stationary Target -->
-    <platform name="target_platform">
-        <motionpath interpolation="static">
-            <positionwaypoint>
-                <x>50.0</x>
-                <y>25.0</y>
                 <altitude>0.0</altitude>
-                <time>0.0</time>
+                <time>0</time>
+            </positionwaypoint>
+        </motionpath>
+        <!-- Fixed rotation for radar (stationary) -->
+        <fixedrotation>
+            <startazimuth>0</startazimuth>
+            <startelevation>0</startelevation>
+            <azimuthrate>0</azimuthrate>
+            <elevationrate>0</elevationrate>
+        </fixedrotation>
+
+        <!-- Monostatic Radar Configuration -->
+        <monostatic name="monostatic_radar" type="pulsed" antenna="parabolic_antenna" pulse="pulse1" timing="radar_clock">
+            <window_skip>0.0001</window_skip>
+            <window_length>0.001</window_length>
+            <prf>1000</prf> <!-- Pulse repetition frequency (1000 Hz) -->
+        </monostatic>
+    </platform>
+
+    <!-- Target with Moving Motion Path -->
+    <platform name="moving_target">
+        <!-- Motion Path of Target with Linear Interpolation -->
+        <motionpath interpolation="linear">
+            <positionwaypoint>
+                <x>500</x> <!-- Initial X position (500 meters) -->
+                <y>0</y> <!-- Initial Y position (0 meters) -->
+                <altitude>50</altitude> <!-- Initial altitude (50 meters) -->
+                <time>0.0</time> <!-- Start time (0 seconds) -->
+            </positionwaypoint>
+            <positionwaypoint>
+                <x>300</x> <!-- Final X position (300 meters) -->
+                <y>0</y> <!-- Final Y position (0 meters) -->
+                <altitude>50</altitude> <!-- Final altitude (50 meters) -->
+                <time>0.1</time> <!-- End time (0.015 seconds) -->
             </positionwaypoint>
         </motionpath>
         <fixedrotation>
-            <startazimuth>0.0</startazimuth>
-            <startelevation>0.0</startelevation>
-            <azimuthrate>0.0</azimuthrate>
-            <elevationrate>0.0</elevationrate>
+            <startazimuth>0</startazimuth>
+            <startelevation>0</startelevation>
+            <azimuthrate>0</azimuthrate>
+            <elevationrate>0</elevationrate>
         </fixedrotation>
-        <target name="target1">
+        <!-- Radar Cross Section (RCS) for Target -->
+        <target name="moving_target">
             <rcs type="isotropic">
-                <value>1.0</value> <!-- RCS in square meters -->
+                <value>1.0</value> <!-- Isotropic RCS value of 1 square meter -->
             </rcs>
         </target>
     </platform>

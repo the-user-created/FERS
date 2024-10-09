@@ -1,11 +1,12 @@
 <?xml version="1.0" ?>
-<!-- Test pulsed radar. One Monostatic radar and one target w/ multipath -->
+<!-- Test pulsed radar. One Monostatic radar and one target -->
 <!DOCTYPE simulation SYSTEM "../../xml_schema/fers-xml.dtd">
 <simulation name="sim1">
     <parameters>
         <starttime>0</starttime>
         <endtime>0.01</endtime>
         <rate>10e6</rate>
+        <oversample>2</oversample>
         <export binary="true" csv="false" xml="true"/>
     </parameters>
 
@@ -64,13 +65,5 @@
             </rcs>
         </target>
     </platform>
-
-    <multipath>
-        <factor>0.5</factor>
-        <nx>1.0</nx>
-        <ny>0.0</ny>
-        <nz>0.0</nz>
-        <d>100.0</d>
-    </multipath>
 
 </simulation>
