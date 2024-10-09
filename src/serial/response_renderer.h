@@ -1,15 +1,9 @@
 // response_renderer.h
-// Definitions for response multi-threaded rendering classes
-// Original code by Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-// Modified by: David Young
-// 7 June 2006
 
 #pragma once
 
+#include <future>
 #include <memory>
-#include <mutex>
-#include <optional>
-#include <queue>
 #include <span>
 #include <vector>
 
@@ -27,12 +21,8 @@ namespace serial
 	class ThreadedResponseRenderer
 	{
 	public:
-		ThreadedResponseRenderer(const std::span<const std::unique_ptr<Response>> responses,
-		                         const radar::Receiver* recv,
-		                         const unsigned maxThreads) : _responses(responses), _recv(recv),
-		                                                      _max_threads(maxThreads) {}
-
-		~ThreadedResponseRenderer() = default;
+		ThreadedResponseRenderer(std::span<const std::unique_ptr<Response>> responses, const radar::Receiver* recv,
+		                         unsigned maxThreads);
 
 		void renderWindow(std::vector<ComplexType>& window, RealType length, RealType start, RealType fracDelay) const;
 
@@ -42,34 +32,7 @@ namespace serial
 		unsigned _max_threads;
 	};
 
-	class RenderThread
-	{
-	public:
-		RenderThread(const unsigned serial, std::mutex& windowMutex, std::vector<ComplexType>& window,
-		             const RealType length, const RealType start, const RealType fracDelay, std::mutex& workListMutex,
-		             std::queue<Response*>& workList) noexcept : _serial(serial), _window_mutex(windowMutex),
-		                                                         _window(window), _length(length), _start(start),
-		                                                         _frac_delay(fracDelay),
-		                                                         _work_list_mutex(workListMutex),
-		                                                         _work_list(workList) {}
-
-		~RenderThread() = default;
-
-		void operator()() const;
-
-	private:
-		[[nodiscard]] std::optional<Response*> getWork() const noexcept;
-
-		void addWindow(const std::vector<ComplexType>& array, std::vector<ComplexType>& localWindow, RealType startTime,
-		               unsigned arraySize) const noexcept;
-
-		unsigned _serial;
-		std::mutex& _window_mutex;
-		std::vector<ComplexType>& _window;
-		RealType _length;
-		RealType _start;
-		RealType _frac_delay;
-		std::mutex& _work_list_mutex;
-		std::queue<Response*>& _work_list;
-	};
+	// Utility function to add an array to the window
+	void addArrayToWindow(RealType wStart, std::vector<ComplexType>& window, unsigned wSize, RealType rate,
+	                      RealType rStart, const std::vector<ComplexType>& resp, unsigned rSize) noexcept;
 }
