@@ -70,16 +70,8 @@ namespace math
 	// Constructor with a rectangular vector
 	SVec3::SVec3(const Vec3& vec) noexcept : length(vec.length())
 	{
-		if (length != 0)
-		{
-			elevation = std::asin(vec.z / length);
-			azimuth = std::atan2(vec.y, vec.x);
-		}
-		else
-		{
-			elevation = 0;
-			azimuth = 0;
-		}
+		elevation = std::asin(vec.z / length);
+		azimuth = std::atan2(vec.y, vec.x);
 	}
 
 	SVec3& SVec3::operator*=(const RealType b) noexcept

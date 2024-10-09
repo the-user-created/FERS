@@ -12,7 +12,6 @@
 #include <fstream>
 #include <iomanip>
 #include <sstream>
-#include <stdexcept>
 
 #include "libxml_wrapper.h"
 #include "radar/radar_obj.h"
@@ -120,14 +119,7 @@ namespace serial
 		for (const auto& point : _points) { renderResponseCsv(of, point); }
 	}
 
-	void Response::addInterpPoint(const InterpPoint& point)
-	{
-		if (!_points.empty() && point.time < _points.back().time)
-		{
-			throw std::logic_error("[BUG] Interpolation points not being added in order");
-		}
-		_points.push_back(point);
-	}
+	void Response::addInterpPoint(const InterpPoint& point) { _points.push_back(point); }
 
 	std::vector<ComplexType> Response::renderBinary(RealType& rate, unsigned& size, const RealType fracWinDelay) const
 	{
