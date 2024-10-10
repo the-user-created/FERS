@@ -59,7 +59,13 @@ namespace serial
 				unsigned psize;
 				RealType prate;
 				std::vector<ComplexType> array = resp->renderBinary(prate, psize, fracDelay);
-				addArrayToWindow(start, local_window, local_window_size, rate, resp->startTime(), array, psize);
+				int start_sample = static_cast<int>(std::round(rate * (resp->startTime() - start)));
+				const unsigned roffset = start_sample < 0 ? -start_sample : 0;
+				if (start_sample < 0) { start_sample = 0; }
+				for (unsigned i = roffset; i < psize && i + start_sample < local_window_size; ++i)
+				{
+					local_window[i + start_sample] += array[i];
+				}
 			}
 
 			// Merge local window into the shared window
@@ -75,18 +81,5 @@ namespace serial
 
 		// Wait for all threads to finish
 		for (auto& future : futures) { future.get(); }
-	}
-
-	void addArrayToWindow(const RealType wStart, std::vector<ComplexType>& window, unsigned wSize, const RealType rate,
-	                      const RealType rStart, const std::vector<ComplexType>& resp, const unsigned rSize) noexcept
-	{
-		int start_sample = static_cast<int>(std::round(rate * (rStart - wStart)));
-		unsigned roffset = 0;
-		if (start_sample < 0)
-		{
-			roffset = -start_sample;
-			start_sample = 0;
-		}
-		for (unsigned i = roffset; i < rSize && i + start_sample < wSize; ++i) { window[i + start_sample] += resp[i]; }
 	}
 }

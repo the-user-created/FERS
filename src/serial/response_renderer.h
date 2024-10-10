@@ -31,8 +31,4 @@ namespace serial
 		const radar::Receiver* _recv;
 		unsigned _max_threads;
 	};
-
-	// Utility function to add an array to the window
-	void addArrayToWindow(RealType wStart, std::vector<ComplexType>& window, unsigned wSize, RealType rate,
-	                      RealType rStart, const std::vector<ComplexType>& resp, unsigned rSize) noexcept;
 }
