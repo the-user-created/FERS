@@ -1,15 +1,19 @@
 set(SRCS
-	radar_system.cpp
+	radar_obj.cpp
 	target.cpp
 	platform.cpp
+	transmitter.cpp
+	receiver.cpp
 )
 
 
 set(HEADERS
-	radar_system.h
+	radar_obj.h
 	platform.h
 	target.h
 	object.h
+	transmitter.h
+	receiver.h
 )
 
 target_sources(${PROJECT_NAME} PRIVATE ${SRCS} ${HEADERS})

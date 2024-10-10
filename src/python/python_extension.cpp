@@ -1,14 +1,17 @@
-// python_extension.cpp
-// Implementation of Python extensions
-// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-// 7 March 2007
+/**
+ * @file python_extension.cpp
+ * @brief Implementation of Python extensions for integrating with FERS.
+ *
+ * @authors David Young, Marc Brooker
+ * @date 2007-03-07
+ */
 
 #include "python_extension.h"
 
 #include <Python.h>
 
-#include "core/logging.h"             // for log, LOG, Level
-#include "math_utils/geometry_ops.h"  // for Vec3, SVec3
+#include "core/logging.h"
+#include "math/geometry_ops.h"
 
 using logging::Level;
 using math::Vec3;
@@ -124,35 +127,6 @@ namespace python
 
 		Py_DECREF(p_value);
 		LOG(Level::TRACE, "PythonPath::getPosition: t={}, x={}, y={}, z={}", t, result.x, result.y, result.z);
-		return result;
-	}
-
-	// =================================================================================================================
-	//
-	// PYTHON NOISE CLASS
-	//
-	// =================================================================================================================
-
-	RealType PythonNoise::getSample() const
-	{
-		// Call the Python function with no arguments
-		PyObject* p_value = PyObject_CallObject(_data->p_func, nullptr);
-
-		if (!p_value) {
-			PyErr_Print();
-			throw std::runtime_error("Error calling Python function for getSample");
-		}
-
-		// Extract the result, assuming it is a float
-		const RealType result = PyFloat_AsDouble(p_value);
-		if (PyErr_Occurred()) {
-			PyErr_Print();
-			Py_DECREF(p_value);
-			throw std::runtime_error("Error converting Python result to RealType");
-		}
-
-		Py_DECREF(p_value);
-		LOG(Level::TRACE, "PythonNoise::getSample: {}", result);
 		return result;
 	}
 

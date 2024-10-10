@@ -1,68 +1,86 @@
-<?xml version="1.0" ?>
-<!-- Test pulsed radar. One Monostatic radar and one target -->
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Test CW radar. One Monostatic radar and one moving non-linear target -->
 <!DOCTYPE simulation SYSTEM "../../xml_schema/fers-xml.dtd">
-<simulation name="sim1">
+<simulation name="CW_Monostatic_Moving_Target_Test">
     <parameters>
-        <starttime>0</starttime>
-        <endtime>0.01</endtime>
-        <rate>10e6</rate>
-        <export binary="true" csv="false" xml="true"/>
+        <starttime>0.0</starttime>
+        <endtime>1.0</endtime>
+        <c>299792458.0</c>
+        <interprate>1e6</interprate>
+        <rate>1e6</rate>
+        <randomseed>12345</randomseed>
+        <export csv="true" binary="true" xml="true"/>
     </parameters>
 
-    <pulse name="pulse1" type="file" filename="waveform.csv">
-        <power>1000</power>
-        <carrier>1e9</carrier>
+    <pulse name="cw_pulse" type="file" filename="waveform.csv">
+        <power>100.0</power>
+        <carrier>10e9</carrier>
     </pulse>
 
-    <timing name="clock">
-        <frequency>10e6</frequency>
+    <timing name="clock_1">
+        <frequency>1e7</frequency>
     </timing>
 
-    <antenna name="ant1" pattern="isotropic">
+    <antenna name="mono_antenna" pattern="parabolic">
+        <diameter>2</diameter>
+        <efficiency>0.85</efficiency>
     </antenna>
 
-    <platform name="radarsite">
-        <motionpath>
+    <platform name="monostatic_radar_platform">
+        <motionpath interpolation="static">
             <positionwaypoint>
-                <x>0.00</x>
+                <x>0.0</x>
                 <y>0.0</y>
-                <altitude>0.0</altitude>
-                <time>0</time>
-            </positionwaypoint>
-        </motionpath>
-        <fixedrotation>
-            <startazimuth>0.0</startazimuth>
-            <startelevation>0</startelevation>
-            <azimuthrate>0</azimuthrate>
-            <elevationrate>0</elevationrate>
-        </fixedrotation>
-        <monostatic name="mono1" type="pulsed" antenna="ant1" pulse="pulse1" timing="clock">
-            <window_skip>0</window_skip>
-            <window_length>20e-5</window_length>
-            <prf>1000</prf>
-        </monostatic>
-    </platform>
-
-    <platform name="aeroplane">
-        <motionpath>
-            <positionwaypoint>
-                <x>10000.0</x>
-                <y>0.0</y>
-                <altitude>0.0</altitude>
-                <time>0</time>
+                <altitude>10.0</altitude>
+                <time>0.0</time>
             </positionwaypoint>
         </motionpath>
         <fixedrotation>
             <startazimuth>0.0</startazimuth>
             <startelevation>0.0</startelevation>
-            <azimuthrate>0</azimuthrate>
-            <elevationrate>0</elevationrate>
+            <azimuthrate>0.0</azimuthrate>
+            <elevationrate>0.0</elevationrate>
         </fixedrotation>
-        <target name="wings">
+        <monostatic name="monostatic_radar" type="continuous" antenna="mono_antenna" pulse="cw_pulse" timing="clock_1">
+            <window_skip>0</window_skip>
+            <window_length>0.1</window_length>
+            <prf>1</prf> <!-- FERS throws an error if PRF is not set (even for a continuous wave),
+            so we set it to 1 so that the system behaves almost like a continuous wave -->
+            <noise_temp>0</noise_temp>
+        </monostatic>
+    </platform>
+
+    <platform name="moving_target_platform">
+        <motionpath interpolation="cubic">
+            <positionwaypoint>
+                <x>1000.0</x>
+                <y>0.0</y>
+                <altitude>5.0</altitude>
+                <time>0.0</time>
+            </positionwaypoint>
+            <positionwaypoint>
+                <x>800.0</x>
+                <y>500.0</y>
+                <altitude>5.0</altitude>
+                <time>5.0</time>
+            </positionwaypoint>
+            <positionwaypoint>
+                <x>500.0</x>
+                <y>1000.0</y>
+                <altitude>5.0</altitude>
+                <time>1.0</time>
+            </positionwaypoint>
+        </motionpath>
+        <fixedrotation>
+            <startazimuth>0.0</startazimuth>
+            <startelevation>0.0</startelevation>
+            <azimuthrate>0.0</azimuthrate>
+            <elevationrate>0.0</elevationrate>
+        </fixedrotation>
+        <target name="moving_target">
             <rcs type="isotropic">
-                <value>10</value>
+                <value>10.0</value>
             </rcs>
         </target>
     </platform>
-
 </simulation>

@@ -117,7 +117,9 @@
         <!ELEMENT receiver (window_skip?,window_length?,prf,noise_temp?)>
         <!ATTLIST receiver name CDATA #REQUIRED
                 antenna CDATA #REQUIRED
-                timing CDATA #REQUIRED>
+                timing CDATA #REQUIRED
+                nodirect (true|false) "false"
+                nopropagationloss (true|false) "false">
         <!ELEMENT window_skip (#PCDATA)> <!-- Time to skip after start of pulse before starting receiving (seconds) -->
         <!ELEMENT window_length (#PCDATA)> <!-- Length of the range gate (seconds) -->
 

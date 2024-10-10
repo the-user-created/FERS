@@ -1,117 +1,101 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!-- Test pulsed bistatic radar. recv and trans on separate moving platforms, one stationary target -->
+<?xml version="1.0" ?>
+<!-- Test pulsed radar. One Monostatic radar and one target. Gaussian antenna -->
 <!DOCTYPE simulation SYSTEM "../../xml_schema/fers-xml.dtd">
-<simulation name="Bistatic Pulsed Radar with Moving Platforms">
-
-    <!-- Simulation Parameters -->
+<simulation name="sim1">
     <parameters>
-        <starttime>0.0</starttime>
-        <endtime>1.0</endtime>
-        <rate>1e8</rate> <!-- Sampling rate in Hz -->
-        <export csv="true" binary="true" xml="true"/>
+        <starttime>0</starttime>
+        <endtime>0.01</endtime>
+        <rate>10e6</rate>
+        <randomseed>1</randomseed>
+        <export binary="true" csv="false" xml="true"/>
     </parameters>
 
-    <!-- Pulse Definition -->
     <pulse name="pulse1" type="file" filename="waveform.csv">
-        <power>1000</power> <!-- Pulse power in Watts -->
-        <carrier>1.0e9</carrier> <!-- Carrier frequency in Hz -->
+        <power>1000</power>
+        <carrier>1e9</carrier>
     </pulse>
 
-    <!-- Timing Source -->
-    <timing name="tx_timing" synconpulse="true">
-        <frequency>1.0e7</frequency> <!-- Frequency in Hz -->
-        <freq_offset>0.0</freq_offset> <!-- No frequency offset -->
+    <timing name="clock" synconpulse="false">
+        <frequency>10e6</frequency>
+        <noise_entry>
+            <alpha>2</alpha>
+            <weight>0.8</weight>
+        </noise_entry>
+        <noise_entry>
+            <alpha>1</alpha>
+            <weight>0.2</weight>
+        </noise_entry>
+        <noise_entry>
+            <alpha>0</alpha>
+            <weight>0.5</weight>
+        </noise_entry>
+        <noise_entry>
+            <alpha>-1</alpha>
+            <weight>0.8</weight>
+        </noise_entry>
+        <noise_entry>
+            <alpha>-2</alpha>
+            <weight>0.8</weight>
+        </noise_entry>
+        <noise_entry>
+            <alpha>-3</alpha>
+            <weight>0.8</weight>
+        </noise_entry>
     </timing>
 
-    <timing name="rx_timing" synconpulse="true">
-        <frequency>1.0e7</frequency> <!-- Frequency in Hz -->
-        <freq_offset>0.0</freq_offset> <!-- No frequency offset -->
-    </timing>
-
-    <!-- Antenna Definitions -->
-    <antenna name="tx_antenna" pattern="isotropic">
-        <efficiency>0.9</efficiency> <!-- Transmitter antenna efficiency -->
+    <antenna name="ant1" pattern="gaussian">
+        <azscale>1</azscale>
+        <elscale>1</elscale>
     </antenna>
 
-    <antenna name="rx_antenna" pattern="isotropic">
-        <efficiency>0.9</efficiency> <!-- Receiver antenna efficiency -->
-    </antenna>
-
-    <!-- Platform: Transmitter -->
-    <platform name="tx_platform">
-        <motionpath interpolation="linear">
+    <platform name="radarsite">
+        <motionpath interpolation="malformed">
             <positionwaypoint>
-                <x>0.0</x>
+                <x>0.00</x>
                 <y>0.0</y>
-                <altitude>10.0</altitude> <!-- Altitude in meters -->
-                <time>0.0</time>
-            </positionwaypoint>
-            <positionwaypoint>
-                <x>100.0</x>
-                <y>0.0</y>
-                <altitude>10.0</altitude>
-                <time>1.0</time>
-            </positionwaypoint>
-        </motionpath>
-        <fixedrotation>
-            <startazimuth>0.0</startazimuth>
-            <startelevation>0.0</startelevation>
-            <azimuthrate>0.0</azimuthrate>
-            <elevationrate>0.0</elevationrate>
-        </fixedrotation>
-        <transmitter name="tx1" type="pulsed" pulse="pulse1" antenna="tx_antenna" timing="tx_timing">
-            <prf>10</prf> <!-- Pulse Repetition Frequency -->
-        </transmitter>
-    </platform>
-
-    <!-- Platform: Receiver -->
-    <platform name="rx_platform">
-        <motionpath interpolation="linear">
-            <positionwaypoint>
-                <x>0.0</x>
-                <y>50.0</y>
-                <altitude>10.0</altitude>
-                <time>0.0</time>
-            </positionwaypoint>
-            <positionwaypoint>
-                <x>100.0</x>
-                <y>50.0</y>
-                <altitude>10.0</altitude>
-                <time>1.0</time>
-            </positionwaypoint>
-        </motionpath>
-        <fixedrotation>
-            <startazimuth>0.0</startazimuth>
-            <startelevation>0.0</startelevation>
-            <azimuthrate>0.0</azimuthrate>
-            <elevationrate>0.0</elevationrate>
-        </fixedrotation>
-        <receiver name="rx1" antenna="rx_antenna" timing="rx_timing">
-            <window_skip>1.0e-6</window_skip>
-            <window_length>1.0e-3</window_length>
-            <prf>10</prf>
-        </receiver>
-    </platform>
-
-    <!-- Stationary Target -->
-    <platform name="target_platform">
-        <motionpath interpolation="static">
-            <positionwaypoint>
-                <x>50.0</x>
-                <y>25.0</y>
                 <altitude>0.0</altitude>
-                <time>0.0</time>
+                <time>0</time>
             </positionwaypoint>
         </motionpath>
         <fixedrotation>
             <startazimuth>0.0</startazimuth>
-            <startelevation>0.0</startelevation>
-            <azimuthrate>0.0</azimuthrate>
-            <elevationrate>0.0</elevationrate>
+            <startelevation>0</startelevation>
+            <azimuthrate>0</azimuthrate>
+            <elevationrate>0</elevationrate>
         </fixedrotation>
-        <target name="target1">
+        <monostatic name="mono1" type="pulsed" antenna="ant1" pulse="pulse1" timing="clock">
+            <window_skip>1e-6</window_skip>
+            <window_length>20e-5</window_length>
+            <prf>1000</prf>
+            <noise_temp>100</noise_temp>
+        </monostatic>
+    </platform>
+
+    <platform name="aeroplane">
+        <motionpath>
+            <positionwaypoint>
+                <x>10000.0</x>
+                <y>0.0</y>
+                <altitude>0.0</altitude>
+                <time>0</time>
+            </positionwaypoint>
+        </motionpath>
+        <rotationpath interpolation="malformed">
+            <rotationwaypoint>
+                <azimuth>0</azimuth>
+                <elevation>0</elevation>
+                <time>0</time>
+            </rotationwaypoint>
+        </rotationpath>
+        <fixedrotation>
+            <startazimuth>0</startazimuth>
+            <startelevation>0</startelevation>
+            <azimuthrate>0</azimuthrate>
+            <elevationrate>0</elevationrate>
+        </fixedrotation>
+        <target name="wings">
             <rcs type="isotropic">
-                <value>1.0</value> <!-- RCS in square meters -->
+                <value>10</value>
             </rcs>
         </target>
     </platform>

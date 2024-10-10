@@ -1,18 +1,22 @@
-// world.cpp
-// Implementation of simulator world object
-// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-// Started: 25 April 2006
+/**
+* @file world.cpp
+* @brief Implementation of the World class for the radar simulation environment.
+*
+* This file contains the implementation of the World class,
+* which manages various objects involved in the radar simulation, such as platforms,
+* transmitters, receivers, targets, antennas, radar signals, and timing sources.
+* It includes methods for adding these objects to the simulation and for handling multipath surface interactions.
+*
+* @authors David Young, Marc Brooker
+* @date 2006-04-25
+*/
 
 #include "world.h"
 
-#include <stdexcept>                         // for runtime_error
-#include <type_traits>                       // for decay, decay_t
-#include <utility>                           // for move
-
-#include "antenna/antenna_factory.h"         // for Antenna
-#include "radar/radar_system.h"              // for Receiver, Transmitter
-#include "signal_processing/radar_signal.h"  // for RadarSignal
-#include "timing/prototype_timing.h"         // for PrototypeTiming
+#include "antenna/antenna_factory.h"
+#include "radar/radar_obj.h"
+#include "signal/radar_signal.h"
+#include "timing/prototype_timing.h"
 
 using signal::RadarSignal;
 using antenna::Antenna;
@@ -25,15 +29,13 @@ using radar::Target;
 
 namespace core
 {
-	using namespace std::string_literals;
+	void World::add(std::unique_ptr<Platform> plat) noexcept { _platforms.push_back(std::move(plat)); }
 
-	void World::add(std::unique_ptr<Platform> plat) { _platforms.push_back(std::move(plat)); }
+	void World::add(std::unique_ptr<Transmitter> trans) noexcept { _transmitters.push_back(std::move(trans)); }
 
-	void World::add(std::unique_ptr<Transmitter> trans) { _transmitters.push_back(std::move(trans)); }
+	void World::add(std::unique_ptr<Receiver> recv) noexcept { _receivers.push_back(std::move(recv)); }
 
-	void World::add(std::unique_ptr<Receiver> recv) { _receivers.push_back(std::move(recv)); }
-
-	void World::add(std::unique_ptr<Target> target) { _targets.push_back(std::move(target)); }
+	void World::add(std::unique_ptr<Target> target) noexcept { _targets.push_back(std::move(target)); }
 
 	void World::add(std::unique_ptr<RadarSignal> pulse)
 	{

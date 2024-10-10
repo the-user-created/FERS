@@ -1,25 +1,33 @@
-// target.cpp
-// Classes for targets and target RCS
-// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-// 11 June 2007
-
-#define TIXML_USE_STL
+/**
+ * @file target.cpp
+ * @brief Defines classes for radar targets and their Radar Cross Section (RCS) models.
+ *
+ * @authors David Young, Marc Brooker
+ * @date 2007-06-11
+ */
 
 #include "target.h"
 
-#include <cmath>                      // for sqrt
-#include <optional>                   // for optional
-#include <stdexcept>                  // for runtime_error
+#include <cmath>
+#include <optional>
+#include <stdexcept>
 
-#include "core/logging.h"             // for log, LOG, Level
-#include "math_utils/geometry_ops.h"  // for SVec3, operator+
-#include "serialization/libxml_wrapper.h"
+#include "core/logging.h"
+#include "math/geometry_ops.h"
+#include "serial/libxml_wrapper.h"
 
 using math::SVec3;
 
 namespace
 {
-	void loadTargetGainAxis(const interp::InterpSet* set, const XmlElement& axisXml)
+	/**
+	 * @brief Load the target gain axis from an XML element.
+	 *
+	 * This function reads the gain samples from an XML element and inserts them into an interpolation set.
+	 * @param set The interpolation set to insert the samples into.
+	 * @param axisXml The XML element containing the gain samples.
+	 */
+	void loadTargetGainAxis(const interp::InterpSet* set, const XmlElement& axisXml) noexcept
 	{
 		XmlElement tmp = axisXml.childElement("rcssample"); // Get the first gainsample
 		while (tmp.isValid()) // Continue while the element is valid
@@ -42,16 +50,23 @@ namespace
 
 namespace radar
 {
-	class Platform;
-
-	RealType IsoTarget::getRcs(SVec3& inAngle, SVec3& outAngle) const
+	RealType IsoTarget::getRcs(SVec3& /*inAngle*/, SVec3& /*outAngle*/) const noexcept
 	{
 		return _model ? _rcs * _model->sampleModel() : _rcs;
 	}
 
 	FileTarget::FileTarget(Platform* platform, std::string name, const std::string& filename) :
 		Target(platform, std::move(name)), _azi_samples(std::make_unique_for_overwrite<interp::InterpSet>()),
-		_elev_samples(std::make_unique_for_overwrite<interp::InterpSet>()) { loadRcsDescription(filename); }
+		_elev_samples(std::make_unique_for_overwrite<interp::InterpSet>())
+	{
+		XmlDocument doc;
+		if (!doc.loadFile(filename)) { throw std::runtime_error("Could not load target description from " + filename); }
+
+		const XmlElement root(doc.getRootElement());
+
+		loadTargetGainAxis(_elev_samples.get(), root.childElement("elevation", 0));
+		loadTargetGainAxis(_azi_samples.get(), root.childElement("azimuth", 0));
+	}
 
 	RealType FileTarget::getRcs(SVec3& inAngle, SVec3& outAngle) const
 	{
@@ -67,16 +82,5 @@ namespace radar
 
 		LOG(logging::Level::FATAL, "Could not get RCS value for target");
 		throw std::runtime_error("Could not get RCS value for target");
-	}
-
-	void FileTarget::loadRcsDescription(const std::string& filename) const
-	{
-		XmlDocument doc;
-		if (!doc.loadFile(filename)) { throw std::runtime_error("Could not load target description from " + filename); }
-
-		const XmlElement root(doc.getRootElement());
-
-		loadTargetGainAxis(_elev_samples.get(), root.childElement("elevation", 0));
-		loadTargetGainAxis(_azi_samples.get(), root.childElement("azimuth", 0));
 	}
 }

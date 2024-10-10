@@ -1,12 +1,16 @@
 <?xml version="1.0" ?>
-<!-- Test pulsed radar. One Monostatic radar and one moving target -->
+<!-- Test pulsed radar. One Monostatic radar and one target
+w/ h5 antenna gain pattern, oversampling, conflicting offsets, target model -->
 <!DOCTYPE simulation SYSTEM "../../xml_schema/fers-xml.dtd">
-<simulation name="sim1">
+<simulation name="code_coverage">
     <parameters>
         <starttime>0</starttime>
-        <endtime>0.0021</endtime>
+        <endtime>0.01</endtime>
         <rate>10e6</rate>
-        <export binary="true" csv="false" xml="true"/>
+        <randomseed>12345</randomseed> <!-- Random seed -->
+        <adc_bits>12</adc_bits> <!-- 12-bit ADC resolution -->
+        <oversample>1</oversample> <!-- Oversample factor -->
+        <export binary="true" csv="true" xml="true"/>
     </parameters>
 
     <pulse name="pulse1" type="file" filename="waveform.csv">
@@ -16,13 +20,18 @@
 
     <timing name="clock">
         <frequency>10e6</frequency>
+        <freq_offset>0</freq_offset>
+        <random_freq_offset>0</random_freq_offset>
+        <phase_offset>0</phase_offset>
+        <random_phase_offset>0</random_phase_offset>
     </timing>
 
-    <antenna name="ant1" pattern="isotropic">
+    <antenna name="ant1" pattern="file" filename="antenna_gain_pattern.h5">
+        <efficiency>0.9</efficiency>
     </antenna>
 
     <platform name="radarsite">
-        <motionpath>
+        <motionpath interpolation="static">
             <positionwaypoint>
                 <x>0.00</x>
                 <y>0.0</y>
@@ -38,30 +47,18 @@
         </fixedrotation>
         <monostatic name="mono1" type="pulsed" antenna="ant1" pulse="pulse1" timing="clock">
             <window_skip>0</window_skip>
-            <window_length>10e-5</window_length>
-            <prf>10000</prf>
+            <window_length>20e-5</window_length>
+            <prf>1000</prf>
         </monostatic>
     </platform>
 
     <platform name="aeroplane">
-        <motionpath interpolation="linear">
+        <motionpath interpolation="static">
             <positionwaypoint>
-                <x>3400.0</x>
+                <x>10000.0</x>
                 <y>0.0</y>
-                <altitude>100.0</altitude>
+                <altitude>0.0</altitude>
                 <time>0</time>
-            </positionwaypoint>
-            <positionwaypoint>
-                <x>0.0</x>
-                <y>0.0</y>
-                <altitude>100.0</altitude>
-                <time>1</time>
-            </positionwaypoint>
-            <positionwaypoint>
-                <x>-3400.0</x>
-                <y>0.0</y>
-                <altitude>100.0</altitude>
-                <time>0.002</time>
             </positionwaypoint>
         </motionpath>
         <fixedrotation>
@@ -70,11 +67,9 @@
             <azimuthrate>0</azimuthrate>
             <elevationrate>0</elevationrate>
         </fixedrotation>
-        <target name="wings">
-            <rcs type="isotropic">
-                <value>10</value>
-            </rcs>
+        <target name="TestFileTarget">
+            <rcs type="file" filename="rcs_data.fersxml"/>
+            <model type="constant"/>
         </target>
     </platform>
-
 </simulation>

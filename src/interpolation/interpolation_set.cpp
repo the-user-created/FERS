@@ -1,36 +1,29 @@
-// interpolation_set.cpp
-// Implements interpolation class
-// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-// 11 June 2007
+/**
+* @file interpolation_set.cpp
+* @brief Implementation file for interpolation of sets of data.
+*
+* This file contains the implementation of the InterpSetData and InterpSet classes. It includes
+* functions for linear interpolation, retrieving the maximum value, and dividing data points
+* by a scalar. The file leverages C++17 concepts to restrict templates to arithmetic types.
+*
+* @authors David Young, Marc Brooker
+* @date 2007-06-11
+*/
 
 #include "interpolation_set.h"
 
-#include <algorithm>       // for __max_element_fn, max_element
-#include <cstddef>        // for size_t
-#include <iterator>        // for prev
-#include <ranges>          // for operator==, operator|, elements_view, values
-#include <stdexcept>       // for invalid_argument
-#include <utility>         // for pair
-#include <bits/std_abs.h>  // for abs
+#include <algorithm>
+#include <cstddef>
+#include <iterator>
+#include <ranges>
+#include <stdexcept>
+#include <utility>
+#include <bits/std_abs.h>
 
 namespace interp
 {
-	// =================================================================================================================
-	//
-	// INTERPOLATION SET DATA CLASS
-	//
-	// =================================================================================================================
-
 	template <RealConcept T>
-	void InterpSetData::loadSamples(const std::vector<T>& x, const std::vector<T>& y)
-	{
-		if (x.size() != y.size()) { throw std::invalid_argument("X and Y vectors must have the same size"); }
-
-		for (size_t i = 0; i < x.size(); ++i) { _data.insert({static_cast<double>(x[i]), static_cast<double>(y[i])}); }
-	}
-
-	template <RealConcept T>
-	std::optional<T> InterpSetData::value(T x) const
+	std::optional<T> InterpSetData::value(T x) const noexcept
 	{
 		if (_data.empty()) { return std::nullopt; }
 
@@ -48,11 +41,12 @@ namespace interp
 		const auto [x1, y1] = *prev;
 		const auto [x2, y2] = *iter;
 
+		// Perform linear interpolation
 		return static_cast<T>(y2 * (x - x1) / (x2 - x1) + y1 * (x2 - x) / (x2 - x1));
 	}
 
 	// Returns the maximum absolute value as a double
-	double InterpSetData::max() const
+	double InterpSetData::max() const noexcept
 	{
 		auto values = _data | std::views::values;
 
@@ -69,19 +63,15 @@ namespace interp
 	{
 		if (a == 0) { throw std::invalid_argument("Division by zero is not allowed."); }
 
-		for (auto& value : _data | std::views::values) { value /= static_cast<double>(a); }
+		std::ranges::for_each(_data | std::views::values, [a](auto& value) { value /= static_cast<double>(a); });
 	}
 
 	// Explicit instantiations for double and float (or any other type you want)
-	template void InterpSetData::loadSamples<double>(const std::vector<double>&, const std::vector<double>&);
-
-	template std::optional<double> InterpSetData::value<double>(double) const;
+	template std::optional<double> InterpSetData::value<double>(double) const noexcept;
 
 	template void InterpSetData::divide<double>(double);
 
-	template void InterpSetData::loadSamples<float>(const std::vector<float>&, const std::vector<float>&);
-
-	template std::optional<float> InterpSetData::value<float>(float) const;
+	template std::optional<float> InterpSetData::value<float>(float) const noexcept;
 
 	template void InterpSetData::divide<float>(float);
 }

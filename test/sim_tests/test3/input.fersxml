@@ -1,80 +1,77 @@
 <?xml version="1.0" ?>
-<!-- Test pulsed radar. One Monostatic radar and one moving target -->
-<!DOCTYPE simulation SYSTEM "../../xml_schema/fers-xml.dtd">
-<simulation name="sim1">
+<!--Monostatic simulation input file w/ xml antenna-->
+<!DOCTYPE simulation SYSTEM "../../fers-xml.dtd">
+<simulation name="sim_mono">
     <parameters>
         <starttime>0</starttime>
-        <endtime>0.0021</endtime>
-        <rate>1e8</rate>
-        <export binary="true" xml="true"/>
+        <endtime>10e-3</endtime>
+        <rate>10e6</rate>
+        <randomseed>12345</randomseed>
+        <export binary="true" csv="true" xml="true"/>
     </parameters>
 
-    <pulse name="pulse1" type="file" filename="waveform.csv">
-        <power>1000</power>
-        <carrier>1e9</carrier>
+    <pulse name="chirp" type="file" filename="chirp.h5">
+        <power>10e3</power>
+        <carrier>5e9</carrier>
     </pulse>
 
     <timing name="clock">
-        <frequency>10e6</frequency>
+        <frequency>5e9</frequency>
     </timing>
 
-    <antenna name="ant1" pattern="isotropic">
+    <antenna name="ant1" pattern="xml" filename="antenna_pattern.fersxml">
+        <efficiency>0.9</efficiency>
     </antenna>
 
-    <platform name="radarsite">
+    <platform name="DroneSAR">
+
         <motionpath>
             <positionwaypoint>
-                <x>0.00</x>
-                <y>0.0</y>
-                <altitude>0.0</altitude>
+                <x>0</x>
+                <y>0</y>
+                <altitude>0</altitude>
                 <time>0</time>
             </positionwaypoint>
         </motionpath>
+
         <fixedrotation>
             <startazimuth>0.0</startazimuth>
             <startelevation>0</startelevation>
             <azimuthrate>0</azimuthrate>
             <elevationrate>0</elevationrate>
         </fixedrotation>
-        <monostatic name="mono1" type="pulsed" antenna="ant1" pulse="pulse1" timing="clock">
+
+        <monostatic name="monostatic" type="pulsed" antenna="ant1" pulse="chirp" timing="clock">
             <window_skip>0</window_skip>
-            <window_length>10e-5</window_length>
-            <prf>5000</prf>
+            <window_length>1e-3</window_length>
+            <prf>1e3</prf>
+            <!--<noise_temp>1e-5</noise_temp>-->
         </monostatic>
     </platform>
 
-    <platform name="aeroplane">
-        <motionpath interpolation="cubic">
+    <platform name="target">
+
+        <motionpath interpolation="linear">
             <positionwaypoint>
-                <x>3400.0</x>
-                <y>0.0</y>
-                <altitude>100.0</altitude>
+                <x>100000</x>
+                <y>0</y>
+                <altitude>0</altitude>
                 <time>0</time>
             </positionwaypoint>
-            <positionwaypoint>
-                <x>0.0</x>
-                <y>0.0</y>
-                <altitude>100.0</altitude>
-                <time>0.001</time>
-            </positionwaypoint>
-            <positionwaypoint>
-                <x>-3400.0</x>
-                <y>0.0</y>
-                <altitude>100.0</altitude>
-                <time>0.0021</time>
-            </positionwaypoint>
         </motionpath>
+
         <fixedrotation>
             <startazimuth>0.0</startazimuth>
             <startelevation>0.0</startelevation>
             <azimuthrate>0</azimuthrate>
             <elevationrate>0</elevationrate>
         </fixedrotation>
+
         <target name="wings">
             <rcs type="isotropic">
-                <value>10</value>
+                <value>500</value>
             </rcs>
         </target>
-    </platform>
 
+    </platform>
 </simulation>

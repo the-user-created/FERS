@@ -1,35 +1,28 @@
-// timing.cpp
-// Implementation of timing sources
-// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-// 16 October 2006
+/**
+ * @file timing.cpp
+ * @brief Implementation of timing sources.
+ *
+ * @authors David Young, Marc Brooker
+ * @date 2006-10-16
+ */
 
 #include "timing.h"
 
-#include <stdexcept>           // for logic_error
-
-#include "prototype_timing.h"  // for PrototypeTiming
-#include "core/logging.h"      // for log, LOG, Level
+#include "prototype_timing.h"
+#include "core/logging.h"
 
 using logging::Level;
 
 namespace timing
 {
-	RealType Timing::getPulseTimeError() const noexcept
-	{
-		return _enabled && _model ? _model->getSample() : 0.0f;
-	}
-
 	void Timing::skipSamples(const long long samples) const noexcept
 	{
 		if (_enabled && _model) { _model->skipSamples(samples); }
 	}
 
-	void Timing::initializeModel(const PrototypeTiming* timing)
+	void Timing::initializeModel(const PrototypeTiming* timing) noexcept
 	{
-		if (!_alphas.empty())
-		{
-			throw std::logic_error("[BUG] ClockModelTiming::initializeModel called more than once");
-		}
+		if (!_alphas.empty()) { LOG(Level::ERROR, "Timing source already initialized."); }
 
 		timing->copyAlphas(_alphas, _weights);
 
