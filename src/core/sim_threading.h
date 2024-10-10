@@ -14,6 +14,8 @@
 #pragma once
 
 #include <exception>
+#include <functional>
+#include <utility>
 
 #include "config.h"
 
@@ -64,77 +66,47 @@ namespace core
 	};
 
 	/**
-	 * @class SimThread
-	 * @brief Manages the simulation of a transmitter-receiver pair.
+	 * @brief Class for managing tasks in a multithreaded environment.
 	 *
-	 * This class handles the simulation of a single transmitter and receiver pair in a multithreaded environment.
-	 * It executes the simulation in a separate thread, allowing multiple simulations to run in parallel.
+	 * This class provides a simple interface for managing tasks in a multithreaded environment.
+	 * It defines a task as a std::function object and executes the task when called.
 	 */
-	class SimThread
+	class TaskThread
 	{
 	public:
 		/**
-		 * @brief Constructs a SimThread instance.
+		 * @brief Alias for a task function.
 		 *
-		 * Initializes the SimThread with a pointer to a transmitter,
-		 * a receiver, and a world object that holds the simulation environment.
-		 *
-		 * @param transmitter Pointer to the radar transmitter.
-		 * @param receiver Pointer to the radar receiver.
-		 * @param world Pointer to the simulation environment.
+		 * Defines a task function as a std::function object.
 		 */
-		SimThread(const radar::Transmitter* transmitter, radar::Receiver* receiver, const World* world)
-			: _trans(transmitter), _recv(receiver), _world(world) {}
+		using Task = std::function<void()>;
 
 		/**
-		 * @brief Runs the simulation thread.
+		 * @brief Constructs a TaskThread object.
 		 *
-		 * This function is executed when the thread starts,
-		 * running the simulation for the associated transmitter and receiver.
+		 * Constructs a TaskThread object with the specified task and task name.
+		 *
+		 * @param task The task to be executed.
+		 * @param taskName The name of the task.
+		 */
+		TaskThread(Task task, std::string taskName) : _task(std::move(task)), _task_name(std::move(taskName)) {}
+
+		/**
+		 * @brief Executes the task.
+		 *
+		 * Executes the task stored in the object.
 		 */
 		void operator()() const;
 
 	private:
-		const radar::Transmitter* _trans; /**< Pointer to the associated transmitter. */
-		radar::Receiver* _recv; /**< Pointer to the associated receiver. */
-		const World* _world; /**< Pointer to the world object representing the simulation environment. */
-	};
-
-	/**
-	 * @class RenderThread
-	 * @brief Handles the rendering process for a radar receiver.
-	 *
-	 * This class manages the rendering of simulation data for a radar receiver.
-	 * It runs in a separate thread to ensure the rendering process does not block other operations.
-	 */
-	class RenderThread
-	{
-	public:
-		/**
-		 * @brief Constructs a RenderThread instance.
-		 *
-		 * Initializes the RenderThread with a pointer to a radar receiver.
-		 *
-		 * @param recv Pointer to the radar receiver.
-		 */
-		explicit RenderThread(radar::Receiver* recv) : _recv(recv) {}
-
-		/**
-		 * @brief Runs the rendering thread.
-		 *
-		 * This function is executed when the thread starts, handling the rendering process for the receiver.
-		 */
-		void operator()() const;
-
-	private:
-		radar::Receiver* _recv; /**< Pointer to the receiver for which rendering is handled. */
+		Task _task; ///< The task to be executed.
+		std::string _task_name; ///< The name of the task.
 	};
 
 	/**
 	 * @brief Runs the simulation in a multithreaded environment.
 	 *
-	 * Manages the threading process for running simulations in parallel, up to a specified thread limit.
-	 * It handles the initialization of threads and ensures that the correct number of simulations is run simultaneously.
+	 * This function runs the simulation in a multithreaded environment, using the specified number of threads.
 	 *
 	 * @param threadLimit The maximum number of threads to use.
 	 * @param world Pointer to the world object that holds the simulation environment.
