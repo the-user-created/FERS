@@ -1,5 +1,4 @@
 set(SRCS
-	response_renderer.cpp
 	hdf5_handler.cpp
 	pulse_factory.cpp
 	receiver_export.cpp
@@ -9,7 +8,6 @@ set(SRCS
 )
 
 set(HEADERS
-	response_renderer.h
 	hdf5_handler.h
 	pulse_factory.h
 	receiver_export.h
