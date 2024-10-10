@@ -49,29 +49,12 @@ namespace radar
 
 	void Receiver::render()
 	{
-		try
-		{
-			std::unique_lock lock(_responses_mutex, std::try_to_lock);
-			if (!lock.owns_lock())
-			{
-				LOG(logging::Level::FATAL, "Responses lock is locked during Render()");
-				throw std::runtime_error("Responses lock is locked during Render()");
-			}
+		std::ranges::sort(_responses, serial::compareTimes);
 
-			std::ranges::sort(_responses, serial::compareTimes);
-
-			// Export based on user preferences
-			if (params::exportXml()) { exportReceiverXml(_responses, getName() + "_results"); }
-			if (params::exportBinary()) { exportReceiverBinary(_responses, this, getName() + "_results"); }
-			if (params::exportCsv()) { exportReceiverCsv(_responses, getName() + "_results"); }
-
-			lock.unlock();
-		}
-		catch (const std::system_error&)
-		{
-			LOG(logging::Level::FATAL, "Responses lock is locked during Render()");
-			throw std::runtime_error("Responses lock is locked during Render()");
-		}
+		// Export based on user preferences
+		if (params::exportXml()) { exportReceiverXml(_responses, getName() + "_results"); }
+		if (params::exportBinary()) { exportReceiverBinary(_responses, this, getName() + "_results"); }
+		if (params::exportCsv()) { exportReceiverCsv(_responses, getName() + "_results"); }
 	}
 
 	void Receiver::setWindowProperties(const RealType length, const RealType prf, const RealType skip) noexcept
