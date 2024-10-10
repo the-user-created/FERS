@@ -387,38 +387,36 @@ namespace
 	// =================================================================================================================
 
 	/**
-	 * @brief Starts a new simulation thread if the thread limit is not exceeded.
+	 * @brief Starts a new task thread for the simulation.
 	 *
-	 * This helper function starts a new simulation thread,
-	 * ensuring that the maximum allowed number of threads is not exceeded.
-	 * If an error occurs in any thread, the simulation will terminate.
+	 * This function creates a new task thread for the simulation,
+	 * ensuring that the number of running threads does not exceed the thread limit.
+	 * It also checks for any errors encountered by other threads and terminates the simulation if necessary.
 	 *
 	 * @param threadLimit The maximum number of threads allowed.
 	 * @param running A vector of currently running threads.
-	 * @param task The task to run in the new thread.
+	 * @param task The task to be executed by the thread.
 	 */
-	void startSimThread(const unsigned threadLimit, std::vector<std::jthread>& running,
-	                    const std::function<void()>& task)
+	void startTaskThread(const unsigned threadLimit, std::vector<std::jthread>& running,
+	                     const std::function<void()>& task)
 	{
 		++threads;
-		while (threads.load() >= static_cast<int>(threadLimit))
-		{
-			std::this_thread::yield(); // Let other threads run if the limit is reached
-		}
+		LOG(Level::TRACE, "Starting task thread. Current thread count: {}", static_cast<int>(threads));
+		while (threads >= static_cast<int>(threadLimit)) { std::this_thread::yield(); }
+
 		if (error.load())
 		{
 			LOG(Level::FATAL, "A thread encountered an error. Terminating simulation.");
 			return;
 		}
 
-		running.emplace_back([task] { task(); });
+		running.emplace_back(task);
 	}
 
 	/**
 	 * @brief Runs the radar simulation for all transmitter-receiver pairs.
 	 *
-	 * This function creates and manages threads for all combinations of receivers and transmitters in the simulation world.
-	 * It runs the simulations in parallel, ensuring efficient use of resources.
+	 * This function runs radar simulations for all possible transmitter-receiver pairs in the simulation world.
 	 *
 	 * @param threadLimit The maximum number of threads allowed.
 	 * @param world Pointer to the simulation environment.
@@ -434,83 +432,52 @@ namespace
 		{
 			for (const auto& transmitter : transmitters)
 			{
-				startSimThread(threadLimit, running, [&]
+				startTaskThread(threadLimit, running, [&]
 				{
-					core::SimThread(transmitter.get(), receiver.get(), world)();
+					core::TaskThread([&] { simulatePair(transmitter.get(), receiver.get(), world); },
+					                 "Simulate Transmitter/Receiver")();
 				});
 			}
 		}
-		running.clear(); // jthreads automatically join when destructed
+		running.clear();
 	}
 }
 
 namespace core
 {
-	// =================================================================================================================
-	//
-	// SIMULATION THREAD
-	//
-	// =================================================================================================================
-
-	void SimThread::operator()() const
+	void TaskThread::operator()() const
 	{
-		LOG(Level::DEBUG, "Created simulator thread for transmitter '{}' and receiver '{}'",
-		    _trans->getName().c_str(), _recv->getName().c_str());
-		try { simulatePair(_trans, _recv, _world); }
+		LOG(Level::DEBUG, "Executing task '{}'", _task_name);
+		try { _task(); }
 		catch (const std::exception& ex)
 		{
-			LOG(Level::FATAL, "First pass thread terminated with unexpected error:\t{}\nSimulator will terminate",
-			    ex.what());
+			LOG(Level::FATAL, "Task '{}' encountered an error: {}", _task_name, ex.what());
 			error.store(true);
 		}
 		--threads;
 	}
-
-	// =================================================================================================================
-	//
-	// RENDER THREAD
-	//
-	// =================================================================================================================
-
-	void RenderThread::operator()() const
-	{
-		LOG(Level::DEBUG, "Created render thread for receiver '{}'", _recv->getName().c_str());
-		try { _recv->render(); }
-		catch (const std::exception& ex)
-		{
-			LOG(Level::FATAL, "Render thread terminated with unexpected error:\t{}\nSimulator will terminate",
-			    ex.what());
-			error.store(true);
-		}
-		--threads;
-	}
-
-	// =================================================================================================================
-	//
-	// RUN THREADED SIMULATION
-	//
-	// =================================================================================================================
 
 	void runThreadedSim(const unsigned threadLimit, const World* world)
 	{
-		std::vector<std::jthread> running; // Use jthread to automatically join threads on destruction
+		std::vector<std::jthread> running;
 
-		LOG(Level::INFO, "Starting simulation with up to {} threads.", threadLimit);
 		const auto& receivers = world->getReceivers();
 
+		LOG(Level::INFO, "Running radar simulation for {} receivers", receivers.size());
 		runSimForReceiverTransmitterPairs(threadLimit, world, receivers, running);
 
-		// Log responses after the simulation is complete
 		for (const auto& receiver : receivers)
 		{
-			LOG(Level::DEBUG, "{} responses added to receiver '{}'", receiver->getResponseCount(),
-			    receiver->getName().c_str());
+			LOG(Level::DEBUG, "{} responses added to '{}'", receiver->getResponseCount(), receiver->getName());
 		}
 
-		// Render responses for each receiver
+		LOG(Level::INFO, "Rendering responses for {} receivers", receivers.size());
 		for (const auto& receiver : receivers)
 		{
-			startSimThread(threadLimit, running, [&] { RenderThread(receiver.get())(); });
+			startTaskThread(threadLimit, running, [&]
+			{
+				TaskThread([&]() { receiver->render(); }, "Render Receiver")();
+			});
 		}
 	}
 }
