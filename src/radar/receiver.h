@@ -16,6 +16,10 @@
 #include "radar_obj.h"
 #include "serial/response.h"
 
+namespace pool {
+	class ThreadPool;
+}
+
 namespace radar
 {
 	/**
@@ -81,7 +85,7 @@ namespace radar
 		 * Processes the stored responses, sorts them, and exports the data
 		 * based on user preferences in XML, binary, or CSV format.
 		 */
-		void render();
+		void render(pool::ThreadPool& pool);
 
 		/**
 		 * @brief Retrieves the noise temperature of the receiver.
@@ -203,7 +207,7 @@ namespace radar
 
 	private:
 		std::vector<std::unique_ptr<serial::Response>> _responses; ///< The list of responses.
-		mutable std::mutex _responses_mutex; ///< Mutex for handling responses.
+		std::mutex _responses_mutex; ///< Mutex for handling responses.
 		RealType _noise_temperature = 0; ///< The noise temperature of the receiver.
 		RealType _window_length = 0; ///< The length of the radar window.
 		RealType _window_prf = 0; ///< The pulse repetition frequency (PRF) of the radar window.

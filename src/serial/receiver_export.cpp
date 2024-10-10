@@ -32,6 +32,7 @@
 #include "hdf5_handler.h"
 #include "libxml_wrapper.h"
 #include "core/parameters.h"
+#include "core/thread_pool.h"
 #include "highfive/H5Exception.hpp"
 #include "libxml/xmlstring.h"
 #include "noise/noise_generators.h"
@@ -254,9 +255,23 @@ namespace
 		}
 	}
 
+	/**
+	 * @brief Render a window of complex samples using multiple threads.
+	 *
+	 * Renders a window of complex samples using multiple threads, processing each response in parallel and merging
+	 * the results into the shared window. The window is rendered based on the specified length, start time, fractional
+	 * delay, and list of responses.
+	 *
+	 * @param window A reference to a vector of ComplexType objects representing the window of complex samples to render.
+	 * @param length The length of the window in seconds.
+	 * @param start The start time of the window in seconds.
+	 * @param fracDelay The fractional delay of the window in seconds.
+	 * @param responses A span of unique pointers to Response objects representing the responses to render.
+	 * @param pool A reference to the ThreadPool object for parallel processing.
+	 */
 	void renderWindow(std::vector<ComplexType>& window, const RealType length, const RealType start,
 	                  const RealType fracDelay, const std::span<const std::unique_ptr<serial::Response>> responses,
-	                  const unsigned maxThreads)
+	                  pool::ThreadPool& pool)
 	{
 		const RealType end = start + length;
 		std::queue<serial::Response*> work_list;
@@ -275,7 +290,7 @@ namespace
 		std::mutex window_mutex, work_list_mutex;
 
 		// Use a lambda to represent the worker logic, which simplifies the RenderThread class
-		auto worker = [&](unsigned)
+		auto worker = [&]
 		{
 			const RealType rate = params::rate() * params::oversampleRatio();
 			auto local_window_size = static_cast<unsigned>(std::ceil(length * rate));
@@ -312,12 +327,11 @@ namespace
 			}
 		};
 
-		// Create a pool of threads using std::async
-		std::vector<std::future<void>> futures;
-		for (unsigned i = 0; i < maxThreads; ++i) { futures.push_back(std::async(std::launch::async, worker, i)); }
+		// Enqueue work items to the pool and capture futures
+		const std::future<void> future = pool.enqueue(worker);
 
-		// Wait for all threads to finish
-		for (auto& future : futures) { future.get(); }
+		// Wait for the task to finish
+		future.wait();
 	}
 }
 
@@ -386,7 +400,7 @@ namespace serial
 	}
 
 	void exportReceiverBinary(const std::span<const std::unique_ptr<Response>> responses, const radar::Receiver* recv,
-	                          const std::string& recvName)
+	                          const std::string& recvName, pool::ThreadPool& pool)
 	{
 		// Bail if there are no responses to export
 		if (responses.empty()) { return; }
@@ -428,7 +442,7 @@ namespace serial
 			addNoiseToWindow(window, recv->getNoiseTemperature());
 
 			// Render the window using multiple threads
-			renderWindow(window, length, start, frac_delay, responses, params::renderThreads());
+			renderWindow(window, length, start, frac_delay, responses, pool);
 
 			// Downsample the window if the oversample ratio is greater than 1
 			if (params::oversampleRatio() > 1)
