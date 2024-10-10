@@ -1,24 +1,28 @@
-// antenna_factory.cpp
-// Implementation of Antenna Class
-// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-// 20 July 2006
-
-#define TIXML_USE_STL
+/**
+ * @file antenna_factory.cpp
+ * @brief Implementation of the Antenna class and its derived classes.
+ *
+ * This file contains the implementation of various antenna types including the base `Antenna` class and several
+ * derived classes like `Isotropic`, `Sinc`, `Gaussian`, `SquareHorn`, `Parabolic`, and others.
+ * The file also includes utility functions for mathematical operations
+ * used in gain computations and methods for loading antenna gain data from XML files.
+ *
+ * @authors David Young, Marc Brooker
+ * @date 2006-07-20
+ */
 
 #include "antenna_factory.h"
 
-#include <algorithm>                  // for max
-#include <cmath>                      // for pow, sin, exp, acos
-#include <complex>                    // for operator*, abs, complex, pow
-#include <limits>                     // for numeric_limits
-#include <optional>                   // for optional
-#include <stdexcept>                  // for runtime_error
-#include <bits/std_abs.h>             // for abs
+#include <algorithm>
+#include <cmath>
+#include <complex>
+#include <optional>
+#include <stdexcept>
 
-#include "core/logging.h"             // for log, LOG, Level
-#include "core/portable_utils.h"      // for besselJ1
-#include "math_utils/geometry_ops.h"  // for SVec3, Vec3, operator-, dotProduct
-#include "serialization/libxml_wrapper.h"
+#include "core/logging.h"
+#include "core/portable_utils.h"
+#include "math/geometry_ops.h"
+#include "serial/libxml_wrapper.h"
 
 using logging::Level;
 using math::SVec3;
@@ -26,11 +30,36 @@ using math::Vec3;
 
 namespace
 {
-	RealType sinc(const RealType theta) { return std::sin(theta) / (theta + EPSILON); }
+	/**
+	 * @brief Compute the sinc function.
+	 *
+	 * The sinc function is defined as sin(x) / x.
+	 * This function computes the sinc function for a given angle theta.
+	 *
+	 * @param theta The angle for which to compute the sinc function.
+	 * @return The value of the sinc function at the given angle theta.
+	 */
+	RealType sinc(const RealType theta) noexcept { return std::sin(theta) / (theta + EPSILON); }
 
-	RealType j1C(const RealType x) { return x == 0 ? 1.0 : core::besselJ1(x) / x; }
+	/**
+	 * @brief Compute the Bessel function of the first kind.
+	 *
+	 * This function computes the Bessel function of the first kind for a given value x.
+	 *
+	 * @param x The value for which to compute the Bessel function.
+	 * @return The value of the Bessel function of the first kind at the given value x.
+	 */
+	RealType j1C(const RealType x) noexcept { return x == 0 ? 1.0 : core::besselJ1(x) / x; }
 
-	void loadAntennaGainAxis(const interp::InterpSet* set, const XmlElement& axisXml)
+	/**
+	 * @brief Load antenna gain axis data from an XML element.
+	 *
+	 * This function loads antenna gain axis data from an XML element and stores it in an interpolation set.
+	 *
+	 * @param set The interpolation set to store the gain axis data.
+	 * @param axisXml The XML element containing the gain axis data.
+	 */
+	void loadAntennaGainAxis(const interp::InterpSet* set, const XmlElement& axisXml) noexcept
 	{
 		XmlElement tmp = axisXml.childElement("gainsample"); // Get the first gainsample
 		while (tmp.isValid()) // Continue while the element is valid
@@ -59,13 +88,13 @@ namespace antenna
 	//
 	// =================================================================================================================
 
-	void Antenna::setEfficiencyFactor(const RealType loss)
+	void Antenna::setEfficiencyFactor(const RealType loss) noexcept
 	{
 		if (loss > 1) { LOG(Level::INFO, "Using greater than unity antenna efficiency."); }
 		_loss_factor = loss;
 	}
 
-	RealType Antenna::getAngle(const SVec3& angle, const SVec3& refangle)
+	RealType Antenna::getAngle(const SVec3& angle, const SVec3& refangle) noexcept
 	{
 		SVec3 normangle(angle);
 		normangle.length = 1;
@@ -78,7 +107,7 @@ namespace antenna
 	//
 	// =================================================================================================================
 
-	RealType Gaussian::getGain(const SVec3& angle, const SVec3& refangle, RealType wavelength) const
+	RealType Gaussian::getGain(const SVec3& angle, const SVec3& refangle, RealType /*wavelength*/) const noexcept
 	{
 		const SVec3 a = angle - refangle;
 		return std::exp(-a.azimuth * a.azimuth * _azscale) * std::exp(-a.elevation * a.elevation * _elscale);
@@ -90,7 +119,7 @@ namespace antenna
 	//
 	// =================================================================================================================
 
-	RealType Sinc::getGain(const SVec3& angle, const SVec3& refangle, RealType wavelength) const
+	RealType Sinc::getGain(const SVec3& angle, const SVec3& refangle, RealType /*wavelength*/) const noexcept
 	{
 		const RealType theta = getAngle(angle, refangle);
 		const ComplexType complex_sinc(sinc(_beta * theta), 0.0);
@@ -105,7 +134,7 @@ namespace antenna
 	//
 	// =================================================================================================================
 
-	RealType SquareHorn::getGain(const SVec3& angle, const SVec3& refangle, const RealType wavelength) const
+	RealType SquareHorn::getGain(const SVec3& angle, const SVec3& refangle, const RealType wavelength) const noexcept
 	{
 		const RealType ge = 4 * PI * std::pow(_dimension, 2) / std::pow(wavelength, 2);
 		const RealType x = PI * _dimension * std::sin(getAngle(angle, refangle)) / wavelength;
@@ -118,7 +147,7 @@ namespace antenna
 	//
 	// =================================================================================================================
 
-	RealType Parabolic::getGain(const SVec3& angle, const SVec3& refangle, const RealType wavelength) const
+	RealType Parabolic::getGain(const SVec3& angle, const SVec3& refangle, const RealType wavelength) const noexcept
 	{
 		const RealType ge = std::pow(PI * _diameter / wavelength, 2);
 		const RealType x = PI * _diameter * std::sin(getAngle(angle, refangle)) / wavelength;
@@ -131,7 +160,7 @@ namespace antenna
 	//
 	// =================================================================================================================
 
-	RealType XmlAntenna::getGain(const SVec3& angle, const SVec3& refangle, RealType wavelength) const
+	RealType XmlAntenna::getGain(const SVec3& angle, const SVec3& refangle, RealType /*wavelength*/) const
 	{
 		const SVec3 delta_angle = angle - refangle;
 

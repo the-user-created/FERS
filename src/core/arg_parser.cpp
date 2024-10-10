@@ -1,69 +1,59 @@
-// arg_parser.cpp
-// Created by David Young on 9/20/24.
-//
+/**
+ * @file arg_parser.cpp
+ * @brief Implementation of the command-line argument parser for the application.
+ *
+ * This file provides the implementation of functions that handle parsing command-line arguments,
+ * displaying help and version information, and validating input configurations.
+ * It supports setting options like logging level, number of threads,
+ * and script file input, with error handling and validation.
+ *
+ * @author David Young
+ * @date 2024-09-20
+ */
 
 #include "arg_parser.h"
 
-#include <exception>              // for exception
-#include <iostream>               // for operator<<, basic_ostream, cerr, cout
-#include <stdexcept>              // for invalid_argument
-#include <unordered_map>          // for unordered_map, operator==, _Node_it...
-#include <utility>                // for pair
+#include <algorithm>
+#include <exception>
+#include <filesystem>
+#include <iostream>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
-#include "core/logging.h"         // for Level, log, LOG
-#include "core/portable_utils.h"  // for countProcessors
+#include "core/logging.h"
+#include "core/portable_utils.h"
 
 using logging::Level;
 
-namespace core
+namespace
 {
 	/**
-	 * @brief Displays the help message.
+	 * @brief Checks if the given file has a valid log file extension.
 	 *
-	 * @param programName The name of the program.
+	 * This function ensures that the log file has a valid extension, either `.log` or `.txt`.
+	 *
+	 * @param filePath The path of the log file.
+	 * @return true if the file has a valid extension, false otherwise.
 	 */
-	void showHelp(const char* programName)
+	bool isValidLogFileExtension(const std::string& filePath) noexcept
 	{
-		std::cout << R"(/------------------------------------------------\
-| FERS - The Flexible Extensible Radar Simulator |
-| Version 0.28                                   |
-\------------------------------------------------/
-Usage: )" << programName << R"( <scriptfile> [options]
-
-Options:
-  --help, -h              Show this help message and exit
-  --version, -v           Show version information and exit
-  --log-level=<level>     Set the logging level (TRACE, DEBUG, INFO, WARNING, ERROR, FATAL)
-  -n=<threads>            Number of threads to use
-
-Arguments:
-  <scriptfile>            Path to the simulation script file (XML)
-
-Example:
-  )" << programName << R"( simulation.xml --log-level=DEBUG -n=4
-
-This program runs radar simulations based on an XML script file.
-Make sure the script file follows the correct format to avoid errors.
-)";
+		static const std::vector<std::string> VALID_EXTENSIONS = {".log", ".txt"};
+		std::string extension = std::filesystem::path(filePath).extension().string();
+		std::ranges::transform(extension, extension.begin(), ::tolower);
+		return std::ranges::find(VALID_EXTENSIONS, extension) != VALID_EXTENSIONS.end();
 	}
 
 	/**
-	 * @brief Displays the version information.
-	 */
-	void showVersion()
-	{
-		std::cout << "FERS - The Flexible Extensible Radar Simulator\n";
-		std::cout << "Version 0.28\n";
-		std::cout << "Author: Marc Brooker\n";
-	}
-
-	/**
-	 * @brief Parses the logging level from a string.
+	 * @brief Parses the logging level from a string representation.
 	 *
-	 * @param level The logging level as a string.
-	 * @return std::optional<Level> The corresponding logging level, or std::nullopt if invalid.
+	 * This function converts a string to the corresponding logging level.
+	 * If the provided string does not match a valid logging level, it returns `std::nullopt`.
+	 *
+	 * @param level The string representation of the logging level.
+	 * @return std::optional<Level> The corresponding logging level, or `std::nullopt` if invalid.
 	 */
-	std::optional<Level> parseLogLevel(const std::string& level)
+	std::optional<Level> parseLogLevel(const std::string& level) noexcept
 	{
 		static const std::unordered_map<std::string, Level> LEVEL_MAP = {
 			{"TRACE", Level::TRACE},
@@ -77,15 +67,45 @@ Make sure the script file follows the correct format to avoid errors.
 		if (const auto it = LEVEL_MAP.find(level); it != LEVEL_MAP.end()) { return it->second; }
 		return std::nullopt;
 	}
+}
 
-	/**
-	 * @brief Parses command-line arguments.
-	 *
-	 * @param argc Argument count.
-	 * @param argv Argument vector.
-	 * @return std::optional<Config> Parsed configuration or std::nullopt if parsing failed.
-	 */
-	std::optional<Config> parseArguments(const int argc, char* argv[])
+namespace core
+{
+	void showHelp(const char* programName) noexcept
+	{
+		std::cout << R"(/------------------------------------------------\
+| FERS - The Flexible Extensible Radar Simulator |
+| Version 0.28                                   |
+\------------------------------------------------/
+Usage: )" << programName << R"( <scriptfile> [options]
+
+Options:
+  --help, -h              Show this help message and exit
+  --version, -v           Show version information and exit
+  --validate, -val		  Validate the input .fersxml file and run the simulation.
+  --log-level=<level>     Set the logging level (TRACE, DEBUG, INFO, WARNING, ERROR, FATAL)
+  --log-file=<file>       Log output to the specified .log or .txt file as well as the console.
+  -n=<threads>            Number of threads to use
+
+Arguments:
+  <scriptfile>            Path to the simulation script file (XML)
+
+Example:
+  )" << programName << R"( simulation.fersxml --log-level=DEBUG --log-file=output.log -n=4
+
+This program runs radar simulations based on an XML script file.
+Make sure the script file follows the correct format to avoid errors.
+)";
+	}
+
+	void showVersion() noexcept
+	{
+		std::cout << "FERS - The Flexible Extensible Radar Simulator\n";
+		std::cout << "Version 0.28\n";
+		std::cout << "Author: Marc Brooker\n";
+	}
+
+	std::expected<Config, std::string> parseArguments(const int argc, char* argv[]) noexcept
 	{
 		Config config;
 		bool script_file_set = false;
@@ -93,7 +113,7 @@ Make sure the script file follows the correct format to avoid errors.
 		if (argc < 2)
 		{
 			showHelp(argv[0]);
-			return std::nullopt;
+			return std::unexpected("No arguments provided.");
 		}
 
 		for (int i = 1; i < argc; ++i)
@@ -101,70 +121,71 @@ Make sure the script file follows the correct format to avoid errors.
 			if (std::string arg = argv[i]; arg == "--help" || arg == "-h")
 			{
 				showHelp(argv[0]);
-				return std::nullopt;
+				return std::unexpected("Help requested.");
 			}
 			else
 			{
 				if (arg == "--version" || arg == "-v")
 				{
 					showVersion();
-					return std::nullopt;
+					return std::unexpected("Version requested.");
 				}
 				if (arg.rfind("--log-level=", 0) == 0)
 				{
-					// starts with --log-level=
 					std::string level_str = arg.substr(12);
 					if (auto level = parseLogLevel(level_str)) { config.log_level = *level; }
 					else
 					{
-						std::cerr << "Error: Invalid log level '" << level_str << "'\n";
-						return std::nullopt;
+						LOG(Level::ERROR, "Invalid log level '" + level_str + "'");
+						return std::unexpected("Invalid log level: " + level_str);
+					}
+				}
+				else if (arg.rfind("--log-file=", 0) == 0)
+				{
+					if (std::string log_file_path = arg.substr(11); isValidLogFileExtension(log_file_path))
+					{
+						config.log_file = log_file_path;
+					}
+					else
+					{
+						LOG(Level::ERROR, "Invalid log file extension. Log file must have .log or .txt extension.");
+						return std::unexpected("Invalid log file extension: " + log_file_path);
 					}
 				}
 				else if (arg.rfind("-n=", 0) == 0)
 				{
-					// starts with -n=
 					try
 					{
 						config.num_threads = std::stoi(arg.substr(3));
-						if (config.num_threads <= 0)
+						if (config.num_threads == 0)
 						{
-							throw std::invalid_argument("Number of threads must be greater than 0");
+							return std::unexpected("Number of threads must be greater than 0");
 						}
 
-						if (const unsigned max_threads = countProcessors(); config.num_threads >
-							max_threads)
+						if (const unsigned max_threads = countProcessors(); config.num_threads > max_threads)
 						{
-							LOG(Level::ERROR,
-							    "Number of threads specified is greater than the number of processors. Defaulting to the number of processors.");
+							LOG(Level::WARNING,
+							    "Number of threads exceeds available processors. Defaulting to max processors.");
 							config.num_threads = max_threads;
 						}
 					}
-					catch (const std::exception&)
-					{
-						std::cerr << "Error: Invalid number of threads specified\n";
-						return std::nullopt;
-					}
+					catch (const std::exception&) { return std::unexpected("Invalid number of threads specified."); }
 				}
 				else if (arg[0] != '-' && !script_file_set)
 				{
-					// Assume it's the script file if it's not an option
 					config.script_file = arg;
 					script_file_set = true;
 				}
+				else if (arg == "--validate" || arg == "-val") { config.validate = true; }
 				else
 				{
-					std::cerr << "Error: Unrecognized option or argument '" << arg << "'\n";
-					return std::nullopt;
+					LOG(Level::ERROR, "Unrecognized option or argument: '" + arg + "'");
+					return std::unexpected("Unrecognized argument: " + arg);
 				}
 			}
 		}
 
-		if (!script_file_set)
-		{
-			std::cerr << "Error: No script file provided\n";
-			return std::nullopt;
-		}
+		if (!script_file_set) { return std::unexpected("No script file provided."); }
 
 		return config;
 	}

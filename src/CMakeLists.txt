@@ -2,15 +2,17 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_executable(${PROJECT_NAME})
 
+target_sources(${PROJECT_NAME} PRIVATE main.cpp config.h)
+
 add_subdirectory(core)
 add_subdirectory(radar)
-add_subdirectory(serialization)
-add_subdirectory(math_utils)
+add_subdirectory(serial)
+add_subdirectory(math)
 add_subdirectory(python)
 add_subdirectory(interpolation)
 add_subdirectory(noise)
 add_subdirectory(timing)
-add_subdirectory(signal_processing)
+add_subdirectory(signal)
 add_subdirectory(antenna)
 
 # Use provided environment variables for HDF5 or fallback to default

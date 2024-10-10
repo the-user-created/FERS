@@ -13,8 +13,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(SCHEMA_DIR ${CMAKE_SOURCE_DIR}/xml_schema)
 set(SCHEMA_HEADERS_DIR ${CMAKE_BINARY_DIR}/generated)
 
-# Add the directory where config.h is located to the include path
-include_directories(${CMAKE_SOURCE_DIR})
 # Ensure that the generated headers are included in the include path
 include_directories(${SCHEMA_HEADERS_DIR})
 
@@ -41,7 +39,7 @@ if (CMAKE_COMPILER_IS_GNUCXX)
 	if (CMAKE_BUILD_TYPE MATCHES "Debug")
 		message(STATUS "Setting compiler flags for Debug")
 		# Include the -g flag for debugging information
-		set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0")
+		set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0 -Wunused -Wall -Wextra -fprofile-arcs -ftest-coverage")
 	endif ()
 endif ()
 

@@ -1,30 +1,41 @@
-// interpolation_filter.cpp
-// Created by David Young on 9/12/24.
-// Original code by Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-//
+/**
+ * @file interpolation_filter.cpp
+ * @brief Implementation of the InterpFilter class.
+ *
+ * This file provides the implementation of the `InterpFilter` class, which is used for generating
+ * interpolation filters using the Kaiser window function.
+ * The class is a singleton and provides methods for filter computation,
+ * including the use of sinc and Kaiser window functions for interpolation.
+ *
+ * @author David Young
+ * @date 2024-09-12
+ */
 
 #include "interpolation_filter.h"
 
-#include <stdexcept>          // for logic_error, runtime_error
+#include <stdexcept>
 
-#include "core/logging.h"     // for log, LOG, Level
-#include "core/parameters.h"  // for renderFilterLength
+#include "core/logging.h"
+#include "core/parameters.h"
 
 using logging::Level;
 
-namespace interp
+namespace
 {
-	InterpFilter& InterpFilter::getInstance()
-	{
-		static InterpFilter instance; // Meyers' Singleton
-		return instance;
-	}
-
-	RealType InterpFilter::besselI0(const RealType x)
+	/**
+	 * @brief Computes the modified Bessel function of the first kind for x.
+	 *
+	 * This function calculates the modified Bessel function of the first kind for a given input x.
+	 * It uses a polynomial approximation for x values less than 3.75 and an exponential approximation for larger values.
+	 *
+	 * @param x The input value for which the Bessel function is computed.
+	 * @return The computed Bessel function value, or an error message if computation fails.
+	 */
+	std::expected<RealType, std::string> besselI0(const RealType x)
 	{
 		// Use the polynomial approximation from section 9.8 of
 		// "Handbook of Mathematical Functions" by Abramowitz and Stegun
-		if (x < 0.0) { throw std::logic_error("Modified Bessel approximation only valid for x > 0"); }
+		if (x < 0.0) { return std::unexpected("Modified Bessel approximation only valid for x > 0"); }
 		if (RealType t = x / 3.75; t <= 1.0)
 		{
 			t *= t;
@@ -39,17 +50,31 @@ namespace interp
 			return i0 * std::exp(x) / std::sqrt(x);
 		}
 	}
+}
 
-	RealType InterpFilter::kaiserWinCompute(const RealType x) const noexcept
+namespace interp
+{
+	InterpFilter& InterpFilter::getInstance() noexcept
 	{
-		return x < 0 || x > _alpha * 2
-				   ? 0
-				   : besselI0(_beta * std::sqrt(1 - std::pow((x - _alpha) / _alpha, 2))) / _bessel_beta;
+		static InterpFilter instance; // Meyers' Singleton
+		return instance;
 	}
 
-	RealType InterpFilter::interpFilter(const RealType x) const noexcept
+	std::expected<RealType, std::string> InterpFilter::kaiserWinCompute(const RealType x) const noexcept
 	{
-		return kaiserWinCompute(x + _alpha) * sinc(x);
+		if (x < 0 || x > _alpha * 2) { return 0; }
+		// Handle besselIO returning an error
+		if (auto bessel = besselI0(_beta * std::sqrt(1 - std::pow((x - _alpha) / _alpha, 2))); bessel)
+		{
+			return *bessel / _bessel_beta;
+		}
+		else { return std::unexpected(bessel.error()); }
+	}
+
+	std::expected<RealType, std::string> InterpFilter::interpFilter(const RealType x) const noexcept
+	{
+		if (auto kaiser = kaiserWinCompute(x + _alpha); kaiser) { return *kaiser * sinc(x); }
+		else { return std::unexpected(kaiser.error()); }
 	}
 
 	InterpFilter::InterpFilter()
@@ -59,16 +84,32 @@ namespace interp
 		_filter_table = std::vector<RealType>(_table_filters * _length);
 
 		_alpha = std::floor(params::renderFilterLength() / 2.0);
-		_bessel_beta = besselI0(_beta);
+		// Handle besselIO returning an error
+		if (auto bessel = besselI0(_beta); bessel) { _bessel_beta = *bessel; }
+		else
+		{
+			LOG(Level::FATAL, "Bessel function calculation failed: {}", bessel.error());
+			throw std::runtime_error("Bessel function calculation failed");
+		}
 
 		const int hfilt = _table_filters / 2;
 
 		LOG(Level::DEBUG, "Building table of {} filters", _table_filters);
 
-		for (int i = -hfilt; i < hfilt; ++i) {
+		for (int i = -hfilt; i < hfilt; ++i)
+		{
 			const RealType delay = i / static_cast<RealType>(hfilt);
-			for (int j = static_cast<int>(-_alpha); j < _alpha; ++j) {
-				_filter_table[(i + hfilt) * _length + j + static_cast<int>(_alpha)] = interpFilter(j - delay);
+			for (int j = static_cast<int>(-_alpha); j < _alpha; ++j)
+			{
+				if (auto interp = interpFilter(j - delay); interp)
+				{
+					_filter_table[(i + hfilt) * _length + j + static_cast<int>(_alpha)] = *interp;
+				}
+				else
+				{
+					LOG(Level::FATAL, "Interpolation filter calculation failed: {}", interp.error());
+					throw std::runtime_error("Interpolation filter calculation failed");
+				}
 			}
 		}
 
@@ -79,7 +120,7 @@ namespace interp
 	{
 		if (delay < -1 || delay > 1)
 		{
-			LOG(Level::FATAL, "Invalid delay value: {}", delay);
+			LOG(Level::FATAL, "Requested delay filter value out of range: {}", delay);
 			throw std::runtime_error("Requested delay filter value out of range");
 		}
 

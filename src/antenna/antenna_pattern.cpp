@@ -1,22 +1,31 @@
-// antenna_pattern.cpp
-// Implementation of interpolated 2D arrays for gain patterns and RCS patterns
-// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-// 19 September 2007
+/**
+ * @file antenna_pattern.cpp
+ * @brief Implementation of interpolated 2D arrays for gain patterns and RCS patterns.
+ *
+ * This file implements the `Pattern` class,
+ * which handles the loading and bilinear interpolation of antenna gain patterns.
+ * The gain pattern is read from a file and stored in a 2D array,
+ * and the class provides a method to calculate the interpolated gain at a given angle.
+ * The interpolation process ensures smooth transitions between data points.
+ *
+ * @authors David Young, Marc Brooker
+ * @date 2007-09-19
+ */
 
 #include "antenna_pattern.h"
 
-#include <algorithm>                  // for min
-#include <cmath>                      // for floor
-#include <utility>                    // for pair
+#include <algorithm>
+#include <cmath>
+#include <utility>
 
 #include "core/logging.h"
-#include "math_utils/geometry_ops.h"  // for SVec3
+#include "math/geometry_ops.h"
 
 constexpr RealType TWO_PI = 2.0 * PI; // Constant for 2*π
 
 namespace antenna
 {
-	RealType Pattern::getGain(const math::SVec3& angle) const
+	RealType Pattern::getGain(const math::SVec3& angle) const noexcept
 	{
 		// Normalizing the azimuth and elevation angles between 0 and 1
 		const double ex1 = (angle.azimuth + PI) / TWO_PI;

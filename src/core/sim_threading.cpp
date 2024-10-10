@@ -1,36 +1,38 @@
-// sim_threading.cpp
-// Thread management for the simulator
-// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-// 29 May 2006
-
-// One of the goals for FERS is to support multiple processors.
-// This is achieved through multithreading.
-// One simulation is performed in for each transmitter-receiver pair.
-// Multi-threading runs a number of these simulations in parallel,
-// according to the number of CPUs (or cores), the system has.
+/**
+* @file sim_threading.cpp
+* @brief Thread management for the simulator.
+*
+* This file contains the implementation of the classes and functions necessary for running a threaded simulation.
+* It includes classes that handle simulations for transmitter-receiver pairs and rendering processes for each receiver.
+* The goal is to use multithreading to run simulations in parallel,
+* improving the performance and efficiency of the system.
+*
+* @authors David Young, Marc Brooker
+* @date 2006-07-19
+*/
 
 #include "sim_threading.h"
 
-#include <algorithm>                            // for __for_each_fn, for_each
-#include <atomic>                               // for atomic, __atomic_base
-#include <cmath>                                // for ceil, pow, sqrt, fmod
-#include <functional>                           // for function
-#include <memory>                               // for unique_ptr, make_unique
-#include <stdexcept>                            // for runtime_error
-#include <thread>                               // for jthread, yield
-#include <utility>                              // for move
-#include <vector>                               // for vector
-#include <bits/chrono.h>                        // for duration, operator+
+#include <algorithm>
+#include <atomic>
+#include <cmath>
+#include <functional>
+#include <memory>
+#include <stdexcept>
+#include <thread>
+#include <utility>
+#include <vector>
+#include <bits/chrono.h>
 
-#include "parameters.h"                         // for c, cwSampleRate
-#include "world.h"                              // for World
-#include "core/logging.h"                       // for log, LOG, Level
-#include "interpolation/interpolation_point.h"  // for InterpPoint
-#include "math_utils/geometry_ops.h"            // for SVec3, operator-, Vec3
-#include "radar/radar_system.h"                 // for Receiver, Transmitter
-#include "radar/target.h"                       // for Target
-#include "serialization/response.h"             // for Response
-#include "signal_processing/radar_signal.h"     // for RadarSignal
+#include "parameters.h"
+#include "world.h"
+#include "core/logging.h"
+#include "interpolation/interpolation_point.h"
+#include "math/geometry_ops.h"
+#include "radar/radar_obj.h"
+#include "radar/target.h"
+#include "serial/response.h"
+#include "signal/radar_signal.h"
 
 using radar::Transmitter;
 using radar::Receiver;
@@ -55,6 +57,22 @@ namespace
 	//
 	// =================================================================================================================
 
+	/**
+	 * @brief Performs radar simulation for a given transmitter, receiver, and target.
+	 *
+	 * This function calculates radar simulation results, including power, delay, Doppler shift, phase,
+	 * and noise temperature based on the position and characteristics of the transmitter, receiver, and target.
+	 * It also accounts for multipath effects, propagation loss, and Doppler shift in the final calculations.
+	 *
+	 * @param trans Pointer to the radar transmitter.
+	 * @param recv Pointer to the radar receiver.
+	 * @param targ Pointer to the radar target.
+	 * @param time The time at which the simulation is being run.
+	 * @param length The duration of the radar pulse.
+	 * @param wave Pointer to the radar signal object.
+	 * @param results Struct to store the results of the simulation.
+	 * @throws core::RangeError If the transmitter or receiver is too close to the target for an accurate simulation.
+	 */
 	void solveRe(const Transmitter* trans, const Receiver* recv, const Target* targ,
 	             const std::chrono::duration<RealType>& time, const std::chrono::duration<RealType>& length,
 	             const RadarSignal* wave, core::ReResults& results)
@@ -72,6 +90,7 @@ namespace
 
 		if (transmitter_to_target_distance <= EPSILON || receiver_to_target_distance <= EPSILON)
 		{
+			LOG(Level::FATAL, "Transmitter or Receiver too close to Target for accurate simulation");
 			throw core::RangeError();
 		}
 
@@ -117,7 +136,8 @@ namespace
 
 		if (rt_end <= EPSILON || rr_end <= EPSILON)
 		{
-			throw std::runtime_error("Target is too close to transmitter or receiver for accurate simulation");
+			LOG(Level::FATAL, "Transmitter or Receiver too close to Target for accurate simulation");
+			throw core::RangeError();
 		}
 
 		const RealType v_r = (rr_end - receiver_to_target_distance) / length.count();
@@ -130,6 +150,22 @@ namespace
 		results.noise_temperature = recv->getNoiseTemperature(recv->getRotation(time.count() + results.delay));
 	}
 
+	/**
+	 * @brief Performs direct radar simulation between a transmitter and receiver without a target.
+	 *
+	 * This function calculates the simulation results when the radar signal travels directly
+	 * between the transmitter and receiver, without any interaction with a target.
+	 * It computes delay, power, Doppler shift,
+	 * and phase based on the relative positions of the transmitter and receiver.
+	 *
+	 * @param trans Pointer to the radar transmitter.
+	 * @param recv Pointer to the radar receiver.
+	 * @param time The time at which the simulation is being run.
+	 * @param length The duration of the radar pulse.
+	 * @param wave Pointer to the radar signal object.
+	 * @param results Struct to store the results of the simulation.
+	 * @throws core::RangeError If the transmitter or receiver is too close for accurate simulation.
+	 */
 	void solveReDirect(const Transmitter* trans, const Receiver* recv, const std::chrono::duration<RealType>& time,
 	                   const std::chrono::duration<RealType>& length, const RadarSignal* wave, core::ReResults& results)
 	{
@@ -143,6 +179,7 @@ namespace
 
 		if (distance <= EPSILON)
 		{
+			LOG(Level::FATAL, "Transmitter or Receiver too close to Target for accurate simulation");
 			throw core::RangeError();
 		}
 
@@ -180,6 +217,18 @@ namespace
 		results.noise_temperature = recv->getNoiseTemperature(recv->getRotation(time.count() + results.delay));
 	}
 
+	/**
+	 * @brief Adds a direct response for a transmitter-receiver pair.
+	 *
+	 * This function simulates the direct interaction between a transmitter and receiver,
+	 * adding the resulting radar response data to the receiver.
+	 * It runs the simulation for each sample point in the radar signal.
+	 *
+	 * @param trans Pointer to the radar transmitter.
+	 * @param recv Pointer to the radar receiver.
+	 * @param signal Pointer to the radar signal pulse being simulated.
+	 * @throws core::RangeError If the transmitter or receiver is too close for accurate simulation.
+	 */
 	void addDirect(const Transmitter* trans, Receiver* recv, const TransmitterPulse* signal)
 	{
 		// Exit early if the transmitter is attached to the receiver
@@ -220,13 +269,28 @@ namespace
 		}
 		catch (const core::RangeError&)
 		{
-			throw std::runtime_error("Receiver or Transmitter too close to Target for accurate simulation");
+			LOG(Level::FATAL, "Receiver or Transmitter too close to Target for accurate simulation");
+			throw core::RangeError();
 		}
 
 		// Add response to receiver
 		recv->addResponse(std::move(response));
 	}
 
+	/**
+	 * @brief Simulates the radar signal interaction with a target.
+	 *
+	 * This function runs a radar simulation for a specific target,
+	 * calculating the results for each time point of the radar pulse.
+	 * The results are added to the receiver as a radar response.
+	 *
+	 * @param trans Pointer to the radar transmitter.
+	 * @param recv Pointer to the radar receiver.
+	 * @param targ Pointer to the radar target.
+	 * @param signal Pointer to the radar signal pulse being simulated.
+	 * @throws core::RangeError If the transmitter or receiver is too close to the target for accurate simulation.
+	 * @throws std::runtime_error If no time points are available for execution.
+	 */
 	void simulateTarget(const Transmitter* trans, Receiver* recv, const Target* targ,
 	                    const TransmitterPulse* signal)
 	{
@@ -241,6 +305,11 @@ namespace
 
 		try
 		{
+			if (point_count == 0)
+			{
+				LOG(Level::FATAL, "No time points are available for execution!");
+				throw std::runtime_error("No time points are available for execution!");
+			}
 			// Loop over all time points, including the final one
 			for (int i = 0; i <= point_count; ++i)
 			{
@@ -267,13 +336,25 @@ namespace
 		}
 		catch (const core::RangeError&)
 		{
-			throw std::runtime_error("Receiver or Transmitter too close to Target for accurate simulation");
+			LOG(Level::FATAL, "Receiver or Transmitter too close to Target for accurate simulation");
+			throw core::RangeError();
 		}
 
 		// Add the response to the receiver
 		recv->addResponse(std::move(response));
 	}
 
+	/**
+	 * @brief Simulates the radar interaction between a transmitter-receiver pair.
+	 *
+	 * This function runs radar simulations for all targets in the simulation world,
+	 * as well as for direct interactions between the transmitter and receiver.
+	 * It handles multiple pulses and adds the resulting responses to the receiver.
+	 *
+	 * @param trans Pointer to the radar transmitter.
+	 * @param recv Pointer to the radar receiver.
+	 * @param world Pointer to the simulation environment.
+	 */
 	void simulatePair(const Transmitter* trans, Receiver* recv, const core::World* world)
 	{
 		constexpr auto flag_nodirect = Receiver::RecvFlag::FLAG_NODIRECT;
@@ -281,7 +362,7 @@ namespace
 		// Use stack allocation instead of dynamic memory for pulse
 		TransmitterPulse pulse{};
 
-		// Get the pulse count
+		// Get the pulse counts
 		const int pulses = trans->getPulseCount();
 
 		// Loop through all pulses
@@ -305,20 +386,43 @@ namespace
 	//
 	// =================================================================================================================
 
-	// Helper function to start a simulation thread
-	void startSimThread(const unsigned threadLimit, std::vector<std::jthread>& running,
-	                    const std::function<void()>& task)
+	/**
+	 * @brief Starts a new task thread for the simulation.
+	 *
+	 * This function creates a new task thread for the simulation,
+	 * ensuring that the number of running threads does not exceed the thread limit.
+	 * It also checks for any errors encountered by other threads and terminates the simulation if necessary.
+	 *
+	 * @param threadLimit The maximum number of threads allowed.
+	 * @param running A vector of currently running threads.
+	 * @param task The task to be executed by the thread.
+	 */
+	void startTaskThread(const unsigned threadLimit, std::vector<std::jthread>& running,
+	                     const std::function<void()>& task)
 	{
 		++threads;
-		while (threads.load() >= static_cast<int>(threadLimit))
+		LOG(Level::TRACE, "Starting task thread. Current thread count: {}", static_cast<int>(threads));
+		while (threads >= static_cast<int>(threadLimit)) { std::this_thread::yield(); }
+
+		if (error.load())
 		{
-			std::this_thread::yield(); // Let other threads run if the limit is reached
+			LOG(Level::FATAL, "A thread encountered an error. Terminating simulation.");
+			return;
 		}
-		if (error.load()) { throw std::runtime_error("Thread terminated with error. Aborting simulation."); }
-		running.emplace_back([task] { task(); });
+
+		running.emplace_back(task);
 	}
 
-	// Helper function to run simulation for receiver-transmitter pairs
+	/**
+	 * @brief Runs the radar simulation for all transmitter-receiver pairs.
+	 *
+	 * This function runs radar simulations for all possible transmitter-receiver pairs in the simulation world.
+	 *
+	 * @param threadLimit The maximum number of threads allowed.
+	 * @param world Pointer to the simulation environment.
+	 * @param receivers A vector of radar receivers involved in the simulation.
+	 * @param running A vector of currently running threads.
+	 */
 	void runSimForReceiverTransmitterPairs(const unsigned threadLimit, const core::World* world,
 	                                       const std::vector<std::unique_ptr<Receiver>>& receivers,
 	                                       std::vector<std::jthread>& running)
@@ -328,85 +432,52 @@ namespace
 		{
 			for (const auto& transmitter : transmitters)
 			{
-				startSimThread(threadLimit, running, [&]
+				startTaskThread(threadLimit, running, [&]
 				{
-					core::SimThread(transmitter.get(), receiver.get(), world)();
+					core::TaskThread([&] { simulatePair(transmitter.get(), receiver.get(), world); },
+					                 "Simulate Transmitter/Receiver")();
 				});
 			}
 		}
-		running.clear(); // jthreads automatically join when destructed
+		running.clear();
 	}
 }
 
 namespace core
 {
-	// =================================================================================================================
-	//
-	// SIMULATION THREAD
-	//
-	// =================================================================================================================
-
-	void SimThread::operator()() const
+	void TaskThread::operator()() const
 	{
-		LOG(Level::DEBUG, "Created simulator thread for transmitter '{}' and receiver '{}'",
-		    _trans->getName().c_str(), _recv->getName().c_str());
-		try { simulatePair(_trans, _recv, _world); }
+		LOG(Level::DEBUG, "Executing task '{}'", _task_name);
+		try { _task(); }
 		catch (const std::exception& ex)
 		{
-			LOG(Level::FATAL, "First pass thread terminated with unexpected error:\t{}\nSimulator will terminate",
-			    ex.what());
+			LOG(Level::FATAL, "Task '{}' encountered an error: {}", _task_name, ex.what());
 			error.store(true);
 		}
 		--threads;
 	}
-
-	// =================================================================================================================
-	//
-	// RENDER THREAD
-	//
-	// =================================================================================================================
-
-	void RenderThread::operator()() const
-	{
-		LOG(Level::DEBUG, "Created render thread for receiver '{}'", _recv->getName().c_str());
-		try { _recv->render(); }
-		catch (const std::exception& ex)
-		{
-			LOG(Level::FATAL, "Render thread terminated with unexpected error:\t{}\nSimulator will terminate",
-			    ex.what());
-			error.store(true);
-		}
-		--threads;
-	}
-
-	// =================================================================================================================
-	//
-	// RUN THREADED SIMULATION
-	//
-	// =================================================================================================================
 
 	void runThreadedSim(const unsigned threadLimit, const World* world)
 	{
-		std::vector<std::jthread> running; // Use jthread to automatically join threads on destruction
-		LOG(Level::INFO, "Using threaded simulation with {} threads.", threadLimit);
+		std::vector<std::jthread> running;
 
-		// Get receivers from the world
 		const auto& receivers = world->getReceivers();
 
-		// Run simulation for receiver-transmitter pairs
+		LOG(Level::INFO, "Running radar simulation for {} receivers", receivers.size());
 		runSimForReceiverTransmitterPairs(threadLimit, world, receivers, running);
 
-		// Clear running threads and log responses
 		for (const auto& receiver : receivers)
 		{
-			LOG(Level::DEBUG, "{} responses added to receiver '{}'", receiver->getResponseCount(),
-			    receiver->getName().c_str());
+			LOG(Level::DEBUG, "{} responses added to '{}'", receiver->getResponseCount(), receiver->getName());
 		}
 
-		// Run rendering for receivers
+		LOG(Level::INFO, "Rendering responses for {} receivers", receivers.size());
 		for (const auto& receiver : receivers)
 		{
-			startSimThread(threadLimit, running, [&] { RenderThread(receiver.get())(); });
+			startTaskThread(threadLimit, running, [&]
+			{
+				TaskThread([&]() { receiver->render(); }, "Render Receiver")();
+			});
 		}
 	}
 }

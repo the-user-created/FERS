@@ -1,37 +1,23 @@
-// noise_generators.cpp
-// Functions for generating different types of noise
-// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-// 14 August 2006
+/**
+ * @file noise_generators.cpp
+ * @brief Implementation file for noise generator classes.
+ *
+ * @authors David Young, Marc Brooker
+ * @date 2006-08-14
+ */
 
 #include "noise_generators.h"
 
-#include <cmath>                  // for pow, floor, fmod, log10
-#include <ranges>                 // for reverse_view, ref_view
-#include <stdexcept>              // for runtime_error
-#include <utility>                // for move
+#include <cmath>
+#include <ranges>
+#include <stdexcept>
+#include <utility>
 
-#include "core/parameters.h"      // for randomSeed, rate
-#include "noise/falpha_branch.h"  // for FAlphaBranch
+#include "core/parameters.h"
+#include "noise/falpha_branch.h"
 
 namespace noise
 {
-	// =================================================================================================================
-	//
-	// GAMMA GENERATOR CLASS
-	//
-	// =================================================================================================================
-
-	GammaGenerator::GammaGenerator(const RealType k) : _rng(params::randomSeed()), _dist(k, 1.0) {}
-
-	// =================================================================================================================
-	//
-	// WGN GENERATOR CLASS
-	//
-	// =================================================================================================================
-
-	WgnGenerator::WgnGenerator(const RealType stddev) : _rng(params::randomSeed()), _dist(0.0, stddev),
-	                                                    _stddev(stddev) {}
-
 	// =================================================================================================================
 	//
 	// MULTI-RATE GENERATOR CLASS
@@ -48,7 +34,7 @@ namespace noise
 		_scale = 1.0 / std::pow(10.0, (-alpha + 2.0) * 2.0);
 	}
 
-	void MultirateGenerator::skipSamples(const long long samples) const
+	void MultirateGenerator::skipSamples(const long long samples) const noexcept
 	{
 		if (const int skip_branches = static_cast<int>(std::log10(samples)) - 1; skip_branches > 0)
 		{
@@ -74,7 +60,11 @@ namespace noise
 
 	void MultirateGenerator::createTree(const RealType fAlpha, const int fInt, const unsigned branches)
 	{
-		if (branches == 0) { throw std::runtime_error("Cannot create multirate noise generator with zero branches"); }
+		if (branches == 0)
+		{
+			LOG(logging::Level::FATAL, "Cannot create multirate noise generator with zero branches");
+			throw std::runtime_error("Cannot create multirate noise generator with zero branches");
+		}
 
 		std::unique_ptr<FAlphaBranch> previous_branch = nullptr;
 		for (unsigned i = 0; i < branches; ++i)
@@ -85,7 +75,7 @@ namespace noise
 		_topbranch = std::move(previous_branch);
 	}
 
-	void MultirateGenerator::reset() const
+	void MultirateGenerator::reset() const noexcept
 	{
 		std::vector<FAlphaBranch*> branches;
 		FAlphaBranch* branch = _topbranch.get();
@@ -107,7 +97,7 @@ namespace noise
 
 	ClockModelGenerator::ClockModelGenerator(const std::vector<RealType>& alpha, const std::vector<RealType>& inWeights,
 	                                         const RealType frequency, const RealType phaseOffset,
-	                                         const RealType freqOffset, int branches)
+	                                         const RealType freqOffset, int branches) noexcept
 		: _weights(inWeights), _phase_offset(phaseOffset), _freq_offset(freqOffset), _frequency(frequency)
 	{
 		for (size_t i = 0; i < alpha.size(); ++i)
