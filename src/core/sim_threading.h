@@ -19,6 +19,10 @@
 
 #include "config.h"
 
+namespace pool {
+	class ThreadPool;
+}
+
 namespace radar
 {
 	class Receiver;
@@ -103,13 +107,5 @@ namespace core
 		std::string _task_name; ///< The name of the task.
 	};
 
-	/**
-	 * @brief Runs the simulation in a multithreaded environment.
-	 *
-	 * This function runs the simulation in a multithreaded environment, using the specified number of threads.
-	 *
-	 * @param threadLimit The maximum number of threads to use.
-	 * @param world Pointer to the world object that holds the simulation environment.
-	 */
-	void runThreadedSim(unsigned threadLimit, const World* world);
+	void runThreadedSim(const World* world, pool::ThreadPool& pool);
 }

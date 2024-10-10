@@ -15,6 +15,10 @@
 #include <span>
 #include <string>
 
+namespace pool {
+	class ThreadPool;
+}
+
 namespace radar
 {
 	class Receiver;
@@ -44,9 +48,11 @@ namespace serial
 	* @param responses A span of unique pointers to Response objects representing the data to be exported.
 	* @param recv A pointer to the radar::Receiver object containing receiver data.
 	* @param recvName The name of the receiver, which will be used as the filename for the binary export.
+	* @param pool A reference to the ThreadPool object for parallel processing.
 	* @throws std::runtime_error If the file cannot be saved or data cannot be written to it.
 	*/
-	void exportReceiverBinary(std::span<const std::unique_ptr<Response>> responses, const radar::Receiver* recv, const std::string& recvName);
+	void exportReceiverBinary(std::span<const std::unique_ptr<Response>> responses, const radar::Receiver* recv,
+	                          const std::string& recvName, pool::ThreadPool& pool);
 
 	/**
 	* @brief Exports receiver responses to CSV files.

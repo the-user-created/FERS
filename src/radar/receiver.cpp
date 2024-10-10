@@ -33,7 +33,6 @@ namespace radar
 
 	int Receiver::getResponseCount() const noexcept
 	{
-		std::lock_guard lock(_responses_mutex);
 		return static_cast<int>(_responses.size());
 	}
 
@@ -47,14 +46,14 @@ namespace radar
 		_noise_temperature = temp;
 	}
 
-	void Receiver::render()
+	void Receiver::render(pool::ThreadPool& pool)
 	{
 		std::ranges::sort(_responses, serial::compareTimes);
 
 		// Export based on user preferences
 		if (params::exportXml()) { exportReceiverXml(_responses, getName() + "_results"); }
-		if (params::exportBinary()) { exportReceiverBinary(_responses, this, getName() + "_results"); }
 		if (params::exportCsv()) { exportReceiverCsv(_responses, getName() + "_results"); }
+		if (params::exportBinary()) { exportReceiverBinary(_responses, this, getName() + "_results", pool); }
 	}
 
 	void Receiver::setWindowProperties(const RealType length, const RealType prf, const RealType skip) noexcept

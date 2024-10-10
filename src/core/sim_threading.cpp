@@ -25,6 +25,7 @@
 #include <bits/chrono.h>
 
 #include "parameters.h"
+#include "thread_pool.h"
 #include "world.h"
 #include "core/logging.h"
 #include "interpolation/interpolation_point.h"
@@ -379,92 +380,30 @@ namespace
 			if (!recv->checkFlag(flag_nodirect)) { addDirect(trans, recv, &pulse); }
 		}
 	}
-
-	// =================================================================================================================
-	//
-	// RUN THREADED SIMULATION HELPERS
-	//
-	// =================================================================================================================
-
-	/**
-	 * @brief Starts a new task thread for the simulation.
-	 *
-	 * This function creates a new task thread for the simulation,
-	 * ensuring that the number of running threads does not exceed the thread limit.
-	 * It also checks for any errors encountered by other threads and terminates the simulation if necessary.
-	 *
-	 * @param threadLimit The maximum number of threads allowed.
-	 * @param running A vector of currently running threads.
-	 * @param task The task to be executed by the thread.
-	 */
-	void startTaskThread(const unsigned threadLimit, std::vector<std::jthread>& running,
-	                     const std::function<void()>& task)
-	{
-		++threads;
-		LOG(Level::TRACE, "Starting task thread. Current thread count: {}", static_cast<int>(threads));
-		while (threads >= static_cast<int>(threadLimit)) { std::this_thread::yield(); }
-
-		if (error.load())
-		{
-			LOG(Level::FATAL, "A thread encountered an error. Terminating simulation.");
-			return;
-		}
-
-		running.emplace_back(task);
-	}
-
-	/**
-	 * @brief Runs the radar simulation for all transmitter-receiver pairs.
-	 *
-	 * This function runs radar simulations for all possible transmitter-receiver pairs in the simulation world.
-	 *
-	 * @param threadLimit The maximum number of threads allowed.
-	 * @param world Pointer to the simulation environment.
-	 * @param receivers A vector of radar receivers involved in the simulation.
-	 * @param running A vector of currently running threads.
-	 */
-	void runSimForReceiverTransmitterPairs(const unsigned threadLimit, const core::World* world,
-	                                       const std::vector<std::unique_ptr<Receiver>>& receivers,
-	                                       std::vector<std::jthread>& running)
-	{
-		const auto& transmitters = world->getTransmitters();
-		for (const auto& receiver : receivers)
-		{
-			for (const auto& transmitter : transmitters)
-			{
-				startTaskThread(threadLimit, running, [&]
-				{
-					core::TaskThread([&] { simulatePair(transmitter.get(), receiver.get(), world); },
-					                 "Simulate Transmitter/Receiver")();
-				});
-			}
-		}
-		running.clear();
-	}
 }
 
 namespace core
 {
-	void TaskThread::operator()() const
+	void runThreadedSim(const World* world, pool::ThreadPool& pool)
 	{
-		LOG(Level::DEBUG, "Executing task '{}'", _task_name);
-		try { _task(); }
-		catch (const std::exception& ex)
-		{
-			LOG(Level::FATAL, "Task '{}' encountered an error: {}", _task_name, ex.what());
-			error.store(true);
-		}
-		--threads;
-	}
-
-	void runThreadedSim(const unsigned threadLimit, const World* world)
-	{
-		std::vector<std::jthread> running;
-
+		// Get the receivers and transmitters from the world
 		const auto& receivers = world->getReceivers();
+		const auto& transmitters = world->getTransmitters();
 
 		LOG(Level::INFO, "Running radar simulation for {} receivers", receivers.size());
-		runSimForReceiverTransmitterPairs(threadLimit, world, receivers, running);
+		// Enqueue tasks for simulating receiver-transmitter pairs
+		for (const auto& receiver : receivers)
+		{
+			for (const auto& transmitter : transmitters)
+			{
+				pool.enqueue([&transmitter, &receiver, world]
+				{
+					simulatePair(transmitter.get(), receiver.get(), world);
+				});
+			}
+		}
+
+		pool.wait();
 
 		for (const auto& receiver : receivers)
 		{
@@ -472,12 +411,9 @@ namespace core
 		}
 
 		LOG(Level::INFO, "Rendering responses for {} receivers", receivers.size());
-		for (const auto& receiver : receivers)
-		{
-			startTaskThread(threadLimit, running, [&]
-			{
-				TaskThread([&]() { receiver->render(); }, "Render Receiver")();
-			});
-		}
+		// Enqueue tasks for rendering each receiver
+		for (const auto& receiver : receivers) { pool.enqueue([&receiver, &pool] { receiver->render(pool); }); }
+
+		pool.wait();
 	}
 }

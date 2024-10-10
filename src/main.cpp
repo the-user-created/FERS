@@ -20,6 +20,7 @@
 #include "core/logging.h"
 #include "core/parameters.h"
 #include "core/sim_threading.h"
+#include "core/thread_pool.h"
 #include "core/world.h"
 #include "serial/xml_parser.h"
 
@@ -93,7 +94,8 @@ int main(const int argc, char* argv[])
 		}
 
 		// Run the simulation using the threading mechanism
-		runThreadedSim(params::renderThreads(), world.get());
+		pool::ThreadPool pool(params::renderThreads());
+		runThreadedSim(world.get(), pool);
 
 		LOG(Level::INFO, "Simulation completed successfully!");
 
