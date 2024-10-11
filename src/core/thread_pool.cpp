@@ -51,4 +51,14 @@ namespace pool
 		_condition.notify_all();
 		for (std::thread& worker : _workers) { worker.join(); }
 	}
+
+	unsigned ThreadPool::getAvailableThreads()
+	{
+		// Total threads minus the pending tasks will give the number of available threads.
+		std::unique_lock lock(_queue_mutex);
+		const unsigned active_threads = _pending_tasks;
+		const unsigned total_threads = _workers.size();
+		// The number of available threads is the total minus active (pending tasks)
+		return total_threads > active_threads ? total_threads - active_threads : 0;
+	}
 }
