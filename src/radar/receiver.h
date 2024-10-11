@@ -147,7 +147,7 @@ namespace radar
 		 * @return The start time of the specified window.
 		 * @throws std::logic_error If the receiver is not associated with a timing source.
 		 */
-		[[nodiscard]] RealType getWindowStart(int window) const;
+		[[nodiscard]] RealType getWindowStart(unsigned window) const;
 
 		/**
 		 * @brief Gets the number of radar windows.
@@ -156,7 +156,7 @@ namespace radar
 		 *
 		 * @return The total number of radar windows.
 		 */
-		[[nodiscard]] int getWindowCount() const noexcept;
+		[[nodiscard]] unsigned getWindowCount() const noexcept;
 
 		/**
 		 * @brief Gets the number of responses collected by the receiver.

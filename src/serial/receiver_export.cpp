@@ -17,7 +17,6 @@
 #include <fstream>
 #include <future>
 #include <map>
-#include <numbers>
 #include <optional>
 #include <queue>
 #include <ranges>
@@ -267,11 +266,9 @@ namespace
 	 * @param start The start time of the window in seconds.
 	 * @param fracDelay The fractional delay of the window in seconds.
 	 * @param responses A span of unique pointers to Response objects representing the responses to render.
-	 * @param pool A reference to the ThreadPool object for parallel processing.
 	 */
 	void renderWindow(std::vector<ComplexType>& window, const RealType length, const RealType start,
-	                  const RealType fracDelay, const std::span<const std::unique_ptr<serial::Response>> responses,
-	                  pool::ThreadPool& pool)
+	                  const RealType fracDelay, const std::span<const std::unique_ptr<serial::Response>> responses)
 	{
 		const RealType end = start + length;
 		std::queue<serial::Response*> work_list;
@@ -286,52 +283,30 @@ namespace
 			}
 		}
 
-		// Shared resources
-		std::mutex window_mutex, work_list_mutex;
+		const RealType rate = params::rate() * params::oversampleRatio();
+		auto local_window_size = static_cast<unsigned>(std::ceil(length * rate));
+		std::vector local_window(local_window_size, ComplexType{});
 
-		// Use a lambda to represent the worker logic, which simplifies the RenderThread class
-		auto worker = [&]
+		// Work processing loop
+		while (!work_list.empty())
 		{
-			const RealType rate = params::rate() * params::oversampleRatio();
-			auto local_window_size = static_cast<unsigned>(std::ceil(length * rate));
-			std::vector local_window(local_window_size, ComplexType{});
+			const auto* resp = work_list.front();
+			work_list.pop();
 
-			// Work processing loop
-			while (true)
+			unsigned psize;
+			RealType prate;
+			std::vector<ComplexType> array = resp->renderBinary(prate, psize, fracDelay);
+			int start_sample = static_cast<int>(std::round(rate * (resp->startTime() - start)));
+			const unsigned roffset = start_sample < 0 ? -start_sample : 0;
+			if (start_sample < 0) { start_sample = 0; }
+			for (unsigned i = roffset; i < psize && i + start_sample < local_window_size; ++i)
 			{
-				std::optional<serial::Response*> resp_opt;
-				{
-					std::scoped_lock lock(work_list_mutex);
-					if (work_list.empty()) { break; }
-					resp_opt = work_list.front();
-					work_list.pop();
-				}
-
-				const auto* resp = resp_opt.value();
-				unsigned psize;
-				RealType prate;
-				std::vector<ComplexType> array = resp->renderBinary(prate, psize, fracDelay);
-				int start_sample = static_cast<int>(std::round(rate * (resp->startTime() - start)));
-				const unsigned roffset = start_sample < 0 ? -start_sample : 0;
-				if (start_sample < 0) { start_sample = 0; }
-				for (unsigned i = roffset; i < psize && i + start_sample < local_window_size; ++i)
-				{
-					local_window[i + start_sample] += array[i];
-				}
+				local_window[i + start_sample] += array[i];
 			}
+		}
 
-			// Merge local window into the shared window
-			{
-				std::scoped_lock lock(window_mutex);
-				for (unsigned i = 0; i < local_window_size; ++i) { window[i] += local_window[i]; }
-			}
-		};
-
-		// Enqueue work items to the pool and capture futures
-		const std::future<void> future = pool.enqueue(worker);
-
-		// Wait for the task to finish
-		future.wait();
+		// Merge the local window into the shared window
+		for (unsigned i = 0; i < local_window_size; ++i) { window[i] += local_window[i]; }
 	}
 }
 
@@ -409,22 +384,23 @@ namespace serial
 		std::optional<HighFive::File> out_bin = openHdf5File(recvName);
 
 		// Retrieve the window count from the receiver
-		const int window_count = recv->getWindowCount();
+		const unsigned window_count = recv->getWindowCount();
+
+		const RealType length = recv->getWindowLength();
+		const RealType rate = params::rate() * params::oversampleRatio();
+		const auto size = static_cast<unsigned>(std::ceil(length * rate));
+
+		RealType carrier;
+		bool pn_enabled;
 
 		// Loop through each window
-		for (int i = 0; i < window_count; ++i)
+		for (unsigned i = 0; i < window_count; ++i)
 		{
-			const RealType length = recv->getWindowLength();
-			const RealType rate = params::rate() * params::oversampleRatio();
-			auto size = static_cast<unsigned>(std::ceil(length * rate));
-
 			// Generate phase noise samples for the window
-			RealType carrier;
-			bool pn_enabled;
 			auto pnoise = generatePhaseNoise(recv, size, rate, carrier, pn_enabled);
 
 			// Get the window start time, including clock drift effects
-			RealType start = recv->getWindowStart(i) + pnoise[0] / (2 * std::numbers::pi * carrier);
+			RealType start = recv->getWindowStart(i) + pnoise[0] / (2 * PI * carrier);
 
 			// Calculate the fractional delay using structured bindings
 			const auto [round_start, frac_delay] = [&start, rate]
@@ -442,22 +418,10 @@ namespace serial
 			addNoiseToWindow(window, recv->getNoiseTemperature());
 
 			// Render the window using multiple threads
-			renderWindow(window, length, start, frac_delay, responses, pool);
+			renderWindow(window, length, start, frac_delay, responses);
 
 			// Downsample the window if the oversample ratio is greater than 1
-			if (params::oversampleRatio() > 1)
-			{
-				// Calculate the new size after downsampling
-				const unsigned new_size = size / params::oversampleRatio();
-
-				// Perform downsampling
-				std::vector<ComplexType> tmp(new_size);
-				signal::downsample(window, tmp, params::oversampleRatio());
-
-				// Replace the window with the downsampled one
-				size = new_size;
-				window = std::move(tmp);
-			}
+			if (params::oversampleRatio() > 1) { window = std::move(signal::downsample(window)); }
 
 			// Add phase noise to the window if enabled
 			if (pn_enabled) { addPhaseNoiseToWindow(pnoise, window); }
@@ -465,13 +429,13 @@ namespace serial
 			// Normalize and quantize the window
 			const RealType fullscale = quantizeWindow(window);
 
-			// Export the binary format if enabled, using HighFive to write to the HDF5 file
-			if (params::exportBinary() && out_bin)
+			// Export the binary format using HighFive to write to the HDF5 file
+			if (out_bin)
 			{
 				try
 				{
 					// Use HighFive to add the data chunks to the HDF5 file
-					serial::addChunkToFile(*out_bin, window, size, start, params::rate(), fullscale, i);
+					serial::addChunkToFile(*out_bin, window, start, fullscale, i);
 				}
 				catch (const std::exception& e)
 				{

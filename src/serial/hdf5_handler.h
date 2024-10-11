@@ -37,15 +37,12 @@ namespace serial
 	*
 	* @param file The HDF5 file where the chunk is written.
 	* @param data A vector of complex data to be written.
-	* @param size The size of the data chunk.
 	* @param time The time attribute associated with the chunk.
-	* @param rate The rate attribute associated with the chunk.
 	* @param fullscale The fullscale attribute for the chunk.
 	* @param count The sequential count number for chunk naming.
 	* @throws std::runtime_error If there is an error writing data or setting attributes.
 	*/
-	void addChunkToFile(HighFive::File& file, const std::vector<ComplexType>& data, unsigned size, RealType time,
-	                    RealType rate, RealType fullscale, unsigned count);
+	void addChunkToFile(HighFive::File& file, const std::vector<ComplexType>& data, RealType time, RealType fullscale, unsigned count);
 
 	/**
 	* @brief Reads pulse data from an HDF5 file.
