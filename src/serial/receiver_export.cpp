@@ -266,47 +266,102 @@ namespace
 	 * @param start The start time of the window in seconds.
 	 * @param fracDelay The fractional delay of the window in seconds.
 	 * @param responses A span of unique pointers to Response objects representing the responses to render.
+	 * @param pool A reference to the ThreadPool object used for multithreading.
 	 */
 	void renderWindow(std::vector<ComplexType>& window, const RealType length, const RealType start,
-	                  const RealType fracDelay, const std::span<const std::unique_ptr<serial::Response>> responses)
+	                  const RealType fracDelay, const std::span<const std::unique_ptr<serial::Response>> responses,
+	                  pool::ThreadPool& pool)
 	{
 		const RealType end = start + length;
 		std::queue<serial::Response*> work_list;
 
-		// Populate the work list
+		// Populate the work list with relevant responses
 		for (const auto& response : responses)
 		{
-			const RealType resp_start = response->startTime();
-			if (const RealType resp_end = response->endTime(); resp_start <= end && resp_end >= start)
+			if (const RealType resp_end = response->endTime(); response->startTime() <= end && resp_end >= start)
 			{
 				work_list.push(response.get());
 			}
 		}
 
+		unsigned num_responses = work_list.size();
+		unsigned available_threads = pool.getAvailableThreads();
 		const RealType rate = params::rate() * params::oversampleRatio();
 		auto local_window_size = static_cast<unsigned>(std::ceil(length * rate));
-		std::vector local_window(local_window_size, ComplexType{});
 
-		// Work processing loop
-		while (!work_list.empty())
+		// Sequential processing if responses are small or threads is limited
+		// TODO: Fine tune the response threshold
+		if (num_responses < 10 || available_threads <= 1)
 		{
-			const auto* resp = work_list.front();
-			work_list.pop();
+			std::vector local_window(local_window_size, ComplexType{});
 
-			unsigned psize;
-			RealType prate;
-			std::vector<ComplexType> array = resp->renderBinary(prate, psize, fracDelay);
-			int start_sample = static_cast<int>(std::round(rate * (resp->startTime() - start)));
-			const unsigned roffset = start_sample < 0 ? -start_sample : 0;
-			if (start_sample < 0) { start_sample = 0; }
-			for (unsigned i = roffset; i < psize && i + start_sample < local_window_size; ++i)
+			while (!work_list.empty())
 			{
-				local_window[i + start_sample] += array[i];
-			}
-		}
+				const auto* resp = work_list.front();
+				work_list.pop();
 
-		// Merge the local window into the shared window
-		for (unsigned i = 0; i < local_window_size; ++i) { window[i] += local_window[i]; }
+				unsigned psize;
+				RealType prate;
+				auto array = resp->renderBinary(prate, psize, fracDelay);
+				int start_sample = static_cast<int>(std::round(rate * (resp->startTime() - start)));
+				const unsigned roffset = start_sample < 0 ? -start_sample : 0;
+				if (start_sample < 0) { start_sample = 0; }
+
+				for (unsigned i = roffset; i < psize && i + start_sample < local_window_size; ++i)
+				{
+					local_window[i + start_sample] += array[i];
+				}
+			}
+
+			// Merge the local window into the shared window
+			for (unsigned i = 0; i < local_window_size; ++i) { window[i] += local_window[i]; }
+		}
+		else
+		{
+			std::mutex window_mutex, work_list_mutex;
+			auto worker = [&]
+			{
+				std::vector local_window(local_window_size, ComplexType{});
+
+				while (true)
+				{
+					const serial::Response* resp = nullptr;
+					{
+						std::scoped_lock lock(work_list_mutex);
+						if (work_list.empty()) { break; }
+						resp = work_list.front();
+						work_list.pop();
+					}
+
+					unsigned psize;
+					RealType prate;
+					auto array = resp->renderBinary(prate, psize, fracDelay);
+					int start_sample = static_cast<int>(std::round(rate * (resp->startTime() - start)));
+					const unsigned roffset = start_sample < 0 ? -start_sample : 0;
+					if (start_sample < 0) { start_sample = 0; }
+
+					for (unsigned i = roffset; i < psize && i + start_sample < local_window_size; ++i)
+					{
+						local_window[i + start_sample] += array[i];
+					}
+				}
+
+				// Merge the local window into the shared window
+				std::scoped_lock lock(window_mutex);
+				for (unsigned i = 0; i < local_window_size; ++i) { window[i] += local_window[i]; }
+			};
+
+			// Multithreading with thread pool
+			const unsigned num_threads = std::min(available_threads, num_responses);
+			LOG(logging::Level::TRACE, "Using {} threads for rendering: {} available, {} responses", num_threads,
+			    available_threads, num_responses);
+
+			std::vector<std::future<void>> futures;
+			for (unsigned i = 0; i < num_threads; ++i) { futures.push_back(pool.enqueue(worker)); }
+
+			// Wait for all threads to finish
+			for (auto& future : futures) { future.get(); }
+		}
 	}
 }
 
@@ -418,7 +473,7 @@ namespace serial
 			addNoiseToWindow(window, recv->getNoiseTemperature());
 
 			// Render the window using multiple threads
-			renderWindow(window, length, start, frac_delay, responses);
+			renderWindow(window, length, start, frac_delay, responses, pool);
 
 			// Downsample the window if the oversample ratio is greater than 1
 			if (params::oversampleRatio() > 1) { window = std::move(signal::downsample(window)); }

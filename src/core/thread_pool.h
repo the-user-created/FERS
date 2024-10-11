@@ -79,6 +79,12 @@ namespace pool
 			_done_condition.wait(lock, [this] { return _pending_tasks == 0; });
 		}
 
+		/**
+		 * @brief Returns the number of threads available for executing tasks.
+		 * @return The number of available threads.
+		 */
+		[[nodiscard]] unsigned getAvailableThreads();
+
 	private:
 		using Task = std::function<void()>;
 
