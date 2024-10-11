@@ -64,14 +64,14 @@ namespace radar
 		_window_skip = std::floor(rate * skip) / rate; // Update skip with better precision
 	}
 
-	int Receiver::getWindowCount() const noexcept
+	unsigned Receiver::getWindowCount() const noexcept
 	{
 		const RealType time = params::endTime() - params::startTime();
 		const RealType pulses = time * _window_prf;
-		return static_cast<int>(std::ceil(pulses));
+		return static_cast<unsigned>(std::ceil(pulses));
 	}
 
-	RealType Receiver::getWindowStart(const int window) const
+	RealType Receiver::getWindowStart(const unsigned window) const
 	{
 		const RealType stime = static_cast<RealType>(window) / _window_prf + _window_skip;
 		if (!_timing)

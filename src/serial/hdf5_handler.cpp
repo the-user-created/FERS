@@ -16,6 +16,7 @@
 #include <highfive/H5File.hpp>
 
 #include "core/logging.h"
+#include "core/parameters.h"
 #include "highfive/H5DataSet.hpp"
 #include "highfive/H5DataSpace.hpp"
 #include "highfive/H5Exception.hpp"
@@ -79,9 +80,10 @@ namespace serial
 		LOG(Level::TRACE, "Read dataset successfully");
 	}
 
-	void addChunkToFile(HighFive::File& file, const std::vector<ComplexType>& data, const unsigned size,
-	                    const RealType time, const RealType rate, const RealType fullscale, const unsigned count)
+	void addChunkToFile(HighFive::File& file, const std::vector<ComplexType>& data, const RealType time, const RealType fullscale, const unsigned count)
 	{
+		const unsigned size = data.size();
+
 		// Generate chunk names
 		const std::string base_chunk_name = "chunk_" + std::format("{:06}", count);
 		const std::string i_chunk_name = base_chunk_name + "_I";
@@ -114,7 +116,7 @@ namespace serial
 			{
 				HighFive::DataSet dataset = file.getDataSet(chunkName);
 				dataset.createAttribute("time", time);
-				dataset.createAttribute("rate", rate);
+				dataset.createAttribute("rate", params::rate());
 				dataset.createAttribute("fullscale", fullscale);
 			}
 			catch (const HighFive::Exception& err)

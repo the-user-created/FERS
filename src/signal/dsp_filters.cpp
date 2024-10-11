@@ -68,9 +68,9 @@ namespace
 
 namespace signal
 {
-	void upsample(const std::span<const ComplexType> in, const unsigned size, std::span<ComplexType> out,
-	              const unsigned ratio)
+	void upsample(const std::span<const ComplexType> in, const unsigned size, std::span<ComplexType> out)
 	{
+		const unsigned ratio = params::oversampleRatio();
 		// TODO: this would be better as a multirate upsampler
 		// This implementation is functional but suboptimal.
 		// Users requiring higher accuracy should oversample outside FERS until this is addressed.
@@ -92,10 +92,11 @@ namespace signal
 		std::ranges::copy_n(tmp.begin() + delay, size * ratio, out.begin());
 	}
 
-	void downsample(std::span<const ComplexType> in, std::span<ComplexType> out, const unsigned ratio)
+	std::vector<ComplexType> downsample(std::span<const ComplexType> in)
 	{
-		if (ratio == 0 || in.empty() || out.empty()) { throw std::invalid_argument("Invalid input arguments"); }
+		if (in.empty()) { throw std::invalid_argument("Input span is empty in Downsample"); }
 
+		const unsigned ratio = params::oversampleRatio();
 		// TODO: Replace with a more efficient multirate downsampling implementation.
 		unsigned filt_length = 0;
 		const auto coeffs = blackmanFir(1 / static_cast<RealType>(ratio), filt_length);
@@ -112,10 +113,13 @@ namespace signal
 
 		// Downsample the filtered data
 		const auto downsampled_size = in.size() / ratio;
+		std::vector<ComplexType> out(downsampled_size);
 		for (unsigned i = 0; i < downsampled_size; ++i)
 		{
 			out[i] = tmp[i * ratio + filt_length / 2] / static_cast<RealType>(ratio);
 		}
+
+		return out;
 	}
 
 	// =================================================================================================================
