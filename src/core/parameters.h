@@ -192,8 +192,9 @@ namespace params
 	* @brief Set the rendering sample rate.
 	* @param rateValue The new sample rate for rendering.
 	*/
-	inline void setRate(RealType rateValue) noexcept
+	inline void setRate(RealType rateValue)
 	{
+		if (rateValue <= 0) { throw std::runtime_error("Sampling rate must be > 0"); }
 		params.rate = rateValue;
 		LOG(logging::Level::DEBUG, "Sample rate set to: {:.5f}", rateValue);
 	}
