@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <!-- multipath w/ malformed timing source and multiple rotation path waypoints -->
-<!DOCTYPE simulation SYSTEM "../../xml_schema/fers-xml.dtd">
+<!DOCTYPE simulation SYSTEM "fers-xml.dtd">
 <simulation name="sim1">
     <parameters>
         <starttime>0</starttime>

@@ -138,6 +138,9 @@ namespace
 		// Set the start and end times
 		params::setTime(get_child_real_type(parameters, "starttime"), get_child_real_type(parameters, "endtime"));
 
+		// Set the sampling rate
+		params::setRate(get_child_real_type(parameters, "rate"));
+
 		auto set_param_with_exception_handling = [](const XmlElement& element, const std::string& paramName,
 		                                            const RealType defaultValue,
 		                                            const std::function<void(RealType)>& setter)
@@ -157,7 +160,6 @@ namespace
 		};
 
 		set_param_with_exception_handling(parameters, "c", params::c(), params::setC);
-		set_param_with_exception_handling(parameters, "rate", params::rate(), params::setRate);
 		set_param_with_exception_handling(parameters, "interprate", params::cwSampleRate(), params::setCwSampleRate);
 
 		set_param_with_exception_handling(parameters, "randomseed", params::randomSeed(), params::setRandomSeed);

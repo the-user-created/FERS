@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <!-- Test pulsed radar. One Monostatic radar and one target
 w/ h5 antenna gain pattern, oversampling, conflicting offsets, target model -->
-<!DOCTYPE simulation SYSTEM "../../xml_schema/fers-xml.dtd">
+<!DOCTYPE simulation SYSTEM "fers-xml.dtd">
 <simulation name="code_coverage">
     <parameters>
         <starttime>0</starttime>
