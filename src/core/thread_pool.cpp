@@ -1,6 +1,10 @@
-//
-// Created by David Young on 10/10/24.
-//
+/**
+ * @file thread_pool.cpp
+ * @brief A simple thread pool implementation.
+ *
+ * @authors David Young
+ * @date 2024-10-10
+ */
 
 #include "thread_pool.h"
 
