@@ -255,18 +255,124 @@ namespace
 	}
 
 	/**
+	 * @brief Process a response and add the response data to the window.
+	 *
+	 * Processes a response and adds the response data to the window based on the specified rate, start time, fractional
+	 * delay, and local window size.
+	 *
+	 * @param resp A pointer to a Response object representing the response to process.
+	 * @param localWindow A reference to a vector of ComplexType objects representing the local window of complex samples.
+	 * @param rate The sample rate in Hz.
+	 * @param start The start time of the window in seconds.
+	 * @param fracDelay The fractional delay of the window in seconds.
+	 * @param localWindowSize The size of the local window in samples.
+	 */
+	void processResponse(const serial::Response* resp, std::vector<ComplexType>& localWindow, const RealType rate,
+	                     const RealType start, const RealType fracDelay, unsigned localWindowSize)
+	{
+		unsigned psize;
+		RealType prate;
+		auto array = resp->renderBinary(prate, psize, fracDelay);
+		int start_sample = static_cast<int>(std::round(rate * (resp->startTime() - start)));
+		const unsigned roffset = start_sample < 0 ? -start_sample : 0;
+		if (start_sample < 0) { start_sample = 0; }
+
+		for (unsigned i = roffset; i < psize && i + start_sample < localWindowSize; ++i)
+		{
+			localWindow[i + start_sample] += array[i];
+		}
+	}
+
+	/**
+	 * @brief Process responses sequentially using a single thread.
+	 *
+	 * Processes responses sequentially using a single thread, adding the response data to the window.
+	 * The window is rendered based on the specified rate, start time, fractional delay, and local window size.
+	 *
+	 * @param workList A reference to a queue of Response pointers representing the list of responses to process.
+	 * @param window A reference to a vector of ComplexType objects representing the window of complex samples to render.
+	 * @param rate The sample rate in Hz.
+	 * @param start The start time of the window in seconds.
+	 * @param fracDelay The fractional delay of the window in seconds.
+	 * @param localWindowSize The size of the local window in samples.
+	 */
+	void sequentialProcessing(std::queue<serial::Response*>& workList, std::vector<ComplexType>& window,
+	                          const RealType rate, const RealType start, const RealType fracDelay,
+	                          const unsigned localWindowSize)
+	{
+		std::vector local_window(localWindowSize, ComplexType{});
+
+		while (!workList.empty())
+		{
+			const auto* resp = workList.front();
+			workList.pop();
+			processResponse(resp, local_window, rate, start, fracDelay, localWindowSize);
+		}
+
+		for (unsigned i = 0; i < localWindowSize; ++i) { window[i] += local_window[i]; }
+	}
+
+	/**
+	 * @brief Process responses in parallel using multiple threads.
+	 *
+	 * Processes responses in parallel using multiple threads, adding the response data to the window.
+	 * The window is rendered based on the specified rate, start time, fractional delay, and local window size.
+	 * The processing is parallelized using a thread pool.
+	 *
+	 * @param workList A reference to a queue of Response pointers representing the list of responses to process.
+	 * @param window A reference to a vector of ComplexType objects representing the window of complex samples to render.
+	 * @param rate The sample rate in Hz.
+	 * @param start The start time of the window in seconds.
+	 * @param fracDelay The fractional delay of the window in seconds.
+	 * @param localWindowSize The size of the local window in samples.
+	 * @param pool A reference to the ThreadPool object used for parallel processing.
+	 * @param numThreads The number of threads to use for parallel processing.
+	 */
+	void parallelProcessing(std::queue<serial::Response*>& workList, std::vector<ComplexType>& window,
+	                        const RealType rate, const RealType start, const RealType fracDelay,
+	                        const unsigned localWindowSize, pool::ThreadPool& pool, const unsigned numThreads)
+	{
+		std::mutex window_mutex, work_list_mutex;
+		auto worker = [&]
+		{
+			std::vector local_window(localWindowSize, ComplexType{});
+
+			while (true)
+			{
+				const serial::Response* resp = nullptr;
+				{
+					std::scoped_lock lock(work_list_mutex);
+					if (workList.empty()) { break; }
+					resp = workList.front();
+					workList.pop();
+				}
+				processResponse(resp, local_window, rate, start, fracDelay, localWindowSize);
+			}
+
+			std::scoped_lock lock(window_mutex);
+			for (unsigned i = 0; i < localWindowSize; ++i) { window[i] += local_window[i]; }
+		};
+
+		std::vector<std::future<void>> futures;
+		for (unsigned i = 0; i < numThreads; ++i) { futures.push_back(pool.enqueue(worker)); }
+
+		for (auto& future : futures) { future.get(); }
+	}
+
+	/**
 	 * @brief Render a window of complex samples using multiple threads.
 	 *
-	 * Renders a window of complex samples using multiple threads, processing each response in parallel and merging
-	 * the results into the shared window. The window is rendered based on the specified length, start time, fractional
-	 * delay, and list of responses.
+	 * Renders a window of complex samples using multiple threads, processing each response in the work list and adding
+	 * the response data to the window.
+	 * The window is rendered based on the specified length, start time, fractional delay, and list of responses.
+	 * The rendering process is parallelized using a thread pool.
 	 *
-	 * @param window A reference to a vector of ComplexType objects representing the window of complex samples to render.
+	 * @param window A vector of ComplexType objects representing the window of complex samples to render.
 	 * @param length The length of the window in seconds.
 	 * @param start The start time of the window in seconds.
 	 * @param fracDelay The fractional delay of the window in seconds.
-	 * @param responses A span of unique pointers to Response objects representing the responses to render.
-	 * @param pool A reference to the ThreadPool object used for multithreading.
+	 * @param responses A span of unique_ptr objects representing the list of responses to render.
+	 * @param pool A reference to the ThreadPool object used for parallel processing.
 	 */
 	void renderWindow(std::vector<ComplexType>& window, const RealType length, const RealType start,
 	                  const RealType fracDelay, const std::span<const std::unique_ptr<serial::Response>> responses,
@@ -275,92 +381,28 @@ namespace
 		const RealType end = start + length;
 		std::queue<serial::Response*> work_list;
 
-		// Populate the work list with relevant responses
 		for (const auto& response : responses)
 		{
-			if (response->startTime() <= end && response->endTime() >= start)
-			{
-				work_list.push(response.get());
-			}
+			if (response->startTime() <= end && response->endTime() >= start) { work_list.push(response.get()); }
 		}
 
 		unsigned num_responses = work_list.size();
 		unsigned available_threads = pool.getAvailableThreads();
 		const RealType rate = params::rate() * params::oversampleRatio();
-		auto local_window_size = static_cast<unsigned>(std::ceil(length * rate));
+		const auto local_window_size = static_cast<unsigned>(std::ceil(length * rate));
 
-		// Sequential processing if responses are small or threads is limited
-		// TODO: Fine tune the response threshold
-		if (num_responses < 10 || available_threads <= 1)
+		if (num_responses < 8 || available_threads <= 1)
 		{
-			std::vector local_window(local_window_size, ComplexType{});
-
-			while (!work_list.empty())
-			{
-				const auto* resp = work_list.front();
-				work_list.pop();
-
-				unsigned psize;
-				RealType prate;
-				auto array = resp->renderBinary(prate, psize, fracDelay);
-				int start_sample = static_cast<int>(std::round(rate * (resp->startTime() - start)));
-				const unsigned roffset = start_sample < 0 ? -start_sample : 0;
-				if (start_sample < 0) { start_sample = 0; }
-
-				for (unsigned i = roffset; i < psize && i + start_sample < local_window_size; ++i)
-				{
-					local_window[i + start_sample] += array[i];
-				}
-			}
-
-			// Merge the local window into the shared window
-			for (unsigned i = 0; i < local_window_size; ++i) { window[i] += local_window[i]; }
+			LOG(logging::Level::TRACE, "Using sequential processing for rendering: {} threads available, {} responses",
+			    available_threads, num_responses);
+			sequentialProcessing(work_list, window, rate, start, fracDelay, local_window_size);
 		}
 		else
 		{
-			std::mutex window_mutex, work_list_mutex;
-			auto worker = [&]
-			{
-				std::vector local_window(local_window_size, ComplexType{});
-
-				while (true)
-				{
-					const serial::Response* resp = nullptr;
-					{
-						std::scoped_lock lock(work_list_mutex);
-						if (work_list.empty()) { break; }
-						resp = work_list.front();
-						work_list.pop();
-					}
-
-					unsigned psize;
-					RealType prate;
-					auto array = resp->renderBinary(prate, psize, fracDelay);
-					int start_sample = static_cast<int>(std::round(rate * (resp->startTime() - start)));
-					const unsigned roffset = start_sample < 0 ? -start_sample : 0;
-					if (start_sample < 0) { start_sample = 0; }
-
-					for (unsigned i = roffset; i < psize && i + start_sample < local_window_size; ++i)
-					{
-						local_window[i + start_sample] += array[i];
-					}
-				}
-
-				// Merge the local window into the shared window
-				std::scoped_lock lock(window_mutex);
-				for (unsigned i = 0; i < local_window_size; ++i) { window[i] += local_window[i]; }
-			};
-
-			// Multithreading with thread pool
 			const unsigned num_threads = std::min(available_threads, num_responses);
 			LOG(logging::Level::TRACE, "Using {} threads for rendering: {} available, {} responses", num_threads,
 			    available_threads, num_responses);
-
-			std::vector<std::future<void>> futures;
-			for (unsigned i = 0; i < num_threads; ++i) { futures.push_back(pool.enqueue(worker)); }
-
-			// Wait for all threads to finish
-			for (auto& future : futures) { future.get(); }
+			parallelProcessing(work_list, window, rate, start, fracDelay, local_window_size, pool, num_threads);
 		}
 	}
 }
