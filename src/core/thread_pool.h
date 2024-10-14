@@ -5,7 +5,7 @@
  * This file provides a thread pool that can be used to execute tasks concurrently.
  *
  * @authors David Young
- * @date 10/10/24
+ * @date 2024-10-10
  */
 
 #pragma once

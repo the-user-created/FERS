@@ -1,8 +1,10 @@
-// multipath_surface.cpp
-// Implementation of multipath propagation
-// Original code by Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-// Modified by: David Young
-// 9 September 2007
+/**
+ * @file multipath_surface.cpp
+ * @brief Implementation of multipath propagation
+ *
+ * @authors David Young, Marc Brooker
+ * @date 2007-09-09
+ */
 
 #include "multipath_surface.h"
 
