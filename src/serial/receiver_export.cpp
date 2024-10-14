@@ -278,7 +278,7 @@ namespace
 		// Populate the work list with relevant responses
 		for (const auto& response : responses)
 		{
-			if (const RealType resp_end = response->endTime(); response->startTime() <= end && resp_end >= start)
+			if (response->startTime() <= end && response->endTime() >= start)
 			{
 				work_list.push(response.get());
 			}
