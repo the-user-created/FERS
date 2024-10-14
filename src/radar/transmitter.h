@@ -47,6 +47,10 @@ namespace radar
 			: Radar(platform, std::move(name)), _pulsed(pulsed) {}
 
 		~Transmitter() override = default;
+		Transmitter(const Transmitter&) = delete;
+		Transmitter& operator=(const Transmitter&) = delete;
+		Transmitter(Transmitter&&) = delete;
+		Transmitter& operator=(Transmitter&&) = delete;
 
 		/**
 		* @brief Retrieves the pulse repetition frequency (PRF).

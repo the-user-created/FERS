@@ -76,13 +76,15 @@ namespace interp
 	public:
 		/**
 		 * @brief Constructs a new InterpSet object.
-		 *
-		 * Initializes the internal InterpSetData object using a smart pointer.
 		 */
 		constexpr InterpSet() : _data(std::make_unique<InterpSetData>()) {}
 
-		/// Default destructor
 		constexpr ~InterpSet() = default;
+
+		InterpSet(const InterpSet&) = delete;
+		InterpSet& operator=(const InterpSet&) = delete;
+		InterpSet(InterpSet&&) = delete;
+		InterpSet& operator=(InterpSet&&) = delete;
 
 		/**
 		 * @brief Inserts a sample point into the interpolation set.

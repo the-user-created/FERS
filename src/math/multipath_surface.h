@@ -32,6 +32,10 @@ namespace math
 		MultipathSurface(RealType a, RealType b, RealType c, RealType d, RealType factor) noexcept;
 
 		~MultipathSurface() = default;
+		MultipathSurface(const MultipathSurface&) = default;
+		MultipathSurface& operator=(const MultipathSurface&) = default;
+		MultipathSurface(MultipathSurface&&) = default;
+		MultipathSurface& operator=(MultipathSurface&&) = default;
 
 		/**
 		 * @brief Reflect a point on the multipath surface.

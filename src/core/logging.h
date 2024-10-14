@@ -46,9 +46,6 @@ namespace logging
 	class Logger
 	{
 	public:
-		Logger() = default;
-		~Logger() noexcept = default;
-
 		/**
 		 * @brief Sets the logging level.
 		 *

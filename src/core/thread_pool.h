@@ -36,6 +36,11 @@ namespace pool
 	     */
 		~ThreadPool();
 
+		ThreadPool(const ThreadPool&) = delete;
+		ThreadPool& operator=(const ThreadPool&) = delete;
+		ThreadPool(ThreadPool&&) = delete;
+		ThreadPool& operator=(ThreadPool&&) = delete;
+
 		/**
 	     * @brief Enqueues a task to be executed by the thread pool.
 	     * @tparam F The type of the function to be executed.

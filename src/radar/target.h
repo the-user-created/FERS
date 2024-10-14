@@ -34,6 +34,11 @@ namespace radar
 	{
 	public:
 		virtual ~RcsModel() = default;
+		RcsModel() = default;
+		RcsModel(const RcsModel&) = delete;
+		RcsModel& operator=(const RcsModel&) = delete;
+		RcsModel(RcsModel&&) = delete;
+		RcsModel& operator=(RcsModel&&) = delete;
 
 		/**
 		* @brief Samples the RCS model to produce a value.
@@ -50,8 +55,6 @@ namespace radar
 	class RcsConst final : public RcsModel
 	{
 	public:
-		~RcsConst() override = default;
-
 		/**
 		* @brief Samples the constant RCS model.
 		*
@@ -73,8 +76,6 @@ namespace radar
 		* @param k The degrees of freedom for the chi-square distribution.
 		*/
 		explicit RcsChiSquare(RealType k) : _gen(std::make_unique<noise::GammaGenerator>(k)) {}
-
-		~RcsChiSquare() override = default;
 
 		/**
 		* @brief Samples the chi-square RCS model.
@@ -101,8 +102,6 @@ namespace radar
 		* @param name The name of the target.
 		*/
 		Target(Platform* platform, std::string name) : Object(platform, std::move(name)) {}
-
-		~Target() override = default;
 
 		/**
 		* @brief Gets the RCS value for the target.
@@ -148,8 +147,6 @@ namespace radar
 		IsoTarget(Platform* platform, std::string name, const RealType rcs) : Target(platform, std::move(name)),
 		                                                                      _rcs(rcs) {}
 
-		~IsoTarget() override = default;
-
 		/**
 		* @brief Gets the constant RCS value.
 		*
@@ -177,8 +174,6 @@ namespace radar
 		* @throws std::runtime_error If the file cannot be loaded or parsed.
 		*/
 		FileTarget(Platform* platform, std::string name, const std::string& filename);
-
-		~FileTarget() override = default;
 
 		/**
 		* @brief Gets the RCS value from file-based data.

@@ -37,10 +37,10 @@ namespace noise
 		FAlphaBranch(RealType ffrac, unsigned fint, std::unique_ptr<FAlphaBranch> pre, bool last) noexcept;
 
 		~FAlphaBranch() = default;
-
 		FAlphaBranch(const FAlphaBranch&) = delete;
-
 		FAlphaBranch& operator=(const FAlphaBranch&) = delete;
+		FAlphaBranch(FAlphaBranch&&) = delete;
+		FAlphaBranch& operator=(FAlphaBranch&&) = delete;
 
 		/**
 		* @brief Retrieves the current noise sample.
