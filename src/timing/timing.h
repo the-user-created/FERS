@@ -37,10 +37,10 @@ namespace timing
 		explicit Timing(std::string name) noexcept : _name(std::move(name)) {}
 
 		~Timing() = default;
-
 		Timing(const Timing&) = delete;
-
 		Timing& operator=(const Timing&) = delete;
+		Timing(Timing&&) = delete;
+		Timing& operator=(Timing&&) = delete;
 
 		/**
 		* @brief Gets the next sample from the timing source.

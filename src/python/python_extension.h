@@ -63,6 +63,11 @@ namespace python
 		 */
 		virtual ~PythonExtension();
 
+		PythonExtension(const PythonExtension&) = delete;
+		PythonExtension& operator=(const PythonExtension&) = delete;
+		PythonExtension(PythonExtension&&) = delete;
+		PythonExtension& operator=(PythonExtension&&) = delete;
+
 	protected:
 		std::unique_ptr<PythonExtensionData> _data; ///< Stores the Python module and function pointers.
 

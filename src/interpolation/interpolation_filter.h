@@ -24,6 +24,12 @@ namespace interp
 	class InterpFilter
 	{
 	public:
+		InterpFilter(const InterpFilter&) = delete;
+		InterpFilter(InterpFilter&&) = delete;
+		InterpFilter& operator=(const InterpFilter&) = delete;
+		InterpFilter& operator=(InterpFilter&&) = delete;
+		~InterpFilter() = default;
+
 		/**
 		 * @brief Computes the sinc function for a given input.
 		 *

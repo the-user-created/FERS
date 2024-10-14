@@ -42,10 +42,10 @@ namespace radar
 		                                               _name(std::move(name)) {}
 
 		Platform(const Platform&) = delete;
-
 		Platform& operator=(const Platform&) = delete;
-
 		~Platform() = default;
+		Platform(Platform&&) = default;
+		Platform& operator=(Platform&&) = default;
 
 		/**
 		* @brief Gets the motion path of the platform.

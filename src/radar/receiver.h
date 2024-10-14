@@ -40,6 +40,10 @@ namespace radar
 		                  std::string name = "defRecv") noexcept : Radar(platform, std::move(name)) {}
 
 		~Receiver() override = default;
+		Receiver(const Receiver&) = delete;
+		Receiver(Receiver&&) = delete;
+		Receiver& operator=(const Receiver&) = delete;
+		Receiver& operator=(Receiver&&) = delete;
 
 		/**
 		 * @brief Adds a response to the receiver.

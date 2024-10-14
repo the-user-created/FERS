@@ -32,6 +32,10 @@ namespace timing
 		explicit PrototypeTiming(std::string name) noexcept : _name(std::move(name)) {}
 
 		~PrototypeTiming() = default;
+		PrototypeTiming(const PrototypeTiming&) = default;
+		PrototypeTiming(PrototypeTiming&&) = default;
+		PrototypeTiming& operator=(const PrototypeTiming&) = default;
+		PrototypeTiming& operator=(PrototypeTiming&&) = default;
 
 		/**
 		* @brief Copies the alphas and weights vectors.

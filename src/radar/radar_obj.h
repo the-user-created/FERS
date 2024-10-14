@@ -40,6 +40,10 @@ namespace radar
 		Radar(Platform* platform, std::string name) noexcept : Object(platform, std::move(name)) {}
 
 		~Radar() override = default;
+		Radar(const Radar&) = delete;
+		Radar& operator=(const Radar&) = delete;
+		Radar(Radar&&) = delete;
+		Radar& operator=(Radar&&) = delete;
 
 		/**
 		* @brief Checks if multipath dual mode is enabled.

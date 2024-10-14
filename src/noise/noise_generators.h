@@ -26,8 +26,11 @@ namespace noise
 	{
 	public:
 		NoiseGenerator() = default;
-
 		virtual ~NoiseGenerator() = default;
+		NoiseGenerator(const NoiseGenerator&) = delete;
+		NoiseGenerator& operator=(const NoiseGenerator&) = delete;
+		NoiseGenerator(NoiseGenerator&&) = delete;
+		NoiseGenerator& operator=(NoiseGenerator&&) = delete;
 
 		/**
 		* @brief Pure virtual method to generate a noise sample.
@@ -35,10 +38,6 @@ namespace noise
 		* @return A noise sample of type RealType.
 		*/
 		virtual RealType getSample() = 0;
-
-		NoiseGenerator(const NoiseGenerator&) = delete;
-
-		NoiseGenerator& operator=(const NoiseGenerator&) = delete;
 	};
 
 	/**

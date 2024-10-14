@@ -32,8 +32,11 @@ namespace core
 	{
 	public:
 		World() = default;
-
 		~World() noexcept = default;
+		World(const World&) = delete;
+		World& operator=(const World&) = delete;
+		World(World&&) = delete;
+		World& operator=(World&&) = delete;
 
 		/**
 		* @brief Adds a radar platform to the simulation world.

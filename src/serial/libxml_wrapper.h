@@ -59,6 +59,12 @@ public:
 	*/
 	explicit XmlElement(const xmlNode* node) : _node(const_cast<xmlNode*>(node)) {}
 
+	XmlElement(const XmlElement&) = default;
+	XmlElement(XmlElement&&) noexcept = default;
+	XmlElement& operator=(const XmlElement&) = default;
+	XmlElement& operator=(XmlElement&&) noexcept = default;
+	~XmlElement() = default;
+
 	/**
 	* @brief Get the name of the XML element.
 	*
@@ -190,6 +196,12 @@ public:
 	{
 		if (!_doc) { throw XmlException("Failed to create XML document."); }
 	}
+
+	~XmlDocument() = default;
+	XmlDocument(const XmlDocument&) = delete;
+	XmlDocument(XmlDocument&&) noexcept = default;
+	XmlDocument& operator=(const XmlDocument&) = delete;
+	XmlDocument& operator=(XmlDocument&&) noexcept = default;
 
 	/**
 	* @brief Load an XML file into the document.

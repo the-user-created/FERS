@@ -46,10 +46,10 @@ namespace serial
 			_transmitter(transmitter), _wave(wave) {}
 
 		~Response() = default;
-
 		Response(const Response&) = delete;
-
 		Response& operator=(const Response&) = delete;
+		Response(Response&&) = delete;
+		Response& operator=(Response&&) = delete;
 
 		/**
 		* @brief Retrieves the start time of the response.

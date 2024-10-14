@@ -42,6 +42,11 @@ namespace antenna
 
 		~Pattern() = default;
 
+		Pattern(const Pattern&) = default;
+		Pattern(Pattern&&) = default;
+		Pattern& operator=(const Pattern&) = default;
+		Pattern& operator=(Pattern&&) = default;
+
 		/**
 		 * @brief Calculates the gain for a given angle.
 		 *

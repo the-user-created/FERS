@@ -42,6 +42,10 @@ namespace math
 		explicit Path(const InterpType type = InterpType::INTERP_STATIC) noexcept : _type(type) {}
 
 		~Path() = default;
+		Path(const Path&) = delete;
+		Path(Path&&) = delete;
+		Path& operator=(const Path&) = delete;
+		Path& operator=(Path&&) = delete;
 
 		/**
 		 * @brief Adds a coordinate to the path.

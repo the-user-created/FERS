@@ -30,9 +30,6 @@ namespace signal
 	class Signal
 	{
 	public:
-		Signal() = default;
-		~Signal() = default;
-
 		/**
 		 * @brief Clears the internal signal data.
 		 */
@@ -126,10 +123,10 @@ namespace signal
 		            std::unique_ptr<Signal> signal);
 
 		~RadarSignal() = default;
-
 		RadarSignal(const RadarSignal&) noexcept = delete;
-
 		RadarSignal& operator=(const RadarSignal&) noexcept = delete;
+		RadarSignal(RadarSignal&&) noexcept = delete;
+		RadarSignal& operator=(RadarSignal&&) noexcept = delete;
 
 		/**
 		 * @brief Gets the power of the radar signal.

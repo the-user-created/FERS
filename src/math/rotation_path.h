@@ -39,6 +39,12 @@ namespace math
 		 */
 		explicit RotationPath(const InterpType type = InterpType::INTERP_STATIC) noexcept : _type(type) {}
 
+		~RotationPath() = default;
+		RotationPath(const RotationPath&) = delete;
+		RotationPath& operator=(const RotationPath&) = delete;
+		RotationPath(RotationPath&&) = delete;
+		RotationPath& operator=(RotationPath&&) = delete;
+
 		/**
 		 * @brief Adds a rotation coordinate to the path.
 		 *

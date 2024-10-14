@@ -26,9 +26,6 @@ namespace math
 	public:
 		std::array<RealType, 9> elements{}; ///< The 3x3 matrix elements
 
-		Matrix3() = default;
-		~Matrix3() = default;
-
 		/**
 		* @brief Get the matrix data as a constant pointer.
 		*
@@ -56,6 +53,10 @@ namespace math
 		RealType elevation{}; ///< The elevation angle of the vector
 
 		SVec3() noexcept = default;
+		SVec3(const SVec3&) noexcept = default;
+		SVec3(SVec3&&) noexcept = default;
+		SVec3& operator=(const SVec3&) noexcept = default;
+		SVec3& operator=(SVec3&&) noexcept = default;
 
 		/**
 		* @brief Parameterized constructor for SVec3.
@@ -73,11 +74,6 @@ namespace math
 		* @param vec A rectangular vector (Vec3) to convert.
 		*/
 		explicit SVec3(const Vec3& vec) noexcept;
-
-		/**
-		* @brief Default destructor for SVec3.
-		*/
-		~SVec3() = default;
 
 		/**
 		* @brief Scalar multiplication assignment for SVec3.
@@ -108,6 +104,10 @@ namespace math
 		RealType z{}; ///< The z component of the vector
 
 		Vec3() noexcept = default;
+		Vec3(const Vec3&) noexcept = default;
+		Vec3(Vec3&&) noexcept = default;
+		Vec3& operator=(const Vec3&) noexcept = default;
+		Vec3& operator=(Vec3&&) noexcept = default;
 
 		/**
 		* @brief Parameterized constructor for Vec3.

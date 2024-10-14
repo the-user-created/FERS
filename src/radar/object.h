@@ -28,13 +28,9 @@ namespace radar
 		Object(Platform* platform, std::string name) noexcept : _platform(platform), _name(std::move(name)) {}
 
 		virtual ~Object() = default;
-
 		Object(const Object&) = delete;
-
 		Object& operator=(const Object&) = delete;
-
 		Object(Object&&) noexcept = default;
-
 		Object& operator=(Object&&) noexcept = default;
 
 		/**
