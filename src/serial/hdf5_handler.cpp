@@ -30,27 +30,22 @@ namespace serial
 {
 	void readPulseData(const std::string& name, std::vector<ComplexType>& data)
 	{
-		// Check if the file exists
 		if (!std::filesystem::exists(name))
 		{
 			LOG(Level::FATAL, "File '{}' not found", name);
 			throw std::runtime_error("File " + name + " not found.");
 		}
 
-		// Open the HDF5 file in read-only mode
 		LOG(Level::TRACE, "Opening file '{}'", name);
 		const HighFive::File file(name, HighFive::File::ReadOnly);
 
 		// Helper lambda to open group and read dataset
 		auto read_dataset = [&file](const std::string& groupName, std::vector<double>& buffer) -> size_t
 		{
-			// Open the group
 			const auto group = file.getGroup("/" + groupName);
 
-			// Read the dataset named "value" into the buffer
 			const auto dataset = group.getDataSet("value");
 
-			// Get dataset dimensions using structured bindings
 			const auto dimensions = dataset.getSpace().getDimensions();
 			const auto size = dimensions[0];
 
@@ -60,12 +55,10 @@ namespace serial
 			return size;
 		};
 
-		// Read the I dataset
 		LOG(Level::TRACE, "Reading dataset 'I' from file '{}'", name);
 		std::vector<double> buffer_i;
 		const auto size = read_dataset("I", buffer_i);
 
-		// Read the Q dataset and ensure it has the same size as I
 		std::vector<double> buffer_q;
 		LOG(Level::TRACE, "Reading dataset 'Q' from file '{}'", name);
 		if (read_dataset("Q", buffer_q) != size)
@@ -74,7 +67,6 @@ namespace serial
 			throw std::runtime_error(R"(Dataset "Q" is not the same size as dataset "I" in file )" + name);
 		}
 
-		// Allocate and populate the complex data using std::vector
 		data.resize(size);
 		for (size_t i = 0; i < size; ++i) { data[i] = ComplexType(buffer_i[i], buffer_q[i]); }
 		LOG(Level::TRACE, "Read dataset successfully");
@@ -84,17 +76,14 @@ namespace serial
 	{
 		const unsigned size = data.size();
 
-		// Generate chunk names
 		const std::string base_chunk_name = "chunk_" + std::format("{:06}", count);
 		const std::string i_chunk_name = base_chunk_name + "_I";
 		const std::string q_chunk_name = base_chunk_name + "_Q";
 
-		// Prepare data for I (real) and Q (imaginary) parts using ranges
 		std::vector<double> i(size), q(size);
 		std::ranges::transform(data, i.begin(), [](const ComplexType& c) { return c.real(); });
 		std::ranges::transform(data, q.begin(), [](const ComplexType& c) { return c.imag(); });
 
-		// Function to write a dataset to the HDF5 file
 		auto write_chunk = [&](const std::string& chunkName, const std::vector<double>& chunkData)
 		{
 			try
@@ -109,7 +98,6 @@ namespace serial
 			}
 		};
 
-		// Function to set attributes on the dataset
 		auto set_chunk_attributes = [&](const std::string& chunkName)
 		{
 			try
@@ -126,7 +114,6 @@ namespace serial
 			}
 		};
 
-		// Write the I and Q chunks and set their attributes
 		write_chunk(i_chunk_name, i);
 		write_chunk(q_chunk_name, q);
 
@@ -139,17 +126,13 @@ namespace serial
 		try
 		{
 			LOG(Level::TRACE, "Reading dataset '{}' from file '{}'", datasetName, name);
-			// Open the file in read-only mode using HighFive
 			const HighFive::File file(name, HighFive::File::ReadOnly);
 
-			// Open the dataset
 			const auto dataset = file.getDataSet(datasetName);
 
-			// Get the dataset's dataspace and its dimensions
 			const auto dataspace = dataset.getSpace();
 			const auto dims = dataspace.getDimensions();
 
-			// Verify the dataset dimensions
 			if (dims.size() != 2)
 			{
 				LOG(Level::FATAL, "Invalid dataset dimensions for '{}' in file '{}'", datasetName, name);
@@ -159,7 +142,6 @@ namespace serial
 
 			LOG(Level::TRACE, "Reading dataset with dimensions {}x{}", dims[0], dims[1]);
 
-			// Read the data into a 2D vector
 			std::vector data(dims[0], std::vector<RealType>(dims[1]));
 			dataset.read(data);
 

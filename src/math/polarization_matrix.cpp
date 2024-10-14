@@ -12,16 +12,14 @@
 
 namespace math
 {
-	// Default constructor
 	PsMatrix::PsMatrix() noexcept
 	{
-		s[0] = {1, 0}; // Initialize as (1 + 0i)
+		s[0] = {1, 0};
 		s[1] = {0, 0};
 		s[2] = {0, 0};
 		s[3] = {1, 0};
 	}
 
-	// Parameterized constructor
 	PsMatrix::PsMatrix(RealType s11, RealType s12, RealType s21, RealType s22) noexcept
 	{
 		s[0] = {s11, 0};

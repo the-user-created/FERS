@@ -2,11 +2,6 @@
  * @file antenna_factory.h
  * @brief Header file defining various types of antennas and their gain patterns.
  *
- * This file provides an abstract base class for different antenna types, along with derived classes representing
- * specific antenna models such as isotropic, sinc, Gaussian, square horn, parabolic, and custom antennas loaded
- * from files or Python modules.
- * Each antenna class provides a method to compute the gain based on the input angles and wavelength.
- *
  * @authors David Young, Marc Brooker
  * @date 2006-07-20
  */
@@ -30,12 +25,6 @@ namespace antenna
 	/**
 	 * @class Antenna
 	 * @brief Abstract base class representing an antenna.
-	 *
-	 * This class serves as the base for different types of antennas.
-	 * Each derived antenna class must implement the `getGain`
-	 * function to compute the gain based on the angles and wavelength.
-	 * The base class provides a mechanism to set
-	 * and get the efficiency factor of the antenna and retrieve the antenna name.
 	 */
 	class Antenna
 	{
@@ -47,13 +36,8 @@ namespace antenna
 		 */
 		explicit Antenna(std::string name) noexcept : _loss_factor(1), _name(std::move(name)) {}
 
-		/// Virtual destructor.
 		virtual ~Antenna() = default;
-
-		/// Deleted copy constructor.
 		Antenna(const Antenna&) = delete;
-
-		/// Deleted assignment operator.
 		Antenna& operator=(const Antenna&) = delete;
 
 		/**
@@ -387,9 +371,6 @@ namespace antenna
 	/**
 	 * @class PythonAntenna
 	 * @brief Represents an antenna with its gain pattern implemented in a Python module.
-	 *
-	 * This class models an antenna whose gain calculation is delegated to a Python function.
-	 * The Python function is invoked through a Python module to compute the gain based on the input angles.
 	 */
 	class PythonAntenna final : public Antenna
 	{

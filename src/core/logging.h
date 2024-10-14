@@ -28,9 +28,6 @@ namespace logging
 	/**
 	 * @class Level
 	 * @brief Enum class representing the log levels.
-	 *
-	 * This enumeration defines different logging levels that specify the severity or importance of the log messages.
-	 * These levels are used to filter messages based on their relevance to the current logging configuration.
 	 */
 	enum class Level
 	{
@@ -44,43 +41,16 @@ namespace logging
 
 	/**
 	 * @class Logger
-	 * @brief Logger class for handling logging operations.
-	 *
-	 * This class manages logging functionality, including setting log levels, formatting log messages,
-	 * and optionally writing them to a file.
-	 * It supports thread-safe operations with the use of a mutex,
-	 * and logs messages with optional source location details for better traceability.
-	 *
-	 * Example usage:
-	 * @code
-	 * Logger logger;
-	 * logger.setLevel(Level::DEBUG);
-	 * logger.log(Level::INFO, "Application started");
-	 * @endcode
+	 * @brief Thread-safe logger class for handling logging operations.
 	 */
 	class Logger
 	{
 	public:
-		/**
-		 * @brief Default constructor.
-		 *
-		 * Initializes the logger with default settings. The default log level is set to INFO,
-		 * and no file output is configured initially.
-		 */
 		Logger() = default;
-
-		/**
-		 * @brief Destructor that ensures the log file is closed using RAII.
-		 *
-		 * If the logger is writing to a file, the file is closed when the logger object is destroyed.
-		 */
 		~Logger() noexcept = default;
 
 		/**
 		 * @brief Sets the logging level.
-		 *
-		 * Updates the logging level to filter log messages based on their severity.
-		 * Only messages with severity equal to or higher than the set level are logged.
 		 *
 		 * @param level The logging level to set.
 		 */
@@ -88,9 +58,6 @@ namespace logging
 
 		/**
 		 * @brief Logs a message with a specific log level and source location.
-		 *
-		 * This function logs a message, including details about where the log was called (file, line, and function).
-		 * The message is logged only if the log level is greater than or equal to the current log level.
 		 *
 		 * @param level The log level.
 		 * @param message The message to log.
@@ -101,9 +68,6 @@ namespace logging
 
 		/**
 		 * @brief Logs a formatted message with a specific log level and source location.
-		 *
-		 * This templated function logs a formatted message, using variadic arguments for formatting.
-		 * It constructs the message using the format string and arguments, then passes it to the log function.
 		 *
 		 * @tparam Args Variadic template for format arguments.
 		 * @param level The log level.
@@ -125,9 +89,6 @@ namespace logging
 		/**
 		 * @brief Sets the log file path to log messages to a file.
 		 *
-		 * Configures the logger to write log messages to a specified file.
-		 * If the file cannot be opened, an error message is returned.
-		 *
 		 * @param filePath The path to the log file.
 		 * @return std::expected indicating success or error message on failure.
 		 */
@@ -141,9 +102,6 @@ namespace logging
 		/**
 		 * @brief Gets the current timestamp as a string.
 		 *
-		 * Generates a timestamp string to be included in the log message, representing the time
-		 * the log event occurred.
-		 *
 		 * @return The current timestamp.
 		 */
 		static std::string getCurrentTimestamp() noexcept;
@@ -151,17 +109,11 @@ namespace logging
 
 	/**
 	 * @brief Externally available logger object.
-	 *
-	 * A global instance of the Logger class, allowing logging to be done without explicitly
-	 * creating a Logger object in various parts of the application.
 	 */
 	extern Logger logger;
 
 	/**
 	 * @brief Converts a log level enum value to its string representation.
-	 *
-	 * This inline function maps the Level enum values to corresponding string labels for
-	 * use in log messages.
 	 *
 	 * @param level The log level.
 	 * @return A string representing the log level.
@@ -182,10 +134,6 @@ namespace logging
 
 	/**
 	 * @brief Logs a formatted message with a specific log level and source location.
-	 *
-	 * This function provides a simple interface for logging a formatted message, allowing
-	 * the user to specify the log level, format string, and arguments.
-	 * The message is formatted and passed to the logger for logging.
 	 *
 	 * @tparam Args Variadic template for format arguments.
 	 * @param level The log level.

@@ -2,11 +2,6 @@
  * @file xml_parser.cpp
  * @brief Implementation file for parsing XML configuration files for simulation.
  *
- * This file defines functions used for parsing XML configuration files that define
- * various elements of the simulation, including pulses, antennas, platforms, transmitters,
- * receivers, motion paths, and more.
- * It also includes helper functions for parsing and validating XML files.
- *
  * @author David Young
  * @date 2024-10-03
  */
@@ -60,10 +55,6 @@ using radar::Receiver;
 /**
  * @brief Parses elements with child iteration (e.g., pulses, timings, antennas).
  *
- * This function iterates over child elements of a given root element with a specified name
- * and calls a provided parsing function for each child element. The parsing function is
- * expected to take an XmlElement and a World pointer as arguments.
- *
  * @tparam T The type of the parsing function.
  * @param root The root XmlElement to parse.
  * @param elementName The name of the child elements to iterate over.
@@ -85,10 +76,6 @@ void parseElements(const XmlElement& root, const std::string& elementName, World
 /**
  * @brief Helper function to extract a RealType value from an element.
  *
- * This function extracts a RealType value from a child element of the given XmlElement
- * with the specified name. If the element is empty or cannot be parsed, an XmlException
- * is thrown.
- *
  * @param element The XmlElement to extract the value from.
  * @param elementName The name of the child element to extract the value from.
  * @return The extracted RealType value.
@@ -103,10 +90,6 @@ auto get_child_real_type = [](const XmlElement& element, const std::string& elem
 
 /**
  * @brief Helper function to extract a boolean value from an element.
- *
- * This function extracts a boolean value from a child element of the given XmlElement
- * with the specified name. If the element is empty or cannot be parsed, the default
- * value is returned.
  *
  * @param element The XmlElement to extract the value from.
  * @param elementName The name of the child element to extract the value from.
@@ -128,17 +111,12 @@ namespace
 	/**
 	 * @brief Parses the <parameters> element of the XML document.
 	 *
-	 * This function extracts simulation parameters from the <parameters> element of the XML document
-	 * and sets them in the global parameters object.
-	 *
 	 * @param parameters The <parameters> XmlElement to parse.
 	 */
 	void parseParameters(const XmlElement& parameters)
 	{
-		// Set the start and end times
 		params::setTime(get_child_real_type(parameters, "starttime"), get_child_real_type(parameters, "endtime"));
 
-		// Set the sampling rate
 		params::setRate(get_child_real_type(parameters, "rate"));
 
 		auto set_param_with_exception_handling = [](const XmlElement& element, const std::string& paramName,
@@ -167,7 +145,6 @@ namespace
 		set_param_with_exception_handling(parameters, "oversample", params::oversampleRatio(),
 		                                  params::setOversampleRatio);
 
-		// Set exporters
 		if (const XmlElement export_element = parameters.childElement("export", 0); export_element.isValid())
 		{
 			params::setExporters(
@@ -180,9 +157,6 @@ namespace
 
 	/**
 	 * @brief Parses the <pulse> element of the XML document.
-	 *
-	 * This function extracts pulse parameters from the <pulse> element of the XML document
-	 * and creates a RadarSignal object based on the specified type.
 	 *
 	 * @param pulse The <pulse> XmlElement to parse.
 	 * @param world A pointer to the World object where the RadarSignal object is added.
@@ -225,20 +199,15 @@ namespace
 	/**
 	 * @brief Parses the <timing> element of the XML document.
 	 *
-	 * This function extracts timing parameters from the <timing> element of the XML document
-	 * and creates a PrototypeTiming object based on the specified type.
-	 *
 	 * @param timing The <timing> XmlElement to parse.
 	 * @param world A pointer to the World object where the PrototypeTiming object is added.
 	 */
 	void parseTiming(const XmlElement& timing, World* world)
 	{
-		// Extract required attributes: name, frequency
 		const std::string name = XmlElement::getSafeAttribute(timing, "name");
 		const RealType freq = get_child_real_type(timing, "frequency");
 		auto timing_obj = std::make_unique<PrototypeTiming>(name);
 
-		// Extract noise entries (optional)
 		unsigned noise_index = 0;
 		while (true)
 		{
@@ -268,7 +237,6 @@ namespace
 
 		timing_obj->setFrequency(freq);
 
-		// Extract optional attribute: synconpulse (default is "true")
 		if (get_child_bool(timing, "synconpulse", true)) { timing_obj->setSyncOnPulse(); }
 
 		world->add(std::move(timing_obj));
@@ -277,21 +245,16 @@ namespace
 	/**
 	 * @brief Parses the <antenna> element of the XML document.
 	 *
-	 * This function extracts antenna parameters from the <antenna> element of the XML document
-	 * and creates an Antenna object based on the specified pattern.
-	 *
 	 * @param antenna The <antenna> XmlElement to parse.
 	 * @param world A pointer to the World object where the Antenna object is added.
 	 */
 	void parseAntenna(const XmlElement& antenna, World* world)
 	{
-		// Extract required attributes: name, pattern
 		std::string name = XmlElement::getSafeAttribute(antenna, "name");
 		const std::string pattern = XmlElement::getSafeAttribute(antenna, "pattern");
 
 		std::unique_ptr<Antenna> ant;
 
-		// Create the appropriate antenna object based on the pattern
 		LOG(Level::DEBUG, "Adding antenna '{}' with pattern '{}'", name, pattern);
 		if (pattern == "isotropic") { ant = std::make_unique<antenna::Isotropic>(name); }
 		else if (pattern == "sinc")
@@ -341,7 +304,6 @@ namespace
 			throw XmlException("Unsupported antenna pattern: " + pattern);
 		}
 
-		// Set the <efficiency> element (optional)
 		try { ant->setEfficiencyFactor(get_child_real_type(antenna, "efficiency")); }
 		catch (XmlException&)
 		{
@@ -353,9 +315,6 @@ namespace
 
 	/**
 	 * @brief Parses the <motionpath> element of the XML document.
-	 *
-	 * This function extracts motion path parameters from the <motionpath> element of the XML document
-	 * and sets them in the specified Platform object.
 	 *
 	 * @param motionPath The <motionpath> XmlElement to parse.
 	 * @param platform A pointer to the Platform object where the motion path is set.
@@ -427,9 +386,6 @@ namespace
 	/**
 	 * @brief Parses the <rotationpath> element of the XML document.
 	 *
-	 * This function extracts rotation path parameters from the <rotationpath> element of the XML document
-	 * and sets them in the specified Platform object.
-	 *
 	 * @param rotation The <rotationpath> XmlElement to parse.
 	 * @param platform A pointer to the Platform object where the rotation path is set.
 	 */
@@ -484,9 +440,6 @@ namespace
 	/**
 	 * @brief Parses the <fixedrotation> element of the XML document.
 	 *
-	 * This function extracts fixed rotation parameters from the <fixedrotation> element of the XML document
-	 * and sets them in the specified Platform object.
-	 *
 	 * @param rotation The <fixedrotation> XmlElement to parse.
 	 * @param platform A pointer to the Platform object where the fixed rotation is set.
 	 */
@@ -513,9 +466,6 @@ namespace
 	/**
 	 * @brief Parses the <transmitter> element of the XML document.
 	 *
-	 * This function extracts transmitter parameters from the <transmitter> element of the XML document
-	 * and creates a Transmitter object based on the specified type.
-	 *
 	 * @param transmitter The <transmitter> XmlElement to parse.
 	 * @param platform A pointer to the Platform
 	 * @param world A pointer to the World
@@ -523,7 +473,6 @@ namespace
 	 */
 	Transmitter* parseTransmitter(const XmlElement& transmitter, Platform* platform, World* world)
 	{
-		// Required attributes
 		const std::string name = XmlElement::getSafeAttribute(transmitter, "name");
 		bool pulsed = XmlElement::getSafeAttribute(transmitter, "type") == "pulsed";
 
@@ -552,9 +501,6 @@ namespace
 
 	/**
 	 * @brief Parses the <receiver> element of the XML document.
-	 *
-	 * This function extracts receiver parameters from the <receiver> element of the XML document
-	 * and creates a Receiver object based on the specified type.
 	 *
 	 * @param receiver The <receiver> XmlElement to parse.
 	 * @param platform A pointer to the Platform
@@ -613,28 +559,20 @@ namespace
 	/**
 	 * @brief Parses the <monostatic> element of the XML document.
 	 *
-	 * This function extracts monostatic radar parameters from the <monostatic> element of the XML document
-	 * and creates Transmitter and Receiver objects based on the specified types.
-	 *
 	 * @param monostatic The <monostatic> XmlElement to parse.
 	 * @param platform A pointer to the Platform
 	 * @param world A pointer to the World
 	 */
 	void parseMonostatic(const XmlElement& monostatic, Platform* platform, World* world)
 	{
-		// Create the transmitter and receiver objects
 		Transmitter* trans = parseTransmitter(monostatic, platform, world);
 		Receiver* recv = parseReceiver(monostatic, platform, world);
-		// Attach the transmitter and receiver objects
 		trans->setAttached(recv);
 		recv->setAttached(trans);
 	}
 
 	/**
 	 * @brief Parses the <target> element of the XML document.
-	 *
-	 * This function extracts target parameters from the <target> element of the XML document
-	 * and creates a Target object based on the specified type.
 	 *
 	 * @param target The <target> XmlElement to parse.
 	 * @param platform A pointer to the Platform
@@ -643,10 +581,8 @@ namespace
 	 */
 	void parseTarget(const XmlElement& target, Platform* platform, World* world)
 	{
-		// Required attribute of <target>
 		const std::string name = XmlElement::getSafeAttribute(target, "name");
 
-		// Required <rcs> element
 		const XmlElement rcs_element = target.childElement("rcs", 0);
 		if (!rcs_element.isValid()) { throw XmlException("<rcs> element is required in <target>!"); }
 
@@ -686,7 +622,6 @@ namespace
 
 	void parsePlatformElements(const XmlElement& platform, World* world, Platform* plat)
 	{
-		// Parse optional <monostatic>, <transmitter>, <receiver>, and <target>
 		unsigned element_index = 0;
 		while (true)
 		{
@@ -709,9 +644,6 @@ namespace
 	/**
 	 * @brief Parses the <platform> element of the XML document.
 	 *
-	 * This function extracts platform parameters from the <platform> element of the XML document
-	 * and creates a Platform object with associated Transmitter, Receiver, Target, and MotionPath objects.
-	 *
 	 * @param platform The <platform> XmlElement to parse.
 	 * @param world A pointer to the World object where the Platform object is added.
 	 */
@@ -722,7 +654,6 @@ namespace
 
 		parsePlatformElements(platform, world, plat.get());
 
-		// Parse <motionpath> (required)
 		if (const XmlElement motion_path = platform.childElement("motionpath", 0); motion_path.isValid())
 		{
 			parseMotionPath(motion_path, plat.get());
@@ -748,9 +679,6 @@ namespace
 	/**
 	 * @brief Parses the <multipath> element of the XML document.
 	 *
-	 * This function extracts multipath parameters from the <multipath> element of the XML document
-	 * and creates a Multipath object based on the specified type.
-	 *
 	 * @param multipathSurface The <multipath> XmlElement to parse.
 	 * @param world A pointer to the World object where the Multipath object is added.
 	 */
@@ -769,9 +697,6 @@ namespace
 	/**
 	 * @brief Collects all "include" elements from the XML document and included documents.
 	 *
-	 * This function recursively collects all "include" elements from the XML document and included documents
-	 * and stores the full paths to the included files in a vector.
-	 *
 	 * @param doc The XmlDocument to collect "include" elements from.
 	 * @param currentDir The current directory of the main XML file.
 	 * @param includePaths A vector to store the full paths to the included files.
@@ -784,7 +709,6 @@ namespace
 			XmlElement include_element = doc.getRootElement().childElement("include", index++);
 			if (!include_element.isValid()) { break; }
 
-			// Get the filename from the <include> element
 			std::string include_filename = include_element.getText();
 			if (include_filename.empty())
 			{
@@ -796,7 +720,6 @@ namespace
 			fs::path include_path = currentDir / include_filename;
 			includePaths.push_back(include_path);
 
-			// Load the included XML file
 			XmlDocument included_doc;
 			if (!included_doc.loadFile(include_path.string()))
 			{
@@ -812,9 +735,6 @@ namespace
 	/**
 	 * @brief Merges the contents of all included documents into the main document.
 	 *
-	 * This function merges the contents of all included documents into the main document by copying
-	 * all elements from the included documents into the main document.
-	 *
 	 * @param mainDoc The main XmlDocument to merge the included documents into.
 	 * @param currentDir The current directory of the main XML file.
 	 * @return True if any included documents were merged into the main document, false otherwise.
@@ -828,7 +748,6 @@ namespace
 		// TODO: Add error handling for invalid includes
 		for (const auto& include_path : include_paths)
 		{
-			// Load the included XML file
 			XmlDocument included_doc;
 			if (!included_doc.loadFile(include_path.string()))
 			{
@@ -836,7 +755,6 @@ namespace
 				throw XmlException("Failed to load included XML file: " + include_path.string());
 			}
 
-			// Merge the included document into the main document
 			mergeXmlDocuments(mainDoc, included_doc);
 			did_combine = true;
 		}
@@ -849,9 +767,6 @@ namespace
 
 	/**
 	 * @brief Validates the combined XML document using DTD and XSD schema data.
-	 *
-	 * This function validates the combined XML document using in-memory DTD and XSD schema data.
-	 * If the document fails validation, a XmlException is thrown.
 	 *
 	 * @param didCombine True if any included documents were merged into the main document, false otherwise.
 	 * @param mainDoc The combined XmlDocument to validate.
@@ -881,7 +796,6 @@ namespace serial
 {
 	void parseSimulation(const std::string& filename, World* world, const bool validate)
 	{
-		// Load the main simulation XML file
 		XmlDocument main_doc;
 		if (!main_doc.loadFile(filename))
 		{
@@ -889,13 +803,10 @@ namespace serial
 			throw XmlException("Failed to load main XML file: " + filename);
 		}
 
-		// Get the directory of the main XML file to resolve include paths
 		const fs::path main_dir = fs::path(filename).parent_path();
 
-		// Process <include> elements and merge their contents into the main document
 		const bool did_combine = addIncludeFilesToMainDocument(main_doc, main_dir);
 
-		// Add all included files into the main document
 		const XmlElement root = main_doc.getRootElement();
 		if (root.name() != "simulation")
 		{
@@ -906,7 +817,6 @@ namespace serial
 		if (validate) { validateXml(did_combine, main_doc); }
 		else { LOG(Level::DEBUG, "Skipping XML validation."); }
 
-		// Proceed with parsing the main document's contents
 		parseParameters(root.childElement("parameters", 0));
 		parseElements(root, "pulse", world, parsePulse);
 		parseElements(root, "timing", world, parseTiming);

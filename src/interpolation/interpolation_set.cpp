@@ -2,10 +2,6 @@
 * @file interpolation_set.cpp
 * @brief Implementation file for interpolation of sets of data.
 *
-* This file contains the implementation of the InterpSetData and InterpSet classes. It includes
-* functions for linear interpolation, retrieving the maximum value, and dividing data points
-* by a scalar. The file leverages C++17 concepts to restrict templates to arithmetic types.
-*
 * @authors David Young, Marc Brooker
 * @date 2007-06-11
 */
@@ -41,11 +37,9 @@ namespace interp
 		const auto [x1, y1] = *prev;
 		const auto [x2, y2] = *iter;
 
-		// Perform linear interpolation
 		return static_cast<T>(y2 * (x - x1) / (x2 - x1) + y1 * (x2 - x) / (x2 - x1));
 	}
 
-	// Returns the maximum absolute value as a double
 	double InterpSetData::max() const noexcept
 	{
 		auto values = _data | std::views::values;
@@ -66,7 +60,7 @@ namespace interp
 		std::ranges::for_each(_data | std::views::values, [a](auto& value) { value /= static_cast<double>(a); });
 	}
 
-	// Explicit instantiations for double and float (or any other type you want)
+	// Explicit instantiations for double and float
 	template std::optional<double> InterpSetData::value<double>(double) const noexcept;
 
 	template void InterpSetData::divide<double>(double);

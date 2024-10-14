@@ -17,7 +17,6 @@ using logging::Level;
 using math::Vec3;
 using math::SVec3;
 
-// Helper function to convert version components to a numeric value for comparison
 int getPythonVersionValue(const int major, const int minor, const int micro) {
 	return major * 10000 + minor * 100 + micro;
 }
@@ -30,19 +29,16 @@ namespace python
 		{
 			Py_Initialize();
 			LOG(Level::DEBUG, "Using Python version {}", Py_GetVersion());
-			// Get Python version details
+
 			constexpr int major = PY_MAJOR_VERSION;
 			constexpr int minor = PY_MINOR_VERSION;
 			constexpr int micro = PY_MICRO_VERSION;
 
-			// Convert the version to numeric value for easy comparison
 			const int version_value = getPythonVersionValue(major, minor, micro);
 
-			// Define the compatible version range (3.7.0 to 3.11.10)
 			const int min_version = getPythonVersionValue(3, 7, 0);
 			const int max_version = getPythonVersionValue(3, 11, 10);
 
-			// Check if the version is outside the allowed range
 			if (const int incompatible_version = getPythonVersionValue(3, 12, 0); version_value >= incompatible_version) {
 				throw std::runtime_error("Python version " + std::to_string(major) + "." +
 										 std::to_string(minor) + "." + std::to_string(micro) +
@@ -60,12 +56,6 @@ namespace python
 			PyRun_SimpleString("import sys; sys.path.append('.')");
 		}
 	}
-
-	// =================================================================================================================
-	//
-	// PYTHON EXTENSION CLASS
-	//
-	// =================================================================================================================
 
 	PythonExtension::PythonExtension(const std::string_view module, const std::string_view function)
 		: _data(std::make_unique<PythonExtensionData>()), _module(module), _function(function)
@@ -93,18 +83,10 @@ namespace python
 		}
 	}
 
-	// =================================================================================================================
-	//
-	// PYTHON PATH CLASS
-	//
-	// =================================================================================================================
-
 	Vec3 PythonPath::getPosition(const RealType t) const
 	{
-		// Prepare the argument list for the Python function
 		PyObject* p_args = PyTuple_Pack(1, PyFloat_FromDouble(t));
 
-		// Call the Python function
 		PyObject* p_value = PyObject_CallObject(_data->p_func, p_args);
 		Py_DECREF(p_args);
 
@@ -113,7 +95,6 @@ namespace python
 			throw std::runtime_error("Error calling Python function for getPosition");
 		}
 
-		// Assuming the Python function returns a tuple (x, y, z)
 		Vec3 result;
 		if (PyTuple_Check(p_value) && PyTuple_Size(p_value) == 3) {
 			result.x = PyFloat_AsDouble(PyTuple_GetItem(p_value, 0));
@@ -130,18 +111,10 @@ namespace python
 		return result;
 	}
 
-	// =================================================================================================================
-	//
-	// PYTHON ANTENNA MOD CLASS
-	//
-	// =================================================================================================================
-
 	RealType PythonAntennaMod::getGain(const SVec3& direction) const
 	{
-		// Prepare the argument list for the Python function
 		PyObject* p_args = PyTuple_Pack(2, PyFloat_FromDouble(direction.azimuth), PyFloat_FromDouble(direction.elevation));
 
-		// Call the Python function
 		PyObject* p_value = PyObject_CallObject(_data->p_func, p_args);
 		Py_DECREF(p_args);
 
@@ -150,7 +123,6 @@ namespace python
 			throw std::runtime_error("Error calling Python function for getGain");
 		}
 
-		// Extract the result, assuming it is a float
 		const RealType result = PyFloat_AsDouble(p_value);
 		if (PyErr_Occurred()) {
 			PyErr_Print();

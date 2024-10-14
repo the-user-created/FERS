@@ -23,14 +23,13 @@ namespace
 	/**
 	 * @brief Load the target gain axis from an XML element.
 	 *
-	 * This function reads the gain samples from an XML element and inserts them into an interpolation set.
 	 * @param set The interpolation set to insert the samples into.
 	 * @param axisXml The XML element containing the gain samples.
 	 */
 	void loadTargetGainAxis(const interp::InterpSet* set, const XmlElement& axisXml) noexcept
 	{
-		XmlElement tmp = axisXml.childElement("rcssample"); // Get the first gainsample
-		while (tmp.isValid()) // Continue while the element is valid
+		XmlElement tmp = axisXml.childElement("rcssample");
+		while (tmp.isValid())
 		{
 			XmlElement angle_element = tmp.childElement("angle", 0);
 
@@ -42,7 +41,6 @@ namespace
 				set->insertSample(angle, gain);
 			}
 
-			// Move to the next sibling gainsample
 			tmp = XmlElement(tmp.getNode()->next);
 		}
 	}

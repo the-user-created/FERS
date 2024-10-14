@@ -2,11 +2,6 @@
  * @file coord.h
  * @brief Coordinate and rotation structure operations.
  *
- * This file defines the `Coord` and `RotationCoord`
- * structures along with various operator overloads for performing mathematical operations on them.
- * These structures are used to represent position coordinates and rotation angles,
- * respectively, in a 3D space, along with time (t).
- *
  * @authors David Young, Marc Brooker
  * @date 2024-09-13
  */
@@ -20,10 +15,6 @@ namespace math
 	/**
 	 * @class Coord
 	 * @brief Represents a position in 3D space with an associated time.
-	 *
-	 * The `Coord` structure holds a 3D position (`pos`) using the `Vec3` type, and a time component (`t`).
-	 * This class also provides various operator overloads for mathematical operations such as addition,
-	 * multiplication, and division.
 	 */
 	struct Coord
 	{
@@ -72,10 +63,6 @@ namespace math
 	/**
 	 * @class RotationCoord
 	 * @brief Represents a rotation in terms of azimuth, elevation, and time.
-	 *
-	 * The `RotationCoord` structure stores rotational information,
-	 * with azimuth and elevation angles, as well as an associated time (`t`).
-	 * Various operator overloads are provided for manipulating rotation data.
 	 */
 	struct RotationCoord
 	{
