@@ -445,10 +445,7 @@ namespace
 			}
 			else if (interp == "cubic") { path->setInterp(RotationPath::InterpType::INTERP_CUBIC); }
 			else if (interp == "static") { path->setInterp(RotationPath::InterpType::INTERP_STATIC); }
-			else
-			{
-				throw XmlException("Unsupported interpolation type: " + interp);
-			}
+			else { throw XmlException("Unsupported interpolation type: " + interp); }
 		}
 		catch (XmlException&)
 		{
@@ -687,6 +684,28 @@ namespace
 		world->add(std::move(target_obj));
 	}
 
+	void parsePlatformElements(const XmlElement& platform, World* world, Platform* plat)
+	{
+		// Parse optional <monostatic>, <transmitter>, <receiver>, and <target>
+		unsigned element_index = 0;
+		while (true)
+		{
+			XmlElement monostatic = platform.childElement("monostatic", element_index);
+			XmlElement transmitter = platform.childElement("transmitter", element_index);
+			XmlElement receiver = platform.childElement("receiver", element_index);
+			XmlElement target = platform.childElement("target", element_index);
+
+			if (target.isValid()) { parseTarget(target, plat, world); }
+			if (transmitter.isValid()) { parseTransmitter(transmitter, plat, world); }
+			if (receiver.isValid()) { parseReceiver(receiver, plat, world); }
+			if (monostatic.isValid()) { parseMonostatic(monostatic, plat, world); }
+
+			if (!monostatic.isValid() && !transmitter.isValid() && !receiver.isValid() && !target.isValid()) { break; }
+
+			element_index++;
+		}
+	}
+
 	/**
 	 * @brief Parses the <platform> element of the XML document.
 	 *
@@ -701,24 +720,7 @@ namespace
 		std::string name = XmlElement::getSafeAttribute(platform, "name");
 		auto plat = std::make_unique<Platform>(name);
 
-		// Parse optional <monostatic>, <transmitter>, <receiver>, and <target>
-		unsigned element_index = 0;
-		while (true)
-		{
-			XmlElement monostatic = platform.childElement("monostatic", element_index);
-			XmlElement transmitter = platform.childElement("transmitter", element_index);
-			XmlElement receiver = platform.childElement("receiver", element_index);
-			XmlElement target = platform.childElement("target", element_index);
-
-			if (target.isValid()) { parseTarget(target, plat.get(), world); }
-			if (transmitter.isValid()) { parseTransmitter(transmitter, plat.get(), world); }
-			if (receiver.isValid()) { parseReceiver(receiver, plat.get(), world); }
-			if (monostatic.isValid()) { parseMonostatic(monostatic, plat.get(), world); }
-
-			if (!monostatic.isValid() && !transmitter.isValid() && !receiver.isValid() && !target.isValid()) { break; }
-
-			element_index++;
-		}
+		parsePlatformElements(platform, world, plat.get());
 
 		// Parse <motionpath> (required)
 		if (const XmlElement motion_path = platform.childElement("motionpath", 0); motion_path.isValid())
@@ -844,11 +846,39 @@ namespace
 
 		return did_combine;
 	}
+
+	/**
+	 * @brief Validates the combined XML document using DTD and XSD schema data.
+	 *
+	 * This function validates the combined XML document using in-memory DTD and XSD schema data.
+	 * If the document fails validation, a XmlException is thrown.
+	 *
+	 * @param didCombine True if any included documents were merged into the main document, false otherwise.
+	 * @param mainDoc The combined XmlDocument to validate.
+	 */
+	void validateXml(const bool didCombine, const XmlDocument& mainDoc)
+	{
+		LOG(Level::DEBUG, "Validating the{}XML file...", didCombine ? " combined " : " ");
+		// Validate the combined document using in-memory schema data - DTD validation is less strict than XSD
+		if (!mainDoc.validateWithDtd(fers_xml_dtd))
+		{
+			LOG(Level::FATAL, "Combined XML file failed DTD validation!");
+			throw XmlException("Combined XML file failed DTD validation!");
+		}
+		LOG(Level::DEBUG, "{} XML file passed DTD validation.", didCombine ? "Combined" : "Main");
+
+		// Validate the combined document using in-memory schema data - XSD validation is stricter than DTD
+		if (!mainDoc.validateWithXsd(fers_xml_xsd))
+		{
+			LOG(Level::FATAL, "{} XML file failed XSD validation!", didCombine ? "Combined" : "Main");
+			throw XmlException("XML file failed XSD validation!");
+		}
+		LOG(Level::DEBUG, "{} XML file passed XSD validation.", didCombine ? "Combined" : "Main");
+	}
 }
 
 namespace serial
 {
-	// Function to parse the entire <simulation> element
 	void parseSimulation(const std::string& filename, World* world, const bool validate)
 	{
 		// Load the main simulation XML file
@@ -873,25 +903,7 @@ namespace serial
 			throw XmlException("Root element is not <simulation>!");
 		}
 
-		if (validate)
-		{
-			LOG(Level::DEBUG, "Validating the{}XML file...", did_combine ? " combined " : " ");
-			// Validate the combined document using in-memory schema data - DTD validation is less strict than XSD
-			if (!main_doc.validateWithDtd(fers_xml_dtd))
-			{
-				LOG(Level::FATAL, "Combined XML file failed DTD validation!");
-				throw XmlException("Combined XML file failed DTD validation!");
-			}
-			LOG(Level::DEBUG, "{} XML file passed DTD validation.", did_combine ? "Combined" : "Main");
-
-			// Validate the combined document using in-memory schema data - XSD validation is stricter than DTD
-			if (!main_doc.validateWithXsd(fers_xml_xsd))
-			{
-				LOG(Level::FATAL, "{} XML file failed XSD validation!", did_combine ? "Combined" : "Main");
-				throw XmlException("XML file failed XSD validation!");
-			}
-			LOG(Level::DEBUG, "{} XML file passed XSD validation.", did_combine ? "Combined" : "Main");
-		}
+		if (validate) { validateXml(did_combine, main_doc); }
 		else { LOG(Level::DEBUG, "Skipping XML validation."); }
 
 		// Proceed with parsing the main document's contents
