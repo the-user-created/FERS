@@ -25,25 +25,19 @@ namespace
 	/**
 	 * @brief Attach a text node to an XML element.
 	 *
-	 * Creates a child element with the given name and sets its text content to the given string.
-	 *
 	 * @param root The parent XML element to attach the text node to.
 	 * @param name The name of the child element to create.
 	 * @param text The text content to set for the child element.
 	 */
 	void attachTextNode(const XmlElement& root, const std::string& name, const std::string& text) noexcept
 	{
-		// Create a child element with the given name
 		const XmlElement element = root.addChild(name);
 
-		// Set the text content of the element
 		element.setText(text);
 	}
 
 	/**
 	 * @brief Attach a float node to an XML element.
-	 *
-	 * Creates a child element with the given name and sets its text content to the formatted float value.
 	 *
 	 * @param root The parent XML element to attach the float node to.
 	 * @param name The name of the child element to create.
@@ -58,27 +52,18 @@ namespace
 		constexpr int precision = 10;
 		oss << std::setprecision(precision) << data;
 
-		// Attach the text node with the formatted float value
 		attachTextNode(root, name, oss.str());
 	}
 }
 
 namespace serial
 {
-	// =================================================================================================================
-	//
-	// RESPONSE CLASS
-	//
-	// =================================================================================================================
-
 	std::string Response::getTransmitterName() const noexcept { return _transmitter->getName(); }
 
 	void Response::renderResponseXml(const XmlElement& root, const InterpPoint& point) const noexcept
 	{
-		// Create an "InterpolationPoint" element and link it to the root
 		const XmlElement element = root.addChild("InterpolationPoint");
 
-		// Attach the various float nodes, using point data
 		attachRsFloatNode(element, "time", point.time, false);
 		attachRsFloatNode(element, "amplitude", std::sqrt(point.power * _wave->getPower()), false);
 		attachRsFloatNode(element, "phase", point.phase, false);
@@ -94,17 +79,13 @@ namespace serial
 
 	void Response::renderXml(const XmlElement& root) noexcept
 	{
-		// Create a "Response" element and link it to the root
 		const XmlElement element = root.addChild("Response");
 
-		// Set the "transmitter" attribute
 		element.setAttribute("transmitter", getTransmitterName());
 
-		// Attach various properties
 		attachRsFloatNode(element, "start", startTime(), false);
 		attachTextNode(element, "name", _wave->getName());
 
-		// Iterate over points and render their XML representation
 		for (const auto& point : _points) { renderResponseXml(element, point); }
 	}
 

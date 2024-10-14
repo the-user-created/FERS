@@ -2,11 +2,6 @@
 * @file noise_generators.h
 * @brief Header file for noise generator classes.
 *
-* This file contains the declaration of several noise generator classes,
-* each providing different noise generation techniques.
-* The noise types include white Gaussian noise (WGN), Gamma noise, multirate noise, and clock model noise.
-* These classes are used to produce random noise samples for various simulation or modeling purposes.
-*
 * @authors David Young, Marc Brooker
 * @date 2006-08-14
 */
@@ -26,28 +21,16 @@ namespace noise
 	/**
 	* @class NoiseGenerator
 	* @brief Abstract base class for noise generators.
-	*
-	* This class serves as an interface for all noise generators.
-	* It provides a pure virtual method `getSample()`
-	* that must be implemented by any derived class to return a noise sample.
 	*/
 	class NoiseGenerator
 	{
 	public:
-		/**
-		* @brief Default constructor.
-		*/
 		NoiseGenerator() = default;
 
-		/**
-		* @brief Virtual destructor.
-		*/
 		virtual ~NoiseGenerator() = default;
 
 		/**
 		* @brief Pure virtual method to generate a noise sample.
-		*
-		* This method should be overridden by derived classes to return a specific type of noise sample.
 		*
 		* @return A noise sample of type RealType.
 		*/
@@ -61,10 +44,6 @@ namespace noise
 	/**
 	* @class WgnGenerator
 	* @brief Generates white Gaussian noise.
-	*
-	* This class generates white Gaussian noise using a normal distribution.
-	* The user can specify the standard deviation
-	* of the noise.
 	*/
 	class WgnGenerator final : public NoiseGenerator
 	{
@@ -94,8 +73,6 @@ namespace noise
 	/**
 	* @class GammaGenerator
 	* @brief Generates Gamma-distributed noise.
-	*
-	* This class generates noise based on a Gamma distribution. The shape parameter k defines the distribution.
 	*/
 	class GammaGenerator final : public NoiseGenerator
 	{
@@ -121,9 +98,6 @@ namespace noise
 	/**
 	* @class MultirateGenerator
 	* @brief Generates multirate noise using a hierarchical tree structure.
-	*
-	* This class generates noise using multiple rate processes based on a fractional alpha branching structure.
-	* It can simulate a range of noise processes.
 	*/
 	class MultirateGenerator final : public NoiseGenerator
 	{
@@ -173,8 +147,6 @@ namespace noise
 	* @class ClockModelGenerator
 	* @brief Generates noise using a clock model with multiple rates.
 	*
-	* This class models a noise process using multiple rate processes, where each rate process is weighted and combined
-	* to generate the final noise output.
 	* This is useful for simulating clock jitter or other similar phenomena.
 	*/
 	class ClockModelGenerator final : public NoiseGenerator

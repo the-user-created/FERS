@@ -2,10 +2,6 @@
  * @file receiver.cpp
  * @brief Implementation of the Receiver class.
  *
- * The `Receiver` class extends the `Radar` class to provide additional features
- * related to signal reception, such as noise temperature management, window properties, and response collection.
- * It supports multiple configuration flags and the ability to work in dual receiver mode.
- *
  * @authors David Young, Marc Brooker
  * @date 2024-10-07
  */
@@ -50,7 +46,6 @@ namespace radar
 	{
 		std::ranges::sort(_responses, serial::compareTimes);
 
-		// Export based on user preferences
 		if (params::exportXml()) { exportReceiverXml(_responses, getName() + "_results"); }
 		if (params::exportCsv()) { exportReceiverCsv(_responses, getName() + "_results"); }
 		if (params::exportBinary()) { exportReceiverBinary(_responses, this, getName() + "_results", pool); }
@@ -60,8 +55,8 @@ namespace radar
 	{
 		const auto rate = params::rate() * params::oversampleRatio();
 		_window_length = length;
-		_window_prf = 1 / (std::floor(rate / prf) / rate); // Update prf to precise value
-		_window_skip = std::floor(rate * skip) / rate; // Update skip with better precision
+		_window_prf = 1 / (std::floor(rate / prf) / rate);
+		_window_skip = std::floor(rate * skip) / rate;
 	}
 
 	unsigned Receiver::getWindowCount() const noexcept

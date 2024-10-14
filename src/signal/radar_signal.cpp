@@ -22,17 +22,11 @@
 
 namespace signal
 {
-	// =================================================================================================================
-	//
-	// RADAR SIGNAL CLASS
-	//
-	// =================================================================================================================
 
 	RadarSignal::RadarSignal(std::string name, const RealType power, const RealType carrierfreq, const RealType length,
 	                         std::unique_ptr<Signal> signal)
 		: _name(std::move(name)), _power(power), _carrierfreq(carrierfreq), _length(length), _signal(std::move(signal))
 	{
-		// Check if the signal is empty
 		if (!_signal) { throw std::runtime_error("Signal is empty"); }
 	}
 
@@ -46,12 +40,6 @@ namespace signal
 
 		return data;
 	}
-
-	// =================================================================================================================
-	//
-	// SIGNAL CLASS
-	//
-	// =================================================================================================================
 
 	void Signal::clear() noexcept
 	{

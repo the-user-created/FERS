@@ -2,11 +2,6 @@
  * @file interpolation_filter.cpp
  * @brief Implementation of the InterpFilter class.
  *
- * This file provides the implementation of the `InterpFilter` class, which is used for generating
- * interpolation filters using the Kaiser window function.
- * The class is a singleton and provides methods for filter computation,
- * including the use of sinc and Kaiser window functions for interpolation.
- *
  * @author David Young
  * @date 2024-09-12
  */
@@ -24,9 +19,6 @@ namespace
 {
 	/**
 	 * @brief Computes the modified Bessel function of the first kind for x.
-	 *
-	 * This function calculates the modified Bessel function of the first kind for a given input x.
-	 * It uses a polynomial approximation for x values less than 3.75 and an exponential approximation for larger values.
 	 *
 	 * @param x The input value for which the Bessel function is computed.
 	 * @return The computed Bessel function value, or an error message if computation fails.
@@ -56,14 +48,13 @@ namespace interp
 {
 	InterpFilter& InterpFilter::getInstance() noexcept
 	{
-		static InterpFilter instance; // Meyers' Singleton
+		static InterpFilter instance;
 		return instance;
 	}
 
 	std::expected<RealType, std::string> InterpFilter::kaiserWinCompute(const RealType x) const noexcept
 	{
 		if (x < 0 || x > _alpha * 2) { return 0; }
-		// Handle besselIO returning an error
 		if (auto bessel = besselI0(_beta * std::sqrt(1 - std::pow((x - _alpha) / _alpha, 2))); bessel)
 		{
 			return *bessel / _bessel_beta;
@@ -84,7 +75,6 @@ namespace interp
 		_filter_table = std::vector<RealType>(_table_filters * _length);
 
 		_alpha = std::floor(params::renderFilterLength() / 2.0);
-		// Handle besselIO returning an error
 		if (auto bessel = besselI0(_beta); bessel) { _bessel_beta = *bessel; }
 		else
 		{

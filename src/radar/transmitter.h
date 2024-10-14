@@ -2,12 +2,6 @@
 * @file transmitter.h
 * @brief Header file for the Transmitter class in the radar namespace.
 *
-* This file defines the structure and operations of the Transmitter class, which inherits from the Radar class.
-* The Transmitter class handles radar transmission, pulse modulation,
-* and supports both pulsed and continuous wave (CW) radar systems.
-* It also manages transmitter pulses, PRF (pulse repetition frequency),
-* and interactions with dual transmitters for complex scenarios.
-*
 * @authors David Young, Marc Brooker
 * @date 2024-10-07
 */
@@ -27,36 +21,23 @@ namespace radar
 	* @struct TransmitterPulse
 	* @brief Struct representing a radar pulse emitted by the transmitter.
 	*
-	* Contains a radar signal and the time at which the pulse is emitted.
 	*/
 	struct TransmitterPulse
 	{
-		/**
-		* @brief Pointer to the radar signal wave.
-		*/
-		signal::RadarSignal* wave;
+		signal::RadarSignal* wave; ///< Pointer to the radar signal wave.
 
-		/**
-		* @brief Time at which the pulse is emitted.
-		*/
-		RealType time;
+		RealType time; ///< Time at which the pulse is emitted.
 	};
 
 	/**
 	* @class Transmitter
 	* @brief Represents a radar transmitter system.
-	*
-	* The Transmitter class is responsible for handling radar pulse transmission, including modulation
-	* of pulsed and continuous wave (CW) radar signals. It can interact with dual transmitters,
-	* control pulse repetition frequency (PRF), and manage radar signal waves.
 	*/
 	class Transmitter final : public Radar
 	{
 	public:
 		/**
 		* @brief Constructor for the Transmitter class.
-		*
-		* Initializes a Transmitter object with a platform, name, and a boolean indicating if the transmitter is pulsed.
 		*
 		* @param platform Pointer to the platform object.
 		* @param name Name of the transmitter.
@@ -65,11 +46,6 @@ namespace radar
 		Transmitter(Platform* platform, std::string name, const bool pulsed) noexcept
 			: Radar(platform, std::move(name)), _pulsed(pulsed) {}
 
-		/**
-		* @brief Default destructor.
-		*
-		* Cleans up the Transmitter object.
-		*/
 		~Transmitter() override = default;
 
 		/**
@@ -102,8 +78,6 @@ namespace radar
 
 		/**
 		* @brief Retrieves the pulse count over the transmission duration.
-		*
-		* Computes the number of pulses transmitted based on the time duration and PRF.
 		*
 		* @return Number of pulses transmitted.
 		*/
@@ -140,8 +114,6 @@ namespace radar
 		/**
 		* @brief Assigns a pulse to be transmitted at a given time.
 		*
-		* This function sets the time and waveform for a specific pulse number based on the PRF.
-		*
 		* @param pulse Pointer to the TransmitterPulse structure to hold the pulse data.
 		* @param number Pulse number for which to set the time and waveform.
 		* @throws std::logic_error If the transmitter is not associated with a timing source.
@@ -151,39 +123,23 @@ namespace radar
 		/**
 		* @brief Sets the pulse repetition frequency (PRF) of the transmitter.
 		*
-		* Adjusts the PRF based on the system parameters and oversample ratio.
-		*
 		* @param mprf Desired PRF to be set.
 		*/
 		void setPrf(RealType mprf) noexcept;
 
 	private:
-		/**
-		* @brief Pointer to the radar signal being transmitted.
-		*/
-		signal::RadarSignal* _signal = nullptr;
+		signal::RadarSignal* _signal = nullptr; ///< Pointer to the radar signal being transmitted.
 
-		/**
-		* @brief The pulse repetition frequency (PRF) of the transmitter.
-		*/
-		RealType _prf = {};
+		RealType _prf = {}; ///< The pulse repetition frequency (PRF) of the transmitter.
 
-		/**
-		* @brief Boolean indicating whether the transmitter uses pulsed signals.
-		*/
-		bool _pulsed;
+		bool _pulsed; ///< Boolean indicating whether the transmitter uses pulsed signals.
 
-		/**
-		* @brief Pointer to a dual transmitter for complex transmission scenarios.
-		*/
-		Transmitter* _dual = nullptr;
+		Transmitter* _dual = nullptr; ///< Pointer to a dual transmitter for complex transmission scenarios.
 	};
 
 	/**
 	* @brief Creates a multipath dual transmitter.
 	*
-	* Generates a dual transmitter that handles multipath radar signals, typically used for simulating complex
-	* surface reflections.
 	*
 	* @param trans Pointer to the primary Transmitter.
 	* @param surf Pointer to the multipath surface object.

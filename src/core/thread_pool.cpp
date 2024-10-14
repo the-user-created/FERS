@@ -35,7 +35,6 @@ namespace pool
 						LOG(logging::Level::ERROR, "Exception in thread pool: {}", e.what());
 					}
 
-					// Decrement the pending tasks count and notify if all tasks are done
 					{
 						std::unique_lock lock(_queue_mutex);
 						--_pending_tasks;
@@ -58,11 +57,9 @@ namespace pool
 
 	unsigned ThreadPool::getAvailableThreads()
 	{
-		// Total threads minus the pending tasks will give the number of available threads.
 		std::unique_lock lock(_queue_mutex);
 		const unsigned active_threads = _pending_tasks;
 		const unsigned total_threads = _workers.size();
-		// The number of available threads is the total minus active (pending tasks)
 		return total_threads > active_threads ? total_threads - active_threads : 0;
 	}
 }

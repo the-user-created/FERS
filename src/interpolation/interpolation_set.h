@@ -2,11 +2,6 @@
 * @file interpolation_set.h
 * @brief Header file for the interpolation of sets of data.
 *
-* This file contains the definition of classes for performing interpolation on sets of data points.
-* The classes support inserting samples, retrieving interpolated values,
-* finding the maximum value, and dividing the dataset by a scalar.
-* It uses arithmetic types for flexibility and precision in calculations.
-*
 * @authors David Young, Marc Brooker
 * @date 2007-06-11
 */
@@ -21,17 +16,12 @@
 
 namespace interp
 {
-	/// Type alias for arithmetic types
 	template <typename T>
 	concept RealConcept = std::is_arithmetic_v<T>;
 
 	/**
 	* @class InterpSetData
 	* @brief Class for managing a set of data and performing interpolation.
-	*
-	* The InterpSetData class manages a collection of data points and provides functionality
-	* to insert samples, retrieve interpolated values at a given point, find the maximum
-	* absolute value in the set, and divide all data points by a scalar.
 	*/
 	class InterpSetData
 	{
@@ -80,11 +70,6 @@ namespace interp
 	/**
 	 * @class InterpSet
 	 * @brief Wrapper class for managing interpolation sets using smart pointers.
-	 *
-	 * The InterpSet class provides a convenient interface
-	 * for working with interpolation data by managing the lifecycle of an InterpSetData object.
-	 * It allows for inserting samples, retrieving interpolated values, finding the maximum value,
-	 * and dividing the set by a scalar through delegation to the internal InterpSetData instance.
 	 */
 	class InterpSet
 	{
@@ -137,6 +122,6 @@ namespace interp
 		void divide(T a) const { _data->divide(a); }
 
 	private:
-		std::unique_ptr<InterpSetData> _data; ///< The internal InterpSetData object managed by a smart pointer
+		std::unique_ptr<InterpSetData> _data; ///< The internal InterpSetData object
 	};
 }

@@ -48,8 +48,6 @@ namespace
 	/**
 	 * @brief Open an HDF5 file for writing.
 	 *
-	 * Opens an HDF5 file for writing, overwriting the file if it already exists.
-	 *
 	 * @param recvName The name of the receiver, which will be used as the filename for the HDF5 export.
 	 * @return An optional HighFive::File object representing the opened file, or std::nullopt if binary export is disabled.
 	 * @throws std::runtime_error If the file cannot be opened.
@@ -62,7 +60,6 @@ namespace
 
 		try
 		{
-			// HighFive::File::Truncate will overwrite the file if it already exists
 			HighFive::File file(hdf5_filename, HighFive::File::Overwrite);
 			return file;
 		}
@@ -74,8 +71,6 @@ namespace
 
 	/**
 	 * @brief Add noise to a window of complex samples.
-	 *
-	 * Adds white Gaussian noise to a window of complex samples based on the specified temperature.
 	 *
 	 * @param data A span of ComplexType objects representing the window of complex samples to add noise to.
 	 * @param temperature The noise temperature in Kelvin. If the temperature is 0, no noise is added.
@@ -100,9 +95,6 @@ namespace
 	/**
 	 * @brief Simulate an ADC quantization process on a window of complex samples.
 	 *
-	 * Simulates an ADC quantization process on a window of complex samples, rounding each sample to the nearest
-	 * quantization level based on the number of bits and full-scale value.
-	 *
 	 * @param data A span of ComplexType objects representing the window of complex samples to quantize.
 	 * @param bits The number of bits used for quantization.
 	 * @param fullscale The full-scale value used for quantization.
@@ -125,16 +117,11 @@ namespace
 	/**
 	 * @brief Quantize a window of complex samples to the nearest quantization level.
 	 *
-	 * Quantizes a window of complex samples to the nearest quantization level based on the maximum absolute value
-	 * across the real and imaginary parts of the samples. The samples are normalized to the full-scale value
-	 * before quantization.
-	 *
 	 * @param data A span of ComplexType objects representing the window of complex samples to quantize.
 	 * @return The full-scale value used for quantization.
 	 */
 	RealType quantizeWindow(std::span<ComplexType> data)
 	{
-		// Find the maximum absolute value across real and imaginary parts
 		RealType max_value = 0;
 
 		for (const auto& sample : data)
@@ -144,7 +131,6 @@ namespace
 
 			max_value = std::max({max_value, real_abs, imag_abs});
 
-			// Check for NaN in both real and imaginary parts
 			if (std::isnan(real_abs) || std::isnan(imag_abs))
 			{
 				LOG(logging::Level::FATAL, "NaN encountered in QuantizeWindow -- early");
@@ -152,7 +138,6 @@ namespace
 			}
 		}
 
-		// Simulate ADC if adcBits parameter is greater than 0
 		if (const auto adc_bits = params::adcBits(); adc_bits > 0) { adcSimulate(data, adc_bits, max_value); }
 		else if (max_value != 0)
 		{
@@ -160,7 +145,6 @@ namespace
 			{
 				sample /= max_value;
 
-				// Re-check for NaN after normalization
 				if (std::isnan(sample.real()) || std::isnan(sample.imag()))
 				{
 					LOG(logging::Level::FATAL, "NaN encountered in QuantizeWindow -- late");
@@ -174,9 +158,6 @@ namespace
 
 	/**
 	 * @brief Generate phase noise samples for a window.
-	 *
-	 * Generates phase noise samples for a window based on the receiver timing model, window size, and sample rate.
-	 * The phase noise samples are used to modulate the phase of the window samples.
 	 *
 	 * @param recv A pointer to the radar::Receiver object containing receiver data.
 	 * @param wSize The size of the window in samples.
@@ -227,9 +208,6 @@ namespace
 	/**
 	 * @brief Add phase noise to a window of complex samples.
 	 *
-	 * Adds phase noise to a window of complex samples by modulating the phase of each sample using the phase noise
-	 * samples. The phase noise samples are generated based on the receiver timing model and window size.
-	 *
 	 * @param noise A span of RealType objects representing the phase noise samples.
 	 * @param window A span of ComplexType objects representing the window of complex samples to add phase noise to.
 	 */
@@ -257,9 +235,6 @@ namespace
 	/**
 	 * @brief Process a response and add the response data to the window.
 	 *
-	 * Processes a response and adds the response data to the window based on the specified rate, start time, fractional
-	 * delay, and local window size.
-	 *
 	 * @param resp A pointer to a Response object representing the response to process.
 	 * @param localWindow A reference to a vector of ComplexType objects representing the local window of complex samples.
 	 * @param rate The sample rate in Hz.
@@ -286,9 +261,6 @@ namespace
 	/**
 	 * @brief Process responses sequentially using a single thread.
 	 *
-	 * Processes responses sequentially using a single thread, adding the response data to the window.
-	 * The window is rendered based on the specified rate, start time, fractional delay, and local window size.
-	 *
 	 * @param workList A reference to a queue of Response pointers representing the list of responses to process.
 	 * @param window A reference to a vector of ComplexType objects representing the window of complex samples to render.
 	 * @param rate The sample rate in Hz.
@@ -314,10 +286,6 @@ namespace
 
 	/**
 	 * @brief Process responses in parallel using multiple threads.
-	 *
-	 * Processes responses in parallel using multiple threads, adding the response data to the window.
-	 * The window is rendered based on the specified rate, start time, fractional delay, and local window size.
-	 * The processing is parallelized using a thread pool.
 	 *
 	 * @param workList A reference to a queue of Response pointers representing the list of responses to process.
 	 * @param window A reference to a vector of ComplexType objects representing the window of complex samples to render.
@@ -361,11 +329,6 @@ namespace
 
 	/**
 	 * @brief Render a window of complex samples using multiple threads.
-	 *
-	 * Renders a window of complex samples using multiple threads, processing each response in the work list and adding
-	 * the response data to the window.
-	 * The window is rendered based on the specified length, start time, fractional delay, and list of responses.
-	 * The rendering process is parallelized using a thread pool.
 	 *
 	 * @param window A vector of ComplexType objects representing the window of complex samples to render.
 	 * @param length The length of the window in seconds.
@@ -411,23 +374,18 @@ namespace serial
 {
 	void exportReceiverXml(std::span<const std::unique_ptr<Response>> responses, const std::string& filename)
 	{
-		// Create a new XML document
 		const XmlDocument doc;
 
-		// Create the root element for the document
 		xmlNodePtr root_node = xmlNewNode(nullptr, reinterpret_cast<const xmlChar*>("receiver"));
 		XmlElement root(root_node);
 
-		// Set the root element for the document
 		doc.setRootElement(root);
 
-		// Iterate over the responses and call renderXml on each, passing the root element
 		for (const auto& response : responses)
 		{
-			response->renderXml(root); // Assuming renderXml modifies the XML tree
+			response->renderXml(root);
 		}
 
-		// Save the document to file
 		if (const fs::path file_path = fs::path(filename).replace_extension(".fersxml"); !doc.
 			saveFile(file_path.string()))
 		{
@@ -440,15 +398,12 @@ namespace serial
 	{
 		std::map<std::string, std::unique_ptr<std::ofstream>> streams;
 
-		// Iterate over each response in the vector, using structured bindings and ranges
 		for (const auto& response : responses)
 		{
 			const std::string& transmitter_name = response->getTransmitterName();
 
-			// Use `std::map::try_emplace` to simplify checking and insertion
 			auto [it, inserted] = streams.try_emplace(transmitter_name, nullptr);
 
-			// If the stream for this transmitter is being inserted, open a new file
 			if (inserted)
 			{
 				fs::path file_path = fs::path(filename).concat("_").concat(transmitter_name).replace_extension(".csv");
@@ -462,11 +417,9 @@ namespace serial
 					throw std::runtime_error("Could not open file " + file_path.string() + " for writing");
 				}
 
-				// Assign the opened file stream to the map entry
 				it->second = std::move(of);
 			}
 
-			// Render the CSV for the current response
 			response->renderCsv(*it->second);
 		}
 	}
@@ -474,13 +427,10 @@ namespace serial
 	void exportReceiverBinary(const std::span<const std::unique_ptr<Response>> responses, const radar::Receiver* recv,
 	                          const std::string& recvName, pool::ThreadPool& pool)
 	{
-		// Bail if there are no responses to export
 		if (responses.empty()) { return; }
 
-		// Open HDF5 file for writing
 		std::optional<HighFive::File> out_bin = openHdf5File(recvName);
 
-		// Retrieve the window count from the receiver
 		const unsigned window_count = recv->getWindowCount();
 
 		const RealType length = recv->getWindowLength();
@@ -490,16 +440,14 @@ namespace serial
 		RealType carrier;
 		bool pn_enabled;
 
-		// Loop through each window
 		for (unsigned i = 0; i < window_count; ++i)
 		{
-			// Generate phase noise samples for the window
 			auto pnoise = generatePhaseNoise(recv, size, rate, carrier, pn_enabled);
 
 			// Get the window start time, including clock drift effects
 			RealType start = recv->getWindowStart(i) + pnoise[0] / (2 * PI * carrier);
 
-			// Calculate the fractional delay using structured bindings
+			// Calculate the fractional delay
 			const auto [round_start, frac_delay] = [&start, rate]
 			{
 				RealType rounded_start = std::round(start * rate) / rate;
@@ -508,30 +456,22 @@ namespace serial
 			}();
 			start = round_start;
 
-			// Allocate memory for the window using std::vector
 			std::vector<ComplexType> window(size);
 
-			// Add noise to the window
 			addNoiseToWindow(window, recv->getNoiseTemperature());
 
-			// Render the window using multiple threads
 			renderWindow(window, length, start, frac_delay, responses, pool);
 
-			// Downsample the window if the oversample ratio is greater than 1
 			if (params::oversampleRatio() > 1) { window = std::move(signal::downsample(window)); }
 
-			// Add phase noise to the window if enabled
 			if (pn_enabled) { addPhaseNoiseToWindow(pnoise, window); }
 
-			// Normalize and quantize the window
 			const RealType fullscale = quantizeWindow(window);
 
-			// Export the binary format using HighFive to write to the HDF5 file
 			if (out_bin)
 			{
 				try
 				{
-					// Use HighFive to add the data chunks to the HDF5 file
 					serial::addChunkToFile(*out_bin, window, start, fullscale, i);
 				}
 				catch (const std::exception& e)

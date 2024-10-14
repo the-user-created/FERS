@@ -2,12 +2,6 @@
 * @file path_utils.h
  * @brief Utility functions for path interpolation and exception handling.
  *
- * This header file provides a set of functions to handle different types of
- * interpolation (static, linear, and cubic) for coordinate points, and manages
- * exceptions that may occur during these operations.
- * The interpolation functions are implemented as templates and can be used with various types that satisfy
- * the necessary mathematical operations.
- *
  * The cubic interpolation functions are based on methods described in "Numerical Recipes
  * in C, Second Edition" by Press et al., but the code here is distinct from the original.
  *
@@ -24,19 +18,12 @@ namespace math
 	/**
 	 * @class PathException
 	 * @brief Exception class for handling path-related errors.
-	 *
-	 * This class extends the standard `std::runtime_error` to provide specific
-	 * error handling for the path interpolation functions.
-	 * It ensures that when an error occurs during interpolation, a meaningful message is generated.
 	 */
 	class PathException final : public std::runtime_error
 	{
 	public:
 		/**
 		 * @brief Constructor for PathException.
-		 *
-		 * Creates an exception with a specific error message, which is prepended
-		 * with a general error description.
 		 *
 		 * @param description A detailed description of the error.
 		 */
@@ -65,9 +52,6 @@ concept Interpolatable = requires(T a, T b, RealType t)
 /**
  * @brief Interpolates a static position from a list of coordinates.
  *
- * This function sets the provided coordinate to the first element in the list of coordinates.
- * It throws an exception if the list is empty.
- *
  * @tparam T The type of the coordinate, which must satisfy the Interpolatable concept.
  * @param coord The output coordinate to be set.
  * @param coords A vector of coordinates from which the first will be selected.
@@ -82,10 +66,6 @@ void getPositionStatic(T& coord, const std::vector<T>& coords)
 
 /**
  * @brief Performs linear interpolation between coordinate points.
- *
- * This function interpolates linearly between two points in the list of coordinates based
- * on the value of `t`. It computes a weighted average of the two nearest points and assigns
- * the result to `coord`.
  *
  * @tparam T The type of the coordinate, which must satisfy the Interpolatable concept.
  * @param t The interpolation factor (usually time) to determine the position.
@@ -118,9 +98,6 @@ void getPositionLinear(RealType t, T& coord, const std::vector<T>& coords)
 
 /**
  * @brief Performs cubic spline interpolation between coordinate points.
- *
- * This function uses cubic spline interpolation to compute a smooth curve between
- * multiple points based on second derivatives provided in `dd`.
  * The method used for calculating the spline is from "Numerical Recipes in C."
  *
  * @tparam T The type of the coordinate, which must satisfy the Interpolatable concept.
@@ -160,9 +137,6 @@ void getPositionCubic(RealType t, T& coord, const std::vector<T>& coords, const 
 
 /**
  * @brief Finalizes cubic spline interpolation by calculating second derivatives.
- *
- * This function computes the second derivatives necessary for cubic spline interpolation.
- * It prepares the `dd` vector, which can then be used in the cubic interpolation function.
  *
  * @tparam T The type of the coordinate, which must satisfy the Interpolatable concept.
  * @param coords A vector of coordinates for which second derivatives will be calculated.

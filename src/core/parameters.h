@@ -2,10 +2,6 @@
 * @file parameters.h
 * @brief Defines the Parameters struct and provides methods for managing simulation parameters.
 *
-* This file contains the definition of the `Parameters` struct, which is used to store global simulation parameters,
-* constants, and configuration values for rendering and exporting simulations. It also provides getter and setter methods
-* for accessing and modifying these parameters, ensuring that no 'magic numbers' are used directly in the code.
-*
 * @authors David Young, Marc Brooker
 * @date 2006-06-11
 */
@@ -23,11 +19,6 @@ namespace params
 	/**
 	* @class Parameters
 	* @brief Struct to hold simulation parameters.
-	*
-	* The `Parameters` struct stores global constants and configuration settings required for running and exporting
-	* simulations. It includes various parameters such as speed of light, Boltzmann constant, sample rates, random seed,
-	* and export flags (XML, CSV, binary). This struct is designed to ensure that global simulation settings are
-	* accessible and can be modified in a controlled manner.
 	*/
 	struct Parameters
 	{
@@ -42,8 +33,7 @@ namespace params
 		RealType cw_sample_rate = 1000; ///< CW interpolation sample rate.
 		RealType rate = 0; ///< Rendering sample rate.
 
-		unsigned random_seed = 0;
-		///< Random seed for simulation.
+		unsigned random_seed = 0; ///< Random seed for simulation.
 		unsigned adc_bits = 0; ///< ADC quantization bits.
 		unsigned filter_length = 33; ///< Default render filter length.
 
@@ -57,14 +47,7 @@ namespace params
 		std::optional<RealType> optional_rate = std::nullopt; ///< Optional sample rate.
 	};
 
-	/// Global instance of `Parameters` used throughout the simulation.
 	inline Parameters params;
-
-	// =================================================================================================================
-	//
-	// GETTERS
-	//
-	// =================================================================================================================
 
 	/**
 	* @brief Get the speed of light.
@@ -149,12 +132,6 @@ namespace params
 	* @return The oversampling ratio.
 	*/
 	inline unsigned oversampleRatio() noexcept { return params.oversample_ratio; }
-
-	// =================================================================================================================
-	//
-	// SETTERS
-	//
-	// =================================================================================================================
 
 	/**
 	* @brief Set the speed of light.

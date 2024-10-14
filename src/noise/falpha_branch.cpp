@@ -101,7 +101,7 @@ namespace noise
 		if (!_last) { refill(); }
 	}
 
-	RealType FAlphaBranch::getSample() noexcept // NOLINT(misc-no-recursion)
+	RealType FAlphaBranch::getSample() noexcept
 	{
 		if (!_last)
 		{
@@ -112,7 +112,7 @@ namespace noise
 		return calcSample() + _offset_sample * _upsample_scale;
 	}
 
-	RealType FAlphaBranch::calcSample() noexcept // NOLINT(misc-no-recursion)
+	RealType FAlphaBranch::calcSample() noexcept
 	{
 		RealType sample = wgnSample(1);
 
@@ -134,7 +134,7 @@ namespace noise
 		return sample;
 	}
 
-	void FAlphaBranch::refill() noexcept // NOLINT(misc-no-recursion)
+	void FAlphaBranch::refill() noexcept
 	{
 		const RealType sample = calcSample();
 		_upsampler->upsample(sample, _buffer);
@@ -150,7 +150,7 @@ namespace noise
 
 	void FAlphaBranch::flush(const RealType scale) noexcept
 	{
-		init(); // Reset everything with the new scale
+		init();
 		_pre_scale = scale;
 	}
 }

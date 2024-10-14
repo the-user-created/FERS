@@ -23,9 +23,6 @@ namespace
 	/**
 	 * @brief Get the random seed for the noise generator.
 	 *
-	 * This function retrieves the random seed from the global parameters.
-	 * If the seed is set to 0, it generates a new seed using std::random_device.
-	 *
 	 * @return The random seed for the noise generator.
 	 */
 	unsigned int getSeed() noexcept
@@ -37,12 +34,11 @@ namespace
 
 namespace noise
 {
-	// Generate a white Gaussian noise sample with the specified standard deviation
 	RealType wgnSample(const RealType stddev) noexcept
 	{
 		if (stddev <= EPSILON) { return 0.0; }
 
-		ensureInitialized(); // Ensure RNG is initialized
+		ensureInitialized();
 		return normal_dist(*rng) * stddev;
 	}
 

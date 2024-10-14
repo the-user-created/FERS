@@ -2,11 +2,6 @@
  * @file arg_parser.cpp
  * @brief Implementation of the command-line argument parser for the application.
  *
- * This file provides the implementation of functions that handle parsing command-line arguments,
- * displaying help and version information, and validating input configurations.
- * It supports setting options like logging level, number of threads,
- * and script file input, with error handling and validation.
- *
  * @author David Young
  * @date 2024-09-20
  */
@@ -31,8 +26,6 @@ namespace
 	/**
 	 * @brief Checks if the given file has a valid log file extension.
 	 *
-	 * This function ensures that the log file has a valid extension, either `.log` or `.txt`.
-	 *
 	 * @param filePath The path of the log file.
 	 * @return true if the file has a valid extension, false otherwise.
 	 */
@@ -46,9 +39,6 @@ namespace
 
 	/**
 	 * @brief Parses the logging level from a string representation.
-	 *
-	 * This function converts a string to the corresponding logging level.
-	 * If the provided string does not match a valid logging level, it returns `std::nullopt`.
 	 *
 	 * @param level The string representation of the logging level.
 	 * @return std::optional<Level> The corresponding logging level, or `std::nullopt` if invalid.
@@ -71,9 +61,6 @@ namespace
 	/**
 	 * @brief Handles the log-level argument and sets the logging level.
 	 *
-	 * This function processes the log-level argument and sets the logging level in the configuration.
-	 * If the provided log level is invalid, it logs an error message and returns an error.
-	 *
 	 * @param arg The log-level argument string.
 	 * @param config The configuration object to update.
 	 * @return std::expected<void, std::string> An expected object with an error message if the log level is invalid.
@@ -93,9 +80,6 @@ namespace
 
 	/**
 	 * @brief Handles the log-file argument and sets the log file path.
-	 *
-	 * This function processes the log-file argument and sets the log file path in the configuration.
-	 * If the provided log file path has an invalid extension, it logs an error message and returns an error.
 	 *
 	 * @param arg The log-file argument string.
 	 * @param config The configuration object to update.
@@ -117,9 +101,6 @@ namespace
 
 	/**
 	 * @brief Handles the number of threads argument and sets the number of threads.
-	 *
-	 * This function processes the number of threads argument and sets the number of threads in the configuration.
-	 * If the provided number of threads is invalid, it logs an error message and returns an error.
 	 *
 	 * @param arg The number of threads argument string.
 	 * @param config The configuration object to update.
@@ -145,10 +126,6 @@ namespace
 
 	/**
 	 * @brief Handles the command-line argument and updates the configuration.
-	 *
-	 * This function processes the command-line argument and updates the configuration object accordingly.
-	 * It handles options like logging level, log file, number of threads, and script file input.
-	 * If the argument is invalid or unrecognized, it logs an error message and returns an error.
 	 *
 	 * @param arg The command-line argument string.
 	 * @param config The configuration object to update.

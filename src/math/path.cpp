@@ -24,13 +24,11 @@ namespace math
 {
 	void Path::addCoord(const Coord& coord) noexcept
 	{
-		// Custom comparator to compare Coord objects based on the member pointer &Coord::t
 		auto comp = [](const Coord& a, const Coord& b) { return a.t < b.t; };
 
-		// Insert the new coordinate while preserving sort order using std::ranges
 		const auto iter = std::ranges::lower_bound(_coords, coord, comp);
 		_coords.insert(iter, coord);
-		_final = false; // Invalidate the finalization after inserting a new coordinate
+		_final = false;
 	}
 
 	Vec3 Path::getPosition(const RealType t) const
@@ -42,7 +40,6 @@ namespace math
 		}
 
 		Coord coord{};
-		// Call the appropriate interpolation function based on _type
 		switch (_type)
 		{
 		case InterpType::INTERP_STATIC: getPositionStatic(coord, _coords);
@@ -58,7 +55,7 @@ namespace math
 			}
 			return _pythonpath->getPosition(t);
 		}
-		return coord.pos; // Return the position part of the coordinate
+		return coord.pos;
 	}
 
 	void Path::finalize()
@@ -73,14 +70,14 @@ namespace math
 			case InterpType::INTERP_CUBIC: finalizeCubic<Coord>(_coords, _dd);
 				break;
 			}
-			_final = true; // Mark as finalized
+			_final = true;
 		}
 	}
 
 	void Path::setInterp(const InterpType settype) noexcept
 	{
 		_type = settype;
-		_final = false; // Invalidate the finalization after changing interpolation type
+		_final = false;
 	}
 
 	void Path::setPythonPath(const std::string_view modname, const std::string_view pathname)
@@ -96,15 +93,13 @@ namespace math
 			throw std::runtime_error("Multipath surfaces are not currently supported for Python paths");
 		}
 
-		// Create a new path object
 		auto dual_path = std::make_unique<Path>(path->getType());
 
-		// Reflect all coordinates and add them to the new path
 		for (const auto& [pos, t] : path->getCoords())
 		{
 			Coord refl{};
 			refl.t = t;
-			refl.pos = surf->reflectPoint(pos); // Reflect the point in the plane
+			refl.pos = surf->reflectPoint(pos);
 
 			LOG(Level::TRACE, "Reflected ({}, {}, {}) to ({}, {}, {})",
 			    pos.x, pos.y, pos.z,
@@ -113,7 +108,7 @@ namespace math
 			dual_path->addCoord(refl);
 		}
 
-		dual_path->finalize(); // Finalize the new path
-		return dual_path; // Return the new path
+		dual_path->finalize();
+		return dual_path;
 	}
 }

@@ -2,8 +2,6 @@
  * @file thread_pool.h
  * @brief A simple thread pool implementation.
  *
- * This file provides a thread pool that can be used to execute tasks concurrently.
- *
  * @authors David Young
  * @date 2024-10-10
  */
@@ -23,8 +21,6 @@ namespace pool
 	/**
   	 * @class ThreadPool
   	 * @brief A simple thread pool implementation.
-  	 *
-  	 * This class provides a thread pool that can be used to execute tasks concurrently.
   	 */
 	class ThreadPool
 	{

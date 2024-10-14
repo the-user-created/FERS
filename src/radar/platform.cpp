@@ -32,6 +32,6 @@ namespace radar
 
 		plat->setDual(dual.get());
 
-		return dual.release(); // Transfer ownership of dual
+		return dual.release();
 	}
 }
