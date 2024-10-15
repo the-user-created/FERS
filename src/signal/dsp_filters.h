@@ -2,13 +2,6 @@
 * @file dsp_filters.h
 * @brief Header file for Digital Signal Processing (DSP) filters and upsampling/downsampling functionality.
 *
-* This file contains declarations for several DSP filter classes and functions. These include IIR, FIR, and AR
-* filters, as well as upsampling and downsampling operations using these filters. The classes and functions
-* are designed to support efficient real-time DSP operations, including sample-based and block-based filtering.
-*
-* The filters are designed to work with both real and complex data types and provide a flexible API for
-* integration into signal processing pipelines.
-*
 * @authors David Young, Marc Brooker
 * @date 2007-07-30
 */
@@ -26,35 +19,24 @@ namespace signal
 	/**
 	* @brief Upsamples a signal by a given ratio.
 	*
-	* Takes an input signal and upscales it by inserting zeros between the samples and applying a filter
-	* to reconstruct the signal at a higher sample rate.
-	*
 	* @param in Input span of complex samples.
 	* @param size Size of the input signal.
 	* @param out Output span for upsampled complex samples.
-	* @param ratio Upsampling ratio.
 	* @throws std::invalid_argument if the input or output spans are empty or the ratio is zero.
 	*/
-	void upsample(std::span<const ComplexType> in, unsigned size, std::span<ComplexType> out, unsigned ratio);
+	void upsample(std::span<const ComplexType> in, unsigned size, std::span<ComplexType> out);
 
 	/**
 	* @brief Downsamples a signal by a given ratio.
 	*
-	* Takes an input signal and downsamples it by filtering and then selecting samples at intervals determined by the ratio.
-	*
 	* @param in Input span of complex samples.
-	* @param out Output span for downsampled complex samples.
-	* @param ratio Downsampling ratio.
 	* @throws std::invalid_argument if the input or output spans are empty or the ratio is zero.
 	*/
-	void downsample(std::span<const ComplexType> in, std::span<ComplexType> out, unsigned ratio);
+	std::vector<ComplexType> downsample(std::span<const ComplexType> in);
 
 	/**
 	* @class DspFilter
 	* @brief Abstract base class for digital filters.
-	*
-	* This class serves as a base class for various digital filters, providing common interface functions for filtering.
-	* Derived classes must implement the sample-based and block-based filtering functions.
 	*/
 	class DspFilter
 	{
@@ -78,12 +60,10 @@ namespace signal
 	    */
 		virtual void filter(std::span<RealType> samples) = 0;
 
-		// Disable copy constructor and copy assignment operator
 		DspFilter(const DspFilter&) = delete;
 
 		DspFilter& operator=(const DspFilter&) = delete;
 
-		// Enable default move semantics
 		DspFilter(DspFilter&&) noexcept = default;
 
 		DspFilter& operator=(DspFilter&&) noexcept = default;
@@ -92,9 +72,6 @@ namespace signal
 	/**
 	* @class IirFilter
 	* @brief Implements an Infinite Impulse Response (IIR) filter.
-	*
-	* The IIR filter is characterized by a set of numerator and denominator coefficients. It provides methods
-	* for filtering single samples or blocks of samples. The filter is designed for real-valued signals.
 	*/
 	class IirFilter final : public DspFilter
 	{
@@ -135,8 +112,6 @@ namespace signal
 	/**
 	* @class FirFilter
 	* @brief Implements a Finite Impulse Response (FIR) filter.
-	*
-	* The FIR filter is characterized by a set of coefficients and is used for real and complex-valued signal processing.
 	*/
 	class FirFilter final : public DspFilter
 	{
@@ -222,8 +197,6 @@ namespace signal
 	/**
 	 * @class DecadeUpsampler
 	 * @brief Implements a specialized upsampler with a fixed upsampling factor of 10.
-	 *
-	 * This class uses an 11th order elliptic lowpass filter for upsampling by a factor of 10.
 	 */
 	class DecadeUpsampler
 	{
@@ -242,12 +215,10 @@ namespace signal
 
 		//void upsample(std::span<const RealType> in, std::span<RealType> out) const;
 
-		// Disable copy constructor and copy assignment operator
 		DecadeUpsampler(const DecadeUpsampler&) = delete;
 
 		DecadeUpsampler& operator=(const DecadeUpsampler&) = delete;
 
-		// Enable default move semantics
 		DecadeUpsampler(DecadeUpsampler&&) noexcept = default;
 
 		DecadeUpsampler& operator=(DecadeUpsampler&&) noexcept = default;

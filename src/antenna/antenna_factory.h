@@ -2,11 +2,6 @@
  * @file antenna_factory.h
  * @brief Header file defining various types of antennas and their gain patterns.
  *
- * This file provides an abstract base class for different antenna types, along with derived classes representing
- * specific antenna models such as isotropic, sinc, Gaussian, square horn, parabolic, and custom antennas loaded
- * from files or Python modules.
- * Each antenna class provides a method to compute the gain based on the input angles and wavelength.
- *
  * @authors David Young, Marc Brooker
  * @date 2006-07-20
  */
@@ -30,12 +25,6 @@ namespace antenna
 	/**
 	 * @class Antenna
 	 * @brief Abstract base class representing an antenna.
-	 *
-	 * This class serves as the base for different types of antennas.
-	 * Each derived antenna class must implement the `getGain`
-	 * function to compute the gain based on the angles and wavelength.
-	 * The base class provides a mechanism to set
-	 * and get the efficiency factor of the antenna and retrieve the antenna name.
 	 */
 	class Antenna
 	{
@@ -47,14 +36,11 @@ namespace antenna
 		 */
 		explicit Antenna(std::string name) noexcept : _loss_factor(1), _name(std::move(name)) {}
 
-		/// Virtual destructor.
 		virtual ~Antenna() = default;
-
-		/// Deleted copy constructor.
 		Antenna(const Antenna&) = delete;
-
-		/// Deleted assignment operator.
 		Antenna& operator=(const Antenna&) = delete;
+		Antenna(Antenna&&) = default;
+		Antenna& operator=(Antenna&&) = default;
 
 		/**
 		 * @brief Computes the gain of the antenna based on the input angle and reference angle.
@@ -127,8 +113,11 @@ namespace antenna
 		 */
 		explicit Isotropic(const std::string_view name) : Antenna(name.data()) {}
 
-		/// Destructor.
 		~Isotropic() override = default;
+		Isotropic(const Isotropic&) = delete;
+		Isotropic& operator=(const Isotropic&) = delete;
+		Isotropic(Isotropic&&) = delete;
+		Isotropic& operator=(Isotropic&&) = delete;
 
 		/**
 		 * @brief Computes the gain of the isotropic antenna.
@@ -164,8 +153,11 @@ namespace antenna
 		Sinc(const std::string_view name, const RealType alpha, const RealType beta, const RealType gamma) :
 			Antenna(name.data()), _alpha(alpha), _beta(beta), _gamma(gamma) {}
 
-		/// Destructor.
 		~Sinc() override = default;
+		Sinc(const Sinc&) = delete;
+		Sinc& operator=(const Sinc&) = delete;
+		Sinc(Sinc&&) = delete;
+		Sinc& operator=(Sinc&&) = delete;
 
 		/**
 		 * @brief Computes the gain of the sinc antenna based on the input parameters.
@@ -203,8 +195,11 @@ namespace antenna
 		Gaussian(const std::string_view name, const RealType azscale, const RealType elscale) : Antenna(name.data()),
 			_azscale(azscale), _elscale(elscale) {}
 
-		/// Destructor.
 		~Gaussian() override = default;
+		Gaussian(const Gaussian&) = delete;
+		Gaussian& operator=(const Gaussian&) = delete;
+		Gaussian(Gaussian&&) = delete;
+		Gaussian& operator=(Gaussian&&) = delete;
 
 		/**
 		 * @brief Computes the gain of the Gaussian antenna.
@@ -240,8 +235,11 @@ namespace antenna
 		SquareHorn(const std::string_view name, const RealType dimension) : Antenna(name.data()),
 		                                                                    _dimension(dimension) {}
 
-		/// Destructor.
 		~SquareHorn() override = default;
+		SquareHorn(const SquareHorn&) = delete;
+		SquareHorn& operator=(const SquareHorn&) = delete;
+		SquareHorn(SquareHorn&&) = delete;
+		SquareHorn& operator=(SquareHorn&&) = delete;
 
 		/**
 		 * @brief Computes the gain of the square horn antenna.
@@ -275,8 +273,11 @@ namespace antenna
 		 */
 		Parabolic(const std::string_view name, const RealType diameter) : Antenna(name.data()), _diameter(diameter) {}
 
-		/// Destructor.
 		~Parabolic() override = default;
+		Parabolic(const Parabolic&) = delete;
+		Parabolic& operator=(const Parabolic&) = delete;
+		Parabolic(Parabolic&&) = delete;
+		Parabolic& operator=(Parabolic&&) = delete;
 
 		/**
 		 * @brief Computes the gain of the parabolic antenna.
@@ -314,8 +315,11 @@ namespace antenna
 			_azi_samples(std::make_unique<interp::InterpSet>()),
 			_elev_samples(std::make_unique<interp::InterpSet>()) { loadAntennaDescription(filename); }
 
-		/// Destructor.
 		~XmlAntenna() override = default;
+		XmlAntenna(const XmlAntenna&) = delete;
+		XmlAntenna& operator=(const XmlAntenna&) = delete;
+		XmlAntenna(XmlAntenna&&) = delete;
+		XmlAntenna& operator=(XmlAntenna&&) = delete;
 
 		/**
 		* @brief Computes the gain of the antenna based on the input angle and reference angle.
@@ -364,8 +368,11 @@ namespace antenna
 		FileAntenna(const std::string_view name, const std::string_view filename) : Antenna(name.data()),
 			_pattern(std::make_unique<Pattern>(filename.data())) {}
 
-		/// Destructor.
 		~FileAntenna() override = default;
+		FileAntenna(const FileAntenna&) = delete;
+		FileAntenna& operator=(const FileAntenna&) = delete;
+		FileAntenna(FileAntenna&&) = delete;
+		FileAntenna& operator=(FileAntenna&&) = delete;
 
 		/**
 		 * @brief Computes the gain of the antenna based on the input angle and reference angle.
@@ -387,9 +394,6 @@ namespace antenna
 	/**
 	 * @class PythonAntenna
 	 * @brief Represents an antenna with its gain pattern implemented in a Python module.
-	 *
-	 * This class models an antenna whose gain calculation is delegated to a Python function.
-	 * The Python function is invoked through a Python module to compute the gain based on the input angles.
 	 */
 	class PythonAntenna final : public Antenna
 	{
@@ -404,8 +408,11 @@ namespace antenna
 		PythonAntenna(const std::string_view name, const std::string_view module, const std::string_view function) :
 			Antenna(name.data()), _py_antenna(module.data(), function.data()) {}
 
-		/// Destructor.
 		~PythonAntenna() override = default;
+		PythonAntenna(const PythonAntenna&) = delete;
+		PythonAntenna& operator=(const PythonAntenna&) = delete;
+		PythonAntenna(PythonAntenna&&) = delete;
+		PythonAntenna& operator=(PythonAntenna&&) = delete;
 
 		/**
 		 * @brief Computes the gain of the antenna based on the input angle and reference angle.

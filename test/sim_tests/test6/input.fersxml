@@ -1,13 +1,13 @@
 <?xml version="1.0" ?>
 <!-- Test pulsed radar. -->
-<!DOCTYPE simulation SYSTEM "../../xml_schema/fers-xml.dtd">
+<!DOCTYPE simulation SYSTEM "fers-xml.dtd">
 <simulation name="sim1">
     <parameters>
         <starttime>0</starttime>
         <endtime>10</endtime>
+        <rate>1e8</rate>
         <c>299792458</c>
         <interprate>1000</interprate>
-        <rate>1e8</rate>
         <randomseed>4444</randomseed>
         <adc_bits>12</adc_bits>
         <oversample>2</oversample>

@@ -26,9 +26,6 @@ namespace
 	/**
 	 * @brief Sinc function for FIR filter design.
 	 *
-	 * The sinc function is used to design FIR filters. This implementation uses the normalized sinc function
-	 * sinc(x) = sin(PI * x) / (PI * x).
-	 *
 	 * @param x Input value.
 	 * @return Sinc value at x.
 	 */
@@ -36,9 +33,6 @@ namespace
 
 	/**
 	 * @brief Generates FIR filter coefficients using the Blackman window.
-	 *
-	 * This function generates FIR filter coefficients using the Blackman window. The
-	 * coefficients are designed to have a cutoff frequency of 'cutoff' and a length of 'filtLength'.
 	 *
 	 * @param cutoff Cutoff frequency for the filter.
 	 * @param filtLength Length of the filter.
@@ -68,77 +62,63 @@ namespace
 
 namespace signal
 {
-	void upsample(const std::span<const ComplexType> in, const unsigned size, std::span<ComplexType> out,
-	              const unsigned ratio)
+	void upsample(const std::span<const ComplexType> in, const unsigned size, std::span<ComplexType> out)
 	{
+		const unsigned ratio = params::oversampleRatio();
 		// TODO: this would be better as a multirate upsampler
 		// This implementation is functional but suboptimal.
 		// Users requiring higher accuracy should oversample outside FERS until this is addressed.
 		unsigned filt_length;
 		const auto coeffs = blackmanFir(1 / static_cast<RealType>(ratio), filt_length);
 
-		// Temporary buffer to hold upsampled and filtered data
 		std::vector tmp(size * ratio + filt_length, ComplexType{0.0, 0.0});
 
-		// Insert the input samples at intervals of 'ratio', leaving zeroes in between
 		for (unsigned i = 0; i < size; ++i) { tmp[i * ratio] = in[i]; }
 
-		// Create the FIR filter and apply it
 		const FirFilter filt(coeffs);
 		filt.filter(tmp);
 
-		// Output the filtered result with appropriate offset for the filter delay
 		const auto delay = filt_length / 2 - 1;
 		std::ranges::copy_n(tmp.begin() + delay, size * ratio, out.begin());
 	}
 
-	void downsample(std::span<const ComplexType> in, std::span<ComplexType> out, const unsigned ratio)
+	std::vector<ComplexType> downsample(std::span<const ComplexType> in)
 	{
-		if (ratio == 0 || in.empty() || out.empty()) { throw std::invalid_argument("Invalid input arguments"); }
+		if (in.empty()) { throw std::invalid_argument("Input span is empty in Downsample"); }
 
+		const unsigned ratio = params::oversampleRatio();
 		// TODO: Replace with a more efficient multirate downsampling implementation.
 		unsigned filt_length = 0;
 		const auto coeffs = blackmanFir(1 / static_cast<RealType>(ratio), filt_length);
 
-		// Temporary buffer with the appropriate size and initialized to zero
 		std::vector tmp(in.size() + filt_length, ComplexType{0, 0});
 
-		// Copy input data to the beginning of the temporary buffer
 		std::ranges::copy(in, tmp.begin());
 
-		// Apply FIR filter
 		const FirFilter filt(coeffs);
 		filt.filter(tmp);
 
-		// Downsample the filtered data
 		const auto downsampled_size = in.size() / ratio;
+		std::vector<ComplexType> out(downsampled_size);
 		for (unsigned i = 0; i < downsampled_size; ++i)
 		{
 			out[i] = tmp[i * ratio + filt_length / 2] / static_cast<RealType>(ratio);
 		}
-	}
 
-	// =================================================================================================================
-	//
-	// IIRFILTER CLASS
-	//
-	// =================================================================================================================
+		return out;
+	}
 
 	IirFilter::IirFilter(const RealType* denCoeffs, const RealType* numCoeffs, const unsigned order) noexcept :
 		_a(denCoeffs, denCoeffs + order), _b(numCoeffs, numCoeffs + order), _w(order, 0.0), _order(order) {}
 
 	RealType IirFilter::filter(const RealType sample) noexcept
 	{
-		// Shift the delay line to the right
-		std::ranges::rotate(_w, _w.end() - 1); // Rotate right by 1 element
+		std::ranges::rotate(_w, _w.end() - 1);
 
-		// Update the first element with the current sample
 		_w[0] = sample;
 
-		// Apply the feedback from the denominator coefficients (skip a[0], assuming it's 1)
 		for (unsigned j = 1; j < _order; ++j) { _w[0] -= _a[j] * _w[j]; }
 
-		// Calculate the output using numerator coefficients and return
 		return std::inner_product(_b.begin(), _b.end(), _w.begin(), 0.0);
 	}
 
@@ -146,25 +126,15 @@ namespace signal
 	{
 		for (auto& sample : samples)
 		{
-			// Shift the delay line to the right
 			std::ranges::rotate(_w, _w.end() - 1);
 
-			// Update the first element with the current sample
 			_w[0] = sample;
 
-			// Apply the feedback from denominator coefficients
 			for (unsigned j = 1; j < _order; ++j) { _w[0] -= _a[j] * _w[j]; }
 
-			// Calculate the output and store in-place
 			sample = std::inner_product(_b.begin(), _b.end(), _w.begin(), 0.0);
 		}
 	}
-
-	// =================================================================================================================
-	//
-	// FIRFILTER CLASS
-	//
-	// =================================================================================================================
 
 	/*void FirFilter::filter(std::span<RealType> samples) noexcept
 	{
@@ -200,7 +170,6 @@ namespace signal
 			line[0] = sample;
 			ComplexType result{0.0, 0.0};
 
-			// Use a simple dot product with std::transform_reduce
 			result = std::transform_reduce(
 				line.rbegin(), line.rend(), _filter.begin(),
 				ComplexType{0.0, 0.0},
@@ -210,16 +179,9 @@ namespace signal
 
 			sample = result;
 
-			// Shift the line buffer with std::rotate
 			std::rotate(line.rbegin(), line.rbegin() + 1, line.rend());
 		}
 	}
-
-	// =================================================================================================================
-	//
-	// ARFILTER CLASS
-	//
-	// =================================================================================================================
 
 	// Private helper method to apply the filter logic
 	/*RealType ArFilter::applyFilter(const RealType sample) noexcept
@@ -240,12 +202,6 @@ namespace signal
 	{
 		std::ranges::transform(samples, samples.begin(), [this](const RealType sample) { return applyFilter(sample); });
 	}*/
-
-	// =================================================================================================================
-	//
-	// UPSAMPLER CLASS
-	//
-	// =================================================================================================================
 
 	/*Upsampler::Upsampler(const int ratio) noexcept : _ratio(ratio), _filter_size(8 * ratio + 1),
 	                                                 _filterbank(_filter_size),
@@ -298,12 +254,6 @@ namespace signal
 		}
 	}*/
 
-	// =================================================================================================================
-	//
-	// DECADE UPSAMPLER CLASS
-	//
-	// =================================================================================================================
-
 	DecadeUpsampler::DecadeUpsampler()
 	{
 		/// 11th order elliptic lowpass at 0.1fs
@@ -326,7 +276,6 @@ namespace signal
 	{
 		if (out.size() != 10) { throw std::invalid_argument("Output span must have a size of 10."); }
 		out[0] = sample;
-		// Fill the rest of the span with zeros
 		std::fill(out.begin() + 1, out.end(), 0);
 		_filter->filter(out);
 	}

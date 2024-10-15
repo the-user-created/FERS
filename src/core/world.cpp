@@ -2,11 +2,6 @@
 * @file world.cpp
 * @brief Implementation of the World class for the radar simulation environment.
 *
-* This file contains the implementation of the World class,
-* which manages various objects involved in the radar simulation, such as platforms,
-* transmitters, receivers, targets, antennas, radar signals, and timing sources.
-* It includes methods for adding these objects to the simulation and for handling multipath surface interactions.
-*
 * @authors David Young, Marc Brooker
 * @date 2006-04-25
 */

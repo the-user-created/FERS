@@ -3,7 +3,7 @@
         <!ATTLIST simulation name CDATA #REQUIRED>
 
         <!-- Simulation Parameters -->
-        <!ELEMENT parameters (starttime,endtime,c?,interprate?,rate?,randomseed?,adc_bits?,oversample?,export?)>
+        <!ELEMENT parameters (starttime,endtime,rate,c?,interprate?,randomseed?,adc_bits?,oversample?,export?)>
         <!ELEMENT starttime (#PCDATA)> <!-- Start time of simulation -->
         <!ELEMENT endtime (#PCDATA)> <!-- End time of simulation -->
         <!ELEMENT c (#PCDATA)> <!-- Propagation speed -->

@@ -2,13 +2,6 @@
 * @file falpha_branch.h
 * @brief Implementation of the FAlphaBranch class for noise generation.
 *
-* This file contains the definition of the FAlphaBranch class, which is responsible for generating noise
-* using a fractional integrator filter.
-* It includes methods for handling noise generation across multiple stages using upsampling,
-* filtering, and recursive sample calculations.
-* The class is designed to handle fractional and integer noise components
-* and provides a mechanism for high-pass filtering and shaping the generated noise.
-*
 * @authors David Young, Marc Brooker
 * @date 2024-09-17
 */
@@ -28,18 +21,13 @@ namespace noise
     * @brief Class responsible for generating fractional and integer noise components.
     *
     * The FAlphaBranch class generates noise by applying a fractional integrator filter. It uses a series of
-    * filters and upsamplers to process and shape the noise signal. This class is non-copyable and works recursively
-    * to handle multiple stages of noise processing. It includes high-pass filtering, integration, and
-    * fractional shaping for various types of noise generation.
+    * filters and upsamplers to process and shape the noise signal.
     */
 	class FAlphaBranch
 	{
 	public:
 		/**
 		* @brief Constructor for FAlphaBranch.
-		*
-		* Initializes a new FAlphaBranch instance with the given fractional and integer noise components.
-		* The branch may also be linked to a previous stage (pre) for recursive noise generation.
 		*
 		* @param ffrac Fractional part of the noise generation (e.g., 0.5 for 1/f noise).
 		* @param fint Integer part of the noise generation (e.g., 1 for integration).
@@ -48,20 +36,14 @@ namespace noise
 		*/
 		FAlphaBranch(RealType ffrac, unsigned fint, std::unique_ptr<FAlphaBranch> pre, bool last) noexcept;
 
-		/// Default destructor.
 		~FAlphaBranch() = default;
-
-		/// Delete copy constructor to prevent copying of the FAlphaBranch.
 		FAlphaBranch(const FAlphaBranch&) = delete;
-
-		/// Delete copy assignment operator to prevent copying of the FAlphaBranch.
 		FAlphaBranch& operator=(const FAlphaBranch&) = delete;
+		FAlphaBranch(FAlphaBranch&&) = delete;
+		FAlphaBranch& operator=(FAlphaBranch&&) = delete;
 
 		/**
 		* @brief Retrieves the current noise sample.
-		*
-		* This method returns the current noise sample, either by retrieving it from the buffer or by
-		* calculating a new sample if this is the final stage in the noise processing.
 		*
 		* @return The current noise sample.
 		*/
@@ -69,9 +51,6 @@ namespace noise
 
 		/**
 		* @brief Flushes the branch with a new scaling factor.
-		*
-		* This method reinitializes the noise generation process and applies a new scale to the previous
-		* stage's noise sample.
 		*
 		* @param scale New scale factor to apply to the previous stage.
 		*/
@@ -94,62 +73,36 @@ namespace noise
 		/// Calculates a new noise sample.
 		RealType calcSample() noexcept;
 
-		/**
-		* @brief Filter used for shaping the noise signal.
-		*/
-		std::unique_ptr<signal::IirFilter> _shape_filter;
+		std::unique_ptr<signal::IirFilter> _shape_filter; ///< Filter used for shaping the noise signal.
 
-		/**
-		* @brief Filter used for integrating the noise signal.
-		*/
-		std::unique_ptr<signal::IirFilter> _integ_filter;
+		std::unique_ptr<signal::IirFilter> _integ_filter; ///< Filter used for integrating the noise signal.
 
-		/**
-		* @brief High-pass filter to remove low-frequency components from the noise.
-		*/
-		std::unique_ptr<signal::IirFilter> _highpass;
+		std::unique_ptr<signal::IirFilter> _highpass; ///< High-pass filter to remove low-frequency components from the noise.
 
-		/**
-		* @brief Upsampler for generating higher-frequency noise components.
-		*/
-		std::unique_ptr<signal::DecadeUpsampler> _upsampler;
+		std::unique_ptr<signal::DecadeUpsampler> _upsampler; ///< Upsampler for generating higher-frequency noise components.
 
-		/**
-		* @brief Previous FAlphaBranch in the chain for recursive noise processing.
-		*/
-		std::unique_ptr<FAlphaBranch> _pre;
+		std::unique_ptr<FAlphaBranch> _pre; ///< Previous FAlphaBranch in the chain for recursive noise processing.
 
-		/// Gain factor for shaping filter.
-		RealType _shape_gain{1.0};
+		RealType _shape_gain{1.0}; ///< Gain factor for shaping filter.
 
-		/// Gain factor for integration filter.
-		RealType _integ_gain{1.0};
+		RealType _integ_gain{1.0}; ///< Gain factor for integration filter.
 
-		/// Scaling factor for the upsampled noise.
-		RealType _upsample_scale{};
+		RealType _upsample_scale{}; ///< Scaling factor for the upsampled noise.
 
-		/// Buffer for storing upsampled noise samples.
-		std::vector<RealType> _buffer{};
+		std::vector<RealType> _buffer{}; ///< Buffer for storing upsampled noise samples.
 
-		/// Number of samples currently in the buffer.
-		unsigned _buffer_samples{};
+		unsigned _buffer_samples{}; ///< Number of samples currently in the buffer.
 
-		/// Fractional part of the noise generation.
-		RealType _ffrac;
+		RealType _ffrac; ///< Fractional part of the noise generation.
 
-		/// Integer part of the noise generation.
-		RealType _fint;
+		RealType _fint; ///< Integer part of the noise generation.
 
-		/// Offset applied to the final noise sample.
-		RealType _offset_sample{};
+		RealType _offset_sample{}; ///< Offset applied to the final noise sample.
 
-		/// Flag indicating if the offset sample has been retrieved.
-		bool _got_offset{false};
+		bool _got_offset{false}; ///< Flag indicating if the offset sample has been retrieved.
 
-		/// Scale factor for the previous stage's noise output.
-		RealType _pre_scale{1.0};
+		RealType _pre_scale{1.0}; ///< Scale factor for the previous stage's noise output.
 
-		/// Indicates if this is the last branch in the noise processing chain.
-		bool _last;
+		bool _last; ///< Indicates if this is the last branch in the noise processing chain.
 	};
 }

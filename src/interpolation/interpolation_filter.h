@@ -2,10 +2,6 @@
  * @file interpolation_filter.h
  * @brief Interpolation filter implementation using Kaiser windowing.
  *
- * This file provides the declaration of the `InterpFilter` class, which is used for generating
- * interpolation filters using the Kaiser window function. The class is a singleton and provides
- * methods for filter computation, including the use of sinc and Kaiser window functions for interpolation.
- *
  * @author David Young
  * @date 2024-09-12
  */
@@ -24,19 +20,18 @@ namespace interp
 	/**
 	 * @class InterpFilter
 	 * @brief Provides methods to generate interpolation filters using Kaiser windows.
-	 *
-	 * The `InterpFilter` class is a singleton responsible for generating and managing interpolation filters.
-	 * It uses the sinc function and Kaiser windowing method to compute the filters.
-	 * The class maintains a table of precomputed filters to optimize performance during filter generation.
 	 */
 	class InterpFilter
 	{
 	public:
+		InterpFilter(const InterpFilter&) = delete;
+		InterpFilter(InterpFilter&&) = delete;
+		InterpFilter& operator=(const InterpFilter&) = delete;
+		InterpFilter& operator=(InterpFilter&&) = delete;
+		~InterpFilter() = default;
+
 		/**
 		 * @brief Computes the sinc function for a given input.
-		 *
-		 * This method calculates the sinc function (sin(πx) / πx) for interpolation purposes.
-		 * If the input is zero, it returns 1 to avoid division by zero.
 		 *
 		 * @param x The input value for which the sinc function is computed.
 		 * @return The computed sinc value.
@@ -73,9 +68,6 @@ namespace interp
 
 		/**
 		 * @brief Retrieves the singleton instance of the `InterpFilter` class.
-		 *
-		 * This method returns the singleton instance of the `InterpFilter` class, ensuring that
-		 * only one instance exists throughout the application.
 		 *
 		 * @return The singleton instance of the `InterpFilter` class.
 		 */

@@ -2,8 +2,6 @@
 * @file geometry_ops.cpp
 * @brief Implementation of geometry classes.
 *
-* This file implements the Vec3, SVec3, and Matrix3 classes for handling 3D vector and matrix operations.
-*
 * @authors David Young, Marc Brooker
 * @date 2006-05-26
 */
@@ -40,7 +38,6 @@ namespace math
 		return *this;
 	}
 
-	// Multiplication by a 3x3 matrix
 	Vec3& Vec3::operator*=(const Matrix3& m) noexcept
 	{
 		const RealType* mat = m.getData();
@@ -67,7 +64,6 @@ namespace math
 		return *this;
 	}
 
-	// Constructor with a rectangular vector
 	SVec3::SVec3(const Vec3& vec) noexcept : length(vec.length())
 	{
 		elevation = std::asin(vec.z / length);

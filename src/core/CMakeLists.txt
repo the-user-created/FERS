@@ -3,6 +3,7 @@ set(SRCS
 	world.cpp
 	arg_parser.cpp
 	sim_threading.cpp
+	thread_pool.cpp
 )
 
 set(HEADERS
@@ -12,6 +13,7 @@ set(HEADERS
 	world.h
 	arg_parser.h
 	sim_threading.h
+	thread_pool.h
 )
 
 target_sources(${PROJECT_NAME} PRIVATE ${SRCS} ${HEADERS})

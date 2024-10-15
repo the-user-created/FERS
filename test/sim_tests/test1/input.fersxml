@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Test CW radar. One Monostatic radar and one moving non-linear target -->
-<!DOCTYPE simulation SYSTEM "../../xml_schema/fers-xml.dtd">
+<!DOCTYPE simulation SYSTEM "fers-xml.dtd">
 <simulation name="CW_Monostatic_Moving_Target_Test">
     <parameters>
         <starttime>0.0</starttime>
         <endtime>1.0</endtime>
+        <rate>1e6</rate>
         <c>299792458.0</c>
         <interprate>1e6</interprate>
-        <rate>1e6</rate>
         <randomseed>12345</randomseed>
         <export csv="true" binary="true" xml="true"/>
     </parameters>

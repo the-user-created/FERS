@@ -2,12 +2,6 @@
 * @file world.h
 * @brief Header file for the World class in the simulator.
 *
-* The World-class encapsulates the simulation world,
-* managing various radar-related objects such as platforms, transmitters,
-* receivers, targets, antennas, radar signals, and timing sources.
-* It provides functionality for adding and retrieving these objects,
-* as well as processing multipath effects within the simulation.
-*
 * @authors David Young, Marc Brooker
 * @date 2006-04-25
 */
@@ -33,28 +27,16 @@ namespace core
 	/**
 	* @class World
 	* @brief The World class manages the simulator environment.
-	*
-	* The World class is responsible for maintaining and organizing various radar simulation objects,
-	* including platforms, transmitters, receivers, targets, antennas, radar signals, and timing mechanisms.
-	* It provides methods for adding and retrieving these components
-	* and handles multipath surface effects during simulation.
 	*/
 	class World
 	{
 	public:
-		/**
-	    * @brief Default constructor.
-	    *
-	    * Constructs an empty simulation world.
-	    */
 		World() = default;
-
-		/**
-		* @brief Default destructor.
-		*
-		* Cleans up resources when the world object is destroyed.
-		*/
 		~World() noexcept = default;
+		World(const World&) = delete;
+		World& operator=(const World&) = delete;
+		World(World&&) = delete;
+		World& operator=(World&&) = delete;
 
 		/**
 		* @brief Adds a radar platform to the simulation world.
@@ -178,44 +160,13 @@ namespace core
 		void processMultipath();
 
 	private:
-		/**
-		* @brief Stores the platforms in the simulation world.
-		*/
 		std::vector<std::unique_ptr<radar::Platform>> _platforms;
-
-		/**
-		* @brief Stores the transmitters in the simulation world.
-		*/
 		std::vector<std::unique_ptr<radar::Transmitter>> _transmitters;
-
-		/**
-		* @brief Stores the receivers in the simulation world.
-		*/
 		std::vector<std::unique_ptr<radar::Receiver>> _receivers;
-
-		/**
-		* @brief Stores the targets in the simulation world.
-		*/
 		std::vector<std::unique_ptr<radar::Target>> _targets;
-
-		/**
-		* @brief Maps signal names to RadarSignal objects.
-		*/
 		std::unordered_map<std::string, std::unique_ptr<signal::RadarSignal>> _pulses;
-
-		/**
-		* @brief Maps antenna names to Antenna objects.
-		*/
 		std::unordered_map<std::string, std::unique_ptr<antenna::Antenna>> _antennas;
-
-		/**
-		* @brief Maps timing source names to PrototypeTiming objects.
-		*/
 		std::unordered_map<std::string, std::unique_ptr<timing::PrototypeTiming>> _timings;
-
-		/**
-		* @brief Stores the multipath surface in the simulation world.
-		*/
 		std::unique_ptr<math::MultipathSurface> _multipath_surface;
 	};
 }
