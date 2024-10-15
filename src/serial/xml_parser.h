@@ -2,11 +2,6 @@
 * @file xml_parser.h
 * @brief Header file for parsing XML configuration files for simulation.
 *
-* This file declares functions used for parsing XML configuration files that define
-* various elements of the simulation, including pulses, antennas, platforms, transmitters,
-* receivers, motion paths, and more. It also includes helper functions for parsing and validating
-* XML files.
-*
 * @author David Young
 * @date 2024-10-03
 */

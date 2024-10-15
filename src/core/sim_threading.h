@@ -4,8 +4,6 @@
  *
  * This file contains the definitions and classes necessary for running a threaded simulation.
  * It includes classes that handle simulations for transmitter-receiver pairs and rendering processes for each receiver.
- * The goal is to use multithreading to run simulations in parallel,
- * improving the performance and efficiency of the system.
  *
  * @authors David Young, Marc Brooker
  * @date 2006-07-19
@@ -18,6 +16,10 @@
 #include <utility>
 
 #include "config.h"
+
+namespace pool {
+	class ThreadPool;
+}
 
 namespace radar
 {
@@ -32,9 +34,6 @@ namespace core
 	/**
      * @struct ReResults
      * @brief Stores the results of a radar simulation.
-     *
-     * Contains information about power, delay, Doppler shift, phase,
-     * and noise temperature resulting from radar simulations.
      */
 	struct ReResults
 	{
@@ -48,17 +47,12 @@ namespace core
 	/**
 	 * @class RangeError
 	 * @brief Exception class for range calculation errors.
-	 *
-	 * Thrown when an error occurs during the range calculations in the radar simulation.
-	 * This error class provides a custom exception message for issues encountered while processing range estimation.
 	 */
 	class RangeError final : public std::exception
 	{
 	public:
 		/**
 		 * @brief Provides the error message for the exception.
-		 *
-		 * Returns a constant character pointer containing the error message.
 		 *
 		 * @return The error message string.
 		 */
@@ -76,15 +70,11 @@ namespace core
 	public:
 		/**
 		 * @brief Alias for a task function.
-		 *
-		 * Defines a task function as a std::function object.
 		 */
 		using Task = std::function<void()>;
 
 		/**
 		 * @brief Constructs a TaskThread object.
-		 *
-		 * Constructs a TaskThread object with the specified task and task name.
 		 *
 		 * @param task The task to be executed.
 		 * @param taskName The name of the task.
@@ -93,8 +83,6 @@ namespace core
 
 		/**
 		 * @brief Executes the task.
-		 *
-		 * Executes the task stored in the object.
 		 */
 		void operator()() const;
 
@@ -103,13 +91,5 @@ namespace core
 		std::string _task_name; ///< The name of the task.
 	};
 
-	/**
-	 * @brief Runs the simulation in a multithreaded environment.
-	 *
-	 * This function runs the simulation in a multithreaded environment, using the specified number of threads.
-	 *
-	 * @param threadLimit The maximum number of threads to use.
-	 * @param world Pointer to the world object that holds the simulation environment.
-	 */
-	void runThreadedSim(unsigned threadLimit, const World* world);
+	void runThreadedSim(const World* world, pool::ThreadPool& pool);
 }

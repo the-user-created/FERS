@@ -15,9 +15,10 @@
 #include <filesystem>
 #include <format>
 #include <fstream>
+#include <future>
 #include <map>
-#include <numbers>
 #include <optional>
+#include <queue>
 #include <ranges>
 #include <stdexcept>
 #include <tuple>
@@ -29,8 +30,8 @@
 #include "config.h"
 #include "hdf5_handler.h"
 #include "libxml_wrapper.h"
-#include "response_renderer.h"
 #include "core/parameters.h"
+#include "core/thread_pool.h"
 #include "highfive/H5Exception.hpp"
 #include "libxml/xmlstring.h"
 #include "noise/noise_generators.h"
@@ -47,8 +48,6 @@ namespace
 	/**
 	 * @brief Open an HDF5 file for writing.
 	 *
-	 * Opens an HDF5 file for writing, overwriting the file if it already exists.
-	 *
 	 * @param recvName The name of the receiver, which will be used as the filename for the HDF5 export.
 	 * @return An optional HighFive::File object representing the opened file, or std::nullopt if binary export is disabled.
 	 * @throws std::runtime_error If the file cannot be opened.
@@ -61,7 +60,6 @@ namespace
 
 		try
 		{
-			// HighFive::File::Truncate will overwrite the file if it already exists
 			HighFive::File file(hdf5_filename, HighFive::File::Overwrite);
 			return file;
 		}
@@ -73,8 +71,6 @@ namespace
 
 	/**
 	 * @brief Add noise to a window of complex samples.
-	 *
-	 * Adds white Gaussian noise to a window of complex samples based on the specified temperature.
 	 *
 	 * @param data A span of ComplexType objects representing the window of complex samples to add noise to.
 	 * @param temperature The noise temperature in Kelvin. If the temperature is 0, no noise is added.
@@ -99,9 +95,6 @@ namespace
 	/**
 	 * @brief Simulate an ADC quantization process on a window of complex samples.
 	 *
-	 * Simulates an ADC quantization process on a window of complex samples, rounding each sample to the nearest
-	 * quantization level based on the number of bits and full-scale value.
-	 *
 	 * @param data A span of ComplexType objects representing the window of complex samples to quantize.
 	 * @param bits The number of bits used for quantization.
 	 * @param fullscale The full-scale value used for quantization.
@@ -124,16 +117,11 @@ namespace
 	/**
 	 * @brief Quantize a window of complex samples to the nearest quantization level.
 	 *
-	 * Quantizes a window of complex samples to the nearest quantization level based on the maximum absolute value
-	 * across the real and imaginary parts of the samples. The samples are normalized to the full-scale value
-	 * before quantization.
-	 *
 	 * @param data A span of ComplexType objects representing the window of complex samples to quantize.
 	 * @return The full-scale value used for quantization.
 	 */
 	RealType quantizeWindow(std::span<ComplexType> data)
 	{
-		// Find the maximum absolute value across real and imaginary parts
 		RealType max_value = 0;
 
 		for (const auto& sample : data)
@@ -143,7 +131,6 @@ namespace
 
 			max_value = std::max({max_value, real_abs, imag_abs});
 
-			// Check for NaN in both real and imaginary parts
 			if (std::isnan(real_abs) || std::isnan(imag_abs))
 			{
 				LOG(logging::Level::FATAL, "NaN encountered in QuantizeWindow -- early");
@@ -151,7 +138,6 @@ namespace
 			}
 		}
 
-		// Simulate ADC if adcBits parameter is greater than 0
 		if (const auto adc_bits = params::adcBits(); adc_bits > 0) { adcSimulate(data, adc_bits, max_value); }
 		else if (max_value != 0)
 		{
@@ -159,7 +145,6 @@ namespace
 			{
 				sample /= max_value;
 
-				// Re-check for NaN after normalization
 				if (std::isnan(sample.real()) || std::isnan(sample.imag()))
 				{
 					LOG(logging::Level::FATAL, "NaN encountered in QuantizeWindow -- late");
@@ -173,9 +158,6 @@ namespace
 
 	/**
 	 * @brief Generate phase noise samples for a window.
-	 *
-	 * Generates phase noise samples for a window based on the receiver timing model, window size, and sample rate.
-	 * The phase noise samples are used to modulate the phase of the window samples.
 	 *
 	 * @param recv A pointer to the radar::Receiver object containing receiver data.
 	 * @param wSize The size of the window in samples.
@@ -226,9 +208,6 @@ namespace
 	/**
 	 * @brief Add phase noise to a window of complex samples.
 	 *
-	 * Adds phase noise to a window of complex samples by modulating the phase of each sample using the phase noise
-	 * samples. The phase noise samples are generated based on the receiver timing model and window size.
-	 *
 	 * @param noise A span of RealType objects representing the phase noise samples.
 	 * @param window A span of ComplexType objects representing the window of complex samples to add phase noise to.
 	 */
@@ -252,29 +231,161 @@ namespace
 			}
 		}
 	}
+
+	/**
+	 * @brief Process a response and add the response data to the window.
+	 *
+	 * @param resp A pointer to a Response object representing the response to process.
+	 * @param localWindow A reference to a vector of ComplexType objects representing the local window of complex samples.
+	 * @param rate The sample rate in Hz.
+	 * @param start The start time of the window in seconds.
+	 * @param fracDelay The fractional delay of the window in seconds.
+	 * @param localWindowSize The size of the local window in samples.
+	 */
+	void processResponse(const serial::Response* resp, std::vector<ComplexType>& localWindow, const RealType rate,
+	                     const RealType start, const RealType fracDelay, unsigned localWindowSize)
+	{
+		unsigned psize;
+		RealType prate;
+		auto array = resp->renderBinary(prate, psize, fracDelay);
+		int start_sample = static_cast<int>(std::round(rate * (resp->startTime() - start)));
+		const unsigned roffset = start_sample < 0 ? -start_sample : 0;
+		if (start_sample < 0) { start_sample = 0; }
+
+		for (unsigned i = roffset; i < psize && i + start_sample < localWindowSize; ++i)
+		{
+			localWindow[i + start_sample] += array[i];
+		}
+	}
+
+	/**
+	 * @brief Process responses sequentially using a single thread.
+	 *
+	 * @param workList A reference to a queue of Response pointers representing the list of responses to process.
+	 * @param window A reference to a vector of ComplexType objects representing the window of complex samples to render.
+	 * @param rate The sample rate in Hz.
+	 * @param start The start time of the window in seconds.
+	 * @param fracDelay The fractional delay of the window in seconds.
+	 * @param localWindowSize The size of the local window in samples.
+	 */
+	void sequentialProcessing(std::queue<serial::Response*>& workList, std::vector<ComplexType>& window,
+	                          const RealType rate, const RealType start, const RealType fracDelay,
+	                          const unsigned localWindowSize)
+	{
+		std::vector local_window(localWindowSize, ComplexType{});
+
+		while (!workList.empty())
+		{
+			const auto* resp = workList.front();
+			workList.pop();
+			processResponse(resp, local_window, rate, start, fracDelay, localWindowSize);
+		}
+
+		for (unsigned i = 0; i < localWindowSize; ++i) { window[i] += local_window[i]; }
+	}
+
+	/**
+	 * @brief Process responses in parallel using multiple threads.
+	 *
+	 * @param workList A reference to a queue of Response pointers representing the list of responses to process.
+	 * @param window A reference to a vector of ComplexType objects representing the window of complex samples to render.
+	 * @param rate The sample rate in Hz.
+	 * @param start The start time of the window in seconds.
+	 * @param fracDelay The fractional delay of the window in seconds.
+	 * @param localWindowSize The size of the local window in samples.
+	 * @param pool A reference to the ThreadPool object used for parallel processing.
+	 * @param numThreads The number of threads to use for parallel processing.
+	 */
+	void parallelProcessing(std::queue<serial::Response*>& workList, std::vector<ComplexType>& window,
+	                        const RealType rate, const RealType start, const RealType fracDelay,
+	                        const unsigned localWindowSize, pool::ThreadPool& pool, const unsigned numThreads)
+	{
+		std::mutex window_mutex, work_list_mutex;
+		auto worker = [&]
+		{
+			std::vector local_window(localWindowSize, ComplexType{});
+
+			while (true)
+			{
+				const serial::Response* resp = nullptr;
+				{
+					std::scoped_lock lock(work_list_mutex);
+					if (workList.empty()) { break; }
+					resp = workList.front();
+					workList.pop();
+				}
+				processResponse(resp, local_window, rate, start, fracDelay, localWindowSize);
+			}
+
+			std::scoped_lock lock(window_mutex);
+			for (unsigned i = 0; i < localWindowSize; ++i) { window[i] += local_window[i]; }
+		};
+
+		std::vector<std::future<void>> futures;
+		for (unsigned i = 0; i < numThreads; ++i) { futures.push_back(pool.enqueue(worker)); }
+
+		for (auto& future : futures) { future.get(); }
+	}
+
+	/**
+	 * @brief Render a window of complex samples using multiple threads.
+	 *
+	 * @param window A vector of ComplexType objects representing the window of complex samples to render.
+	 * @param length The length of the window in seconds.
+	 * @param start The start time of the window in seconds.
+	 * @param fracDelay The fractional delay of the window in seconds.
+	 * @param responses A span of unique_ptr objects representing the list of responses to render.
+	 * @param pool A reference to the ThreadPool object used for parallel processing.
+	 */
+	void renderWindow(std::vector<ComplexType>& window, const RealType length, const RealType start,
+	                  const RealType fracDelay, const std::span<const std::unique_ptr<serial::Response>> responses,
+	                  pool::ThreadPool& pool)
+	{
+		const RealType end = start + length;
+		std::queue<serial::Response*> work_list;
+
+		for (const auto& response : responses)
+		{
+			if (response->startTime() <= end && response->endTime() >= start) { work_list.push(response.get()); }
+		}
+
+		unsigned num_responses = work_list.size();
+		unsigned available_threads = pool.getAvailableThreads();
+		const RealType rate = params::rate() * params::oversampleRatio();
+		const auto local_window_size = static_cast<unsigned>(std::ceil(length * rate));
+
+		if (num_responses < 8 || available_threads <= 1)
+		{
+			LOG(logging::Level::TRACE, "Using sequential processing for rendering: {} threads available, {} responses",
+			    available_threads, num_responses);
+			sequentialProcessing(work_list, window, rate, start, fracDelay, local_window_size);
+		}
+		else
+		{
+			const unsigned num_threads = std::min(available_threads, num_responses);
+			LOG(logging::Level::TRACE, "Using {} threads for rendering: {} available, {} responses", num_threads,
+			    available_threads, num_responses);
+			parallelProcessing(work_list, window, rate, start, fracDelay, local_window_size, pool, num_threads);
+		}
+	}
 }
 
 namespace serial
 {
 	void exportReceiverXml(std::span<const std::unique_ptr<Response>> responses, const std::string& filename)
 	{
-		// Create a new XML document
 		const XmlDocument doc;
 
-		// Create the root element for the document
 		xmlNodePtr root_node = xmlNewNode(nullptr, reinterpret_cast<const xmlChar*>("receiver"));
 		XmlElement root(root_node);
 
-		// Set the root element for the document
 		doc.setRootElement(root);
 
-		// Iterate over the responses and call renderXml on each, passing the root element
 		for (const auto& response : responses)
 		{
-			response->renderXml(root); // Assuming renderXml modifies the XML tree
+			response->renderXml(root);
 		}
 
-		// Save the document to file
 		if (const fs::path file_path = fs::path(filename).replace_extension(".fersxml"); !doc.
 			saveFile(file_path.string()))
 		{
@@ -287,15 +398,12 @@ namespace serial
 	{
 		std::map<std::string, std::unique_ptr<std::ofstream>> streams;
 
-		// Iterate over each response in the vector, using structured bindings and ranges
 		for (const auto& response : responses)
 		{
 			const std::string& transmitter_name = response->getTransmitterName();
 
-			// Use `std::map::try_emplace` to simplify checking and insertion
 			auto [it, inserted] = streams.try_emplace(transmitter_name, nullptr);
 
-			// If the stream for this transmitter is being inserted, open a new file
 			if (inserted)
 			{
 				fs::path file_path = fs::path(filename).concat("_").concat(transmitter_name).replace_extension(".csv");
@@ -309,46 +417,37 @@ namespace serial
 					throw std::runtime_error("Could not open file " + file_path.string() + " for writing");
 				}
 
-				// Assign the opened file stream to the map entry
 				it->second = std::move(of);
 			}
 
-			// Render the CSV for the current response
 			response->renderCsv(*it->second);
 		}
 	}
 
 	void exportReceiverBinary(const std::span<const std::unique_ptr<Response>> responses, const radar::Receiver* recv,
-	                          const std::string& recvName)
+	                          const std::string& recvName, pool::ThreadPool& pool)
 	{
-		// Bail if there are no responses to export
 		if (responses.empty()) { return; }
 
-		// Open HDF5 file for writing
 		std::optional<HighFive::File> out_bin = openHdf5File(recvName);
 
-		// Create a threaded render object to manage the rendering process
-		const ThreadedResponseRenderer thr_renderer(responses, recv, params::renderThreads());
+		const unsigned window_count = recv->getWindowCount();
 
-		// Retrieve the window count from the receiver
-		const int window_count = recv->getWindowCount();
+		const RealType length = recv->getWindowLength();
+		const RealType rate = params::rate() * params::oversampleRatio();
+		const auto size = static_cast<unsigned>(std::ceil(length * rate));
 
-		// Loop through each window
-		for (int i = 0; i < window_count; ++i)
+		RealType carrier;
+		bool pn_enabled;
+
+		for (unsigned i = 0; i < window_count; ++i)
 		{
-			const RealType length = recv->getWindowLength();
-			const RealType rate = params::rate() * params::oversampleRatio();
-			auto size = static_cast<unsigned>(std::ceil(length * rate));
-
-			// Generate phase noise samples for the window
-			RealType carrier;
-			bool pn_enabled;
 			auto pnoise = generatePhaseNoise(recv, size, rate, carrier, pn_enabled);
 
 			// Get the window start time, including clock drift effects
-			RealType start = recv->getWindowStart(i) + pnoise[0] / (2 * std::numbers::pi * carrier);
+			RealType start = recv->getWindowStart(i) + pnoise[0] / (2 * PI * carrier);
 
-			// Calculate the fractional delay using structured bindings
+			// Calculate the fractional delay
 			const auto [round_start, frac_delay] = [&start, rate]
 			{
 				RealType rounded_start = std::round(start * rate) / rate;
@@ -357,43 +456,23 @@ namespace serial
 			}();
 			start = round_start;
 
-			// Allocate memory for the window using std::vector
 			std::vector<ComplexType> window(size);
 
-			// Add noise to the window
 			addNoiseToWindow(window, recv->getNoiseTemperature());
 
-			// Render the window using the threaded renderer
-			thr_renderer.renderWindow(window, length, start, frac_delay);
+			renderWindow(window, length, start, frac_delay, responses, pool);
 
-			// Downsample the window if the oversample ratio is greater than 1
-			if (params::oversampleRatio() > 1)
-			{
-				// Calculate the new size after downsampling
-				const unsigned new_size = size / params::oversampleRatio();
+			if (params::oversampleRatio() > 1) { window = std::move(signal::downsample(window)); }
 
-				// Perform downsampling
-				std::vector<ComplexType> tmp(new_size);
-				signal::downsample(window, tmp, params::oversampleRatio());
-
-				// Replace the window with the downsampled one
-				size = new_size;
-				window = std::move(tmp);
-			}
-
-			// Add phase noise to the window if enabled
 			if (pn_enabled) { addPhaseNoiseToWindow(pnoise, window); }
 
-			// Normalize and quantize the window
 			const RealType fullscale = quantizeWindow(window);
 
-			// Export the binary format if enabled, using HighFive to write to the HDF5 file
-			if (params::exportBinary() && out_bin)
+			if (out_bin)
 			{
 				try
 				{
-					// Use HighFive to add the data chunks to the HDF5 file
-					serial::addChunkToFile(*out_bin, window, size, start, params::rate(), fullscale, i);
+					serial::addChunkToFile(*out_bin, window, start, fullscale, i);
 				}
 				catch (const std::exception& e)
 				{

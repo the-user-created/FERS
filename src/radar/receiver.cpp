@@ -2,10 +2,6 @@
  * @file receiver.cpp
  * @brief Implementation of the Receiver class.
  *
- * The `Receiver` class extends the `Radar` class to provide additional features
- * related to signal reception, such as noise temperature management, window properties, and response collection.
- * It supports multiple configuration flags and the ability to work in dual receiver mode.
- *
  * @authors David Young, Marc Brooker
  * @date 2024-10-07
  */
@@ -33,7 +29,6 @@ namespace radar
 
 	int Receiver::getResponseCount() const noexcept
 	{
-		std::lock_guard lock(_responses_mutex);
 		return static_cast<int>(_responses.size());
 	}
 
@@ -47,49 +42,31 @@ namespace radar
 		_noise_temperature = temp;
 	}
 
-	void Receiver::render()
+	void Receiver::render(pool::ThreadPool& pool)
 	{
-		try
-		{
-			std::unique_lock lock(_responses_mutex, std::try_to_lock);
-			if (!lock.owns_lock())
-			{
-				LOG(logging::Level::FATAL, "Responses lock is locked during Render()");
-				throw std::runtime_error("Responses lock is locked during Render()");
-			}
+		std::ranges::sort(_responses, serial::compareTimes);
 
-			std::ranges::sort(_responses, serial::compareTimes);
-
-			// Export based on user preferences
-			if (params::exportXml()) { exportReceiverXml(_responses, getName() + "_results"); }
-			if (params::exportBinary()) { exportReceiverBinary(_responses, this, getName() + "_results"); }
-			if (params::exportCsv()) { exportReceiverCsv(_responses, getName() + "_results"); }
-
-			lock.unlock();
-		}
-		catch (const std::system_error&)
-		{
-			LOG(logging::Level::FATAL, "Responses lock is locked during Render()");
-			throw std::runtime_error("Responses lock is locked during Render()");
-		}
+		if (params::exportXml()) { exportReceiverXml(_responses, getName() + "_results"); }
+		if (params::exportCsv()) { exportReceiverCsv(_responses, getName() + "_results"); }
+		if (params::exportBinary()) { exportReceiverBinary(_responses, this, getName() + "_results", pool); }
 	}
 
 	void Receiver::setWindowProperties(const RealType length, const RealType prf, const RealType skip) noexcept
 	{
 		const auto rate = params::rate() * params::oversampleRatio();
 		_window_length = length;
-		_window_prf = 1 / (std::floor(rate / prf) / rate); // Update prf to precise value
-		_window_skip = std::floor(rate * skip) / rate; // Update skip with better precision
+		_window_prf = 1 / (std::floor(rate / prf) / rate);
+		_window_skip = std::floor(rate * skip) / rate;
 	}
 
-	int Receiver::getWindowCount() const noexcept
+	unsigned Receiver::getWindowCount() const noexcept
 	{
 		const RealType time = params::endTime() - params::startTime();
 		const RealType pulses = time * _window_prf;
-		return static_cast<int>(std::ceil(pulses));
+		return static_cast<unsigned>(std::ceil(pulses));
 	}
 
-	RealType Receiver::getWindowStart(const int window) const
+	RealType Receiver::getWindowStart(const unsigned window) const
 	{
 		const RealType stime = static_cast<RealType>(window) / _window_prf + _window_skip;
 		if (!_timing)

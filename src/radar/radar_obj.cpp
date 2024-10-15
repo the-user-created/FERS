@@ -22,11 +22,6 @@ using math::MultipathSurface;
 
 namespace radar
 {
-	// =================================================================================================================
-	//
-	// RADAR CLASS
-	//
-	// =================================================================================================================
 	RealType Radar::getGain(const math::SVec3& angle, const math::SVec3& refangle,
 	                        const RealType wavelength) const { return _antenna->getGain(angle, refangle, wavelength); }
 
@@ -87,14 +82,8 @@ namespace radar
 		}
 	}
 
-	// =================================================================================================================
-	//
-	// MULTIPATH DUAL FUNCTION
-	//
-	// =================================================================================================================
-
 	template <typename T>
-	T* createMultipathDualBase(T* obj, const MultipathSurface* surf) // NOLINT(misc-no-recursion)
+	T* createMultipathDualBase(T* obj, const MultipathSurface* surf)
 	{
 		if (obj->getDual())
 		{

@@ -2,11 +2,6 @@
  * @file arg_parser.cpp
  * @brief Implementation of the command-line argument parser for the application.
  *
- * This file provides the implementation of functions that handle parsing command-line arguments,
- * displaying help and version information, and validating input configurations.
- * It supports setting options like logging level, number of threads,
- * and script file input, with error handling and validation.
- *
  * @author David Young
  * @date 2024-09-20
  */
@@ -31,8 +26,6 @@ namespace
 	/**
 	 * @brief Checks if the given file has a valid log file extension.
 	 *
-	 * This function ensures that the log file has a valid extension, either `.log` or `.txt`.
-	 *
 	 * @param filePath The path of the log file.
 	 * @return true if the file has a valid extension, false otherwise.
 	 */
@@ -46,9 +39,6 @@ namespace
 
 	/**
 	 * @brief Parses the logging level from a string representation.
-	 *
-	 * This function converts a string to the corresponding logging level.
-	 * If the provided string does not match a valid logging level, it returns `std::nullopt`.
 	 *
 	 * @param level The string representation of the logging level.
 	 * @return std::optional<Level> The corresponding logging level, or `std::nullopt` if invalid.
@@ -67,6 +57,113 @@ namespace
 		if (const auto it = LEVEL_MAP.find(level); it != LEVEL_MAP.end()) { return it->second; }
 		return std::nullopt;
 	}
+
+	/**
+	 * @brief Handles the log-level argument and sets the logging level.
+	 *
+	 * @param arg The log-level argument string.
+	 * @param config The configuration object to update.
+	 * @return std::expected<void, std::string> An expected object with an error message if the log level is invalid.
+	 */
+	std::expected<void, std::string> handleLogLevel(const std::string& arg, core::Config& config) noexcept
+	{
+		const std::string level_str = arg.substr(12);
+		if (const auto level = parseLogLevel(level_str))
+		{
+			config.log_level = *level;
+			return {};
+		}
+
+		LOG(Level::ERROR, "Invalid log level '" + level_str + "'");
+		return std::unexpected("Invalid log level: " + level_str);
+	}
+
+	/**
+	 * @brief Handles the log-file argument and sets the log file path.
+	 *
+	 * @param arg The log-file argument string.
+	 * @param config The configuration object to update.
+	 * @return std::expected<void, std::string> An expected object with an error message if the log file path is invalid.
+	 */
+	std::expected<void, std::string> handleLogFile(const std::string& arg, core::Config& config) noexcept
+	{
+		if (std::string log_file_path = arg.substr(11); isValidLogFileExtension(log_file_path))
+		{
+			config.log_file = log_file_path;
+			return {};
+		}
+		else
+		{
+			LOG(Level::ERROR, "Invalid log file extension. Log file must have .log or .txt extension.");
+			return std::unexpected("Invalid log file extension: " + log_file_path);
+		}
+	}
+
+	/**
+	 * @brief Handles the number of threads argument and sets the number of threads.
+	 *
+	 * @param arg The number of threads argument string.
+	 * @param config The configuration object to update.
+	 * @return std::expected<void, std::string> An expected object with an error message if the number of threads is invalid.
+	 */
+	std::expected<void, std::string> handleNumThreads(const std::string& arg, core::Config& config) noexcept
+	{
+		try
+		{
+			config.num_threads = std::stoi(arg.substr(3));
+			if (config.num_threads == 0) { return std::unexpected("Number of threads must be greater than 0"); }
+
+			if (const unsigned max_threads = core::countProcessors(); config.num_threads > max_threads)
+			{
+				LOG(Level::WARNING,
+				    "Number of threads exceeds available processors. Defaulting to max processors.");
+				config.num_threads = max_threads;
+			}
+			return {};
+		}
+		catch (const std::exception&) { return std::unexpected("Invalid number of threads specified."); }
+	}
+
+	/**
+	 * @brief Handles the command-line argument and updates the configuration.
+	 *
+	 * @param arg The command-line argument string.
+	 * @param config The configuration object to update.
+	 * @param scriptFileSet A flag indicating if the script file has been set.
+	 * @param programName The name of the program executable.
+	 * @return std::expected<void, std::string> An expected object with an error message if the argument is invalid.
+	 */
+	std::expected<void, std::string> handleArgument(const std::string& arg, core::Config& config, bool& scriptFileSet,
+	                                                const char* programName) noexcept
+	{
+		if (arg == "--help" || arg == "-h")
+		{
+			core::showHelp(programName);
+			return std::unexpected("Help requested.");
+		}
+		if (arg == "--version" || arg == "-v")
+		{
+			core::showVersion();
+			return std::unexpected("Version requested.");
+		}
+		if (arg.rfind("--log-level=", 0) == 0) { return handleLogLevel(arg, config); }
+		if (arg.rfind("--log-file=", 0) == 0) { return handleLogFile(arg, config); }
+		if (arg.rfind("-n=", 0) == 0) { return handleNumThreads(arg, config); }
+		if (arg == "--validate" || arg == "-val")
+		{
+			config.validate = true;
+			return {};
+		}
+		if (arg[0] != '-' && !scriptFileSet)
+		{
+			config.script_file = arg;
+			scriptFileSet = true;
+			return {};
+		}
+
+		LOG(Level::ERROR, "Unrecognized option or argument: '" + arg + "'");
+		return std::unexpected("Unrecognized argument: " + arg);
+	}
 }
 
 namespace core
@@ -75,7 +172,7 @@ namespace core
 	{
 		std::cout << R"(/------------------------------------------------\
 | FERS - The Flexible Extensible Radar Simulator |
-| Version 0.28                                   |
+| Version 1.00                                   |
 \------------------------------------------------/
 Usage: )" << programName << R"( <scriptfile> [options]
 
@@ -100,9 +197,13 @@ Make sure the script file follows the correct format to avoid errors.
 
 	void showVersion() noexcept
 	{
-		std::cout << "FERS - The Flexible Extensible Radar Simulator\n";
-		std::cout << "Version 0.28\n";
-		std::cout << "Author: Marc Brooker\n";
+		std::cout << R"(
+/------------------------------------------------\
+| FERS - The Flexible Extensible Radar Simulator |
+| Version 1.00                                   |
+| Author: Marc Brooker                           |
+\------------------------------------------------/
+)" << std::endl;
 	}
 
 	std::expected<Config, std::string> parseArguments(const int argc, char* argv[]) noexcept
@@ -118,75 +219,13 @@ Make sure the script file follows the correct format to avoid errors.
 
 		for (int i = 1; i < argc; ++i)
 		{
-			if (std::string arg = argv[i]; arg == "--help" || arg == "-h")
+			if (const auto result = handleArgument(argv[i], config, script_file_set, argv[0]); !result)
 			{
-				showHelp(argv[0]);
-				return std::unexpected("Help requested.");
-			}
-			else
-			{
-				if (arg == "--version" || arg == "-v")
-				{
-					showVersion();
-					return std::unexpected("Version requested.");
-				}
-				if (arg.rfind("--log-level=", 0) == 0)
-				{
-					std::string level_str = arg.substr(12);
-					if (auto level = parseLogLevel(level_str)) { config.log_level = *level; }
-					else
-					{
-						LOG(Level::ERROR, "Invalid log level '" + level_str + "'");
-						return std::unexpected("Invalid log level: " + level_str);
-					}
-				}
-				else if (arg.rfind("--log-file=", 0) == 0)
-				{
-					if (std::string log_file_path = arg.substr(11); isValidLogFileExtension(log_file_path))
-					{
-						config.log_file = log_file_path;
-					}
-					else
-					{
-						LOG(Level::ERROR, "Invalid log file extension. Log file must have .log or .txt extension.");
-						return std::unexpected("Invalid log file extension: " + log_file_path);
-					}
-				}
-				else if (arg.rfind("-n=", 0) == 0)
-				{
-					try
-					{
-						config.num_threads = std::stoi(arg.substr(3));
-						if (config.num_threads == 0)
-						{
-							return std::unexpected("Number of threads must be greater than 0");
-						}
-
-						if (const unsigned max_threads = countProcessors(); config.num_threads > max_threads)
-						{
-							LOG(Level::WARNING,
-							    "Number of threads exceeds available processors. Defaulting to max processors.");
-							config.num_threads = max_threads;
-						}
-					}
-					catch (const std::exception&) { return std::unexpected("Invalid number of threads specified."); }
-				}
-				else if (arg[0] != '-' && !script_file_set)
-				{
-					config.script_file = arg;
-					script_file_set = true;
-				}
-				else if (arg == "--validate" || arg == "-val") { config.validate = true; }
-				else
-				{
-					LOG(Level::ERROR, "Unrecognized option or argument: '" + arg + "'");
-					return std::unexpected("Unrecognized argument: " + arg);
-				}
+				return std::unexpected(result.error());
 			}
 		}
 
 		if (!script_file_set) { return std::unexpected("No script file provided."); }
-
 		return config;
 	}
 }

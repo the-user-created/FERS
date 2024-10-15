@@ -2,11 +2,6 @@
  * @file logging.cpp
  * @brief Implementation of the logging system.
  *
- * This file contains the implementation of the logging system defined in `logging.h`.
- * It handles logging messages with different log levels,
- * thread-safe logging, and output to both console and optional file.
- * The logger also includes timestamp generation and source location tracking for more detailed logs.
- *
  * @author David Young
  * @date 2024-09-20
  */
@@ -42,7 +37,6 @@ namespace logging
 		{
 			std::scoped_lock lock(_log_mutex);
 
-			// Extract only the filename from the full path
 			const std::string filename = std::filesystem::path(location.file_name()).filename().string();
 			const std::string file_line = filename + ":" + std::to_string(location.line());
 
@@ -52,10 +46,8 @@ namespace logging
 				<< "[" << std::setw(30) << std::left << file_line << "] "
 				<< message << std::endl;
 
-			// Log to console
 			std::cerr << oss.str();
 
-			// Log to file if opened
 			if (_log_file && _log_file->is_open()) { (*_log_file) << oss.str(); }
 		}
 	}

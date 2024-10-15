@@ -18,12 +18,6 @@
 
 namespace noise
 {
-	// =================================================================================================================
-	//
-	// MULTI-RATE GENERATOR CLASS
-	//
-	// =================================================================================================================
-
 	MultirateGenerator::MultirateGenerator(const RealType alpha, const unsigned branches)
 	{
 		const RealType beta = -(alpha - 2) / 2.0;
@@ -88,12 +82,6 @@ namespace noise
 
 		for (const auto& b : std::ranges::reverse_view(branches)) { b->flush(1.0); }
 	}
-
-	// =================================================================================================================
-	//
-	// CLOCK MODEL GENERATOR CLASS
-	//
-	// =================================================================================================================
 
 	ClockModelGenerator::ClockModelGenerator(const std::vector<RealType>& alpha, const std::vector<RealType>& inWeights,
 	                                         const RealType frequency, const RealType phaseOffset,

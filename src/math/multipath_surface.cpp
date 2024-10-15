@@ -1,8 +1,10 @@
-// multipath_surface.cpp
-// Implementation of multipath propagation
-// Original code by Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-// Modified by: David Young
-// 9 September 2007
+/**
+ * @file multipath_surface.cpp
+ * @brief Implementation of multipath propagation
+ *
+ * @authors David Young, Marc Brooker
+ * @date 2007-09-09
+ */
 
 #include "multipath_surface.h"
 
@@ -15,8 +17,7 @@ namespace math
 		: _factor(factor), _norm_factor(1 / (a * a + b * b + c * c)),
 		  _translation_vector{-2 * a * d, -2 * b * d, -2 * c * d}
 	{
-		// Initialize _reflection matrix directly using structured bindings
-		const auto mat = _reflection.getData(); // Assuming this returns a reference to the underlying array
+		const auto mat = _reflection.getData();
 		mat[0] = -a * a + b * b + c * c;
 		mat[4] = a * a - b * b + c * c;
 		mat[8] = a * a + b * b - c * c;
@@ -30,7 +31,7 @@ namespace math
 	Vec3 MultipathSurface::reflectPoint(const Vec3& b) const noexcept
 	{
 		Vec3 ans = b;
-		ans *= _reflection; // Matrix multiplication
+		ans *= _reflection;
 		ans -= _translation_vector;
 		ans *= _norm_factor;
 		return ans;

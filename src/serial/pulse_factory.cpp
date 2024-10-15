@@ -2,11 +2,6 @@
  * @file pulse_factory.cpp
  * @brief Implementation for loading pulse data into RadarSignal objects.
  *
- * This file provides the implementation of functions that load radar pulse data
- * from different file formats and create RadarSignal objects. It supports
- * loading pulse data from HDF5 and CSV files and handles their conversion
- * into RadarSignal instances.
- *
  * @authors David Young, Marc Brooker
  * @date 2024-09-12
  */
@@ -36,8 +31,6 @@ namespace
 	/**
 	 * @brief Loads a radar pulse from an HDF5 file and returns a RadarSignal object.
 	 *
-	 * This function loads pulse waveform data from the specified HDF5 file and creates a RadarSignal object.
-	 *
 	 * @param name The name of the radar signal.
 	 * @param filepath The path to the HDF5 file containing the pulse data.
 	 * @param power The power of the radar signal in the pulse.
@@ -59,8 +52,6 @@ namespace
 
 	/**
 	 * @brief Loads a radar pulse from a CSV file and returns a RadarSignal object.
-	 *
-	 * This function loads pulse waveform data from the specified CSV file and creates a RadarSignal object.
 	 *
 	 * @param name The name of the radar signal.
 	 * @param filepath The path to the CSV file containing the pulse data.
@@ -101,8 +92,6 @@ namespace
 
 	/**
 	 * @brief Checks if a filename has a specific extension.
-	 *
-	 * This function checks if the specified filename has the specified extension.
 	 *
 	 * @param filename The filename to check.
 	 * @param ext The extension to check for.

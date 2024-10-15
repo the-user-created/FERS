@@ -22,7 +22,7 @@ namespace math
 	{
 		const auto iter = std::lower_bound(_coords.begin(), _coords.end(), coord);
 		_coords.insert(iter, coord);
-		_final = false; // Invalidate finalization after insertion
+		_final = false;
 	}
 
 	SVec3 RotationPath::getPosition(const RealType t) const
@@ -53,14 +53,14 @@ namespace math
 		if (!_final)
 		{
 			if (_type == InterpType::INTERP_CUBIC) { finalizeCubic(_coords, _dd); }
-			_final = true; // Mark as finalized
+			_final = true;
 		}
 	}
 
 	void RotationPath::setInterp(const InterpType setinterp) noexcept
 	{
 		_type = setinterp;
-		_final = false; // Requiring re-finalization
+		_final = false;
 	}
 
 	void RotationPath::setConstantRate(const RotationCoord& setstart, const RotationCoord& setrate) noexcept
@@ -68,7 +68,7 @@ namespace math
 		_start = setstart;
 		_rate = setrate;
 		_type = InterpType::INTERP_CONSTANT;
-		_final = true; // Pre-finalized for constant rate motion
+		_final = true;
 	}
 
 	std::unique_ptr<RotationPath> reflectPath(const RotationPath* path, const MultipathSurface* surf)
