@@ -1,19 +1,27 @@
-<!-- DTD for FERS XML simulation script files with include element handling. -->
+<!-- FERS XML Document Type Definition -->
         <!ELEMENT simulation (parameters?, (pulse | timing | antenna | platform | include | multipath)*)>
         <!ATTLIST simulation name CDATA #REQUIRED>
 
         <!-- Simulation Parameters -->
         <!ELEMENT parameters (starttime,endtime,rate,c?,interprate?,randomseed?,adc_bits?,oversample?,export?)>
-        <!ELEMENT starttime (#PCDATA)> <!-- Start time of simulation -->
-        <!ELEMENT endtime (#PCDATA)> <!-- End time of simulation -->
-        <!ELEMENT c (#PCDATA)> <!-- Propagation speed -->
-        <!ELEMENT interprate (#PCDATA)> <!-- Position interpolation rate for CW -->
-        <!ELEMENT rate (#PCDATA)> <!-- Override the rendering sample rate with the specified one (Hz) -->
-        <!ELEMENT randomseed (#PCDATA)> <!-- Random seed for noise.
-         If this is not specified, time() is used -->
-        <!ELEMENT adc_bits (#PCDATA)> <!-- ADC bits for resolution -->
-        <!ELEMENT oversample (#PCDATA)> <!-- Oversampling factor -->
-        <!ELEMENT export EMPTY> <!-- Formats to export -->
+        <!-- Start time of simulation -->
+        <!ELEMENT starttime (#PCDATA)>
+        <!-- End time of simulation -->
+        <!ELEMENT endtime (#PCDATA)>
+        <!-- Propagation speed -->
+        <!ELEMENT c (#PCDATA)>
+        <!-- Position interpolation rate for CW -->
+        <!ELEMENT interprate (#PCDATA)>
+        <!-- Override the rendering sample rate with the specified one (Hz) -->
+        <!ELEMENT rate (#PCDATA)>
+        <!-- Random seed for noise -->
+        <!ELEMENT randomseed (#PCDATA)>
+        <!-- ADC bits for resolution -->
+        <!ELEMENT adc_bits (#PCDATA)>
+        <!-- Oversampling factor -->
+        <!ELEMENT oversample (#PCDATA)>
+        <!-- Formats to export -->
+        <!ELEMENT export EMPTY>
         <!ATTLIST export xml (true|false) "true">
         <!ATTLIST export csv (true|false) "true">
         <!ATTLIST export binary (true|false) "false">
@@ -25,24 +33,34 @@
                 filename CDATA #IMPLIED> <!-- Filename required only for specific types -->
 
         <!-- Pulse power and carrier frequency -->
-        <!ELEMENT power (#PCDATA)> <!-- Pulse power (Watts) -->
-        <!ELEMENT carrier (#PCDATA)> <!-- Frequency (Hz) -->
+        <!-- Pulse power (Watts) -->
+        <!ELEMENT power (#PCDATA)>
+        <!-- Frequency (Hz) -->
+        <!ELEMENT carrier (#PCDATA)>
 
         <!-- Timing Source -->
         <!ELEMENT timing (frequency,freq_offset?,random_freq_offset?,phase_offset?,random_phase_offset?,noise_entry*)>
         <!-- Timing source. Sets frequency -->
         <!ATTLIST timing name CDATA #REQUIRED
-                synconpulse (true|false) "true"> <!-- Sync on pulse flag -->
-        <!ELEMENT frequency (#PCDATA)> <!-- Frequency (Hz) -->
+                synconpulse (true|false) "true">
+
+        <!-- Frequency (Hz) -->
+        <!ELEMENT frequency (#PCDATA)>
 
         <!-- Noise Entry for timing -->
         <!ELEMENT noise_entry (alpha,weight)>
-        <!ELEMENT alpha (#PCDATA)> <!-- Noise category alpha -->
-        <!ELEMENT weight (#PCDATA)> <!-- Weighting of noise in the category -->
-        <!ELEMENT freq_offset (#PCDATA)> <!-- Offset from system frequency -->
-        <!ELEMENT random_freq_offset (#PCDATA)> <!-- Random frequency offset -->
-        <!ELEMENT phase_offset (#PCDATA)> <!-- Phase offset -->
-        <!ELEMENT random_phase_offset (#PCDATA)> <!-- Random phase offset -->
+        <!-- Noise category alpha -->
+        <!ELEMENT alpha (#PCDATA)>
+        <!-- Weighting of noise in the category -->
+        <!ELEMENT weight (#PCDATA)>
+        <!-- Offset from system frequency -->
+        <!ELEMENT freq_offset (#PCDATA)>
+        <!-- Random frequency offset -->
+        <!ELEMENT random_freq_offset (#PCDATA)>
+        <!-- Phase offset -->
+        <!ELEMENT phase_offset (#PCDATA)>
+        <!-- Random phase offset -->
+        <!ELEMENT random_phase_offset (#PCDATA)>
 
         <!-- Antenna -->
         <!ELEMENT antenna (alpha?,beta?,gamma?,diameter?,azscale?,elscale?,efficiency?)>
@@ -50,48 +68,61 @@
                 pattern CDATA #REQUIRED
                 filename CDATA #IMPLIED
                 module CDATA #IMPLIED
-                function CDATA #IMPLIED> <!-- Optional attributes for function and module -->
+                function CDATA #IMPLIED>
 
-        <!-- Parameters of antenna model (see doc/equations.tex) -->
+        <!-- Parameters of antenna model -->
+        <!-- Element for beta -->
         <!ELEMENT beta (#PCDATA)>
+        <!-- Element for gamma -->
         <!ELEMENT gamma (#PCDATA)>
+        <!-- Diameter of the antenna -->
         <!ELEMENT diameter (#PCDATA)>
-        <!ELEMENT azscale (#PCDATA)> <!-- Azimuth scale for a Gaussian pattern -->
-        <!ELEMENT elscale (#PCDATA)> <!-- Elevation scale for Gaussian pattern -->
-        <!ELEMENT efficiency (#PCDATA)> <!-- The antenna efficiency factor -->
+        <!-- Azimuth scale for a Gaussian pattern -->
+        <!ELEMENT azscale (#PCDATA)>
+        <!-- Elevation scale for Gaussian pattern -->
+        <!ELEMENT elscale (#PCDATA)>
+        <!-- The antenna efficiency factor -->
+        <!ELEMENT efficiency (#PCDATA)>
 
         <!-- Platform -->
         <!ELEMENT platform (motionpath,(rotationpath|fixedrotation),(monostatic|transmitter|receiver|target)?)>
         <!ATTLIST platform name CDATA #REQUIRED>
 
         <!-- Motion paths and Position Waypoints -->
-        <!ELEMENT motionpath (positionwaypoint*|pythonpath?)> <!-- Allow either position waypoints or a pythonpath -->
+        <!ELEMENT motionpath (positionwaypoint*|pythonpath?)>
         <!ATTLIST motionpath interpolation (static|linear|cubic|python) "static">
-        <!-- Added "python" as an interpolation option -->
 
         <!-- Pythonpath for custom interpolation -->
         <!ELEMENT pythonpath EMPTY> <!-- Pythonpath element for defining module and function -->
         <!ATTLIST pythonpath module CDATA #REQUIRED
-                function CDATA #REQUIRED> <!-- Pythonpath attributes -->
+                function CDATA #REQUIRED>
 
         <!-- Position Waypoints -->
         <!ELEMENT positionwaypoint (x,y,altitude,time)>
-        <!ELEMENT x (#PCDATA)> <!-- x position of waypoint -->
-        <!ELEMENT y (#PCDATA)> <!-- y position of waypoint -->
-        <!ELEMENT altitude (#PCDATA)> <!-- z (altitude) position of waypoint -->
-        <!ELEMENT time (#PCDATA)> <!-- Time the platform is at the waypoint -->
+        <!-- x position of waypoint -->
+        <!ELEMENT x (#PCDATA)>
+        <!-- y position of waypoint -->
+        <!ELEMENT y (#PCDATA)>
+        <!-- z (altitude) position of waypoint -->
+        <!ELEMENT altitude (#PCDATA)>
+        <!-- Time the platform is at the waypoint -->
+        <!ELEMENT time (#PCDATA)>
 
         <!-- Constant Rate Rotation -->
         <!ELEMENT fixedrotation (startazimuth,startelevation,azimuthrate,elevationrate)>
-        <!ELEMENT startazimuth (#PCDATA)> <!-- Azimuth at time 0 -->
-        <!ELEMENT startelevation (#PCDATA)> <!-- Elevation at time 0 -->
-        <!ELEMENT azimuthrate (#PCDATA)> <!-- Rate of change of azimuth -->
-        <!ELEMENT elevationrate (#PCDATA)> <!-- Rate of change of elevation -->
+        <!-- Azimuth at time 0 -->
+        <!ELEMENT startazimuth (#PCDATA)>
+        <!-- Elevation at time 0 -->
+        <!ELEMENT startelevation (#PCDATA)>
+        <!-- Rate of change of azimuth -->
+        <!ELEMENT azimuthrate (#PCDATA)>
+        <!-- Rate of change of elevation -->
+        <!ELEMENT elevationrate (#PCDATA)>
 
         <!-- Rotation Paths and Waypoints -->
         <!ELEMENT rotationpath (rotationwaypoint+)>
         <!ATTLIST rotationpath interpolation (static|linear|cubic) #REQUIRED>
-        <!ELEMENT rotationwaypoint (azimuth,elevation,time)> <!-- Waypoint along a rotation path -->
+        <!ELEMENT rotationwaypoint (azimuth,elevation,time)>
         <!ELEMENT azimuth (#PCDATA)>
         <!ELEMENT elevation (#PCDATA)>
 
@@ -101,9 +132,11 @@
                 type (pulsed|continuous) #REQUIRED
                 antenna CDATA #REQUIRED
                 pulse CDATA #REQUIRED
-                timing CDATA #REQUIRED>
-        <!ELEMENT prf (#PCDATA)> <!-- PRF required for pulse transmitters only -->
-        <!ELEMENT noise_temp (#PCDATA)> <!-- Noise temperature contributed by receiver -->
+                timing CDATA #REQUIRED
+                nodirect (true|false) "false"
+                nopropagationloss (true|false) "false">
+        <!ELEMENT prf (#PCDATA)>
+        <!ELEMENT noise_temp (#PCDATA)>
 
         <!-- Standalone Transmitter -->
         <!ELEMENT transmitter (prf)>
@@ -120,24 +153,28 @@
                 timing CDATA #REQUIRED
                 nodirect (true|false) "false"
                 nopropagationloss (true|false) "false">
-        <!ELEMENT window_skip (#PCDATA)> <!-- Time to skip after start of pulse before starting receiving (seconds) -->
-        <!ELEMENT window_length (#PCDATA)> <!-- Length of the range gate (seconds) -->
+        <!-- Time to skip after start of pulse before starting receiving (seconds) -->
+        <!ELEMENT window_skip (#PCDATA)>
+        <!-- Length of the range gate (seconds) -->
+        <!ELEMENT window_length (#PCDATA)>
 
         <!-- Target -->
-        <!ELEMENT target (rcs,model?)> <!-- Model is optional -->
+        <!ELEMENT target (rcs,model?)>
         <!ATTLIST target name CDATA #REQUIRED>
 
         <!-- RCS can either have a 'value' element or a 'filename' attribute -->
-        <!ELEMENT rcs (value?)> <!-- Target RCS -->
+        <!-- Target RCS -->
+        <!ELEMENT rcs (value?)>
         <!ATTLIST rcs type CDATA #REQUIRED
-                filename CDATA #IMPLIED> <!-- 'filename' is used when type="file" -->
+                filename CDATA #IMPLIED>
 
-        <!ELEMENT value (#PCDATA)> <!-- RCS value -->
+        <!-- RCS value -->
+        <!ELEMENT value (#PCDATA)>
 
         <!-- Model element with 'type' as an attribute and optional k element -->
-        <!ELEMENT model (k?)> <!-- Model can now include an optional 'k' element -->
+        <!ELEMENT model (k?)>
         <!ATTLIST model type CDATA #REQUIRED>
-        <!ELEMENT k (#PCDATA)> <!-- Element for 'k' value -->
+        <!ELEMENT k (#PCDATA)>
 
         <!-- Multipath Surface -->
         <!ELEMENT multipath (factor,nx,ny,nz,d)>

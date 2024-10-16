@@ -265,6 +265,8 @@
             <xs:attribute name="antenna" use="required"/>
             <xs:attribute name="pulse" use="required"/>
             <xs:attribute name="timing" use="required"/>
+            <xs:attribute name="nodirect" type="xs:boolean" default="false"/>
+            <xs:attribute name="nopropagationloss" type="xs:boolean" default="false"/>
         </xs:complexType>
     </xs:element>
 
