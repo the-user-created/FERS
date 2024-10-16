@@ -66,8 +66,8 @@ namespace pool
 
 				++_pending_tasks;
 				_tasks.emplace([task] { (*task)(); });
+				_condition.notify_one();
 			}
-			_condition.notify_one();
 			return res;
 		}
 
