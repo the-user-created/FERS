@@ -50,8 +50,8 @@ namespace pool
 		{
 			std::unique_lock lock(_queue_mutex);
 			_stop = true;
+			_condition.notify_all();
 		}
-		_condition.notify_all();
 		for (std::thread& worker : _workers) { worker.join(); }
 	}
 
