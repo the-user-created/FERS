@@ -33,7 +33,7 @@ namespace
 	{
 		static const std::vector<std::string> VALID_EXTENSIONS = {".log", ".txt"};
 		std::string extension = std::filesystem::path(filePath).extension().string();
-		std::ranges::transform(extension, extension.begin(), ::tolower);
+		std::ranges::transform(extension, extension.begin(), tolower);
 		return std::ranges::find(VALID_EXTENSIONS, extension) != VALID_EXTENSIONS.end();
 	}
 
