@@ -48,7 +48,7 @@ namespace logging
 
 			std::cerr << oss.str();
 
-			if (_log_file && _log_file->is_open()) { (*_log_file) << oss.str(); }
+			if (_log_file && _log_file->is_open()) { *_log_file << oss.str(); }
 		}
 	}
 
