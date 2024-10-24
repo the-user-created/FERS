@@ -172,7 +172,7 @@ namespace core
 	{
 		std::cout << R"(/------------------------------------------------\
 | FERS - The Flexible Extensible Radar Simulator |
-| Version 1.00                                   |
+| Version 1.0.0                                  |
 \------------------------------------------------/
 Usage: )" << programName << R"( <scriptfile> [options]
 
@@ -200,7 +200,7 @@ Make sure the script file follows the correct format to avoid errors.
 		std::cout << R"(
 /------------------------------------------------\
 | FERS - The Flexible Extensible Radar Simulator |
-| Version 1.00                                   |
+| Version 1.0.0                                  |
 | Author: Marc Brooker                           |
 \------------------------------------------------/
 )" << std::endl;
