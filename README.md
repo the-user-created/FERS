@@ -176,6 +176,9 @@ cd FERS # Navigate to the root directory of the FERS repository
 doxygen Doxyfile
 ```
 
+## Contributing
+If you would like to contribute to FERS, please refer to the [CONTRIBUTING.md](CONTRIBUTING.md) file for guidelines.
+
 ## License
 
 FERS is licensed under the GNU General Public License (GPL) v3. See the [LICENSE](LICENSE) file for more details.
