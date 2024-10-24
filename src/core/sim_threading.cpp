@@ -249,6 +249,7 @@ namespace
 
 		auto response = std::make_unique<Response>(signal->wave, trans);
 
+		// TODO: RangeError thrown here doesn't cause simulation to stop, but it should
 		try
 		{
 			if (point_count == 0)
