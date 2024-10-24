@@ -1,112 +1,181 @@
 # FERS—The Flexible Extensible Radar Simulator
 
-## NOTE: PLEASE REFER TO THE GIT WIKI FOR FURTHER INFORMATION
+[![Build Status](https://github.com/the-user-created/FERS/actions/workflows/CMake.yml/badge.svg)](https://github.com/the-user-created/FERS/actions/workflows/CMake.yml)
+[![GitHub issues](https://img.shields.io/github/issues/the-user-created/FERS.svg)](https://github.com/the-user-created/FERS/issues)
+[![License](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://opensource.org/licenses/GPL-3.0)
 
----
+## Overview
 
-FERS is a simulator for simulating the performance and output of a variety of radar systems.
-It is designed to support a wide range of traditional and modern radar system designs.
-FERS is currently under active development—this version is likely to contain many bugs,
-incomplete or missing features, incomplete or missing documentation and major inaccuracies.
+FERS (Flexible Extensible Radar Simulator) is a C++ radar simulation tool that models various radar systems, both
+traditional and modern.
+This simulator allows detailed signal-level simulations and performance assessments of radar systems under different
+conditions and configurations.
 
-FERS has been used to generate useful results for real-world projects, so it might be useful for your projects.
-Documentation is currently very sparse—it will be improved soon.
+The FERS software has been **modernized** to leverage modern C++ standards (C++20/23) for improved performance,
+maintainability, and modularity.
+Key enhancements include optimized multithreading, better memory management, and updated code features.
 
-The features which are currently implemented are:
+### Key Features
 
-* Creation of returns from arbitrary pulse shapes
-* Simple propagation, doppler and phase model
-* Modeling of Multistatic and Monostatic radar systems
-* Modeling of CW and Pulsed radars
-* Export to CSV, XML and HDF5 file formats
-* Proper range-gate and timing for pulsed radars
-* Modelling of 1/f noise on local oscillators
-* Effects of multipath propagation
+- Creation of radar signal returns, including Doppler and phase modeling
+- Simulation of Multistatic and Monostatic radar systems
+- Support for both CW (Continuous Wave) and Pulsed radars
+- Multipath propagation effects
+- Data export in CSV, XML, and HDF5 formats
+- Enhanced memory management using smart pointers
+- Multithreading with a global thread pool
 
-#### AUTHORS:
+### Authors
 
-FERS was written by:
+- Marc Brooker (Original Author)
+- Michael Inggs (Original Author)
+- David Young (Modernization and Refactor)
 
-Marc Brooker (marcbrooker@gmail.com)
+## Dependencies
 
-#### BUILDING FERS
+FERS relies on the following libraries:
 
-FERS depends on a number of external libraries, which you need to install before attempting to build FERS.
-The libraries you need to have installed are:
+- **HighFive** (included as a git submodule for HDF5 integration)
+- **libhdf5** (HDF5 support)
+- **libxml2** (XML handling)
+- **python3.11** (for additional scripting capabilities)
 
-* libhdf5
-* libxml2-dev
-* HighFive (included as a git submodule)
+> **Note**: The **Boost** library has been **completely removed** in this modernization, and **FFTW3** is no longer
+> required.
 
-On a Debian or Ubuntu system (or pretty much any other decent GNU/Linux distribution),
-these libraries should be available pre-packaged for your installing pleasure.
+## Installation Instructions
 
-FERS also depends on the cmake system.
-This system can generate makefiles, VC++ projects, KDevelop projects, and more from the FERS sources.
-Please install cmake before attempting to build FERS.
+### Local Installation on Ubuntu/Linux
 
-* Download and extract the tar ball.
-* Navigate to the extracted directory (by default: `cd fers/`)
-* Enter the following commands:
-    ```bash
-    mkdir build
-    cd build
-    cmake ../
-    make
-    ```
+You can also run FERS on **Windows 10** using **Windows Subsystem for Linux (WSL)**.
+However, installing FERS on Windows 10+ has not been tested, and therefore is not officially supported.
+For WSL setup instructions, refer to the
+appropriate [WSL setup guide](https://learn.microsoft.com/en-us/windows/wsl/install) (link to WSL setup).
 
--------------------------------------------------------------------------------------
-## NOTE: PLEASE REFER TO THE GIT WIKI FOR FURTHER INFORMATION ON SOLVING COMPILE ERRORS
--------------------------------------------------------------------------------------
+Before beginning, update your system’s package list and upgrade installed packages:
 
-A "fers" binary will then be placed in the "src" directory which can be copied to a location of your choice.
+```bash
+sudo apt-get update && sudo apt-get upgrade
+```
 
-FERS can be build in debug mode by replacing the `cmake ../` with `cmake -DCMAKE_BUILD_TYPE=Debug ../`
+#### Step 1: Install Dependencies
 
-Note it is advisable to use separate build folders for release and debug builds.
+Install the required libraries:
 
-FERS is written in standard C++ and should compile and run on many architectures and operating systems.
-Please report successes and failures of running this software on non-Linux and non-x86 platforms to the authors,
-so we can improve the software and make it more portable.
+```bash
+sudo apt-get install libhdf5-dev libhdf5-serial-dev libxml2-dev build-essential cmake python3.11 python3.11-venv
+sudo apt-get install cmake-qt-gui # Optional: CMake GUI
+```
 
-#### DOCUMENTATION
+> **Note**: If you encounter issues while trying to install python3.11, you may need to use the deadsnakes PPA:
+> ```bash
+> sudo add-apt-repository ppa:deadsnakes/ppa
+> sudo apt-get update
+> sudo apt-get install python3.11 python3.11-venv
+> ```
+> Then ensure to use -D PYTHON_EXECUTABLE=/usr/bin/python3.11 when running CMake.
 
-Documentation is available in the doc/ directory. Highlights include:
+#### Step 2: Clone the Repository
 
-doc/equations/equations.tex - All equations used by FERS in convenient LaTeX form
-fers-xml.dtd—DTD for the XML script file format
-fers-xml.xsd—XML Schema for the XML script file format
+Clone the FERS repository and initialize the submodules:
 
-#### THANKS
+```bash
+git clone --recursive https://github.com/the-user-created/FERS.git
+cd FERS
+```
 
-The authors of HighFive for making excellent software freely available.
+#### Step 3: Build FERS
 
-#### COPYRIGHT NOTICE
+Create a build directory, configure, and compile the project:
 
-FERS is covered by the following copyright notice.
-Should you wish to acquire a copy of FERS not covered by these terms,
-please contact the Department of Electrical Engineering at the University of Cape Town.
+```bash
+mkdir build && cd build
+cmake ..
+make -j$(nproc)
+```
 
-Please note that this copyright only covers the source code, program binaries and the build system of FERS.
-Any input files you create and results created by the simulator are not covered by this notice
-and remain copyright of their original author.
+The compiled `fers` binary will be placed in the `build/src/` directory.
 
-This copyright notice does not cover the source code of tinyxml (found in the tinyxml directory).
-Please see the file readme.txt in that directory for a copyright notice for that code.
-TinyXML can, however, be freely distributed along with the code of FERS.
+> **Note**: To build in Debug mode, replace `cmake ..` with:
 
-FERS - The Flexible Extensible Radar Simulator
-Copyright © 2006 Marc Brooker and Michael Inggs
+```bash
+cmake -DCMAKE_BUILD_TYPE=Debug ..
+```
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of version 2 of the GNU General Public License as
-published by the Free Software Foundation.
+It’s recommended to use separate build directories for release and debug builds.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU General Public License for more details.
+#### Step 4: Install FERS
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+Optionally, you can install FERS system-wide:
+
+```bash
+sudo make install
+sudo ldconfig
+```
+
+### Advanced Installation Notes for Ubuntu 15+
+
+Ubuntu versions 15+ may have issues with the HDF5 libraries. In such cases, manually link the libraries:
+
+```bash
+cmake -D FERS_LIB_HDF5="/usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5.so" \
+      -D FERS_LIB_HDF5_HL="/usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5_hl.so" \
+      -D CMAKE_CXX_FLAGS="-I/usr/include/hdf5/serial/" ../
+make -j$(nproc)
+sudo make install
+sudo ldconfig
+```
+
+You can use **CMake GUI** for manual configuration by navigating to the HDF5 paths as needed.
+
+## Regression Testing Suite
+
+The FERS modernization includes a comprehensive **regression testing suite**
+to ensure the accuracy and reliability of the simulation results after updates or changes to the codebase.
+This suite is located in the `test/sim_tests/` directory and contains multiple test cases,
+each stored in its own folder (e.g., `test1/`, `test2/`, etc.).
+
+### How the Regression Suite Works:
+
+* Each test case folder contains:
+    * The `.fersxml` and waveform file (`.csv` or `.h5`).
+    * Any additional files required to run the simulation.
+    * An `expected_output` folder, which holds the expected results for each test case.
+* To run the regression suite, first build the Release version of FERS in a directory named `build/` and then use the
+  `run_sim_tests.py` script, which automatically executes every test case and compares the output to the expected
+  results.
+* **CI Integration**: The regression suite is integrated with the Continuous Integration (CI) build.
+  The `run_sim_tests.py` script is invoked as part of the CI process,
+  and if any test case fails, the build will fail, ensuring that code changes do not introduce errors.
+
+To run the regression tests locally:
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python3 run_sim_tests.py
+```
+
+The script will report on the overall result of the test suite, including any test cases that fail.
+
+> **Note**: If any major changes are made to the codebase which are intended to change the output of the simulation, 
+> the expected results in the `expected_output` folders should be updated accordingly otherwise the regression tests
+> will fail.
+
+## Documentation
+
+For detailed documentation on FERS, refer to the `docs/` directory in the repository.
+
+### Doxygen Documentation
+
+The Doxygen documentation for FERS can be generated using the following steps:
+
+```bash
+cd FERS # Navigate to the root directory of the FERS repository
+doxygen Doxyfile
+```
+
+## License
+
+FERS is licensed under the GNU General Public License (GPL) v3. See the [LICENSE](LICENSE) file for more details.
