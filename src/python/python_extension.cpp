@@ -37,7 +37,7 @@ namespace python
 			const int version_value = getPythonVersionValue(major, minor, micro);
 
 			const int min_version = getPythonVersionValue(3, 7, 0);
-			const int max_version = getPythonVersionValue(3, 11, 10);
+			const int max_version = getPythonVersionValue(3, 11, 12);
 
 			if (const int incompatible_version = getPythonVersionValue(3, 12, 0); version_value >= incompatible_version) {
 				throw std::runtime_error("Python version " + std::to_string(major) + "." +
@@ -48,7 +48,7 @@ namespace python
 			if (version_value < min_version || version_value > max_version) {
 				throw std::runtime_error("Python version " + std::to_string(major) + "." +
 					std::to_string(minor) + "." + std::to_string(micro) +
-					" is not supported. Please use a version between 3.7 and 3.11.10.");
+					" is not supported. Please use a version between 3.7 and 3.11.12.");
 			}
 
 			LOG(Level::DEBUG, "Python version is within the supported range.");
