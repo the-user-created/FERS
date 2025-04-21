@@ -34,7 +34,7 @@ namespace noise
 		* @param pre Previous stage of the FAlphaBranch for recursive noise processing.
 		* @param last Specifies if this is the last branch in the chain of processing.
 		*/
-		FAlphaBranch(RealType ffrac, unsigned fint, std::unique_ptr<FAlphaBranch> pre, bool last) noexcept;
+		FAlphaBranch(RealType ffrac, unsigned fint, std::unique_ptr<FAlphaBranch> pre, bool last);
 
 		~FAlphaBranch() = default;
 		FAlphaBranch(const FAlphaBranch&) = delete;
@@ -54,7 +54,7 @@ namespace noise
 		*
 		* @param scale New scale factor to apply to the previous stage.
 		*/
-		void flush(RealType scale) noexcept;
+		void flush(RealType scale);
 
 		/**
 		* @brief Retrieves the previous branch in the chain.

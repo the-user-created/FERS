@@ -25,7 +25,7 @@ using signal::DecadeUpsampler;
 namespace noise
 {
 	FAlphaBranch::FAlphaBranch(RealType ffrac, unsigned fint, std::unique_ptr<FAlphaBranch> pre,
-	                           const bool last) noexcept
+	                           const bool last)
 		: _pre(std::move(pre)), _buffer(10), _ffrac(ffrac), _fint(fint), _last(last)
 	{
 		LOG(Level::TRACE, "Creating FAlphaBranch: ffrac={} fint={}", ffrac, fint);
@@ -148,7 +148,7 @@ namespace noise
 		_buffer_samples = 0;
 	}
 
-	void FAlphaBranch::flush(const RealType scale) noexcept
+	void FAlphaBranch::flush(const RealType scale)
 	{
 		init();
 		_pre_scale = scale;
