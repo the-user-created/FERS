@@ -13,7 +13,6 @@
 
 #include <exception>
 #include <functional>
-#include <utility>
 
 #include "config.h"
 
@@ -57,38 +56,6 @@ namespace core
 		 * @return The error message string.
 		 */
 		[[nodiscard]] const char* what() const noexcept override { return "Range error in RE calculations"; }
-	};
-
-	/**
-	 * @brief Class for managing tasks in a multithreaded environment.
-	 *
-	 * This class provides a simple interface for managing tasks in a multithreaded environment.
-	 * It defines a task as a std::function object and executes the task when called.
-	 */
-	class TaskThread
-	{
-	public:
-		/**
-		 * @brief Alias for a task function.
-		 */
-		using Task = std::function<void()>;
-
-		/**
-		 * @brief Constructs a TaskThread object.
-		 *
-		 * @param task The task to be executed.
-		 * @param taskName The name of the task.
-		 */
-		TaskThread(Task task, std::string taskName) : _task(std::move(task)), _task_name(std::move(taskName)) {}
-
-		/**
-		 * @brief Executes the task.
-		 */
-		void operator()() const;
-
-	private:
-		Task _task; ///< The task to be executed.
-		std::string _task_name; ///< The name of the task.
 	};
 
 	void runThreadedSim(const World* world, pool::ThreadPool& pool);

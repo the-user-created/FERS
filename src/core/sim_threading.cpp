@@ -9,7 +9,6 @@
 #include "sim_threading.h"
 
 #include <algorithm>
-#include <atomic>
 #include <cmath>
 #include <functional>
 #include <memory>
@@ -38,9 +37,6 @@ using signal::RadarSignal;
 using radar::TransmitterPulse;
 using serial::Response;
 using logging::Level;
-
-std::atomic threads{0};
-std::atomic error{false};
 
 namespace
 {
@@ -182,108 +178,68 @@ namespace
 	}
 
 	/**
-	 * @brief Adds a direct response for a transmitter-receiver pair.
+	 * @brief Simulates the radar signal interaction with a target or performs direct simulation.
 	 *
 	 * @param trans Pointer to the radar transmitter.
 	 * @param recv Pointer to the radar receiver.
 	 * @param signal Pointer to the radar signal pulse being simulated.
-	 * @throws core::RangeError If the transmitter or receiver is too close for accurate simulation.
-	 */
-	void addDirect(const Transmitter* trans, Receiver* recv, const TransmitterPulse* signal)
-	{
-		if (trans->getAttached() == recv) { return; }
-
-		const auto start_time = std::chrono::duration<RealType>(signal->time);
-		const auto end_time = start_time + std::chrono::duration<RealType>(signal->wave->getLength());
-		const auto sample_time = std::chrono::duration<RealType>(1.0 / params::cwSampleRate());
-		const int point_count = static_cast<int>(std::ceil(signal->wave->getLength() / sample_time.count()));
-
-		auto response = std::make_unique<Response>(signal->wave, trans);
-
-		try
-		{
-			for (int i = 0; i <= point_count; ++i)
-			{
-				const auto current_time = i < point_count ? start_time + i * sample_time : end_time;
-
-				core::ReResults results{};
-				solveReDirect(trans, recv, current_time, sample_time, signal->wave, results);
-
-				interp::InterpPoint point{
-					.power = results.power,
-					.time = current_time.count() + results.delay,
-					.delay = results.delay,
-					.doppler = results.doppler,
-					.phase = results.phase,
-					.noise_temperature = results.noise_temperature
-				};
-				response->addInterpPoint(point);
-			}
-		}
-		catch (const core::RangeError&)
-		{
-			LOG(Level::FATAL, "Receiver or Transmitter too close to Target for accurate simulation");
-			throw core::RangeError();
-		}
-
-		recv->addResponse(std::move(response));
-	}
-
-	/**
-	 * @brief Simulates the radar signal interaction with a target.
-	 *
-	 * @param trans Pointer to the radar transmitter.
-	 * @param recv Pointer to the radar receiver.
 	 * @param targ Pointer to the radar target.
-	 * @param signal Pointer to the radar signal pulse being simulated.
 	 * @throws core::RangeError If the transmitter or receiver is too close to the target for accurate simulation.
 	 * @throws std::runtime_error If no time points are available for execution.
 	 */
-	void simulateTarget(const Transmitter* trans, Receiver* recv, const Target* targ,
-	                    const TransmitterPulse* signal)
+	void simulateResponse(const Transmitter* trans, Receiver* recv, const TransmitterPulse* signal, const Target* targ = nullptr)
 	{
-		const auto start_time = std::chrono::duration<RealType>(signal->time);
-		const auto end_time = start_time + std::chrono::duration<RealType>(signal->wave->getLength());
-		const auto sample_time = std::chrono::duration<RealType>(1.0 / params::cwSampleRate());
-		const int point_count = static_cast<int>(std::ceil(signal->wave->getLength() / sample_time.count()));
+		if (targ == nullptr && trans->getAttached() == recv) { return; }
 
-		auto response = std::make_unique<Response>(signal->wave, trans);
+	    const auto start_time = std::chrono::duration<RealType>(signal->time);
+	    const auto end_time = start_time + std::chrono::duration<RealType>(signal->wave->getLength());
+	    const auto sample_time = std::chrono::duration<RealType>(1.0 / params::cwSampleRate());
+	    const int point_count = static_cast<int>(std::ceil(signal->wave->getLength() / sample_time.count()));
 
-		// TODO: RangeError thrown here doesn't cause simulation to stop, but it should
-		try
-		{
-			if (point_count == 0)
-			{
-				LOG(Level::FATAL, "No time points are available for execution!");
-				throw std::runtime_error("No time points are available for execution!");
-			}
-			for (int i = 0; i <= point_count; ++i)
-			{
-				const auto current_time = i < point_count
-					                          ? start_time + i * sample_time
-					                          : end_time;
+	    // Check for a valid point count in case of target simulation
+	    if (targ && point_count == 0)
+	    {
+	        LOG(Level::FATAL, "No time points are available for execution!");
+	        throw std::runtime_error("No time points are available for execution!");
+	    }
 
-				core::ReResults results{};
-				solveRe(trans, recv, targ, current_time, sample_time, signal->wave, results);
+	    auto response = std::make_unique<Response>(signal->wave, trans);
 
-				interp::InterpPoint point{
-					.power = results.power,
-					.time = current_time.count() + results.delay,
-					.delay = results.delay,
-					.doppler = results.doppler,
-					.phase = results.phase,
-					.noise_temperature = results.noise_temperature
-				};
-				response->addInterpPoint(point);
-			}
-		}
-		catch (const core::RangeError&)
-		{
-			LOG(Level::FATAL, "Receiver or Transmitter too close to Target for accurate simulation");
-			throw core::RangeError();
-		}
+	    try
+	    {
+	        for (int i = 0; i <= point_count; ++i)
+	        {
+	            const auto current_time = i < point_count ? start_time + i * sample_time : end_time;
 
-		recv->addResponse(std::move(response));
+	            core::ReResults results{};
+	            // If a target is provided, use target simulation; otherwise, direct simulation.
+	            if (targ)
+	            {
+	                solveRe(trans, recv, targ, current_time, sample_time, signal->wave, results);
+	            }
+	            else
+	            {
+	                solveReDirect(trans, recv, current_time, sample_time, signal->wave, results);
+	            }
+
+	            interp::InterpPoint point{
+	                .power = results.power,
+	                .time = current_time.count() + results.delay,
+	                .delay = results.delay,
+	                .doppler = results.doppler,
+	                .phase = results.phase,
+	                .noise_temperature = results.noise_temperature
+	            };
+	            response->addInterpPoint(point);
+	        }
+	    }
+	    catch (const core::RangeError&)
+	    {
+	        LOG(Level::FATAL, "Receiver or Transmitter too close for accurate simulation");
+	        throw core::RangeError();
+	    }
+
+	    recv->addResponse(std::move(response));
 	}
 
 	/**
@@ -305,10 +261,12 @@ namespace
 		{
 			trans->setPulse(&pulse, i);
 
-			std::ranges::for_each(world->getTargets(),
-			                      [&](const auto& target) { simulateTarget(trans, recv, target.get(), &pulse); });
+			std::ranges::for_each(world->getTargets(), [&](const auto& target)
+			{
+				simulateResponse(trans, recv, &pulse, target.get());
+			});
 
-			if (!recv->checkFlag(flag_nodirect)) { addDirect(trans, recv, &pulse); }
+			if (!recv->checkFlag(flag_nodirect)) { simulateResponse(trans, recv, &pulse); }
 		}
 	}
 }
