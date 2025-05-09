@@ -42,8 +42,7 @@ namespace noise
 			}
 
 			if (branch)
-			{
-				auto reduced_samples = samples / static_cast<long long>(std::pow(10.0, skip_branches));
+			{ const auto reduced_samples = samples / static_cast<long long>(std::pow(10.0, skip_branches));
 				for (long long i = 0; i < reduced_samples; ++i) { const_cast<FAlphaBranch*>(branch)->getSample(); }
 			}
 
@@ -54,6 +53,7 @@ namespace noise
 
 	void MultirateGenerator::createTree(const RealType fAlpha, const int fInt, const unsigned branches)
 	{
+		// TODO: Should move to the constructor
 		if (branches == 0)
 		{
 			LOG(logging::Level::FATAL, "Cannot create multirate noise generator with zero branches");

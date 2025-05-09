@@ -66,6 +66,7 @@ namespace antenna
 		 * @return The name of the antenna.
 		 */
 		[[nodiscard]] std::string getName() const noexcept { return _name; }
+
 		/**
 		 * @brief Computes the noise temperature of the antenna based on the angle.
 		 *

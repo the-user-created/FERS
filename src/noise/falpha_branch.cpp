@@ -32,6 +32,7 @@ namespace noise
 		_upsample_scale = std::pow(10, ffrac + fint + 0.5);
 		init();
 
+		// TODO: refill() is called twice upon construction if not _last, once in init() and once here.
 		if (!_last) { refill(); }
 	}
 
@@ -93,6 +94,7 @@ namespace noise
 				constexpr std::array<RealType, 3> i_num = {1.0f, 0.0f, 0.0f};
 				_integ_filter = std::make_unique<IirFilter>(i_den.data(), i_num.data(), i_num.size());
 			}
+			// TODO: Is this true?
 			else { throw std::runtime_error("Only alpha values between 2 and -2 are supported for noise generation"); }
 		}
 		_offset_sample = 0.0f;

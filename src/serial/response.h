@@ -78,7 +78,7 @@ namespace serial
 		*
 		* @param root XML element that will contain the response data.
 		*/
-		void renderXml(const XmlElement& root) noexcept;
+		void renderXml(const XmlElement& root) const noexcept;
 
 		/**
 		* @brief Renders the response as a CSV.
@@ -123,14 +123,6 @@ namespace serial
 		* @param point Interpolation point to be rendered.
 		*/
 		void renderResponseXml(const XmlElement& root, const interp::InterpPoint& point) const noexcept;
-
-		/**
-		* @brief Helper function to render a single interpolation point as CSV.
-		*
-		* @param of Output stream to write the CSV data to.
-		* @param point Interpolation point to be rendered.
-		*/
-		void renderResponseCsv(std::ofstream& of, const interp::InterpPoint& point) const noexcept;
 	};
 
 	/**

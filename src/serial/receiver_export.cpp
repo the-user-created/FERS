@@ -54,6 +54,7 @@ namespace
 	 */
 	std::optional<HighFive::File> openHdf5File(const std::string& recvName)
 	{
+		// TODO: unnecessary check as exportBinary() is already checked in the caller
 		if (!params::exportBinary()) { return std::nullopt; }
 
 		const auto hdf5_filename = std::format("{}.h5", recvName);
@@ -99,7 +100,7 @@ namespace
 	 * @param bits The number of bits used for quantization.
 	 * @param fullscale The full-scale value used for quantization.
 	 */
-	void adcSimulate(std::span<ComplexType> data, const unsigned bits, RealType fullscale) noexcept
+	void adcSimulate(std::span<ComplexType> data, const unsigned bits, const RealType fullscale) noexcept
 	{
 		const RealType levels = std::pow(2, bits - 1);
 
@@ -124,6 +125,7 @@ namespace
 	{
 		RealType max_value = 0;
 
+		// TODO: NaN checks are not needed
 		for (const auto& sample : data)
 		{
 			const RealType real_abs = std::fabs(sample.real());
@@ -243,11 +245,11 @@ namespace
 	 * @param localWindowSize The size of the local window in samples.
 	 */
 	void processResponse(const serial::Response* resp, std::vector<ComplexType>& localWindow, const RealType rate,
-	                     const RealType start, const RealType fracDelay, unsigned localWindowSize)
+	                     const RealType start, const RealType fracDelay, const unsigned localWindowSize)
 	{
 		unsigned psize;
 		RealType prate;
-		auto array = resp->renderBinary(prate, psize, fracDelay);
+		const auto array = resp->renderBinary(prate, psize, fracDelay);
 		int start_sample = static_cast<int>(std::round(rate * (resp->startTime() - start)));
 		const unsigned roffset = start_sample < 0 ? -start_sample : 0;
 		if (start_sample < 0) { start_sample = 0; }
@@ -354,6 +356,7 @@ namespace
 		const RealType rate = params::rate() * params::oversampleRatio();
 		const auto local_window_size = static_cast<unsigned>(std::ceil(length * rate));
 
+		// TODO: Magic numbers...
 		if (num_responses < 8 || available_threads <= 1)
 		{
 			LOG(logging::Level::TRACE, "Using sequential processing for rendering: {} threads available, {} responses",
@@ -372,7 +375,7 @@ namespace
 
 namespace serial
 {
-	void exportReceiverXml(std::span<const std::unique_ptr<Response>> responses, const std::string& filename)
+	void exportReceiverXml(const std::span<const std::unique_ptr<Response>> responses, const std::string& filename)
 	{
 		const XmlDocument doc;
 
@@ -468,17 +471,14 @@ namespace serial
 
 			const RealType fullscale = quantizeWindow(window);
 
-			if (out_bin)
+			try
 			{
-				try
-				{
-					serial::addChunkToFile(*out_bin, window, start, fullscale, i);
-				}
-				catch (const std::exception& e)
-				{
-					LOG(logging::Level::FATAL, "Error writing chunk to HDF5 file: {}", e.what());
-					throw std::runtime_error("Error writing chunk to HDF5 file: " + std::string(e.what()));
-				}
+				addChunkToFile(*out_bin, window, start, fullscale, i);
+			}
+			catch (const std::exception& e)
+			{
+				LOG(logging::Level::FATAL, "Error writing chunk to HDF5 file: {}", e.what());
+				throw std::runtime_error("Error writing chunk to HDF5 file: " + std::string(e.what()));
 			}
 		}
 	}

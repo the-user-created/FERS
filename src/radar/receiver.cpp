@@ -45,6 +45,7 @@ namespace radar
 	void Receiver::render(pool::ThreadPool& pool)
 	{
 		std::ranges::sort(_responses, serial::compareTimes);
+		// TODO: Should check here if there are any responses to render
 
 		if (params::exportXml()) { exportReceiverXml(_responses, getName() + "_results"); }
 		if (params::exportCsv()) { exportReceiverCsv(_responses, getName() + "_results"); }
