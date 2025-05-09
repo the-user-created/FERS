@@ -77,7 +77,7 @@ namespace serial
 		attachRsFloatNode(element, "phasedeg", point.phase / PI * 180);
 	}
 
-	void Response::renderXml(const XmlElement& root) noexcept
+	void Response::renderXml(const XmlElement& root) const noexcept
 	{
 		const XmlElement element = root.addChild("Response");
 
@@ -89,15 +89,13 @@ namespace serial
 		for (const auto& point : _points) { renderResponseXml(element, point); }
 	}
 
-	void Response::renderResponseCsv(std::ofstream& of, const InterpPoint& point) const noexcept
-	{
-		of << point.time << ", " << point.power << ", " << point.phase << ", " << _wave->getCarrier() * (1 - point.
-			doppler) << "\n";
-	}
-
 	void Response::renderCsv(std::ofstream& of) const noexcept
 	{
-		for (const auto& point : _points) { renderResponseCsv(of, point); }
+		for (const auto& point : _points)
+		{
+			of << point.time << ", " << point.power << ", " << point.phase << ", " << _wave->getCarrier() * (1 - point.
+				doppler) << "\n";
+		}
 	}
 
 	void Response::addInterpPoint(const InterpPoint& point) { _points.push_back(point); }

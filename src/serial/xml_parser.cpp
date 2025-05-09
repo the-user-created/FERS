@@ -235,6 +235,7 @@ namespace
 		try { timing_obj->setRandomPhaseOffset(get_child_real_type(timing, "random_phase_offset")); }
 		catch (XmlException&) { LOG(Level::WARNING, "Clock section '{}' does not specify random phase offset.", name); }
 
+		// TODO: Why set the frequency so late?
 		timing_obj->setFrequency(freq);
 
 		if (get_child_bool(timing, "synconpulse", true)) { timing_obj->setSyncOnPulse(); }
@@ -338,6 +339,7 @@ namespace
 					XmlElement::getSafeAttribute(python_path, "module"),
 					XmlElement::getSafeAttribute(python_path, "function")
 				);
+				// TODO: If the path is python defined, then the code should skip the while loop???
 			}
 			else
 			{
@@ -525,6 +527,11 @@ namespace
 			    receiver_obj->getName().c_str());
 		}
 
+		// TODO: These are required elements which are not enforced if not using XML validation
+		//  Should fail if:
+		//  - window_length is not specified or 0
+		//  - prf is not specified or 0
+		//  - window_skip is not specified or 0
 		receiver_obj->setWindowProperties(
 			get_child_real_type(receiver, "window_length"),
 			get_child_real_type(receiver, "prf"),
@@ -622,6 +629,8 @@ namespace
 
 	void parsePlatformElements(const XmlElement& platform, World* world, Platform* plat)
 	{
+		// TODO: No need for a while loop here, we can just parse the elements directly
+		//	 and we assume that each platform has only 1 of any given element (should throw exception if not)
 		unsigned element_index = 0;
 		while (true)
 		{
@@ -777,8 +786,8 @@ namespace
 		// Validate the combined document using in-memory schema data - DTD validation is less strict than XSD
 		if (!mainDoc.validateWithDtd(fers_xml_dtd))
 		{
-			LOG(Level::FATAL, "Combined XML file failed DTD validation!");
-			throw XmlException("Combined XML file failed DTD validation!");
+			LOG(Level::FATAL, "{} XML file failed DTD validation!", didCombine ? "Combined" : "Main");
+			throw XmlException("XML file failed DTD validation!");
 		}
 		LOG(Level::DEBUG, "{} XML file passed DTD validation.", didCombine ? "Combined" : "Main");
 
@@ -807,15 +816,15 @@ namespace serial
 
 		const bool did_combine = addIncludeFilesToMainDocument(main_doc, main_dir);
 
+		if (validate) { validateXml(did_combine, main_doc); }
+		else { LOG(Level::DEBUG, "Skipping XML validation."); }
+
 		const XmlElement root = main_doc.getRootElement();
 		if (root.name() != "simulation")
 		{
 			LOG(Level::FATAL, "Root element is not <simulation>!");
 			throw XmlException("Root element is not <simulation>!");
 		}
-
-		if (validate) { validateXml(did_combine, main_doc); }
-		else { LOG(Level::DEBUG, "Skipping XML validation."); }
 
 		parseParameters(root.childElement("parameters", 0));
 		parseElements(root, "pulse", world, parsePulse);

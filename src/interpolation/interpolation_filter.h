@@ -8,7 +8,6 @@
 
 #pragma once
 
-#include <cmath>
 #include <expected>
 #include <span>
 #include <vector>

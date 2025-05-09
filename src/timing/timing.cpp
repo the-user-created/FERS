@@ -22,6 +22,7 @@ namespace timing
 
 	void Timing::initializeModel(const PrototypeTiming* timing) noexcept
 	{
+		// TODO: Should just return here is _alphas is empty?
 		if (!_alphas.empty()) { LOG(Level::ERROR, "Timing source already initialized."); }
 
 		timing->copyAlphas(_alphas, _weights);
