@@ -114,13 +114,16 @@ namespace
 		)
 	{
 		constexpr double control_point_angle = 45.0 * PI / 180.0;
-		constexpr double control_point_distance = 111319.9;
+		const double dx_meters = (longitude4 - longitude1) * std::cos(latitude1 * PI / 180.0) * 111319.9;
+		const double dy_meters = (latitude4 - latitude1) * 111319.9;
+		const double segment_dist_meters = std::sqrt(dx_meters * dx_meters + dy_meters * dy_meters);
+		const double control_point_offset = segment_dist_meters / 3.0;
 		const double x2 = longitude1 +
-			control_point_distance * cos(control_point_angle) / (cos(latitude1 * PI / 180) * 111319.9);
-		const double y2 = latitude1 + control_point_distance * sin(control_point_angle) / 111319.9;
+			control_point_offset * cos(control_point_angle) / (cos(latitude1 * PI / 180) * 111319.9);
+		const double y2 = latitude1 + control_point_offset * sin(control_point_angle) / 111319.9;
 		const double x3 = longitude4 -
-			control_point_distance * cos(control_point_angle) / (cos(latitude4 * PI / 180) * 111319.9);
-		const double y3 = latitude4 - control_point_distance * sin(control_point_angle) / 111319.9;
+			control_point_offset * cos(control_point_angle) / (cos(latitude4 * PI / 180) * 111319.9);
+		const double y3 = latitude4 - control_point_offset * sin(control_point_angle) / 111319.9;
 		const double one_minus_t = 1 - t;
 		const double t2 = t * t;
 		const double t3 = t2 * t;
