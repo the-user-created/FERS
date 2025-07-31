@@ -37,7 +37,7 @@ namespace python
 			const int version_value = getPythonVersionValue(major, minor, micro);
 
 			const int min_version = getPythonVersionValue(3, 7, 0);
-			const int max_version = getPythonVersionValue(3, 11, 12);
+			const int max_version = getPythonVersionValue(3, 11, 13);
 
 			if (const int incompatible_version = getPythonVersionValue(3, 12, 0); version_value >= incompatible_version) {
 				throw std::runtime_error("Python version " + std::to_string(major) + "." +
