@@ -22,6 +22,7 @@
 #include "core/sim_threading.h"
 #include "core/thread_pool.h"
 #include "core/world.h"
+#include "serial/kml_generator.h"
 #include "serial/xml_parser.h"
 
 using logging::Level;
@@ -55,7 +56,7 @@ int main(const int argc, char* argv[])
 	}
 
 	// Structured bindings for the configuration options
-	const auto& [script_file, log_level, num_threads, validate, log_file] = config_result.value();
+	const auto& [script_file, log_level, num_threads, validate, log_file, kml_output_file] = config_result.value();
 
 	// Set the logging level
 	logging::logger.setLevel(log_level);
@@ -76,6 +77,19 @@ int main(const int argc, char* argv[])
 
 	try
 	{
+		// If KML generation is requested, generate the KML file and exit
+		if (kml_output_file)
+		{
+			LOG(Level::INFO, "Generating KML file for scenario: {}", script_file);
+			if (serial::KmlGenerator generator; generator.generateKml(script_file, *kml_output_file))
+			{
+				LOG(Level::INFO, "KML file generated successfully: {}", *kml_output_file);
+				return 0;
+			}
+			LOG(Level::FATAL, "Failed to generate KML file for scenario: {}", script_file);
+			return 1;
+		}
+
 		// Set the number of threads to use for the simulation
 		if (const auto result = params::setThreads(num_threads); !result)
 		{

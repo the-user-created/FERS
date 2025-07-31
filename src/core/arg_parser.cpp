@@ -154,6 +154,11 @@ namespace
 			config.validate = true;
 			return {};
 		}
+		if (arg.rfind("--kml=", 0) == 0)
+		{
+			config.kml_output_file = arg.substr(6);
+			return {};
+		}
 		if (arg[0] != '-' && !scriptFileSet)
 		{
 			config.script_file = arg;
@@ -180,6 +185,7 @@ Options:
   --help, -h              Show this help message and exit
   --version, -v           Show version information and exit
   --validate, -val		  Validate the input .fersxml file and run the simulation.
+  --kml=<file>            Generate a KML visualization of the scenario and exit.
   --log-level=<level>     Set the logging level (TRACE, DEBUG, INFO, WARNING, ERROR, FATAL)
   --log-file=<file>       Log output to the specified .log or .txt file as well as the console.
   -n=<threads>            Number of threads to use
