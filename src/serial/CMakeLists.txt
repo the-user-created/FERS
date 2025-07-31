@@ -5,6 +5,7 @@ set(SRCS
 	response.cpp
 	libxml_wrapper.cpp
 	xml_parser.cpp
+	kml_generator.cpp
 )
 
 set(HEADERS
@@ -14,6 +15,7 @@ set(HEADERS
 	response.h
 	libxml_wrapper.h
 	xml_parser.h
+	kml_generator.h
 )
 
 target_sources(${PROJECT_NAME} PRIVATE ${SRCS} ${HEADERS})
