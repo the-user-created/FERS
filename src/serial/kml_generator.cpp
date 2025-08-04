@@ -6,13 +6,19 @@
 #include <iomanip>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <optional>
 #include <sstream>
 #include <string>
 #include <vector>
 
+#include <GeographicLib/Geodesic.hpp>
+#include <GeographicLib/LocalCartesian.hpp>
+
 #include "config.h"
 #include "core/logging.h"
+#include "math/coord.h"
+#include "math/path.h"
 #include "serial/libxml_wrapper.h"
 
 namespace
@@ -73,65 +79,34 @@ namespace
 
 	std::string getCoordinatesFromPositionWaypoint
 	(
-		const XmlElement& positionWaypointElement, const double referenceLatitude,
-		const double referenceLongitude, const double referenceAltitude
+		const XmlElement& positionWaypointElement,
+		const GeographicLib::LocalCartesian& proj,
+		const double referenceAltitude
 		)
 	{
 		const double x = std::stod(positionWaypointElement.childElement("x", 0).getText());
 		const double y = std::stod(positionWaypointElement.childElement("y", 0).getText());
 		const double altitude = std::stod(positionWaypointElement.childElement("altitude", 0).getText());
-		const double longitude = referenceLongitude + x / (cos(referenceLatitude * PI / 180) * 111319.9);
-		const double latitude = referenceLatitude + y / 111319.9;
-		const double altitude_above_ground = altitude - referenceAltitude;
+
+		// local ENU 'up' coordinate is absolute altitude minus reference altitude
+		const double z_enu = altitude - referenceAltitude;
+		double lat, lon, alt_abs;
+		proj.Reverse(x, y, z_enu, lat, lon, alt_abs);
+
+		const double altitude_above_ground = alt_abs - referenceAltitude;
 		std::stringstream coordinates;
-		coordinates << std::fixed << std::setprecision
-			(6) << longitude << "," << latitude << "," << altitude_above_ground;
+		coordinates << std::fixed << std::setprecision(6) << lon << "," << lat << "," << altitude_above_ground;
 		return coordinates.str();
 	}
 
 	void calculateDestinationCoordinate
 	(
-		const double startLatitude, const double startLongitude, const double angle, double distance,
+		const double startLatitude, const double startLongitude, const double angle, const double distance,
 		double& destLatitude, double& destLongitude
 		)
 	{
-		constexpr double r = 6371000; // Earth's radius in meters
-		const double d = distance / r; // Angular distance in radians
-		const double start_lat_rad = startLatitude * PI / 180;
-		const double start_lon_rad = startLongitude * PI / 180;
-		const double angle_rad = angle * PI / 180;
-		const double dest_lat_rad = asin(sin(start_lat_rad) * cos(d) + cos(start_lat_rad) * sin(d) * cos(angle_rad));
-		const double dest_lon_rad = start_lon_rad +
-			atan2(sin(angle_rad) * sin(d) * cos(start_lat_rad), cos(d) - sin(start_lat_rad) * sin(dest_lat_rad));
-		destLatitude = dest_lat_rad * 180 / PI;
-		destLongitude = dest_lon_rad * 180 / PI;
-	}
-
-	void updateLongitudeLatitudeCubic
-	(
-		double& newLongitude, double& newLatitude, const double t, const double longitude1,
-		const double latitude1, const double longitude4, const double latitude4
-		)
-	{
-		constexpr double control_point_angle = 45.0 * PI / 180.0;
-		const double dx_meters = (longitude4 - longitude1) * std::cos(latitude1 * PI / 180.0) * 111319.9;
-		const double dy_meters = (latitude4 - latitude1) * 111319.9;
-		const double segment_dist_meters = std::sqrt(dx_meters * dx_meters + dy_meters * dy_meters);
-		const double control_point_offset = segment_dist_meters / 3.0;
-		const double x2 = longitude1 +
-			control_point_offset * cos(control_point_angle) / (cos(latitude1 * PI / 180) * 111319.9);
-		const double y2 = latitude1 + control_point_offset * sin(control_point_angle) / 111319.9;
-		const double x3 = longitude4 -
-			control_point_offset * cos(control_point_angle) / (cos(latitude4 * PI / 180) * 111319.9);
-		const double y3 = latitude4 - control_point_offset * sin(control_point_angle) / 111319.9;
-		const double one_minus_t = 1 - t;
-		const double t2 = t * t;
-		const double t3 = t2 * t;
-		const double one_minus_t2 = one_minus_t * one_minus_t;
-		const double one_minus_t3 = one_minus_t2 * one_minus_t;
-		newLongitude = one_minus_t3 * longitude1 + 3 * one_minus_t2 * t * x2 + 3 * one_minus_t * t2 * x3 + t3 *
-			longitude4;
-		newLatitude = one_minus_t3 * latitude1 + 3 * one_minus_t2 * t * y2 + 3 * one_minus_t * t2 * y3 + t3 * latitude4;
+		const GeographicLib::Geodesic& geod = GeographicLib::Geodesic::WGS84();
+		geod.Direct(startLatitude, startLongitude, angle, distance, destLatitude, destLongitude);
 	}
 
 	void populateAntennaMaps
@@ -170,24 +145,9 @@ namespace
 		std::vector<std::pair<double, double>> circle_coordinates;
 		for (int i = 0; i < num_points; i++)
 		{
-			constexpr double radius_earth = 6371.0;
-			const double bearing = deg2Rad(i * 360.0 / num_points);
-			const double lat_rad = deg2Rad(lat);
-			const double lon_rad = deg2Rad(lon);
-			const double angular_distance = radius_km / radius_earth;
-			const double new_lat_rad = asin
-				(
-					sin(lat_rad) * cos(angular_distance) +
-					cos(lat_rad) * sin(angular_distance) * cos(bearing)
-					);
-			const double new_lon_rad = lon_rad +
-				atan2
-				(
-					sin(bearing) * sin(angular_distance) * cos(lat_rad),
-					cos(angular_distance) - sin(lat_rad) * sin(new_lat_rad)
-					);
-			double new_lat = new_lat_rad * 180.0 / PI;
-			double new_lon = new_lon_rad * 180.0 / PI;
+			const double bearing = i * 360.0 / num_points;
+			double new_lat, new_lon;
+			calculateDestinationCoordinate(lat, lon, bearing, radius_km * 1000, new_lat, new_lon);
 			circle_coordinates.emplace_back(new_lat, new_lon);
 		}
 		return circle_coordinates;
@@ -211,6 +171,7 @@ namespace
 		double referenceLongitude, double referenceAltitude, const XmlDocument& document
 		)
 	{
+		GeographicLib::LocalCartesian proj(referenceLatitude, referenceLongitude, referenceAltitude);
 		std::map<std::string, XmlElement> isotropic_antennas;
 		std::map<std::string, XmlElement> patterned_antennas;
 		populateAntennaMaps(document.getRootElement(), isotropic_antennas, patterned_antennas);
@@ -234,9 +195,10 @@ namespace
 			double x = std::stod(position_waypoint_element.childElement("x", 0).getText());
 			double y = std::stod(position_waypoint_element.childElement("y", 0).getText());
 			double altitude = std::stod(position_waypoint_element.childElement("altitude", 0).getText());
-			double longitude = referenceLongitude + x / (cos(referenceLatitude * PI / 180) * 111319.9);
-			double latitude = referenceLatitude + y / 111319.9;
-			double altitude_above_ground = altitude - referenceAltitude;
+			double longitude, latitude, alt_abs;
+			proj.Reverse(x, y, altitude - referenceAltitude, latitude, longitude, alt_abs);
+			double altitude_above_ground = alt_abs - referenceAltitude;
+
 			XmlElement motion_path_element = element.childElement("motionpath", 0);
 			string interpolation = XmlElement::getSafeAttribute(motion_path_element, "interpolation");
 			bool is_static = interpolation == "static";
@@ -308,11 +270,7 @@ namespace
 					pos_waypoint_element = element.childElement("motionpath", 0).childElement("positionwaypoint", 0);
 				}
 				std::string coordinates =
-					getCoordinatesFromPositionWaypoint
-					(
-						pos_waypoint_element, referenceLatitude, referenceLongitude,
-						referenceAltitude
-						);
+					getCoordinatesFromPositionWaypoint(pos_waypoint_element, proj, referenceAltitude);
 				double arrow_length = 20000;
 				double start_latitude, start_longitude, start_altitude;
 				std::istringstream coordinates_stream(coordinates);
@@ -414,59 +372,102 @@ namespace
 			else if (element.childElement("target", 0).isValid()) { kmlFile << "    <styleUrl>#target</styleUrl>\n"; }
 			if (is_static || is_linear || is_cubic)
 			{
+				auto path = std::make_unique<math::Path>();
+				if (is_linear) { path->setInterp(math::Path::InterpType::INTERP_LINEAR); }
+				else if (is_cubic) { path->setInterp(math::Path::InterpType::INTERP_CUBIC); }
+				else { path->setInterp(math::Path::InterpType::INTERP_STATIC); }
+				for (const auto& p_waypoint_element : position_waypoint_list)
+				{
+					math::Coord coord;
+					coord.t = std::stod(p_waypoint_element.childElement("time", 0).getText());
+					coord.pos.x = std::stod(p_waypoint_element.childElement("x", 0).getText());
+					coord.pos.y = std::stod(p_waypoint_element.childElement("y", 0).getText());
+					coord.pos.z = std::stod(p_waypoint_element.childElement("altitude", 0).getText());
+					path->addCoord(coord);
+				}
+				path->finalize();
+
 				kmlFile << "    <gx:Track>\n";
+				// TODO: Need to handle coordinate system choices as this current solution is inflexible and assumes
+				//		that the user is aware of the altitudeMode being used (i.e., absolute).
+				//		This can lead to paths being obscured by terrain if user defines waypoints in local Cartesian
+				//		and then renders them with absolute altitude mode.
 				if (altitude_above_ground > 0)
 				{
-					kmlFile << "        <altitudeMode>relativeToGround</altitudeMode>\n";
+					kmlFile << "        <altitudeMode>absolute</altitudeMode>\n";
 					kmlFile << "        <extrude>1</extrude>\n";
 				}
 				else { kmlFile << "        <altitudeMode>clampToGround</altitudeMode>\n"; }
-				for (size_t i = 0; i < position_waypoint_list.size(); ++i)
+
+				if (const auto& waypoints = path->getCoords(); !waypoints.empty())
 				{
-					const XmlElement& p_waypoint_element = position_waypoint_list[i];
-					double p_x = std::stod(p_waypoint_element.childElement("x", 0).getText());
-					double p_y = std::stod(p_waypoint_element.childElement("y", 0).getText());
-					double p_alt = std::stod(p_waypoint_element.childElement("altitude", 0).getText());
-					double p_lon = referenceLongitude + p_x / (cos
-						(referenceLatitude * PI / 180) * 111319.9);
-					double p_lat = referenceLatitude + p_y / 111319.9;
-					double p_alt_ag = p_alt - referenceAltitude;
-					double time = std::stod(p_waypoint_element.childElement("time", 0).getText());
-					if (is_cubic && i + 1 < position_waypoint_list.size())
+					if (waypoints.size() == 1 || is_static)
 					{
-						const XmlElement& next_position_waypoint_element = position_waypoint_list[i + 1];
-						double next_time = std::stod(next_position_waypoint_element.childElement("time", 0).getText());
-						double time_diff = next_time - time;
-						double next_x = std::stod(next_position_waypoint_element.childElement("x", 0).getText());
-						double next_y = std::stod(next_position_waypoint_element.childElement("y", 0).getText());
-						double next_altitude = std::stod
-							(next_position_waypoint_element.childElement("altitude", 0).getText());
-						double next_longitude =
-							referenceLongitude + next_x / (cos(referenceLatitude * PI / 180) * 111319.9);
-						double next_latitude = referenceLatitude + next_y / 111319.9;
-						double next_altitude_above_ground = next_altitude - referenceAltitude;
-						int num_divisions = 100;
-						for (int j = 0; j <= num_divisions; ++j)
-						{
-							double t = static_cast<double>(j) / num_divisions;
-							double new_longitude, new_latitude;
-							updateLongitudeLatitudeCubic
-								(
-									new_longitude, new_latitude, t, p_lon, p_lat, next_longitude,
-									next_latitude
-									);
-							double new_altitude_above_ground = p_alt_ag + t * (next_altitude_above_ground - p_alt_ag);
-							kmlFile << "        <when>" << time + (static_cast<double>(j) * time_diff) / num_divisions
-								<<
-								"</when>\n";
-							kmlFile << "        <gx:coord>" << new_longitude << " " << new_latitude << " " <<
-								new_altitude_above_ground << "</gx:coord>\n";
-						}
+						const auto& [pos, t] = waypoints[0];
+						math::Vec3 p_local_pos = path->getPosition(t);
+						double p_lon, p_lat, p_alt_abs;
+						proj.Reverse
+							(
+								p_local_pos.x, p_local_pos.y, p_local_pos.z - referenceAltitude,
+								p_lat, p_lon, p_alt_abs
+								);
+						kmlFile << "        <when>" << t << "</when>\n";
+						kmlFile << "        <gx:coord>" << p_lon << " " << p_lat << " " << p_alt_abs << "</gx:coord>\n";
 					}
-					else if (is_linear || is_static)
+					else
 					{
-						kmlFile << "        <when>" << time << "</when>\n";
-						kmlFile << "        <gx:coord>" << p_lon << " " << p_lat << " " << p_alt_ag << "</gx:coord>\n";
+						for (size_t i = 0; i < waypoints.size() - 1; ++i)
+						{
+							const auto& [start_pos, start_t] = waypoints[i];
+							const auto& [end_pos, end_t] = waypoints[i + 1];
+							const double start_time = start_t;
+							const double end_time = end_t;
+							const double time_diff = end_time - start_time;
+							if (time_diff <= 0)
+							{
+								if (i == 0)
+								{
+									math::Vec3 p_local_pos = path->getPosition(start_time);
+									double p_lon, p_lat, p_alt_abs;
+									proj.Reverse
+										(
+											p_local_pos.x, p_local_pos.y, p_local_pos.z - referenceAltitude, p_lat,
+											p_lon,
+											p_alt_abs
+											);
+									kmlFile << "        <when>" << start_time << "</when>\n";
+									kmlFile << "        <gx:coord>" << p_lon << " " << p_lat << " " << (p_alt_abs -
+										referenceAltitude) << "</gx:coord>\n";
+								}
+								continue;
+							}
+							constexpr int num_divisions = 100;
+							for (int j = 0; j < num_divisions; ++j)
+							{
+								const double t_ratio = static_cast<double>(j) / num_divisions;
+								const double current_time = start_time + t_ratio * time_diff;
+								math::Vec3 p_local_pos = path->getPosition(current_time);
+								double p_lon, p_lat, p_alt_abs;
+								proj.Reverse
+									(
+										p_local_pos.x, p_local_pos.y, p_local_pos.z - referenceAltitude, p_lat, p_lon,
+										p_alt_abs
+										);
+								kmlFile << "        <when>" << current_time << "</when>\n";
+								kmlFile << "        <gx:coord>" << p_lon << " " << p_lat << " " << (p_alt_abs -
+									referenceAltitude) << "</gx:coord>\n";
+							}
+						}
+						const auto& [pos, t] = waypoints.back();
+						math::Vec3 p_local_pos = path->getPosition(t);
+						double p_lon, p_lat, p_alt_abs;
+						proj.Reverse
+							(
+								p_local_pos.x, p_local_pos.y, p_local_pos.z - referenceAltitude, p_lat, p_lon, p_alt_abs
+								);
+						kmlFile << "        <when>" << t << "</when>\n";
+						kmlFile << "        <gx:coord>" << p_lon << " " << p_lat << " " << (p_alt_abs -
+							referenceAltitude) << "</gx:coord>\n";
 					}
 				}
 				kmlFile << "    </gx:Track>\n";
@@ -497,14 +498,10 @@ namespace
 			{
 				const XmlElement& first_position_waypoint_element = position_waypoint_list.front();
 				const XmlElement& last_position_waypoint_element = position_waypoint_list.back();
-				std::string start_coordinates = getCoordinatesFromPositionWaypoint
-					(
-						first_position_waypoint_element, referenceLatitude, referenceLongitude, referenceAltitude
-						);
-				std::string end_coordinates = getCoordinatesFromPositionWaypoint
-					(
-						last_position_waypoint_element, referenceLatitude, referenceLongitude, referenceAltitude
-						);
+				std::string start_coordinates =
+					getCoordinatesFromPositionWaypoint(first_position_waypoint_element, proj, referenceAltitude);
+				std::string end_coordinates =
+					getCoordinatesFromPositionWaypoint(last_position_waypoint_element, proj, referenceAltitude);
 				kmlFile << "<Placemark>\n";
 				kmlFile << "    <name>Start: " << XmlElement::getSafeAttribute(element, "name") << "</name>\n";
 				kmlFile << "    <styleUrl>#target</styleUrl>\n";
@@ -569,10 +566,11 @@ namespace serial
 	{
 		try
 		{
-			// Setting default geographical and altitude coordinates
-			constexpr double reference_altitude = 0;
-			constexpr double reference_longitude = 18.4563;
-			constexpr double reference_latitude = -33.9545;
+			// Default to the location of the University of Cape Town in South Africa
+			double reference_latitude = -33.9545;
+			double reference_longitude = 18.4563;
+			double reference_altitude = 0;
+
 			XmlDocument document;
 			if (!document.loadFile(inputXmlPath))
 			{
@@ -585,6 +583,30 @@ namespace serial
 				LOG(logging::Level::ERROR, "Root element not found in XML file");
 				return false;
 			}
+
+			if (const XmlElement parameters_element = root_element.childElement("parameters", 0); parameters_element.
+				isValid())
+			{
+				if (const XmlElement origin_element = parameters_element.childElement("origin", 0); origin_element.
+					isValid())
+				{
+					try
+					{
+						reference_latitude = std::stod(XmlElement::getSafeAttribute(origin_element, "latitude"));
+						reference_longitude = std::stod(XmlElement::getSafeAttribute(origin_element, "longitude"));
+						reference_altitude = std::stod(XmlElement::getSafeAttribute(origin_element, "altitude"));
+					}
+					catch (const std::exception& e)
+					{
+						LOG
+						(
+							logging::Level::WARNING, "Could not parse origin from XML, using defaults. Error: {}",
+							e.what()
+							);
+					}
+				}
+			}
+
 			std::ofstream kml_file(outputKmlPath.c_str());
 			if (!kml_file.is_open())
 			{
