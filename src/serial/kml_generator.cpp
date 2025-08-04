@@ -80,22 +80,22 @@ namespace
 	std::string getCoordinatesFromPositionWaypoint
 	(
 		const XmlElement& positionWaypointElement,
-		const GeographicLib::LocalCartesian& proj,
-		const double referenceAltitude
+		const GeographicLib::LocalCartesian& proj
 		)
 	{
 		const double x = std::stod(positionWaypointElement.childElement("x", 0).getText());
 		const double y = std::stod(positionWaypointElement.childElement("y", 0).getText());
 		const double altitude = std::stod(positionWaypointElement.childElement("altitude", 0).getText());
 
-		// local ENU 'up' coordinate is absolute altitude minus reference altitude
-		const double z_enu = altitude - referenceAltitude;
+		// The 'altitude' from XML is treated as the local ENU 'up' coordinate (z_enu).
+		// GeographicLib::LocalCartesian handles the conversion to absolute MSL altitude
+		// based on the origin's reference altitude.
+		const double z_enu = altitude;
 		double lat, lon, alt_abs;
 		proj.Reverse(x, y, z_enu, lat, lon, alt_abs);
 
-		const double altitude_above_ground = alt_abs - referenceAltitude;
 		std::stringstream coordinates;
-		coordinates << std::fixed << std::setprecision(6) << lon << "," << lat << "," << altitude_above_ground;
+		coordinates << std::fixed << std::setprecision(6) << lon << "," << lat << "," << alt_abs;
 		return coordinates.str();
 	}
 
@@ -133,8 +133,6 @@ namespace
 	{
 		return isotropicAntennas.contains(antennaName);
 	}
-
-	double deg2Rad(const double degrees) { return degrees * PI / 180.0; }
 
 	std::vector<std::pair<double, double>> generateCircleCoordinates
 	(
@@ -196,8 +194,7 @@ namespace
 			double y = std::stod(position_waypoint_element.childElement("y", 0).getText());
 			double altitude = std::stod(position_waypoint_element.childElement("altitude", 0).getText());
 			double longitude, latitude, alt_abs;
-			proj.Reverse(x, y, altitude - referenceAltitude, latitude, longitude, alt_abs);
-			double altitude_above_ground = alt_abs - referenceAltitude;
+			proj.Reverse(x, y, altitude, latitude, longitude, alt_abs);
 
 			XmlElement motion_path_element = element.childElement("motionpath", 0);
 			string interpolation = XmlElement::getSafeAttribute(motion_path_element, "interpolation");
@@ -242,18 +239,18 @@ namespace
 					generateCircleCoordinates(latitude, longitude, circle_radius, num_points);
 				kmlFile << "    <Polygon>\n";
 				kmlFile << "        <extrude>1</extrude>\n";
-				kmlFile << "        <altitudeMode>relativeToGround</altitudeMode>\n";
+				kmlFile << "        <altitudeMode>absolute</altitudeMode>\n";
 				kmlFile << "        <outerBoundaryIs>\n";
 				kmlFile << "            <LinearRing>\n";
 				kmlFile << "                <coordinates>\n";
 				for (const auto& [fst, snd] : circle_coordinates)
 				{
 					kmlFile << "                    " << snd << "," << fst << "," <<
-						altitude_above_ground << "\n";
+						alt_abs << "\n";
 				}
 				kmlFile << "                    " << circle_coordinates[0].second << "," << circle_coordinates[0].first
 					<< ","
-					<< altitude_above_ground << "\n";
+					<< alt_abs << "\n";
 				kmlFile << "                </coordinates>\n";
 				kmlFile << "            </LinearRing>\n";
 				kmlFile << "        </outerBoundaryIs>\n";
@@ -270,7 +267,7 @@ namespace
 					pos_waypoint_element = element.childElement("motionpath", 0).childElement("positionwaypoint", 0);
 				}
 				std::string coordinates =
-					getCoordinatesFromPositionWaypoint(pos_waypoint_element, proj, referenceAltitude);
+					getCoordinatesFromPositionWaypoint(pos_waypoint_element, proj);
 				double arrow_length = 20000;
 				double start_latitude, start_longitude, start_altitude;
 				std::istringstream coordinates_stream(coordinates);
@@ -331,6 +328,7 @@ namespace
 						kmlFile << "      <name>" << side_line_name << "</name>\n";
 						kmlFile << "      <styleUrl>#lineStyleBlue</styleUrl>\n";
 						kmlFile << "      <LineString>\n";
+						kmlFile << "            <altitudeMode>absolute</altitudeMode>\n";
 						kmlFile << "            <tessellate>1</tessellate>\n";
 						kmlFile << "            <coordinates>\n";
 						kmlFile << "            " + coordinates + " " + side_line_end_coordinates + "\n";
@@ -344,6 +342,7 @@ namespace
 				kmlFile << "      <name>Antenna Direction</name>\n";
 				kmlFile << "      <styleUrl>#lineStyle</styleUrl>\n";
 				kmlFile << "      <LineString>\n";
+				kmlFile << "            <altitudeMode>absolute</altitudeMode>\n";
 				kmlFile << "            <tessellate>1</tessellate>\n";
 				kmlFile << "            <coordinates>\n";
 				kmlFile << "            " + coordinates + " " + end_coordinates + "\n";
@@ -355,6 +354,7 @@ namespace
 				kmlFile << "      <styleUrl>#arrowStyle</styleUrl>\n";
 				kmlFile << "      <Point>\n";
 				kmlFile << "          <coordinates>" + end_coordinates + "</coordinates>\n";
+				kmlFile << "          <altitudeMode>absolute</altitudeMode>\n";
 				kmlFile << "      </Point>\n";
 				kmlFile << "      <IconStyle>\n";
 				kmlFile << "          <heading>" << start_azimuth << "</heading>\n";
@@ -388,16 +388,10 @@ namespace
 				path->finalize();
 
 				kmlFile << "    <gx:Track>\n";
-				// TODO: Need to handle coordinate system choices as this current solution is inflexible and assumes
-				//		that the user is aware of the altitudeMode being used (i.e., absolute).
-				//		This can lead to paths being obscured by terrain if user defines waypoints in local Cartesian
-				//		and then renders them with absolute altitude mode.
-				if (altitude_above_ground > 0)
-				{
-					kmlFile << "        <altitudeMode>absolute</altitudeMode>\n";
-					kmlFile << "        <extrude>1</extrude>\n";
-				}
-				else { kmlFile << "        <altitudeMode>clampToGround</altitudeMode>\n"; }
+				// The altitude from the XML is a relative offset (local z). GeographicLib converts this
+				// to an absolute MSL altitude for KML rendering.
+				kmlFile << "        <altitudeMode>absolute</altitudeMode>\n";
+				if (alt_abs > referenceAltitude) { kmlFile << "        <extrude>1</extrude>\n"; }
 
 				if (const auto& waypoints = path->getCoords(); !waypoints.empty())
 				{
@@ -408,7 +402,7 @@ namespace
 						double p_lon, p_lat, p_alt_abs;
 						proj.Reverse
 							(
-								p_local_pos.x, p_local_pos.y, p_local_pos.z - referenceAltitude,
+								p_local_pos.x, p_local_pos.y, p_local_pos.z,
 								p_lat, p_lon, p_alt_abs
 								);
 						kmlFile << "        <when>" << t << "</when>\n";
@@ -431,13 +425,13 @@ namespace
 									double p_lon, p_lat, p_alt_abs;
 									proj.Reverse
 										(
-											p_local_pos.x, p_local_pos.y, p_local_pos.z - referenceAltitude, p_lat,
+											p_local_pos.x, p_local_pos.y, p_local_pos.z, p_lat,
 											p_lon,
 											p_alt_abs
 											);
 									kmlFile << "        <when>" << start_time << "</when>\n";
-									kmlFile << "        <gx:coord>" << p_lon << " " << p_lat << " " << (p_alt_abs -
-										referenceAltitude) << "</gx:coord>\n";
+									kmlFile << "        <gx:coord>" << p_lon << " " << p_lat << " " << p_alt_abs <<
+										"</gx:coord>\n";
 								}
 								continue;
 							}
@@ -450,12 +444,12 @@ namespace
 								double p_lon, p_lat, p_alt_abs;
 								proj.Reverse
 									(
-										p_local_pos.x, p_local_pos.y, p_local_pos.z - referenceAltitude, p_lat, p_lon,
+										p_local_pos.x, p_local_pos.y, p_local_pos.z, p_lat, p_lon,
 										p_alt_abs
 										);
 								kmlFile << "        <when>" << current_time << "</when>\n";
-								kmlFile << "        <gx:coord>" << p_lon << " " << p_lat << " " << (p_alt_abs -
-									referenceAltitude) << "</gx:coord>\n";
+								kmlFile << "        <gx:coord>" << p_lon << " " << p_lat << " " << p_alt_abs <<
+									"</gx:coord>\n";
 							}
 						}
 						const auto& [pos, t] = waypoints.back();
@@ -463,11 +457,10 @@ namespace
 						double p_lon, p_lat, p_alt_abs;
 						proj.Reverse
 							(
-								p_local_pos.x, p_local_pos.y, p_local_pos.z - referenceAltitude, p_lat, p_lon, p_alt_abs
+								p_local_pos.x, p_local_pos.y, p_local_pos.z, p_lat, p_lon, p_alt_abs
 								);
 						kmlFile << "        <when>" << t << "</when>\n";
-						kmlFile << "        <gx:coord>" << p_lon << " " << p_lat << " " << (p_alt_abs -
-							referenceAltitude) << "</gx:coord>\n";
+						kmlFile << "        <gx:coord>" << p_lon << " " << p_lat << " " << p_alt_abs << "</gx:coord>\n";
 					}
 				}
 				kmlFile << "    </gx:Track>\n";
@@ -477,42 +470,49 @@ namespace
 				kmlFile << "    <LookAt>\n";
 				kmlFile << "        <longitude>" << longitude << "</longitude>\n";
 				kmlFile << "        <latitude>" << latitude << "</latitude>\n";
-				kmlFile << "        <altitude>" << altitude_above_ground << "</altitude>\n";
+				kmlFile << "        <altitude>" << alt_abs << "</altitude>\n";
 				kmlFile << "        <heading>-148.4122922628044</heading>\n";
 				kmlFile << "        <tilt>40.5575073395506</tilt>\n";
 				kmlFile << "        <range>500.6566641072245</range>\n";
 				kmlFile << "    </LookAt>\n";
 				kmlFile << "    <Point>\n";
-				kmlFile << "        <coordinates>" << longitude << "," << latitude << "," << altitude_above_ground <<
+				kmlFile << "        <coordinates>" << longitude << "," << latitude << "," << alt_abs <<
 					"</coordinates>\n";
-				if (altitude_above_ground > 0)
-				{
-					kmlFile << "        <altitudeMode>relativeToGround</altitudeMode>\n";
-					kmlFile << "        <extrude>1</extrude>\n";
-				}
-				else { kmlFile << "        <altitudeMode>clampToGround</altitudeMode>\n"; }
+				kmlFile << "        <altitudeMode>absolute</altitudeMode>\n";
+				if (alt_abs > referenceAltitude) { kmlFile << "        <extrude>1</extrude>\n"; }
 				kmlFile << "    </Point>\n";
 			}
 			kmlFile << "</Placemark>\n";
+			// TODO: Adding both start and end points for static platforms
 			if (is_static || is_linear || is_cubic)
 			{
 				const XmlElement& first_position_waypoint_element = position_waypoint_list.front();
 				const XmlElement& last_position_waypoint_element = position_waypoint_list.back();
 				std::string start_coordinates =
-					getCoordinatesFromPositionWaypoint(first_position_waypoint_element, proj, referenceAltitude);
+					getCoordinatesFromPositionWaypoint(first_position_waypoint_element, proj);
 				std::string end_coordinates =
-					getCoordinatesFromPositionWaypoint(last_position_waypoint_element, proj, referenceAltitude);
+					getCoordinatesFromPositionWaypoint(last_position_waypoint_element, proj);
+
+				// Extract absolute altitude from the coordinate string for the extrude check
+				double start_altitude_abs, end_altitude_abs;
+				try
+				{
+					start_altitude_abs = std::stod(start_coordinates.substr(start_coordinates.rfind(',') + 1));
+					end_altitude_abs = std::stod(end_coordinates.substr(end_coordinates.rfind(',') + 1));
+				}
+				catch (const std::exception& e)
+				{
+					LOG(logging::Level::WARNING, "Could not parse altitude from coordinate string: {}", e.what());
+					start_altitude_abs = end_altitude_abs = referenceAltitude; // Default to reference altitude on error
+				}
+
 				kmlFile << "<Placemark>\n";
 				kmlFile << "    <name>Start: " << XmlElement::getSafeAttribute(element, "name") << "</name>\n";
 				kmlFile << "    <styleUrl>#target</styleUrl>\n";
 				kmlFile << "    <Point>\n";
 				kmlFile << "        <coordinates>" << start_coordinates << "</coordinates>\n";
-				if (altitude_above_ground > 0)
-				{
-					kmlFile << "        <altitudeMode>relativeToGround</altitudeMode>\n";
-					kmlFile << "        <extrude>1</extrude>\n";
-				}
-				else { kmlFile << "        <altitudeMode>clampToGround</altitudeMode>\n"; }
+				kmlFile << "        <altitudeMode>absolute</altitudeMode>\n";
+				if (start_altitude_abs > referenceAltitude) { kmlFile << "        <extrude>1</extrude>\n"; }
 				kmlFile << "    </Point>\n";
 				kmlFile << "</Placemark>\n";
 				kmlFile << "<Placemark>\n";
@@ -520,12 +520,8 @@ namespace
 				kmlFile << "    <styleUrl>#target</styleUrl>\n";
 				kmlFile << "    <Point>\n";
 				kmlFile << "        <coordinates>" << end_coordinates << "</coordinates>\n";
-				if (altitude_above_ground > 0)
-				{
-					kmlFile << "        <altitudeMode>relativeToGround</altitudeMode>\n";
-					kmlFile << "        <extrude>1</extrude>\n";
-				}
-				else { kmlFile << "        <altitudeMode>clampToGround</altitudeMode>\n"; }
+				kmlFile << "        <altitudeMode>absolute</altitudeMode>\n";
+				if (end_altitude_abs > referenceAltitude) { kmlFile << "        <extrude>1</extrude>\n"; }
 				kmlFile << "    </Point>\n";
 				kmlFile << "</Placemark>\n";
 			}
@@ -567,9 +563,9 @@ namespace serial
 		try
 		{
 			// Default to the location of the University of Cape Town in South Africa
-			double reference_latitude = -33.9545;
-			double reference_longitude = 18.4563;
-			double reference_altitude = 0;
+			double reference_latitude = -33.957652;
+			double reference_longitude = 18.4611991;
+			double reference_altitude = 111.01;
 
 			XmlDocument document;
 			if (!document.loadFile(inputXmlPath))
