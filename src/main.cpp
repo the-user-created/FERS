@@ -77,11 +77,22 @@ int main(const int argc, char* argv[])
 
 	try
 	{
+		// Create the world object
+		const auto world = std::make_unique<core::World>();
+
+		// Load the XML file and deserialize it into the world object
+		try { serial::parseSimulation(script_file, world.get(), validate); }
+		catch (const std::exception&)
+		{
+			LOG(Level::FATAL, "Failed to load simulation file: {}", script_file);
+			return 1;
+		}
+
 		// If KML generation is requested, generate the KML file and exit
 		if (kml_output_file)
 		{
 			LOG(Level::INFO, "Generating KML file for scenario: {}", script_file);
-			if (serial::KmlGenerator generator; generator.generateKml(script_file, *kml_output_file))
+			if (serial::KmlGenerator::generateKml(*world, *kml_output_file))
 			{
 				LOG(Level::INFO, "KML file generated successfully: {}", *kml_output_file);
 				return 0;
@@ -94,17 +105,6 @@ int main(const int argc, char* argv[])
 		if (const auto result = params::setThreads(num_threads); !result)
 		{
 			LOG(Level::ERROR, "Failed to set number of threads: {}", result.error());
-		}
-
-		// Create the world object
-		const auto world = std::make_unique<core::World>();
-
-		// Load the XML file and deserialize it into the world object
-		try { serial::parseSimulation(script_file, world.get(), validate); }
-		catch (const std::exception&)
-		{
-			LOG(Level::FATAL, "Failed to load simulation file: {}", script_file);
-			return 1;
 		}
 
 		// Run the simulation using the threading mechanism

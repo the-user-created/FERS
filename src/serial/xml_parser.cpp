@@ -153,6 +153,22 @@ namespace
 				get_child_bool(export_element, "binary", params::exportBinary())
 			);
 		}
+
+		// Parse the origin element for the KML generator
+		if (const XmlElement origin_element = parameters.childElement("origin", 0); origin_element.isValid())
+		{
+			try
+			{
+				const double latitude = std::stod(XmlElement::getSafeAttribute(origin_element, "latitude"));
+				const double longitude = std::stod(XmlElement::getSafeAttribute(origin_element, "longitude"));
+				const double altitude = std::stod(XmlElement::getSafeAttribute(origin_element, "altitude"));
+				params::setOrigin(latitude, longitude, altitude);
+			}
+			catch (const std::exception& e)
+			{
+				LOG(Level::WARNING, "Could not parse origin from XML, using defaults. Error: {}", e.what());
+			}
+		}
 	}
 
 	/**
