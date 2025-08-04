@@ -2,6 +2,11 @@
 
 #include <string>
 
+namespace core
+{
+	class World;
+}
+
 namespace serial
 {
 	/**
@@ -28,13 +33,12 @@ namespace serial
 	{
 	public:
 		/**
-		 * @brief Generates a KML file for the given simulation scenario.
+		 * @brief Generates a KML file from a pre-built simulation world.
 		 *
-		 * @param inputXmlPath The path to the input FERS XML file.
+		 * @param world The simulation world containing all objects and paths.
 		 * @param outputKmlPath The path for the output KML file.
 		 * @return True on success, false on failure.
 		 */
-		static bool generateKml(const std::string& inputXmlPath, const std::string& outputKmlPath);
+		static bool generateKml(const core::World& world, const std::string& outputKmlPath);
 	};
-
 }
