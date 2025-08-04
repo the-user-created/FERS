@@ -46,6 +46,7 @@ endif ()
 # Add subdirectories for source and third-party libraries
 add_subdirectory(src)
 add_subdirectory(third_party/HighFive)
+add_subdirectory(third_party/geographiclib)
 
 # Ensure the output directory for generated headers exists
 file(MAKE_DIRECTORY ${SCHEMA_HEADERS_DIR})
@@ -77,3 +78,4 @@ add_custom_target(generate_schemas ALL DEPENDS ${GENERATED_HEADERS})
 add_dependencies(${PROJECT_NAME} generate_schemas)
 
 target_link_libraries(${PROJECT_NAME} HighFive)
+target_link_libraries(${PROJECT_NAME} GeographicLib::GeographicLib)
