@@ -31,6 +31,10 @@ namespace params
 		RealType start = 0; ///< Start time for the simulation.
 		RealType end = 0; ///< End time for the simulation.
 		RealType cw_sample_rate = 1000; ///< CW interpolation sample rate.
+		// Default to the location of the University of Cape Town in South Africa
+		double origin_latitude = -33.957652; ///< Geodetic origin latitude
+		double origin_longitude = 18.4611991; ///< Geodetic origin longitude
+		double origin_altitude = 111.01; ///< Geodetic origin altitude (in meters)
 		RealType rate = 0; ///< Rendering sample rate.
 
 		unsigned random_seed = 0; ///< Random seed for simulation.
@@ -232,6 +236,24 @@ namespace params
 		params.oversample_ratio = ratio;
 		LOG(logging::Level::DEBUG, "Oversampling enabled with ratio: {}", ratio);
 	}
+
+	/**
+	 * @brief Set the geodetic origin for the KML generator.
+	 * @param lat The latitude of the origin.
+	 * @param lon The longitude of the origin.
+	 * @param alt The altitude of the origin (MSL).
+	 */
+	inline void setOrigin(const double lat, const double lon, const double alt) noexcept
+	{
+		params.origin_latitude = lat;
+		params.origin_longitude = lon;
+		params.origin_altitude = alt;
+		LOG(logging::Level::INFO, "Origin set to lat: {}, lon: {}, alt: {}", lat, lon, alt);
+	}
+
+	inline double originLatitude() noexcept { return params.origin_latitude; }
+	inline double originLongitude() noexcept { return params.origin_longitude; }
+	inline double originAltitude() noexcept { return params.origin_altitude; }
 
 	/**
 	* @brief Set the number of rendering threads.

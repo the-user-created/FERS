@@ -42,8 +42,18 @@
                 <xs:element minOccurs="0" name="randomseed" type="xs:string"/>
                 <xs:element minOccurs="0" name="adc_bits" type="xs:string"/>
                 <xs:element minOccurs="0" name="oversample" type="xs:string"/>
+                <xs:element minOccurs="0" ref="origin"/>
                 <xs:element minOccurs="0" ref="export"/>
             </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- Geodetic Origin Element -->
+    <xs:element name="origin">
+        <xs:complexType>
+            <xs:attribute name="latitude" type="xs:double" use="required"/>
+            <xs:attribute name="longitude" type="xs:double" use="required"/>
+            <xs:attribute name="altitude" type="xs:double" default="0"/>
         </xs:complexType>
     </xs:element>
 
