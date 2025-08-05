@@ -1,3 +1,11 @@
+/**
+* @file kml_generator.h
+* @brief Header file for KML file generation from FERS simulation scenarios.
+*
+* @authors David Young
+* @date 2025-07-31
+*/
+
 #pragma once
 
 #include <string>
