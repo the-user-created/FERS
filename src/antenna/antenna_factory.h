@@ -160,6 +160,15 @@ namespace antenna
 		Sinc(Sinc&&) = delete;
 		Sinc& operator=(Sinc&&) = delete;
 
+		/** @brief Gets the alpha parameter of the sinc function. */
+		[[nodiscard]] RealType getAlpha() const noexcept { return _alpha; }
+
+		/** @brief Gets the beta parameter of the sinc function. */
+		[[nodiscard]] RealType getBeta() const noexcept { return _beta; }
+
+		/** @brief Gets the gamma parameter of the sinc function. */
+		[[nodiscard]] RealType getGamma() const noexcept { return _gamma; }
+
 		/**
 		 * @brief Computes the gain of the sinc antenna based on the input parameters.
 		 *
