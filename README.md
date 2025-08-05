@@ -22,6 +22,7 @@ Key enhancements include optimized multithreading, better memory management, and
 - Support for both CW (Continuous Wave) and Pulsed radars
 - Multipath propagation effects
 - Data export in CSV, XML, and HDF5 formats
+- Geographic scenario visualization via KML export
 - Enhanced memory management using smart pointers
 - Multithreading with a global thread pool
 
@@ -35,7 +36,8 @@ Key enhancements include optimized multithreading, better memory management, and
 
 FERS relies on the following libraries:
 
-- **HighFive** (included as a git submodule for HDF5 integration)
+- **HighFive** (included as a git submodule)
+- **GeographicLib** (included as a git submodule)
 - **libhdf5** (HDF5 support)
 - **libxml2** (XML handling)
 - **python3.11** (for additional scripting capabilities)
@@ -97,12 +99,10 @@ make -j$(nproc)
 The compiled `fers` binary will be placed in the `build/src/` directory.
 
 > **Note**: To build in Debug mode, replace `cmake ..` with:
-
-```bash
-cmake -DCMAKE_BUILD_TYPE=Debug ..
-```
-
-It’s recommended to use separate build directories for release and debug builds.
+> ```bash
+> cmake -DCMAKE_BUILD_TYPE=Debug ..
+> ```
+> It’s recommended to use separate build directories for release and debug builds.
 
 #### Step 4: Install FERS
 
@@ -137,14 +137,14 @@ each stored in its own folder (e.g., `test1/`, `test2/`, etc.).
 
 ### How the Regression Suite Works:
 
-* Each test case folder contains:
-    * The `.fersxml` and waveform file (`.csv` or `.h5`).
-    * Any additional files required to run the simulation.
-    * An `expected_output` folder, which holds the expected results for each test case.
-* To run the regression suite, first build the Release version of FERS in a directory named `build/` and then use the
+- Each test case folder contains:
+    - The `.fersxml` and waveform file (`.csv` or `.h5`).
+    - Any additional files required to run the simulation.
+    - An `expected_output` folder, which holds the expected results for each test case.
+- To run the regression suite, first build the Release version of FERS in a directory named `build/` and then use the
   `run_sim_tests.py` script, which automatically executes every test case and compares the output to the expected
   results.
-* **CI Integration**: The regression suite is integrated with the Continuous Integration (CI) build.
+- **CI Integration**: The regression suite is integrated with the Continuous Integration (CI) build.
   The `run_sim_tests.py` script is invoked as part of the CI process,
   and if any test case fails, the build will fail, ensuring that code changes do not introduce errors.
 
@@ -159,9 +159,55 @@ python3 run_sim_tests.py
 
 The script will report on the overall result of the test suite, including any test cases that fail.
 
-> **Note**: If any major changes are made to the codebase which are intended to change the output of the simulation, 
+> **Note**: If any major changes are made to the codebase which are intended to change the output of the simulation,
 > the expected results in the `expected_output` folders should be updated accordingly otherwise the regression tests
 > will fail.
+
+## Scenario Visualization (KML Export)
+
+FERS can generate KML (Keyhole Markup Language) files to create a geographic visualization of your simulation scenario,
+which can be viewed in applications like Google Earth. This feature is fully integrated into the FERS executable and
+provides a geodetically accurate representation of platforms, paths, and antenna patterns.
+
+This integrated visualizer replaces the legacy standalone `kml_visualiser` tool and builds upon the original concept by
+Michael Altshuler. It uses the **GeographicLib** library to ensure that the local simulation coordinates are accurately
+projected onto the WGS84 ellipsoid.
+
+#### How it Works
+
+The KML generator interprets the FERS local Cartesian coordinate system as an East-North-Up (ENU) tangent plane. You can
+define the geographic anchor point for this plane (i.e., the location of `(0,0,0)`) in your scenario file.
+
+To define the origin, add an `<origin>` tag to the `<parameters>` section of your `.fersxml` file. The altitude is
+specified in meters above Mean Sea Level (MSL).
+
+**XML Configuration Example:**
+
+```xml
+
+<parameters>
+    ...
+    <!-- Set the simulation's (0,0,0) to a specific point on Earth -->
+    <origin latitude="34.0522" longitude="-118.2437" altitude="71.0"/>
+    ...
+</parameters>
+```
+
+> **Note**: If the `<origin>` tag is omitted, the location defaults to the University of Cape Town, South Africa.
+
+#### Generating a KML File
+
+To generate the KML file, run FERS with the `--kml` command-line argument, specifying the path to your scenario and the
+desired output file. FERS will parse the scenario, generate the KML, and exit without running the full simulation.
+
+**Command-line Example:**
+
+```bash
+# From the build directory
+./src/fers --kml=path/to/my_scenario.kml path/to/your_scenario.fersxml
+```
+
+You can then open `my_scenario.kml` in any KML-compatible viewer.
 
 ## Documentation
 

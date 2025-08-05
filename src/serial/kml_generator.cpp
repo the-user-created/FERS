@@ -1,3 +1,11 @@
+/**
+* @file kml_generator.cpp
+* @brief Source file for KML file generation from FERS simulation scenarios.
+*
+* @authors David Young
+* @date 2025-07-31
+*/
+
 #include "serial/kml_generator.h"
 
 #include <algorithm>
