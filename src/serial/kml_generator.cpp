@@ -28,16 +28,30 @@
 #include "radar/target.h"
 #include "radar/transmitter.h"
 
-// TODO: Numerous magic numbers are used in this file, such as the number of divisions for the waypoint path
-// TODO: Assumes that every simulation will use local Cartesian coordinates centered at the origin.
-//		However, because FERS doesn't care what your coordinate system is (provided it is in meters and xyz),
-//		this is not a problem for FERS. But for a KML visualizer, the coordinate system used while creating a scenario
-//		is extremely important.
+// TODO: The KML generator assumes all scenarios use a local ENU tangent plane, which conflicts with FERS's
+//       coordinate-system-agnostic design. This can lead to incorrect visualizations if a user designs a
+//       scenario in a different frame (e.g., ECEF). Consider adding support for other common coordinate
+//       systems or prominently documenting this limitation.
+
+// TODO: KML visualization for antenna patterns is incomplete. This function only supports 'isotropic' and 'sinc'
+//       antennas, while FERS supports many others (gaussian, parabolic, etc.). To provide a more complete
+//       scenario preview, add symbolic representations for the other FERS antenna types.
 
 namespace
 {
 	using namespace std;
 
+	// --- Constants ---
+	constexpr int TRACK_NUM_DIVISIONS = 100;
+	constexpr int ISOTROPIC_PATTERN_POINTS = 100;
+	constexpr double ISOTROPIC_PATTERN_RADIUS_KM = 20.0;
+	constexpr double SINC_ARROW_LENGTH_M = 20000.0;
+	// TODO: The visual size of this antenna beam is hardcoded to a symbolic 20km radius/length and has no
+	//       connection to the antenna's actual performance (e.g., gain, power). To be more representative,
+	//       the beam symbology could be scaled based on a calculated metric like the antenna's directivity or a
+	//       nominal range.
+
+	// --- Geodetic and Coordinate Helpers ---
 	double sincAntennaGain(const double theta, const double alpha, const double beta, const double gamma)
 	{
 		if (theta == 0.0) { return alpha; }
@@ -74,22 +88,11 @@ namespace
 		return angle_3db_drop * 180.0 / PI;
 	}
 
-	std::string getCoordinatesFromPositionWaypoint(const math::Coord& coord, const GeographicLib::LocalCartesian& proj)
+	std::string formatCoordinates(const double lon, const double lat, const double alt)
 	{
-		// The 'altitude' from XML is treated as the local ENU 'up' coordinate (z_enu).
-		// GeographicLib::LocalCartesian handles the conversion to absolute MSL altitude
-		// based on the origin's reference altitude.
-		double lat, lon, alt_abs;
-		proj.Reverse(coord.pos.x, coord.pos.y, coord.pos.z, lat, lon, alt_abs);
-
-		std::stringstream coordinates;
-		coordinates << std::fixed << std::setprecision(6) << lon << "," << lat << "," << alt_abs;
-		return coordinates.str();
-	}
-
-	std::string getCoordinatesFromPosition(const math::Vec3& pos, const GeographicLib::LocalCartesian& proj)
-	{
-		return getCoordinatesFromPositionWaypoint({pos, 0.0}, proj);
+		std::stringstream ss;
+		ss << std::fixed << std::setprecision(6) << lon << "," << lat << "," << alt;
+		return ss.str();
 	}
 
 	void calculateDestinationCoordinate
@@ -104,14 +107,13 @@ namespace
 
 	std::vector<std::pair<double, double>> generateCircleCoordinates
 	(
-		const double lat, const double lon, const double radius_km,
-		const int num_points = 100
+		const double lat, const double lon, const double radius_km
 		)
 	{
 		std::vector<std::pair<double, double>> circle_coordinates;
-		for (int i = 0; i < num_points; i++)
+		for (int i = 0; i < ISOTROPIC_PATTERN_POINTS; i++)
 		{
-			const double bearing = i * 360.0 / num_points;
+			const double bearing = i * 360.0 / ISOTROPIC_PATTERN_POINTS;
 			double new_lat, new_lon;
 			calculateDestinationCoordinate(lat, lon, bearing, radius_km * 1000.0, new_lat, new_lon);
 			circle_coordinates.emplace_back(new_lat, new_lon);
@@ -119,329 +121,326 @@ namespace
 		return circle_coordinates;
 	}
 
-	void processPlatform
+	// --- KML Generation Helpers ---
+	void writeKmlHeaderAndStyles(std::ofstream& kmlFile)
+	{
+		kmlFile << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+		kmlFile <<
+			"<kml xmlns=\"http://www.opengis.net/kml/2.2\" xmlns:gx=\"http://www.google.com/kml/ext/2.2\">\n";
+		kmlFile << "<Document>\n\n";
+		kmlFile << "<name>FERS Simulation Visualization</name>\n";
+		kmlFile <<
+			"<Style id=\"receiver\"><IconStyle><Icon><href>https://cdn-icons-png.flaticon.com/512/645/645436.png</href></Icon></IconStyle></Style>\n";
+		kmlFile <<
+			"<Style id=\"transmitter\"><IconStyle><Icon><href>https://cdn-icons-png.flaticon.com/128/224/224666.png</href></Icon></IconStyle></Style>\n";
+		kmlFile <<
+			"<Style id=\"target\"><IconStyle><Icon><href>https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Target_red_dot1.svg/1200px-Target_red_dot1.svg.png</href></Icon></IconStyle><LineStyle><width>2</width></LineStyle></Style>\n";
+		kmlFile <<
+			"<Style id=\"translucentPolygon\"><LineStyle><color>ff0000ff</color><width>2</width></LineStyle><PolyStyle><color>00ffffff</color></PolyStyle></Style>\n";
+		kmlFile <<
+			"<Style id=\"arrowStyle\"><IconStyle><Icon><href>http://maps.google.com/mapfiles/kml/shapes/arrow.png</href></Icon><scale>0.5</scale></IconStyle></Style>\n";
+		kmlFile << "<Style id=\"lineStyle\"><LineStyle><color>ff0000ff</color><width>2</width></LineStyle></Style>\n";
+		kmlFile <<
+			"<Style id=\"lineStyleBlue\"><LineStyle><color>ffff0000</color><width>2</width></LineStyle></Style>\n";
+	}
+
+	void writePoint
 	(
-		const radar::Platform* platform,
-		const std::vector<const radar::Object*>& objectsOnPlatform,
-		std::ofstream& kmlFile,
-		const GeographicLib::LocalCartesian& proj,
-		const double referenceAltitude
+		std::ofstream& kmlFile, const std::string& name, const std::string& styleUrl, const std::string& coordinates,
+		const double objectAltitude, const double referenceAltitude
 		)
 	{
-		const math::Path* path = platform->getMotionPath();
-		if (path->getCoords().empty()) { return; }
+		kmlFile << "<Placemark>\n";
+		kmlFile << "    <name>" << name << "</name>\n";
+		kmlFile << "    <styleUrl>" << styleUrl << "</styleUrl>\n";
+		kmlFile << "    <Point>\n";
+		kmlFile << "        <coordinates>" << coordinates << "</coordinates>\n";
+		kmlFile << "        <altitudeMode>absolute</altitudeMode>\n";
+		if (objectAltitude > referenceAltitude) { kmlFile << "        <extrude>1</extrude>\n"; }
+		kmlFile << "    </Point>\n";
+		kmlFile << "</Placemark>\n";
+	}
 
-		const auto& [first_wp_pos, first_wp_t] = path->getCoords().front();
-		double x = first_wp_pos.x;
-		double y = first_wp_pos.y;
-		double altitude = first_wp_pos.z;
-		double longitude, latitude, alt_abs;
-		proj.Reverse(x, y, altitude, latitude, longitude, alt_abs);
+	void writeAntennaBeamLine
+	(
+		std::ofstream& kmlFile, const std::string& name, const std::string& style, const std::string& startCoords,
+		const std::string& endCoords
+		)
+	{
+		kmlFile << "<Placemark>\n";
+		kmlFile << "    <name>" << name << "</name>\n";
+		kmlFile << "    <styleUrl>" << style << "</styleUrl>\n";
+		kmlFile << "    <LineString>\n";
+		kmlFile << "        <altitudeMode>absolute</altitudeMode>\n";
+		kmlFile << "        <tessellate>1</tessellate>\n";
+		kmlFile << "        <coordinates>" << startCoords << " " << endCoords << "</coordinates>\n";
+		kmlFile << "    </LineString>\n";
+		kmlFile << "</Placemark>\n";
+	}
 
-		const auto interp_type = path->getType();
-		const bool is_static = interp_type == math::Path::InterpType::INTERP_STATIC;
-		const bool is_linear = interp_type == math::Path::InterpType::INTERP_LINEAR;
-		const bool is_cubic = interp_type == math::Path::InterpType::INTERP_CUBIC;
-
-		// Determine icon style based on objects on the platform
-		string placemark_style = "#target"; // Default
-		const radar::Radar* radar_obj = nullptr;
+	// --- Platform Processing Logic ---
+	std::string getPlacemarkStyleForPlatform(const std::vector<const radar::Object*>& objects)
+	{
 		bool has_receiver = false;
 		bool has_transmitter = false;
-		for (const auto* obj : objectsOnPlatform)
+		for (const auto* obj : objects)
 		{
 			if (dynamic_cast<const radar::Receiver*>(obj)) { has_receiver = true; }
 			if (dynamic_cast<const radar::Transmitter*>(obj)) { has_transmitter = true; }
-			if (const auto r = dynamic_cast<const radar::Radar*>(obj)) { if (!radar_obj) { radar_obj = r; } }
 		}
 
-		if (has_receiver) { placemark_style = "#receiver"; }
-		else if (has_transmitter) { placemark_style = "#transmitter"; }
+		if (has_receiver) { return "#receiver"; }
+		if (has_transmitter) { return "#transmitter"; }
+		return "#target";
+	}
 
-		bool is_isotropic = false;
-		const antenna::Sinc* sinc_antenna = nullptr;
-		if (radar_obj)
-		{
-			if (const antenna::Antenna* ant = radar_obj->getAntenna(); dynamic_cast<const antenna::Isotropic*>(ant))
-			{
-				is_isotropic = true;
-			}
-			else if (const auto* sinc_ant = dynamic_cast<const antenna::Sinc*>(ant)) { sinc_antenna = sinc_ant; }
-		}
+	const radar::Radar* getPrimaryRadar(const std::vector<const radar::Object*>& objects)
+	{
+		for (const auto* obj : objects) { if (const auto r = dynamic_cast<const radar::Radar*>(obj)) { return r; } }
+		return nullptr;
+	}
 
-		if (is_isotropic)
-		{
-			constexpr double circle_radius = 20;
-			constexpr int num_points = 100;
-			proj.Reverse(x, y, altitude, latitude, longitude, alt_abs);
+	void generateIsotropicAntennaKml
+	(std::ofstream& kmlFile, const math::Vec3& position, const GeographicLib::LocalCartesian& proj)
+	{
+		double lat, lon, alt_abs;
+		proj.Reverse(position.x, position.y, position.z, lat, lon, alt_abs);
 
-			// TODO: UNUSED
-			//std::string placemarkStyle;
-			//if (element.childElement("receiver", 0).isValid()) { placemarkStyle = "receiver"; }
-			//else if (element.childElement("transmitter", 0).isValid()) { placemarkStyle = "transmitter"; }
-			//else if (element.childElement("target", 0).isValid()) { placemarkStyle = "target"; }
+		const auto circle_coordinates = generateCircleCoordinates(lat, lon, ISOTROPIC_PATTERN_RADIUS_KM);
 
-			kmlFile << "<Placemark>\n";
-			kmlFile << "    <name>Isotropic pattern range</name>\n";
-			kmlFile << "    <styleUrl>#translucentPolygon</styleUrl>\n";
-			std::vector<std::pair<double, double>> circle_coordinates =
-				generateCircleCoordinates(latitude, longitude, circle_radius, num_points);
-			kmlFile << "    <Polygon>\n";
-			kmlFile << "        <extrude>1</extrude>\n";
-			kmlFile << "        <altitudeMode>absolute</altitudeMode>\n";
-			kmlFile << "        <outerBoundaryIs>\n";
-			kmlFile << "            <LinearRing>\n";
-			kmlFile << "                <coordinates>\n";
-			for (const auto& [fst, snd] : circle_coordinates)
-			{
-				kmlFile << "                    " << snd << "," << fst << "," <<
-					alt_abs << "\n";
-			}
-			kmlFile << "                    " << circle_coordinates[0].second << "," << circle_coordinates[0].first
-				<< ","
-				<< alt_abs << "\n";
-			kmlFile << "                </coordinates>\n";
-			kmlFile << "            </LinearRing>\n";
-			kmlFile << "        </outerBoundaryIs>\n";
-			kmlFile << "    </Polygon>\n";
-			kmlFile << "</Placemark>\n";
-		}
-		else if (sinc_antenna)
-		{
-			math::SVec3 initial_rotation = platform->getRotationPath()->getPosition(params::startTime());
-			double start_azimuth_rad = initial_rotation.azimuth;
-
-			string coordinates = getCoordinatesFromPosition(first_wp_pos, proj);
-			constexpr double arrow_length = 20000;
-			double start_latitude, start_longitude, start_altitude;
-			std::istringstream coordinates_stream(coordinates);
-			coordinates_stream >> start_longitude;
-			coordinates_stream.ignore(1);
-			coordinates_stream >> start_latitude;
-			coordinates_stream.ignore(1);
-			coordinates_stream >> start_altitude;
-			double start_azimuth_deg_kml = (start_azimuth_rad * 180.0 / PI) + 180;
-			double dest_latitude, dest_longitude;
-			calculateDestinationCoordinate
-				(
-					start_latitude, start_longitude, start_azimuth_deg_kml, arrow_length, dest_latitude,
-					dest_longitude
-					);
-			std::stringstream end_coordinates_stream;
-			end_coordinates_stream << std::fixed << std::setprecision
-				(6) << dest_longitude << "," << dest_latitude << ","
-				<< start_altitude;
-			std::string end_coordinates = end_coordinates_stream.str();
-			const double angle_3d_b_drop_deg = find3DbDropAngle
-				(
-					sinc_antenna->getAlpha(), sinc_antenna->getBeta(),
-					sinc_antenna->getGamma()
-					);
-			const double side_line1_azimuth = start_azimuth_deg_kml - angle_3d_b_drop_deg;
-			const double side_line2_azimuth = start_azimuth_deg_kml + angle_3d_b_drop_deg;
-			double side_line_1dest_latitude, side_line_1dest_longitude;
-			double side_line_2dest_latitude, side_line_2dest_longitude;
-			calculateDestinationCoordinate
-				(
-					start_latitude, start_longitude, side_line1_azimuth, arrow_length,
-					side_line_1dest_latitude, side_line_1dest_longitude
-					);
-			calculateDestinationCoordinate
-				(
-					start_latitude, start_longitude, side_line2_azimuth, arrow_length,
-					side_line_2dest_latitude, side_line_2dest_longitude
-					);
-			std::stringstream side_line1_end_coordinates_stream, side_line2_end_coordinates_stream;
-			side_line1_end_coordinates_stream << std::fixed << std::setprecision
-				(6) << side_line_1dest_longitude << ","
-				<< side_line_1dest_latitude << "," << start_altitude;
-			side_line2_end_coordinates_stream << std::fixed << std::setprecision
-				(6) << side_line_2dest_longitude << ","
-				<< side_line_2dest_latitude << "," << start_altitude;
-			std::string side_line1_end_coordinates = side_line1_end_coordinates_stream.str();
-			std::string side_line2_end_coordinates = side_line2_end_coordinates_stream.str();
-			for (int i = 1; i <= 2; ++i)
-			{
-				std::string side_line_name = "Antenna Side Line " + std::to_string(i);
-				std::string side_line_end_coordinates = i == 1
-					? side_line1_end_coordinates
-					: side_line2_end_coordinates;
-				kmlFile << "<Placemark>\n";
-				kmlFile << "      <name>" << side_line_name << "</name>\n";
-				kmlFile << "      <styleUrl>#lineStyleBlue</styleUrl>\n";
-				kmlFile << "      <LineString>\n";
-				kmlFile << "            <altitudeMode>absolute</altitudeMode>\n";
-				kmlFile << "            <tessellate>1</tessellate>\n";
-				kmlFile << "            <coordinates>\n";
-				kmlFile << "            " + coordinates + " " + side_line_end_coordinates + "\n";
-				kmlFile << "            </coordinates>\n";
-				kmlFile << "      </LineString>\n";
-				kmlFile << "</Placemark>\n";
-			}
-			kmlFile << "<Placemark>\n";
-			kmlFile << "      <name>Antenna Direction</name>\n";
-			kmlFile << "      <styleUrl>#lineStyle</styleUrl>\n";
-			kmlFile << "      <LineString>\n";
-			kmlFile << "            <altitudeMode>absolute</altitudeMode>\n";
-			kmlFile << "            <tessellate>1</tessellate>\n";
-			kmlFile << "            <coordinates>\n";
-			kmlFile << "            " + coordinates + " " + end_coordinates + "\n";
-			kmlFile << "            </coordinates>\n";
-			kmlFile << "      </LineString>\n";
-			kmlFile << "</Placemark>\n";
-			kmlFile << "<Placemark>\n";
-			kmlFile << "      <name>Antenna Arrow</name>\n";
-			kmlFile << "      <styleUrl>#arrowStyle</styleUrl>\n";
-			kmlFile << "      <Point>\n";
-			kmlFile << "          <coordinates>" + end_coordinates + "</coordinates>\n";
-			kmlFile << "          <altitudeMode>absolute</altitudeMode>\n";
-			kmlFile << "      </Point>\n";
-			kmlFile << "      <IconStyle>\n";
-			kmlFile << "          <heading>" << start_azimuth_deg_kml << "</heading>\n";
-			kmlFile << "      </IconStyle>\n";
-			kmlFile << "</Placemark>\n";
-		}
 		kmlFile << "<Placemark>\n";
-		kmlFile << "    <name>" << platform->getName() << "</name>\n";
-		kmlFile << "    <styleUrl>" << placemark_style << "</styleUrl>\n";
-		if (is_linear || is_cubic)
+		kmlFile << "    <name>Isotropic pattern range</name>\n";
+		kmlFile << "    <styleUrl>#translucentPolygon</styleUrl>\n";
+		kmlFile << "    <Polygon>\n";
+		kmlFile << "        <extrude>1</extrude>\n";
+		kmlFile << "        <altitudeMode>absolute</altitudeMode>\n";
+		kmlFile << "        <outerBoundaryIs><LinearRing><coordinates>\n";
+		for (const auto& [pt_lat, pt_lon] : circle_coordinates)
 		{
-			kmlFile << "    <gx:Track>\n";
-			// The altitude from the XML is a relative offset (local z). GeographicLib converts this
-			// to an absolute MSL altitude for KML rendering.
-			kmlFile << "        <altitudeMode>absolute</altitudeMode>\n";
-			if (alt_abs > referenceAltitude) { kmlFile << "        <extrude>1</extrude>\n"; }
-
-			if (const auto& waypoints = path->getCoords(); !waypoints.empty())
-			{
-				if (waypoints.size() == 1 || is_static)
-				{
-					const auto& [pos, t] = waypoints[0];
-					math::Vec3 p_local_pos = path->getPosition(t);
-					double p_lon, p_lat, p_alt_abs;
-					proj.Reverse
-						(
-							p_local_pos.x, p_local_pos.y, p_local_pos.z,
-							p_lat, p_lon, p_alt_abs
-							);
-					kmlFile << "        <when>" << t << "</when>\n";
-					kmlFile << "        <gx:coord>" << p_lon << " " << p_lat << " " << p_alt_abs << "</gx:coord>\n";
-				}
-				else
-				{
-					for (size_t i = 0; i < waypoints.size() - 1; ++i)
-					{
-						const auto& [start_pos, start_t] = waypoints[i];
-						const auto& [end_pos, end_t] = waypoints[i + 1];
-						const double start_time = start_t;
-						const double end_time = end_t;
-						const double time_diff = end_time - start_time;
-						if (time_diff <= 0)
-						{
-							if (i == 0)
-							{
-								math::Vec3 p_local_pos = path->getPosition(start_time);
-								double p_lon, p_lat, p_alt_abs;
-								proj.Reverse
-									(
-										p_local_pos.x, p_local_pos.y, p_local_pos.z, p_lat,
-										p_lon,
-										p_alt_abs
-										);
-								kmlFile << "        <when>" << start_time << "</when>\n";
-								kmlFile << "        <gx:coord>" << p_lon << " " << p_lat << " " << p_alt_abs <<
-									"</gx:coord>\n";
-							}
-							continue;
-						}
-						constexpr int num_divisions = 100;
-						for (int j = 0; j < num_divisions; ++j)
-						{
-							const double t_ratio = static_cast<double>(j) / num_divisions;
-							const double current_time = start_time + t_ratio * time_diff;
-							math::Vec3 p_local_pos = path->getPosition(current_time);
-							double p_lon, p_lat, p_alt_abs;
-							proj.Reverse
-								(
-									p_local_pos.x, p_local_pos.y, p_local_pos.z, p_lat, p_lon,
-									p_alt_abs
-									);
-							kmlFile << "        <when>" << current_time << "</when>\n";
-							kmlFile << "        <gx:coord>" << p_lon << " " << p_lat << " " << p_alt_abs <<
-								"</gx:coord>\n";
-						}
-					}
-					const auto& [pos, t] = waypoints.back();
-					math::Vec3 p_local_pos = path->getPosition(t);
-					double p_lon, p_lat, p_alt_abs;
-					proj.Reverse
-						(
-							p_local_pos.x, p_local_pos.y, p_local_pos.z, p_lat, p_lon, p_alt_abs
-							);
-					kmlFile << "        <when>" << t << "</when>\n";
-					kmlFile << "        <gx:coord>" << p_lon << " " << p_lat << " " << p_alt_abs << "</gx:coord>\n";
-				}
-			}
-			kmlFile << "    </gx:Track>\n";
+			kmlFile << "            " << formatCoordinates(pt_lon, pt_lat, alt_abs) << "\n";
 		}
-		else // Not a gx:Track compatible path, just a single point
-		{
-			kmlFile << "    <LookAt>\n";
-			kmlFile << "        <longitude>" << longitude << "</longitude>\n";
-			kmlFile << "        <latitude>" << latitude << "</latitude>\n";
-			kmlFile << "        <altitude>" << alt_abs << "</altitude>\n";
-			kmlFile << "        <heading>-148.4122922628044</heading>\n";
-			kmlFile << "        <tilt>40.5575073395506</tilt>\n";
-			kmlFile << "        <range>500.6566641072245</range>\n";
-			kmlFile << "    </LookAt>\n";
-			kmlFile << "    <Point>\n";
-			kmlFile << "        <coordinates>" << longitude << "," << latitude << "," << alt_abs <<
-				"</coordinates>\n";
-			kmlFile << "        <altitudeMode>absolute</altitudeMode>\n";
-			if (alt_abs > referenceAltitude) { kmlFile << "        <extrude>1</extrude>\n"; }
-			kmlFile << "    </Point>\n";
-		}
+		kmlFile << "            " << formatCoordinates
+			(circle_coordinates[0].second, circle_coordinates[0].first, alt_abs) << "\n";
+		kmlFile << "        </coordinates></LinearRing></outerBoundaryIs>\n";
+		kmlFile << "    </Polygon>\n";
 		kmlFile << "</Placemark>\n";
-		if (is_linear || is_cubic)
+	}
+
+	void generateSincAntennaKml
+	(
+		std::ofstream& kmlFile, const antenna::Sinc* sinc, const radar::Platform* platform,
+		const GeographicLib::LocalCartesian& proj
+		)
+	{
+		const auto& first_wp_pos = platform->getMotionPath()->getCoords().front().pos;
+		double start_lat, start_lon, start_alt;
+		proj.Reverse(first_wp_pos.x, first_wp_pos.y, first_wp_pos.z, start_lat, start_lon, start_alt);
+		const std::string start_coords_str = formatCoordinates(start_lon, start_lat, start_alt);
+
+		const math::SVec3 initial_rotation = platform->getRotationPath()->getPosition(params::startTime());
+		// TODO: The conversion from FERS internal azimuth to KML heading uses a hardcoded +180 degree offset.
+		//       This indicates an undocumented convention mismatch between FERS's coordinate system (likely a
+		//       right-handed frame with azimuth from East) and KML's heading (degrees clockwise from North). This
+		//       "magic number" is brittle and should be clarified, documented, and potentially made more robust.
+		const double start_azimuth_deg_kml = initial_rotation.azimuth * 180.0 / PI + 180.0;
+
+		// TODO: Antenna beam visualization is static, showing only the orientation at the simulation's start time.
+		//       This does not represent dynamic scanning defined by a platform's <rotationpath>. The KML should
+		//       ideally visualize the scan volume or animate the beam's movement using a <gx:Track> to match FERS's
+		//       capabilities.
+		// Main beam
+		double dest_lat, dest_lon;
+		calculateDestinationCoordinate
+			(start_lat, start_lon, start_azimuth_deg_kml, SINC_ARROW_LENGTH_M, dest_lat, dest_lon);
+		const std::string end_coords_str = formatCoordinates(dest_lon, dest_lat, start_alt);
+		writeAntennaBeamLine(kmlFile, "Antenna Direction", "#lineStyle", start_coords_str, end_coords_str);
+
+		// 3dB beamwidth lines
+		const double angle_3db_drop_deg = find3DbDropAngle(sinc->getAlpha(), sinc->getBeta(), sinc->getGamma());
+
+		double side1_lat, side1_lon;
+		calculateDestinationCoordinate
+			(
+				start_lat, start_lon, start_azimuth_deg_kml - angle_3db_drop_deg, SINC_ARROW_LENGTH_M, side1_lat,
+				side1_lon
+				);
+		const std::string side1_coords_str = formatCoordinates(side1_lon, side1_lat, start_alt);
+		writeAntennaBeamLine(kmlFile, "Antenna Side Line 1", "#lineStyleBlue", start_coords_str, side1_coords_str);
+
+		double side2_lat, side2_lon;
+		calculateDestinationCoordinate
+			(
+				start_lat, start_lon, start_azimuth_deg_kml + angle_3db_drop_deg, SINC_ARROW_LENGTH_M, side2_lat,
+				side2_lon
+				);
+		const std::string side2_coords_str = formatCoordinates(side2_lon, side2_lat, start_alt);
+		writeAntennaBeamLine(kmlFile, "Antenna Side Line 2", "#lineStyleBlue", start_coords_str, side2_coords_str);
+
+		// Arrow placemark
+		kmlFile << "<Placemark>\n";
+		kmlFile << "    <name>Antenna Arrow</name>\n";
+		kmlFile << "    <styleUrl>#arrowStyle</styleUrl>\n";
+		kmlFile << "    <Point><coordinates>" << end_coords_str <<
+			"</coordinates><altitudeMode>absolute</altitudeMode></Point>\n";
+		kmlFile << "    <IconStyle><heading>" << start_azimuth_deg_kml << "</heading></IconStyle>\n";
+		kmlFile << "</Placemark>\n";
+	}
+
+	void generateAntennaKml
+	(
+		std::ofstream& kmlFile, const radar::Platform* platform, const radar::Radar* radar,
+		const GeographicLib::LocalCartesian& proj
+		)
+	{
+		const antenna::Antenna* ant = radar->getAntenna();
+		if (!ant || platform->getMotionPath()->getCoords().empty()) { return; }
+
+		if (dynamic_cast<const antenna::Isotropic*>(ant))
 		{
-			const math::Coord& start_coord = path->getCoords().front();
-			const math::Coord& end_coord = path->getCoords().back();
-			std::string start_coordinates = getCoordinatesFromPositionWaypoint(start_coord, proj);
-			std::string end_coordinates = getCoordinatesFromPositionWaypoint(end_coord, proj);
-
-			// Extract absolute altitude from the coordinate string for the extrude check
-			double start_altitude_abs, end_altitude_abs;
-			try
-			{
-				start_altitude_abs = std::stod(start_coordinates.substr(start_coordinates.rfind(',') + 1));
-				end_altitude_abs = std::stod(end_coordinates.substr(end_coordinates.rfind(',') + 1));
-			}
-			catch (const std::exception& e)
-			{
-				LOG(logging::Level::WARNING, "Could not parse altitude from coordinate string: {}", e.what());
-				start_altitude_abs = end_altitude_abs = referenceAltitude; // Default to reference altitude on error
-			}
-
-			kmlFile << "<Placemark>\n";
-			kmlFile << "    <name>Start: " << platform->getName() << "</name>\n";
-			kmlFile << "    <styleUrl>#target</styleUrl>\n";
-			kmlFile << "    <Point>\n";
-			kmlFile << "        <coordinates>" << start_coordinates << "</coordinates>\n";
-			kmlFile << "        <altitudeMode>absolute</altitudeMode>\n";
-			if (start_altitude_abs > referenceAltitude) { kmlFile << "        <extrude>1</extrude>\n"; }
-			kmlFile << "    </Point>\n";
-			kmlFile << "</Placemark>\n";
-			kmlFile << "<Placemark>\n";
-			kmlFile << "    <name>End: " << platform->getName() << "</name>\n";
-			kmlFile << "    <styleUrl>#target</styleUrl>\n";
-			kmlFile << "    <Point>\n";
-			kmlFile << "        <coordinates>" << end_coordinates << "</coordinates>\n";
-			kmlFile << "        <altitudeMode>absolute</altitudeMode>\n";
-			if (end_altitude_abs > referenceAltitude) { kmlFile << "        <extrude>1</extrude>\n"; }
-			kmlFile << "    </Point>\n";
-			kmlFile << "</Placemark>\n";
+			const math::Vec3 initial_pos = platform->getMotionPath()->getCoords().front().pos;
+			generateIsotropicAntennaKml(kmlFile, initial_pos, proj);
+		}
+		else if (const auto* sinc_ant = dynamic_cast<const antenna::Sinc*>(ant))
+		{
+			generateSincAntennaKml(kmlFile, sinc_ant, platform, proj);
 		}
 	}
+
+	void generateDynamicPathKml
+	(
+		std::ofstream& kmlFile, const radar::Platform* platform, const std::string& styleUrl, const double refAlt,
+		const GeographicLib::LocalCartesian& proj
+		)
+	{
+		// TODO: The visualization for dynamic paths can be misleading for objects with short lifespans. The track is
+		//       sampled based on the global simulation time (`params::startTime` to `params::endTime`), not the object's
+		//       actual movement duration defined by its waypoints. This can result in very few KML points for a
+		//       fast-moving object in a long simulation. The sampling should be relative to the path's own start and
+		//       end times to accurately represent the trajectory.
+		const math::Path* path = platform->getMotionPath();
+		const auto& waypoints = path->getCoords();
+
+		double first_alt_abs;
+		{
+			double lat, lon;
+			proj.Reverse
+				(waypoints.front().pos.x, waypoints.front().pos.y, waypoints.front().pos.z, lat, lon, first_alt_abs);
+		}
+
+		kmlFile << "<Placemark>\n";
+		kmlFile << "    <name>" << platform->getName() << "</name>\n";
+		kmlFile << "    <styleUrl>" << styleUrl << "</styleUrl>\n";
+		kmlFile << "    <gx:Track>\n";
+		kmlFile << "        <altitudeMode>absolute</altitudeMode>\n";
+		if (first_alt_abs > refAlt) { kmlFile << "        <extrude>1</extrude>\n"; }
+
+		const double start_time = params::startTime();
+		const double end_time = params::endTime();
+		const double time_diff = end_time - start_time;
+		const double time_step = time_diff > 0 ? time_diff / TRACK_NUM_DIVISIONS : 0;
+
+		for (int i = 0; i <= TRACK_NUM_DIVISIONS; ++i)
+		{
+			const double current_time = start_time + i * time_step;
+			const math::Vec3 p_local_pos = path->getPosition(current_time);
+
+			double p_lon, p_lat, p_alt_abs;
+			proj.Reverse(p_local_pos.x, p_local_pos.y, p_local_pos.z, p_lat, p_lon, p_alt_abs);
+
+			kmlFile << "        <when>" << current_time << "</when>\n";
+			kmlFile << "        <gx:coord>" << p_lon << " " << p_lat << " " << p_alt_abs << "</gx:coord>\n";
+		}
+
+		kmlFile << "    </gx:Track>\n";
+		kmlFile << "</Placemark>\n";
+	}
+
+	void generateTrackEndpointsKml
+	(
+		std::ofstream& kmlFile, const radar::Platform* platform, const double refAlt,
+		const GeographicLib::LocalCartesian& proj
+		)
+	{
+		const math::Path* path = platform->getMotionPath();
+		if (path->getCoords().size() <= 1) { return; }
+
+		const auto& [start_wp_pos, start_wp_t] = path->getCoords().front();
+		const auto& [end_wp_pos, end_wp_t] = path->getCoords().back();
+
+		double start_lat, start_lon, start_alt_abs;
+		proj.Reverse(start_wp_pos.x, start_wp_pos.y, start_wp_pos.z, start_lat, start_lon, start_alt_abs);
+		const std::string start_coordinates = formatCoordinates(start_lon, start_lat, start_alt_abs);
+
+		double end_lat, end_lon, end_alt_abs;
+		proj.Reverse(end_wp_pos.x, end_wp_pos.y, end_wp_pos.z, end_lat, end_lon, end_alt_abs);
+		const std::string end_coordinates = formatCoordinates(end_lon, end_lat, end_alt_abs);
+
+		writePoint(kmlFile, "Start: " + platform->getName(), "#target", start_coordinates, start_alt_abs, refAlt);
+		writePoint(kmlFile, "End: " + platform->getName(), "#target", end_coordinates, end_alt_abs, refAlt);
+	}
+
+	void generateStaticPlacemarkKml
+	(
+		std::ofstream& kmlFile, const radar::Platform* platform, const std::string& styleUrl, const double refAlt,
+		const GeographicLib::LocalCartesian& proj
+		)
+	{
+		const auto& [first_wp_pos, first_wp_t] = platform->getMotionPath()->getCoords().front();
+		double lat, lon, alt_abs;
+		proj.Reverse(first_wp_pos.x, first_wp_pos.y, first_wp_pos.z, lat, lon, alt_abs);
+		const std::string coordinates = formatCoordinates(lon, lat, alt_abs);
+
+		kmlFile << "<Placemark>\n";
+		kmlFile << "    <name>" << platform->getName() << "</name>\n";
+		kmlFile << "    <styleUrl>" << styleUrl << "</styleUrl>\n";
+		kmlFile << "    <LookAt>\n";
+		kmlFile << "        <longitude>" << lon << "</longitude>\n";
+		kmlFile << "        <latitude>" << lat << "</latitude>\n";
+		kmlFile << "        <altitude>" << alt_abs << "</altitude>\n";
+		kmlFile << "        <heading>-148.41</heading><tilt>40.55</tilt><range>500.65</range>\n";
+		kmlFile << "    </LookAt>\n";
+		kmlFile << "    <Point>\n";
+		kmlFile << "        <coordinates>" << coordinates << "</coordinates>\n";
+		kmlFile << "        <altitudeMode>absolute</altitudeMode>\n";
+		if (alt_abs > refAlt) { kmlFile << "        <extrude>1</extrude>\n"; }
+		kmlFile << "    </Point>\n";
+		kmlFile << "</Placemark>\n";
+	}
+
+	void generatePlatformPathKml
+	(
+		std::ofstream& kmlFile, const radar::Platform* platform, const std::string& style, const double refAlt,
+		const GeographicLib::LocalCartesian& proj
+		)
+	{
+		const auto path_type = platform->getMotionPath()->getType();
+		const bool is_dynamic = (path_type == math::Path::InterpType::INTERP_LINEAR || path_type ==
+			math::Path::InterpType::INTERP_CUBIC);
+
+		if (is_dynamic)
+		{
+			generateDynamicPathKml(kmlFile, platform, style, refAlt, proj);
+			generateTrackEndpointsKml(kmlFile, platform, refAlt, proj);
+		}
+		else { generateStaticPlacemarkKml(kmlFile, platform, style, refAlt, proj); }
+	}
+
+	void processPlatform
+	(
+		const radar::Platform* platform, const std::vector<const radar::Object*>& objects, std::ofstream& kmlFile,
+		const GeographicLib::LocalCartesian& proj, const double referenceAltitude
+		)
+	{
+		if (platform->getMotionPath()->getCoords().empty()) { return; }
+
+		const auto placemark_style = getPlacemarkStyleForPlatform(objects);
+
+		if (const auto* radar_obj = getPrimaryRadar
+			(objects)) { generateAntennaKml(kmlFile, platform, radar_obj, proj); }
+
+		generatePlatformPathKml(kmlFile, platform, placemark_style, referenceAltitude, proj);
+	}
+
 }
 
 namespace serial
@@ -456,7 +455,6 @@ namespace serial
 
 			GeographicLib::LocalCartesian proj(reference_latitude, reference_longitude, reference_altitude);
 
-			// Group objects by their platform
 			map<const radar::Platform*, vector<const radar::Object*>> platform_to_objects;
 			const auto group_objects = [&](const auto& objectCollection)
 			{
@@ -476,65 +474,9 @@ namespace serial
 				LOG(logging::Level::ERROR, "Error opening output KML file {}", outputKmlPath);
 				return false;
 			}
-			kml_file << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-			kml_file <<
-				"<kml xmlns=\"http://www.opengis.net/kml/2.2\" xmlns:gx=\"http://www.google.com/kml/ext/2.2\">\n";
-			kml_file << "<Document>\n\n";
-			kml_file << "<name>FERS Simulation Visualization</name>\n";
-			kml_file << "<Style id=\"receiver\">\n";
-			kml_file << "  <IconStyle>\n";
-			kml_file << "    <Icon>\n";
-			kml_file << "      <href>https://cdn-icons-png.flaticon.com/512/645/645436.png</href>\n";
-			kml_file << "    </Icon>\n";
-			kml_file << "  </IconStyle>\n";
-			kml_file << "</Style>\n";
-			kml_file << "<Style id=\"transmitter\">\n";
-			kml_file << "  <IconStyle>\n";
-			kml_file << "    <Icon>\n";
-			kml_file << "      <href>https://cdn-icons-png.flaticon.com/128/224/224666.png</href>\n";
-			kml_file << "    </Icon>\n";
-			kml_file << "  </IconStyle>\n";
-			kml_file << "</Style>\n";
-			kml_file << "<Style id=\"target\">\n";
-			kml_file << "  <IconStyle>\n";
-			kml_file << "    <Icon>\n";
-			kml_file <<
-				"      <href>https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Target_red_dot1.svg/1200px-Target_red_dot1.svg.png</href>\n";
-			kml_file << "    </Icon>\n";
-			kml_file << "  </IconStyle>\n";
-			kml_file << "  <LineStyle>\n";
-			kml_file << "    <width>2</width>\n";
-			kml_file << "  </LineStyle>\n";
-			kml_file << "</Style>\n";
-			kml_file << "<Style id=\"translucentPolygon\">\n";
-			kml_file << "    <LineStyle>\n";
-			kml_file << "        <color>ff0000ff</color>\n";
-			kml_file << "        <width>2</width>\n";
-			kml_file << "    </LineStyle>\n";
-			kml_file << "    <PolyStyle>\n";
-			kml_file << "        <color>00ffffff</color> <!-- RGBA: 50% transparent white --> \n";
-			kml_file << "     </PolyStyle>\n";
-			kml_file << "</Style>\n";
-			kml_file << "<Style id=\"arrowStyle\">\n";
-			kml_file << "    <IconStyle>\n";
-			kml_file << "        <Icon>\n";
-			kml_file << "            <href>http://maps.google.com/mapfiles/kml/shapes/arrow.png</href>\n";
-			kml_file << "        </Icon>\n";
-			kml_file << "        <scale>0.5</scale>\n";
-			kml_file << "    </IconStyle>\n";
-			kml_file << "</Style>\n";
-			kml_file << "<Style id=\"lineStyle\">\n";
-			kml_file << "    <LineStyle>\n";
-			kml_file << "        <color>ff0000ff</color>\n";
-			kml_file << "        <width>2</width>\n";
-			kml_file << "     </LineStyle>\n";
-			kml_file << "</Style>\n";
-			kml_file << "<Style id=\"lineStyleBlue\">\n";
-			kml_file << "    <LineStyle>\n";
-			kml_file << "        <color>ffff0000</color>\n";
-			kml_file << "        <width>2</width>\n";
-			kml_file << "     </LineStyle>\n";
-			kml_file << "</Style>\n";
+
+			writeKmlHeaderAndStyles(kml_file);
+
 			kml_file << "<Folder>\n";
 			kml_file << "  <name>Reference Coordinate</name>\n";
 			kml_file <<
@@ -543,18 +485,23 @@ namespace serial
 			kml_file << "    <longitude>" << reference_longitude << "</longitude>\n";
 			kml_file << "    <latitude>" << reference_latitude << "</latitude>\n";
 			kml_file << "    <altitude>" << reference_altitude << "</altitude>\n";
-			kml_file << "    <heading>-148.4122922628044</heading>\n";
-			kml_file << "    <tilt>40.5575073395506</tilt>\n";
-			kml_file << "    <range>10000</range>\n";
+			kml_file << "    <heading>-148.41</heading><tilt>40.55</tilt><range>10000</range>\n";
 			kml_file << "  </LookAt>\n";
+
 			for (const auto& [platform, objects] : platform_to_objects)
 			{
 				processPlatform(platform, objects, kml_file, proj, reference_altitude);
 			}
+
 			kml_file << "</Folder>\n";
 			kml_file << "</Document>\n";
 			kml_file << "</kml>\n";
 			kml_file.close();
+		}
+		catch (const std::exception& e)
+		{
+			LOG(logging::Level::ERROR, "Error generating KML file: {}", e.what());
+			return false;
 		}
 		catch (...)
 		{
