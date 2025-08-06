@@ -13,16 +13,10 @@
 #include <filesystem>
 #include <format>
 #include <stdexcept>
-#include <highfive/H5File.hpp>
+#include <highfive/highfive.hpp>
 
 #include "core/logging.h"
 #include "core/parameters.h"
-#include "highfive/H5DataSet.hpp"
-#include "highfive/H5DataSpace.hpp"
-#include "highfive/H5Exception.hpp"
-#include "highfive/H5Group.hpp"
-#include "highfive/bits/H5Annotate_traits_misc.hpp"
-#include "highfive/bits/H5Node_traits_misc.hpp"
 
 using logging::Level;
 
@@ -72,7 +66,8 @@ namespace serial
 		LOG(Level::TRACE, "Read dataset successfully");
 	}
 
-	void addChunkToFile(HighFive::File& file, const std::vector<ComplexType>& data, const RealType time, const RealType fullscale, const unsigned count)
+	void addChunkToFile(HighFive::File& file, const std::vector<ComplexType>& data, const RealType time,
+	                    const RealType fullscale, const unsigned count)
 	{
 		const unsigned size = data.size();
 
