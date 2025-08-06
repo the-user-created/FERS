@@ -24,7 +24,7 @@
 #include <tuple>
 #include <utility>
 #include <vector>
-#include <highfive/H5File.hpp>
+#include <highfive/highfive.hpp>
 #include <libxml/parser.h>
 
 #include "config.h"
@@ -32,7 +32,6 @@
 #include "libxml_wrapper.h"
 #include "core/parameters.h"
 #include "core/thread_pool.h"
-#include "highfive/H5Exception.hpp"
 #include "libxml/xmlstring.h"
 #include "noise/noise_generators.h"
 #include "noise/noise_utils.h"
@@ -61,7 +60,7 @@ namespace
 
 		try
 		{
-			HighFive::File file(hdf5_filename, HighFive::File::Overwrite);
+			HighFive::File file(hdf5_filename, HighFive::File::Truncate);
 			return file;
 		}
 		catch (const HighFive::Exception& err)
@@ -82,7 +81,7 @@ namespace
 
 		const RealType power = noise::noiseTemperatureToPower(
 			temperature, params::rate() * params::oversampleRatio() / 2
-		);
+			);
 
 		noise::WgnGenerator generator(std::sqrt(power) / 2.0);
 

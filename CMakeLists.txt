@@ -45,7 +45,7 @@ endif ()
 
 # Add subdirectories for source and third-party libraries
 add_subdirectory(src)
-add_subdirectory(third_party/HighFive)
+add_subdirectory(third_party/highfive)
 add_subdirectory(third_party/geographiclib)
 
 # Ensure the output directory for generated headers exists

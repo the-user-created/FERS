@@ -86,6 +86,9 @@ git clone --recursive https://github.com/the-user-created/FERS.git
 cd FERS
 ```
 
+> **Note:** If you have already cloned the repository, you can update to the latest version and sync the submodules by
+> running `git pull` followed by `git submodule update --init --recursive` from the project's root directory.
+
 #### Step 3: Build FERS
 
 Create a build directory, configure, and compile the project:
@@ -223,6 +226,7 @@ doxygen Doxyfile
 ```
 
 ## Contributing
+
 If you would like to contribute to FERS, please refer to the [CONTRIBUTING.md](CONTRIBUTING.md) file for guidelines.
 
 ## License

@@ -30,7 +30,8 @@ namespace serial
 	* @param count The sequential count number for chunk naming.
 	* @throws std::runtime_error If there is an error writing data or setting attributes.
 	*/
-	void addChunkToFile(HighFive::File& file, const std::vector<ComplexType>& data, RealType time, RealType fullscale, unsigned count);
+	void addChunkToFile(HighFive::File& file, const std::vector<ComplexType>& data, RealType time, RealType fullscale,
+	                    unsigned count);
 
 	/**
 	* @brief Reads pulse data from an HDF5 file.
