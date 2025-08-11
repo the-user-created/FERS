@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <cmath>
 #include <functional>
+#include <iostream>
 #include <memory>
 #include <stdexcept>
 #include <thread>
@@ -164,14 +165,32 @@ namespace
 		const auto trpos_end = SVec3(
 			trans->getPosition(time.count() + length.count()) - recv->getPosition(time.count() + length.count()));
 		const RealType r_end = trpos_end.length;
-		const RealType doppler_shift = (r_end - distance) / length.count();
+		const RealType v_radial = (r_end - distance) / length.count();
 
-		results.doppler = (params::c() + doppler_shift) / (params::c() - doppler_shift);
+		// --- Doppler Calculation ---
+		// The Doppler factor is calculated using the one-way relativistic longitudinal Doppler effect formula.
+		// The full relativistic formula also includes a transverse component (due to the Lorentz factor),
+		// but its contribution is negligible for velocities where (v/c) << 1.
+		// In such scenarios, the longitudinal effect (proportional to v/c) is always dominant.
+		//
+		// Example: LEO satellite (v = 7800 m/s) at 1 GHz carrier:
+		//   - Longitudinal Doppler Shift (from v_radial): ~26.0 kHz
+		//   - Transverse Doppler Shift (from v_total):    ~ -0.34 Hz
+		//
+		// The longitudinal effect is >76,000x larger and is the only component modeled.
+		// The radial velocity (v_doppler) is calculated numerically as dR/dt, which implicitly
+		// handles the cosine of the angle between the velocity vector and the line-of-sight.
+		//
+		// Ref: https://en.wikipedia.org/wiki/Relativistic_Doppler_effect#Relativistic_longitudinal_Doppler_effect
+		// Ref: https://www.mrelativity.net/MBriefs/SR_Transverse_Doppler_Explained.htm
+
+		results.doppler = std::sqrt((params::c() + v_radial) / (params::c() - v_radial));
 
 		// Multipath conditions: if either transmitter or receiver has multipath, zero the power
 		if (trans->getMultipathDual() || recv->getMultipathDual()) { results.power = 0; }
 
 		// Phase calculation, ensuring the phase is wrapped within [0, 2π]
+		// TODO: Incorrect sign and why wrap?
 		results.phase = std::fmod(results.delay * 2 * PI * wave->getCarrier(), 2 * PI);
 
 		results.noise_temperature = recv->getNoiseTemperature(recv->getRotation(time.count() + results.delay));
@@ -187,59 +206,60 @@ namespace
 	 * @throws core::RangeError If the transmitter or receiver is too close to the target for accurate simulation.
 	 * @throws std::runtime_error If no time points are available for execution.
 	 */
-	void simulateResponse(const Transmitter* trans, Receiver* recv, const TransmitterPulse* signal, const Target* targ = nullptr)
+	void simulateResponse(const Transmitter* trans, Receiver* recv, const TransmitterPulse* signal,
+	                      const Target* targ = nullptr)
 	{
 		if (targ == nullptr && trans->getAttached() == recv) { return; }
 
-	    const auto start_time = std::chrono::duration<RealType>(signal->time);
-	    const auto end_time = start_time + std::chrono::duration<RealType>(signal->wave->getLength());
-	    const auto sample_time = std::chrono::duration<RealType>(1.0 / params::cwSampleRate());
-	    const int point_count = static_cast<int>(std::ceil(signal->wave->getLength() / sample_time.count()));
+		const auto start_time = std::chrono::duration<RealType>(signal->time);
+		const auto end_time = start_time + std::chrono::duration<RealType>(signal->wave->getLength());
+		const auto sample_time = std::chrono::duration<RealType>(1.0 / params::cwSampleRate());
+		const int point_count = static_cast<int>(std::ceil(signal->wave->getLength() / sample_time.count()));
 
-	    // Check for a valid point count in case of target simulation
-	    if (targ && point_count == 0)
-	    {
-	        LOG(Level::FATAL, "No time points are available for execution!");
-	        throw std::runtime_error("No time points are available for execution!");
-	    }
+		// Check for a valid point count in case of target simulation
+		if (targ && point_count == 0)
+		{
+			LOG(Level::FATAL, "No time points are available for execution!");
+			throw std::runtime_error("No time points are available for execution!");
+		}
 
-	    auto response = std::make_unique<Response>(signal->wave, trans);
+		auto response = std::make_unique<Response>(signal->wave, trans);
 
-	    try
-	    {
-	        for (int i = 0; i <= point_count; ++i)
-	        {
-	            const auto current_time = i < point_count ? start_time + i * sample_time : end_time;
+		try
+		{
+			for (int i = 0; i <= point_count; ++i)
+			{
+				const auto current_time = i < point_count ? start_time + i * sample_time : end_time;
 
-	            core::ReResults results{};
-	            // If a target is provided, use target simulation; otherwise, direct simulation.
-	            if (targ)
-	            {
-	                solveRe(trans, recv, targ, current_time, sample_time, signal->wave, results);
-	            }
-	            else
-	            {
-	                solveReDirect(trans, recv, current_time, sample_time, signal->wave, results);
-	            }
+				core::ReResults results{};
+				// If a target is provided, use target simulation; otherwise, direct simulation.
+				if (targ)
+				{
+					solveRe(trans, recv, targ, current_time, sample_time, signal->wave, results);
+				}
+				else
+				{
+					solveReDirect(trans, recv, current_time, sample_time, signal->wave, results);
+				}
 
-	            interp::InterpPoint point{
-	                .power = results.power,
-	                .time = current_time.count() + results.delay,
-	                .delay = results.delay,
-	                .doppler = results.doppler,
-	                .phase = results.phase,
-	                .noise_temperature = results.noise_temperature
-	            };
-	            response->addInterpPoint(point);
-	        }
-	    }
-	    catch (const core::RangeError&)
-	    {
-	        LOG(Level::FATAL, "Receiver or Transmitter too close for accurate simulation");
-	        throw core::RangeError();
-	    }
+				interp::InterpPoint point{
+					.power = results.power,
+					.time = current_time.count() + results.delay,
+					.delay = results.delay,
+					.doppler = results.doppler,
+					.phase = results.phase,
+					.noise_temperature = results.noise_temperature
+				};
+				response->addInterpPoint(point);
+			}
+		}
+		catch (const core::RangeError&)
+		{
+			LOG(Level::FATAL, "Receiver or Transmitter too close for accurate simulation");
+			throw core::RangeError();
+		}
 
-	    recv->addResponse(std::move(response));
+		recv->addResponse(std::move(response));
 	}
 
 	/**
