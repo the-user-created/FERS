@@ -14,19 +14,28 @@ namespace radar
 {
 	int Transmitter::getPulseCount() const noexcept
 	{
-		const RealType time = params::endTime() - params::startTime();
-		if (_pulsed)
+		if (!_pulsed)
 		{
-			const RealType pulses = time * _prf;
-			return static_cast<int>(std::ceil(pulses));
+			return 1;
 		}
-		return 1; // CW systems only have one 'pulse'
+		const RealType time = params::endTime() - params::startTime();
+		const RealType pulses = time * _prf;
+		return static_cast<int>(std::ceil(pulses));
 	}
 
 	void Transmitter::setPulse(TransmitterPulse* pulse, const int number) const
 	{
 		pulse->wave = _signal;
-		pulse->time = _pulsed ? static_cast<RealType>(number) / _prf : 0;
+		if (_pulsed)
+		{
+			pulse->time = static_cast<RealType>(number) / _prf;
+		}
+		else
+		{
+			pulse->time = params::startTime();
+			// pulse->wave->length = params::endTime() - params::startTime(); // Cannot be implemented without new methods.
+		}
+
 		if (!_timing)
 		{
 			LOG(logging::Level::FATAL, "Transmitter {} must be associated with timing source", getName());

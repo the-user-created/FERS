@@ -32,4 +32,18 @@ namespace serial
 	*/
 	[[nodiscard]] std::unique_ptr<signal::RadarSignal> loadPulseFromFile(
 		const std::string& name, const std::string& filename, RealType power, RealType carrierFreq);
+
+	/**
+	* @brief Natively generates a placeholder signal object for a CW tone.
+	*
+	* This function creates a minimal, valid RadarSignal object to represent a
+	* continuous wave. The actual complex signal is synthesized sample-by-sample
+	* during the simulation, so this object does not need to contain a complex waveform.
+	*
+	* @param name The name of the CW signal.
+	* @param power The power of the signal.
+	* @param carrierFreq The carrier frequency of the signal.
+	* @return A unique_ptr to a RadarSignal object.
+	*/
+	std::unique_ptr<signal::RadarSignal> createCwTone(const std::string& name, RealType power, RealType carrierFreq);
 }

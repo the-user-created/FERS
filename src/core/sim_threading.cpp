@@ -26,6 +26,8 @@
 #include "math/geometry_ops.h"
 #include "radar/radar_obj.h"
 #include "radar/target.h"
+#include "radar/receiver.h"
+#include "radar/transmitter.h"
 #include "serial/response.h"
 #include "signal/radar_signal.h"
 
@@ -33,6 +35,7 @@ using radar::Transmitter;
 using radar::Receiver;
 using radar::Target;
 using math::SVec3;
+using math::Vec3;
 using signal::RadarSignal;
 using radar::TransmitterPulse;
 using serial::Response;
@@ -242,6 +245,47 @@ namespace
 	    recv->addResponse(std::move(response));
 	}
 
+	void simulateCwResponse(const Transmitter* trans, Receiver* recv, const core::World* world)
+	{
+		// A. Setup
+		const RealType samplingRate = params::cwSampleRate();
+		const int numSamples = static_cast<int>(std::ceil((params::endTime() - params::startTime()) * samplingRate));
+		std::vector<ComplexType> iq_block(numSamples, {0.0, 0.0});
+		const RealType fc = trans->getSignal()->getCarrier();
+		const RealType lambda = params::c() / fc;
+
+		// B. Sample Generation Loop
+		for (int k = 0; k < numSamples; ++k)
+		{
+			const RealType t_sample = params::startTime() + k / samplingRate;
+			ComplexType total_complex_sample = {0.0, 0.0};
+
+			// C. Target Interaction Loop
+			for (const auto& target : world->getTargets())
+			{
+				const Vec3 trans_pos = trans->getPosition(t_sample);
+				const Vec3 recv_pos = recv->getPosition(t_sample);
+				const Vec3 target_pos = target->getPosition(t_sample);
+
+				const RealType path_length = (target_pos - trans_pos).length() + (target_pos - recv_pos).length();
+				const RealType phase = 2.0 * PI * path_length / lambda;
+
+				// MVP Amplitude
+				constexpr RealType amplitude = 1.0;
+
+				const ComplexType target_contribution = std::polar(amplitude, phase);
+				total_complex_sample += target_contribution;
+			}
+
+			// D. Finalize Sample
+			iq_block[k] = total_complex_sample;
+		}
+
+		// E. Store Result
+		recv->setCwDataBlock(std::move(iq_block));
+	}
+
+
 	/**
 	 * @brief Simulates the radar interaction between a transmitter-receiver pair.
 	 *
@@ -251,6 +295,12 @@ namespace
 	 */
 	void simulatePair(const Transmitter* trans, Receiver* recv, const core::World* world)
 	{
+		if (trans->getPulsed() == false)
+		{
+			simulateCwResponse(trans, recv, world);
+			return;
+		}
+
 		constexpr auto flag_nodirect = Receiver::RecvFlag::FLAG_NODIRECT;
 
 		TransmitterPulse pulse{};

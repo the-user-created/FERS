@@ -44,6 +44,15 @@ namespace radar
 
 	void Receiver::render(pool::ThreadPool& pool)
 	{
+		if (!m_cwDataBlock.empty())
+		{
+			if (params::exportBinary())
+			{
+				serial::exportCwBinary(m_cwDataBlock, getName() + "_results");
+			}
+			return;
+		}
+
 		std::ranges::sort(_responses, serial::compareTimes);
 		// TODO: Should check here if there are any responses to render
 

@@ -105,6 +105,25 @@ namespace
 
 namespace serial
 {
+	std::unique_ptr<RadarSignal> createCwTone(const std::string& name, const RealType power, const RealType carrierFreq)
+	{
+		// For a CW signal, the underlying waveform is synthesized during simulation,
+		// not rendered from a stored pulse. We just need to create a minimal,
+		// valid Signal object to act as a placeholder. A single sample is sufficient.
+		auto signal = std::make_unique<Signal>();
+
+		// Create a single, normalized complex sample.
+		std::vector<ComplexType> placeholder_data = {{1.0, 0.0}};
+
+		// Load this minimal data into the signal object. The sample rate is arbitrary here
+		// since it's not used for rendering in the CW path.
+		signal->load(placeholder_data, 1, 1.0);
+
+		// Create the main RadarSignal object. The length is set to 0.0 because it will be
+		// dynamically determined by the simulation start/end times in the CW simulation path.
+		return std::make_unique<RadarSignal>(name, power, carrierFreq, 0.0, std::move(signal));
+	}
+
 	std::unique_ptr<RadarSignal> loadPulseFromFile(const std::string& name, const std::string& filename,
 	                                               const RealType power, const RealType carrierFreq)
 	{

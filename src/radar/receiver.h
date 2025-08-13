@@ -11,7 +11,8 @@
 #include "radar_obj.h"
 #include "serial/response.h"
 
-namespace pool {
+namespace pool
+{
 	class ThreadPool;
 }
 
@@ -37,7 +38,8 @@ namespace radar
 		 * @param name The name of the receiver. Defaults to "defRecv".
 		 */
 		explicit Receiver(Platform* platform,
-		                  std::string name = "defRecv") noexcept : Radar(platform, std::move(name)) {}
+		                  std::string name = "defRecv") noexcept :
+			Radar(platform, std::move(name)) {}
 
 		~Receiver() override = default;
 		Receiver(const Receiver&) = delete;
@@ -162,8 +164,11 @@ namespace radar
 		 */
 		void setNoiseTemperature(RealType temp);
 
+		void setCwDataBlock(std::vector<ComplexType> block) { m_cwDataBlock = std::move(block); }
+
 	private:
 		std::vector<std::unique_ptr<serial::Response>> _responses; ///< The list of responses.
+		std::vector<ComplexType> m_cwDataBlock;
 		std::mutex _responses_mutex; ///< Mutex for handling responses.
 		RealType _noise_temperature = 0; ///< The noise temperature of the receiver.
 		RealType _window_length = 0; ///< The length of the radar window.

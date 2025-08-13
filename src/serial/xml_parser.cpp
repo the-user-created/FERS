@@ -181,8 +181,8 @@ namespace
 	{
 		const std::string name = XmlElement::getSafeAttribute(pulse, "name");
 		const std::string type = XmlElement::getSafeAttribute(pulse, "type");
-		const std::string filename = XmlElement::getSafeAttribute(pulse, "filename");
 
+		// Power and Carrier are mandatory for all pulse types
 		if (const XmlElement power_element = pulse.childElement("power", 0); !power_element.isValid())
 		{
 			LOG(Level::FATAL, "<power> element is missing in <pulse>!");
@@ -195,14 +195,27 @@ namespace
 			throw XmlException("<carrier> element is missing in <pulse>!");
 		}
 
+		const RealType power = get_child_real_type(pulse, "power");
+		const RealType carrier = get_child_real_type(pulse, "carrier");
+
 		if (type == "file")
 		{
 			// TODO: Add error handling for invalid file paths
 			//		 should default to searching the same directory as the XML file
-			auto wave = serial::loadPulseFromFile(name, filename,
-			                                      get_child_real_type(pulse, "power"),
-			                                      get_child_real_type(pulse, "carrier")
-			);
+			const std::string filename = XmlElement::getSafeAttribute(pulse, "filename");
+			if (filename.empty())
+			{
+				LOG(Level::FATAL, "Pulse type is 'file' but 'filename' attribute is missing!");
+				throw XmlException("Pulse type is 'file' but 'filename' attribute is missing!");
+			}
+
+			auto wave = serial::loadPulseFromFile(name, filename, power, carrier);
+			world->add(std::move(wave));
+		}
+		else if (type == "cw")
+		{
+			// Call our new native generator function
+			auto wave = serial::createCwTone(name, power, carrier);
 			world->add(std::move(wave));
 		}
 		else
@@ -492,7 +505,17 @@ namespace
 	Transmitter* parseTransmitter(const XmlElement& transmitter, Platform* platform, World* world)
 	{
 		const std::string name = XmlElement::getSafeAttribute(transmitter, "name");
-		bool pulsed = XmlElement::getSafeAttribute(transmitter, "type") == "pulsed";
+		const std::string type = XmlElement::getSafeAttribute(transmitter, "type");
+		bool pulsed = true;
+		if (type == "continuous")
+		{
+			pulsed = false;
+		}
+		else if (type != "pulsed")
+		{
+			// This should be caught by validation
+			LOG(Level::WARNING, "Transmitter '{}' has unknown type '{}', defaulting to pulsed.", name, type);
+		}
 
 		auto transmitter_obj = std::make_unique<Transmitter>(platform, name, pulsed);
 

@@ -481,4 +481,20 @@ namespace serial
 			}
 		}
 	}
+
+	void exportCwBinary(const std::vector<ComplexType>& iq_block, const std::string& filename)
+	{
+		if (auto out_bin = openHdf5File(filename))
+		{
+			try
+			{
+				addChunkToFile(*out_bin, iq_block, params::startTime(), 1.0, 0);
+			}
+			catch (const std::exception& e)
+			{
+				LOG(logging::Level::FATAL, "Error writing CW chunk to HDF5 file: {}", e.what());
+				throw;
+			}
+		}
+	}
 }
