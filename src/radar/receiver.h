@@ -164,11 +164,16 @@ namespace radar
 		 */
 		void setNoiseTemperature(RealType temp);
 
-		void setCwDataBlock(std::vector<ComplexType> block) { m_cwDataBlock = std::move(block); }
+		void setCwProcessing(RealType cpiDuration, RealType samplingRate, RealType cpiOverlap) noexcept;
+		void addCpiDataBlock(std::vector<ComplexType> block, RealType startTime, RealType carrierFreq);
+
+		[[nodiscard]] bool isCwReceiver() const noexcept { return m_isCwReceiver; }
+		[[nodiscard]] RealType getCpiDuration() const noexcept { return m_cpiDuration; }
+		[[nodiscard]] RealType getSamplingRate() const noexcept { return m_samplingRate; }
+		[[nodiscard]] RealType getCpiOverlap() const noexcept { return m_cpiOverlap; }
 
 	private:
 		std::vector<std::unique_ptr<serial::Response>> _responses; ///< The list of responses.
-		std::vector<ComplexType> m_cwDataBlock;
 		std::mutex _responses_mutex; ///< Mutex for handling responses.
 		RealType _noise_temperature = 0; ///< The noise temperature of the receiver.
 		RealType _window_length = 0; ///< The length of the radar window.
@@ -176,6 +181,17 @@ namespace radar
 		RealType _window_skip = 0; ///< The skip time between radar windows.
 		Receiver* _dual = nullptr; ///< The dual receiver.
 		int _flags = 0; ///< Flags for receiver configuration.
+
+		bool m_isCwReceiver = false;
+		RealType m_cpiDuration = 0.0;
+		RealType m_samplingRate = 0.0;
+		RealType m_cpiOverlap = 0.0;
+		std::vector<std::vector<ComplexType>> m_cpiDataBlocks;
+		std::vector<RealType> m_cpiStartTimes;
+		std::vector<RealType> m_cpiCarrierFreqs;
+		std::mutex m_cpiMutex;
+
+		void exportCwData(pool::ThreadPool& pool);
 	};
 
 	/**

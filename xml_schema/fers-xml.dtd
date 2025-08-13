@@ -134,7 +134,7 @@
         <!ELEMENT elevation (#PCDATA)>
 
         <!-- Monostatic radar installations -->
-        <!ELEMENT monostatic (window_skip?,window_length?,prf,noise_temp?)>
+        <!ELEMENT monostatic (window_skip?,window_length?,prf,noise_temp?,cwProcessing?)>
         <!ATTLIST monostatic name CDATA #REQUIRED
                 type (pulsed|continuous) #REQUIRED
                 antenna CDATA #REQUIRED
@@ -154,12 +154,17 @@
                 timing CDATA #REQUIRED>
 
         <!-- Standalone Receiver -->
-        <!ELEMENT receiver (window_skip?,window_length?,prf,noise_temp?)>
+        <!ELEMENT receiver (window_skip?,window_length?,prf,noise_temp?,cwProcessing?)>
         <!ATTLIST receiver name CDATA #REQUIRED
                 antenna CDATA #REQUIRED
                 timing CDATA #REQUIRED
                 nodirect (true|false) "false"
                 nopropagationloss (true|false) "false">
+        <!-- CW Processing Block -->
+        <!ELEMENT cwProcessing (cpiDuration,samplingRate,cpiOverlap?)>
+        <!ELEMENT cpiDuration (#PCDATA)>
+        <!ELEMENT samplingRate (#PCDATA)>
+        <!ELEMENT cpiOverlap (#PCDATA)>
         <!-- Time to skip after start of pulse before starting receiving (seconds) -->
         <!ELEMENT window_skip (#PCDATA)>
         <!-- Length of the range gate (seconds) -->

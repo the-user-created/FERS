@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -28,10 +29,13 @@ namespace serial
 	* @param time The time attribute associated with the chunk.
 	* @param fullscale The fullscale attribute for the chunk.
 	* @param count The sequential count number for chunk naming.
+	* @param samplingRate Optional sampling rate for the chunk. If not provided, a global default is used.
+	* @param carrierFrequency Optional carrier frequency for the chunk.
 	* @throws std::runtime_error If there is an error writing data or setting attributes.
 	*/
-	void addChunkToFile(HighFive::File& file, const std::vector<ComplexType>& data, RealType time, RealType fullscale,
-	                    unsigned count);
+	void addChunkToFile(HighFive::File& file, const std::vector<ComplexType>& data, RealType time,
+	                    RealType fullscale, unsigned count, std::optional<RealType> samplingRate = std::nullopt,
+	                    std::optional<RealType> carrierFrequency = std::nullopt);
 
 	/**
 	* @brief Reads pulse data from an HDF5 file.

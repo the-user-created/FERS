@@ -598,6 +598,23 @@ namespace
 			    receiver_obj->getName().c_str());
 		}
 
+		// Check for CW processing block
+		if (const XmlElement cw_proc_element = receiver.childElement("cwProcessing", 0); cw_proc_element.isValid())
+		{
+			const RealType cpi_duration = get_child_real_type(cw_proc_element, "cpiDuration");
+			const RealType sampling_rate = get_child_real_type(cw_proc_element, "samplingRate");
+			RealType cpi_overlap = 0.0;
+			try
+			{
+				cpi_overlap = get_child_real_type(cw_proc_element, "cpiOverlap");
+			}
+			catch (const XmlException&)
+			{
+				LOG(Level::DEBUG, "Receiver '{}' cwProcessing block does not specify overlap, defaulting to 0.0", name);
+			}
+			receiver_obj->setCwProcessing(cpi_duration, sampling_rate, cpi_overlap);
+		}
+
 		world->add(std::move(receiver_obj));
 		return world->getReceivers().back().get();
 	}

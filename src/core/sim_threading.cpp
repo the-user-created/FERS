@@ -190,77 +190,92 @@ namespace
 	 * @throws core::RangeError If the transmitter or receiver is too close to the target for accurate simulation.
 	 * @throws std::runtime_error If no time points are available for execution.
 	 */
-	void simulateResponse(const Transmitter* trans, Receiver* recv, const TransmitterPulse* signal, const Target* targ = nullptr)
+	void simulateResponse(const Transmitter* trans, Receiver* recv, const TransmitterPulse* signal,
+	                      const Target* targ = nullptr)
 	{
 		if (targ == nullptr && trans->getAttached() == recv) { return; }
 
-	    const auto start_time = std::chrono::duration<RealType>(signal->time);
-	    const auto end_time = start_time + std::chrono::duration<RealType>(signal->wave->getLength());
-	    const auto sample_time = std::chrono::duration<RealType>(1.0 / params::cwSampleRate());
-	    const int point_count = static_cast<int>(std::ceil(signal->wave->getLength() / sample_time.count()));
+		const auto start_time = std::chrono::duration<RealType>(signal->time);
+		const auto end_time = start_time + std::chrono::duration<RealType>(signal->wave->getLength());
+		const auto sample_time = std::chrono::duration<RealType>(1.0 / params::cwSampleRate());
+		const int point_count = static_cast<int>(std::ceil(signal->wave->getLength() / sample_time.count()));
 
-	    // Check for a valid point count in case of target simulation
-	    if (targ && point_count == 0)
-	    {
-	        LOG(Level::FATAL, "No time points are available for execution!");
-	        throw std::runtime_error("No time points are available for execution!");
-	    }
+		// Check for a valid point count in case of target simulation
+		if (targ && point_count == 0)
+		{
+			LOG(Level::FATAL, "No time points are available for execution!");
+			throw std::runtime_error("No time points are available for execution!");
+		}
 
-	    auto response = std::make_unique<Response>(signal->wave, trans);
+		auto response = std::make_unique<Response>(signal->wave, trans);
 
-	    try
-	    {
-	        for (int i = 0; i <= point_count; ++i)
-	        {
-	            const auto current_time = i < point_count ? start_time + i * sample_time : end_time;
+		try
+		{
+			for (int i = 0; i <= point_count; ++i)
+			{
+				const auto current_time = i < point_count ? start_time + i * sample_time : end_time;
 
-	            core::ReResults results{};
-	            // If a target is provided, use target simulation; otherwise, direct simulation.
-	            if (targ)
-	            {
-	                solveRe(trans, recv, targ, current_time, sample_time, signal->wave, results);
-	            }
-	            else
-	            {
-	                solveReDirect(trans, recv, current_time, sample_time, signal->wave, results);
-	            }
+				core::ReResults results{};
+				// If a target is provided, use target simulation; otherwise, direct simulation.
+				if (targ)
+				{
+					solveRe(trans, recv, targ, current_time, sample_time, signal->wave, results);
+				}
+				else
+				{
+					solveReDirect(trans, recv, current_time, sample_time, signal->wave, results);
+				}
 
-	            interp::InterpPoint point{
-	                .power = results.power,
-	                .time = current_time.count() + results.delay,
-	                .delay = results.delay,
-	                .doppler = results.doppler,
-	                .phase = results.phase,
-	                .noise_temperature = results.noise_temperature
-	            };
-	            response->addInterpPoint(point);
-	        }
-	    }
-	    catch (const core::RangeError&)
-	    {
-	        LOG(Level::FATAL, "Receiver or Transmitter too close for accurate simulation");
-	        throw core::RangeError();
-	    }
+				interp::InterpPoint point{
+					.power = results.power,
+					.time = current_time.count() + results.delay,
+					.delay = results.delay,
+					.doppler = results.doppler,
+					.phase = results.phase,
+					.noise_temperature = results.noise_temperature
+				};
+				response->addInterpPoint(point);
+			}
+		}
+		catch (const core::RangeError&)
+		{
+			LOG(Level::FATAL, "Receiver or Transmitter too close for accurate simulation");
+			throw core::RangeError();
+		}
 
-	    recv->addResponse(std::move(response));
+		recv->addResponse(std::move(response));
 	}
 
-	void simulateCwResponse(const Transmitter* trans, Receiver* recv, const core::World* world)
+	/**
+	 * @brief Generates the I/Q data for a single Coherent Processing Interval (CPI) for a CW radar.
+	 *
+	 * @param trans Pointer to the radar transmitter.
+	 * @param recv Pointer to the radar receiver.
+	 * @param world Pointer to the simulation environment.
+	 * @param t_cpi_start The start time of the CPI.
+	 * @param numSamples The number of samples to generate in the CPI.
+	 * @param samplingRate The sampling rate for the I/Q data.
+	 * @return A vector of complex I/Q samples for the CPI.
+	 */
+	std::vector<ComplexType> generateCwBlock(const Transmitter* trans, const Receiver* recv, const core::World* world,
+	                                         const RealType t_cpi_start, const int numSamples,
+	                                         const RealType samplingRate)
 	{
-		// A. Setup
-		const RealType samplingRate = params::cwSampleRate();
-		const int numSamples = static_cast<int>(std::ceil((params::endTime() - params::startTime()) * samplingRate));
 		std::vector<ComplexType> iq_block(numSamples, {0.0, 0.0});
 		const RealType fc = trans->getSignal()->getCarrier();
 		const RealType lambda = params::c() / fc;
 
-		// B. Sample Generation Loop
 		for (int k = 0; k < numSamples; ++k)
 		{
-			const RealType t_sample = params::startTime() + k / samplingRate;
+			const RealType t_sample = t_cpi_start + static_cast<RealType>(k) / samplingRate;
+			if (t_sample > params::endTime())
+			{
+				iq_block.resize(k);
+				break;
+			}
+
 			ComplexType total_complex_sample = {0.0, 0.0};
 
-			// C. Target Interaction Loop
 			for (const auto& target : world->getTargets())
 			{
 				const Vec3 trans_pos = trans->getPosition(t_sample);
@@ -268,21 +283,46 @@ namespace
 				const Vec3 target_pos = target->getPosition(t_sample);
 
 				const RealType path_length = (target_pos - trans_pos).length() + (target_pos - recv_pos).length();
+				// TODO: should be negative?
 				const RealType phase = 2.0 * PI * path_length / lambda;
 
-				// MVP Amplitude
 				constexpr RealType amplitude = 1.0;
 
 				const ComplexType target_contribution = std::polar(amplitude, phase);
 				total_complex_sample += target_contribution;
 			}
 
-			// D. Finalize Sample
 			iq_block[k] = total_complex_sample;
 		}
+		return iq_block;
+	}
 
-		// E. Store Result
-		recv->setCwDataBlock(std::move(iq_block));
+	void simulateCwPair(const Transmitter* trans, Receiver* recv, const core::World* world)
+	{
+		// A. Setup
+		const RealType cpiDuration = recv->getCpiDuration();
+		const RealType samplingRate = recv->getSamplingRate();
+		const RealType cpiOverlap = recv->getCpiOverlap();
+		// B. Calculate Derived Values
+		const auto numSamplesPerCPI = static_cast<int>(std::ceil(cpiDuration * samplingRate));
+		const RealType cpiIncrement = cpiDuration * (1.0 - cpiOverlap);
+		const RealType carrierFreq = trans->getSignal()->getCarrier();
+
+		if (cpiIncrement <= 0.0)
+		{
+			LOG(Level::WARNING, "CPI increment is non-positive (duration={}, overlap={}). Simulating one CPI only.",
+			    cpiDuration, cpiOverlap);
+			auto resultBlock = generateCwBlock(trans, recv, world, params::startTime(), numSamplesPerCPI, samplingRate);
+			recv->addCpiDataBlock(std::move(resultBlock), params::startTime(), carrierFreq);
+			return;
+		}
+
+		// C. Main CPI Loop
+		for (RealType t_cpi_start = params::startTime(); t_cpi_start < params::endTime(); t_cpi_start += cpiIncrement)
+		{
+			auto resultBlock = generateCwBlock(trans, recv, world, t_cpi_start, numSamplesPerCPI, samplingRate);
+			recv->addCpiDataBlock(std::move(resultBlock), t_cpi_start, carrierFreq);
+		}
 	}
 
 
@@ -295,9 +335,9 @@ namespace
 	 */
 	void simulatePair(const Transmitter* trans, Receiver* recv, const core::World* world)
 	{
-		if (trans->getPulsed() == false)
+		if (recv->isCwReceiver())
 		{
-			simulateCwResponse(trans, recv, world);
+			simulateCwPair(trans, recv, world);
 			return;
 		}
 

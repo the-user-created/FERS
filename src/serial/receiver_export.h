@@ -58,6 +58,4 @@ namespace serial
 	* @throws std::runtime_error If a file cannot be opened for writing.
 	*/
 	void exportReceiverCsv(std::span<const std::unique_ptr<Response>> responses, const std::string& filename);
-
-	void exportCwBinary(const std::vector<ComplexType>& iq_block, const std::string& filename);
 }

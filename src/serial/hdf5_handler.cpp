@@ -67,7 +67,8 @@ namespace serial
 	}
 
 	void addChunkToFile(HighFive::File& file, const std::vector<ComplexType>& data, const RealType time,
-	                    const RealType fullscale, const unsigned count)
+	                    const RealType fullscale, const unsigned count,
+	                    const std::optional<RealType> samplingRate, const std::optional<RealType> carrierFrequency)
 	{
 		const unsigned size = data.size();
 
@@ -100,8 +101,12 @@ namespace serial
 			{
 				HighFive::DataSet dataset = file.getDataSet(chunkName);
 				dataset.createAttribute("time", time);
-				dataset.createAttribute("rate", params::rate());
+				dataset.createAttribute("rate", samplingRate.value_or(params::rate()));
 				dataset.createAttribute("fullscale", fullscale);
+				if (carrierFrequency)
+				{
+					dataset.createAttribute("carrier_frequency", *carrierFrequency);
+				}
 			}
 			catch (const HighFive::Exception& err)
 			{

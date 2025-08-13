@@ -472,28 +472,13 @@ namespace serial
 
 			try
 			{
+				// Carrier frequency is not available here, as responses can be from multiple transmitters
 				addChunkToFile(*out_bin, window, start, fullscale, i);
 			}
 			catch (const std::exception& e)
 			{
 				LOG(logging::Level::FATAL, "Error writing chunk to HDF5 file: {}", e.what());
 				throw std::runtime_error("Error writing chunk to HDF5 file: " + std::string(e.what()));
-			}
-		}
-	}
-
-	void exportCwBinary(const std::vector<ComplexType>& iq_block, const std::string& filename)
-	{
-		if (auto out_bin = openHdf5File(filename))
-		{
-			try
-			{
-				addChunkToFile(*out_bin, iq_block, params::startTime(), 1.0, 0);
-			}
-			catch (const std::exception& e)
-			{
-				LOG(logging::Level::FATAL, "Error writing CW chunk to HDF5 file: {}", e.what());
-				throw;
 			}
 		}
 	}
