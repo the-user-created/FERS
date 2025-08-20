@@ -75,16 +75,16 @@ namespace serial
 		const std::string i_chunk_name = base_chunk_name + "_I";
 		const std::string q_chunk_name = base_chunk_name + "_Q";
 
-		// TODO: Should be RealType instead of double
-		std::vector<double> i(size), q(size);
+		std::vector<RealType> i(size), q(size);
 		std::ranges::transform(data, i.begin(), [](const ComplexType& c) { return c.real(); });
 		std::ranges::transform(data, q.begin(), [](const ComplexType& c) { return c.imag(); });
 
-		auto write_chunk = [&](const std::string& chunkName, const std::vector<double>& chunkData)
+		auto write_chunk = [&](const std::string& chunkName, const std::vector<RealType>& chunkData)
 		{
 			try
 			{
-				HighFive::DataSet dataset = file.createDataSet<double>(chunkName, HighFive::DataSpace::From(chunkData));
+				HighFive::DataSet dataset = file.createDataSet<RealType>(
+					chunkName, HighFive::DataSpace::From(chunkData));
 				dataset.write(chunkData);
 			}
 			catch (const HighFive::Exception& err)
