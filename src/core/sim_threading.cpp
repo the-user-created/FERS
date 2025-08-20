@@ -193,7 +193,7 @@ namespace
 
 	    const auto start_time = std::chrono::duration<RealType>(signal->time);
 	    const auto end_time = start_time + std::chrono::duration<RealType>(signal->wave->getLength());
-	    const auto sample_time = std::chrono::duration<RealType>(1.0 / params::cwSampleRate());
+	    const auto sample_time = std::chrono::duration<RealType>(1.0 / params::pathSamplingRate());
 	    const int point_count = static_cast<int>(std::ceil(signal->wave->getLength() / sample_time.count()));
 
 	    // Check for a valid point count in case of target simulation
