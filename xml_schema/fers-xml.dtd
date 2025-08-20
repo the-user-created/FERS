@@ -3,15 +3,15 @@
         <!ATTLIST simulation name CDATA #REQUIRED>
 
         <!-- Simulation Parameters -->
-        <!ELEMENT parameters (starttime,endtime,rate,c?,interprate?,randomseed?,adc_bits?,oversample?,origin?,export?)>
+        <!ELEMENT parameters (starttime,endtime,rate,c?,pathSamplingRate?,randomseed?,adc_bits?,oversample?,origin?,export?)>
         <!-- Start time of simulation -->
         <!ELEMENT starttime (#PCDATA)>
         <!-- End time of simulation -->
         <!ELEMENT endtime (#PCDATA)>
         <!-- Propagation speed -->
         <!ELEMENT c (#PCDATA)>
-        <!-- Position interpolation rate for CW -->
-        <!ELEMENT interprate (#PCDATA)>
+        <!-- Fidelity of the underlying physics simulation (Hz) -->
+        <!ELEMENT pathSamplingRate (#PCDATA)>
         <!-- Override the rendering sample rate with the specified one (Hz) -->
         <!ELEMENT rate (#PCDATA)>
         <!-- Random seed for noise -->
