@@ -8,7 +8,6 @@
 
 #pragma once
 
-#include <memory>
 #include <vector>
 
 #include "config.h"
@@ -17,8 +16,6 @@
 
 namespace math
 {
-	class MultipathSurface;
-
 	/**
 	 * @class RotationPath
 	 * @brief Manages rotational paths with different interpolation techniques.
@@ -37,12 +34,17 @@ namespace math
 		 *
 		 * @param type The type of interpolation (default is static).
 		 */
-		explicit RotationPath(const InterpType type = InterpType::INTERP_STATIC) noexcept : _type(type) {}
+		explicit RotationPath(const InterpType type = InterpType::INTERP_STATIC) noexcept :
+			_type(type) {}
 
 		~RotationPath() = default;
+
 		RotationPath(const RotationPath&) = delete;
+
 		RotationPath& operator=(const RotationPath&) = delete;
+
 		RotationPath(RotationPath&&) = delete;
+
 		RotationPath& operator=(RotationPath&&) = delete;
 
 		/**
@@ -131,13 +133,4 @@ namespace math
 		RotationCoord _rate{}; ///< Rate of change for constant interpolation.
 		InterpType _type{InterpType::INTERP_STATIC}; ///< Interpolation type used by the path.
 	};
-
-	/**
-	 * @brief Reflects a rotation path across a surface.
-	 *
-	 * @param path Pointer to the original rotation path.
-	 * @param surf Pointer to the surface used for reflection.
-	 * @return A unique pointer to the newly reflected rotation path.
-	 */
-	std::unique_ptr<RotationPath> reflectPath(const RotationPath* path, const MultipathSurface* surf);
 }

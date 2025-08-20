@@ -1,7 +1,6 @@
 set(SRCS
 	radar_obj.cpp
 	target.cpp
-	platform.cpp
 	transmitter.cpp
 	receiver.cpp
 )

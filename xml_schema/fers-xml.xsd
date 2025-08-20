@@ -22,9 +22,6 @@
                     <!-- Any number of include elements is allowed -->
                     <xs:element ref="include" minOccurs="0"/>
                 </xs:choice>
-
-                <!-- multipath can only occur once, and its order doesn't matter -->
-                <xs:element minOccurs="0" ref="multipath"/>
             </xs:sequence>
             <xs:attribute name="name" use="required"/>
         </xs:complexType>
@@ -174,20 +171,16 @@
     <!-- Motion paths and Position Waypoints -->
     <xs:element name="motionpath">
         <xs:complexType>
-            <xs:choice>
+            <xs:sequence>
                 <!-- At least 1 positionwaypoint, no max limit -->
                 <xs:element maxOccurs="unbounded" ref="positionwaypoint"/>
-
-                <!-- Exactly 1 pythonpath element -->
-                <xs:element ref="pythonpath"/>
-            </xs:choice>
+            </xs:sequence>
             <xs:attribute name="interpolation" default="static">
                 <xs:simpleType>
                     <xs:restriction base="xs:token">
                         <xs:enumeration value="static"/>
                         <xs:enumeration value="linear"/>
                         <xs:enumeration value="cubic"/>
-                        <xs:enumeration value="python"/>
                     </xs:restriction>
                 </xs:simpleType>
             </xs:attribute>
@@ -203,14 +196,6 @@
                 <xs:element name="altitude" type="xs:string"/>
                 <xs:element name="time" type="xs:string"/>
             </xs:sequence>
-        </xs:complexType>
-    </xs:element>
-
-    <!-- Definition for pythonpath element -->
-    <xs:element name="pythonpath">
-        <xs:complexType>
-            <xs:attribute name="module" type="xs:string" use="required"/>
-            <xs:attribute name="function" type="xs:string" use="required"/>
         </xs:complexType>
     </xs:element>
 
@@ -346,19 +331,6 @@
                 <xs:element name="k" type="xs:string" minOccurs="0"/> <!-- k is optional -->
             </xs:sequence>
             <xs:attribute name="type" use="required"/>
-        </xs:complexType>
-    </xs:element>
-
-    <!-- Multipath Surface Element -->
-    <xs:element name="multipath">
-        <xs:complexType>
-            <xs:sequence>
-                <xs:element name="factor" type="xs:string"/>
-                <xs:element name="nx" type="xs:string"/>
-                <xs:element name="ny" type="xs:string"/>
-                <xs:element name="nz" type="xs:string"/>
-                <xs:element name="d" type="xs:string"/>
-            </xs:sequence>
         </xs:complexType>
     </xs:element>
 

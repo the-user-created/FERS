@@ -11,7 +11,8 @@
 #include "radar_obj.h"
 #include "serial/response.h"
 
-namespace pool {
+namespace pool
+{
 	class ThreadPool;
 }
 
@@ -36,13 +37,17 @@ namespace radar
 		 * @param platform The platform associated with this receiver.
 		 * @param name The name of the receiver. Defaults to "defRecv".
 		 */
-		explicit Receiver(Platform* platform,
-		                  std::string name = "defRecv") noexcept : Radar(platform, std::move(name)) {}
+		explicit Receiver(Platform* platform, std::string name = "defRecv") noexcept :
+			Radar(platform, std::move(name)) {}
 
 		~Receiver() override = default;
+
 		Receiver(const Receiver&) = delete;
+
 		Receiver(Receiver&&) = delete;
+
 		Receiver& operator=(const Receiver&) = delete;
+
 		Receiver& operator=(Receiver&&) = delete;
 
 		/**
@@ -94,13 +99,6 @@ namespace radar
 		[[nodiscard]] RealType getWindowSkip() const noexcept { return _window_skip; }
 
 		/**
-		 * @brief Gets the dual receiver.
-		 *
-		 * @return Pointer to the dual receiver.
-		 */
-		[[nodiscard]] Receiver* getDual() const noexcept { return _dual; }
-
-		/**
 		 * @brief Gets the noise temperature for a specific angle.
 		 *
 		 * @param angle The angle in spherical coordinates (SVec3).
@@ -148,13 +146,6 @@ namespace radar
 		void setFlag(RecvFlag flag) noexcept { _flags |= static_cast<int>(flag); }
 
 		/**
-		 * @brief Sets the dual receiver.
-		 *
-		 * @param dual The dual receiver.
-		 */
-		void setDual(Receiver* dual) noexcept { _dual = dual; }
-
-		/**
 		 * @brief Sets the noise temperature of the receiver.
 		 *
 		 * @param temp The new noise temperature.
@@ -169,19 +160,6 @@ namespace radar
 		RealType _window_length = 0; ///< The length of the radar window.
 		RealType _window_prf = 0; ///< The pulse repetition frequency (PRF) of the radar window.
 		RealType _window_skip = 0; ///< The skip time between radar windows.
-		Receiver* _dual = nullptr; ///< The dual receiver.
 		int _flags = 0; ///< Flags for receiver configuration.
 	};
-
-	/**
-	 * @brief Creates a dual receiver.
-	 *
-	 * @param recv The receiver to create a dual receiver for.
-	 * @param surf The multipath surface to use for the dual receiver.
-	 * @return The dual receiver.
-	 */
-	inline Receiver* createMultipathDual(Receiver* recv, const math::MultipathSurface* surf)
-	{
-		return createMultipathDualBase(recv, surf);
-	}
 }

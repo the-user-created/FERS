@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<!-- multipath w/ malformed timing source and multiple rotation path waypoints -->
+<!-- malformed timing source and multiple rotation path waypoints -->
 <!DOCTYPE simulation SYSTEM "fers-xml.dtd">
 <simulation name="sim1">
     <parameters>
@@ -78,13 +78,5 @@
             </rcs>
         </target>
     </platform>
-
-    <multipath>
-        <factor>1.1</factor>
-        <nx>1.0</nx>
-        <ny>0.0</ny>
-        <nz>0.0</nz>
-        <d>100.0</d>
-    </multipath>
 
 </simulation>

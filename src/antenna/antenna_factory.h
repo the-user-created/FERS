@@ -18,7 +18,6 @@
 #include "core/logging.h"
 #include "interpolation/interpolation_set.h"
 #include "math/geometry_ops.h"
-#include "python/python_extension.h"
 
 namespace antenna
 {
@@ -34,12 +33,17 @@ namespace antenna
 		 *
 		 * @param name The name of the antenna.
 		 */
-		explicit Antenna(std::string name) noexcept : _loss_factor(1), _name(std::move(name)) {}
+		explicit Antenna(std::string name) noexcept :
+			_loss_factor(1), _name(std::move(name)) {}
 
 		virtual ~Antenna() = default;
+
 		Antenna(const Antenna&) = delete;
+
 		Antenna& operator=(const Antenna&) = delete;
+
 		Antenna(Antenna&&) = default;
+
 		Antenna& operator=(Antenna&&) = default;
 
 		/**
@@ -112,12 +116,17 @@ namespace antenna
 		 *
 		 * @param name The name of the antenna.
 		 */
-		explicit Isotropic(const std::string_view name) : Antenna(name.data()) {}
+		explicit Isotropic(const std::string_view name) :
+			Antenna(name.data()) {}
 
 		~Isotropic() override = default;
+
 		Isotropic(const Isotropic&) = delete;
+
 		Isotropic& operator=(const Isotropic&) = delete;
+
 		Isotropic(Isotropic&&) = delete;
+
 		Isotropic& operator=(Isotropic&&) = delete;
 
 		/**
@@ -155,9 +164,13 @@ namespace antenna
 			Antenna(name.data()), _alpha(alpha), _beta(beta), _gamma(gamma) {}
 
 		~Sinc() override = default;
+
 		Sinc(const Sinc&) = delete;
+
 		Sinc& operator=(const Sinc&) = delete;
+
 		Sinc(Sinc&&) = delete;
+
 		Sinc& operator=(Sinc&&) = delete;
 
 		/** @brief Gets the alpha parameter of the sinc function. */
@@ -202,13 +215,18 @@ namespace antenna
 		 * @param azscale The azimuth scale factor.
 		 * @param elscale The elevation scale factor.
 		 */
-		Gaussian(const std::string_view name, const RealType azscale, const RealType elscale) : Antenna(name.data()),
+		Gaussian(const std::string_view name, const RealType azscale, const RealType elscale) :
+			Antenna(name.data()),
 			_azscale(azscale), _elscale(elscale) {}
 
 		~Gaussian() override = default;
+
 		Gaussian(const Gaussian&) = delete;
+
 		Gaussian& operator=(const Gaussian&) = delete;
+
 		Gaussian(Gaussian&&) = delete;
+
 		Gaussian& operator=(Gaussian&&) = delete;
 
 		/**
@@ -242,13 +260,18 @@ namespace antenna
 		 * @param name The name of the antenna.
 		 * @param dimension The dimension of the square horn.
 		 */
-		SquareHorn(const std::string_view name, const RealType dimension) : Antenna(name.data()),
-		                                                                    _dimension(dimension) {}
+		SquareHorn(const std::string_view name, const RealType dimension) :
+			Antenna(name.data()),
+			_dimension(dimension) {}
 
 		~SquareHorn() override = default;
+
 		SquareHorn(const SquareHorn&) = delete;
+
 		SquareHorn& operator=(const SquareHorn&) = delete;
+
 		SquareHorn(SquareHorn&&) = delete;
+
 		SquareHorn& operator=(SquareHorn&&) = delete;
 
 		/**
@@ -281,12 +304,17 @@ namespace antenna
 		 * @param name The name of the antenna.
 		 * @param diameter The diameter of the parabolic reflector.
 		 */
-		Parabolic(const std::string_view name, const RealType diameter) : Antenna(name.data()), _diameter(diameter) {}
+		Parabolic(const std::string_view name, const RealType diameter) :
+			Antenna(name.data()), _diameter(diameter) {}
 
 		~Parabolic() override = default;
+
 		Parabolic(const Parabolic&) = delete;
+
 		Parabolic& operator=(const Parabolic&) = delete;
+
 		Parabolic(Parabolic&&) = delete;
+
 		Parabolic& operator=(Parabolic&&) = delete;
 
 		/**
@@ -321,14 +349,19 @@ namespace antenna
 		 * @param name The name of the antenna.
 		 * @param filename The path to the XML file containing the antenna's gain pattern data.
 		 */
-		XmlAntenna(const std::string_view name, const std::string_view filename) : Antenna(name.data()),
+		XmlAntenna(const std::string_view name, const std::string_view filename) :
+			Antenna(name.data()),
 			_azi_samples(std::make_unique<interp::InterpSet>()),
 			_elev_samples(std::make_unique<interp::InterpSet>()) { loadAntennaDescription(filename); }
 
 		~XmlAntenna() override = default;
+
 		XmlAntenna(const XmlAntenna&) = delete;
+
 		XmlAntenna& operator=(const XmlAntenna&) = delete;
+
 		XmlAntenna(XmlAntenna&&) = delete;
+
 		XmlAntenna& operator=(XmlAntenna&&) = delete;
 
 		/**
@@ -375,13 +408,18 @@ namespace antenna
 		 * @param name The name of the antenna.
 		 * @param filename The path to the file containing the antenna's gain pattern.
 		 */
-		FileAntenna(const std::string_view name, const std::string_view filename) : Antenna(name.data()),
+		FileAntenna(const std::string_view name, const std::string_view filename) :
+			Antenna(name.data()),
 			_pattern(std::make_unique<Pattern>(filename.data())) {}
 
 		~FileAntenna() override = default;
+
 		FileAntenna(const FileAntenna&) = delete;
+
 		FileAntenna& operator=(const FileAntenna&) = delete;
+
 		FileAntenna(FileAntenna&&) = delete;
+
 		FileAntenna& operator=(FileAntenna&&) = delete;
 
 		/**
@@ -399,45 +437,5 @@ namespace antenna
 
 	private:
 		std::unique_ptr<Pattern> _pattern; ///< Pointer to the gain pattern object.
-	};
-
-	/**
-	 * @class PythonAntenna
-	 * @brief Represents an antenna with its gain pattern implemented in a Python module.
-	 */
-	class PythonAntenna final : public Antenna
-	{
-	public:
-		/**
-		 * @brief Constructs a PythonAntenna with the specified name, Python module, and function.
-		 *
-		 * @param name The name of the antenna.
-		 * @param module The name of the Python module that contains the gain calculation function.
-		 * @param function The name of the Python function that computes the antenna's gain.
-		 */
-		PythonAntenna(const std::string_view name, const std::string_view module, const std::string_view function) :
-			Antenna(name.data()), _py_antenna(module.data(), function.data()) {}
-
-		~PythonAntenna() override = default;
-		PythonAntenna(const PythonAntenna&) = delete;
-		PythonAntenna& operator=(const PythonAntenna&) = delete;
-		PythonAntenna(PythonAntenna&&) = delete;
-		PythonAntenna& operator=(PythonAntenna&&) = delete;
-
-		/**
-		 * @brief Computes the gain of the antenna based on the input angle and reference angle.
-		 *
-		 * @param angle The angle at which the gain is to be computed.
-		 * @param refangle The reference angle.
-		 * @return The gain of the antenna at the specified angle.
-		 */
-		[[nodiscard]] RealType getGain(const math::SVec3& angle, const math::SVec3& refangle,
-		                               RealType /*wavelength*/) const override
-		{
-			return _py_antenna.getGain(angle - refangle) * getEfficiencyFactor();
-		}
-
-	private:
-		python::PythonAntennaMod _py_antenna; ///< Python module and function to compute the gain.
 	};
 }
