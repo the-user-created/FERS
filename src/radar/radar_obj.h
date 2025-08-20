@@ -37,20 +37,18 @@ namespace radar
 		* @param platform Pointer to the platform on which the radar is mounted.
 		* @param name Name of the radar object.
 		*/
-		Radar(Platform* platform, std::string name) noexcept : Object(platform, std::move(name)) {}
+		Radar(Platform* platform, std::string name) noexcept :
+			Object(platform, std::move(name)) {}
 
 		~Radar() override = default;
-		Radar(const Radar&) = delete;
-		Radar& operator=(const Radar&) = delete;
-		Radar(Radar&&) = delete;
-		Radar& operator=(Radar&&) = delete;
 
-		/**
-		* @brief Checks if multipath dual mode is enabled.
-		*
-		* @return True if multipath dual is enabled, false otherwise.
-		*/
-		[[nodiscard]] bool getMultipathDual() const noexcept { return _multipath_dual; }
+		Radar(const Radar&) = delete;
+
+		Radar& operator=(const Radar&) = delete;
+
+		Radar(Radar&&) = delete;
+
+		Radar& operator=(Radar&&) = delete;
 
 		/**
 		* @brief Retrieves the attached radar object.
@@ -58,13 +56,6 @@ namespace radar
 		* @return Pointer to the attached radar object.
 		*/
 		[[nodiscard]] const Radar* getAttached() const noexcept { return _attached; }
-
-		/**
-		* @brief Gets the multipath reflection factor.
-		*
-		* @return Multipath reflection factor.
-		*/
-		[[nodiscard]] RealType getMultipathFactor() const noexcept { return _multipath_factor; }
 
 		/**
 		* @brief Gets the antenna associated with this radar.
@@ -114,13 +105,6 @@ namespace radar
 		void setAntenna(const antenna::Antenna* ant);
 
 		/**
-		* @brief Enables multipath dual mode.
-		*
-		* @param reflect The reflection factor to be set for multipath dual mode.
-		*/
-		void setMultipathDual(RealType reflect) noexcept;
-
-		/**
 		* @brief Attaches another radar object to this radar.
 		*
 		* @param obj Pointer to the radar object to attach.
@@ -134,18 +118,5 @@ namespace radar
 	private:
 		const antenna::Antenna* _antenna{nullptr}; ///< Antenna object associated with the radar.
 		const Radar* _attached{nullptr}; ///< Attached radar object.
-		bool _multipath_dual{false}; ///< Flag indicating if multipath dual mode is enabled.
-		RealType _multipath_factor{0}; ///< Multipath reflection factor.
 	};
-
-	/**
-	* @brief Creates a multipath dual base object.
-	*
-	* @tparam T The type of the object for which the dual is created (e.g., Transmitter, Receiver).
-	* @param obj Pointer to the original object.
-	* @param surf Pointer to the multipath surface defining the reflection characteristics.
-	* @return Pointer to the newly created dual object.
-	*/
-	template <typename T>
-	T* createMultipathDualBase(T* obj, const math::MultipathSurface* surf);
 }

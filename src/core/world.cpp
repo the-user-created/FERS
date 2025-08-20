@@ -16,7 +16,6 @@
 using signal::RadarSignal;
 using antenna::Antenna;
 using timing::PrototypeTiming;
-using math::MultipathSurface;
 using radar::Platform;
 using radar::Receiver;
 using radar::Transmitter;
@@ -59,12 +58,6 @@ namespace core
 		_timings[timing->getName()] = std::move(timing);
 	}
 
-	void World::addMultipathSurface(std::unique_ptr<MultipathSurface> surface)
-	{
-		if (_multipath_surface) { throw std::runtime_error("Only one multipath surface per simulation is supported."); }
-		_multipath_surface = std::move(surface);
-	}
-
 	RadarSignal* World::findSignal(const std::string& name)
 	{
 		return _pulses.contains(name) ? _pulses[name].get() : nullptr;
@@ -78,28 +71,5 @@ namespace core
 	PrototypeTiming* World::findTiming(const std::string& name)
 	{
 		return _timings.contains(name) ? _timings[name].get() : nullptr;
-	}
-
-	void World::processMultipath()
-	{
-		if (_multipath_surface)
-		{
-			const auto append_multipath_duals = [this](auto& collection)
-			{
-				const size_t initial_size = collection.size();
-				collection.reserve(initial_size * 2);
-				for (size_t i = 0; i < initial_size; ++i)
-				{
-					collection.push_back(std::unique_ptr<typename std::decay_t<decltype(collection[i])>::element_type>(
-						createMultipathDual(collection[i].get(), _multipath_surface.get())));
-				}
-			};
-
-			append_multipath_duals(_platforms);
-			append_multipath_duals(_receivers);
-			append_multipath_duals(_transmitters);
-
-			_multipath_surface.reset();
-		}
 	}
 }

@@ -27,7 +27,6 @@
 #include "core/world.h"
 #include "math/coord.h"
 #include "math/geometry_ops.h"
-#include "math/multipath_surface.h"
 #include "math/path.h"
 #include "math/rotation_path.h"
 #include "radar/platform.h"
@@ -324,13 +323,6 @@ namespace
 		{
 			ant = std::make_unique<antenna::FileAntenna>(name, XmlElement::getSafeAttribute(antenna, "filename"));
 		}
-		else if (pattern == "python")
-		{
-			ant = std::make_unique<antenna::PythonAntenna>(name,
-			                                               XmlElement::getSafeAttribute(antenna, "module"),
-			                                               XmlElement::getSafeAttribute(antenna, "function")
-				);
-		}
 		else
 		{
 			LOG(Level::FATAL, "Unsupported antenna pattern: {}", pattern);
@@ -355,7 +347,6 @@ namespace
 	void parseMotionPath(const XmlElement& motionPath, const Platform* platform)
 	{
 		Path* path = platform->getMotionPath();
-		bool is_python_path = false;
 		try
 		{
 			if (std::string interp = XmlElement::getSafeAttribute(motionPath, "interpolation"); interp == "linear")
@@ -364,16 +355,6 @@ namespace
 			}
 			else if (interp == "cubic") { path->setInterp(Path::InterpType::INTERP_CUBIC); }
 			else if (interp == "static") { path->setInterp(Path::InterpType::INTERP_STATIC); }
-			else if (interp == "python")
-			{
-				path->setInterp(Path::InterpType::INTERP_PYTHON);
-				const XmlElement python_path = motionPath.childElement("pythonpath", 0);
-				path->setPythonPath(
-					XmlElement::getSafeAttribute(python_path, "module"),
-					XmlElement::getSafeAttribute(python_path, "function")
-					);
-				is_python_path = true;
-			}
 			else
 			{
 				LOG(Level::ERROR, "Unsupported interpolation type: {} for platform {}. Defaulting to static", interp,
@@ -386,13 +367,6 @@ namespace
 			LOG(Level::ERROR, "Failed to set MotionPath interpolation type for platform {}. Defaulting to static",
 			    platform->getName());
 			path->setInterp(Path::InterpType::INTERP_STATIC);
-		}
-
-		// If path is defined by Python, skip parsing waypoints.
-		if (is_python_path)
-		{
-			path->finalize();
-			return;
 		}
 
 		unsigned waypoint_index = 0;
@@ -740,24 +714,6 @@ namespace
 	}
 
 	/**
-	 * @brief Parses the <multipath> element of the XML document.
-	 *
-	 * @param multipathSurface The <multipath> XmlElement to parse.
-	 * @param world A pointer to the World object where the Multipath object is added.
-	 */
-	void parseMultipathSurface(const XmlElement& multipathSurface, World* world)
-	{
-		auto mps = std::make_unique<math::MultipathSurface>(
-			get_child_real_type(multipathSurface, "nx"),
-			get_child_real_type(multipathSurface, "ny"),
-			get_child_real_type(multipathSurface, "nz"),
-			get_child_real_type(multipathSurface, "d"),
-			get_child_real_type(multipathSurface, "factor")
-			);
-		world->addMultipathSurface(std::move(mps));
-	}
-
-	/**
 	 * @brief Collects all "include" elements from the XML document and included documents.
 	 *
 	 * @param doc The XmlDocument to collect "include" elements from.
@@ -884,8 +840,5 @@ namespace serial
 		parseElements(root, "timing", world, parseTiming);
 		parseElements(root, "antenna", world, parseAntenna);
 		parseElements(root, "platform", world, parsePlatform);
-		parseElements(root, "multipath", world, parseMultipathSurface);
-
-		world->processMultipath();
 	}
 }
