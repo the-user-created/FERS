@@ -9,7 +9,6 @@
 #pragma once
 
 #include <memory>
-#include <optional>
 #include <string>
 #include <utility>
 
@@ -17,11 +16,6 @@
 #include "math/geometry_ops.h"
 #include "math/path.h"
 #include "math/rotation_path.h"
-
-namespace math
-{
-	class MultipathSurface;
-}
 
 namespace radar
 {
@@ -37,14 +31,19 @@ namespace radar
 		*
 		* @param name The name of the platform.
 		*/
-		explicit Platform(std::string name) noexcept : _motion_path(std::make_unique<math::Path>()),
-		                                               _rotation_path(std::make_unique<math::RotationPath>()),
-		                                               _name(std::move(name)) {}
+		explicit Platform(std::string name) noexcept :
+			_motion_path(std::make_unique<math::Path>()),
+			_rotation_path(std::make_unique<math::RotationPath>()),
+			_name(std::move(name)) {}
 
 		Platform(const Platform&) = delete;
+
 		Platform& operator=(const Platform&) = delete;
+
 		~Platform() = default;
+
 		Platform(Platform&&) = default;
+
 		Platform& operator=(Platform&&) = default;
 
 		/**
@@ -85,13 +84,6 @@ namespace radar
 		[[nodiscard]] const std::string& getName() const noexcept { return _name; }
 
 		/**
-		* @brief Gets the dual platform, if it exists.
-		*
-		* @return An optional containing a pointer to the dual platform, or nullopt if none exists.
-		*/
-		[[nodiscard]] std::optional<Platform*> getDual() const noexcept { return _dual ? std::optional{_dual} : std::nullopt; }
-
-		/**
 		* @brief Sets the rotation path of the platform.
 		*
 		* @param path A unique pointer to the new rotation path.
@@ -105,26 +97,9 @@ namespace radar
 		*/
 		void setMotionPath(std::unique_ptr<math::Path> path) noexcept { _motion_path = std::move(path); }
 
-		/**
-		* @brief Sets the dual platform.
-		*
-		* @param dual A pointer to the dual platform.
-		*/
-		void setDual(Platform* dual) noexcept { _dual = dual; }
-
 	private:
 		std::unique_ptr<math::Path> _motion_path; ///< The motion path of the platform.
 		std::unique_ptr<math::RotationPath> _rotation_path; ///< The rotation path of the platform.
 		std::string _name; ///< The name of the platform.
-		Platform* _dual = nullptr; ///< The dual platform, if it exists.
 	};
-
-	/**
-	* @brief Creates a dual platform based on multipath reflections.
-	*
-	* @param plat The original platform for which the dual is created.
-	* @param surf The multipath surface used to reflect the paths.
-	* @return A pointer to the newly created dual platform.
-	*/
-	Platform* createMultipathDual(Platform* plat, const math::MultipathSurface* surf);
 }

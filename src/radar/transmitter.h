@@ -43,13 +43,17 @@ namespace radar
 		* @param name Name of the transmitter.
 		* @param pulsed Boolean indicating whether the transmitter uses pulsed signals.
 		*/
-		Transmitter(Platform* platform, std::string name, const bool pulsed) noexcept
-			: Radar(platform, std::move(name)), _pulsed(pulsed) {}
+		Transmitter(Platform* platform, std::string name, const bool pulsed) noexcept :
+			Radar(platform, std::move(name)), _pulsed(pulsed) {}
 
 		~Transmitter() override = default;
+
 		Transmitter(const Transmitter&) = delete;
+
 		Transmitter& operator=(const Transmitter&) = delete;
+
 		Transmitter(Transmitter&&) = delete;
+
 		Transmitter& operator=(Transmitter&&) = delete;
 
 		/**
@@ -65,13 +69,6 @@ namespace radar
 		* @return Pointer to the RadarSignal object being transmitted.
 		*/
 		[[nodiscard]] signal::RadarSignal* getSignal() const noexcept { return _signal; }
-
-		/**
-		* @brief Retrieves the dual transmitter if applicable.
-		*
-		* @return Pointer to the dual Transmitter object, or nullptr if none is set.
-		*/
-		[[nodiscard]] Transmitter* getDual() const noexcept { return _dual; }
 
 		/**
 		* @brief Checks if the transmitter is pulsed.
@@ -93,13 +90,6 @@ namespace radar
 		* @param pulse Pointer to the RadarSignal object representing the wave.
 		*/
 		void setWave(signal::RadarSignal* pulse) noexcept { _signal = pulse; }
-
-		/**
-		* @brief Sets a dual transmitter to enable more complex transmission scenarios.
-		*
-		* @param dual Pointer to the dual Transmitter object.
-		*/
-		void setDual(Transmitter* dual) noexcept { _dual = dual; }
 
 		/**
 		* @brief Sets the radar signal wave to be transmitted.
@@ -137,20 +127,5 @@ namespace radar
 		RealType _prf = {}; ///< The pulse repetition frequency (PRF) of the transmitter.
 
 		bool _pulsed; ///< Boolean indicating whether the transmitter uses pulsed signals.
-
-		Transmitter* _dual = nullptr; ///< Pointer to a dual transmitter for complex transmission scenarios.
 	};
-
-	/**
-	* @brief Creates a multipath dual transmitter.
-	*
-	*
-	* @param trans Pointer to the primary Transmitter.
-	* @param surf Pointer to the multipath surface object.
-	* @return Pointer to the newly created dual Transmitter.
-	*/
-	inline Transmitter* createMultipathDual(Transmitter* trans, const math::MultipathSurface* surf)
-	{
-		return createMultipathDualBase(trans, surf);
-	}
 }

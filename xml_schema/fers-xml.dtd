@@ -1,5 +1,5 @@
 <!-- FERS XML Document Type Definition -->
-        <!ELEMENT simulation (parameters?, (pulse | timing | antenna | platform | include | multipath)*)>
+        <!ELEMENT simulation (parameters?, (pulse | timing | antenna | platform | include)*)>
         <!ATTLIST simulation name CDATA #REQUIRED>
 
         <!-- Simulation Parameters -->
@@ -96,13 +96,8 @@
         <!ATTLIST platform name CDATA #REQUIRED>
 
         <!-- Motion paths and Position Waypoints -->
-        <!ELEMENT motionpath (positionwaypoint*|pythonpath?)>
-        <!ATTLIST motionpath interpolation (static|linear|cubic|python) "static">
-
-        <!-- Pythonpath for custom interpolation -->
-        <!ELEMENT pythonpath EMPTY> <!-- Pythonpath element for defining module and function -->
-        <!ATTLIST pythonpath module CDATA #REQUIRED
-                function CDATA #REQUIRED>
+        <!ELEMENT motionpath (positionwaypoint*)>
+        <!ATTLIST motionpath interpolation (static|linear|cubic) "static">
 
         <!-- Position Waypoints -->
         <!ELEMENT positionwaypoint (x,y,altitude,time)>
@@ -182,14 +177,6 @@
         <!ELEMENT model (k?)>
         <!ATTLIST model type CDATA #REQUIRED>
         <!ELEMENT k (#PCDATA)>
-
-        <!-- Multipath Surface -->
-        <!ELEMENT multipath (factor,nx,ny,nz,d)>
-        <!ELEMENT factor (#PCDATA)>
-        <!ELEMENT nx (#PCDATA)>
-        <!ELEMENT ny (#PCDATA)>
-        <!ELEMENT nz (#PCDATA)>
-        <!ELEMENT d (#PCDATA)>
 
         <!-- Include another XML file -->
         <!ELEMENT include (#PCDATA)>
