@@ -11,7 +11,6 @@
 #include <algorithm>
 #include <cmath>
 
-#include "multipath_surface.h"
 #include "path_utils.h"
 #include "math/coord.h"
 #include "math/geometry_ops.h"
@@ -32,17 +31,21 @@ namespace math
 
 		switch (_type)
 		{
-		case InterpType::INTERP_STATIC: getPositionStatic(coord, _coords);
+		case InterpType::INTERP_STATIC:
+			getPositionStatic(coord, _coords);
 			break;
-		case InterpType::INTERP_LINEAR: getPositionLinear(t, coord, _coords);
+		case InterpType::INTERP_LINEAR:
+			getPositionLinear(t, coord, _coords);
 			break;
-		case InterpType::INTERP_CUBIC: getPositionCubic(t, coord, _coords, _dd);
+		case InterpType::INTERP_CUBIC:
+			getPositionCubic(t, coord, _coords, _dd);
 			break;
 		case InterpType::INTERP_CONSTANT:
 			coord.azimuth = std::fmod(t * _rate.azimuth + _start.azimuth, 2 * PI);
 			coord.elevation = std::fmod(t * _rate.elevation + _start.elevation, 2 * PI);
 			break;
-		default: throw PathException("Unknown interpolation type.");
+		default:
+			throw PathException("Unknown interpolation type.");
 		}
 
 		return {1, coord.azimuth, coord.elevation};
@@ -69,31 +72,5 @@ namespace math
 		_rate = setrate;
 		_type = InterpType::INTERP_CONSTANT;
 		_final = true;
-	}
-
-	std::unique_ptr<RotationPath> reflectPath(const RotationPath* path, const MultipathSurface* surf)
-	{
-		auto dual_path = std::make_unique<RotationPath>(path->getType());
-
-		dual_path->setStart(path->getStart());
-		dual_path->setRate(path->getRate());
-
-		for (const auto& coord : path->getCoords())
-		{
-			RotationCoord rc;
-			rc.t = coord.t;
-
-			SVec3 sv{1, coord.azimuth, coord.elevation};
-			auto v = Vec3(sv);
-			v = surf->reflectPoint(v);
-			const SVec3 refl(v);
-
-			rc.azimuth = refl.azimuth;
-			rc.elevation = refl.elevation;
-			dual_path->addCoord(rc);
-		}
-
-		dual_path->finalize();
-		return dual_path;
 	}
 }

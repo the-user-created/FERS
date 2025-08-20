@@ -14,7 +14,6 @@
 #include <vector>
 
 #include "antenna/antenna_factory.h"
-#include "math/multipath_surface.h"
 #include "radar/platform.h"
 #include "radar/receiver.h"
 #include "radar/target.h"
@@ -32,10 +31,15 @@ namespace core
 	{
 	public:
 		World() = default;
+
 		~World() noexcept = default;
+
 		World(const World&) = delete;
+
 		World& operator=(const World&) = delete;
+
 		World(World&&) = delete;
+
 		World& operator=(World&&) = delete;
 
 		/**
@@ -91,14 +95,6 @@ namespace core
 		void add(std::unique_ptr<timing::PrototypeTiming> timing);
 
 		/**
-		* @brief Adds a multipath surface to the simulation world.
-		*
-		* @param surface A unique pointer to a MultipathSurface object.
-		* @throws std::runtime_error if a multipath surface already exists in the simulation.
-		*/
-		void addMultipathSurface(std::unique_ptr<math::MultipathSurface> surface);
-
-		/**
 		* @brief Finds a radar signal by name.
 		*
 		* @param name The name of the radar signal to find.
@@ -152,21 +148,19 @@ namespace core
 			return _transmitters;
 		}
 
-		/**
-		* @brief Processes multipath surface interactions.
-		*
-		* If a multipath surface is present, this function will modify the simulation objects to account for multipath effects.
-		*/
-		void processMultipath();
-
 	private:
 		std::vector<std::unique_ptr<radar::Platform>> _platforms;
+
 		std::vector<std::unique_ptr<radar::Transmitter>> _transmitters;
+
 		std::vector<std::unique_ptr<radar::Receiver>> _receivers;
+
 		std::vector<std::unique_ptr<radar::Target>> _targets;
+
 		std::unordered_map<std::string, std::unique_ptr<signal::RadarSignal>> _pulses;
+
 		std::unordered_map<std::string, std::unique_ptr<antenna::Antenna>> _antennas;
+
 		std::unordered_map<std::string, std::unique_ptr<timing::PrototypeTiming>> _timings;
-		std::unique_ptr<math::MultipathSurface> _multipath_surface;
 	};
 }

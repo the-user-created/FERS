@@ -20,7 +20,6 @@ Key enhancements include optimized multithreading, better memory management, and
 - Creation of radar signal returns, including Doppler and phase modeling
 - Simulation of Multistatic and Monostatic radar systems
 - Support for both CW (Continuous Wave) and Pulsed radars
-- Multipath propagation effects
 - Data export in CSV, XML, and HDF5 formats
 - Geographic scenario visualization via KML export
 - Enhanced memory management using smart pointers
@@ -34,16 +33,15 @@ Key enhancements include optimized multithreading, better memory management, and
 
 ## Dependencies
 
-FERS relies on the following libraries:
+FERS relies on the following libraries for its core functionality:
 
 - **HighFive** (included as a git submodule)
 - **GeographicLib** (included as a git submodule)
 - **libhdf5** (HDF5 support)
 - **libxml2** (XML handling)
-- **python3.11** (for additional scripting capabilities)
 
-> **Note**: The **Boost** library has been **completely removed** in this modernization, and **FFTW3** is no longer
-> required.
+> **Note**: **Python** is no longer an internal dependency for building or running the simulator; it is now only needed
+> for the optional regression testing suite.
 
 ## Installation Instructions
 
@@ -65,17 +63,9 @@ sudo apt-get update && sudo apt-get upgrade
 Install the required libraries:
 
 ```bash
-sudo apt-get install libhdf5-dev libhdf5-serial-dev libxml2-dev build-essential cmake python3.11 python3.11-venv
+sudo apt-get install libhdf5-dev libhdf5-serial-dev libxml2-dev build-essential cmake
 sudo apt-get install cmake-qt-gui # Optional: CMake GUI
 ```
-
-> **Note**: If you encounter issues while trying to install python3.11, you may need to use the deadsnakes PPA:
-> ```bash
-> sudo add-apt-repository ppa:deadsnakes/ppa
-> sudo apt-get update
-> sudo apt-get install python3.11 python3.11-venv
-> ```
-> Then ensure to use -D PYTHON_EXECUTABLE=/usr/bin/python3.11 when running CMake.
 
 #### Step 2: Clone the Repository
 
@@ -138,6 +128,9 @@ to ensure the accuracy and reliability of the simulation results after updates o
 This suite is located in the `test/sim_tests/` directory and contains multiple test cases,
 each stored in its own folder (e.g., `test1/`, `test2/`, etc.).
 
+**Note:** The regression testing suite is written in Python. To run the tests, you will need a modern version of Python
+3 and the packages listed in `requirements.txt`.
+
 ### How the Regression Suite Works:
 
 - Each test case folder contains:
@@ -154,6 +147,7 @@ each stored in its own folder (e.g., `test1/`, `test2/`, etc.).
 To run the regression tests locally:
 
 ```bash
+# If you don't have python3-venv, install it: sudo apt-get install python3-venv
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt

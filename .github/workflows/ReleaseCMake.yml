@@ -34,23 +34,10 @@ jobs:
           lsb-release \
           xxd
 
-      - name: Set up Python  # Install Python 3.11, pip, and venv
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.11
-
-      - name: Install dependencies in virtual environment  # Create venv and install dependencies
-        run: |
-          python3 -m venv venv
-          . ../venv/bin/activate
-          pip install --upgrade pip
-          pip install -r requirements.txt
-
       - name: Generate and Build FERS
         run: |
           mkdir -p build
           cd build
-          . ../venv/bin/activate
           cmake -S .. -B .
           make -j$(nproc)
 
