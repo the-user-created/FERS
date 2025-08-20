@@ -25,29 +25,24 @@ namespace params
 		constexpr static RealType DEFAULT_C = 299792458.0; ///< Speed of light (m/s)
 		constexpr static RealType DEFAULT_BOLTZMANN_K = 1.3806503e-23; ///< Boltzmann constant
 		//constexpr static unsigned MIN_FILTER_LENGTH = 16; ///< Minimum render filter length
-
 		RealType c = DEFAULT_C; ///< Speed of light (modifiable)
 		RealType boltzmann_k = DEFAULT_BOLTZMANN_K; ///< Boltzmann constant (modifiable)
 		RealType start = 0; ///< Start time for the simulation.
 		RealType end = 0; ///< End time for the simulation.
-		RealType cw_sample_rate = 1000; ///< CW interpolation sample rate.
+		RealType path_sampling_rate = 1000; ///< The fidelity of the underlying physics simulation (Hz).
 		// Default to the location of the University of Cape Town in South Africa
 		double origin_latitude = -33.957652; ///< Geodetic origin latitude
 		double origin_longitude = 18.4611991; ///< Geodetic origin longitude
 		double origin_altitude = 111.01; ///< Geodetic origin altitude (in meters)
 		RealType rate = 0; ///< Rendering sample rate.
-
 		unsigned random_seed = 0; ///< Random seed for simulation.
 		unsigned adc_bits = 0; ///< ADC quantization bits.
 		unsigned filter_length = 33; ///< Default render filter length.
-
 		bool export_xml = false; ///< Enable or disable XML export.
 		bool export_csv = false; ///< Enable or disable CSV export.
 		bool export_binary = true; ///< Enable or disable binary export.
-
 		unsigned render_threads = 1; ///< Number of rendering threads to use.
 		unsigned oversample_ratio = 1; ///< Oversampling ratio.
-
 		std::optional<RealType> optional_rate = std::nullopt; ///< Optional sample rate.
 	};
 
@@ -78,10 +73,10 @@ namespace params
 	inline RealType endTime() noexcept { return params.end; }
 
 	/**
-	* @brief Get the CW interpolation sample rate.
-	* @return The CW sample rate.
+	* @brief Get the path sampling rate.
+	* @return The path sampling rate.
 	*/
-	inline RealType cwSampleRate() noexcept { return params.cw_sample_rate; }
+	inline RealType pathSamplingRate() noexcept { return params.path_sampling_rate; }
 
 	/**
 	* @brief Get the rendering sample rate.
@@ -160,13 +155,13 @@ namespace params
 	}
 
 	/**
-	* @brief Set the CW interpolation rate.
-	* @param rate The new CW sample rate.
+	* @brief Set the path sampling rate.
+	* @param rate The new path sampling rate.
 	*/
-	inline void setCwSampleRate(const RealType rate) noexcept
+	inline void setPathSamplingRate(const RealType rate) noexcept
 	{
-		params.cw_sample_rate = rate;
-		LOG(logging::Level::DEBUG, "CW interpolation rate set to: {:.5f} Hz", rate);
+		params.path_sampling_rate = rate;
+		LOG(logging::Level::DEBUG, "Path sampling rate set to: {:.5f} Hz", rate);
 	}
 
 	/**
@@ -238,11 +233,11 @@ namespace params
 	}
 
 	/**
-	 * @brief Set the geodetic origin for the KML generator.
-	 * @param lat The latitude of the origin.
-	 * @param lon The longitude of the origin.
-	 * @param alt The altitude of the origin (MSL).
-	 */
+	* @brief Set the geodetic origin for the KML generator.
+	* @param lat The latitude of the origin.
+	* @param lon The longitude of the origin.
+	* @param alt The altitude of the origin (MSL).
+	*/
 	inline void setOrigin(const double lat, const double lon, const double alt) noexcept
 	{
 		params.origin_latitude = lat;
@@ -252,7 +247,9 @@ namespace params
 	}
 
 	inline double originLatitude() noexcept { return params.origin_latitude; }
+
 	inline double originLongitude() noexcept { return params.origin_longitude; }
+
 	inline double originAltitude() noexcept { return params.origin_altitude; }
 
 	/**
