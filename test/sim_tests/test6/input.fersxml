@@ -76,7 +76,7 @@
             </rotationwaypoint>
             <rotationwaypoint>
                 <azimuth>0</azimuth>
-                <elevation>0</elevation>
+                <elevation>1</elevation>
                 <time>10</time>
             </rotationwaypoint>
         </rotationpath>
@@ -115,12 +115,18 @@
     </platform>
 
     <platform name="aeroplane">
-        <motionpath interpolation="static">
+        <motionpath interpolation="linear">
             <positionwaypoint>
-                <x>10000.0</x>
+                <x>1000.0</x>
                 <y>0.0</y>
                 <altitude>0.0</altitude>
                 <time>0</time>
+            </positionwaypoint>
+            <positionwaypoint>
+                <x>1000.0</x>
+                <y>500.0</y>
+                <altitude>0.0</altitude>
+                <time>10</time>
             </positionwaypoint>
         </motionpath>
         <rotationpath interpolation="linear">
@@ -142,7 +148,7 @@
         </rotationpath>
         <target name="wings">
             <rcs type="isotropic">
-                <value>10</value>
+                <value>100</value>
             </rcs>
         </target>
     </platform>
