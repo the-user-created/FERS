@@ -7,7 +7,7 @@
         <endtime>1.0</endtime>
         <rate>1e6</rate>
         <c>299792458.0</c>
-        <interprate>1e6</interprate>
+        <pathSamplingRate>1e6</pathSamplingRate>
         <randomseed>12345</randomseed>
         <export csv="true" binary="true" xml="true"/>
     </parameters>
