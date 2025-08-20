@@ -44,8 +44,13 @@ namespace radar
 
 	void Receiver::render(pool::ThreadPool& pool)
 	{
+		// Prevent exporting empty files when there are no responses
+		if (_responses.empty())
+		{
+			LOG(logging::Level::INFO, "Receiver '{}' has no responses to render. Skipping export.", getName());
+			return;
+		}
 		std::ranges::sort(_responses, serial::compareTimes);
-		// TODO: Should check here if there are any responses to render
 
 		if (params::exportXml()) { exportReceiverXml(_responses, getName() + "_results"); }
 		if (params::exportCsv()) { exportReceiverCsv(_responses, getName() + "_results"); }

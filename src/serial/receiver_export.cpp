@@ -44,6 +44,9 @@ namespace fs = std::filesystem;
 
 namespace
 {
+	/// Minimum number of responses required to justify parallel processing for rendering.
+	constexpr unsigned MIN_RESPONSES_FOR_PARALLEL_RENDERING = 8;
+
 	/**
 	 * @brief Open an HDF5 file for writing.
 	 *
@@ -53,9 +56,6 @@ namespace
 	 */
 	std::optional<HighFive::File> openHdf5File(const std::string& recvName)
 	{
-		// TODO: unnecessary check as exportBinary() is already checked in the caller
-		if (!params::exportBinary()) { return std::nullopt; }
-
 		const auto hdf5_filename = std::format("{}.h5", recvName);
 
 		try
@@ -124,19 +124,12 @@ namespace
 	{
 		RealType max_value = 0;
 
-		// TODO: NaN checks are not needed
 		for (const auto& sample : data)
 		{
 			const RealType real_abs = std::fabs(sample.real());
 			const RealType imag_abs = std::fabs(sample.imag());
 
 			max_value = std::max({max_value, real_abs, imag_abs});
-
-			if (std::isnan(real_abs) || std::isnan(imag_abs))
-			{
-				LOG(logging::Level::FATAL, "NaN encountered in QuantizeWindow -- early");
-				throw std::runtime_error("NaN encountered in QuantizeWindow -- early");
-			}
 		}
 
 		if (const auto adc_bits = params::adcBits(); adc_bits > 0) { adcSimulate(data, adc_bits, max_value); }
@@ -145,15 +138,8 @@ namespace
 			for (auto& sample : data)
 			{
 				sample /= max_value;
-
-				if (std::isnan(sample.real()) || std::isnan(sample.imag()))
-				{
-					LOG(logging::Level::FATAL, "NaN encountered in QuantizeWindow -- late");
-					throw std::runtime_error("NaN encountered in QuantizeWindow -- late");
-				}
 			}
 		}
-
 		return max_value;
 	}
 
@@ -354,9 +340,7 @@ namespace
 		unsigned available_threads = pool.getAvailableThreads();
 		const RealType rate = params::rate() * params::oversampleRatio();
 		const auto local_window_size = static_cast<unsigned>(std::ceil(length * rate));
-
-		// TODO: Magic numbers...
-		if (num_responses < 8 || available_threads <= 1)
+		if (num_responses < MIN_RESPONSES_FOR_PARALLEL_RENDERING || available_threads <= 1)
 		{
 			LOG(logging::Level::TRACE, "Using sequential processing for rendering: {} threads available, {} responses",
 			    available_threads, num_responses);
