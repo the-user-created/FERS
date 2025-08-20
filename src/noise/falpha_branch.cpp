@@ -25,14 +25,13 @@ using signal::DecadeUpsampler;
 namespace noise
 {
 	FAlphaBranch::FAlphaBranch(RealType ffrac, unsigned fint, std::unique_ptr<FAlphaBranch> pre,
-	                           const bool last)
-		: _pre(std::move(pre)), _buffer(10), _ffrac(ffrac), _fint(fint), _last(last)
+	                           const bool last) :
+		_pre(std::move(pre)), _buffer(10), _ffrac(ffrac), _fint(fint), _last(last)
 	{
 		LOG(Level::TRACE, "Creating FAlphaBranch: ffrac={} fint={}", ffrac, fint);
 		_upsample_scale = std::pow(10, ffrac + fint + 0.5);
 		init();
 
-		// TODO: refill() is called twice upon construction if not _last, once in init() and once here.
 		if (!_last) { refill(); }
 	}
 
@@ -74,7 +73,8 @@ namespace noise
 		}
 		else if (_ffrac != 0.0f)
 		{
-			LOG(Level::FATAL, "Fractional noise generation values other than 0.5 or 0 are not supported. ffrac={}", _ffrac);
+			LOG(Level::FATAL, "Fractional noise generation values other than 0.5 or 0 are not supported. ffrac={}",
+			    _ffrac);
 			throw std::runtime_error("Fractional integrator values other than 0.5 or 0 are not supported");
 		}
 
@@ -99,8 +99,6 @@ namespace noise
 		}
 		_offset_sample = 0.0f;
 		_got_offset = false;
-
-		if (!_last) { refill(); }
 	}
 
 	RealType FAlphaBranch::getSample() noexcept

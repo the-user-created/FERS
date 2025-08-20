@@ -1,5 +1,5 @@
 /**
- * @file timing.cpp
+* @file timing.cpp
  * @brief Implementation of timing sources.
  *
  * @authors David Young, Marc Brooker
@@ -22,8 +22,11 @@ namespace timing
 
 	void Timing::initializeModel(const PrototypeTiming* timing) noexcept
 	{
-		// TODO: Should just return here is _alphas is empty?
-		if (!_alphas.empty()) { LOG(Level::ERROR, "Timing source already initialized."); }
+		if (_model)
+		{
+			LOG(Level::WARNING, "Timing source '{}' already initialized. Skipping re-initialization.", _name);
+			return;
+		}
 
 		timing->copyAlphas(_alphas, _weights);
 
