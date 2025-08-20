@@ -52,6 +52,11 @@ using timing::PrototypeTiming;
 using radar::Transmitter;
 using radar::Receiver;
 
+namespace
+{
+	void parsePulse(const XmlElement& pulse, World* world, const fs::path& base_dir);
+}
+
 /**
  * @brief Parses elements with child iteration (e.g., pulses, timings, antennas).
  *
@@ -138,7 +143,8 @@ namespace
 		};
 
 		set_param_with_exception_handling(parameters, "c", params::c(), params::setC);
-		set_param_with_exception_handling(parameters, "pathSamplingRate", params::pathSamplingRate(), params::setPathSamplingRate);
+		set_param_with_exception_handling(parameters, "pathSamplingRate", params::pathSamplingRate(),
+		                                  params::setPathSamplingRate);
 
 		set_param_with_exception_handling(parameters, "randomseed", params::randomSeed(), params::setRandomSeed);
 		set_param_with_exception_handling(parameters, "adc_bits", params::adcBits(), params::setAdcBits);
@@ -151,7 +157,7 @@ namespace
 				get_child_bool(export_element, "xml", params::exportXml()),
 				get_child_bool(export_element, "csv", params::exportCsv()),
 				get_child_bool(export_element, "binary", params::exportBinary())
-			);
+				);
 		}
 
 		// Parse the origin element for the KML generator
@@ -176,12 +182,12 @@ namespace
 	 *
 	 * @param pulse The <pulse> XmlElement to parse.
 	 * @param world A pointer to the World object where the RadarSignal object is added.
+	 * @param base_dir The base directory of the main scenario file to resolve relative paths.
 	 */
-	void parsePulse(const XmlElement& pulse, World* world)
+	void parsePulse(const XmlElement& pulse, World* world, const fs::path& base_dir)
 	{
 		const std::string name = XmlElement::getSafeAttribute(pulse, "name");
 		const std::string type = XmlElement::getSafeAttribute(pulse, "type");
-		const std::string filename = XmlElement::getSafeAttribute(pulse, "filename");
 
 		if (const XmlElement power_element = pulse.childElement("power", 0); !power_element.isValid())
 		{
@@ -197,12 +203,23 @@ namespace
 
 		if (type == "file")
 		{
-			// TODO: Add error handling for invalid file paths
-			//		 should default to searching the same directory as the XML file
-			auto wave = serial::loadPulseFromFile(name, filename,
+			const std::string filename_str = XmlElement::getSafeAttribute(pulse, "filename");
+			fs::path pulse_path(filename_str);
+
+			// Check if path exists as is, if not, try relative to the main XML directory
+			if (!fs::exists(pulse_path))
+			{
+				pulse_path = base_dir / filename_str;
+			}
+
+			if (!fs::exists(pulse_path))
+			{
+				throw XmlException("Pulse file not found: " + filename_str);
+			}
+
+			auto wave = serial::loadPulseFromFile(name, pulse_path.string(),
 			                                      get_child_real_type(pulse, "power"),
-			                                      get_child_real_type(pulse, "carrier")
-			);
+			                                      get_child_real_type(pulse, "carrier"));
 			world->add(std::move(wave));
 		}
 		else
@@ -224,6 +241,8 @@ namespace
 		const RealType freq = get_child_real_type(timing, "frequency");
 		auto timing_obj = std::make_unique<PrototypeTiming>(name);
 
+		timing_obj->setFrequency(freq);
+
 		unsigned noise_index = 0;
 		while (true)
 		{
@@ -233,7 +252,7 @@ namespace
 			timing_obj->setAlpha(
 				get_child_real_type(noise_element, "alpha"),
 				get_child_real_type(noise_element, "weight")
-			);
+				);
 		}
 
 		try { timing_obj->setFreqOffset(get_child_real_type(timing, "freq_offset")); }
@@ -250,9 +269,6 @@ namespace
 
 		try { timing_obj->setRandomPhaseOffset(get_child_real_type(timing, "random_phase_offset")); }
 		catch (XmlException&) { LOG(Level::WARNING, "Clock section '{}' does not specify random phase offset.", name); }
-
-		// TODO: Why set the frequency so late?
-		timing_obj->setFrequency(freq);
 
 		if (get_child_bool(timing, "synconpulse", true)) { timing_obj->setSyncOnPulse(); }
 
@@ -280,25 +296,25 @@ namespace
 			                                      get_child_real_type(antenna, "alpha"),
 			                                      get_child_real_type(antenna, "beta"),
 			                                      get_child_real_type(antenna, "gamma")
-			);
+				);
 		}
 		else if (pattern == "gaussian")
 		{
 			ant = std::make_unique<antenna::Gaussian>(name,
 			                                          get_child_real_type(antenna, "azscale"),
 			                                          get_child_real_type(antenna, "elscale")
-			);
+				);
 		}
 		else if (pattern == "squarehorn")
 		{
 			ant = std::make_unique<antenna::SquareHorn>(name,
 			                                            get_child_real_type(antenna, "diameter")
-			);
+				);
 		}
 		else if (pattern == "parabolic")
 		{
 			ant = std::make_unique<antenna::Parabolic>(name, get_child_real_type(antenna, "diameter")
-			);
+				);
 		}
 		else if (pattern == "xml")
 		{
@@ -313,7 +329,7 @@ namespace
 			ant = std::make_unique<antenna::PythonAntenna>(name,
 			                                               XmlElement::getSafeAttribute(antenna, "module"),
 			                                               XmlElement::getSafeAttribute(antenna, "function")
-			);
+				);
 		}
 		else
 		{
@@ -339,6 +355,7 @@ namespace
 	void parseMotionPath(const XmlElement& motionPath, const Platform* platform)
 	{
 		Path* path = platform->getMotionPath();
+		bool is_python_path = false;
 		try
 		{
 			if (std::string interp = XmlElement::getSafeAttribute(motionPath, "interpolation"); interp == "linear")
@@ -354,8 +371,8 @@ namespace
 				path->setPythonPath(
 					XmlElement::getSafeAttribute(python_path, "module"),
 					XmlElement::getSafeAttribute(python_path, "function")
-				);
-				// TODO: If the path is python defined, then the code should skip the while loop???
+					);
+				is_python_path = true;
 			}
 			else
 			{
@@ -369,6 +386,13 @@ namespace
 			LOG(Level::ERROR, "Failed to set MotionPath interpolation type for platform {}. Defaulting to static",
 			    platform->getName());
 			path->setInterp(Path::InterpType::INTERP_STATIC);
+		}
+
+		// If path is defined by Python, skip parsing waypoints.
+		if (is_python_path)
+		{
+			path->finalize();
+			return;
 		}
 
 		unsigned waypoint_index = 0;
@@ -385,7 +409,7 @@ namespace
 					get_child_real_type(waypoint, "x"),
 					get_child_real_type(waypoint, "y"),
 					get_child_real_type(waypoint, "altitude")
-				);
+					);
 				path->addCoord(coord);
 				LOG(Level::TRACE, "Added waypoint {} to motion path for platform {}.", waypoint_index,
 				    platform->getName());
@@ -543,16 +567,25 @@ namespace
 			    receiver_obj->getName().c_str());
 		}
 
-		// TODO: These are required elements which are not enforced if not using XML validation
-		//  Should fail if:
-		//  - window_length is not specified or 0
-		//  - prf is not specified or 0
-		//  - window_skip is not specified or 0
-		receiver_obj->setWindowProperties(
-			get_child_real_type(receiver, "window_length"),
-			get_child_real_type(receiver, "prf"),
-			get_child_real_type(receiver, "window_skip")
-		);
+		// Enforce required receiver parameters.
+		const RealType window_length = get_child_real_type(receiver, "window_length");
+		if (window_length <= 0)
+		{
+			throw XmlException("<window_length> must be positive for receiver '" + name + "'");
+		}
+
+		const RealType prf = get_child_real_type(receiver, "prf");
+		if (prf <= 0)
+		{
+			throw XmlException("<prf> must be positive for receiver '" + name + "'");
+		}
+
+		const RealType window_skip = get_child_real_type(receiver, "window_skip");
+		if (window_skip < 0)
+		{
+			throw XmlException("<window_skip> must not be negative for receiver '" + name + "'");
+		}
+		receiver_obj->setWindowProperties(window_length, prf, window_skip);
 
 		const std::string timing_name = XmlElement::getSafeAttribute(receiver, "timing");
 		const auto timing = std::make_shared<Timing>(name);
@@ -633,7 +666,7 @@ namespace
 			{
 				target_obj->setFluctuationModel(std::make_unique<radar::RcsChiSquare>(
 					get_child_real_type(model, "k")
-				));
+					));
 			}
 			else { throw XmlException("Unsupported model type: " + model_type); }
 		}
@@ -645,25 +678,29 @@ namespace
 
 	void parsePlatformElements(const XmlElement& platform, World* world, Platform* plat)
 	{
-		// TODO: No need for a while loop here, we can just parse the elements directly
-		//	 and we assume that each platform has only 1 of any given element (should throw exception if not)
-		unsigned element_index = 0;
-		while (true)
+		XmlElement monostatic = platform.childElement("monostatic", 0);
+		XmlElement transmitter = platform.childElement("transmitter", 0);
+		XmlElement receiver = platform.childElement("receiver", 0);
+		XmlElement target = platform.childElement("target", 0);
+
+		int component_count = 0;
+		if (monostatic.isValid()) { component_count++; }
+		if (transmitter.isValid()) { component_count++; }
+		if (receiver.isValid()) { component_count++; }
+		if (target.isValid()) { component_count++; }
+
+		if (component_count != 1)
 		{
-			XmlElement monostatic = platform.childElement("monostatic", element_index);
-			XmlElement transmitter = platform.childElement("transmitter", element_index);
-			XmlElement receiver = platform.childElement("receiver", element_index);
-			XmlElement target = platform.childElement("target", element_index);
-
-			if (target.isValid()) { parseTarget(target, plat, world); }
-			if (transmitter.isValid()) { parseTransmitter(transmitter, plat, world); }
-			if (receiver.isValid()) { parseReceiver(receiver, plat, world); }
-			if (monostatic.isValid()) { parseMonostatic(monostatic, plat, world); }
-
-			if (!monostatic.isValid() && !transmitter.isValid() && !receiver.isValid() && !target.isValid()) { break; }
-
-			element_index++;
+			const std::string platform_name = XmlElement::getSafeAttribute(platform, "name");
+			throw XmlException("Platform '" + platform_name +
+				"' must contain exactly one component: <monostatic>, <transmitter>, <receiver>, or <target>.");
 		}
+
+		if (monostatic.isValid()) { parseMonostatic(monostatic, plat, world); }
+		else if (transmitter.isValid()) { parseTransmitter(transmitter, plat, world); }
+		else if (receiver.isValid()) { parseReceiver(receiver, plat, world); }
+		else
+			if (target.isValid()) { parseTarget(target, plat, world); }
 	}
 
 	/**
@@ -696,7 +733,8 @@ namespace
 			parseRotationPath(rot_path, plat.get());
 		}
 		else if (rot_path.isValid()) { parseRotationPath(rot_path, plat.get()); }
-		else if (fixed_rot.isValid()) { parseFixedRotation(fixed_rot, plat.get()); }
+		else
+			if (fixed_rot.isValid()) { parseFixedRotation(fixed_rot, plat.get()); }
 
 		world->add(std::move(plat));
 	}
@@ -715,7 +753,7 @@ namespace
 			get_child_real_type(multipathSurface, "nz"),
 			get_child_real_type(multipathSurface, "d"),
 			get_child_real_type(multipathSurface, "factor")
-		);
+			);
 		world->addMultipathSurface(std::move(mps));
 	}
 
@@ -770,13 +808,11 @@ namespace
 		collectIncludeElements(mainDoc, currentDir, include_paths);
 		bool did_combine = false;
 
-		// TODO: Add error handling for invalid includes
 		for (const auto& include_path : include_paths)
 		{
 			XmlDocument included_doc;
 			if (!included_doc.loadFile(include_path.string()))
 			{
-				LOG(Level::ERROR, "Failed to load included XML file: {}", include_path.string());
 				throw XmlException("Failed to load included XML file: " + include_path.string());
 			}
 
@@ -843,7 +879,8 @@ namespace serial
 		}
 
 		parseParameters(root.childElement("parameters", 0));
-		parseElements(root, "pulse", world, parsePulse);
+		auto pulse_parser = [&](const XmlElement& p, World* w) { parsePulse(p, w, main_dir); };
+		parseElements(root, "pulse", world, pulse_parser);
 		parseElements(root, "timing", world, parseTiming);
 		parseElements(root, "antenna", world, parseAntenna);
 		parseElements(root, "platform", world, parsePlatform);
