@@ -1,3 +1,12 @@
+# LOCAL DEVELOPMENT FILES AND FOLDERS
+build_and_run.sh
+collect_files.py
+list_files.py
+issue_verification_tests/
+testing_files/
+design_docs/
+
+# ------------- EVERYTHING ELSE -------------
 doc/equations/equations.aux
 doc/equations/equations.log
 doc/equations/equations.pdf

@@ -20,6 +20,12 @@ namespace noise
 {
 	MultirateGenerator::MultirateGenerator(const RealType alpha, const unsigned branches)
 	{
+		if (branches == 0)
+		{
+			LOG(logging::Level::FATAL, "Cannot create multirate noise generator with zero branches");
+			throw std::runtime_error("Cannot create multirate noise generator with zero branches");
+		}
+
 		const RealType beta = -(alpha - 2) / 2.0;
 		const int fint = static_cast<int>(std::floor(beta));
 		const RealType ffrac = std::fmod(beta, 1.0);
@@ -42,7 +48,8 @@ namespace noise
 			}
 
 			if (branch)
-			{ const auto reduced_samples = samples / static_cast<long long>(std::pow(10.0, skip_branches));
+			{
+				const auto reduced_samples = samples / static_cast<long long>(std::pow(10.0, skip_branches));
 				for (long long i = 0; i < reduced_samples; ++i) { const_cast<FAlphaBranch*>(branch)->getSample(); }
 			}
 
@@ -53,13 +60,6 @@ namespace noise
 
 	void MultirateGenerator::createTree(const RealType fAlpha, const int fInt, const unsigned branches)
 	{
-		// TODO: Should move to the constructor
-		if (branches == 0)
-		{
-			LOG(logging::Level::FATAL, "Cannot create multirate noise generator with zero branches");
-			throw std::runtime_error("Cannot create multirate noise generator with zero branches");
-		}
-
 		std::unique_ptr<FAlphaBranch> previous_branch = nullptr;
 		for (unsigned i = 0; i < branches; ++i)
 		{
@@ -85,8 +85,8 @@ namespace noise
 
 	ClockModelGenerator::ClockModelGenerator(const std::vector<RealType>& alpha, const std::vector<RealType>& inWeights,
 	                                         const RealType frequency, const RealType phaseOffset,
-	                                         const RealType freqOffset, int branches) noexcept
-		: _weights(inWeights), _phase_offset(phaseOffset), _freq_offset(freqOffset), _frequency(frequency)
+	                                         const RealType freqOffset, int branches) noexcept :
+		_weights(inWeights), _phase_offset(phaseOffset), _freq_offset(freqOffset), _frequency(frequency)
 	{
 		for (size_t i = 0; i < alpha.size(); ++i)
 		{
@@ -95,17 +95,23 @@ namespace noise
 
 			switch (static_cast<int>(alpha[i]))
 			{
-			case 2: _weights[i] *= std::pow(10.0, 1.225);
+			case 2:
+				_weights[i] *= std::pow(10.0, 1.225);
 				break;
-			case 1: _weights[i] *= std::pow(10.0, 0.25);
+			case 1:
+				_weights[i] *= std::pow(10.0, 0.25);
 				break;
-			case 0: _weights[i] *= std::pow(10.0, -0.25);
+			case 0:
+				_weights[i] *= std::pow(10.0, -0.25);
 				break;
-			case -1: _weights[i] *= std::pow(10.0, -0.5);
+			case -1:
+				_weights[i] *= std::pow(10.0, -0.5);
 				break;
-			case -2: _weights[i] *= std::pow(10.0, -1.0);
+			case -2:
+				_weights[i] *= std::pow(10.0, -1.0);
 				break;
-			default: break;
+			default:
+				break;
 			}
 		}
 	}
