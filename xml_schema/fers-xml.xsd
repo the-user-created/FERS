@@ -91,7 +91,15 @@
                 <xs:element minOccurs="0" name="carrier" type="xs:string"/>
             </xs:sequence>
             <xs:attribute name="name" use="required"/>
-            <xs:attribute name="type" use="required"/>
+            <xs:attribute name="type" use="required">
+                <xs:simpleType>
+                    <xs:restriction base="xs:token">
+                        <xs:enumeration value="file"/>
+                        <xs:enumeration value="continuous"/>
+                        <xs:enumeration value="cw"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
             <xs:attribute name="filename"/> <!-- This is only required for type="file" -->
         </xs:complexType>
     </xs:element>
@@ -254,6 +262,7 @@
                     <xs:restriction base="xs:token">
                         <xs:enumeration value="pulsed"/>
                         <xs:enumeration value="continuous"/>
+                        <xs:enumeration value="cw"/>
                     </xs:restriction>
                 </xs:simpleType>
             </xs:attribute>
@@ -270,7 +279,6 @@
         <xs:complexType>
             <xs:sequence>
                 <xs:element name="prf" type="xs:string"/>
-                <!-- code requires the use of prf even for CW transmitters -->
             </xs:sequence>
             <xs:attribute name="name" use="required"/>
             <xs:attribute name="type" use="required">
@@ -278,6 +286,7 @@
                     <xs:restriction base="xs:token">
                         <xs:enumeration value="pulsed"/>
                         <xs:enumeration value="continuous"/>
+                        <xs:enumeration value="cw"/>
                     </xs:restriction>
                 </xs:simpleType>
             </xs:attribute>

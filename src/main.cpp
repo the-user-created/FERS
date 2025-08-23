@@ -47,7 +47,7 @@ int main(const int argc, char* argv[])
 	{
 		// Log or display the error message
 		if (config_result.error() != "Help requested." && config_result.error() != "Version requested." &&
-		    config_result.error() != "No arguments provided.")
+			config_result.error() != "No arguments provided.")
 		{
 			LOG(Level::ERROR, "Argument parsing error: {}", config_result.error());
 			return 1;
@@ -109,7 +109,15 @@ int main(const int argc, char* argv[])
 
 		// Run the simulation using the threading mechanism
 		pool::ThreadPool pool(params::renderThreads());
-		runThreadedSim(world.get(), pool);
+
+		if (params::isCwSimulation())
+		{
+			core::runThreadedCwSim(world.get(), pool);
+		}
+		else
+		{
+			runThreadedSim(world.get(), pool);
+		}
 
 		LOG(Level::INFO, "Simulation completed successfully!");
 

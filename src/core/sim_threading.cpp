@@ -28,6 +28,7 @@
 #include "radar/target.h"
 #include "serial/response.h"
 #include "signal/radar_signal.h"
+#include "timing/timing.h"
 
 using radar::Transmitter;
 using radar::Receiver;
@@ -40,6 +41,116 @@ using logging::Level;
 
 namespace
 {
+	/**
+	 * @brief Calculates the complex envelope contribution for a direct propagation path (Tx -> Rx) at a specific time.
+	 * @param trans The transmitter.
+	 * @param recv The receiver.
+	 * @param timeK The current simulation time.
+	 * @return The complex I/Q sample contribution for this path.
+	 */
+	ComplexType calculateDirectPathContribution(const Transmitter* trans, const Receiver* recv, const RealType timeK)
+	{
+		const auto p_tx = trans->getPlatform()->getPosition(timeK);
+		const auto p_rx = recv->getPlatform()->getPosition(timeK);
+
+		const auto tx_to_rx_vec = p_rx - p_tx;
+		const auto range = tx_to_rx_vec.length();
+
+		if (range <= EPSILON) { return {0.0, 0.0}; }
+
+		const auto u_ji = tx_to_rx_vec / range;
+		const RealType tau = range / params::c();
+		const auto signal = trans->getSignal();
+		const RealType carrier_freq = signal->getCarrier();
+		const RealType lambda = params::c() / carrier_freq;
+
+		// Amplitude Scaling (Friis Transmission Equation)
+		const RealType tx_gain = trans->getGain(SVec3(u_ji), trans->getRotation(timeK), lambda);
+		const RealType rx_gain = recv->getGain(SVec3(-u_ji), recv->getRotation(timeK + tau), lambda);
+
+		RealType power_scaling = signal->getPower() * tx_gain * rx_gain * lambda * lambda / (std::pow(4 * PI, 2) *
+			range * range);
+		if (recv->checkFlag(Receiver::RecvFlag::FLAG_NOPROPLOSS))
+		{
+			power_scaling = signal->getPower() * tx_gain * rx_gain * lambda * lambda / std::pow(4 * PI, 2);
+		}
+		const RealType amplitude = std::sqrt(power_scaling);
+
+		// Complex Envelope Contribution
+		const RealType phase = -2 * PI * carrier_freq * tau;
+		ComplexType contribution = std::polar(amplitude, phase);
+
+		// Non-coherent Local Oscillator Effects
+		const auto tx_timing = trans->getTiming();
+		const auto rx_timing = recv->getTiming();
+		const RealType delta_f = tx_timing->getFreqOffset() - rx_timing->getFreqOffset();
+		const RealType delta_phi = tx_timing->getPhaseOffset() - rx_timing->getPhaseOffset();
+		const RealType non_coherent_phase = 2 * PI * delta_f * timeK + delta_phi;
+		contribution *= std::polar(1.0, non_coherent_phase);
+
+		return contribution;
+	}
+
+	/**
+	 * @brief Calculates the complex envelope contribution for a reflected path (Tx -> Tgt -> Rx) at a specific time.
+	 * @param trans The transmitter.
+	 * @param recv The receiver.
+	 * @param targ The target.
+	 * @param timeK The current simulation time.
+	 * @return The complex I/Q sample contribution for this path.
+	 */
+	ComplexType calculateReflectedPathContribution(const Transmitter* trans, const Receiver* recv, const Target* targ,
+	                                               const RealType timeK)
+	{
+		const auto p_tx = trans->getPlatform()->getPosition(timeK);
+		const auto p_rx = recv->getPlatform()->getPosition(timeK);
+		const auto p_tgt = targ->getPlatform()->getPosition(timeK);
+
+		const auto tx_to_tgt_vec = p_tgt - p_tx;
+		const auto tgt_to_rx_vec = p_rx - p_tgt;
+		const RealType r_jm = tx_to_tgt_vec.length();
+		const RealType r_mi = tgt_to_rx_vec.length();
+
+		if (r_jm <= EPSILON || r_mi <= EPSILON) { return {0.0, 0.0}; }
+
+		const auto u_jm = tx_to_tgt_vec / r_jm;
+		const auto u_mi = tgt_to_rx_vec / r_mi;
+
+		const RealType tau = (r_jm + r_mi) / params::c();
+		const auto signal = trans->getSignal();
+		const RealType carrier_freq = signal->getCarrier();
+		const RealType lambda = params::c() / carrier_freq;
+
+		// Amplitude Scaling (Bistatic Radar Range Equation)
+		SVec3 in_angle_sv(u_jm);
+		SVec3 out_angle_sv(-u_mi);
+		const RealType rcs = targ->getRcs(in_angle_sv, out_angle_sv);
+		const RealType tx_gain = trans->getGain(SVec3(u_jm), trans->getRotation(timeK), lambda);
+		const RealType rx_gain = recv->getGain(SVec3(-u_mi), recv->getRotation(timeK + tau), lambda);
+
+		RealType power_scaling = signal->getPower() * tx_gain * rx_gain * rcs * lambda * lambda / (std::pow(
+			4 * PI, 3) * r_jm * r_jm * r_mi * r_mi);
+		if (recv->checkFlag(Receiver::RecvFlag::FLAG_NOPROPLOSS))
+		{
+			power_scaling = signal->getPower() * tx_gain * rx_gain * rcs * lambda * lambda / std::pow(4 * PI, 3);
+		}
+		const RealType amplitude = std::sqrt(power_scaling);
+
+		// Complex Envelope Contribution
+		const RealType phase = -2 * PI * carrier_freq * tau;
+		ComplexType contribution = std::polar(amplitude, phase);
+
+		// Non-coherent Local Oscillator Effects
+		const auto tx_timing = trans->getTiming();
+		const auto rx_timing = recv->getTiming();
+		const RealType delta_f = tx_timing->getFreqOffset() - rx_timing->getFreqOffset();
+		const RealType delta_phi = tx_timing->getPhaseOffset() - rx_timing->getPhaseOffset();
+		const RealType non_coherent_phase = 2 * PI * delta_f * timeK + delta_phi;
+		contribution *= std::polar(1.0, non_coherent_phase);
+
+		return contribution;
+	}
+
 	/**
 	 * @brief Performs radar simulation for a given transmitter, receiver, and target.
 	 *
@@ -295,6 +406,67 @@ namespace core
 		LOG(Level::INFO, "Rendering responses for {} receivers", receivers.size());
 		for (const auto& receiver : receivers) { pool.enqueue([&receiver, &pool] { receiver->render(pool); }); }
 
+		pool.wait();
+	}
+
+	void runThreadedCwSim(const World* world, pool::ThreadPool& pool)
+	{
+		const auto& receivers = world->getReceivers();
+		const auto& transmitters = world->getTransmitters();
+		const auto& targets = world->getTargets();
+
+		const RealType start_time = params::startTime();
+		const RealType end_time = params::endTime();
+		const RealType dt = 1.0 / params::rate(); // TODO: No oversampling of the data yet
+		const auto num_samples = static_cast<size_t>(std::ceil((end_time - start_time) / dt));
+
+		LOG(Level::INFO, "Running CW simulation for {} receivers over {} samples", receivers.size(), num_samples);
+
+		// Pre-allocate memory for I/Q data in each receiver
+		for (const auto& receiver : receivers)
+		{
+			receiver->prepareCwData(num_samples);
+		}
+
+		size_t sample_index = 0;
+		for (RealType t_k = start_time; t_k < end_time; t_k += dt)
+		{
+			if (sample_index >= num_samples) { continue; }
+
+			pool.enqueue([&, t_k, sample_index]
+			{
+				for (const auto& receiver : receivers)
+				{
+					ComplexType total_sample{0.0, 0.0};
+
+					for (const auto& transmitter : transmitters)
+					{
+						// Direct Path
+						if (!receiver->checkFlag(Receiver::RecvFlag::FLAG_NODIRECT))
+						{
+							total_sample += calculateDirectPathContribution(transmitter.get(), receiver.get(), t_k);
+						}
+
+						// Reflected Paths
+						for (const auto& target : targets)
+						{
+							total_sample += calculateReflectedPathContribution(
+								transmitter.get(), receiver.get(),
+								target.get(), t_k);
+						}
+					}
+					receiver->setCwSample(sample_index, total_sample);
+				}
+			});
+			++sample_index;
+		}
+		pool.wait();
+
+		LOG(Level::INFO, "Rendering CW data for {} receivers", receivers.size());
+		for (const auto& receiver : receivers)
+		{
+			pool.enqueue([&receiver, &pool] { receiver->render(pool); });
+		}
 		pool.wait();
 	}
 }
