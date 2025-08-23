@@ -30,6 +30,10 @@ namespace timing
 
 		timing->copyAlphas(_alphas, _weights);
 
+		_frequency = timing->getFrequency();
+		_freq_offset = timing->getFreqOffset();
+		_phase_offset = timing->getPhaseOffset();
+
 		_model = std::make_unique<noise::ClockModelGenerator>(_alphas, _weights, timing->getFrequency(),
 		                                                      timing->getPhaseOffset(), timing->getFreqOffset(), 15);
 
@@ -38,7 +42,6 @@ namespace timing
 			LOG(Level::INFO, "Timing source frequency not set, results could be incorrect.");
 		}
 
-		_frequency = timing->getFrequency();
 		_sync_on_pulse = timing->getSyncOnPulse();
 		_enabled = true;
 	}

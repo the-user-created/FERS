@@ -181,6 +181,8 @@ namespace math
 		 */
 		Vec3 operator+(const RealType value) const { return {x + value, y + value, z + value}; }
 
+		Vec3 operator-() const { return {-x, -y, -z}; }
+
 		/**
 		* @brief Calculates the length (magnitude) of the vector.
 		*

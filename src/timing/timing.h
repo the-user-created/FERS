@@ -34,12 +34,17 @@ namespace timing
 		*
 		* @param name The name of the timing source.
 		*/
-		explicit Timing(std::string name) noexcept : _name(std::move(name)) {}
+		explicit Timing(std::string name) noexcept :
+			_name(std::move(name)) {}
 
 		~Timing() = default;
+
 		Timing(const Timing&) = delete;
+
 		Timing& operator=(const Timing&) = delete;
+
 		Timing(Timing&&) = delete;
+
 		Timing& operator=(Timing&&) = delete;
 
 		/**
@@ -69,6 +74,18 @@ namespace timing
 		* @return The frequency of the timing source.
 		*/
 		[[nodiscard]] RealType getFrequency() const noexcept { return _frequency; }
+
+		/**
+		 * @brief Gets the frequency offset of the timing source.
+		 * @return The frequency offset.
+		 */
+		[[nodiscard]] RealType getFreqOffset() const noexcept { return _freq_offset; }
+
+		/**
+		 * @brief Gets the phase offset of the timing source.
+		 * @return The phase offset.
+		 */
+		[[nodiscard]] RealType getPhaseOffset() const noexcept { return _phase_offset; }
 
 		/**
 		* @brief Checks if the timing source is enabled.
@@ -104,11 +121,12 @@ namespace timing
 	private:
 		std::string _name; ///< The name of the timing source.
 		bool _enabled{false}; ///< Flag indicating if the timing source is enabled.
-		std::unique_ptr<noise::ClockModelGenerator> _model{nullptr};
-		///< The noise generator model for the timing source.
+		std::unique_ptr<noise::ClockModelGenerator> _model{nullptr}; ///< The noise model for the timing source.
 		std::vector<RealType> _alphas; ///< The alpha values for the noise generator model.
 		std::vector<RealType> _weights; ///< The weights for the noise generator model.
 		RealType _frequency{}; ///< The frequency of the timing source.
+		RealType _freq_offset{}; ///< The frequency offset of the timing source.
+		RealType _phase_offset{}; ///< The phase offset of the timing source.
 		bool _sync_on_pulse{false}; ///< Flag indicating if the timing source synchronizes on pulse.
 	};
 }

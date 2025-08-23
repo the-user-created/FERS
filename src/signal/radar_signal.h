@@ -123,9 +123,13 @@ namespace signal
 		            std::unique_ptr<Signal> signal);
 
 		~RadarSignal() = default;
+
 		RadarSignal(const RadarSignal&) noexcept = delete;
+
 		RadarSignal& operator=(const RadarSignal&) noexcept = delete;
+
 		RadarSignal(RadarSignal&&) noexcept = delete;
+
 		RadarSignal& operator=(RadarSignal&&) noexcept = delete;
 
 		/**
@@ -180,5 +184,28 @@ namespace signal
 		RealType _carrierfreq; ///< The carrier frequency of the radar signal.
 		RealType _length; ///< The length of the radar signal.
 		std::unique_ptr<Signal> _signal; ///< The `Signal` object containing the radar signal data.
+	};
+
+	class CwSignal final : public Signal
+	{
+	public:
+		CwSignal() = default;
+
+		~CwSignal() = default;
+
+		CwSignal(const CwSignal&) noexcept = delete;
+
+		CwSignal& operator=(const CwSignal&) noexcept = delete;
+
+		CwSignal(CwSignal&&) noexcept = delete;
+
+		CwSignal& operator=(CwSignal&&) noexcept = delete;
+
+		/**
+		 * @brief Renders the signal data. For CW signals, this is a no-op.
+		 * @return An empty vector of complex signal data.
+		 */
+		std::vector<ComplexType> render(const std::vector<interp::InterpPoint>& points, unsigned& size,
+		                                RealType fracWinDelay) const;
 	};
 }

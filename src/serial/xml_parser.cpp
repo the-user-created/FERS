@@ -112,6 +112,10 @@ auto get_child_bool = [](const XmlElement& element, const std::string& elementNa
 
 namespace
 {
+	enum class SimType { UNSET, PULSED, CW };
+
+	SimType simulation_type = SimType::UNSET;
+
 	/**
 	 * @brief Parses the <parameters> element of the XML document.
 	 *
@@ -194,13 +198,24 @@ namespace
 			throw XmlException("<power> element is missing in <pulse>!");
 		}
 
+		const auto power = get_child_real_type(pulse, "power");
+
 		if (const XmlElement carrier_element = pulse.childElement("carrier", 0); !carrier_element.isValid())
 		{
 			LOG(Level::FATAL, "<carrier> element is missing in <pulse>!");
 			throw XmlException("<carrier> element is missing in <pulse>!");
 		}
 
-		if (type == "file")
+		const auto carrier = get_child_real_type(pulse, "carrier");
+
+		if (type == "continuous" || type == "cw")
+		{
+			auto cw_signal = std::make_unique<signal::CwSignal>();
+			auto wave = std::make_unique<RadarSignal>(name, power, carrier, params::endTime() - params::startTime(),
+			                                          std::move(cw_signal));
+			world->add(std::move(wave));
+		}
+		else if (type == "file")
 		{
 			const std::string filename_str = XmlElement::getSafeAttribute(pulse, "filename");
 			fs::path pulse_path(filename_str);
@@ -216,9 +231,7 @@ namespace
 				throw XmlException("Pulse file not found: " + filename_str);
 			}
 
-			auto wave = serial::loadPulseFromFile(name, pulse_path.string(),
-			                                      get_child_real_type(pulse, "power"),
-			                                      get_child_real_type(pulse, "carrier"));
+			auto wave = serial::loadPulseFromFile(name, pulse_path.string(), power, carrier);
 			world->add(std::move(wave));
 		}
 		else
@@ -490,9 +503,23 @@ namespace
 	Transmitter* parseTransmitter(const XmlElement& transmitter, Platform* platform, World* world)
 	{
 		const std::string name = XmlElement::getSafeAttribute(transmitter, "name");
-		bool pulsed = XmlElement::getSafeAttribute(transmitter, "type") == "pulsed";
+		const std::string type = XmlElement::getSafeAttribute(transmitter, "type");
+		const bool is_pulsed = type == "pulsed";
 
-		auto transmitter_obj = std::make_unique<Transmitter>(platform, name, pulsed);
+		if (simulation_type == SimType::UNSET)
+		{
+			simulation_type = is_pulsed ? SimType::PULSED : SimType::CW;
+			LOG(Level::INFO, "Simulation type set to: {}", is_pulsed ? "PULSED" : "CW");
+		}
+		else if ((is_pulsed && simulation_type == SimType::CW) ||
+			(!is_pulsed && simulation_type == SimType::PULSED))
+		{
+			throw XmlException("Cannot mix pulsed and CW transmitters in the same simulation!");
+		}
+
+		if (!is_pulsed) { params::params.is_cw_simulation = true; }
+
+		auto transmitter_obj = std::make_unique<Transmitter>(platform, name, is_pulsed);
 
 		const std::string pulse_name = XmlElement::getSafeAttribute(transmitter, "pulse");
 		RadarSignal* pulse = world->findSignal(pulse_name);
@@ -819,6 +846,8 @@ namespace serial
 			LOG(Level::FATAL, "Failed to load main XML file: {}", filename);
 			throw XmlException("Failed to load main XML file: " + filename);
 		}
+
+		simulation_type = SimType::UNSET;
 
 		const fs::path main_dir = fs::path(filename).parent_path();
 
