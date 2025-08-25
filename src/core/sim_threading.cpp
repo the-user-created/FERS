@@ -124,8 +124,9 @@ namespace
 		// Amplitude Scaling (Bistatic Radar Range Equation)
 		SVec3 in_angle_sv(u_jm);
 		SVec3 out_angle_sv(-u_mi);
-		const RealType rcs = targ->getRcs(in_angle_sv, out_angle_sv);
+		const RealType rcs = targ->getRcs(in_angle_sv, out_angle_sv, timeK);
 		const RealType tx_gain = trans->getGain(SVec3(u_jm), trans->getRotation(timeK), lambda);
+		// TODO: Is this meant to use timeK + tau?
 		const RealType rx_gain = recv->getGain(SVec3(-u_mi), recv->getRotation(timeK + tau), lambda);
 
 		RealType power_scaling = signal->getPower() * tx_gain * rx_gain * rcs * lambda * lambda / (std::pow(
@@ -137,6 +138,7 @@ namespace
 		const RealType amplitude = std::sqrt(power_scaling);
 
 		// Complex Envelope Contribution
+		// TODO: Use fmod?
 		const RealType phase = -2 * PI * carrier_freq * tau;
 		ComplexType contribution = std::polar(amplitude, phase);
 
@@ -188,7 +190,7 @@ namespace
 
 		results.delay = (transmitter_to_target_distance + receiver_to_target_distance) / params::c();
 
-		const auto rcs = targ->getRcs(transmitter_to_target_vector, receiver_to_target_vector);
+		const auto rcs = targ->getRcs(transmitter_to_target_vector, receiver_to_target_vector, time.count());
 		const auto wavelength = params::c() / wave->getCarrier();
 
 		const auto transmitter_gain = trans->

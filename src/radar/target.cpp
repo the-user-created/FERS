@@ -48,7 +48,7 @@ namespace
 
 namespace radar
 {
-	RealType IsoTarget::getRcs(SVec3& /*inAngle*/, SVec3& /*outAngle*/) const noexcept
+	RealType IsoTarget::getRcs(SVec3& /*inAngle*/, SVec3& /*outAngle*/, RealType /*time*/) const noexcept
 	{
 		return _model ? _rcs * _model->sampleModel() : _rcs;
 	}
@@ -66,15 +66,25 @@ namespace radar
 		loadTargetGainAxis(_azi_samples.get(), root.childElement("azimuth", 0));
 	}
 
-	RealType FileTarget::getRcs(SVec3& inAngle, SVec3& outAngle) const
+	RealType FileTarget::getRcs(SVec3& inAngle, SVec3& outAngle, const RealType time) const
 	{
-		const SVec3 t_angle = inAngle + outAngle;
+		// 1. Calculate the bistatic angle bisector in the GLOBAL frame.
+		const SVec3 global_bisector_angle = inAngle + outAngle;
 
-		const auto azi_value = _azi_samples->getValueAt(t_angle.azimuth / 2.0);
+		// 2. Get the target's own rotation at the current time.
+		const SVec3 target_rotation = getRotation(time);
 
-		if (const auto elev_value = _elev_samples->getValueAt(t_angle.elevation / 2.0); azi_value && elev_value)
+		// 3. Transform the global angle into the target's LOCAL frame for lookup.
+		const SVec3 local_aspect_angle = global_bisector_angle - target_rotation;
+
+		// 4. Use the local aspect angle (bisector is halved) to look up RCS.
+		const auto azi_value = _azi_samples->getValueAt(local_aspect_angle.azimuth / 2.0);
+
+		if (const auto elev_value = _elev_samples->getValueAt(local_aspect_angle.elevation / 2.0); azi_value &&
+			elev_value)
 		{
-			const RealType rcs = std::sqrt(*azi_value * *elev_value);
+			// Return the raw RCS value (proportional to power), not its square root.
+			const RealType rcs = *azi_value * *elev_value;
 			return _model ? rcs * _model->sampleModel() : rcs;
 		}
 
