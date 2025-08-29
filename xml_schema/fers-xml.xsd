@@ -35,7 +35,7 @@
                 <xs:element name="endtime" type="xs:string"/>
                 <xs:element name="rate" type="xs:string"/>
                 <xs:element minOccurs="0" name="c" type="xs:string"/>
-                <xs:element minOccurs="0" name="pathSamplingRate" type="xs:string"/>
+                <xs:element minOccurs="0" name="simSamplingRate" type="xs:string"/>
                 <xs:element minOccurs="0" name="randomseed" type="xs:string"/>
                 <xs:element minOccurs="0" name="adc_bits" type="xs:string"/>
                 <xs:element minOccurs="0" name="oversample" type="xs:string"/>

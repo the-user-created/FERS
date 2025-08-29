@@ -7,7 +7,7 @@
         <endtime>10</endtime>
         <rate>1e8</rate>
         <c>299792458</c>
-        <pathSamplingRate>1000</pathSamplingRate>
+        <simSamplingRate>1000</simSamplingRate>
         <randomseed>4444</randomseed>
         <adc_bits>12</adc_bits>
         <oversample>2</oversample>

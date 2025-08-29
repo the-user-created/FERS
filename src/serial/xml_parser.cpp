@@ -142,8 +142,8 @@ namespace
 		};
 
 		set_param_with_exception_handling(parameters, "c", params::c(), params::setC);
-		set_param_with_exception_handling(parameters, "pathSamplingRate", params::pathSamplingRate(),
-		                                  params::setPathSamplingRate);
+		set_param_with_exception_handling(parameters, "simSamplingRate", params::simSamplingRate(),
+		                                  params::setSimSamplingRate);
 
 		set_param_with_exception_handling(parameters, "randomseed", params::randomSeed(), params::setRandomSeed);
 		set_param_with_exception_handling(parameters, "adc_bits", params::adcBits(), params::setAdcBits);
