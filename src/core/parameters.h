@@ -29,7 +29,7 @@ namespace params
 		RealType boltzmann_k = DEFAULT_BOLTZMANN_K; ///< Boltzmann constant (modifiable)
 		RealType start = 0; ///< Start time for the simulation.
 		RealType end = 0; ///< End time for the simulation.
-		RealType path_sampling_rate = 1000; ///< The fidelity of the underlying physics simulation (Hz).
+		RealType sim_sampling_rate = 1000; ///< Temporal sampling rate (Hz) that determines time-step resolution for radar pulse simulation.
 		// Default to the location of the University of Cape Town in South Africa
 		double origin_latitude = -33.957652; ///< Geodetic origin latitude
 		double origin_longitude = 18.4611991; ///< Geodetic origin longitude
@@ -73,10 +73,10 @@ namespace params
 	inline RealType endTime() noexcept { return params.end; }
 
 	/**
-	* @brief Get the path sampling rate.
-	* @return The path sampling rate.
+	* @brief Get the simulation sampling rate.
+	* @return The simulation sampling rate.
 	*/
-	inline RealType pathSamplingRate() noexcept { return params.path_sampling_rate; }
+	inline RealType simSamplingRate() noexcept { return params.sim_sampling_rate; }
 
 	/**
 	* @brief Get the rendering sample rate.
@@ -155,13 +155,13 @@ namespace params
 	}
 
 	/**
-	* @brief Set the path sampling rate.
-	* @param rate The new path sampling rate.
+	* @brief Set the simulation sampling rate.
+	* @param rate The new simulation sampling rate.
 	*/
-	inline void setPathSamplingRate(const RealType rate) noexcept
+	inline void setSimSamplingRate(const RealType rate) noexcept
 	{
-		params.path_sampling_rate = rate;
-		LOG(logging::Level::DEBUG, "Path sampling rate set to: {:.5f} Hz", rate);
+		params.sim_sampling_rate = rate;
+		LOG(logging::Level::DEBUG, "Simulation sampling rate set to: {:.5f} Hz", rate);
 	}
 
 	/**
