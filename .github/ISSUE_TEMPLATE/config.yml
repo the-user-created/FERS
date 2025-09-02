@@ -1,5 +1,6 @@
-blank_issues_enabled: false
+blank_issues_enabled: true
 contact_links:
   - name: 💬 Community Discussion
     url: https://github.com/the-user-created/FERS/discussions
     about: Ask questions, suggest ideas, or start discussions here.
+
