@@ -19,7 +19,7 @@ namespace interp
 		RealType power; ///< Power level of the signal at the interpolation point.
 		RealType time; ///< Time at which the interpolation point is recorded.
 		RealType delay; ///< Delay associated with the signal at the interpolation point.
-		RealType doppler; ///< Doppler shift value at the interpolation point.
+		RealType doppler_factor; ///< Doppler factor (f_recv/f_trans) at the interpolation point.
 		RealType phase; ///< Phase of the signal at the interpolation point.
 		RealType noise_temperature; ///< Noise temperature at the interpolation point.
 	};
