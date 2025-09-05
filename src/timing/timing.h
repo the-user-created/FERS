@@ -109,6 +109,8 @@ namespace timing
 		std::vector<RealType> _alphas; ///< The alpha values for the noise generator model.
 		std::vector<RealType> _weights; ///< The weights for the noise generator model.
 		RealType _frequency{}; ///< The frequency of the timing source.
+		RealType _freq_offset{}; ///< The frequency offset of the timing source.
+		RealType _phase_offset{}; ///< The phase offset of the timing source.
 		bool _sync_on_pulse{false}; ///< Flag indicating if the timing source synchronizes on pulse.
 	};
 }

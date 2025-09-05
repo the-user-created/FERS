@@ -29,12 +29,17 @@ namespace timing
 		*
 		* @param name The name of the timing source.
 		*/
-		explicit PrototypeTiming(std::string name) noexcept : _name(std::move(name)) {}
+		explicit PrototypeTiming(std::string name) noexcept :
+			_name(std::move(name)) {}
 
 		~PrototypeTiming() = default;
+
 		PrototypeTiming(const PrototypeTiming&) = default;
+
 		PrototypeTiming(PrototypeTiming&&) = default;
+
 		PrototypeTiming& operator=(const PrototypeTiming&) = default;
+
 		PrototypeTiming& operator=(PrototypeTiming&&) = default;
 
 		/**
@@ -71,14 +76,18 @@ namespace timing
 		*
 		* @return The phase offset value.
 		*/
-		[[nodiscard]] RealType getPhaseOffset() const noexcept;
+		[[nodiscard]] std::optional<RealType> getPhaseOffset() const noexcept { return _phase_offset; }
 
 		/**
 		* @brief Gets the frequency offset.
 		*
 		* @return The frequency offset value.
 		*/
-		[[nodiscard]] RealType getFreqOffset() const noexcept;
+		[[nodiscard]] std::optional<RealType> getFreqOffset() const noexcept { return _freq_offset; }
+
+		[[nodiscard]] std::optional<RealType> getRandomFreqOffsetStdev() const noexcept { return _random_freq_stdev; }
+
+		[[nodiscard]] std::optional<RealType> getRandomPhaseOffsetStdev() const noexcept { return _random_phase_stdev; }
 
 		/**
 		* @brief Sets the frequency value.
@@ -105,28 +114,28 @@ namespace timing
 		*
 		* @param offset The frequency offset to be set.
 		*/
-		void setFreqOffset(RealType offset) noexcept;
+		void setFreqOffset(RealType offset) noexcept { _freq_offset = offset; }
 
 		/**
 		* @brief Sets the phase offset.
 		*
 		* @param offset The phase offset to be set.
 		*/
-		void setPhaseOffset(RealType offset) noexcept;
+		void setPhaseOffset(RealType offset) noexcept { _phase_offset = offset; }
 
 		/**
-		* @brief Sets a random frequency offset.
+		* @brief Sets a random frequency offset standard deviation.
 		*
 		* @param stdev The standard deviation for generating the random frequency offset.
 		*/
-		void setRandomFreqOffset(RealType stdev) noexcept;
+		void setRandomFreqOffsetStdev(RealType stdev) noexcept { _random_freq_stdev = stdev; }
 
 		/**
-		* @brief Sets a random phase offset.
+		* @brief Sets a random phase offset standard deviation.
 		*
 		* @param stdev The standard deviation for generating the random phase offset.
 		*/
-		void setRandomPhaseOffset(RealType stdev) noexcept;
+		void setRandomPhaseOffsetStdev(RealType stdev) noexcept { _random_phase_stdev = stdev; }
 
 	private:
 		std::string _name; ///< The name of the timing source.
@@ -134,16 +143,9 @@ namespace timing
 		std::vector<RealType> _weights; ///< Vector of weight values.
 		std::optional<RealType> _freq_offset; ///< Constant frequency offset.
 		std::optional<RealType> _phase_offset; ///< Constant phase offset.
-		std::optional<RealType> _random_phase; ///< Random phase offset.
-		std::optional<RealType> _random_freq; ///< Random frequency offset.
+		std::optional<RealType> _random_phase_stdev; ///< Random phase offset standard deviation.
+		std::optional<RealType> _random_freq_stdev; ///< Random frequency offset standard deviation.
 		RealType _frequency{0}; ///< The frequency value.
 		bool _sync_on_pulse{false}; ///< Flag indicating synchronization on pulse.
-
-		/**
-		* @brief Logs a conflict between random and constant offsets.
-		*
-		* @param offsetType The type of offset ("frequency" or "phase") that caused the conflict.
-		*/
-		void logOffsetConflict(const std::string& offsetType) const noexcept;
 	};
 }

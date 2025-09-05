@@ -102,9 +102,9 @@
             <xs:sequence>
                 <xs:element name="frequency" type="xs:string"/>
                 <xs:element minOccurs="0" name="freq_offset" type="xs:string"/>
-                <xs:element minOccurs="0" name="random_freq_offset" type="xs:string"/>
+                <xs:element minOccurs="0" name="random_freq_offset_stdev" type="xs:string"/>
                 <xs:element minOccurs="0" name="phase_offset" type="xs:string"/>
-                <xs:element minOccurs="0" name="random_phase_offset" type="xs:string"/>
+                <xs:element minOccurs="0" name="random_phase_offset_stdev" type="xs:string"/>
                 <xs:element minOccurs="0" ref="noise_entry" maxOccurs="unbounded"/>
             </xs:sequence>
             <xs:attribute name="name" use="required"/>

@@ -9,7 +9,6 @@
 #pragma once
 
 #include <chrono>
-#include <optional>
 
 #include "config.h"
 #include "logging.h"
@@ -43,7 +42,6 @@ namespace params
 		bool export_binary = true; ///< Enable or disable binary export.
 		unsigned render_threads = 1; ///< Number of rendering threads to use.
 		unsigned oversample_ratio = 1; ///< Oversampling ratio.
-		std::optional<RealType> optional_rate = std::nullopt; ///< Optional sample rate.
 	};
 
 	inline Parameters params;
