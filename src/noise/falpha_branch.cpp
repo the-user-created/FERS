@@ -94,7 +94,6 @@ namespace noise
 				constexpr std::array<RealType, 3> i_num = {1.0f, 0.0f, 0.0f};
 				_integ_filter = std::make_unique<IirFilter>(i_den.data(), i_num.data(), i_num.size());
 			}
-			// TODO: Is this true?
 			else { throw std::runtime_error("Only alpha values between 2 and -2 are supported for noise generation"); }
 		}
 		_offset_sample = 0.0f;

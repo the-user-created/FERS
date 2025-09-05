@@ -257,7 +257,7 @@ namespace
 		try { timing_obj->setFreqOffset(get_child_real_type(timing, "freq_offset")); }
 		catch (XmlException&) { LOG(Level::WARNING, "Clock section '{}' does not specify frequency offset.", name); }
 
-		try { timing_obj->setRandomFreqOffset(get_child_real_type(timing, "random_freq_offset")); }
+		try { timing_obj->setRandomFreqOffsetStdev(get_child_real_type(timing, "random_freq_offset_stdev")); }
 		catch (XmlException&)
 		{
 			LOG(Level::WARNING, "Clock section '{}' does not specify random frequency offset.", name);
@@ -266,7 +266,7 @@ namespace
 		try { timing_obj->setPhaseOffset(get_child_real_type(timing, "phase_offset")); }
 		catch (XmlException&) { LOG(Level::WARNING, "Clock section '{}' does not specify phase offset.", name); }
 
-		try { timing_obj->setRandomPhaseOffset(get_child_real_type(timing, "random_phase_offset")); }
+		try { timing_obj->setRandomPhaseOffsetStdev(get_child_real_type(timing, "random_phase_offset_stdev")); }
 		catch (XmlException&) { LOG(Level::WARNING, "Clock section '{}' does not specify random phase offset.", name); }
 
 		if (get_child_bool(timing, "synconpulse", true)) { timing_obj->setSyncOnPulse(); }

@@ -27,6 +27,8 @@ namespace
 	 */
 	unsigned int getSeed() noexcept
 	{
+		// TODO: there should be a better way to determine if the user set a seed or not (relying on 0 is not ideal
+		//       because the user may set the randomseed to 0 intentionally)
 		const unsigned int seed = params::randomSeed();
 		return seed != 0 ? seed : std::random_device{}();
 	}
