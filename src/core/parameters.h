@@ -23,7 +23,6 @@ namespace params
 	{
 		constexpr static RealType DEFAULT_C = 299792458.0; ///< Speed of light (m/s)
 		constexpr static RealType DEFAULT_BOLTZMANN_K = 1.3806503e-23; ///< Boltzmann constant
-		//constexpr static unsigned MIN_FILTER_LENGTH = 16; ///< Minimum render filter length
 		RealType c = DEFAULT_C; ///< Speed of light (modifiable)
 		RealType boltzmann_k = DEFAULT_BOLTZMANN_K; ///< Boltzmann constant (modifiable)
 		RealType start = 0; ///< Start time for the simulation.
@@ -206,17 +205,6 @@ namespace params
 		params.adc_bits = bits;
 		LOG(logging::Level::DEBUG, "ADC quantization bits set to: {}", bits);
 	}
-
-	/*inline std::expected<void, std::string> setRenderFilterLength(unsigned length) noexcept
-	{
-		constexpr unsigned MIN_FILTER_LENGTH = 16;
-		if (length < MIN_FILTER_LENGTH) {
-			return std::unexpected("Render filter length must be >= 16");
-		}
-		params.filter_length = length;
-		LOG(logging::Level::DEBUG, "Render filter length set to: {}", length);
-		return {};
-	}*/
 
 	/**
 	* @brief Set the oversampling ratio.

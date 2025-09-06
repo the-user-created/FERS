@@ -47,16 +47,6 @@ namespace signal
 		_rate = 0;
 	}
 
-	// Note: This function is not used in the codebase
-	/*void Signal::load(std::span<const RealType> inData, const unsigned samples, const RealType sampleRate)
-	{
-		clear();
-		_size = samples;
-		_rate = sampleRate;
-		_data.resize(samples);
-		std::ranges::transform(inData, _data.begin(), [](const RealType value) { return ComplexType(value, 0.0); });
-	}*/
-
 	void Signal::load(std::span<const ComplexType> inData, const unsigned samples, const RealType sampleRate)
 	{
 		clear();
