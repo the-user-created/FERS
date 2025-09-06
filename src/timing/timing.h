@@ -77,11 +77,6 @@ namespace timing
 		*/
 		[[nodiscard]] bool isEnabled() const noexcept { return _enabled && _model && _model->enabled(); }
 
-		// Note: This function is not used in the codebase
-		/*[[nodiscard]] RealType getPulseTimeError() const noexcept {
-			return _enabled && _model ? _model->getSample() : 0.0f;
-		}*/
-
 		/**
 		* @brief Skips a number of samples in the timing model.
 		*
