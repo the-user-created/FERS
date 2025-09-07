@@ -9,6 +9,7 @@
 #pragma once
 
 #include <chrono>
+#include <optional>
 
 #include "config.h"
 #include "logging.h"
@@ -27,13 +28,15 @@ namespace params
 		RealType boltzmann_k = DEFAULT_BOLTZMANN_K; ///< Boltzmann constant (modifiable)
 		RealType start = 0; ///< Start time for the simulation.
 		RealType end = 0; ///< End time for the simulation.
-		RealType sim_sampling_rate = 1000; ///< Temporal sampling rate (Hz) that determines time-step resolution for radar pulse simulation.
+		RealType sim_sampling_rate = 1000;
+
+		///< Temporal sampling rate (Hz) that determines time-step resolution for radar pulse simulation.
 		// Default to the location of the University of Cape Town in South Africa
 		double origin_latitude = -33.957652; ///< Geodetic origin latitude
 		double origin_longitude = 18.4611991; ///< Geodetic origin longitude
 		double origin_altitude = 111.01; ///< Geodetic origin altitude (in meters)
 		RealType rate = 0; ///< Rendering sample rate.
-		unsigned random_seed = 0; ///< Random seed for simulation.
+		std::optional<unsigned> random_seed; ///< Random seed for simulation.
 		unsigned adc_bits = 0; ///< ADC quantization bits.
 		unsigned filter_length = 33; ///< Default render filter length.
 		bool export_xml = false; ///< Enable or disable XML export.
@@ -85,7 +88,7 @@ namespace params
 	* @brief Get the random seed.
 	* @return The current random seed value.
 	*/
-	inline unsigned randomSeed() noexcept { return params.random_seed; }
+	inline unsigned randomSeed() noexcept { return params.random_seed.value_or(0); }
 
 	/**
 	* @brief Get the ADC quantization bits.

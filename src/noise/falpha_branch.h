@@ -8,7 +8,9 @@
 
 #pragma once
 
+#include <functional>
 #include <memory>
+#include <random>
 #include <vector>
 
 #include "config.h"
@@ -29,17 +31,23 @@ namespace noise
 		/**
 		* @brief Constructor for FAlphaBranch.
 		*
+		* @param rngEngine The random number generator engine to use.
 		* @param ffrac Fractional part of the noise generation (e.g., 0.5 for 1/f noise).
 		* @param fint Integer part of the noise generation (e.g., 1 for integration).
 		* @param pre Previous stage of the FAlphaBranch for recursive noise processing.
 		* @param last Specifies if this is the last branch in the chain of processing.
 		*/
-		FAlphaBranch(RealType ffrac, unsigned fint, std::unique_ptr<FAlphaBranch> pre, bool last);
+		FAlphaBranch(std::mt19937& rngEngine, RealType ffrac, unsigned fint, std::unique_ptr<FAlphaBranch> pre,
+		             bool last);
 
 		~FAlphaBranch() = default;
+
 		FAlphaBranch(const FAlphaBranch&) = delete;
+
 		FAlphaBranch& operator=(const FAlphaBranch&) = delete;
+
 		FAlphaBranch(FAlphaBranch&&) = delete;
+
 		FAlphaBranch& operator=(FAlphaBranch&&) = delete;
 
 		/**
@@ -73,13 +81,14 @@ namespace noise
 		/// Calculates a new noise sample.
 		RealType calcSample() noexcept;
 
+		std::reference_wrapper<std::mt19937> _rng_engine_ref; ///< Reference to the RNG engine.
 		std::unique_ptr<signal::IirFilter> _shape_filter; ///< Filter used for shaping the noise signal.
 
 		std::unique_ptr<signal::IirFilter> _integ_filter; ///< Filter used for integrating the noise signal.
 
-		std::unique_ptr<signal::IirFilter> _highpass; ///< High-pass filter to remove low-frequency components from the noise.
+		std::unique_ptr<signal::IirFilter> _highpass; ///< High-pass filter to remove low-frequency components.
 
-		std::unique_ptr<signal::DecadeUpsampler> _upsampler; ///< Upsampler for generating higher-frequency noise components.
+		std::unique_ptr<signal::DecadeUpsampler> _upsampler; ///< Upsampler for generating higher-frequency components.
 
 		std::unique_ptr<FAlphaBranch> _pre; ///< Previous FAlphaBranch in the chain for recursive noise processing.
 

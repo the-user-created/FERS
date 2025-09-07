@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <random>
+
 #include "radar_obj.h"
 #include "serial/response.h"
 
@@ -36,9 +38,9 @@ namespace radar
 		 *
 		 * @param platform The platform associated with this receiver.
 		 * @param name The name of the receiver. Defaults to "defRecv".
+		 * @param seed The seed for the receiver's internal random number generator.
 		 */
-		explicit Receiver(Platform* platform, std::string name = "defRecv") noexcept :
-			Radar(platform, std::move(name)) {}
+		explicit Receiver(Platform* platform, std::string name, unsigned seed) noexcept;
 
 		~Receiver() override = default;
 
@@ -130,6 +132,12 @@ namespace radar
 		[[nodiscard]] int getResponseCount() const noexcept;
 
 		/**
+		* @brief Gets the receiver's internal random number generator engine.
+		* @return A mutable reference to the RNG engine.
+		*/
+		[[nodiscard]] std::mt19937& getRngEngine() noexcept { return _rng; }
+
+		/**
 		 * @brief Sets the properties for radar windows.
 		 *
 		 * @param length The length of the radar window.
@@ -161,5 +169,6 @@ namespace radar
 		RealType _window_prf = 0; ///< The pulse repetition frequency (PRF) of the radar window.
 		RealType _window_skip = 0; ///< The skip time between radar windows.
 		int _flags = 0; ///< Flags for receiver configuration.
+		std::mt19937 _rng; ///< Per-object random number generator for statistical independence.
 	};
 }

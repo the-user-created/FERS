@@ -16,6 +16,10 @@
 
 namespace radar
 {
+	Receiver::Receiver(Platform* platform, std::string name, const unsigned seed) noexcept :
+		Radar(platform, std::move(name)),
+		_rng(seed) {}
+
 	void Receiver::addResponse(std::unique_ptr<serial::Response> response) noexcept
 	{
 		std::lock_guard lock(_responses_mutex);
