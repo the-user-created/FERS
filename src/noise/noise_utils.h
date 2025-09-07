@@ -1,5 +1,5 @@
 /**
- * @file noise_utils.h
+* @file noise_utils.h
  * @brief Utility functions for generating noise and calculating noise power.
  *
  * @author David Young
@@ -16,17 +16,13 @@
 namespace noise
 {
 	/**
-	 * @brief Global random engine wrapped in std::optional for lazy initialization.
-	 */
-	inline std::optional<std::mt19937> rng;
-
-	/**
 	 * @brief Generates a white Gaussian noise (WGN) sample.
 	 *
+	 * @param rngEngine The random number generator engine to use.
 	 * @param stddev The standard deviation of the WGN sample.
 	 * @return A white Gaussian noise sample scaled by the given standard deviation.
 	 */
-	RealType wgnSample(RealType stddev) noexcept;
+	RealType wgnSample(std::mt19937& rngEngine, RealType stddev) noexcept;
 
 	/**
 	 * @brief Converts noise temperature to noise power.
@@ -39,9 +35,4 @@ namespace noise
 	{
 		return params::boltzmannK() * temperature * bandwidth;
 	}
-
-	/**
-	 * @brief Ensure the random number generator (RNG) is initialized.
-	 */
-	void ensureInitialized() noexcept;
 }

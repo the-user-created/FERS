@@ -15,6 +15,7 @@
 #include <exception>
 #include <memory>
 #include <optional>
+#include <random>
 
 #include "core/arg_parser.h"
 #include "core/logging.h"
@@ -47,7 +48,7 @@ int main(const int argc, char* argv[])
 	{
 		// Log or display the error message
 		if (config_result.error() != "Help requested." && config_result.error() != "Version requested." &&
-		    config_result.error() != "No arguments provided.")
+			config_result.error() != "No arguments provided.")
 		{
 			LOG(Level::ERROR, "Argument parsing error: {}", config_result.error());
 			return 1;
@@ -80,12 +81,28 @@ int main(const int argc, char* argv[])
 		// Create the world object
 		const auto world = std::make_unique<core::World>();
 
+		// Create the master seeder engine for deterministic seed generation
+		std::mt19937 master_seeder;
+
 		// Load the XML file and deserialize it into the world object
-		try { serial::parseSimulation(script_file, world.get(), validate); }
+		try { serial::parseSimulation(script_file, world.get(), validate, master_seeder); }
 		catch (const std::exception&)
 		{
 			LOG(Level::FATAL, "Failed to load simulation file: {}", script_file);
 			return 1;
+		}
+
+		// Initialize the master seeder after parsing, as the seed might be in the XML
+		if (params::params.random_seed)
+		{
+			LOG(Level::INFO, "Using master seed: {}", *params::params.random_seed);
+			master_seeder.seed(*params::params.random_seed);
+		}
+		else
+		{
+			const auto seed = std::random_device{}();
+			LOG(Level::INFO, "No master seed provided. Using random_device seed: {}", seed);
+			master_seeder.seed(seed);
 		}
 
 		// If KML generation is requested, generate the KML file and exit
