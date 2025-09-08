@@ -169,7 +169,14 @@ namespace
 		kmlFile <<
 			"<kml xmlns=\"http://www.opengis.net/kml/2.2\" xmlns:gx=\"http://www.google.com/kml/ext/2.2\">\n";
 		kmlFile << "<Document>\n\n";
-		kmlFile << "<name>FERS Simulation Visualization</name>\n";
+		if (params::params.simulation_name.empty())
+		{
+			kmlFile << "<name>FERS Simulation Visualization</name>\n";
+		}
+		else
+		{
+			kmlFile << "<name>" << params::params.simulation_name << "</name>\n";
+		}
 		kmlFile <<
 			"<Style id=\"receiver\"><IconStyle><Icon><href>https://cdn-icons-png.flaticon.com/512/645/645436.png</href></Icon></IconStyle></Style>\n";
 		kmlFile <<
