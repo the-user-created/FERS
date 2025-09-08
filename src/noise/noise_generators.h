@@ -15,7 +15,6 @@
 
 #include "config.h"
 #include "falpha_branch.h"
-#include "noise_utils.h"
 
 namespace noise
 {

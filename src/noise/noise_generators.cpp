@@ -21,12 +21,6 @@ namespace noise
 	MultirateGenerator::MultirateGenerator(std::mt19937& rngEngine, const RealType alpha, const unsigned branches) :
 		_rng_engine(rngEngine)
 	{
-		if (branches == 0)
-		{
-			LOG(logging::Level::FATAL, "Cannot create multirate noise generator with zero branches");
-			throw std::runtime_error("Cannot create multirate noise generator with zero branches");
-		}
-
 		const RealType beta = -(alpha - 2) / 2.0;
 		const int fint = static_cast<int>(std::floor(beta));
 		const RealType ffrac = std::fmod(beta, 1.0);

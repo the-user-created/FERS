@@ -82,6 +82,9 @@ namespace noise
 		RealType calcSample() noexcept;
 
 		std::reference_wrapper<std::mt19937> _rng_engine_ref; ///< Reference to the RNG engine.
+
+		std::normal_distribution<RealType> _normal_dist; ///< Normal distribution for generating white Gaussian noise.
+
 		std::unique_ptr<signal::IirFilter> _shape_filter; ///< Filter used for shaping the noise signal.
 
 		std::unique_ptr<signal::IirFilter> _integ_filter; ///< Filter used for integrating the noise signal.
