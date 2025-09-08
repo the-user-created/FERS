@@ -10,7 +10,6 @@
 
 #include <cmath>
 #include <ranges>
-#include <stdexcept>
 #include <utility>
 
 #include "core/parameters.h"
@@ -29,23 +28,24 @@ namespace noise
 		_scale = 1.0 / std::pow(10.0, (-alpha + 2.0) * 2.0);
 	}
 
-	void MultirateGenerator::skipSamples(const long long samples) const noexcept
+	// NOLINTNEXTLINE(readability-make-member-function-const)
+	void MultirateGenerator::skipSamples(const long long samples) noexcept
 	{
 		if (const int skip_branches = static_cast<int>(std::log10(samples)) - 1; skip_branches > 0)
 		{
 			std::vector<FAlphaBranch*> flushbranches;
-			const FAlphaBranch* branch = _topbranch.get();
+			FAlphaBranch* branch = _topbranch.get();
 
 			for (int i = 0; i < skip_branches && branch; ++i)
 			{
-				flushbranches.push_back(const_cast<FAlphaBranch*>(branch));
+				flushbranches.push_back(branch);
 				branch = branch->getPre();
 			}
 
 			if (branch)
 			{
 				const auto reduced_samples = samples / static_cast<long long>(std::pow(10.0, skip_branches));
-				for (long long i = 0; i < reduced_samples; ++i) { const_cast<FAlphaBranch*>(branch)->getSample(); }
+				for (long long i = 0; i < reduced_samples; ++i) { branch->getSample(); }
 			}
 
 			for (const auto& fb : std::ranges::reverse_view(flushbranches)) { fb->flush(1.0); }
@@ -65,7 +65,8 @@ namespace noise
 		_topbranch = std::move(previous_branch);
 	}
 
-	void MultirateGenerator::reset() const noexcept
+	// NOLINTNEXTLINE(readability-make-member-function-const)
+	void MultirateGenerator::reset() noexcept
 	{
 		std::vector<FAlphaBranch*> branches;
 		FAlphaBranch* branch = _topbranch.get();
