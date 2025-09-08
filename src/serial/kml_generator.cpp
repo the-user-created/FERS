@@ -51,9 +51,13 @@ namespace
 
 	// --- Constants ---
 	constexpr int TRACK_NUM_DIVISIONS = 100;
+
 	constexpr int ISOTROPIC_PATTERN_POINTS = 100;
+
 	constexpr double ISOTROPIC_PATTERN_RADIUS_KM = 20.0;
+
 	constexpr double SINC_ARROW_LENGTH_M = 20000.0;
+
 	// TODO: The visual size of this antenna beam is hardcoded to a symbolic 20km radius/length and has no
 	//       connection to the antenna's actual performance (e.g., gain, power). To be more representative,
 	//       the beam symbology could be scaled based on a calculated metric like the antenna's directivity or a
@@ -129,6 +133,35 @@ namespace
 		return circle_coordinates;
 	}
 
+	/**
+	 * @brief Converts FERS internal azimuth to KML heading.
+	 *
+	 * FERS uses an East-North-Up (ENU) coordinate system, where azimuth is measured
+	 * in radians counter-clockwise from the East (+X) axis. This is confirmed by the
+	 * SVec3(Vec3) constructor which uses `atan2(y, x)`.
+	 *
+	 * KML heading is specified in degrees, measured clockwise from North (0 is North,
+	 * 90 is East, 180 is South, 270 is West).
+	 *
+	 * The conversion formula is: heading_kml_deg = 90.0 - azimuth_fers_deg.
+	 * This function performs the conversion and normalizes the result to [0, 360).
+	 *
+	 * @param fersAzimuthRad The FERS azimuth in radians.
+	 * @return The corresponding KML heading in degrees.
+	 */
+	double convertFersAzimuthToKmlHeading(const double fersAzimuthRad)
+	{
+		const double fersAzimuthDeg = fersAzimuthRad * 180.0 / PI;
+		double kmlHeading = 90.0 - fersAzimuthDeg;
+		// Normalize to [0, 360) range
+		kmlHeading = std::fmod(kmlHeading, 360.0);
+		if (kmlHeading < 0.0)
+		{
+			kmlHeading += 360.0;
+		}
+		return kmlHeading;
+	}
+
 	// --- KML Generation Helpers ---
 	void writeKmlHeaderAndStyles(std::ofstream& kmlFile)
 	{
@@ -136,7 +169,14 @@ namespace
 		kmlFile <<
 			"<kml xmlns=\"http://www.opengis.net/kml/2.2\" xmlns:gx=\"http://www.google.com/kml/ext/2.2\">\n";
 		kmlFile << "<Document>\n\n";
-		kmlFile << "<name>FERS Simulation Visualization</name>\n";
+		if (params::params.simulation_name.empty())
+		{
+			kmlFile << "<name>FERS Simulation Visualization</name>\n";
+		}
+		else
+		{
+			kmlFile << "<name>" << params::params.simulation_name << "</name>\n";
+		}
 		kmlFile <<
 			"<Style id=\"receiver\"><IconStyle><Icon><href>https://cdn-icons-png.flaticon.com/512/645/645436.png</href></Icon></IconStyle></Style>\n";
 		kmlFile <<
@@ -246,11 +286,10 @@ namespace
 		const std::string start_coords_str = formatCoordinates(start_lon, start_lat, start_alt);
 
 		const math::SVec3 initial_rotation = platform->getRotationPath()->getPosition(params::startTime());
-		// TODO: The conversion from FERS internal azimuth to KML heading uses a hardcoded +180 degree offset.
-		//       This indicates an undocumented convention mismatch between FERS's coordinate system (likely a
-		//       right-handed frame with azimuth from East) and KML's heading (degrees clockwise from North). This
-		//       "magic number" is brittle and should be clarified, documented, and potentially made more robust.
-		const double start_azimuth_deg_kml = initial_rotation.azimuth * 180.0 / PI + 180.0;
+		// The conversion from FERS internal azimuth to KML heading is now handled by a dedicated
+		// function that correctly transforms from FERS's coordinate system (azimuth counter-clockwise
+		// from East) to KML's heading convention (clockwise from North).
+		const double start_azimuth_deg_kml = convertFersAzimuthToKmlHeading(initial_rotation.azimuth);
 
 		// TODO: Antenna beam visualization is static, showing only the orientation at the simulation's start time.
 		//       This does not represent dynamic scanning defined by a platform's <rotationpath>. The KML should
@@ -320,11 +359,6 @@ namespace
 		const GeographicLib::LocalCartesian& proj
 		)
 	{
-		// TODO: The visualization for dynamic paths can be misleading for objects with short lifespans. The track is
-		//       sampled based on the global simulation time (`params::startTime` to `params::endTime`), not the object's
-		//       actual movement duration defined by its waypoints. This can result in very few KML points for a
-		//       fast-moving object in a long simulation. The sampling should be relative to the path's own start and
-		//       end times to accurately represent the trajectory.
 		const math::Path* path = platform->getMotionPath();
 		const auto& waypoints = path->getCoords();
 
@@ -342,21 +376,35 @@ namespace
 		kmlFile << "        <altitudeMode>absolute</altitudeMode>\n";
 		if (first_alt_abs > refAlt) { kmlFile << "        <extrude>1</extrude>\n"; }
 
-		const double start_time = params::startTime();
-		const double end_time = params::endTime();
+		// The sampling time range is now based on the platform's specific motion path duration,
+		// ensuring accurate track resolution for objects with short lifespans.
+		const double start_time = waypoints.front().t;
+		const double end_time = waypoints.back().t;
 		const double time_diff = end_time - start_time;
-		const double time_step = time_diff > 0 ? time_diff / TRACK_NUM_DIVISIONS : 0;
 
-		for (int i = 0; i <= TRACK_NUM_DIVISIONS; ++i)
+		// Handle single-point paths or paths with zero duration by emitting a single coordinate.
+		if (time_diff <= 0.0)
 		{
-			const double current_time = start_time + i * time_step;
-			const math::Vec3 p_local_pos = path->getPosition(current_time);
-
+			const math::Vec3 p_local_pos = path->getPosition(start_time);
 			double p_lon, p_lat, p_alt_abs;
 			proj.Reverse(p_local_pos.x, p_local_pos.y, p_local_pos.z, p_lat, p_lon, p_alt_abs);
-
-			kmlFile << "        <when>" << current_time << "</when>\n";
+			kmlFile << "        <when>" << start_time << "</when>\n";
 			kmlFile << "        <gx:coord>" << p_lon << " " << p_lat << " " << p_alt_abs << "</gx:coord>\n";
+		}
+		else
+		{
+			const double time_step = time_diff / TRACK_NUM_DIVISIONS;
+			for (int i = 0; i <= TRACK_NUM_DIVISIONS; ++i)
+			{
+				const double current_time = start_time + i * time_step;
+				const math::Vec3 p_local_pos = path->getPosition(current_time);
+
+				double p_lon, p_lat, p_alt_abs;
+				proj.Reverse(p_local_pos.x, p_local_pos.y, p_local_pos.z, p_lat, p_lon, p_alt_abs);
+
+				kmlFile << "        <when>" << current_time << "</when>\n";
+				kmlFile << "        <gx:coord>" << p_lon << " " << p_lat << " " << p_alt_abs << "</gx:coord>\n";
+			}
 		}
 
 		kmlFile << "    </gx:Track>\n";
