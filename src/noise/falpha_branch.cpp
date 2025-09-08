@@ -14,7 +14,6 @@
 #include <stdexcept>
 #include <utility>
 
-#include "noise_utils.h"
 #include "core/logging.h"
 #include "signal/dsp_filters.h"
 
@@ -28,6 +27,7 @@ namespace noise
 	                           std::unique_ptr<FAlphaBranch> pre,
 	                           const bool last) :
 		_rng_engine_ref(rngEngine),
+		_normal_dist{0.0, 1.0},
 		_pre(std::move(pre)),
 		_buffer(10),
 		_ffrac(ffrac),
@@ -119,7 +119,7 @@ namespace noise
 
 	RealType FAlphaBranch::calcSample() noexcept
 	{
-		RealType sample = wgnSample(_rng_engine_ref.get(), 1.0);
+		RealType sample = _normal_dist(_rng_engine_ref.get());
 
 		if (_shape_filter) { sample = _shape_filter->filter(sample) / _shape_gain; }
 

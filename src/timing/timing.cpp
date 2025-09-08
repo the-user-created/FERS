@@ -33,20 +33,22 @@ namespace timing
 
 		_frequency = timing->getFrequency();
 
+		std::normal_distribution normal_dist{0.0, 1.0};
+
 		_freq_offset = timing->getFreqOffset().value_or(0);
 		if (const std::optional<RealType> random_freq_stdev = timing->getRandomFreqOffsetStdev(); random_freq_stdev)
 		{
 			LOG(Level::INFO, "Timing source '{}': applying random frequency offset with stdev {} Hz.", _name,
-			    *random_freq_stdev);
-			_freq_offset += noise::wgnSample(_rng, *random_freq_stdev);
+			    random_freq_stdev.value());
+			_freq_offset += normal_dist(_rng) * random_freq_stdev.value();
 		}
 
 		_phase_offset = timing->getPhaseOffset().value_or(0);
 		if (const std::optional<RealType> random_phase_stdev = timing->getRandomPhaseOffsetStdev(); random_phase_stdev)
 		{
 			LOG(Level::INFO, "Timing source '{}': applying random phase offset with stdev {} radians.", _name,
-			    *random_phase_stdev);
-			_phase_offset += noise::wgnSample(_rng, *random_phase_stdev);
+			    random_phase_stdev.value());
+			_phase_offset += normal_dist(_rng) * random_phase_stdev.value();
 		}
 
 		timing->copyAlphas(_alphas, _weights);

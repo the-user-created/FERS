@@ -9,7 +9,6 @@
 #include "prototype_timing.h"
 
 #include "core/logging.h"
-#include "noise/noise_utils.h"
 
 using logging::Level;
 

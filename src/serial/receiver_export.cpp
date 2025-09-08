@@ -34,7 +34,6 @@
 #include "core/thread_pool.h"
 #include "libxml/xmlstring.h"
 #include "noise/noise_generators.h"
-#include "noise/noise_utils.h"
 #include "radar/receiver.h"
 #include "serial/response.h"
 #include "signal/dsp_filters.h"
@@ -80,9 +79,8 @@ namespace
 	{
 		if (temperature == 0) { return; }
 
-		const RealType power = noise::noiseTemperatureToPower(
-			temperature, params::rate() * params::oversampleRatio() / 2
-			);
+		// params::boltzmannK() * temperature * bandwidth
+		const RealType power = params::boltzmannK() * temperature * (params::rate() * params::oversampleRatio() / 2);
 
 		noise::WgnGenerator generator(rngEngine, std::sqrt(power) / 2.0);
 
