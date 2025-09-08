@@ -152,7 +152,8 @@ namespace
 	 * @param enabled A boolean flag indicating whether phase noise is enabled.
 	 * @return A vector of RealType objects representing the phase noise samples.
 	 */
-	std::vector<RealType> generatePhaseNoise(const radar::Receiver* recv, const unsigned wSize, const RealType rate,
+	// NOLINTNEXTLINE(readability-non-const-parameter)
+	std::vector<RealType> generatePhaseNoise(radar::Receiver* recv, const unsigned wSize, const RealType rate,
 	                                         RealType& carrier, bool& enabled)
 	{
 		const auto timing = recv->getTiming();

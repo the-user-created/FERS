@@ -133,12 +133,12 @@ namespace noise
 		*
 		* @param samples The number of samples to skip.
 		*/
-		void skipSamples(long long samples) const noexcept;
+		void skipSamples(long long samples) noexcept;
 
 		/**
 		* @brief Resets the noise generator state.
 		*/
-		void reset() const noexcept;
+		void reset() noexcept;
 
 	private:
 		RealType _scale; ///< Scaling factor for the noise.

@@ -87,7 +87,7 @@ namespace timing
 		*
 		* @param samples The number of samples to skip.
 		*/
-		void skipSamples(long long samples) const noexcept;
+		void skipSamples(long long samples) noexcept;
 
 		/**
 		* @brief Initializes the timing model.
@@ -99,7 +99,8 @@ namespace timing
 		/**
 		* @brief Resets the timing model.
 		*/
-		void reset() const noexcept { if (_model) { _model->reset(); } }
+		// NOLINTNEXTLINE(readability-make-member-function-const)
+		void reset() noexcept { if (_model) { _model->reset(); } }
 
 	private:
 		std::string _name; ///< The name of the timing source.

@@ -18,7 +18,8 @@ namespace timing
 	Timing::Timing(std::string name, const unsigned seed) noexcept :
 		_name(std::move(name)), _rng(seed) {}
 
-	void Timing::skipSamples(const long long samples) const noexcept
+	// NOLINTNEXTLINE(readability-make-member-function-const)
+	void Timing::skipSamples(const long long samples) noexcept
 	{
 		if (_enabled && _model) { _model->skipSamples(samples); }
 	}
