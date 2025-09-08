@@ -10,6 +10,7 @@
 
 #include <chrono>
 #include <optional>
+#include <string>
 
 #include "config.h"
 #include "logging.h"
@@ -43,6 +44,7 @@ namespace params
 		bool export_csv = false; ///< Enable or disable CSV export.
 		bool export_binary = true; ///< Enable or disable binary export.
 		unsigned render_threads = 1; ///< Number of rendering threads to use.
+		std::string simulation_name; ///< The name of the simulation, from the XML.
 		unsigned oversample_ratio = 1; ///< Oversampling ratio.
 	};
 

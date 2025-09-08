@@ -13,6 +13,7 @@
 */
 
 #include <exception>
+#include <filesystem>
 #include <memory>
 #include <optional>
 #include <random>
@@ -57,7 +58,7 @@ int main(const int argc, char* argv[])
 	}
 
 	// Structured bindings for the configuration options
-	const auto& [script_file, log_level, num_threads, validate, log_file, kml_output_file] = config_result.value();
+	const auto& [script_file, log_level, num_threads, validate, log_file, generate_kml] = config_result.value();
 
 	// Set the logging level
 	logging::logger.setLevel(log_level);
@@ -106,12 +107,16 @@ int main(const int argc, char* argv[])
 		}
 
 		// If KML generation is requested, generate the KML file and exit
-		if (kml_output_file)
+		if (generate_kml)
 		{
+			std::filesystem::path kml_output_path = script_file;
+			kml_output_path.replace_extension(".kml");
+			const std::string kml_output_file = kml_output_path.string();
+
 			LOG(Level::INFO, "Generating KML file for scenario: {}", script_file);
-			if (serial::KmlGenerator::generateKml(*world, *kml_output_file))
+			if (serial::KmlGenerator::generateKml(*world, kml_output_file))
 			{
-				LOG(Level::INFO, "KML file generated successfully: {}", *kml_output_file);
+				LOG(Level::INFO, "KML file generated successfully: {}", kml_output_file);
 				return 0;
 			}
 			LOG(Level::FATAL, "Failed to generate KML file for scenario: {}", script_file);
