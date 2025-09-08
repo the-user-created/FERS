@@ -35,15 +35,7 @@
 #include "radar/receiver.h"
 #include "radar/target.h"
 #include "radar/transmitter.h"
-
-// TODO: The KML generator assumes all scenarios use a local ENU tangent plane, which conflicts with FERS's
-//       coordinate-system-agnostic design. This can lead to incorrect visualizations if a user designs a
-//       scenario in a different frame (e.g., ECEF). Consider adding support for other common coordinate
-//       systems or prominently documenting this limitation.
-
-// TODO: KML visualization for antenna patterns is incomplete. This function only supports 'isotropic' and 'sinc'
-//       antennas, while FERS supports many others (gaussian, parabolic, etc.). To provide a more complete
-//       scenario preview, add symbolic representations for the other FERS antenna types.
+#include "signal/radar_signal.h"
 
 namespace
 {
@@ -56,12 +48,7 @@ namespace
 
 	constexpr double ISOTROPIC_PATTERN_RADIUS_KM = 20.0;
 
-	constexpr double SINC_ARROW_LENGTH_M = 20000.0;
-
-	// TODO: The visual size of this antenna beam is hardcoded to a symbolic 20km radius/length and has no
-	//       connection to the antenna's actual performance (e.g., gain, power). To be more representative,
-	//       the beam symbology could be scaled based on a calculated metric like the antenna's directivity or a
-	//       nominal range.
+	constexpr double DIRECTIONAL_ANTENNA_ARROW_LENGTH_M = 20000.0;
 
 	// --- Geodetic and Coordinate Helpers ---
 	double sincAntennaGain(const double theta, const double alpha, const double beta, const double gamma)
@@ -98,6 +85,94 @@ namespace
 				);
 		const double angle_3db_drop = theta[idx + num_points / 2];
 		return angle_3db_drop * 180.0 / PI;
+	}
+
+	/**
+	 * @brief Calculates the half-power (-3dB) beamwidth angle for a Gaussian antenna.
+	 * @param gaussianAnt Pointer to the Gaussian antenna object.
+	 * @return The 3dB drop half-angle in degrees.
+	 */
+	double findGaussian3DbDropAngle(const antenna::Gaussian* gaussianAnt)
+	{
+		// 3dB drop is when gain is 0.5. For gaussian, G = exp(-theta^2 * scale)
+		// 0.5 = exp(-theta^2 * scale) => ln(0.5) = -theta^2 * scale
+		// theta = sqrt(-ln(0.5) / scale) = sqrt(ln(2) / scale)
+		// We use the azimuth scale for the visualization in the horizontal plane.
+		if (gaussianAnt->getAzimuthScale() <= 0.0)
+		{
+			LOG(logging::Level::WARNING,
+			    "Gaussian antenna '{}' has a non-positive azimuth scale ({}). 3dB beamwidth is undefined. KML will only show boresight.",
+			    gaussianAnt->getName(), gaussianAnt->getAzimuthScale());
+			return 0.0;
+		}
+		const double half_angle_rad = std::sqrt(std::log(2.0) / gaussianAnt->getAzimuthScale());
+		return half_angle_rad * 180.0 / PI;
+	}
+
+	/**
+	 * @brief Calculates the half-power (-3dB) beamwidth angle for a Parabolic antenna.
+	 * @param parabolicAnt Pointer to the Parabolic antenna object.
+	 * @param wavelength The operating wavelength in meters.
+	 * @return The 3dB drop half-angle in degrees.
+	 */
+	double findParabolic3DbDropAngle(const antenna::Parabolic* parabolicAnt, const double wavelength)
+	{
+		// For a parabolic antenna, the gain pattern is related to (2*J1(x)/x)^2,
+		// where J1 is the Bessel function of the first kind of order one.
+		// The 3dB point occurs approximately when x = 1.6.
+		// x = PI * diameter * sin(theta) / wavelength
+		// sin(theta) = 1.6 * wavelength / (PI * diameter)
+		if (parabolicAnt->getDiameter() <= 0.0)
+		{
+			LOG(logging::Level::WARNING,
+			    "Parabolic antenna '{}' has a non-positive diameter ({}). This is physically impossible. KML will only show boresight.",
+			    parabolicAnt->getName(), parabolicAnt->getDiameter());
+			return 0.0;
+		}
+		// TODO: magic numbers
+		const double arg = 1.6 * wavelength / (PI * parabolicAnt->getDiameter());
+		// For physically realizable antennas, arg should be <= 1.
+		if (arg > 1.0)
+		{
+			LOG(logging::Level::INFO,
+			    "Parabolic antenna '{}': The operating wavelength ({:.4f}m) is very large compared to its diameter ({:.4f}m), resulting in a nearly omnidirectional pattern. KML visualization will cap the 3dB half-angle at 90 degrees.",
+			    parabolicAnt->getName(), wavelength, parabolicAnt->getDiameter());
+			return 90.0; // Extremely wide beam, cap at 90 degrees.
+		}
+		const double half_angle_rad = std::asin(arg);
+		return half_angle_rad * 180.0 / PI;
+	}
+
+	/**
+	 * @brief Calculates the half-power (-3dB) beamwidth angle for a SquareHorn antenna.
+	 * @param squarehornAnt Pointer to the SquareHorn antenna object.
+	 * @param wavelength The operating wavelength in meters.
+	 * @return The 3dB drop half-angle in degrees.
+	 */
+	double findSquareHorn3DbDropAngle(const antenna::SquareHorn* squarehornAnt, const double wavelength)
+	{
+		// The gain pattern for a square horn is related to sinc(x)^2.
+		// The 3dB point occurs when sinc(x) = sqrt(0.5), which is approx. x = 1.39155.
+		// x = PI * dimension * sin(theta) / wavelength
+		// sin(theta) = 1.39155 * wavelength / (PI * dimension)
+		if (squarehornAnt->getDimension() <= 0.0)
+		{
+			LOG(logging::Level::WARNING,
+			    "SquareHorn antenna '{}' has a non-positive dimension ({}). This is physically impossible. KML will only show boresight.",
+			    squarehornAnt->getName(), squarehornAnt->getDimension());
+			return 0.0;
+		}
+		// TODO: magic numbers
+		const double arg = 1.39155 * wavelength / (PI * squarehornAnt->getDimension());
+		if (arg > 1.0)
+		{
+			LOG(logging::Level::INFO,
+			    "SquareHorn antenna '{}': The operating wavelength ({:.4f}m) is very large compared to its dimension ({:.4f}m), resulting in a nearly omnidirectional pattern. KML visualization will cap the 3dB half-angle at 90 degrees.",
+			    squarehornAnt->getName(), wavelength, squarehornAnt->getDimension());
+			return 90.0; // Extremely wide beam, cap at 90 degrees.
+		}
+		const double half_angle_rad = std::asin(arg);
+		return half_angle_rad * 180.0 / PI;
 	}
 
 	std::string formatCoordinates(const double lon, const double lat, const double alt)
@@ -151,15 +226,15 @@ namespace
 	 */
 	double convertFersAzimuthToKmlHeading(const double fersAzimuthRad)
 	{
-		const double fersAzimuthDeg = fersAzimuthRad * 180.0 / PI;
-		double kmlHeading = 90.0 - fersAzimuthDeg;
+		const double fers_azimuth_deg = fersAzimuthRad * 180.0 / PI;
+		double kml_heading = 90.0 - fers_azimuth_deg;
 		// Normalize to [0, 360) range
-		kmlHeading = std::fmod(kmlHeading, 360.0);
-		if (kmlHeading < 0.0)
+		kml_heading = std::fmod(kml_heading, 360.0);
+		if (kml_heading < 0.0)
 		{
-			kmlHeading += 360.0;
+			kml_heading += 360.0;
 		}
-		return kmlHeading;
+		return kml_heading;
 	}
 
 	// --- KML Generation Helpers ---
@@ -274,10 +349,10 @@ namespace
 		kmlFile << "</Placemark>\n";
 	}
 
-	void generateSincAntennaKml
+	void generateDirectionalAntennaKml
 	(
-		std::ofstream& kmlFile, const antenna::Sinc* sinc, const radar::Platform* platform,
-		const GeographicLib::LocalCartesian& proj
+		std::ofstream& kmlFile, const radar::Platform* platform, const GeographicLib::LocalCartesian& proj,
+		const std::optional<double>& angle3DbDropDeg
 		)
 	{
 		const auto& first_wp_pos = platform->getMotionPath()->getCoords().front().pos;
@@ -298,30 +373,35 @@ namespace
 		// Main beam
 		double dest_lat, dest_lon;
 		calculateDestinationCoordinate
-			(start_lat, start_lon, start_azimuth_deg_kml, SINC_ARROW_LENGTH_M, dest_lat, dest_lon);
+			(start_lat, start_lon, start_azimuth_deg_kml, DIRECTIONAL_ANTENNA_ARROW_LENGTH_M, dest_lat, dest_lon);
 		const std::string end_coords_str = formatCoordinates(dest_lon, dest_lat, start_alt);
-		writeAntennaBeamLine(kmlFile, "Antenna Direction", "#lineStyle", start_coords_str, end_coords_str);
+		writeAntennaBeamLine(kmlFile, "Antenna Boresight", "#lineStyle", start_coords_str, end_coords_str);
 
-		// 3dB beamwidth lines
-		const double angle_3db_drop_deg = find3DbDropAngle(sinc->getAlpha(), sinc->getBeta(), sinc->getGamma());
+		// 3dB beamwidth lines, if angle is provided and is greater than a small epsilon
+		if (angle3DbDropDeg.has_value() && *angle3DbDropDeg > EPSILON)
+		{
+			double side1_lat, side1_lon;
+			calculateDestinationCoordinate
+				(
+					start_lat, start_lon, start_azimuth_deg_kml - *angle3DbDropDeg, DIRECTIONAL_ANTENNA_ARROW_LENGTH_M,
+					side1_lat,
+					side1_lon
+					);
+			const std::string side1_coords_str = formatCoordinates(side1_lon, side1_lat, start_alt);
+			writeAntennaBeamLine(kmlFile, "Antenna 3dB Beamwidth", "#lineStyleBlue", start_coords_str,
+			                     side1_coords_str);
 
-		double side1_lat, side1_lon;
-		calculateDestinationCoordinate
-			(
-				start_lat, start_lon, start_azimuth_deg_kml - angle_3db_drop_deg, SINC_ARROW_LENGTH_M, side1_lat,
-				side1_lon
-				);
-		const std::string side1_coords_str = formatCoordinates(side1_lon, side1_lat, start_alt);
-		writeAntennaBeamLine(kmlFile, "Antenna Side Line 1", "#lineStyleBlue", start_coords_str, side1_coords_str);
-
-		double side2_lat, side2_lon;
-		calculateDestinationCoordinate
-			(
-				start_lat, start_lon, start_azimuth_deg_kml + angle_3db_drop_deg, SINC_ARROW_LENGTH_M, side2_lat,
-				side2_lon
-				);
-		const std::string side2_coords_str = formatCoordinates(side2_lon, side2_lat, start_alt);
-		writeAntennaBeamLine(kmlFile, "Antenna Side Line 2", "#lineStyleBlue", start_coords_str, side2_coords_str);
+			double side2_lat, side2_lon;
+			calculateDestinationCoordinate
+				(
+					start_lat, start_lon, start_azimuth_deg_kml + *angle3DbDropDeg, DIRECTIONAL_ANTENNA_ARROW_LENGTH_M,
+					side2_lat,
+					side2_lon
+					);
+			const std::string side2_coords_str = formatCoordinates(side2_lon, side2_lat, start_alt);
+			writeAntennaBeamLine(kmlFile, "Antenna 3dB Beamwidth", "#lineStyleBlue", start_coords_str,
+			                     side2_coords_str);
+		}
 
 		// Arrow placemark
 		kmlFile << "<Placemark>\n";
@@ -347,9 +427,67 @@ namespace
 			const math::Vec3 initial_pos = platform->getMotionPath()->getCoords().front().pos;
 			generateIsotropicAntennaKml(kmlFile, initial_pos, proj);
 		}
-		else if (const auto* sinc_ant = dynamic_cast<const antenna::Sinc*>(ant))
+		else // Handle all directional antennas
 		{
-			generateSincAntennaKml(kmlFile, sinc_ant, platform, proj);
+			std::optional<double> angle_3db_drop_deg;
+
+			// Attempt to find wavelength for wavelength-dependent patterns
+			std::optional<double> wavelength;
+			if (const auto* tx = dynamic_cast<const radar::Transmitter*>(radar))
+			{
+				if (tx->getSignal())
+				{
+					wavelength = params::c() / tx->getSignal()->getCarrier();
+				}
+			}
+			else if (const auto* rx = dynamic_cast<const radar::Receiver*>(radar))
+			{
+				if (const auto* attached_tx = dynamic_cast<const radar::Transmitter*>(rx->getAttached()))
+				{
+					if (attached_tx->getSignal())
+					{
+						wavelength = params::c() / attached_tx->getSignal()->getCarrier();
+					}
+				}
+			}
+
+			// Calculate 3dB drop angle based on antenna type
+			if (const auto* sinc_ant = dynamic_cast<const antenna::Sinc*>(ant))
+			{
+				angle_3db_drop_deg = find3DbDropAngle(sinc_ant->getAlpha(), sinc_ant->getBeta(), sinc_ant->getGamma());
+			}
+			else if (const auto* gaussian_ant = dynamic_cast<const antenna::Gaussian*>(ant))
+			{
+				angle_3db_drop_deg = findGaussian3DbDropAngle(gaussian_ant);
+			}
+			else if (const auto* parabolic_ant = dynamic_cast<const antenna::Parabolic*>(ant))
+			{
+				if (wavelength)
+				{
+					angle_3db_drop_deg = findParabolic3DbDropAngle(parabolic_ant, *wavelength);
+				}
+			}
+			else if (const auto* squarehorn_ant = dynamic_cast<const antenna::SquareHorn*>(ant))
+			{
+				if (wavelength)
+				{
+					angle_3db_drop_deg = findSquareHorn3DbDropAngle(squarehorn_ant, *wavelength);
+				}
+			}
+			else if (dynamic_cast<const antenna::XmlAntenna*>(ant) || dynamic_cast<const antenna::H5Antenna*>(ant))
+			{
+				// For XmlAntenna and H5Antenna, angle_3db_drop_deg remains nullopt,
+				// resulting in only the boresight arrow being drawn. This is an intentional
+				// symbolic representation. Alert the user about this.
+				LOG(logging::Level::INFO,
+				    "KML visualization for antenna '{}' ('{}') is symbolic. "
+				    "Only the boresight direction is shown, as a 3dB beamwidth is not calculated from file-based patterns.",
+				    ant->getName(),
+				    dynamic_cast<const antenna::XmlAntenna*>(ant) ? "xml" : "file"
+					);
+			}
+
+			generateDirectionalAntennaKml(kmlFile, platform, proj, angle_3db_drop_deg);
 		}
 	}
 

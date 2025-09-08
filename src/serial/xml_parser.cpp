@@ -331,7 +331,7 @@ namespace
 		}
 		else if (pattern == "file")
 		{
-			ant = std::make_unique<antenna::FileAntenna>(name, XmlElement::getSafeAttribute(antenna, "filename"));
+			ant = std::make_unique<antenna::H5Antenna>(name, XmlElement::getSafeAttribute(antenna, "filename"));
 		}
 		else
 		{
