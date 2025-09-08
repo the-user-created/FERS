@@ -46,7 +46,7 @@
         <!ELEMENT carrier (#PCDATA)>
 
         <!-- Timing Source -->
-        <!ELEMENT timing (frequency,freq_offset?,random_freq_offset?,phase_offset?,random_phase_offset?,noise_entry*)>
+        <!ELEMENT timing (frequency,freq_offset?,random_freq_offset_stdev?,phase_offset?,random_phase_offset_stdev?,noise_entry*)>
         <!-- Timing source. Sets frequency -->
         <!ATTLIST timing name CDATA #REQUIRED
                 synconpulse (true|false) "true">
@@ -62,12 +62,12 @@
         <!ELEMENT weight (#PCDATA)>
         <!-- Offset from system frequency -->
         <!ELEMENT freq_offset (#PCDATA)>
-        <!-- Random frequency offset -->
-        <!ELEMENT random_freq_offset (#PCDATA)>
+        <!-- Random frequency offset standard deviation -->
+        <!ELEMENT random_freq_offset_stdev (#PCDATA)>
         <!-- Phase offset -->
         <!ELEMENT phase_offset (#PCDATA)>
-        <!-- Random phase offset -->
-        <!ELEMENT random_phase_offset (#PCDATA)>
+        <!-- Random phase offset standard deviation -->
+        <!ELEMENT random_phase_offset_stdev (#PCDATA)>
 
         <!-- Antenna -->
         <!ELEMENT antenna (alpha?,beta?,gamma?,diameter?,azscale?,elscale?,efficiency?)>

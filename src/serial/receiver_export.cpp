@@ -34,7 +34,6 @@
 #include "core/thread_pool.h"
 #include "libxml/xmlstring.h"
 #include "noise/noise_generators.h"
-#include "noise/noise_utils.h"
 #include "radar/receiver.h"
 #include "serial/response.h"
 #include "signal/dsp_filters.h"
@@ -74,16 +73,16 @@ namespace
 	 *
 	 * @param data A span of ComplexType objects representing the window of complex samples to add noise to.
 	 * @param temperature The noise temperature in Kelvin. If the temperature is 0, no noise is added.
+	 * @param rngEngine The random number generator engine to use for noise generation.
 	 */
-	void addNoiseToWindow(std::span<ComplexType> data, const RealType temperature) noexcept
+	void addNoiseToWindow(std::span<ComplexType> data, const RealType temperature, std::mt19937& rngEngine) noexcept
 	{
 		if (temperature == 0) { return; }
 
-		const RealType power = noise::noiseTemperatureToPower(
-			temperature, params::rate() * params::oversampleRatio() / 2
-			);
+		// params::boltzmannK() * temperature * bandwidth
+		const RealType power = params::boltzmannK() * temperature * (params::rate() * params::oversampleRatio() / 2);
 
-		noise::WgnGenerator generator(std::sqrt(power) / 2.0);
+		noise::WgnGenerator generator(rngEngine, std::sqrt(power) / 2.0);
 
 		for (auto& sample : data)
 		{
@@ -410,7 +409,7 @@ namespace serial
 		}
 	}
 
-	void exportReceiverBinary(const std::span<const std::unique_ptr<Response>> responses, const radar::Receiver* recv,
+	void exportReceiverBinary(const std::span<const std::unique_ptr<Response>> responses, radar::Receiver* recv,
 	                          const std::string& recvName, pool::ThreadPool& pool)
 	{
 		if (responses.empty()) { return; }
@@ -444,7 +443,7 @@ namespace serial
 
 			std::vector<ComplexType> window(size);
 
-			addNoiseToWindow(window, recv->getNoiseTemperature());
+			addNoiseToWindow(window, recv->getNoiseTemperature(), recv->getRngEngine());
 
 			renderWindow(window, length, start, frac_delay, responses, pool);
 

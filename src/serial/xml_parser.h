@@ -9,6 +9,7 @@
 #pragma once
 
 #include <string>
+#include <random>
 
 namespace core
 {
@@ -18,16 +19,19 @@ namespace core
 namespace serial
 {
 	/**
-	* @brief Parses the simulation configuration from an XML file.
-	*
-	* This function loads an XML file and parses its content, extracting simulation
-	* parameters and elements such as pulses, antennas, platforms, and more, and adds them
-	* to the provided World object. Optionally, it validates the XML file against its schema.
-	*
-	* @param filename The path to the XML file to be parsed.
-	* @param world A pointer to the World object where parsed data is added.
-	* @param validate A flag to indicate whether to validate the XML file against its schema.
-	* @throws XmlException if the XML file is invalid or cannot be parsed.
-	*/
-	void parseSimulation(const std::string& filename, core::World* world, bool validate);
+	 * @brief Parses a simulation configuration from an XML file.
+	 *
+	 * This function loads an XML file, merges any included files, validates it against
+	 * the FERS DTD and XSD schemas, and then populates the simulation `World` object
+	 * with the parsed parameters and components.
+	 *
+	 * @param filename The path to the main XML simulation script.
+	 * @param world A pointer to the `World` object to be populated.
+	 * @param validate A boolean indicating whether to perform XML validation.
+	 * @param masterSeeder A reference to the master random number generator used for seeding components.
+	 * @throws XmlException if the XML is malformed, fails validation, or contains invalid data.
+	 * @throws std::runtime_error for file I/O errors or other critical issues.
+	 */
+	void parseSimulation(const std::string& filename, core::World* world, bool validate,
+	                     std::mt19937& masterSeeder);
 }

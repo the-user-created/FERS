@@ -44,18 +44,12 @@ namespace signal
 		 */
 		void load(std::span<const ComplexType> inData, unsigned samples, RealType sampleRate);
 
-		// Note: This function is not used in the codebase
-		//void load(std::span<const RealType> inData, unsigned samples, RealType sampleRate);
-
 		/**
 		 * @brief Gets the sample rate of the signal.
 		 *
 		 * @return The sample rate of the signal.
 		 */
 		[[nodiscard]] RealType getRate() const noexcept { return _rate; }
-
-		// Note: This function is not used in the codebase
-		// [[nodiscard]] unsigned getSize() const noexcept { return _size; }
 
 		/**
 		 * @brief Renders the signal data based on interpolation points.

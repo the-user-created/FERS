@@ -126,7 +126,7 @@ namespace signal
 
 		~FirFilter() override = default;
 
-		RealType filter(RealType) override { return 0; } // Not used
+		RealType filter(RealType) override { return 0; }
 
 		void filter(std::span<RealType> /*samples*/) noexcept override {}
 
@@ -142,57 +142,6 @@ namespace signal
 		std::vector<RealType> _w; ///< Internal state
 		unsigned _order{}; ///< Filter order
 	};
-
-	/*class ArFilter final : public DspFilter
-	{
-	public:
-		explicit ArFilter(std::span<const RealType> coeffs) noexcept
-			: _w(coeffs.size()), _filter(coeffs.begin(), coeffs.end()), _order(coeffs.size()) {}
-
-		~ArFilter() override = default;
-
-		RealType filter(RealType sample) noexcept override;
-
-		void filter(std::span<RealType> samples) noexcept override;
-
-	private:
-		std::vector<RealType> _w; ///< Internal state
-		std::vector<RealType> _filter; ///< Filter coefficients
-		unsigned _order{}; ///< Filter order
-
-		RealType applyFilter(RealType sample) noexcept;
-	};*/
-
-	/*class Upsampler
-	{
-	public:
-		explicit Upsampler(int ratio) noexcept;
-
-		~Upsampler() = default;
-
-		void upsample(std::span<const RealType> inSamples, std::span<RealType> outSamples);
-
-		// Disable copy constructor and copy assignment operator
-		Upsampler(const Upsampler&) = delete;
-
-		Upsampler& operator=(const Upsampler&) = delete;
-
-		// Enable default move semantics
-		Upsampler(Upsampler&&) noexcept = default;
-
-		Upsampler& operator=(Upsampler&&) noexcept = default;
-
-	private:
-		int _ratio; ///< Upsampling ratio.
-		int _filter_size; ///< Size of the filter.
-		std::vector<RealType> _filterbank; ///< Coefficients of the polyphase filter.
-		std::vector<RealType> _sample_memory; ///< Memory for previous samples (used in filtering).
-
-		[[nodiscard]] RealType getSample(const std::span<const RealType> samples, const long n) const
-		{
-			return n >= 0 ? samples[n] : _sample_memory[n + _filter_size];
-		}
-	};*/
 
 	/**
 	 * @class DecadeUpsampler
@@ -212,8 +161,6 @@ namespace signal
 		 * @param out Span of output samples.
 		 */
 		void upsample(RealType sample, std::span<RealType> out) const;
-
-		//void upsample(std::span<const RealType> in, std::span<RealType> out) const;
 
 		DecadeUpsampler(const DecadeUpsampler&) = delete;
 

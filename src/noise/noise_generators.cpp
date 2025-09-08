@@ -18,14 +18,9 @@
 
 namespace noise
 {
-	MultirateGenerator::MultirateGenerator(const RealType alpha, const unsigned branches)
+	MultirateGenerator::MultirateGenerator(std::mt19937& rngEngine, const RealType alpha, const unsigned branches) :
+		_rng_engine(rngEngine)
 	{
-		if (branches == 0)
-		{
-			LOG(logging::Level::FATAL, "Cannot create multirate noise generator with zero branches");
-			throw std::runtime_error("Cannot create multirate noise generator with zero branches");
-		}
-
 		const RealType beta = -(alpha - 2) / 2.0;
 		const int fint = static_cast<int>(std::floor(beta));
 		const RealType ffrac = std::fmod(beta, 1.0);
@@ -63,7 +58,8 @@ namespace noise
 		std::unique_ptr<FAlphaBranch> previous_branch = nullptr;
 		for (unsigned i = 0; i < branches; ++i)
 		{
-			previous_branch = std::make_unique<FAlphaBranch>(fAlpha, fInt, std::move(previous_branch),
+			previous_branch = std::make_unique<FAlphaBranch>(_rng_engine.get(), fAlpha, fInt,
+			                                                 std::move(previous_branch),
 			                                                 i == branches - 1);
 		}
 		_topbranch = std::move(previous_branch);
@@ -83,14 +79,19 @@ namespace noise
 		for (const auto& b : std::ranges::reverse_view(branches)) { b->flush(1.0); }
 	}
 
-	ClockModelGenerator::ClockModelGenerator(const std::vector<RealType>& alpha, const std::vector<RealType>& inWeights,
+	ClockModelGenerator::ClockModelGenerator(std::mt19937& rngEngine, const std::vector<RealType>& alpha,
+	                                         const std::vector<RealType>& inWeights,
 	                                         const RealType frequency, const RealType phaseOffset,
 	                                         const RealType freqOffset, int branches) noexcept :
-		_weights(inWeights), _phase_offset(phaseOffset), _freq_offset(freqOffset), _frequency(frequency)
+		_rng_engine(rngEngine),
+		_weights(inWeights),
+		_phase_offset(phaseOffset),
+		_freq_offset(freqOffset),
+		_frequency(frequency)
 	{
 		for (size_t i = 0; i < alpha.size(); ++i)
 		{
-			auto mgen = std::make_unique<MultirateGenerator>(alpha[i], branches);
+			auto mgen = std::make_unique<MultirateGenerator>(_rng_engine.get(), alpha[i], branches);
 			_generators.push_back(std::move(mgen));
 
 			switch (static_cast<int>(alpha[i]))
