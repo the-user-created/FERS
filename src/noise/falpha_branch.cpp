@@ -14,7 +14,6 @@
 #include <stdexcept>
 #include <utility>
 
-#include "noise_utils.h"
 #include "core/logging.h"
 #include "signal/dsp_filters.h"
 
@@ -24,9 +23,16 @@ using signal::DecadeUpsampler;
 
 namespace noise
 {
-	FAlphaBranch::FAlphaBranch(RealType ffrac, unsigned fint, std::unique_ptr<FAlphaBranch> pre,
+	FAlphaBranch::FAlphaBranch(std::mt19937& rngEngine, RealType ffrac, unsigned fint,
+	                           std::unique_ptr<FAlphaBranch> pre,
 	                           const bool last) :
-		_pre(std::move(pre)), _buffer(10), _ffrac(ffrac), _fint(fint), _last(last)
+		_rng_engine_ref(rngEngine),
+		_normal_dist{0.0, 1.0},
+		_pre(std::move(pre)),
+		_buffer(10),
+		_ffrac(ffrac),
+		_fint(fint),
+		_last(last)
 	{
 		LOG(Level::TRACE, "Creating FAlphaBranch: ffrac={} fint={}", ffrac, fint);
 		_upsample_scale = std::pow(10, ffrac + fint + 0.5);
@@ -94,7 +100,6 @@ namespace noise
 				constexpr std::array<RealType, 3> i_num = {1.0f, 0.0f, 0.0f};
 				_integ_filter = std::make_unique<IirFilter>(i_den.data(), i_num.data(), i_num.size());
 			}
-			// TODO: Is this true?
 			else { throw std::runtime_error("Only alpha values between 2 and -2 are supported for noise generation"); }
 		}
 		_offset_sample = 0.0f;
@@ -114,7 +119,7 @@ namespace noise
 
 	RealType FAlphaBranch::calcSample() noexcept
 	{
-		RealType sample = wgnSample(1);
+		RealType sample = _normal_dist(_rng_engine_ref.get());
 
 		if (_shape_filter) { sample = _shape_filter->filter(sample) / _shape_gain; }
 

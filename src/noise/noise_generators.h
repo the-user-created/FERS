@@ -8,13 +8,13 @@
 
 #pragma once
 
+#include <functional>
 #include <memory>
 #include <random>
 #include <vector>
 
 #include "config.h"
 #include "falpha_branch.h"
-#include "noise_utils.h"
 
 namespace noise
 {
@@ -26,10 +26,15 @@ namespace noise
 	{
 	public:
 		NoiseGenerator() = default;
+
 		virtual ~NoiseGenerator() = default;
+
 		NoiseGenerator(const NoiseGenerator&) = delete;
+
 		NoiseGenerator& operator=(const NoiseGenerator&) = delete;
+
 		NoiseGenerator(NoiseGenerator&&) = delete;
+
 		NoiseGenerator& operator=(NoiseGenerator&&) = delete;
 
 		/**
@@ -50,21 +55,23 @@ namespace noise
 		/**
 		* @brief Constructor to initialize the WGN generator with a given standard deviation.
 		*
+		* @param rngEngine The random number engine to use for generation.
 		* @param stddev The standard deviation of the generated Gaussian noise. Default is 1.0.
 		*/
-		explicit WgnGenerator(const RealType stddev = 1.0) noexcept : _dist(0.0, stddev), _stddev(stddev)
-		{
-			ensureInitialized();
-		}
+		explicit WgnGenerator(std::mt19937& rngEngine, const RealType stddev = 1.0) noexcept :
+			_rng_engine(rngEngine),
+			_dist(0.0, stddev),
+			_stddev(stddev) {}
 
 		/**
 		* @brief Generates a sample of white Gaussian noise.
 		*
 		* @return A noise sample of type RealType.
 		*/
-		RealType getSample() noexcept override { return _dist(*rng) * _stddev; }
+		RealType getSample() noexcept override { return _dist(_rng_engine.get()); }
 
 	private:
+		std::reference_wrapper<std::mt19937> _rng_engine; ///< Reference to the RNG engine.
 		std::normal_distribution<> _dist; ///< Normal distribution for generating Gaussian noise.
 		RealType _stddev; ///< Standard deviation of the generated noise.
 	};
@@ -79,18 +86,22 @@ namespace noise
 		/**
 		* @brief Constructor to initialize the Gamma generator with a shape parameter.
 		*
+		* @param rngEngine The random number engine to use for generation.
 		* @param k The shape parameter of the Gamma distribution.
 		*/
-		explicit GammaGenerator(const RealType k) noexcept : _dist(k, 1.0) { ensureInitialized(); }
+		explicit GammaGenerator(std::mt19937& rngEngine, const RealType k) noexcept :
+			_rng_engine(rngEngine),
+			_dist(k, 1.0) {}
 
 		/**
 		* @brief Generates a sample of Gamma noise.
 		*
 		* @return A noise sample of type RealType.
 		*/
-		RealType getSample() noexcept override { return _dist(*rng); }
+		RealType getSample() noexcept override { return _dist(_rng_engine.get()); }
 
 	private:
+		std::reference_wrapper<std::mt19937> _rng_engine; ///< Reference to the RNG engine.
 		std::gamma_distribution<> _dist; ///< Gamma distribution for generating noise.
 	};
 
@@ -104,10 +115,11 @@ namespace noise
 		/**
 		* @brief Constructor to initialize the multirate generator.
 		*
+		* @param rngEngine The random number engine to use for generation.
 		* @param alpha The scaling parameter that controls the noise properties.
 		* @param branches The number of branches in the tree structure.
 		*/
-		MultirateGenerator(RealType alpha, unsigned branches);
+		MultirateGenerator(std::mt19937& rngEngine, RealType alpha, unsigned branches);
 
 		/**
 		* @brief Generates a multirate noise sample.
@@ -131,6 +143,7 @@ namespace noise
 	private:
 		RealType _scale; ///< Scaling factor for the noise.
 		std::unique_ptr<FAlphaBranch> _topbranch; ///< Pointer to the top branch in the tree structure.
+		std::reference_wrapper<std::mt19937> _rng_engine; ///< Reference to the RNG engine.
 
 		/**
 		* @brief Helper method to create the hierarchical tree structure.
@@ -154,6 +167,7 @@ namespace noise
 		/**
 		* @brief Constructor to initialize the clock model generator.
 		*
+		* @param rngEngine The random number engine to use for generation.
 		* @param alpha Vector of scaling parameters for the noise.
 		* @param inWeights Vector of weights for each rate process.
 		* @param frequency The base frequency of the clock model.
@@ -161,7 +175,8 @@ namespace noise
 		* @param freqOffset The frequency offset of the generated noise.
 		* @param branches The number of branches in each rate process.
 		*/
-		ClockModelGenerator(const std::vector<RealType>& alpha, const std::vector<RealType>& inWeights,
+		ClockModelGenerator(std::mt19937& rngEngine, const std::vector<RealType>& alpha,
+		                    const std::vector<RealType>& inWeights,
 		                    RealType frequency, RealType phaseOffset, RealType freqOffset, int branches) noexcept;
 
 		/**
@@ -191,6 +206,7 @@ namespace noise
 		[[nodiscard]] bool enabled() const;
 
 	private:
+		std::reference_wrapper<std::mt19937> _rng_engine; ///< Reference to the RNG engine.
 		std::vector<std::unique_ptr<MultirateGenerator>> _generators; ///< Multirate noise generators.
 		std::vector<RealType> _weights; ///< Weights for each rate process.
 		RealType _phase_offset; ///< Phase offset for the noise.

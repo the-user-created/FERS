@@ -12,7 +12,8 @@
 #include <span>
 #include <string>
 
-namespace pool {
+namespace pool
+{
 	class ThreadPool;
 }
 
@@ -43,7 +44,7 @@ namespace serial
 	* @param pool A reference to the ThreadPool object for parallel processing.
 	* @throws std::runtime_error If the file cannot be saved or data cannot be written to it.
 	*/
-	void exportReceiverBinary(std::span<const std::unique_ptr<Response>> responses, const radar::Receiver* recv,
+	void exportReceiverBinary(std::span<const std::unique_ptr<Response>> responses, radar::Receiver* recv,
 	                          const std::string& recvName, pool::ThreadPool& pool);
 
 	/**

@@ -1,6 +1,6 @@
 /**
  * @file target.cpp
- * @brief Defines classes for radar targets and their Radar Cross Section (RCS) models.
+ * @brief Defines classes for radar targets and their Radar Cross-Section (RCS) models.
  *
  * @authors David Young, Marc Brooker
  * @date 2007-06-11
@@ -53,8 +53,8 @@ namespace radar
 		return _model ? _rcs * _model->sampleModel() : _rcs;
 	}
 
-	FileTarget::FileTarget(Platform* platform, std::string name, const std::string& filename) :
-		Target(platform, std::move(name)), _azi_samples(std::make_unique_for_overwrite<interp::InterpSet>()),
+	FileTarget::FileTarget(Platform* platform, std::string name, const std::string& filename, const unsigned seed) :
+		Target(platform, std::move(name), seed), _azi_samples(std::make_unique_for_overwrite<interp::InterpSet>()),
 		_elev_samples(std::make_unique_for_overwrite<interp::InterpSet>())
 	{
 		XmlDocument doc;
