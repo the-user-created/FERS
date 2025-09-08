@@ -31,7 +31,7 @@ namespace core
 		unsigned num_threads = countProcessors(); ///< Number of threads to use, defaults to the number of processors.
 		bool validate = false; ///< Validate the input .fersxml file.
 		std::optional<std::string> log_file; ///< Optional log file path for logging output.
-		std::optional<std::string> kml_output_file; ///< Optional KML file path for visualization output.
+		bool generate_kml = false; ///< Optional flag to generate KML visualization output.
 	};
 
 	/**

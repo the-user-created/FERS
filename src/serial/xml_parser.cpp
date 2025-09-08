@@ -855,6 +855,19 @@ namespace serial
 			throw XmlException("Root element is not <simulation>!");
 		}
 
+		try
+		{
+			params::params.simulation_name = XmlElement::getSafeAttribute(root, "name");
+			if (!params::params.simulation_name.empty())
+			{
+				LOG(Level::INFO, "Simulation name set to: {}", params::params.simulation_name);
+			}
+		}
+		catch (const XmlException&)
+		{
+			LOG(Level::WARNING, "No 'name' attribute found in <simulation> tag. KML name will default.");
+		}
+
 		parseParameters(root.childElement("parameters", 0));
 		auto pulse_parser = [&](const XmlElement& p, World* w) { parsePulse(p, w, main_dir); };
 		parseElements(root, "pulse", world, pulse_parser);
