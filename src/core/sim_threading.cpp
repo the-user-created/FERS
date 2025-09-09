@@ -16,7 +16,7 @@
 #include <thread>
 #include <utility>
 #include <vector>
-#include <bits/chrono.h>
+#include <chrono>
 
 #include "parameters.h"
 #include "thread_pool.h"
@@ -33,7 +33,7 @@ using radar::Transmitter;
 using radar::Receiver;
 using radar::Target;
 using math::SVec3;
-using signal::RadarSignal;
+using fers_signal::RadarSignal;
 using radar::TransmitterPulse;
 using serial::Response;
 using logging::Level;

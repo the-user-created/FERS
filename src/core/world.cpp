@@ -13,7 +13,7 @@
 #include "signal/radar_signal.h"
 #include "timing/prototype_timing.h"
 
-using signal::RadarSignal;
+using fers_signal::RadarSignal;
 using antenna::Antenna;
 using timing::PrototypeTiming;
 using radar::Platform;

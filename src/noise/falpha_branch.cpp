@@ -18,8 +18,8 @@
 #include "signal/dsp_filters.h"
 
 using logging::Level;
-using signal::IirFilter;
-using signal::DecadeUpsampler;
+using fers_signal::IirFilter;
+using fers_signal::DecadeUpsampler;
 
 namespace noise
 {
