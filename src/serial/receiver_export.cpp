@@ -448,7 +448,7 @@ namespace serial
 
 			renderWindow(window, length, start, frac_delay, responses, pool);
 
-			if (params::oversampleRatio() > 1) { window = std::move(signal::downsample(window)); }
+			if (params::oversampleRatio() > 1) { window = std::move(fers_signal::downsample(window)); }
 
 			if (pn_enabled) { addPhaseNoiseToWindow(pnoise, window); }
 

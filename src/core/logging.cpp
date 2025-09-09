@@ -13,7 +13,7 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
-#include <bits/chrono.h>
+#include <chrono>
 
 namespace logging
 {

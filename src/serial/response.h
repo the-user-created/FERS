@@ -17,7 +17,7 @@
 
 class XmlElement;
 
-namespace signal
+namespace fers_signal
 {
 	class RadarSignal;
 }
@@ -42,7 +42,7 @@ namespace serial
 		* @param wave Pointer to the radar signal object.
 		* @param transmitter Pointer to the transmitter object.
 		*/
-		Response(const signal::RadarSignal* wave, const radar::Transmitter* transmitter) noexcept :
+		Response(const fers_signal::RadarSignal* wave, const radar::Transmitter* transmitter) noexcept :
 			_transmitter(transmitter), _wave(wave) {}
 
 		~Response() = default;
@@ -113,7 +113,7 @@ namespace serial
 
 	private:
 		const radar::Transmitter* _transmitter; ///< Pointer to the transmitter object.
-		const signal::RadarSignal* _wave; ///< Pointer to the radar signal object.
+		const fers_signal::RadarSignal* _wave; ///< Pointer to the radar signal object.
 		std::vector<interp::InterpPoint> _points; ///< Vector of interpolation points.
 
 		/**

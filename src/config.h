@@ -13,6 +13,7 @@
 #pragma once
 
 #include <complex>
+#include <numbers>
 
 /**
 * @brief Type for real numbers.

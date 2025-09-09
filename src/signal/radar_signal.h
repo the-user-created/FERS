@@ -21,7 +21,7 @@ namespace interp
 	struct InterpPoint;
 }
 
-namespace signal
+namespace fers_signal
 {
 	/**
 	 * @class Signal
