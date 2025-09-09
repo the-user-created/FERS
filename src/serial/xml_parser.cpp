@@ -279,7 +279,7 @@ namespace
 		try { timing_obj->setRandomPhaseOffsetStdev(get_child_real_type(timing, "random_phase_offset_stdev")); }
 		catch (XmlException&) { LOG(Level::WARNING, "Clock section '{}' does not specify random phase offset.", name); }
 
-		if (get_child_bool(timing, "synconpulse", true)) { timing_obj->setSyncOnPulse(); }
+		if (get_child_bool(timing, "synconpulse", false)) { timing_obj->setSyncOnPulse(); }
 
 		world->add(std::move(timing_obj));
 	}
