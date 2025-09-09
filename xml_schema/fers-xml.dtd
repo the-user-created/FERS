@@ -29,9 +29,9 @@
                 >
         <!-- Formats to export -->
         <!ELEMENT export EMPTY>
-        <!ATTLIST export xml (true|false) "true">
-        <!ATTLIST export csv (true|false) "true">
-        <!ATTLIST export binary (true|false) "false">
+        <!ATTLIST export xml (true|false) "false">
+        <!ATTLIST export csv (true|false) "false">
+        <!ATTLIST export binary (true|false) "true">
 
         <!-- Pulsed Radar Pulse -->
         <!ELEMENT pulse (power?,carrier?)>
@@ -49,7 +49,7 @@
         <!ELEMENT timing (frequency,freq_offset?,random_freq_offset_stdev?,phase_offset?,random_phase_offset_stdev?,noise_entry*)>
         <!-- Timing source. Sets frequency -->
         <!ATTLIST timing name CDATA #REQUIRED
-                synconpulse (true|false) "true">
+                synconpulse (true|false) "false">
 
         <!-- Frequency (Hz) -->
         <!ELEMENT frequency (#PCDATA)>

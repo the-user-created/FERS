@@ -138,6 +138,8 @@ namespace noise
 
 	void ClockModelGenerator::reset()
 	{
+		// reset() call chain is only called if sync on pulse is enabled,
+		// otherwise the all generators and counts remain as-is
 		for (const auto& generator : _generators) { generator->reset(); }
 		_count = 0;
 	}
