@@ -23,8 +23,8 @@
 #include "core/parameters.h"
 #include "signal/radar_signal.h"
 
-using signal::Signal;
-using signal::RadarSignal;
+using fers_signal::Signal;
+using fers_signal::RadarSignal;
 
 namespace
 {

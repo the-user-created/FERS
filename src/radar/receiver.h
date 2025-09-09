@@ -9,6 +9,7 @@
 #pragma once
 
 #include <random>
+#include <mutex>
 
 #include "radar_obj.h"
 #include "serial/response.h"

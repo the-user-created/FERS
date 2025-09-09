@@ -14,7 +14,7 @@
 #include <ranges>
 #include <stdexcept>
 #include <utility>
-#include <bits/std_abs.h>
+#include <cmath>
 
 namespace interp
 {

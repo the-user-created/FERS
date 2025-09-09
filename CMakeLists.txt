@@ -1,6 +1,15 @@
 cmake_minimum_required(VERSION 3.13)
 project(fers)
 
+if(APPLE AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+	# On macOS, when using a Homebrew LLVM toolchain for modern C++ features,
+	# we must explicitly tell the linker where to find the corresponding
+	# Homebrew libc++ library. Otherwise, it defaults to the older,
+	# incompatible system version.
+	message(STATUS "macOS with Clang detected. Setting linker paths for Homebrew libc++.")
+	link_directories(/usr/local/opt/llvm/lib/c++)
+endif()
+
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)  # Useful for static code analysis tools
 
