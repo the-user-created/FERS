@@ -46,7 +46,7 @@ using radar::Platform;
 using math::Path;
 using math::RotationPath;
 using radar::Target;
-using signal::RadarSignal;
+using fers_signal::RadarSignal;
 using timing::Timing;
 using timing::PrototypeTiming;
 using radar::Transmitter;

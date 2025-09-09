@@ -60,7 +60,7 @@ namespace
 	}
 }
 
-namespace signal
+namespace fers_signal
 {
 	void upsample(const std::span<const ComplexType> in, const unsigned size, std::span<ComplexType> out)
 	{

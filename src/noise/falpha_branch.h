@@ -85,13 +85,13 @@ namespace noise
 
 		std::normal_distribution<RealType> _normal_dist; ///< Normal distribution for generating white Gaussian noise.
 
-		std::unique_ptr<signal::IirFilter> _shape_filter; ///< Filter used for shaping the noise signal.
+		std::unique_ptr<fers_signal::IirFilter> _shape_filter; ///< Filter used for shaping the noise signal.
 
-		std::unique_ptr<signal::IirFilter> _integ_filter; ///< Filter used for integrating the noise signal.
+		std::unique_ptr<fers_signal::IirFilter> _integ_filter; ///< Filter used for integrating the noise signal.
 
-		std::unique_ptr<signal::IirFilter> _highpass; ///< High-pass filter to remove low-frequency components.
+		std::unique_ptr<fers_signal::IirFilter> _highpass; ///< High-pass filter to remove low-frequency components.
 
-		std::unique_ptr<signal::DecadeUpsampler> _upsampler; ///< Upsampler for generating higher-frequency components.
+		std::unique_ptr<fers_signal::DecadeUpsampler> _upsampler; ///< Upsampler for generating higher-frequency components.
 
 		std::unique_ptr<FAlphaBranch> _pre; ///< Previous FAlphaBranch in the chain for recursive noise processing.
 

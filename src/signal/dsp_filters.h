@@ -14,7 +14,7 @@
 
 #include "config.h"
 
-namespace signal
+namespace fers_signal
 {
 	/**
 	* @brief Upsamples a signal by a given ratio.

@@ -10,7 +10,7 @@
 
 #include "radar_obj.h"
 
-namespace signal
+namespace fers_signal
 {
 	class RadarSignal;
 }
@@ -24,7 +24,7 @@ namespace radar
 	*/
 	struct TransmitterPulse
 	{
-		signal::RadarSignal* wave; ///< Pointer to the radar signal wave.
+		fers_signal::RadarSignal* wave; ///< Pointer to the radar signal wave.
 
 		RealType time; ///< Time at which the pulse is emitted.
 	};
@@ -68,7 +68,7 @@ namespace radar
 		*
 		* @return Pointer to the RadarSignal object being transmitted.
 		*/
-		[[nodiscard]] signal::RadarSignal* getSignal() const noexcept { return _signal; }
+		[[nodiscard]] fers_signal::RadarSignal* getSignal() const noexcept { return _signal; }
 
 		/**
 		* @brief Checks if the transmitter is pulsed.
@@ -89,14 +89,14 @@ namespace radar
 		*
 		* @param pulse Pointer to the RadarSignal object representing the wave.
 		*/
-		void setWave(signal::RadarSignal* pulse) noexcept { _signal = pulse; }
+		void setWave(fers_signal::RadarSignal* pulse) noexcept { _signal = pulse; }
 
 		/**
 		* @brief Sets the radar signal wave to be transmitted.
 		*
 		* @param signal Pointer to the RadarSignal object to be transmitted.
 		*/
-		void setSignal(signal::RadarSignal* signal) noexcept { _signal = signal; }
+		void setSignal(fers_signal::RadarSignal* signal) noexcept { _signal = signal; }
 
 		/**
 		* @brief Sets whether the transmitter is pulsed or continuous wave.
@@ -122,7 +122,7 @@ namespace radar
 		void setPrf(RealType mprf) noexcept;
 
 	private:
-		signal::RadarSignal* _signal = nullptr; ///< Pointer to the radar signal being transmitted.
+		fers_signal::RadarSignal* _signal = nullptr; ///< Pointer to the radar signal being transmitted.
 
 		RealType _prf = {}; ///< The pulse repetition frequency (PRF) of the transmitter.
 

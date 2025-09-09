@@ -20,7 +20,7 @@
 #include "interpolation/interpolation_filter.h"
 #include "interpolation/interpolation_point.h"
 
-namespace signal
+namespace fers_signal
 {
 
 	RadarSignal::RadarSignal(std::string name, const RealType power, const RealType carrierfreq, const RealType length,
