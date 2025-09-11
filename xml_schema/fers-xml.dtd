@@ -3,7 +3,7 @@
         <!ATTLIST simulation name CDATA #REQUIRED>
 
         <!-- Simulation Parameters -->
-        <!ELEMENT parameters (starttime,endtime,rate,c?,simSamplingRate?,randomseed?,adc_bits?,oversample?,origin?,export?)>
+        <!ELEMENT parameters (starttime,endtime,rate,c?,simSamplingRate?,randomseed?,adc_bits?,oversample?,origin?,coordinatesystem?,export?)>
         <!-- Start time of simulation -->
         <!ELEMENT starttime (#PCDATA)>
         <!-- End time of simulation -->
@@ -20,12 +20,19 @@
         <!ELEMENT adc_bits (#PCDATA)>
         <!-- Oversampling factor -->
         <!ELEMENT oversample (#PCDATA)>
-        <!-- Geodetic Origin for the simulation coordinate system -->
+        <!-- Geodetic Origin for the simulation coordinate system (used for ENU frame) -->
         <!ELEMENT origin EMPTY>
         <!ATTLIST origin
                 latitude  CDATA #REQUIRED
                 longitude CDATA #REQUIRED
                 altitude  CDATA "0"
+                >
+        <!-- Coordinate System for the simulation input coordinates -->
+        <!ELEMENT coordinatesystem EMPTY>
+        <!ATTLIST coordinatesystem
+                frame      (ENU|UTM|ECEF) #REQUIRED
+                zone       CDATA          #IMPLIED
+                hemisphere (N|S)           #IMPLIED
                 >
         <!-- Formats to export -->
         <!ELEMENT export EMPTY>
