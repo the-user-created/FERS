@@ -212,35 +212,6 @@ namespace
 		return circle_coordinates;
 	}
 
-	/**
-	 * @brief Converts FERS internal azimuth to KML heading.
-	 *
-	 * FERS uses an East-North-Up (ENU) coordinate system, where azimuth is measured
-	 * in radians counter-clockwise from the East (+X) axis. This is confirmed by the
-	 * SVec3(Vec3) constructor which uses `atan2(y, x)`.
-	 *
-	 * KML heading is specified in degrees, measured clockwise from North (0 is North,
-	 * 90 is East, 180 is South, 270 is West).
-	 *
-	 * The conversion formula is: heading_kml_deg = 90.0 - azimuth_fers_deg.
-	 * This function performs the conversion and normalizes the result to [0, 360).
-	 *
-	 * @param fersAzimuthRad The FERS azimuth in radians.
-	 * @return The corresponding KML heading in degrees.
-	 */
-	double convertFersAzimuthToKmlHeading(const double fersAzimuthRad)
-	{
-		const double fers_azimuth_deg = fersAzimuthRad * 180.0 / PI;
-		double kml_heading = 90.0 - fers_azimuth_deg;
-		// Normalize to [0, 360) range
-		kml_heading = std::fmod(kml_heading, 360.0);
-		if (kml_heading < 0.0)
-		{
-			kml_heading += 360.0;
-		}
-		return kml_heading;
-	}
-
 	// --- KML Generation Helpers ---
 	void writeKmlHeaderAndStyles(std::ofstream& kmlFile)
 	{
@@ -371,10 +342,21 @@ namespace
 		const std::string start_coords_str = formatCoordinates(start_lon, start_lat, start_alt);
 
 		const math::SVec3 initial_rotation = platform->getRotationPath()->getPosition(params::startTime());
-		// The conversion from FERS internal azimuth to KML heading is now handled by a dedicated
-		// function that correctly transforms from FERS's coordinate system (azimuth counter-clockwise
-		// from East) to KML's heading convention (clockwise from North).
-		const double start_azimuth_deg_kml = convertFersAzimuthToKmlHeading(initial_rotation.azimuth);
+
+		// The parser now handles the conversion from compass heading to the internal
+		// FERS format (radians, CCW from East). The KML generator needs to convert
+		// this back to a standard KML heading (degrees, CW from North).
+		const double fers_azimuth_deg = initial_rotation.azimuth * 180.0 / PI;
+		double start_azimuth_deg_kml = 90.0 - fers_azimuth_deg;
+		// Normalize to [0, 360)
+		start_azimuth_deg_kml = std::fmod(start_azimuth_deg_kml, 360.0);
+		if (start_azimuth_deg_kml < 0.0) { start_azimuth_deg_kml += 360.0; }
+
+		// Project the arrow length onto the horizontal plane for the geodetic calculation
+		// and calculate the change in altitude separately.
+		const double horizontal_distance = DIRECTIONAL_ANTENNA_ARROW_LENGTH_M * std::cos(initial_rotation.elevation);
+		const double delta_altitude = DIRECTIONAL_ANTENNA_ARROW_LENGTH_M * std::sin(initial_rotation.elevation);
+		const double end_alt = start_alt + delta_altitude;
 
 		// TODO: Antenna beam visualization is static, showing only the orientation at the simulation's start time.
 		//       This does not represent dynamic scanning defined by a platform's <rotationpath>. The KML should
@@ -383,8 +365,8 @@ namespace
 		// Main beam
 		double dest_lat, dest_lon;
 		calculateDestinationCoordinate
-			(start_lat, start_lon, start_azimuth_deg_kml, DIRECTIONAL_ANTENNA_ARROW_LENGTH_M, dest_lat, dest_lon);
-		const std::string end_coords_str = formatCoordinates(dest_lon, dest_lat, start_alt);
+			(start_lat, start_lon, start_azimuth_deg_kml, horizontal_distance, dest_lat, dest_lon);
+		const std::string end_coords_str = formatCoordinates(dest_lon, dest_lat, end_alt);
 		writeAntennaBeamLine(kmlFile, indent, "Antenna Boresight", "#lineStyle", start_coords_str, end_coords_str);
 
 		// 3dB beamwidth lines, if angle is provided and is greater than a small epsilon
@@ -393,33 +375,36 @@ namespace
 			double side1_lat, side1_lon;
 			calculateDestinationCoordinate
 				(
-					start_lat, start_lon, start_azimuth_deg_kml - *angle3DbDropDeg, DIRECTIONAL_ANTENNA_ARROW_LENGTH_M,
+					start_lat, start_lon, start_azimuth_deg_kml - *angle3DbDropDeg, horizontal_distance,
 					side1_lat,
 					side1_lon
 					);
-			const std::string side1_coords_str = formatCoordinates(side1_lon, side1_lat, start_alt);
+			const std::string side1_coords_str = formatCoordinates(side1_lon, side1_lat, end_alt);
 			writeAntennaBeamLine(kmlFile, indent, "Antenna 3dB Beamwidth", "#lineStyleBlue", start_coords_str,
 			                     side1_coords_str);
 
 			double side2_lat, side2_lon;
 			calculateDestinationCoordinate
 				(
-					start_lat, start_lon, start_azimuth_deg_kml + *angle3DbDropDeg, DIRECTIONAL_ANTENNA_ARROW_LENGTH_M,
+					start_lat, start_lon, start_azimuth_deg_kml + *angle3DbDropDeg, horizontal_distance,
 					side2_lat,
 					side2_lon
 					);
-			const std::string side2_coords_str = formatCoordinates(side2_lon, side2_lat, start_alt);
+			const std::string side2_coords_str = formatCoordinates(side2_lon, side2_lat, end_alt);
 			writeAntennaBeamLine(kmlFile, indent, "Antenna 3dB Beamwidth", "#lineStyleBlue", start_coords_str,
 			                     side2_coords_str);
 		}
 
 		// Arrow placemark
+		const double arrow_heading = std::fmod(start_azimuth_deg_kml + 180.0, 360.0);
 		kmlFile << indent << "<Placemark>\n";
 		kmlFile << indent << "  <name>Antenna Arrow</name>\n";
 		kmlFile << indent << "  <styleUrl>#arrowStyle</styleUrl>\n";
 		kmlFile << indent << "  <Point><coordinates>" << end_coords_str <<
 			"</coordinates><altitudeMode>absolute</altitudeMode></Point>\n";
-		kmlFile << indent << "  <IconStyle><heading>" << start_azimuth_deg_kml << "</heading></IconStyle>\n";
+		kmlFile << indent << "  <Style>\n";
+		kmlFile << indent << "    <IconStyle><heading>" << arrow_heading << "</heading></IconStyle>\n";
+		kmlFile << indent << "  </Style>\n";
 		kmlFile << indent << "</Placemark>\n";
 	}
 
