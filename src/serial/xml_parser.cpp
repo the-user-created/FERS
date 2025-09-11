@@ -502,11 +502,17 @@ namespace
 			{
 				LOG(Level::TRACE, "Adding waypoint {} to rotation path for platform {}.", waypoint_index,
 				    platform->getName());
-				path->addCoord({
-					get_child_real_type(waypoint, "elevation"),
-					get_child_real_type(waypoint, "azimuth"),
-					get_child_real_type(waypoint, "time")
-				});
+
+				const RealType az_deg = get_child_real_type(waypoint, "azimuth");
+				const RealType el_deg = get_child_real_type(waypoint, "elevation");
+				const RealType time = get_child_real_type(waypoint, "time");
+
+				// Convert from compass heading (degrees, CW from North) to FERS mathematical angle (radians, CCW from East)
+				const RealType az_rad = (90.0 - az_deg) * (PI / 180.0);
+				// Convert elevation from degrees to radians
+				const RealType el_rad = el_deg * (PI / 180.0);
+
+				path->addCoord({az_rad, el_rad, time});
 			}
 			catch (const XmlException& e)
 			{
@@ -531,10 +537,21 @@ namespace
 		try
 		{
 			math::RotationCoord start, rate;
-			start.azimuth = get_child_real_type(rotation, "startazimuth");
-			start.elevation = get_child_real_type(rotation, "startelevation");
-			rate.azimuth = get_child_real_type(rotation, "azimuthrate");
-			rate.elevation = get_child_real_type(rotation, "elevationrate");
+			const RealType start_az_deg = get_child_real_type(rotation, "startazimuth");
+			const RealType start_el_deg = get_child_real_type(rotation, "startelevation");
+			const RealType rate_az_deg_s = get_child_real_type(rotation, "azimuthrate");
+			const RealType rate_el_deg_s = get_child_real_type(rotation, "elevationrate");
+
+			// Convert compass azimuth (degrees, CW from North) to FERS mathematical angle (radians, CCW from East)
+			start.azimuth = (90.0 - start_az_deg) * (PI / 180.0);
+			// Convert elevation from degrees to radians
+			start.elevation = start_el_deg * (PI / 180.0);
+
+			// Convert angular rates from deg/s to rad/s.
+			// A positive (CW) azimuth rate in degrees becomes a negative (CCW) rate in radians.
+			rate.azimuth = -rate_az_deg_s * (PI / 180.0);
+			rate.elevation = rate_el_deg_s * (PI / 180.0);
+
 			path->setConstantRate(start, rate);
 			LOG(Level::DEBUG, "Added fixed rotation to platform {}", platform->getName());
 		}
