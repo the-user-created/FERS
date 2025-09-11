@@ -20,8 +20,10 @@
 #include <string>
 #include <vector>
 
+#include <GeographicLib/Geocentric.hpp>
 #include <GeographicLib/Geodesic.hpp>
 #include <GeographicLib/LocalCartesian.hpp>
+#include <GeographicLib/UTMUPS.hpp>
 
 #include "config.h"
 #include "antenna/antenna_factory.h"
@@ -37,14 +39,11 @@
 #include "radar/transmitter.h"
 #include "signal/radar_signal.h"
 
-// TODO: The KML generator assumes all scenarios use a local ENU tangent plane, which conflicts with FERS's
-//       coordinate-system-agnostic design. This can lead to incorrect visualizations if a user designs a
-//       scenario in a different frame (e.g., ECEF). Consider adding support for other common coordinate
-//       systems or prominently documenting this limitation.
 
 namespace
 {
 	using namespace std;
+	using ConverterFunc = std::function<void(const math::Vec3&, double&, double&, double&)>;
 
 	// --- Constants ---
 	constexpr int TRACK_NUM_DIVISIONS = 100;
@@ -333,12 +332,12 @@ namespace
 
 	void generateIsotropicAntennaKml
 	(
-		std::ofstream& kmlFile, const math::Vec3& position, const GeographicLib::LocalCartesian& proj,
+		std::ofstream& kmlFile, const math::Vec3& position, const ConverterFunc& converter,
 		const std::string& indent
 		)
 	{
 		double lat, lon, alt_abs;
-		proj.Reverse(position.x, position.y, position.z, lat, lon, alt_abs);
+		converter(position, lat, lon, alt_abs);
 
 		const auto circle_coordinates = generateCircleCoordinates(lat, lon, ISOTROPIC_PATTERN_RADIUS_KM);
 
@@ -362,13 +361,13 @@ namespace
 
 	void generateDirectionalAntennaKml
 	(
-		std::ofstream& kmlFile, const radar::Platform* platform, const GeographicLib::LocalCartesian& proj,
+		std::ofstream& kmlFile, const radar::Platform* platform, const ConverterFunc& converter,
 		const std::optional<double>& angle3DbDropDeg, const std::string& indent
 		)
 	{
 		const auto& first_wp_pos = platform->getMotionPath()->getCoords().front().pos;
 		double start_lat, start_lon, start_alt;
-		proj.Reverse(first_wp_pos.x, first_wp_pos.y, first_wp_pos.z, start_lat, start_lon, start_alt);
+		converter(first_wp_pos, start_lat, start_lon, start_alt);
 		const std::string start_coords_str = formatCoordinates(start_lon, start_lat, start_alt);
 
 		const math::SVec3 initial_rotation = platform->getRotationPath()->getPosition(params::startTime());
@@ -427,7 +426,7 @@ namespace
 	void generateAntennaKml
 	(
 		std::ofstream& kmlFile, const radar::Platform* platform, const radar::Radar* radar,
-		const GeographicLib::LocalCartesian& proj, const std::string& indent
+		const ConverterFunc& converter, const std::string& indent
 		)
 	{
 		const antenna::Antenna* ant = radar->getAntenna();
@@ -436,7 +435,7 @@ namespace
 		if (dynamic_cast<const antenna::Isotropic*>(ant))
 		{
 			const math::Vec3 initial_pos = platform->getMotionPath()->getCoords().front().pos;
-			generateIsotropicAntennaKml(kmlFile, initial_pos, proj, indent);
+			generateIsotropicAntennaKml(kmlFile, initial_pos, converter, indent);
 		}
 		else // Handle all directional antennas
 		{
@@ -498,14 +497,14 @@ namespace
 					);
 			}
 
-			generateDirectionalAntennaKml(kmlFile, platform, proj, angle_3db_drop_deg, indent);
+			generateDirectionalAntennaKml(kmlFile, platform, converter, angle_3db_drop_deg, indent);
 		}
 	}
 
 	void generateDynamicPathKml
 	(
 		std::ofstream& kmlFile, const radar::Platform* platform, const std::string& styleUrl, const double refAlt,
-		const GeographicLib::LocalCartesian& proj, const std::string& indent
+		const ConverterFunc& converter, const std::string& indent
 		)
 	{
 		const math::Path* path = platform->getMotionPath();
@@ -514,8 +513,7 @@ namespace
 		double first_alt_abs;
 		{
 			double lat, lon;
-			proj.Reverse
-				(waypoints.front().pos.x, waypoints.front().pos.y, waypoints.front().pos.z, lat, lon, first_alt_abs);
+			converter(waypoints.front().pos, lat, lon, first_alt_abs);
 		}
 
 		kmlFile << indent << "<Placemark>\n";
@@ -533,9 +531,9 @@ namespace
 		// Handle single-point paths or paths with zero duration by emitting a single coordinate.
 		if (const double time_diff = end_time - start_time; time_diff <= 0.0)
 		{
-			const math::Vec3 p_local_pos = path->getPosition(start_time);
+			const math::Vec3 p_pos = path->getPosition(start_time);
 			double p_lon, p_lat, p_alt_abs;
-			proj.Reverse(p_local_pos.x, p_local_pos.y, p_local_pos.z, p_lat, p_lon, p_alt_abs);
+			converter(p_pos, p_lat, p_lon, p_alt_abs);
 			kmlFile << indent << "    <when>" << start_time << "</when>\n";
 			kmlFile << indent << "    <gx:coord>" << p_lon << " " << p_lat << " " << p_alt_abs << "</gx:coord>\n";
 		}
@@ -545,11 +543,9 @@ namespace
 			for (int i = 0; i <= TRACK_NUM_DIVISIONS; ++i)
 			{
 				const double current_time = start_time + i * time_step;
-				const math::Vec3 p_local_pos = path->getPosition(current_time);
-
+				const math::Vec3 p_pos = path->getPosition(current_time);
 				double p_lon, p_lat, p_alt_abs;
-				proj.Reverse(p_local_pos.x, p_local_pos.y, p_local_pos.z, p_lat, p_lon, p_alt_abs);
-
+				converter(p_pos, p_lat, p_lon, p_alt_abs);
 				kmlFile << indent << "    <when>" << current_time << "</when>\n";
 				kmlFile << indent << "    <gx:coord>" << p_lon << " " << p_lat << " " << p_alt_abs << "</gx:coord>\n";
 			}
@@ -562,7 +558,7 @@ namespace
 	void generateTrackEndpointsKml
 	(
 		std::ofstream& kmlFile, const radar::Platform* platform, const double refAlt,
-		const GeographicLib::LocalCartesian& proj, const std::string& indent
+		const ConverterFunc& converter, const std::string& indent
 		)
 	{
 		const math::Path* path = platform->getMotionPath();
@@ -572,11 +568,11 @@ namespace
 		const auto& [end_wp_pos, end_wp_t] = path->getCoords().back();
 
 		double start_lat, start_lon, start_alt_abs;
-		proj.Reverse(start_wp_pos.x, start_wp_pos.y, start_wp_pos.z, start_lat, start_lon, start_alt_abs);
+		converter(start_wp_pos, start_lat, start_lon, start_alt_abs);
 		const std::string start_coordinates = formatCoordinates(start_lon, start_lat, start_alt_abs);
 
 		double end_lat, end_lon, end_alt_abs;
-		proj.Reverse(end_wp_pos.x, end_wp_pos.y, end_wp_pos.z, end_lat, end_lon, end_alt_abs);
+		converter(end_wp_pos, end_lat, end_lon, end_alt_abs);
 		const std::string end_coordinates = formatCoordinates(end_lon, end_lat, end_alt_abs);
 
 		writePoint(kmlFile, indent, "Start: " + platform->getName(), "#target", start_coordinates, start_alt_abs,
@@ -587,12 +583,12 @@ namespace
 	void generateStaticPlacemarkKml
 	(
 		std::ofstream& kmlFile, const radar::Platform* platform, const std::string& styleUrl, const double refAlt,
-		const GeographicLib::LocalCartesian& proj, const std::string& indent
+		const ConverterFunc& converter, const std::string& indent
 		)
 	{
 		const auto& [first_wp_pos, first_wp_t] = platform->getMotionPath()->getCoords().front();
 		double lat, lon, alt_abs;
-		proj.Reverse(first_wp_pos.x, first_wp_pos.y, first_wp_pos.z, lat, lon, alt_abs);
+		converter(first_wp_pos, lat, lon, alt_abs);
 		const std::string coordinates = formatCoordinates(lon, lat, alt_abs);
 
 		kmlFile << indent << "<Placemark>\n";
@@ -615,7 +611,7 @@ namespace
 	void generatePlatformPathKml
 	(
 		std::ofstream& kmlFile, const radar::Platform* platform, const std::string& style, const double refAlt,
-		const GeographicLib::LocalCartesian& proj, const std::string& indent
+		const ConverterFunc& converter, const std::string& indent
 		)
 	{
 		const auto path_type = platform->getMotionPath()->getType();
@@ -624,16 +620,16 @@ namespace
 
 		if (is_dynamic)
 		{
-			generateDynamicPathKml(kmlFile, platform, style, refAlt, proj, indent);
-			generateTrackEndpointsKml(kmlFile, platform, refAlt, proj, indent);
+			generateDynamicPathKml(kmlFile, platform, style, refAlt, converter, indent);
+			generateTrackEndpointsKml(kmlFile, platform, refAlt, converter, indent);
 		}
-		else { generateStaticPlacemarkKml(kmlFile, platform, style, refAlt, proj, indent); }
+		else { generateStaticPlacemarkKml(kmlFile, platform, style, refAlt, converter, indent); }
 	}
 
 	void processPlatform
 	(
 		const radar::Platform* platform, const std::vector<const radar::Object*>& objects, std::ofstream& kmlFile,
-		const GeographicLib::LocalCartesian& proj, const double referenceAltitude, const std::string& indent
+		const ConverterFunc& converter, const double referenceAltitude, const std::string& indent
 		)
 	{
 		if (platform->getMotionPath()->getCoords().empty()) { return; }
@@ -646,10 +642,10 @@ namespace
 
 		if (const auto* radar_obj = getPrimaryRadar(objects))
 		{
-			generateAntennaKml(kmlFile, platform, radar_obj, proj, inner_indent);
+			generateAntennaKml(kmlFile, platform, radar_obj, converter, inner_indent);
 		}
 
-		generatePlatformPathKml(kmlFile, platform, placemark_style, referenceAltitude, proj, inner_indent);
+		generatePlatformPathKml(kmlFile, platform, placemark_style, referenceAltitude, converter, inner_indent);
 
 		kmlFile << indent << "</Folder>\n";
 	}
@@ -662,11 +658,47 @@ namespace serial
 	{
 		try
 		{
-			const double reference_latitude = params::originLatitude();
-			const double reference_longitude = params::originLongitude();
-			const double reference_altitude = params::originAltitude();
+			// Setup coordinate conversion based on global parameters
+			ConverterFunc converter;
+			double reference_latitude, reference_longitude, reference_altitude;
 
-			GeographicLib::LocalCartesian proj(reference_latitude, reference_longitude, reference_altitude);
+			switch (params::coordinateFrame())
+			{
+			case params::CoordinateFrame::ENU:
+			{
+				reference_latitude = params::originLatitude();
+				reference_longitude = params::originLongitude();
+				reference_altitude = params::originAltitude();
+				auto proj = std::make_shared<GeographicLib::LocalCartesian>(
+					reference_latitude, reference_longitude, reference_altitude);
+				converter = [proj](const math::Vec3& pos, double& lat, double& lon, double& alt)
+				{
+					proj->Reverse(pos.x, pos.y, pos.z, lat, lon, alt);
+				};
+				break;
+			}
+			case params::CoordinateFrame::UTM:
+			{
+				const int zone = params::utmZone();
+				const bool northp = params::utmNorthHemisphere();
+				converter = [zone, northp](const math::Vec3& pos, double& lat, double& lon, double& alt)
+				{
+					double gamma, k;
+					GeographicLib::UTMUPS::Reverse(zone, northp, pos.x, pos.y, lat, lon, gamma, k);
+					alt = pos.z; // Altitude is given directly in the z-coordinate
+				};
+				break;
+			}
+			case params::CoordinateFrame::ECEF:
+			{
+				const auto& earth = GeographicLib::Geocentric::WGS84();
+				converter = [&earth](const math::Vec3& pos, double& lat, double& lon, double& alt)
+				{
+					earth.Reverse(pos.x, pos.y, pos.z, lat, lon, alt);
+				};
+				break;
+			}
+			}
 
 			map<const radar::Platform*, vector<const radar::Object*>> platform_to_objects;
 			const auto group_objects = [&](const auto& objectCollection)
@@ -680,6 +712,27 @@ namespace serial
 			group_objects(world.getReceivers());
 			group_objects(world.getTransmitters());
 			group_objects(world.getTargets());
+
+			if (params::coordinateFrame() != params::CoordinateFrame::ENU)
+			{
+				bool ref_set = false;
+				for (const auto& [platform, objects] : platform_to_objects)
+				{
+					if (!platform->getMotionPath()->getCoords().empty())
+					{
+						const math::Vec3& first_pos = platform->getMotionPath()->getCoords().front().pos;
+						converter(first_pos, reference_latitude, reference_longitude, reference_altitude);
+						ref_set = true;
+						break;
+					}
+				}
+				if (!ref_set) // Fallback if no platforms or no waypoints
+				{
+					reference_latitude = params::originLatitude(); // UCT default
+					reference_longitude = params::originLongitude();
+					reference_altitude = params::originAltitude();
+				}
+			}
 
 			std::ofstream kml_file(outputKmlPath.c_str());
 			if (!kml_file.is_open())
@@ -704,7 +757,7 @@ namespace serial
 			const std::string platform_indent = "    ";
 			for (const auto& [platform, objects] : platform_to_objects)
 			{
-				processPlatform(platform, objects, kml_file, proj, reference_altitude, platform_indent);
+				processPlatform(platform, objects, kml_file, converter, reference_altitude, platform_indent);
 			}
 
 			kml_file << "  </Folder>\n";

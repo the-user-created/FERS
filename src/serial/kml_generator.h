@@ -1,11 +1,3 @@
-/**
-* @file kml_generator.h
-* @brief Header file for KML file generation from FERS simulation scenarios.
-*
-* @authors David Young
-* @date 2025-07-31
-*/
-
 #pragma once
 
 #include <string>
@@ -21,21 +13,24 @@ namespace serial
 	 * @class KmlGenerator
 	 * @brief Generates KML files from FERS simulation scenarios for geographical visualization.
 	 *
-	 * This class reads a FERS XML scenario and interprets its local Cartesian coordinates
-	 * within a geodetic (WGS84) framework. It makes the following key assumptions:
+	 * This class generates KML files for geographical visualization of FERS scenarios. It
+	 * interprets the simulation coordinates based on the user-specified coordinate system
+	 * in the XML file, which can be one of:
 	 *
-	 * - Geodetic Origin: The simulation's local origin (0,0,0) is anchored to a
-	 *   geographical point defined by the `<origin>` tag in the XML's `<parameters>` section.
-	 *   The origin's altitude is considered its Mean Sea Level (MSL) altitude.
-	 *   If this tag is not present, a default location is used.
+	 * - ENU (East-North-Up): Default. Local Cartesian coordinates (x, y, z) are
+	 *   treated as meters in an ENU tangent plane centered at a geodetic `<origin>`.
 	 *
-	 * - Coordinate Interpretation: The local `(x, y)` coordinates from `<positionwaypoint>`
-	 *   are treated as meters in an East-North-Up (ENU) tangent plane centered at the origin.
+	 * - UTM (Universal Transverse Mercator): Coordinates (x, y, z) are treated as
+	 *   easting (m), northing (m), and altitude (m) within a specified UTM zone and
+	 *   hemisphere.
 	 *
-	 * - Altitude Interpretation: The `<altitude>` value in a `<positionwaypoint>` is interpreted
-	 *   as a relative offset in the local "up" direction (z-axis) from the geodetic origin.
-	 *   The final absolute altitude (MSL) is calculated by GeographicLib based on this offset
-	 *   and the origin's altitude. The KML is then written with `<altitudeMode>absolute</altitudeMode>`.
+	 * - ECEF (Earth-Centered, Earth-Fixed): Coordinates (x, y, z) are treated as
+	 *   geocentric X, Y, Z values in meters.
+	 *
+	 * All input coordinates are converted to WGS84 geodetic coordinates (latitude,
+	 * longitude, altitude) for the final KML output. The KML is written with
+	 * `<altitudeMode>absolute</altitudeMode>`, where altitude is relative to Mean Sea
+	 * Level (MSL).
 	 */
 	class KmlGenerator
 	{

@@ -17,6 +17,7 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+#include <GeographicLib/UTMUPS.hpp>
 
 #include "config.h"
 #include "fers_xml_dtd.h"
@@ -170,6 +171,7 @@ namespace
 		}
 
 		// Parse the origin element for the KML generator
+		bool origin_set = false;
 		if (const XmlElement origin_element = parameters.childElement("origin", 0); origin_element.isValid())
 		{
 			try
@@ -178,10 +180,64 @@ namespace
 				const double longitude = std::stod(XmlElement::getSafeAttribute(origin_element, "longitude"));
 				const double altitude = std::stod(XmlElement::getSafeAttribute(origin_element, "altitude"));
 				params::setOrigin(latitude, longitude, altitude);
+				origin_set = true;
 			}
 			catch (const std::exception& e)
 			{
 				LOG(Level::WARNING, "Could not parse origin from XML, using defaults. Error: {}", e.what());
+			}
+		}
+
+		// Parse coordinate system, defaulting to ENU
+		if (const XmlElement cs_element = parameters.childElement("coordinatesystem", 0); cs_element.isValid())
+		{
+			try
+			{
+				const std::string frame_str = XmlElement::getSafeAttribute(cs_element, "frame");
+				params::CoordinateFrame frame;
+				int zone = 0;
+				bool north = true;
+
+				if (frame_str == "UTM")
+				{
+					frame = params::CoordinateFrame::UTM;
+					zone = std::stoi(XmlElement::getSafeAttribute(cs_element, "zone"));
+					const std::string hem_str = XmlElement::getSafeAttribute(cs_element, "hemisphere");
+
+					if (zone < GeographicLib::UTMUPS::MINUTMZONE || zone > GeographicLib::UTMUPS::MAXUTMZONE)
+					{
+						throw XmlException("UTM zone " + std::to_string(zone) + " is invalid; must be in [1, 60].");
+					}
+					if (hem_str == "N" || hem_str == "n") { north = true; }
+					else if (hem_str == "S" || hem_str == "s") { north = false; }
+					else
+					{
+						throw XmlException("UTM hemisphere '" + hem_str + "' is invalid; must be 'N' or 'S'.");
+					}
+					LOG(Level::INFO, "Coordinate system set to UTM, zone {}{}", zone, north ? 'N' : 'S');
+				}
+				else if (frame_str == "ECEF")
+				{
+					frame = params::CoordinateFrame::ECEF;
+					LOG(Level::INFO, "Coordinate system set to ECEF.");
+				}
+				else if (frame_str == "ENU")
+				{
+					frame = params::CoordinateFrame::ENU;
+					if (!origin_set)
+					{
+						LOG(Level::WARNING,
+						    "ENU frame specified but no <origin> tag found. Using default origin at UCT.");
+					}
+					LOG(Level::INFO, "Coordinate system set to ENU local tangent plane.");
+				}
+				else { throw XmlException("Unsupported coordinate frame: " + frame_str); }
+				params::setCoordinateSystem(frame, zone, north);
+			}
+			catch (const std::exception& e)
+			{
+				LOG(Level::WARNING, "Could not parse <coordinatesystem> from XML: {}. Defaulting to ENU.", e.what());
+				params::setCoordinateSystem(params::CoordinateFrame::ENU, 0, true);
 			}
 		}
 	}
