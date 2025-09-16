@@ -17,6 +17,7 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+#include <GeographicLib/UTMUPS.hpp>
 
 #include "config.h"
 #include "fers_xml_dtd.h"
@@ -174,6 +175,7 @@ namespace
 		}
 
 		// Parse the origin element for the KML generator
+		bool origin_set = false;
 		if (const XmlElement origin_element = parameters.childElement("origin", 0); origin_element.isValid())
 		{
 			try
@@ -182,10 +184,64 @@ namespace
 				const double longitude = std::stod(XmlElement::getSafeAttribute(origin_element, "longitude"));
 				const double altitude = std::stod(XmlElement::getSafeAttribute(origin_element, "altitude"));
 				params::setOrigin(latitude, longitude, altitude);
+				origin_set = true;
 			}
 			catch (const std::exception& e)
 			{
 				LOG(Level::WARNING, "Could not parse origin from XML, using defaults. Error: {}", e.what());
+			}
+		}
+
+		// Parse coordinate system, defaulting to ENU
+		if (const XmlElement cs_element = parameters.childElement("coordinatesystem", 0); cs_element.isValid())
+		{
+			try
+			{
+				const std::string frame_str = XmlElement::getSafeAttribute(cs_element, "frame");
+				params::CoordinateFrame frame;
+				int zone = 0;
+				bool north = true;
+
+				if (frame_str == "UTM")
+				{
+					frame = params::CoordinateFrame::UTM;
+					zone = std::stoi(XmlElement::getSafeAttribute(cs_element, "zone"));
+					const std::string hem_str = XmlElement::getSafeAttribute(cs_element, "hemisphere");
+
+					if (zone < GeographicLib::UTMUPS::MINUTMZONE || zone > GeographicLib::UTMUPS::MAXUTMZONE)
+					{
+						throw XmlException("UTM zone " + std::to_string(zone) + " is invalid; must be in [1, 60].");
+					}
+					if (hem_str == "N" || hem_str == "n") { north = true; }
+					else if (hem_str == "S" || hem_str == "s") { north = false; }
+					else
+					{
+						throw XmlException("UTM hemisphere '" + hem_str + "' is invalid; must be 'N' or 'S'.");
+					}
+					LOG(Level::INFO, "Coordinate system set to UTM, zone {}{}", zone, north ? 'N' : 'S');
+				}
+				else if (frame_str == "ECEF")
+				{
+					frame = params::CoordinateFrame::ECEF;
+					LOG(Level::INFO, "Coordinate system set to ECEF.");
+				}
+				else if (frame_str == "ENU")
+				{
+					frame = params::CoordinateFrame::ENU;
+					if (!origin_set)
+					{
+						LOG(Level::WARNING,
+						    "ENU frame specified but no <origin> tag found. Using default origin at UCT.");
+					}
+					LOG(Level::INFO, "Coordinate system set to ENU local tangent plane.");
+				}
+				else { throw XmlException("Unsupported coordinate frame: " + frame_str); }
+				params::setCoordinateSystem(frame, zone, north);
+			}
+			catch (const std::exception& e)
+			{
+				LOG(Level::WARNING, "Could not parse <coordinatesystem> from XML: {}. Defaulting to ENU.", e.what());
+				params::setCoordinateSystem(params::CoordinateFrame::ENU, 0, true);
 			}
 		}
 	}
@@ -344,7 +400,7 @@ namespace
 		}
 		else if (pattern == "file")
 		{
-			ant = std::make_unique<antenna::FileAntenna>(name, XmlElement::getSafeAttribute(antenna, "filename"));
+			ant = std::make_unique<antenna::H5Antenna>(name, XmlElement::getSafeAttribute(antenna, "filename"));
 		}
 		else
 		{
@@ -459,11 +515,17 @@ namespace
 			{
 				LOG(Level::TRACE, "Adding waypoint {} to rotation path for platform {}.", waypoint_index,
 				    platform->getName());
-				path->addCoord({
-					get_child_real_type(waypoint, "elevation"),
-					get_child_real_type(waypoint, "azimuth"),
-					get_child_real_type(waypoint, "time")
-				});
+
+				const RealType az_deg = get_child_real_type(waypoint, "azimuth");
+				const RealType el_deg = get_child_real_type(waypoint, "elevation");
+				const RealType time = get_child_real_type(waypoint, "time");
+
+				// Convert from compass heading (degrees, CW from North) to FERS mathematical angle (radians, CCW from East)
+				const RealType az_rad = (90.0 - az_deg) * (PI / 180.0);
+				// Convert elevation from degrees to radians
+				const RealType el_rad = el_deg * (PI / 180.0);
+
+				path->addCoord({az_rad, el_rad, time});
 			}
 			catch (const XmlException& e)
 			{
@@ -488,10 +550,21 @@ namespace
 		try
 		{
 			math::RotationCoord start, rate;
-			start.azimuth = get_child_real_type(rotation, "startazimuth");
-			start.elevation = get_child_real_type(rotation, "startelevation");
-			rate.azimuth = get_child_real_type(rotation, "azimuthrate");
-			rate.elevation = get_child_real_type(rotation, "elevationrate");
+			const RealType start_az_deg = get_child_real_type(rotation, "startazimuth");
+			const RealType start_el_deg = get_child_real_type(rotation, "startelevation");
+			const RealType rate_az_deg_s = get_child_real_type(rotation, "azimuthrate");
+			const RealType rate_el_deg_s = get_child_real_type(rotation, "elevationrate");
+
+			// Convert compass azimuth (degrees, CW from North) to FERS mathematical angle (radians, CCW from East)
+			start.azimuth = (90.0 - start_az_deg) * (PI / 180.0);
+			// Convert elevation from degrees to radians
+			start.elevation = start_el_deg * (PI / 180.0);
+
+			// Convert angular rates from deg/s to rad/s.
+			// A positive (CW) azimuth rate in degrees becomes a negative (CCW) rate in radians.
+			rate.azimuth = -rate_az_deg_s * (PI / 180.0);
+			rate.elevation = rate_el_deg_s * (PI / 180.0);
+
 			path->setConstantRate(start, rate);
 			LOG(Level::DEBUG, "Added fixed rotation to platform {}", platform->getName());
 		}

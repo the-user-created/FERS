@@ -12,12 +12,16 @@
 #include <string>
 #include <string_view>
 #include <utility>
-
-#include "antenna_pattern.h"
+#include <vector>
 #include "config.h"
 #include "core/logging.h"
 #include "interpolation/interpolation_set.h"
 #include "math/geometry_ops.h"
+
+namespace serial
+{
+	std::vector<std::vector<RealType>> readPattern(const std::string& name, const std::string& datasetName);
+}
 
 namespace antenna
 {
@@ -240,6 +244,12 @@ namespace antenna
 		[[nodiscard]] RealType getGain(const math::SVec3& angle, const math::SVec3& refangle,
 		                               RealType wavelength) const noexcept override;
 
+		/** @brief Gets the azimuth scale factor. */
+		[[nodiscard]] RealType getAzimuthScale() const noexcept { return _azscale; }
+
+		/** @brief Gets the elevation scale factor. */
+		[[nodiscard]] RealType getElevationScale() const noexcept { return _elscale; }
+
 	private:
 		RealType _azscale; ///< Azimuth scale factor.
 		RealType _elscale; ///< Elevation scale factor.
@@ -285,6 +295,9 @@ namespace antenna
 		[[nodiscard]] RealType getGain(const math::SVec3& angle, const math::SVec3& refangle,
 		                               RealType wavelength) const noexcept override;
 
+		/** @brief Gets the dimension of the square horn. */
+		[[nodiscard]] RealType getDimension() const noexcept { return _dimension; }
+
 	private:
 		RealType _dimension; ///< Dimension of the square horn.
 	};
@@ -327,6 +340,9 @@ namespace antenna
 		 */
 		[[nodiscard]] RealType getGain(const math::SVec3& angle, const math::SVec3& refangle,
 		                               RealType wavelength) const noexcept override;
+
+		/** @brief Gets the diameter of the parabolic reflector. */
+		[[nodiscard]] RealType getDiameter() const noexcept { return _diameter; }
 
 	private:
 		RealType _diameter; ///< Diameter of the parabolic reflector.
@@ -376,6 +392,15 @@ namespace antenna
 		[[nodiscard]] RealType getGain(const math::SVec3& angle, const math::SVec3& refangle,
 		                               RealType wavelength) const override;
 
+		/** @brief Gets the maximum gain of the antenna. */
+		[[nodiscard]] RealType getMaxGain() const noexcept { return _max_gain; }
+
+		/** @brief Gets the interpolation set for azimuth gain samples. */
+		[[nodiscard]] const interp::InterpSet* getAzimuthSamples() const noexcept { return _azi_samples.get(); }
+
+		/** @brief Gets the interpolation set for elevation gain samples. */
+		[[nodiscard]] const interp::InterpSet* getElevationSamples() const noexcept { return _elev_samples.get(); }
+
 	private:
 		/**
 		 * @brief Loads the antenna gain pattern from the specified XML file.
@@ -391,36 +416,34 @@ namespace antenna
 	};
 
 	/**
-	 * @class FileAntenna
-	 * @brief Represents an antenna whose gain pattern is loaded from a file.
+	 * @class H5Antenna
+	 * @brief Represents an antenna whose gain pattern is loaded from a HDF5 file.
 	 *
-	 * This class models an antenna with a gain pattern defined in an external file. The gain pattern is stored in a
+	 * This class models an antenna with a gain pattern defined in an HDF5 file. The gain pattern is stored in a
 	 * `Pattern` object, which is used to compute the antenna's gain based on the input angle and reference angle.
 	 */
-	class FileAntenna final : public Antenna
+	class H5Antenna final : public Antenna
 	{
 	public:
 		/**
-		 * @brief Constructs a FileAntenna with the specified name and gain pattern file.
-		 *
-		 * The constructor initializes the antenna by loading the gain pattern from the provided file.
+		 * @brief Constructs a H5Antenna with the specified name and gain pattern file.
 		 *
 		 * @param name The name of the antenna.
 		 * @param filename The path to the file containing the antenna's gain pattern.
 		 */
-		FileAntenna(const std::string_view name, const std::string_view filename) :
+		H5Antenna(const std::string_view name, const std::string& filename) :
 			Antenna(name.data()),
-			_pattern(std::make_unique<Pattern>(filename.data())) {}
+			_pattern(serial::readPattern(filename, "antenna")) {}
 
-		~FileAntenna() override = default;
+		~H5Antenna() override = default;
 
-		FileAntenna(const FileAntenna&) = delete;
+		H5Antenna(const H5Antenna&) = delete;
 
-		FileAntenna& operator=(const FileAntenna&) = delete;
+		H5Antenna& operator=(const H5Antenna&) = delete;
 
-		FileAntenna(FileAntenna&&) = delete;
+		H5Antenna(H5Antenna&&) = delete;
 
-		FileAntenna& operator=(FileAntenna&&) = delete;
+		H5Antenna& operator=(H5Antenna&&) = delete;
 
 		/**
 		 * @brief Computes the gain of the antenna based on the input angle and reference angle.
@@ -430,12 +453,12 @@ namespace antenna
 		 * @return The gain of the antenna at the specified angle.
 		 */
 		[[nodiscard]] RealType getGain(const math::SVec3& angle, const math::SVec3& refangle,
-		                               RealType /*wavelength*/) const override
-		{
-			return _pattern->getGain(angle - refangle) * getEfficiencyFactor();
-		}
+		                               RealType /*wavelength*/) const override;
+
+		/** @brief Gets the gain pattern object. */
+		[[nodiscard]] const std::vector<std::vector<RealType>>& getPattern() const noexcept { return _pattern; }
 
 	private:
-		std::unique_ptr<Pattern> _pattern; ///< Pointer to the gain pattern object.
+		std::vector<std::vector<RealType>> _pattern; ///< The 2D pattern data.
 	};
 }

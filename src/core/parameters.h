@@ -18,6 +18,17 @@
 namespace params
 {
 	/**
+	 * @enum CoordinateFrame
+	 * @brief Defines the coordinate systems supported for scenario definition.
+	 */
+	enum class CoordinateFrame
+	{
+		ENU, ///< East-North-Up local tangent plane (default)
+		UTM, ///< Universal Transverse Mercator
+		ECEF ///< Earth-Centered, Earth-Fixed
+	};
+
+	/**
 	* @class Parameters
 	* @brief Struct to hold simulation parameters.
 	*/
@@ -36,6 +47,9 @@ namespace params
 		double origin_latitude = -33.957652; ///< Geodetic origin latitude
 		double origin_longitude = 18.4611991; ///< Geodetic origin longitude
 		double origin_altitude = 111.01; ///< Geodetic origin altitude (in meters)
+		CoordinateFrame coordinate_frame = CoordinateFrame::ENU; ///< Scenario coordinate frame
+		int utm_zone = 0; ///< UTM zone (1-60), if applicable
+		bool utm_north_hemisphere = true; ///< UTM hemisphere, if applicable
 		RealType rate = 0; ///< Rendering sample rate.
 		std::optional<unsigned> random_seed; ///< Random seed for simulation.
 		unsigned adc_bits = 0; ///< ADC quantization bits.
@@ -259,4 +273,23 @@ namespace params
 		LOG(logging::Level::INFO, "Number of rendering threads set to: {}", threads);
 		return {};
 	}
+
+	/**
+	* @brief Set the coordinate system for the scenario.
+	* @param frame The coordinate frame (ENU, UTM, ECEF).
+	* @param zone The UTM zone, if applicable.
+	* @param north The UTM hemisphere (true for North), if applicable.
+	*/
+	inline void setCoordinateSystem(const CoordinateFrame frame, const int zone, const bool north) noexcept
+	{
+		params.coordinate_frame = frame;
+		params.utm_zone = zone;
+		params.utm_north_hemisphere = north;
+	}
+
+	inline CoordinateFrame coordinateFrame() noexcept { return params.coordinate_frame; }
+
+	inline int utmZone() noexcept { return params.utm_zone; }
+
+	inline bool utmNorthHemisphere() noexcept { return params.utm_north_hemisphere; }
 }
