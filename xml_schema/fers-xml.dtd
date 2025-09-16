@@ -3,7 +3,7 @@
         <!ATTLIST simulation name CDATA #REQUIRED>
 
         <!-- Simulation Parameters -->
-        <!ELEMENT parameters (starttime,endtime,rate,c?,pathSamplingRate?,randomseed?,adc_bits?,oversample?,origin?,export?)>
+        <!ELEMENT parameters (starttime,endtime,rate,c?,simSamplingRate?,randomseed?,adc_bits?,oversample?,origin?,export?)>
         <!-- Start time of simulation -->
         <!ELEMENT starttime (#PCDATA)>
         <!-- End time of simulation -->
@@ -11,7 +11,7 @@
         <!-- Propagation speed -->
         <!ELEMENT c (#PCDATA)>
         <!-- Fidelity of the underlying physics simulation (Hz) -->
-        <!ELEMENT pathSamplingRate (#PCDATA)>
+        <!ELEMENT simSamplingRate (#PCDATA)>
         <!-- Override the rendering sample rate with the specified one (Hz) -->
         <!ELEMENT rate (#PCDATA)>
         <!-- Random seed for noise -->
@@ -29,9 +29,9 @@
                 >
         <!-- Formats to export -->
         <!ELEMENT export EMPTY>
-        <!ATTLIST export xml (true|false) "true">
-        <!ATTLIST export csv (true|false) "true">
-        <!ATTLIST export binary (true|false) "false">
+        <!ATTLIST export xml (true|false) "false">
+        <!ATTLIST export csv (true|false) "false">
+        <!ATTLIST export binary (true|false) "true">
 
         <!-- Pulsed Radar Pulse -->
         <!ELEMENT pulse (power?,carrier?)>
@@ -46,10 +46,10 @@
         <!ELEMENT carrier (#PCDATA)>
 
         <!-- Timing Source -->
-        <!ELEMENT timing (frequency,freq_offset?,random_freq_offset?,phase_offset?,random_phase_offset?,noise_entry*)>
+        <!ELEMENT timing (frequency,freq_offset?,random_freq_offset_stdev?,phase_offset?,random_phase_offset_stdev?,noise_entry*)>
         <!-- Timing source. Sets frequency -->
         <!ATTLIST timing name CDATA #REQUIRED
-                synconpulse (true|false) "true">
+                synconpulse (true|false) "false">
 
         <!-- Frequency (Hz) -->
         <!ELEMENT frequency (#PCDATA)>
@@ -62,12 +62,12 @@
         <!ELEMENT weight (#PCDATA)>
         <!-- Offset from system frequency -->
         <!ELEMENT freq_offset (#PCDATA)>
-        <!-- Random frequency offset -->
-        <!ELEMENT random_freq_offset (#PCDATA)>
+        <!-- Random frequency offset standard deviation -->
+        <!ELEMENT random_freq_offset_stdev (#PCDATA)>
         <!-- Phase offset -->
         <!ELEMENT phase_offset (#PCDATA)>
-        <!-- Random phase offset -->
-        <!ELEMENT random_phase_offset (#PCDATA)>
+        <!-- Random phase offset standard deviation -->
+        <!ELEMENT random_phase_offset_stdev (#PCDATA)>
 
         <!-- Antenna -->
         <!ELEMENT antenna (alpha?,beta?,gamma?,diameter?,azscale?,elscale?,efficiency?)>

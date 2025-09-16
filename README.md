@@ -121,6 +121,45 @@ sudo ldconfig
 
 You can use **CMake GUI** for manual configuration by navigating to the HDF5 paths as needed.
 
+### Building on macOS (Intel/Homebrew)
+
+FERS uses modern C++20/23 features, which require a modern compiler toolchain. The default Clang provided by macOS may link against an older, incompatible version of the C++ standard library. Therefore, it is necessary to install and use the LLVM toolchain provided by Homebrew.
+
+**1. Install Dependencies**
+
+First, install the required libraries and build tools using Homebrew:
+
+```bash
+brew install cmake hdf5 libxml2
+```
+
+**2. Install Modern LLVM Toolchain**
+
+Next, install the latest LLVM compiler suite from Homebrew:
+
+```bash
+brew install llvm
+```
+
+**3. Configure and Build**
+
+To ensure CMake uses the correct Homebrew-installed Clang compiler, you must set the `CC` and `CXX` environment variables before running the configuration step.
+
+Follow these steps from the root of the project directory:
+
+```bash
+# Create and navigate to the build directory
+mkdir build && cd build
+
+# Configure the project using the Homebrew Clang compiler
+CC=/usr/local/opt/llvm/bin/clang CXX=/usr/local/opt/llvm/bin/clang++ cmake ..
+
+# Compile the project
+make -j$(sysctl -n hw.ncpu)
+```
+
+After the build completes, the `fers` executable will be located in the `build/src` directory.
+
 ## Regression Testing Suite
 
 The FERS modernization includes a comprehensive **regression testing suite**

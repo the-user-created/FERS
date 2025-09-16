@@ -67,7 +67,7 @@ namespace serial
 		attachRsFloatNode(element, "time", point.time, false);
 		attachRsFloatNode(element, "amplitude", std::sqrt(point.power * _wave->getPower()), false);
 		attachRsFloatNode(element, "phase", point.phase, false);
-		attachRsFloatNode(element, "doppler", _wave->getCarrier() * (1 - point.doppler), false);
+		attachRsFloatNode(element, "doppler", _wave->getCarrier() * (point.doppler_factor - 1.0), false);
 		attachRsFloatNode(element, "power", point.power * _wave->getPower());
 		attachRsFloatNode(element, "Iamplitude",
 		                  std::cos(point.phase) * std::sqrt(point.power * _wave->getPower()));
@@ -93,8 +93,8 @@ namespace serial
 	{
 		for (const auto& point : _points)
 		{
-			of << point.time << ", " << point.power << ", " << point.phase << ", " << _wave->getCarrier() * (1 - point.
-				doppler) << "\n";
+			of << point.time << ", " << point.power << ", " << point.phase << ", " << _wave->getCarrier() * (point.
+				doppler_factor - 1.0) << "\n";
 		}
 	}
 

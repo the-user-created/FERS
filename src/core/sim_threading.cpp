@@ -16,7 +16,7 @@
 #include <thread>
 #include <utility>
 #include <vector>
-#include <bits/chrono.h>
+#include <chrono>
 
 #include "parameters.h"
 #include "thread_pool.h"
@@ -34,7 +34,7 @@ using radar::Transmitter;
 using radar::Receiver;
 using radar::Target;
 using math::SVec3;
-using signal::RadarSignal;
+using fers_signal::RadarSignal;
 using radar::TransmitterPulse;
 using serial::Response;
 using logging::Level;
@@ -210,25 +210,35 @@ namespace
 
 		results.phase = -results.delay * 2 * PI * wave->getCarrier();
 
-		const auto transvec_end = SVec3(
-			targ->getPosition(time.count() + length.count()) - trans->getPosition(time.count() + length.count()));
-		const auto recvvec_end = SVec3(
-			targ->getPosition(time.count() + length.count()) - recv->getPosition(time.count() + length.count()));
-
-		const RealType rt_end = transvec_end.length;
-		const RealType rr_end = recvvec_end.length;
-
-		if (rt_end <= EPSILON || rr_end <= EPSILON)
-		{
-			LOG(Level::FATAL, "Transmitter or Receiver too close to Target for accurate simulation");
-			throw core::RangeError();
-		}
-
-		const RealType v_r = (rr_end - receiver_to_target_distance) / length.count();
-		const RealType v_t = (rt_end - transmitter_to_target_distance) / length.count();
-
+		// Relativistic Doppler Calculation
+		const RealType dt = length.count();
 		const auto c = params::c();
-		results.doppler = std::sqrt((1 + v_r / c) / (1 - v_r / c)) * std::sqrt((1 + v_t / c) / (1 - v_t / c));
+
+		// Calculate velocities
+		const math::Vec3 trans_vel = (trans->getPosition(time.count() + dt) - transmitter_position) / dt;
+		const math::Vec3 recv_vel = (recv->getPosition(time.count() + dt) - receiver_position) / dt;
+		const math::Vec3 targ_vel = (targ->getPosition(time.count() + dt) - target_position) / dt;
+
+		// Propagation unit vectors
+		const math::Vec3 u_ttgt{transmitter_to_target_vector}; // T -> Tgt
+		const math::Vec3 u_tgtr = math::Vec3{receiver_to_target_vector} * -1.0; // Tgt -> R
+
+		// Beta vectors
+		const math::Vec3 beta_t = trans_vel / c;
+		const math::Vec3 beta_r = recv_vel / c;
+		const math::Vec3 beta_tgt = targ_vel / c;
+
+		// Lorentz factors (only need T and R, as Tgt cancels)
+		const RealType gamma_t = 1.0 / std::sqrt(1.0 - dotProduct(beta_t, beta_t));
+		const RealType gamma_r = 1.0 / std::sqrt(1.0 - dotProduct(beta_r, beta_r));
+
+		// Numerators and denominators for the Doppler factor formula
+		const RealType term1_num = 1.0 - dotProduct(beta_tgt, u_ttgt);
+		const RealType term1_den = 1.0 - dotProduct(beta_t, u_ttgt);
+		const RealType term2_num = 1.0 - dotProduct(beta_r, u_tgtr);
+		const RealType term2_den = 1.0 - dotProduct(beta_tgt, u_tgtr);
+
+		results.doppler_factor = (term1_num / term1_den) * (term2_num / term2_den) * (gamma_r / gamma_t);
 
 		results.noise_temperature = recv->getNoiseTemperature(recv->getRotation(time.count() + results.delay));
 	}
@@ -271,15 +281,33 @@ namespace
 
 		if (!recv->checkFlag(Receiver::RecvFlag::FLAG_NOPROPLOSS)) { results.power /= 4 * PI * distance * distance; }
 
-		const auto trpos_end = SVec3(
-			trans->getPosition(time.count() + length.count()) - recv->getPosition(time.count() + length.count()));
-		const RealType r_end = trpos_end.length;
-		const RealType doppler_shift = (r_end - distance) / length.count();
+		// Relativistic Doppler Calculation
+		const RealType dt = length.count();
+		const auto c = params::c();
 
-		results.doppler = (params::c() + doppler_shift) / (params::c() - doppler_shift);
+		// Calculate velocities
+		const math::Vec3 trans_vel = (trans->getPosition(time.count() + dt) - tpos) / dt;
+		const math::Vec3 recv_vel = (recv->getPosition(time.count() + dt) - rpos) / dt;
 
-		// Phase calculation, ensuring the phase is wrapped within [0, 2π]
-		results.phase = std::fmod(results.delay * 2 * PI * wave->getCarrier(), 2 * PI);
+		// Propagation unit vector (Transmitter to Receiver)
+		math::Vec3 u_tr = rpos - tpos;
+		u_tr /= distance;
+
+		// Beta vectors
+		const math::Vec3 beta_t = trans_vel / c;
+		const math::Vec3 beta_r = recv_vel / c;
+
+		// Lorentz factors
+		const RealType gamma_t = 1.0 / std::sqrt(1.0 - dotProduct(beta_t, beta_t));
+		const RealType gamma_r = 1.0 / std::sqrt(1.0 - dotProduct(beta_r, beta_r));
+
+		// Numerators and denominators for the Doppler factor formula
+		const RealType num = 1.0 - dotProduct(beta_r, u_tr);
+		const RealType den = 1.0 - dotProduct(beta_t, u_tr);
+
+		results.doppler_factor = (num / den) * (gamma_r / gamma_t);
+
+		results.phase = -results.delay * 2 * PI * wave->getCarrier();
 
 		results.noise_temperature = recv->getNoiseTemperature(recv->getRotation(time.count() + results.delay));
 	}
@@ -301,7 +329,7 @@ namespace
 
 		const auto start_time = std::chrono::duration<RealType>(signal->time);
 		const auto end_time = start_time + std::chrono::duration<RealType>(signal->wave->getLength());
-		const auto sample_time = std::chrono::duration<RealType>(1.0 / params::pathSamplingRate());
+		const auto sample_time = std::chrono::duration<RealType>(1.0 / params::simSamplingRate());
 		const int point_count = static_cast<int>(std::ceil(signal->wave->getLength() / sample_time.count()));
 
 		// Check for a valid point count in case of target simulation
@@ -334,7 +362,7 @@ namespace
 					.power = results.power,
 					.time = current_time.count() + results.delay,
 					.delay = results.delay,
-					.doppler = results.doppler,
+					.doppler_factor = results.doppler_factor,
 					.phase = results.phase,
 					.noise_temperature = results.noise_temperature
 				};

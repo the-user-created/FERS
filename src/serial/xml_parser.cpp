@@ -12,6 +12,7 @@
 #include <filesystem>
 #include <functional>
 #include <memory>
+#include <random>
 #include <span>
 #include <string_view>
 #include <utility>
@@ -45,7 +46,7 @@ using radar::Platform;
 using math::Path;
 using math::RotationPath;
 using radar::Target;
-using signal::RadarSignal;
+using fers_signal::RadarSignal;
 using timing::Timing;
 using timing::PrototypeTiming;
 using radar::Transmitter;
@@ -53,7 +54,7 @@ using radar::Receiver;
 
 namespace
 {
-	void parsePulse(const XmlElement& pulse, World* world, const fs::path& base_dir);
+	void parsePulse(const XmlElement& pulse, World* world, const fs::path& baseDir);
 }
 
 /**
@@ -133,7 +134,7 @@ namespace
 		{
 			try
 			{
-				if (paramName == "randomseed" || paramName == "adc_bits" || paramName == "oversample")
+				if (paramName == "adc_bits" || paramName == "oversample")
 				{
 					setter(static_cast<unsigned>(std::floor(get_child_real_type(element, paramName))));
 				}
@@ -146,10 +147,19 @@ namespace
 		};
 
 		set_param_with_exception_handling(parameters, "c", params::c(), params::setC);
-		set_param_with_exception_handling(parameters, "pathSamplingRate", params::pathSamplingRate(),
-		                                  params::setPathSamplingRate);
+		set_param_with_exception_handling(parameters, "simSamplingRate", params::simSamplingRate(),
+		                                  params::setSimSamplingRate);
 
-		set_param_with_exception_handling(parameters, "randomseed", params::randomSeed(), params::setRandomSeed);
+		try
+		{
+			const auto seed = static_cast<unsigned>(std::floor(get_child_real_type(parameters, "randomseed")));
+			params::params.random_seed = seed;
+		}
+		catch (const XmlException&)
+		{
+			// Do nothing, optional remains empty
+		}
+
 		set_param_with_exception_handling(parameters, "adc_bits", params::adcBits(), params::setAdcBits);
 		set_param_with_exception_handling(parameters, "oversample", params::oversampleRatio(),
 		                                  params::setOversampleRatio);
@@ -185,9 +195,9 @@ namespace
 	 *
 	 * @param pulse The <pulse> XmlElement to parse.
 	 * @param world A pointer to the World object where the RadarSignal object is added.
-	 * @param base_dir The base directory of the main scenario file to resolve relative paths.
+	 * @param baseDir The base directory of the main scenario file to resolve relative paths.
 	 */
-	void parsePulse(const XmlElement& pulse, World* world, const fs::path& base_dir)
+	void parsePulse(const XmlElement& pulse, World* world, const fs::path& baseDir)
 	{
 		const std::string name = XmlElement::getSafeAttribute(pulse, "name");
 		const std::string type = XmlElement::getSafeAttribute(pulse, "type");
@@ -223,7 +233,7 @@ namespace
 			// Check if path exists as is, if not, try relative to the main XML directory
 			if (!fs::exists(pulse_path))
 			{
-				pulse_path = base_dir / filename_str;
+				pulse_path = baseDir / filename_str;
 			}
 
 			if (!fs::exists(pulse_path))
@@ -270,7 +280,7 @@ namespace
 		try { timing_obj->setFreqOffset(get_child_real_type(timing, "freq_offset")); }
 		catch (XmlException&) { LOG(Level::WARNING, "Clock section '{}' does not specify frequency offset.", name); }
 
-		try { timing_obj->setRandomFreqOffset(get_child_real_type(timing, "random_freq_offset")); }
+		try { timing_obj->setRandomFreqOffsetStdev(get_child_real_type(timing, "random_freq_offset_stdev")); }
 		catch (XmlException&)
 		{
 			LOG(Level::WARNING, "Clock section '{}' does not specify random frequency offset.", name);
@@ -279,10 +289,10 @@ namespace
 		try { timing_obj->setPhaseOffset(get_child_real_type(timing, "phase_offset")); }
 		catch (XmlException&) { LOG(Level::WARNING, "Clock section '{}' does not specify phase offset.", name); }
 
-		try { timing_obj->setRandomPhaseOffset(get_child_real_type(timing, "random_phase_offset")); }
+		try { timing_obj->setRandomPhaseOffsetStdev(get_child_real_type(timing, "random_phase_offset_stdev")); }
 		catch (XmlException&) { LOG(Level::WARNING, "Clock section '{}' does not specify random phase offset.", name); }
 
-		if (get_child_bool(timing, "synconpulse", true)) { timing_obj->setSyncOnPulse(); }
+		if (get_child_bool(timing, "synconpulse", false)) { timing_obj->setSyncOnPulse(); }
 
 		world->add(std::move(timing_obj));
 	}
@@ -498,9 +508,11 @@ namespace
 	 * @param transmitter The <transmitter> XmlElement to parse.
 	 * @param platform A pointer to the Platform
 	 * @param world A pointer to the World
+	 * @param masterSeeder The master random number generator for seeding.
 	 * @return A pointer to the created Transmitter object.
 	 */
-	Transmitter* parseTransmitter(const XmlElement& transmitter, Platform* platform, World* world)
+	Transmitter* parseTransmitter(const XmlElement& transmitter, Platform* platform, World* world,
+	                              std::mt19937& masterSeeder)
 	{
 		const std::string name = XmlElement::getSafeAttribute(transmitter, "name");
 		const std::string type = XmlElement::getSafeAttribute(transmitter, "type");
@@ -532,7 +544,7 @@ namespace
 		transmitter_obj->setAntenna(ant);
 
 		const std::string timing_name = XmlElement::getSafeAttribute(transmitter, "timing");
-		const auto timing = std::make_shared<Timing>(name);
+		const auto timing = std::make_shared<Timing>(name, masterSeeder());
 		const PrototypeTiming* proto = world->findTiming(timing_name);
 		timing->initializeModel(proto);
 		transmitter_obj->setTiming(timing);
@@ -548,13 +560,14 @@ namespace
 	 * @param receiver The <receiver> XmlElement to parse.
 	 * @param platform A pointer to the Platform
 	 * @param world A pointer to the World
+	 * @param masterSeeder The master random number generator for seeding.
 	 * @return A pointer to the created Receiver object.
 	 */
-	Receiver* parseReceiver(const XmlElement& receiver, Platform* platform, World* world)
+	Receiver* parseReceiver(const XmlElement& receiver, Platform* platform, World* world, std::mt19937& masterSeeder)
 	{
 		const std::string name = XmlElement::getSafeAttribute(receiver, "name");
 
-		auto receiver_obj = std::make_unique<Receiver>(platform, name);
+		auto receiver_obj = std::make_unique<Receiver>(platform, name, masterSeeder());
 
 		const std::string ant_name = XmlElement::getSafeAttribute(receiver, "antenna");
 
@@ -589,7 +602,7 @@ namespace
 		receiver_obj->setWindowProperties(window_length, prf, window_skip);
 
 		const std::string timing_name = XmlElement::getSafeAttribute(receiver, "timing");
-		const auto timing = std::make_shared<Timing>(name);
+		const auto timing = std::make_shared<Timing>(name, masterSeeder());
 
 		const PrototypeTiming* proto = world->findTiming(timing_name);
 		timing->initializeModel(proto);
@@ -619,11 +632,12 @@ namespace
 	 * @param monostatic The <monostatic> XmlElement to parse.
 	 * @param platform A pointer to the Platform
 	 * @param world A pointer to the World
+	 * @param masterSeeder The master random number generator for seeding.
 	 */
-	void parseMonostatic(const XmlElement& monostatic, Platform* platform, World* world)
+	void parseMonostatic(const XmlElement& monostatic, Platform* platform, World* world, std::mt19937& masterSeeder)
 	{
-		Transmitter* trans = parseTransmitter(monostatic, platform, world);
-		Receiver* recv = parseReceiver(monostatic, platform, world);
+		Transmitter* trans = parseTransmitter(monostatic, platform, world, masterSeeder);
+		Receiver* recv = parseReceiver(monostatic, platform, world, masterSeeder);
 		trans->setAttached(recv);
 		recv->setAttached(trans);
 	}
@@ -634,9 +648,10 @@ namespace
 	 * @param target The <target> XmlElement to parse.
 	 * @param platform A pointer to the Platform
 	 * @param world A pointer to the World
+	 * @param masterSeeder The master random number generator for seeding.
 	 * @throws XmlException if the target element is missing required attributes or elements.
 	 */
-	void parseTarget(const XmlElement& target, Platform* platform, World* world)
+	void parseTarget(const XmlElement& target, Platform* platform, World* world, std::mt19937& masterSeeder)
 	{
 		const std::string name = XmlElement::getSafeAttribute(target, "name");
 
@@ -646,14 +661,16 @@ namespace
 		const std::string rcs_type = XmlElement::getSafeAttribute(rcs_element, "type");
 
 		std::unique_ptr<Target> target_obj;
+		const unsigned seed = masterSeeder();
 
 		if (rcs_type == "isotropic")
 		{
-			target_obj = createIsoTarget(platform, name, get_child_real_type(rcs_element, "value"));
+			target_obj = createIsoTarget(platform, name, get_child_real_type(rcs_element, "value"), seed);
 		}
 		else if (rcs_type == "file")
 		{
-			target_obj = createFileTarget(platform, name, XmlElement::getSafeAttribute(rcs_element, "filename"));
+			target_obj = createFileTarget(platform, name, XmlElement::getSafeAttribute(rcs_element, "filename"),
+			                              seed);
 		}
 		else { throw XmlException("Unsupported RCS type: " + rcs_type); }
 
@@ -666,6 +683,7 @@ namespace
 			else if (model_type == "chisquare" || model_type == "gamma")
 			{
 				target_obj->setFluctuationModel(std::make_unique<radar::RcsChiSquare>(
+					target_obj->getRngEngine(),
 					get_child_real_type(model, "k")
 					));
 			}
@@ -677,7 +695,8 @@ namespace
 		world->add(std::move(target_obj));
 	}
 
-	void parsePlatformElements(const XmlElement& platform, World* world, Platform* plat)
+	void parsePlatformElements(const XmlElement& platform, World* world, Platform* plat,
+	                           std::mt19937& masterSeeder)
 	{
 		XmlElement monostatic = platform.childElement("monostatic", 0);
 		XmlElement transmitter = platform.childElement("transmitter", 0);
@@ -697,11 +716,11 @@ namespace
 				"' must contain exactly one component: <monostatic>, <transmitter>, <receiver>, or <target>.");
 		}
 
-		if (monostatic.isValid()) { parseMonostatic(monostatic, plat, world); }
-		else if (transmitter.isValid()) { parseTransmitter(transmitter, plat, world); }
-		else if (receiver.isValid()) { parseReceiver(receiver, plat, world); }
+		if (monostatic.isValid()) { parseMonostatic(monostatic, plat, world, masterSeeder); }
+		else if (transmitter.isValid()) { parseTransmitter(transmitter, plat, world, masterSeeder); }
+		else if (receiver.isValid()) { parseReceiver(receiver, plat, world, masterSeeder); }
 		else
-			if (target.isValid()) { parseTarget(target, plat, world); }
+			if (target.isValid()) { parseTarget(target, plat, world, masterSeeder); }
 	}
 
 	/**
@@ -709,13 +728,14 @@ namespace
 	 *
 	 * @param platform The <platform> XmlElement to parse.
 	 * @param world A pointer to the World object where the Platform object is added.
+	 * @param masterSeeder The master random number generator for seeding.
 	 */
-	void parsePlatform(const XmlElement& platform, World* world)
+	void parsePlatform(const XmlElement& platform, World* world, std::mt19937& masterSeeder)
 	{
 		std::string name = XmlElement::getSafeAttribute(platform, "name");
 		auto plat = std::make_unique<Platform>(name);
 
-		parsePlatformElements(platform, world, plat.get());
+		parsePlatformElements(platform, world, plat.get(), masterSeeder);
 
 		if (const XmlElement motion_path = platform.childElement("motionpath", 0); motion_path.isValid())
 		{
@@ -838,7 +858,8 @@ namespace
 
 namespace serial
 {
-	void parseSimulation(const std::string& filename, World* world, const bool validate)
+	void parseSimulation(const std::string& filename, World* world, const bool validate,
+	                     std::mt19937& masterSeeder)
 	{
 		XmlDocument main_doc;
 		if (!main_doc.loadFile(filename))
@@ -863,11 +884,26 @@ namespace serial
 			throw XmlException("Root element is not <simulation>!");
 		}
 
+		try
+		{
+			params::params.simulation_name = XmlElement::getSafeAttribute(root, "name");
+			if (!params::params.simulation_name.empty())
+			{
+				LOG(Level::INFO, "Simulation name set to: {}", params::params.simulation_name);
+			}
+		}
+		catch (const XmlException&)
+		{
+			LOG(Level::WARNING, "No 'name' attribute found in <simulation> tag. KML name will default.");
+		}
+
 		parseParameters(root.childElement("parameters", 0));
 		auto pulse_parser = [&](const XmlElement& p, World* w) { parsePulse(p, w, main_dir); };
 		parseElements(root, "pulse", world, pulse_parser);
 		parseElements(root, "timing", world, parseTiming);
 		parseElements(root, "antenna", world, parseAntenna);
-		parseElements(root, "platform", world, parsePlatform);
+
+		auto platform_parser = [&](const XmlElement& p, World* w) { parsePlatform(p, w, masterSeeder); };
+		parseElements(root, "platform", world, platform_parser);
 	}
 }

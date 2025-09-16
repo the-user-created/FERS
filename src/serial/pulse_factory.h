@@ -13,7 +13,7 @@
 
 #include "config.h"
 
-namespace signal
+namespace fers_signal
 {
 	class RadarSignal;
 }
@@ -30,6 +30,6 @@ namespace serial
 	* @return A unique pointer to a RadarSignal object loaded with the pulse data.
 	* @throws std::runtime_error If the file cannot be opened or the file format is unrecognized.
 	*/
-	[[nodiscard]] std::unique_ptr<signal::RadarSignal> loadPulseFromFile(
+	[[nodiscard]] std::unique_ptr<fers_signal::RadarSignal> loadPulseFromFile(
 		const std::string& name, const std::string& filename, RealType power, RealType carrierFreq);
 }

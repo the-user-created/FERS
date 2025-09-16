@@ -38,7 +38,7 @@ namespace core
 	{
 		RealType power; /**< Power of the radar signal. */
 		RealType delay; /**< Signal delay in time. */
-		RealType doppler; /**< Doppler shift of the radar signal. */
+		RealType doppler_factor; /**< Doppler factor of the radar signal (f_recv/f_trans). */
 		RealType phase; /**< Phase of the radar signal. */
 		RealType noise_temperature; /**< Noise temperature affecting the radar signal. */
 	};

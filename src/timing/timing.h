@@ -11,8 +11,8 @@
 #pragma once
 
 #include <memory>
+#include <random>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "config.h"
@@ -33,9 +33,9 @@ namespace timing
 		* @brief Constructs a Timing object.
 		*
 		* @param name The name of the timing source.
+		* @param seed The seed for the timing source's internal random number generator.
 		*/
-		explicit Timing(std::string name) noexcept :
-			_name(std::move(name)) {}
+		explicit Timing(std::string name, unsigned seed) noexcept;
 
 		~Timing() = default;
 
@@ -94,17 +94,12 @@ namespace timing
 		*/
 		[[nodiscard]] bool isEnabled() const noexcept { return _enabled && _model && _model->enabled(); }
 
-		// Note: This function is not used in the codebase
-		/*[[nodiscard]] RealType getPulseTimeError() const noexcept {
-			return _enabled && _model ? _model->getSample() : 0.0f;
-		}*/
-
 		/**
 		* @brief Skips a number of samples in the timing model.
 		*
 		* @param samples The number of samples to skip.
 		*/
-		void skipSamples(long long samples) const noexcept;
+		void skipSamples(long long samples) noexcept;
 
 		/**
 		* @brief Initializes the timing model.
@@ -116,17 +111,19 @@ namespace timing
 		/**
 		* @brief Resets the timing model.
 		*/
-		void reset() const noexcept { if (_model) { _model->reset(); } }
+		// NOLINTNEXTLINE(readability-make-member-function-const)
+		void reset() noexcept { if (_model) { _model->reset(); } }
 
 	private:
 		std::string _name; ///< The name of the timing source.
 		bool _enabled{false}; ///< Flag indicating if the timing source is enabled.
-		std::unique_ptr<noise::ClockModelGenerator> _model{nullptr}; ///< The noise model for the timing source.
+		std::unique_ptr<noise::ClockModelGenerator> _model{nullptr}; ///< Noise generator model for the timing source.
 		std::vector<RealType> _alphas; ///< The alpha values for the noise generator model.
 		std::vector<RealType> _weights; ///< The weights for the noise generator model.
 		RealType _frequency{}; ///< The frequency of the timing source.
 		RealType _freq_offset{}; ///< The frequency offset of the timing source.
 		RealType _phase_offset{}; ///< The phase offset of the timing source.
 		bool _sync_on_pulse{false}; ///< Flag indicating if the timing source synchronizes on pulse.
+		std::mt19937 _rng; ///< Per-object random number generator for statistical independence.
 	};
 }
