@@ -50,7 +50,7 @@ dependencies, building, and usage.
 ## Contributing
 
 We welcome contributions to the FERS project! Whether you're interested in improving the C++ core, enhancing the UI, or
-refining the documentation, your help is appreciated. Please read our [CONTRIBUTING.md](packages/fers/CONTRIBUTING.md)
+refining the documentation, your help is appreciated. Please read our [CONTRIBUTING.md](.github/CONTRIBUTING.md)
 guide to get started.
 
 ## License
