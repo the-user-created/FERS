@@ -1,5 +1,5 @@
-test/sim_tests/** linguist-generated
-doc/** linguist-documentation
-tutorials/** linguist-documentation
-third_party/** linguist-vendored
-utilities/** linguist-documentation
+packages/fers/test/sim_tests/** linguist-generated
+packages/fers/doc/** linguist-documentation
+packages/fers/tutorials/** linguist-documentation
+packages/fers/third_party/** linguist-vendored
+packages/fers/utilities/** linguist-documentation
