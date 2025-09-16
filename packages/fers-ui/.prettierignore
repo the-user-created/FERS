@@ -1,0 +1,13 @@
+# Build artifacts
+dist
+.vite
+
+# Dependencies
+node_modules
+
+# Tauri files
+src-tauri/target
+src-tauri/Cargo.lock
+
+# Logs
+*.log
