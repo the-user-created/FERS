@@ -7,7 +7,10 @@ import {
     ListItemText,
     Divider,
 } from '@mui/material';
-import {useSimulationStore, useSimulationActions} from '@/store/simulationStore';
+import {
+    useSimulationStore,
+    useSimulationActions,
+} from '@/store/simulationStore';
 
 /**
  * The RightSidebar component serves as the WorldView Hierarchy.
@@ -15,8 +18,10 @@ import {useSimulationStore, useSimulationActions} from '@/store/simulationStore'
  */
 export function RightSidebar() {
     const elements = useSimulationStore((state) => state.elements);
-    const selectedElementId = useSimulationStore((state) => state.selectedElementId);
-    const {selectElement} = useSimulationActions();
+    const selectedElementId = useSimulationStore(
+        (state) => state.selectedElementId
+    );
+    const { selectElement } = useSimulationActions();
 
     return (
         <Paper
@@ -30,7 +35,7 @@ export function RightSidebar() {
             <Typography variant="h6" gutterBottom>
                 Scene Hierarchy
             </Typography>
-            <Divider sx={{mb: 1}}/>
+            <Divider sx={{ mb: 1 }} />
             <List dense>
                 {elements.map((element) => (
                     <ListItem key={element.id} disablePadding>
@@ -38,7 +43,10 @@ export function RightSidebar() {
                             selected={selectedElementId === element.id}
                             onClick={() => selectElement(element.id)}
                         >
-                            <ListItemText primary={element.name} secondary={element.type}/>
+                            <ListItemText
+                                primary={element.name}
+                                secondary={element.type}
+                            />
                         </ListItemButton>
                     </ListItem>
                 ))}

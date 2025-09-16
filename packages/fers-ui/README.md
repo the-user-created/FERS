@@ -73,17 +73,19 @@ concerns between `components`, `views`, `layouts`, `store`, and `types`.
 ### Installation & Running
 
 1. **Clone the repository:** (If you haven't already)
-   ```bash
-   git clone https://github.com/the-user-created/FERS.git
-   ```
+
+    ```bash
+    git clone https://github.com/the-user-created/FERS.git
+    ```
 
 2. **Navigate to the `fers-ui` package and install dependencies:**
-   ```bash
-   cd FERS/packages/fers-ui
-   pnpm install
-   ```
+
+    ```bash
+    cd FERS/packages/fers-ui
+    pnpm install
+    ```
 
 3. **Run the application in development mode:**
-   ```bash
-   pnpm tauri dev
-   ```
+    ```bash
+    pnpm tauri dev
+    ```

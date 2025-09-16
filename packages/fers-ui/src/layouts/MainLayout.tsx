@@ -1,7 +1,7 @@
-import {Box} from '@mui/material';
-import {LeftSidebar} from '@/views/LeftSidebar';
-import {RightSidebar} from '@/views/RightSidebar';
-import {MainView} from '@/views/MainView';
+import { Box } from '@mui/material';
+import { LeftSidebar } from '@/views/LeftSidebar';
+import { RightSidebar } from '@/views/RightSidebar';
+import { MainView } from '@/views/MainView';
 
 const LEFT_SIDEBAR_WIDTH = 300;
 const RIGHT_SIDEBAR_WIDTH = 280;
@@ -14,7 +14,14 @@ const RIGHT_SIDEBAR_WIDTH = 280;
  */
 export function MainLayout() {
     return (
-        <Box sx={{display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden'}}>
+        <Box
+            sx={{
+                display: 'flex',
+                height: '100vh',
+                width: '100vw',
+                overflow: 'hidden',
+            }}
+        >
             {/* Left Sidebar: Property Inspector */}
             <Box
                 component="aside"
@@ -24,7 +31,7 @@ export function MainLayout() {
                     height: '100%',
                 }}
             >
-                <LeftSidebar/>
+                <LeftSidebar />
             </Box>
 
             {/* Main Content: 3D Viewport */}
@@ -36,7 +43,7 @@ export function MainLayout() {
                     minWidth: 0, // Prevents flexbox from overflowing
                 }}
             >
-                <MainView/>
+                <MainView />
             </Box>
 
             {/* Right Sidebar: WorldView Hierarchy */}
@@ -48,7 +55,7 @@ export function MainLayout() {
                     height: '100%',
                 }}
             >
-                <RightSidebar/>
+                <RightSidebar />
             </Box>
         </Box>
     );
