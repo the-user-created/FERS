@@ -40,6 +40,7 @@
                 <xs:element minOccurs="0" name="adc_bits" type="xs:string"/>
                 <xs:element minOccurs="0" name="oversample" type="xs:string"/>
                 <xs:element minOccurs="0" ref="origin"/>
+                <xs:element minOccurs="0" ref="coordinatesystem"/>
                 <xs:element minOccurs="0" ref="export"/>
             </xs:sequence>
         </xs:complexType>
@@ -51,6 +52,30 @@
             <xs:attribute name="latitude" type="xs:double" use="required"/>
             <xs:attribute name="longitude" type="xs:double" use="required"/>
             <xs:attribute name="altitude" type="xs:double" default="0"/>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- Coordinate System Element -->
+    <xs:element name="coordinatesystem">
+        <xs:complexType>
+            <xs:attribute name="frame" use="required">
+                <xs:simpleType>
+                    <xs:restriction base="xs:token">
+                        <xs:enumeration value="ENU"/>
+                        <xs:enumeration value="UTM"/>
+                        <xs:enumeration value="ECEF"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
+            <xs:attribute name="zone" type="xs:integer"/>
+            <xs:attribute name="hemisphere">
+                <xs:simpleType>
+                    <xs:restriction base="xs:token">
+                        <xs:enumeration value="N"/>
+                        <xs:enumeration value="S"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
         </xs:complexType>
     </xs:element>
 

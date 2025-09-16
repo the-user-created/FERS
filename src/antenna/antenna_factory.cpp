@@ -141,4 +141,48 @@ namespace antenna
 		_elev_samples->divide(_max_gain);
 		_azi_samples->divide(_max_gain);
 	}
+
+	RealType H5Antenna::getGain(const SVec3& angle, const SVec3& refangle, RealType /*wavelength*/) const
+	{
+		constexpr RealType two_pi = 2.0 * PI;
+
+		const SVec3& pattern_angle = angle - refangle;
+
+		const double ex1 = (pattern_angle.azimuth + PI) / two_pi;
+		const double ey1 = (pattern_angle.elevation + PI) / two_pi;
+
+		const auto calc_grid_point = [](const double value, const unsigned size)
+		{
+			const double x1 = std::floor(value * (size - 1)) / (size - 1);
+			const double x2 = std::min(x1 + 1.0 / size, 1.0);
+			return std::pair{x1, x2};
+		};
+
+		unsigned size_azi = _pattern.size();
+		unsigned size_elev = _pattern[0].size();
+
+		LOG(logging::Level::TRACE, "Size of pattern: {} x {}", size_azi, size_elev);
+
+		const auto [x1, x2] = calc_grid_point(ex1, size_azi);
+		const auto [y1, y2] = calc_grid_point(ey1, size_elev);
+
+		const double t = (ex1 - x1) / (x2 - x1);
+		const double u = (ey1 - y1) / (y2 - y1);
+
+		const auto calc_array_index = [](const double value, const unsigned size)
+		{
+			return std::min(static_cast<unsigned>(std::floor(value * size)), size - 1);
+		};
+
+		const unsigned arr_x = calc_array_index(x1, size_azi);
+		const unsigned arr_y = calc_array_index(y1, size_elev);
+
+		const RealType interp =
+			(1.0 - t) * (1.0 - u) * _pattern[arr_x][arr_y] +
+			t * (1.0 - u) * _pattern[(arr_x + 1) % size_azi][arr_y] +
+			t * u * _pattern[(arr_x + 1) % size_azi][(arr_y + 1) % size_elev] +
+			(1.0 - t) * u * _pattern[arr_x][(arr_y + 1) % size_elev];
+
+		return interp * getEfficiencyFactor();
+	}
 }
