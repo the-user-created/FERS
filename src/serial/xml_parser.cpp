@@ -220,7 +220,7 @@ namespace
 
 		if (type == "continuous" || type == "cw")
 		{
-			auto cw_signal = std::make_unique<signal::CwSignal>();
+			auto cw_signal = std::make_unique<fers_signal::CwSignal>();
 			auto wave = std::make_unique<RadarSignal>(name, power, carrier, params::endTime() - params::startTime(),
 			                                          std::move(cw_signal));
 			world->add(std::move(wave));
