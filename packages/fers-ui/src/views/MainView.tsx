@@ -1,5 +1,5 @@
-import {Box} from '@mui/material';
-import {Canvas} from '@react-three/fiber';
+import { Box } from '@mui/material';
+import { Canvas } from '@react-three/fiber';
 import WorldView from '@/components/WorldView';
 
 /**
@@ -14,8 +14,8 @@ export function MainView() {
                 backgroundColor: 'black',
             }}
         >
-            <Canvas camera={{position: [10, 10, 10], fov: 25}}>
-                <WorldView/>
+            <Canvas camera={{ position: [10, 10, 10], fov: 25 }}>
+                <WorldView />
             </Canvas>
         </Box>
     );

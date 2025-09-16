@@ -26,7 +26,7 @@ export default [
         },
         languageOptions: {
             parserOptions: {
-                ecmaFeatures: {jsx: true},
+                ecmaFeatures: { jsx: true },
             },
             globals: {
                 ...globals.browser,
@@ -45,7 +45,7 @@ export default [
             'react/no-unknown-property': 'off',
             'react-refresh/only-export-components': [
                 'warn',
-                {allowConstantExport: true},
+                { allowConstantExport: true },
             ],
         },
     },
