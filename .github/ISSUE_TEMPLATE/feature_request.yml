@@ -1,36 +1,48 @@
+---
 name: 💡 Feature Request
-description: Suggest an idea for this project
-title: "[FEATURE] <Short description>"
-labels: ["enhancement"]
+description: Suggest a new feature or enhancement for FERS.
+title: "[Feature] <A brief, descriptive title for the feature>"
+labels: ["type: enhancement", "status: triage"]
 body:
-  - type: input
-    id: summary
+  - type: dropdown
+    id: scope
     attributes:
-      label: Feature Summary
-      placeholder: e.g., Add CLI support
+      label: Related Package / Scope
+      description: Which part of the project would this feature affect?
+      options:
+        - Core Simulator (fers)
+        - Desktop UI (fers-ui)
+        - XML Schema (schema)
+        - Build Process / CI
+        - Testing Framework
     validations:
       required: true
 
   - type: textarea
-    id: motivation
+    id: problem-statement
     attributes:
-      label: Motivation
-      description: Why is this feature important?
+      label: Is your feature request related to a problem? Please describe.
+      description: A clear and concise description of what the problem is.
+      placeholder: "e.g., I'm always frustrated when I have to manually calculate..."
     validations:
       required: true
 
   - type: textarea
-    id: solution
+    id: proposed-solution
     attributes:
-      label: Proposed solution
-      description: Describe how you'd like this feature to work.
+      label: Describe the solution you'd like
+      description: A clear and concise description of what you want to happen. How would this feature work?
     validations:
-      required: false
+      required: true
 
   - type: textarea
     id: alternatives
     attributes:
-      label: Alternatives
-      description: Any alternative solutions you’ve considered?
-    validations:
-      required: false
+      label: Describe alternatives you've considered
+      description: A clear and concise description of any alternative solutions or features you've considered.
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Add any other context, mockups, or screenshots about the feature request here.
