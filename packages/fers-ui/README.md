@@ -31,8 +31,7 @@ fers-ui is built with a modern technology stack to provide a powerful, cross-pla
   robust, component-based architecture for building complex UIs with the safety of static typing.
 - **Component Library:** [**Material-UI**](https://mui.com/material-ui/) - A comprehensive library of UI components that
   accelerates development and ensures a consistent, modern design.
-- **3D Rendering:** [**Three.js**](https://threejs.org/) via [**React Three Fiber
-  **](https://docs.pmnd.rs/react-three-fiber) - Simplifies managing a 3D scene within a React application, powering the
+- **3D Rendering:** [**Three.js**](https://threejs.org/) via [**React Three Fiber**](https://docs.pmnd.rs/react-three-fiber) - Simplifies managing a 3D scene within a React application, powering the
   visual scenario builder.
 - **State Management:** [**Zustand**](https://docs.pmnd.rs/zustand) - A minimal, fast, and scalable state management
   solution that serves as the single source of truth for all simulation data.
