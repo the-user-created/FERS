@@ -10,9 +10,10 @@
 
 namespace math
 {
-	Vec3::Vec3(const SVec3& svec) noexcept : x(svec.length * std::cos(svec.azimuth) * std::cos(svec.elevation)),
-	                                         y(svec.length * std::sin(svec.azimuth) * std::cos(svec.elevation)),
-	                                         z(svec.length * std::sin(svec.elevation)) {}
+	Vec3::Vec3(const SVec3& svec) noexcept :
+		x(svec.length * std::cos(svec.azimuth) * std::cos(svec.elevation)),
+		y(svec.length * std::sin(svec.azimuth) * std::cos(svec.elevation)),
+		z(svec.length * std::sin(svec.elevation)) {}
 
 	Vec3& Vec3::operator+=(const Vec3& b) noexcept
 	{
@@ -64,7 +65,8 @@ namespace math
 		return *this;
 	}
 
-	SVec3::SVec3(const Vec3& vec) noexcept : length(vec.length())
+	SVec3::SVec3(const Vec3& vec) noexcept :
+		length(vec.length())
 	{
 		elevation = std::asin(vec.z / length);
 		azimuth = std::atan2(vec.y, vec.x);
@@ -92,8 +94,17 @@ namespace math
 
 	SVec3 operator-(const SVec3& a, const SVec3& b) noexcept
 	{
-		RealType new_azimuth = fmod(a.azimuth - b.azimuth, 2 * PI);
-		if (new_azimuth < 0) { new_azimuth += 2 * PI; }
+		RealType new_azimuth = a.azimuth - b.azimuth;
+
+		// Wrap the azimuth to the range [-PI, PI] to find the shortest angle
+		// TODO: Has to be a better way to do this...
+		while (new_azimuth <= -PI)
+			new_azimuth += 2 * PI;
+		while (new_azimuth > PI)
+			new_azimuth -= 2 * PI;
+
+		// Elevation difference is typically simpler and doesn't need wrapping
+		// unless 180 degree elevation sweeps are expected.
 		RealType new_elevation = fmod(a.elevation - b.elevation, PI);
 		return {a.length - b.length, new_azimuth, new_elevation};
 	}

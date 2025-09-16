@@ -48,17 +48,28 @@ namespace radar
 
 	void Receiver::render(pool::ThreadPool& pool)
 	{
-		// Prevent exporting empty files when there are no responses
-		if (_responses.empty())
+		if (params::isCwSimulation())
 		{
-			LOG(logging::Level::INFO, "Receiver '{}' has no responses to render. Skipping export.", getName());
-			return;
+			// CW simulation does not support XML or CSV response export
+			if (params::exportBinary() && !_cw_iq_data.empty())
+			{
+				serial::exportReceiverCwBinary(this, getName() + "_results");
+			}
 		}
-		std::ranges::sort(_responses, serial::compareTimes);
+		else
+		{
+			// Prevent exporting empty files when there are no responses
+			if (_responses.empty())
+			{
+				LOG(logging::Level::INFO, "Receiver '{}' has no responses to render. Skipping export.", getName());
+				return;
+			}
+			std::ranges::sort(_responses, serial::compareTimes);
 
-		if (params::exportXml()) { exportReceiverXml(_responses, getName() + "_results"); }
-		if (params::exportCsv()) { exportReceiverCsv(_responses, getName() + "_results"); }
-		if (params::exportBinary()) { exportReceiverBinary(_responses, this, getName() + "_results", pool); }
+			if (params::exportXml()) { exportReceiverXml(_responses, getName() + "_results"); }
+			if (params::exportCsv()) { exportReceiverCsv(_responses, getName() + "_results"); }
+			if (params::exportBinary()) { exportReceiverBinary(_responses, this, getName() + "_results", pool); }
+		}
 	}
 
 	void Receiver::setWindowProperties(const RealType length, const RealType prf, const RealType skip) noexcept
@@ -85,5 +96,19 @@ namespace radar
 			throw std::logic_error("Receiver must be associated with timing source");
 		}
 		return stime;
+	}
+
+	void Receiver::prepareCwData(const size_t numSamples)
+	{
+		std::lock_guard lock(_cw_mutex);
+		_cw_iq_data.resize(numSamples);
+	}
+
+	void Receiver::setCwSample(const size_t index, const ComplexType sample)
+	{
+		if (index < _cw_iq_data.size())
+		{
+			_cw_iq_data[index] = sample;
+		}
 	}
 }

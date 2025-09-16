@@ -118,9 +118,10 @@ namespace radar
 		*
 		* @param inAngle The incoming angle of the radar wave.
 		* @param outAngle The outgoing angle of the reflected radar wave.
+		* @param time The current simulation time (default is 0.0).
 		* @return The RCS value.
 		*/
-		virtual RealType getRcs(math::SVec3& inAngle, math::SVec3& outAngle) const = 0;
+		virtual RealType getRcs(math::SVec3& inAngle, math::SVec3& outAngle, RealType time) const = 0;
 
 		// [[nodiscard]] virtual math::PsMatrix getPolarization() const { return _psm; }
 
@@ -171,7 +172,7 @@ namespace radar
 		*
 		* @return The constant RCS value, possibly modified by the fluctuation model.
 		*/
-		RealType getRcs(math::SVec3& /*inAngle*/, math::SVec3& /*outAngle*/) const noexcept override;
+		RealType getRcs(math::SVec3& /*inAngle*/, math::SVec3& /*outAngle*/, RealType /*time*/) const noexcept override;
 
 	private:
 		RealType _rcs; ///< The constant RCS value for the target.
@@ -196,14 +197,25 @@ namespace radar
 		FileTarget(Platform* platform, std::string name, const std::string& filename, unsigned seed);
 
 		/**
-		* @brief Gets the RCS value from file-based data.
-		*
-		* @param inAngle The incoming angle of the radar wave.
-		* @param outAngle The outgoing angle of the reflected radar wave.
-		* @return The RCS value based on the angle, possibly modified by the fluctuation model.
+		* @brief Gets the RCS value from file-based data for a specific bistatic geometry and time.
+		* @param inAngle The incoming angle of the radar wave in the global frame.
+		* @param outAngle The outgoing angle of the reflected radar wave in the global frame.
+		* @param time The simulation time at which the interaction occurs.
+		* @return The Radar Cross Section (RCS) value in meters squared (m²).
 		* @throws std::runtime_error If RCS data cannot be retrieved.
+		*
+		* This function calculates the target's aspect-dependent RCS. The key steps are:
+		* 1.  Calculate the bistatic angle bisector in the global simulation coordinate system.
+		* 2.  Retrieve the target's own orientation (rotation) at the specified 'time'.
+		* 3.  Transform the global bistatic angle into the target's local, body-fixed frame by subtracting
+		*     the target's rotation. This is critical, as RCS patterns are defined relative to the target itself.
+		* 4.  Use this local aspect angle to look up the azimuthal and elevation RCS values from the loaded data.
+		*
+		* NOTE: This function returns the raw RCS value (σ), which is linearly proportional to scattered power.
+		* The calling physics engine is responsible for converting this to a signal amplitude by taking the
+		* square root.
 		*/
-		RealType getRcs(math::SVec3& inAngle, math::SVec3& outAngle) const override;
+		RealType getRcs(math::SVec3& inAngle, math::SVec3& outAngle, RealType time) const override;
 
 	private:
 		std::unique_ptr<interp::InterpSet> _azi_samples; ///< The azimuthal RCS samples.

@@ -162,6 +162,25 @@ namespace radar
 		 */
 		void setNoiseTemperature(RealType temp);
 
+		/**
+		 * @brief Prepares the internal storage for CW IQ data.
+		 * @param numSamples The total number of samples to allocate memory for.
+		 */
+		void prepareCwData(size_t numSamples);
+
+		/**
+		 * @brief Sets a single IQW sample at a specific index for CW simulation.
+		 * @param index The index at which to store the sample.
+		 * @param sample The complex IQ sample.
+		 */
+		void setCwSample(size_t index, ComplexType sample);
+
+		/**
+		 * @brief Retrieves the collected CW IQ data.
+		 * @return A constant reference to the vector of complex IQ samples.
+		 */
+		[[nodiscard]] const std::vector<ComplexType>& getCwData() const { return _cw_iq_data; }
+
 	private:
 		std::vector<std::unique_ptr<serial::Response>> _responses; ///< The list of responses.
 		std::mutex _responses_mutex; ///< Mutex for handling responses.
@@ -170,6 +189,8 @@ namespace radar
 		RealType _window_prf = 0; ///< The pulse repetition frequency (PRF) of the radar window.
 		RealType _window_skip = 0; ///< The skip time between radar windows.
 		int _flags = 0; ///< Flags for receiver configuration.
+		std::vector<ComplexType> _cw_iq_data; ///< IQ data for CW simulations.
+		std::mutex _cw_mutex; ///< Mutex for handling CW data.
 		std::mt19937 _rng; ///< Per-object random number generator for statistical independence.
 	};
 }

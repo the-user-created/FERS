@@ -46,6 +46,8 @@ namespace params
 		unsigned render_threads = 1; ///< Number of rendering threads to use.
 		std::string simulation_name; ///< The name of the simulation, from the XML.
 		unsigned oversample_ratio = 1; ///< Oversampling ratio.
+		std::optional<RealType> optional_rate = std::nullopt; ///< Optional sample rate.
+		bool is_cw_simulation = false; ///< Simulation is operating in unmodulated continuous wave (CW) mode.
 	};
 
 	inline Parameters params;
@@ -242,6 +244,8 @@ namespace params
 	inline double originLongitude() noexcept { return params.origin_longitude; }
 
 	inline double originAltitude() noexcept { return params.origin_altitude; }
+
+	inline bool isCwSimulation() noexcept { return params.is_cw_simulation; }
 
 	/**
 	* @brief Set the number of rendering threads.

@@ -76,6 +76,18 @@ namespace timing
 		[[nodiscard]] RealType getFrequency() const noexcept { return _frequency; }
 
 		/**
+		 * @brief Gets the frequency offset of the timing source.
+		 * @return The frequency offset.
+		 */
+		[[nodiscard]] RealType getFreqOffset() const noexcept { return _freq_offset; }
+
+		/**
+		 * @brief Gets the phase offset of the timing source.
+		 * @return The phase offset.
+		 */
+		[[nodiscard]] RealType getPhaseOffset() const noexcept { return _phase_offset; }
+
+		/**
 		* @brief Checks if the timing source is enabled.
 		*
 		* @return True if enabled, otherwise false.

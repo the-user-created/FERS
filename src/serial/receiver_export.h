@@ -48,6 +48,15 @@ namespace serial
 	                          const std::string& recvName, pool::ThreadPool& pool);
 
 	/**
+	* @brief Exports receiver CW data to a binary HDF5 file.
+	*
+	* @param recv A pointer to the radar::Receiver object containing CW IQ data.
+	* @param recvName The name of the receiver, which will be used as the filename for the binary export.
+	* @throws std::runtime_error If the file cannot be saved or data cannot be written to it.
+	*/
+	void exportReceiverCwBinary(const radar::Receiver* recv, const std::string& recvName);
+
+	/**
 	* @brief Exports receiver responses to CSV files.
 	*
 	* @param responses A span of unique pointers to Response objects representing the data to be exported.
