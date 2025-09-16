@@ -19,7 +19,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Schema files
-set(SCHEMA_DIR ${CMAKE_SOURCE_DIR}/../../xml_schema)
+set(SCHEMA_DIR ${CMAKE_SOURCE_DIR}/../schema)
 set(SCHEMA_HEADERS_DIR ${CMAKE_BINARY_DIR}/generated)
 
 # Ensure that the generated headers are included in the include path
