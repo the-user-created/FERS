@@ -1,7 +1,27 @@
-# Schema
+# FERS XML Schema
 
-- dtd is an older xml descriptor used in the original implementation of unit testing
-- xsd is used for xml validation
+This directory contains the schema definitions that govern the structure of FERS scenario files. These schemas are the
+single source of truth for defining simulation scenarios.
 
-Note: when changing xml definitions - both files should be changed and relevant changes propagated throughout the
-codebase
+## Files
+
+- `fers-xml.xsd`: The **XML Schema Definition (XSD)** used for modern, robust validation of scenario files. This is the
+  primary schema used by both the core simulator and the UI.
+- `fers-xml.dtd`: The **Document Type Definition (DTD)**, an older schema format retained for legacy purposes.
+
+## Role in the Monorepo
+
+The schema serves as the formal contract between the `fers` core simulator and the `fers-ui` graphical interface.
+
+- **`fers-ui`** generates `.fersxml` files that conform to this schema.
+- **`fers`** validates incoming `.fersxml` files against this schema before running a simulation.
+
+During the build process of the `fers` package, the XSD and DTD files are converted into C header files and embedded
+directly into the simulator binary. This ensures that the simulator always has access to the correct schema version for
+validation without relying on external files.
+
+## Modifying the Schema
+
+When making changes to the scenario definition, both `fers-xml.xsd` and `fers-xml.dtd` should be updated to maintain
+consistency. Any changes must be propagated throughout the codebase, particularly in the XML parsing logic within the
+`fers` package and the XML generation logic in the `fers-ui` package.
