@@ -1,6 +1,6 @@
 [submodule "third_party/geographiclib"]
-	path = third_party/geographiclib
+	path = packages/fers/third_party/geographiclib
 	url = https://github.com/geographiclib/geographiclib.git
 [submodule "third_party/highfive"]
-	path = third_party/highfive
+	path = packages/fers/third_party/highfive
 	url = https://github.com/highfive-devs/highfive.git
