@@ -131,7 +131,15 @@ int main(const int argc, char* argv[])
 
 		// Run the simulation using the threading mechanism
 		pool::ThreadPool pool(params::renderThreads());
-		runThreadedSim(world.get(), pool);
+
+		if (params::isCwSimulation())
+		{
+			core::runThreadedCwSim(world.get(), pool);
+		}
+		else
+		{
+			runThreadedSim(world.get(), pool);
+		}
 
 		LOG(Level::INFO, "Simulation completed successfully!");
 

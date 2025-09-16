@@ -22,10 +22,16 @@
 
 namespace fers_signal
 {
+	std::vector<ComplexType> CwSignal::render(const std::vector<interp::InterpPoint>& points, unsigned& size,
+	                                          const RealType /*fracWinDelay*/) const
+	{
+		size = 0;
+		return {};
+	}
 
 	RadarSignal::RadarSignal(std::string name, const RealType power, const RealType carrierfreq, const RealType length,
-	                         std::unique_ptr<Signal> signal)
-		: _name(std::move(name)), _power(power), _carrierfreq(carrierfreq), _length(length), _signal(std::move(signal))
+	                         std::unique_ptr<Signal> signal) :
+		_name(std::move(name)), _power(power), _carrierfreq(carrierfreq), _length(length), _signal(std::move(signal))
 	{
 		if (!_signal) { throw std::runtime_error("Signal is empty"); }
 	}

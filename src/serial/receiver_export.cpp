@@ -465,4 +465,50 @@ namespace serial
 			}
 		}
 	}
+
+	void exportReceiverCwBinary(const radar::Receiver* recv, const std::string& recvName)
+	{
+		const auto& iq_data = recv->getCwData();
+		if (iq_data.empty())
+		{
+			LOG(logging::Level::INFO, "No CW data to export for receiver '{}'", recv->getName());
+			return;
+		}
+
+		std::optional<HighFive::File> file_opt = openHdf5File(recvName);
+		if (!file_opt) { return; }
+		HighFive::File& file = *file_opt;
+
+		std::vector<RealType> i_data(iq_data.size());
+		std::vector<RealType> q_data(iq_data.size());
+
+		std::ranges::transform(iq_data, i_data.begin(), [](const auto& c) { return c.real(); });
+		std::ranges::transform(iq_data, q_data.begin(), [](const auto& c) { return c.imag(); });
+
+		try
+		{
+			HighFive::DataSet i_dataset = file.createDataSet<RealType>("I_data", HighFive::DataSpace::From(i_data));
+			i_dataset.write(i_data);
+
+			HighFive::DataSet q_dataset = file.createDataSet<RealType>("Q_data", HighFive::DataSpace::From(q_data));
+			q_dataset.write(q_data);
+
+			// Add attributes to make the file self-describing
+			file.createAttribute("sampling_rate", params::rate() * params::oversampleRatio());
+			file.createAttribute("start_time", params::startTime());
+			if (const auto timing = recv->getTiming())
+			{
+				// TODO: This is exporting the timing frequency, not the actual carrier frequency(ies)?
+				file.createAttribute("reference_carrier_frequency", timing->getFrequency());
+			}
+		}
+		catch (const HighFive::Exception& err)
+		{
+			LOG(logging::Level::FATAL, "Error writing CW data to HDF5 file '{}': {}", recvName, err.what());
+			throw std::runtime_error("Error writing CW data to HDF5 file: " + recvName);
+		}
+
+		LOG(logging::Level::INFO, "Successfully exported CW data for receiver '{}' to '{}.h5'", recv->getName(),
+		    recvName);
+	}
 }

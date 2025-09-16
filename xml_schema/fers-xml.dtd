@@ -36,7 +36,7 @@
         <!-- Pulsed Radar Pulse -->
         <!ELEMENT pulse (power?,carrier?)>
         <!ATTLIST pulse name CDATA #REQUIRED
-                type CDATA #REQUIRED
+                type (file|cw) #REQUIRED
                 filename CDATA #IMPLIED> <!-- Filename required only for specific types -->
 
         <!-- Pulse power and carrier frequency -->
@@ -131,7 +131,7 @@
         <!-- Monostatic radar installations -->
         <!ELEMENT monostatic (window_skip?,window_length?,prf,noise_temp?)>
         <!ATTLIST monostatic name CDATA #REQUIRED
-                type (pulsed|continuous) #REQUIRED
+                type (pulsed|continuous|cw) #REQUIRED
                 antenna CDATA #REQUIRED
                 pulse CDATA #REQUIRED
                 timing CDATA #REQUIRED
@@ -143,7 +143,7 @@
         <!-- Standalone Transmitter -->
         <!ELEMENT transmitter (prf)>
         <!ATTLIST transmitter name CDATA #REQUIRED
-                type (pulsed|continuous) #REQUIRED
+                type (pulsed|continuous|cw) #REQUIRED
                 pulse CDATA #REQUIRED
                 antenna CDATA #REQUIRED
                 timing CDATA #REQUIRED>

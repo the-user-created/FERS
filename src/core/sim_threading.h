@@ -59,4 +59,5 @@ namespace core
 	};
 
 	void runThreadedSim(const World* world, pool::ThreadPool& pool);
+	void runThreadedCwSim(const World* world, pool::ThreadPool& pool);
 }
