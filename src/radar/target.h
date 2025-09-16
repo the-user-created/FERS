@@ -1,6 +1,6 @@
 /**
 * @file target.h
-* @brief Defines classes for radar targets and their Radar Cross Section (RCS) models.
+* @brief Defines classes for radar targets and their Radar Cross-Section (RCS) models.
 *
 * @authors David Young, Marc Brooker
 * @date 2006-04-26
@@ -9,6 +9,7 @@
 #pragma once
 
 #include <memory>
+#include <random>
 #include <string>
 #include <utility>
 
@@ -78,10 +79,11 @@ namespace radar
 		/**
 		* @brief Constructs an RcsChiSquare model.
 		*
+		* @param rngEngine The random number engine to use.
 		* @param k The degrees of freedom for the chi-square distribution.
 		*/
-		explicit RcsChiSquare(RealType k) :
-			_gen(std::make_unique<noise::GammaGenerator>(k)) {}
+		explicit RcsChiSquare(std::mt19937& rngEngine, RealType k) :
+			_gen(std::make_unique<noise::GammaGenerator>(rngEngine, k)) {}
 
 		/**
 		* @brief Samples the chi-square RCS model.
@@ -106,9 +108,10 @@ namespace radar
 		*
 		* @param platform Pointer to the platform associated with the target.
 		* @param name The name of the target.
+		* @param seed The seed for the target's internal random number generator.
 		*/
-		Target(Platform* platform, std::string name) :
-			Object(platform, std::move(name)) {}
+		Target(Platform* platform, std::string name, const unsigned seed) :
+			Object(platform, std::move(name)), _rng(seed) {}
 
 		/**
 		* @brief Gets the RCS value for the target.
@@ -125,6 +128,12 @@ namespace radar
 		// virtual void setPolarization(const math::PsMatrix& in) { _psm = in; }
 
 		/**
+		* @brief Gets the target's internal random number generator engine.
+		* @return A mutable reference to the RNG engine.
+		*/
+		[[nodiscard]] std::mt19937& getRngEngine() noexcept { return _rng; }
+
+		/**
 		* @brief Sets the RCS fluctuation model.
 		*
 		* Assigns a new RCS fluctuation model to the target.
@@ -135,6 +144,7 @@ namespace radar
 	protected:
 		// math::PsMatrix _psm; ///< The polarization matrix for the target.
 		std::unique_ptr<RcsModel> _model{nullptr}; ///< The RCS fluctuation model for the target.
+		std::mt19937 _rng; ///< Per-object random number generator for statistical independence.
 	};
 
 	/**
@@ -151,9 +161,10 @@ namespace radar
 		* @param platform Pointer to the platform associated with the target.
 		* @param name The name of the target.
 		* @param rcs The constant RCS value for the target.
+		* @param seed The seed for the target's internal random number generator.
 		*/
-		IsoTarget(Platform* platform, std::string name, const RealType rcs) :
-			Target(platform, std::move(name)),
+		IsoTarget(Platform* platform, std::string name, const RealType rcs, const unsigned seed) :
+			Target(platform, std::move(name), seed),
 			_rcs(rcs) {}
 
 		/**
@@ -180,9 +191,10 @@ namespace radar
 		* @param platform Pointer to the platform associated with the target.
 		* @param name The name of the target.
 		* @param filename The name of the file containing RCS data.
+		* @param seed The seed for the target's internal random number generator.
 		* @throws std::runtime_error If the file cannot be loaded or parsed.
 		*/
-		FileTarget(Platform* platform, std::string name, const std::string& filename);
+		FileTarget(Platform* platform, std::string name, const std::string& filename, unsigned seed);
 
 		/**
 		* @brief Gets the RCS value from file-based data for a specific bistatic geometry and time.
@@ -216,11 +228,12 @@ namespace radar
 	* @param platform Pointer to the platform associated with the target.
 	* @param name The name of the target.
 	* @param rcs The constant RCS value for the target.
+	* @param seed The seed for the target's internal random number generator.
 	* @return A unique pointer to the newly created IsoTarget.
 	*/
-	inline std::unique_ptr<Target> createIsoTarget(Platform* platform, std::string name, RealType rcs)
+	inline std::unique_ptr<Target> createIsoTarget(Platform* platform, std::string name, RealType rcs, unsigned seed)
 	{
-		return std::make_unique<IsoTarget>(platform, std::move(name), rcs);
+		return std::make_unique<IsoTarget>(platform, std::move(name), rcs, seed);
 	}
 
 	/**
@@ -229,10 +242,12 @@ namespace radar
 	* @param platform Pointer to the platform associated with the target.
 	* @param name The name of the target.
 	* @param filename The name of the file containing RCS data.
+	* @param seed The seed for the target's internal random number generator.
 	* @return A unique pointer to the newly created FileTarget.
 	*/
-	inline std::unique_ptr<Target> createFileTarget(Platform* platform, std::string name, const std::string& filename)
+	inline std::unique_ptr<Target> createFileTarget(Platform* platform, std::string name, const std::string& filename,
+	                                                unsigned seed)
 	{
-		return std::make_unique<FileTarget>(platform, std::move(name), filename);
+		return std::make_unique<FileTarget>(platform, std::move(name), filename, seed);
 	}
 }

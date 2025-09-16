@@ -10,6 +10,7 @@
 
 #include <chrono>
 #include <optional>
+#include <string>
 
 #include "config.h"
 #include "logging.h"
@@ -24,24 +25,26 @@ namespace params
 	{
 		constexpr static RealType DEFAULT_C = 299792458.0; ///< Speed of light (m/s)
 		constexpr static RealType DEFAULT_BOLTZMANN_K = 1.3806503e-23; ///< Boltzmann constant
-		//constexpr static unsigned MIN_FILTER_LENGTH = 16; ///< Minimum render filter length
 		RealType c = DEFAULT_C; ///< Speed of light (modifiable)
 		RealType boltzmann_k = DEFAULT_BOLTZMANN_K; ///< Boltzmann constant (modifiable)
 		RealType start = 0; ///< Start time for the simulation.
 		RealType end = 0; ///< End time for the simulation.
-		RealType path_sampling_rate = 1000; ///< The fidelity of the underlying physics simulation (Hz).
+		RealType sim_sampling_rate = 1000;
+
+		///< Temporal sampling rate (Hz) that determines time-step resolution for radar pulse simulation.
 		// Default to the location of the University of Cape Town in South Africa
 		double origin_latitude = -33.957652; ///< Geodetic origin latitude
 		double origin_longitude = 18.4611991; ///< Geodetic origin longitude
 		double origin_altitude = 111.01; ///< Geodetic origin altitude (in meters)
 		RealType rate = 0; ///< Rendering sample rate.
-		unsigned random_seed = 0; ///< Random seed for simulation.
+		std::optional<unsigned> random_seed; ///< Random seed for simulation.
 		unsigned adc_bits = 0; ///< ADC quantization bits.
 		unsigned filter_length = 33; ///< Default render filter length.
 		bool export_xml = false; ///< Enable or disable XML export.
 		bool export_csv = false; ///< Enable or disable CSV export.
 		bool export_binary = true; ///< Enable or disable binary export.
 		unsigned render_threads = 1; ///< Number of rendering threads to use.
+		std::string simulation_name; ///< The name of the simulation, from the XML.
 		unsigned oversample_ratio = 1; ///< Oversampling ratio.
 		std::optional<RealType> optional_rate = std::nullopt; ///< Optional sample rate.
 		bool is_cw_simulation = false; ///< Simulation is operating in unmodulated continuous wave (CW) mode.
@@ -74,10 +77,10 @@ namespace params
 	inline RealType endTime() noexcept { return params.end; }
 
 	/**
-	* @brief Get the path sampling rate.
-	* @return The path sampling rate.
+	* @brief Get the simulation sampling rate.
+	* @return The simulation sampling rate.
 	*/
-	inline RealType pathSamplingRate() noexcept { return params.path_sampling_rate; }
+	inline RealType simSamplingRate() noexcept { return params.sim_sampling_rate; }
 
 	/**
 	* @brief Get the rendering sample rate.
@@ -89,7 +92,7 @@ namespace params
 	* @brief Get the random seed.
 	* @return The current random seed value.
 	*/
-	inline unsigned randomSeed() noexcept { return params.random_seed; }
+	inline unsigned randomSeed() noexcept { return params.random_seed.value_or(0); }
 
 	/**
 	* @brief Get the ADC quantization bits.
@@ -156,13 +159,13 @@ namespace params
 	}
 
 	/**
-	* @brief Set the path sampling rate.
-	* @param rate The new path sampling rate.
+	* @brief Set the simulation sampling rate.
+	* @param rate The new simulation sampling rate.
 	*/
-	inline void setPathSamplingRate(const RealType rate) noexcept
+	inline void setSimSamplingRate(const RealType rate) noexcept
 	{
-		params.path_sampling_rate = rate;
-		LOG(logging::Level::DEBUG, "Path sampling rate set to: {:.5f} Hz", rate);
+		params.sim_sampling_rate = rate;
+		LOG(logging::Level::DEBUG, "Simulation sampling rate set to: {:.5f} Hz", rate);
 	}
 
 	/**
@@ -209,17 +212,6 @@ namespace params
 		params.adc_bits = bits;
 		LOG(logging::Level::DEBUG, "ADC quantization bits set to: {}", bits);
 	}
-
-	/*inline std::expected<void, std::string> setRenderFilterLength(unsigned length) noexcept
-	{
-		constexpr unsigned MIN_FILTER_LENGTH = 16;
-		if (length < MIN_FILTER_LENGTH) {
-			return std::unexpected("Render filter length must be >= 16");
-		}
-		params.filter_length = length;
-		LOG(logging::Level::DEBUG, "Render filter length set to: {}", length);
-		return {};
-	}*/
 
 	/**
 	* @brief Set the oversampling ratio.

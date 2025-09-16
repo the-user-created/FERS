@@ -60,7 +60,7 @@ namespace
 	}
 }
 
-namespace signal
+namespace fers_signal
 {
 	void upsample(const std::span<const ComplexType> in, const unsigned size, std::span<ComplexType> out)
 	{
@@ -136,31 +136,6 @@ namespace signal
 		}
 	}
 
-	/*void FirFilter::filter(std::span<RealType> samples) noexcept
-	{
-		// See Oppenheim and Scaffer, section 6.5 "Basic Network Structures for FIR Systems"
-		// FIR filter using direct form
-		// Temporary line buffer for delay line (reuse it across all samples)
-		std::vector<RealType> line(_order, 0);
-
-		// Iterate over each sample
-		for (auto& sample : samples)
-		{
-			// Insert the new sample at the start of the line
-			line[0] = sample;
-			RealType result = 0.0;
-
-			// Perform the convolution (dot product) with the filter coefficients
-			for (unsigned j = 0; j < _order; ++j) { result += line[_order - j - 1] * _filter[j]; }
-
-			// Store the result in the current sample
-			sample = result;
-
-			// Shift the line buffer manually instead of using std::rotate
-			for (unsigned j = _order - 1; j > 0; --j) { line[j] = line[j - 1]; }
-		}
-	}*/
-
 	void FirFilter::filter(std::vector<ComplexType>& samples) const
 	{
 		std::vector line(_order, ComplexType{0.0, 0.0});
@@ -182,77 +157,6 @@ namespace signal
 			std::rotate(line.rbegin(), line.rbegin() + 1, line.rend());
 		}
 	}
-
-	// Private helper method to apply the filter logic
-	/*RealType ArFilter::applyFilter(const RealType sample) noexcept
-	{
-		// Manually shift the delay line (_w) right by one position
-		for (unsigned j = _order - 1; j > 0; --j) { _w[j] = _w[j - 1]; }
-		_w[0] = sample;
-
-		// Apply the filter using the coefficients
-		for (unsigned j = 1; j < _order; ++j) { _w[0] -= _filter[j] * _w[j]; }
-
-		return _w[0];
-	}
-
-	RealType ArFilter::filter(const RealType sample) noexcept { return applyFilter(sample); }
-
-	void ArFilter::filter(std::span<RealType> samples) noexcept
-	{
-		std::ranges::transform(samples, samples.begin(), [this](const RealType sample) { return applyFilter(sample); });
-	}*/
-
-	/*Upsampler::Upsampler(const int ratio) noexcept : _ratio(ratio), _filter_size(8 * ratio + 1),
-	                                                 _filterbank(_filter_size),
-	                                                 _sample_memory(_filter_size / ratio + 1, 0.0)
-	{
-		_filterbank.resize(_filter_size);
-		_sample_memory.resize(_filter_size / ratio + 1, 0.0); // Initialize with zeros
-
-		for (int i = 0; i < _filter_size; i++)
-		{
-			RealType window_value = 0.54 - 0.46 * std::cos(2 * PI * i / static_cast<RealType>(_filter_size));
-			RealType filter_value = sinc(1.0 / static_cast<RealType>(ratio) * (i - _filter_size / 2.0));
-			_filterbank[i] = filter_value * window_value;
-		}
-	}
-
-	void Upsampler::upsample(std::span<const RealType> inSamples, std::span<RealType> outSamples)
-	{
-		if (outSamples.size() != _ratio * inSamples.size())
-		{
-			throw std::runtime_error("Target array size is not correct in Upsample");
-		}
-		// Polyphase upsampler implementation
-		// See fers_upsample_p.m in the documentation for more details
-		// Follows the diagram in section 4.7.4 "Polyphase Implementation of Interpolation Filters" of
-		// Discrete Time Signal Processing, 2nd ed., Oppenheim and Schafer
-		int branch = 0;
-		for (size_t i = 0; i < inSamples.size(); ++i, ++branch)
-		{
-			if (branch >= _ratio) { branch = 0; }
-			outSamples[i] = 0;
-
-			for (int j = branch; j < _filter_size; j += _ratio)
-			{
-				outSamples[i] += _filterbank[j] * getSample(inSamples, static_cast<long>(i - j) / _ratio);
-			}
-		}
-
-		// Transfer last samples into sample memory
-		if (const unsigned transfer_size = _filter_size / _ratio + 1; inSamples.size() >= transfer_size)
-		{
-			std::copy_n(inSamples.end() - transfer_size, transfer_size, _sample_memory.begin());
-		}
-		else
-		{
-			std::move(_sample_memory.begin() + static_cast<std::ptrdiff_t>(inSamples.size()), _sample_memory.end(),
-			          _sample_memory.begin());
-			std::copy_n(inSamples.begin(), inSamples.size(),
-			            _sample_memory.begin() + (transfer_size - static_cast<std::ptrdiff_t>(inSamples.size())));
-		}
-	}*/
 
 	DecadeUpsampler::DecadeUpsampler()
 	{
@@ -279,21 +183,4 @@ namespace signal
 		std::fill(out.begin() + 1, out.end(), 0);
 		_filter->filter(out);
 	}
-
-	/*void DecadeUpsampler::upsample(const std::span<const RealType> in, std::span<RealType> out) const
-	{
-		if (out.size() != in.size() * 10)
-		{
-			throw std::invalid_argument("Output span size must be 10 times the input size.");
-		}
-
-		for (size_t i = 0; i < in.size(); ++i)
-		{
-			out[i * 10] = in[i];
-			// Fill the rest of the 10-sample block with zeros
-			std::fill(out.begin() + static_cast<std::ptrdiff_t>(i) * 10 + 1,
-			          out.begin() + (static_cast<std::ptrdiff_t>(i) + 1) * 10, 0);
-		}
-		_filter->filter(out);
-	}*/
 }
