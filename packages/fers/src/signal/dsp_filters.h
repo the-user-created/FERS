@@ -1,9 +1,13 @@
+// SPDX-License-Identifier: GPL-2.0-only
+//
+// Copyright (c) 2007-2008 Marc Brooker and Michael Inggs
+// Copyright (c) 2008-present FERS Contributors (see AUTHORS.md).
+//
+// See the GNU GPLv2 LICENSE file in the FERS project root for more information.
+
 /**
 * @file dsp_filters.h
 * @brief Header file for Digital Signal Processing (DSP) filters and upsampling/downsampling functionality.
-*
-* @authors David Young, Marc Brooker
-* @date 2007-07-30
 */
 
 #pragma once

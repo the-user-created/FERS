@@ -1,15 +1,18 @@
+// SPDX-License-Identifier: GPL-2.0-only
+//
+// Copyright (c) 2024-present FERS Contributors (see AUTHORS.md).
+//
+// See the GNU GPLv2 LICENSE file in the FERS project root for more information.
+
 /**
- * @file logging.h
- * @brief Header file for the logging system.
- *
- * This file defines a logging system with multiple log levels, supporting thread-safe logging
- * to a file or standard output, and allowing formatted log messages with source location details.
- * The logging system is customizable with log levels and file output for effective debugging
- * and tracking of events in an application.
- *
- * @author David Young
- * @date 2024-09-20
- */
+* @file logging.h
+* @brief Header file for the logging system.
+*
+* This file defines a logging system with multiple log levels, supporting thread-safe logging
+* to a file or standard output, and allowing formatted log messages with source location details.
+* The logging system is customizable with log levels and file output for effective debugging
+* and tracking of events in an application.
+*/
 
 #pragma once
 

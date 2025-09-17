@@ -1,7 +1,12 @@
+// SPDX-License-Identifier: GPL-2.0-only
+//
+// Copyright (c) 2008 Marc Brooker and Michael Inggs
+// Copyright (c) 2008-present FERS Contributors (see AUTHORS.md).
+//
+// See the GNU GPLv2 LICENSE file in the FERS project root for more information.
+
 // Turn FERS HDF5 output into a raw binary file with 32 bit interleaved float samples
 // This was used for integeration with the G2 SAR processor, and probably isn't a good idea in most cases - the HDF5 version is much easier to work with
-// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-// 18 April 2008
 
 #include <cstdio>        // for size_t, FILE, fclose, fopen, fwrite
 #include <H5LTpublic.h>  // for H5LTget_attribute_double, H5LTfind_dataset

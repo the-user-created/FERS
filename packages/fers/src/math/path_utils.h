@@ -1,13 +1,17 @@
+// SPDX-License-Identifier: GPL-2.0-only
+//
+// Copyright (c) 2006-2008 Marc Brooker and Michael Inggs
+// Copyright (c) 2008-present FERS Contributors (see AUTHORS.md).
+//
+// See the GNU GPLv2 LICENSE file in the FERS project root for more information.
+
 /**
 * @file path_utils.h
- * @brief Utility functions for path interpolation and exception handling.
- *
- * The cubic interpolation functions are based on methods described in "Numerical Recipes
- * in C, Second Edition" by Press et al., but the code here is distinct from the original.
- *
- * @authors David Young, Marc Brooker
- * @date 2024-09-13
- */
+* @brief Utility functions for path interpolation and exception handling.
+*
+* The cubic interpolation functions are based on methods described in "Numerical Recipes
+* in C, Second Edition" by Press et al., but the code here is distinct from the original.
+*/
 
 #pragma once
 

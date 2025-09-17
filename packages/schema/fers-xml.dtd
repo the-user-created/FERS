@@ -1,4 +1,11 @@
-<!-- FERS XML Document Type Definition -->
+<!--
+  FERS XML simulation script Document Type Definition (DTD).
+
+  Copyright (C) 2006-2008 Marc Brooker.
+  Copyright (C) 2008-present FERS contributors (see AUTHORS.md).
+
+  This file is part of FERS. FERS is free software, licensed under the GPLv2.
+-->
         <!ELEMENT simulation (parameters?, (pulse | timing | antenna | platform | include)*)>
         <!ATTLIST simulation name CDATA #REQUIRED>
 

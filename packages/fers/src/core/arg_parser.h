@@ -1,13 +1,16 @@
+// SPDX-License-Identifier: GPL-2.0-only
+//
+// Copyright (c) 2024-present FERS Contributors (see AUTHORS.md).
+//
+// See the GNU GPLv2 LICENSE file in the FERS project root for more information.
+
 /**
- * @file arg_parser.h
- * @brief Command-line argument parsing utilities for the application.
- *
- * This header file provides utilities for parsing command-line arguments,
- * displaying help, version information, and configuring the application via a configuration structure.
- *
- * @author David Young
- * @date 2024-09-20
- */
+* @file arg_parser.h
+* @brief Command-line argument parsing utilities for the application.
+*
+* This header file provides utilities for parsing command-line arguments,
+* displaying help, version information, and configuring the application via a configuration structure.
+*/
 
 #pragma once
 

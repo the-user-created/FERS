@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-only
+// Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
+
 import { Box, Paper, Typography, Divider } from '@mui/material';
 import { useSimulationStore } from '@/store/simulationStore';
 

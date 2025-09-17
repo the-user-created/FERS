@@ -1,3 +1,9 @@
+// SPDX-License-Identifier: GPL-2.0-only
+//
+// Copyright (c) 2024-present FERS Contributors (see AUTHORS.md).
+//
+// See the GNU GPLv2 LICENSE file in the FERS project root for more information.
+
 /**
 * @file libxml_wrapper.h
 * @brief Wrapper for managing XML documents and elements using libxml2.
@@ -5,9 +11,6 @@
 * This header file provides classes and functions to simplify handling XML documents and elements
 * using the libxml2 library. It includes basic functionality for manipulating XML nodes, attributes,
 * content, and validation using DTD and XSD schemas.
-*
-* @author David Young
-* @date 2024-09-29
 */
 
 #pragma once

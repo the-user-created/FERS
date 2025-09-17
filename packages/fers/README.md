@@ -1,7 +1,7 @@
 # FERS Core Simulator
 
 [![Build Status](https://github.com/the-user-created/FERS/actions/workflows/CMake.yml/badge.svg)](https://github.com/the-user-created/FERS/actions/workflows/CMake.yml)
-[![License](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://opensource.org/licenses/GPL-3.0)
+[![License: GPL v2](https://img.shields.io/badge/License-GPLv2-blue.svg)](../../LICENSE)
 
 **FERS (Flexible Extensible Radar Simulator)** is a high-performance, command-line C++ tool that models various radar
 systems at the signal level. It allows for detailed simulations and performance assessments of radar systems under

@@ -1,11 +1,15 @@
+// SPDX-License-Identifier: GPL-2.0-only
+//
+// Copyright (c) 2006-2008 Marc Brooker and Michael Inggs
+// Copyright (c) 2008-present FERS Contributors (see AUTHORS.md).
+//
+// See the GNU GPLv2 LICENSE file in the FERS project root for more information.
+
 /**
 * @file timing.h
 * @brief Timing source for simulation objects.
-
-* All objects must adhere to a common timing source, which is modeled and adjusted by the methods in this class.
 *
-* @authors David Young, Marc Brooker
-* @date 2006-10-16
+* All objects must adhere to a common timing source, which is modeled and adjusted by the methods in this class.
 */
 
 #pragma once

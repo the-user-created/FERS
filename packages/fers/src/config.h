@@ -1,3 +1,9 @@
+// SPDX-License-Identifier: GPL-2.0-only
+//
+// Copyright (c) 2024-present FERS Contributors (see AUTHORS.md).
+//
+// See the GNU GPLv2 LICENSE file in the FERS project root for more information.
+
 /**
 * @file config.h
 * @brief Global configuration file for the project.
@@ -5,9 +11,6 @@
 * This file contains type definitions and constants used throughout the project
 * for real and complex number types, as well as mathematical constants like π
 * and machine epsilon.
-*
-* @author David Young
-* @date 2024-09-10
 */
 
 #pragma once

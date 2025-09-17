@@ -1,9 +1,13 @@
+// SPDX-License-Identifier: GPL-2.0-only
+//
+// Copyright (c) 2006-2008 Marc Brooker and Michael Inggs
+// Copyright (c) 2008-present FERS Contributors (see AUTHORS.md).
+//
+// See the GNU GPLv2 LICENSE file in the FERS project root for more information.
+
 /**
 * @file target.h
 * @brief Defines classes for radar targets and their Radar Cross-Section (RCS) models.
-*
-* @authors David Young, Marc Brooker
-* @date 2006-04-26
 */
 
 #pragma once

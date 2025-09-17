@@ -1,3 +1,10 @@
+// SPDX-License-Identifier: GPL-2.0-only
+//
+// Copyright (c) 2006-2008 Marc Brooker and Michael Inggs
+// Copyright (c) 2008-present FERS Contributors (see AUTHORS.md).
+//
+// See the GNU GPLv2 LICENSE file in the FERS project root for more information.
+
 /**
 * @file main.cpp
 * @brief Entry point and main logic for the FERS simulation application.
@@ -7,9 +14,6 @@
 * It handles command-line argument parsing, logging configuration,
 * simulation initialization, and execution using multithreading.
 * This is the central component of the simulation framework.
-*
-* @authors David Young, Marc Brooker
-* @date 2006-04-25
 */
 
 #include <exception>
