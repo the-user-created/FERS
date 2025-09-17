@@ -19,7 +19,6 @@ To ensure a smooth and effective process, please read these guidelines before yo
     - [C++ (`fers`) Style Guide](#c-fers-style-guide)
     - [TypeScript/React (`fers-ui`) Style Guide](#typescriptreact-fers-ui-style-guide)
 - [Commit Message Guidelines](#commit-message-guidelines)
-- [Code of Conduct](#code-of-conduct)
 
 ## Ways to Contribute
 
@@ -73,7 +72,7 @@ The core simulator is written in C++.
 
 1. **Prerequisites**: Ensure you have a C++23 compiler, CMake, `libhdf5`, and `libxml2`.
 2. **Clone the repo**: `git clone --recursive https://github.com/the-user-created/FERS.git`
-3. **Build**: Follow the detailed build instructions in the [`packages/fers/README.md`](../packages/fers/README.md).
+3. **Build**: Follow the detailed build instructions in the [`packages/fers/README.md`](packages/fers/README.md).
 
 ### User Interface (`fers-ui`) Setup
 
@@ -88,7 +87,7 @@ The UI is a Tauri desktop application built with React and TypeScript.
    pnpm tauri dev
    ```
 
-For more details, see the [`packages/fers-ui/README.md`](../packages/fers-ui/README.md).
+For more details, see the [`packages/fers-ui/README.md`](packages/fers-ui/README.md).
 
 ## Pull Request Process
 
@@ -150,8 +149,3 @@ and allows editing of properties for the selected antenna element.
 
 Fixes #42
 ```
-
-## Code of Conduct
-
-This project and everyone participating in it is governed by the [FERS Code of Conduct](CODE_OF_CONDUCT.md). By
-participating, you are expected to uphold this code.
