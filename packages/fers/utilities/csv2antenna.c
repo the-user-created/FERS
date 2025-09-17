@@ -1,6 +1,11 @@
+// SPDX-License-Identifier: GPL-2.0-only
+//
+// Copyright (c) 2007-2008 Marc Brooker and Michael Inggs
+// Copyright (c) 2008-present FERS Contributors (see AUTHORS.md).
+//
+// See the GNU GPLv2 LICENSE file in the FERS project root for more information.
+
 // Create a FERS antenna description file from 2 sets of CSV antenna data
-// Marc Brooker mbrooker@rrsg.ee.uct.ac.za
-// 12 June 2007
 
 #include <stdio.h>
 #include <stdlib.h>

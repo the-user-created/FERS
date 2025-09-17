@@ -1,13 +1,17 @@
+// SPDX-License-Identifier: GPL-2.0-only
+//
+// Copyright (c) 2006-2008 Marc Brooker and Michael Inggs
+// Copyright (c) 2008-present FERS Contributors (see AUTHORS.md).
+//
+// See the GNU GPLv2 LICENSE file in the FERS project root for more information.
+
 /**
- * @file sim_threading.h
- * @brief Header file for threaded simulation management.
- *
- * This file contains the definitions and classes necessary for running a threaded simulation.
- * It includes classes that handle simulations for transmitter-receiver pairs and rendering processes for each receiver.
- *
- * @authors David Young, Marc Brooker
- * @date 2006-07-19
- */
+* @file sim_threading.h
+* @brief Header file for threaded simulation management.
+*
+* This file contains the definitions and classes necessary for running a threaded simulation.
+* It includes classes that handle simulations for transmitter-receiver pairs and rendering processes for each receiver.
+*/
 
 #pragma once
 

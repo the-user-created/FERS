@@ -1,10 +1,14 @@
+// SPDX-License-Identifier: GPL-2.0-only
+//
+// Copyright (c) 2006-2008 Marc Brooker and Michael Inggs
+// Copyright (c) 2008-present FERS Contributors (see AUTHORS.md).
+//
+// See the GNU GPLv2 LICENSE file in the FERS project root for more information.
+
 /**
- * @file receiver.cpp
- * @brief Implementation of the Receiver class.
- *
- * @authors David Young, Marc Brooker
- * @date 2024-10-07
- */
+* @file receiver.cpp
+* @brief Implementation of the Receiver class.
+*/
 
 #include "receiver.h"
 

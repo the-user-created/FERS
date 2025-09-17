@@ -1,9 +1,12 @@
+// SPDX-License-Identifier: GPL-2.0-only
+//
+// Copyright (c) 2023-present FERS Contributors (see AUTHORS.md).
+//
+// See the GNU GPLv2 LICENSE file in the FERS project root for more information.
+
 /**
 * @file kml_generator.cpp
 * @brief Source file for KML file generation from FERS simulation scenarios.
-*
-* @authors David Young
-* @date 2025-07-31
 */
 
 #include "serial/kml_generator.h"

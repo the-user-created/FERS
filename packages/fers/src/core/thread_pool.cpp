@@ -1,10 +1,13 @@
+// SPDX-License-Identifier: GPL-2.0-only
+//
+// Copyright (c) 2024-present FERS Contributors (see AUTHORS.md).
+//
+// See the GNU GPLv2 LICENSE file in the FERS project root for more information.
+
 /**
- * @file thread_pool.cpp
- * @brief A simple thread pool implementation.
- *
- * @authors David Young
- * @date 2024-10-10
- */
+* @file thread_pool.cpp
+* @brief A simple thread pool implementation.
+*/
 
 #include "thread_pool.h"
 

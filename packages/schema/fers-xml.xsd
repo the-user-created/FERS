@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- XSD for FERS XML simulation script files. -->
-<!-- Script files must conform to this DTD or simulation results are likely to be unreliable. -->
-<!-- Marc Brooker mbrooker@rrsg.ee.uct.ac.za -->
+<!--
+  XSD for FERS XML simulation script files.
+
+  Copyright (C) 2023-present FERS contributors (see AUTHORS.md).
+
+  This file is part of FERS. FERS is free software, licensed under the GPLv2.
+-->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
     <xs:element name="simulation">
         <xs:complexType>

@@ -1,9 +1,12 @@
+// SPDX-License-Identifier: GPL-2.0-only
+//
+// Copyright (c) 2024-present FERS Contributors (see AUTHORS.md).
+//
+// See the GNU GPLv2 LICENSE file in the FERS project root for more information.
+
 /**
 * @file libxml_wrapper.cpp
 * @brief Wrapper for managing XML documents and elements using libxml2.
-*
-* @author David Young
-* @date 2024-09-29
 */
 
 #include "libxml_wrapper.h"

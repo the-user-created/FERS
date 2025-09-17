@@ -1,10 +1,13 @@
+// SPDX-License-Identifier: GPL-2.0-only
+//
+// Copyright (c) 2024-present FERS Contributors (see AUTHORS.md).
+//
+// See the GNU GPLv2 LICENSE file in the FERS project root for more information.
+
 /**
- * @file logging.cpp
- * @brief Implementation of the logging system.
- *
- * @author David Young
- * @date 2024-09-20
- */
+* @file logging.cpp
+* @brief Implementation of the logging system.
+*/
 
 #include "logging.h"
 

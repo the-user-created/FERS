@@ -1,3 +1,10 @@
+// SPDX-License-Identifier: GPL-2.0-only
+//
+// Copyright (c) 2008 Marc Brooker and Michael Inggs
+// Copyright (c) 2008-present FERS Contributors (see AUTHORS.md).
+//
+// See the GNU GPLv2 LICENSE file in the FERS project root for more information.
+
 /// Two dimensional clutter generator, this is an extremely over-simplified program, but it does the job
 
 #include <fstream>   // for operator<<, basic_ostream, char_traits, basic_of...
