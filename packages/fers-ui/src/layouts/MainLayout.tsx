@@ -1,21 +1,26 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
 
+import { useState } from 'react';
 import { Box } from '@mui/material';
-import { LeftSidebar } from '@/views/LeftSidebar';
-import { RightSidebar } from '@/views/RightSidebar';
-import { MainView } from '@/views/MainView';
+import AppRail from '@/components/AppRail';
+import { ScenarioView } from '@/views/ScenarioView';
+import { AssetLibraryView } from '@/views/AssetLibraryView';
+import { SimulationView } from '@/views/SimulationView';
+import { ResultsView } from '@/views/ResultsView';
 
-const LEFT_SIDEBAR_WIDTH = 300;
-const RIGHT_SIDEBAR_WIDTH = 280;
+const views: { [key: string]: React.ComponentType } = {
+    scenario: ScenarioView,
+    assets: AssetLibraryView,
+    simulation: SimulationView,
+    results: ResultsView,
+};
 
-/**
- * Defines the main three-panel structure of the application:
- * - Left Sidebar (Property Inspector)
- * - Main Content (3D World View)
- * - Right Sidebar (WorldView Hierarchy)
- */
 export function MainLayout() {
+    const [activeView, setActiveView] = useState('scenario');
+
+    const ActiveViewComponent = views[activeView] || ScenarioView;
+
     return (
         <Box
             sx={{
@@ -25,40 +30,12 @@ export function MainLayout() {
                 overflow: 'hidden',
             }}
         >
-            {/* Left Sidebar: Property Inspector */}
-            <Box
-                component="aside"
-                sx={{
-                    width: LEFT_SIDEBAR_WIDTH,
-                    flexShrink: 0,
-                    height: '100%',
-                }}
-            >
-                <LeftSidebar />
-            </Box>
-
-            {/* Main Content: 3D Viewport */}
+            <AppRail activeView={activeView} onViewChange={setActiveView} />
             <Box
                 component="main"
-                sx={{
-                    flexGrow: 1,
-                    height: '100%',
-                    minWidth: 0, // Prevents flexbox from overflowing
-                }}
+                sx={{ flexGrow: 1, minWidth: 0, height: '100%' }}
             >
-                <MainView />
-            </Box>
-
-            {/* Right Sidebar: WorldView Hierarchy */}
-            <Box
-                component="aside"
-                sx={{
-                    width: RIGHT_SIDEBAR_WIDTH,
-                    flexShrink: 0,
-                    height: '100%',
-                }}
-            >
-                <RightSidebar />
+                <ActiveViewComponent />
             </Box>
         </Box>
     );
