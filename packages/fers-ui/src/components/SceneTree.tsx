@@ -1,85 +1,247 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
 
-import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView';
-import { TreeItem } from '@mui/x-tree-view/TreeItem';
+import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
+import { useScenarioStore, findItemInStore } from '@/stores/scenarioStore';
+import { Box, Typography, IconButton, Tooltip } from '@mui/material';
 
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import MemoryIcon from '@mui/icons-material/Memory';
-import AdjustIcon from '@mui/icons-material/Adjust';
+import PublicIcon from '@mui/icons-material/Public';
+import WavesIcon from '@mui/icons-material/Waves';
+import TimerIcon from '@mui/icons-material/Timer';
 import SettingsInputAntennaIcon from '@mui/icons-material/SettingsInputAntenna';
-import { Box, Typography } from '@mui/material';
+import FlightIcon from '@mui/icons-material/Flight';
+import AddIcon from '@mui/icons-material/Add';
+import RemoveIcon from '@mui/icons-material/Remove';
 
-// Helper component to render a label with an icon
-const TreeItemLabel = ({
-    Icon,
-    text,
+const SectionHeader = ({
+    title,
+    onAdd,
 }: {
-    Icon?: React.ElementType;
-    text: string;
+    title: string;
+    onAdd: () => void;
 }) => (
-    <Box sx={{ display: 'flex', alignItems: 'center', p: 0.5, py: 0 }}>
-        {Icon && (
-            <Box
-                component={Icon}
-                color="inherit"
-                sx={{ mr: 1, fontSize: '1.25rem' }}
-            />
-        )}
-        <Typography variant="body2" sx={{ fontWeight: 'inherit', flexGrow: 1 }}>
-            {text}
+    <Box
+        sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            pr: 1,
+        }}
+    >
+        <Typography variant="overline" sx={{ color: 'text.secondary' }}>
+            {title}
         </Typography>
+        <Tooltip title={`Add ${title.slice(0, -1)}`}>
+            <IconButton size="small" onClick={onAdd}>
+                <AddIcon fontSize="inherit" />
+            </IconButton>
+        </Tooltip>
     </Box>
 );
 
 export default function SceneTree() {
+    const {
+        globalParameters,
+        pulses,
+        timings,
+        antennas,
+        platforms,
+        selectedItemId,
+        selectItem,
+        addPulse,
+        addTiming,
+        addAntenna,
+        addPlatform,
+        removeSelectedItem,
+    } = useScenarioStore();
+
+    const handleSelect = (
+        _event: React.SyntheticEvent | null,
+        nodeId: string | null
+    ) => {
+        const rootNodes = [
+            'pulses-root',
+            'timings-root',
+            'antennas-root',
+            'platforms-root',
+        ];
+        if (nodeId && rootNodes.includes(nodeId)) {
+            return;
+        }
+        selectItem(nodeId);
+    };
+
+    const selectedItem = findItemInStore(selectedItemId);
+    const canRemove = selectedItem && selectedItem.type !== 'GlobalParameters';
+
     return (
-        <Box>
-            <Typography
-                variant="overline"
-                sx={{ px: 2, pt: 1, color: 'text.secondary' }}
+        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <Box
+                sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    px: 2,
+                    pt: 1,
+                    pb: 1,
+                }}
             >
-                Scenario
-            </Typography>
+                <Typography variant="overline" sx={{ color: 'text.secondary' }}>
+                    Scenario Explorer
+                </Typography>
+                <Box>
+                    <Tooltip title="Remove Selected Item">
+                        <span>
+                            <IconButton
+                                size="small"
+                                onClick={removeSelectedItem}
+                                disabled={!canRemove}
+                            >
+                                <RemoveIcon />
+                            </IconButton>
+                        </span>
+                    </Tooltip>
+                </Box>
+            </Box>
             <SimpleTreeView
-                defaultExpandedItems={['platforms']}
+                selectedItems={selectedItemId}
+                onSelectedItemsChange={handleSelect}
                 slots={{
                     collapseIcon: ExpandMoreIcon,
                     expandIcon: ChevronRightIcon,
                 }}
-                sx={{ flexGrow: 1, maxWidth: 400, overflowY: 'auto' }}
+                sx={{
+                    flexGrow: 1,
+                    overflowY: 'auto',
+                    '& .MuiTreeItem-content': {
+                        py: 0.5,
+                    },
+                }}
             >
-                <TreeItem itemId="global" label="Global Parameters">
-                    <TreeItem itemId="origin" label="Origin: UCT" />
-                    <TreeItem itemId="frame" label="Frame: ENU" />
-                </TreeItem>
-                <TreeItem itemId="platforms" label="Platforms">
-                    <TreeItem itemId="awacs" label="AWACS">
+                <TreeItem
+                    itemId={globalParameters.id}
+                    label={
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <PublicIcon sx={{ mr: 1 }} fontSize="small" />
+                            <Typography variant="body2">
+                                Global Parameters
+                            </Typography>
+                        </Box>
+                    }
+                />
+                <TreeItem
+                    itemId="pulses-root"
+                    label={<SectionHeader title="Pulses" onAdd={addPulse} />}
+                >
+                    {pulses.map((pulse) => (
                         <TreeItem
-                            itemId="radar"
+                            key={pulse.id}
+                            itemId={pulse.id}
                             label={
-                                <TreeItemLabel
-                                    Icon={SettingsInputAntennaIcon}
-                                    text="Radar: AN/APY-2"
-                                />
+                                <Box
+                                    sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                    }}
+                                >
+                                    <WavesIcon
+                                        sx={{ mr: 1 }}
+                                        fontSize="small"
+                                    />
+                                    <Typography variant="body2">
+                                        {pulse.name}
+                                    </Typography>
+                                </Box>
                             }
                         />
-                        <TreeItem itemId="awacs-motion" label="Motion Path" />
-                    </TreeItem>
-                    <TreeItem
-                        itemId="f16"
-                        label={<TreeItemLabel Icon={AdjustIcon} text="F-16" />}
-                    />
-                    <TreeItem
-                        itemId="ground-station"
-                        label={
-                            <TreeItemLabel
-                                Icon={MemoryIcon}
-                                text="Ground Station"
-                            />
-                        }
-                    />
+                    ))}
+                </TreeItem>
+                <TreeItem
+                    itemId="timings-root"
+                    label={<SectionHeader title="Timings" onAdd={addTiming} />}
+                >
+                    {timings.map((timing) => (
+                        <TreeItem
+                            key={timing.id}
+                            itemId={timing.id}
+                            label={
+                                <Box
+                                    sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                    }}
+                                >
+                                    <TimerIcon
+                                        sx={{ mr: 1 }}
+                                        fontSize="small"
+                                    />
+                                    <Typography variant="body2">
+                                        {timing.name}
+                                    </Typography>
+                                </Box>
+                            }
+                        />
+                    ))}
+                </TreeItem>
+                <TreeItem
+                    itemId="antennas-root"
+                    label={
+                        <SectionHeader title="Antennas" onAdd={addAntenna} />
+                    }
+                >
+                    {antennas.map((antenna) => (
+                        <TreeItem
+                            key={antenna.id}
+                            itemId={antenna.id}
+                            label={
+                                <Box
+                                    sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                    }}
+                                >
+                                    <SettingsInputAntennaIcon
+                                        sx={{ mr: 1 }}
+                                        fontSize="small"
+                                    />
+                                    <Typography variant="body2">
+                                        {antenna.name}
+                                    </Typography>
+                                </Box>
+                            }
+                        />
+                    ))}
+                </TreeItem>
+                <TreeItem
+                    itemId="platforms-root"
+                    label={
+                        <SectionHeader title="Platforms" onAdd={addPlatform} />
+                    }
+                >
+                    {platforms.map((platform) => (
+                        <TreeItem
+                            key={platform.id}
+                            itemId={platform.id}
+                            label={
+                                <Box
+                                    sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                    }}
+                                >
+                                    <FlightIcon
+                                        sx={{ mr: 1 }}
+                                        fontSize="small"
+                                    />
+                                    <Typography variant="body2">
+                                        {platform.name}
+                                    </Typography>
+                                </Box>
+                            }
+                        />
+                    ))}
                 </TreeItem>
             </SimpleTreeView>
         </Box>

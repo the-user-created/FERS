@@ -17,6 +17,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 interface AppRailProps {
     activeView: string;
     onViewChange: (view: string) => void;
+    onSettingsClick: () => void;
 }
 
 const views = [
@@ -26,7 +27,11 @@ const views = [
     { id: 'results', label: 'Results Analysis', icon: <BarChartIcon /> },
 ];
 
-export default function AppRail({ activeView, onViewChange }: AppRailProps) {
+export default function AppRail({
+    activeView,
+    onViewChange,
+    onSettingsClick,
+}: AppRailProps) {
     return (
         <Box
             sx={{
@@ -66,9 +71,7 @@ export default function AppRail({ activeView, onViewChange }: AppRailProps) {
             <Box>
                 <Tooltip title="Settings" placement="right">
                     <ListItemButton
-                        onClick={() => {
-                            /* handle settings click */
-                        }}
+                        onClick={onSettingsClick}
                         sx={{ my: 1, justifyContent: 'center' }}
                     >
                         <ListItemIcon sx={{ minWidth: 0 }}>
