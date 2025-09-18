@@ -8,6 +8,7 @@ import { ScenarioView } from '@/views/ScenarioView';
 import { AssetLibraryView } from '@/views/AssetLibraryView';
 import { SimulationView } from '@/views/SimulationView';
 import { ResultsView } from '@/views/ResultsView';
+import SettingsDialog from '@/components/SettingsDialog';
 
 const views: { [key: string]: React.ComponentType } = {
     scenario: ScenarioView,
@@ -18,6 +19,7 @@ const views: { [key: string]: React.ComponentType } = {
 
 export function MainLayout() {
     const [activeView, setActiveView] = useState('scenario');
+    const [settingsOpen, setSettingsOpen] = useState(false);
 
     const ActiveViewComponent = views[activeView] || ScenarioView;
 
@@ -30,13 +32,21 @@ export function MainLayout() {
                 overflow: 'hidden',
             }}
         >
-            <AppRail activeView={activeView} onViewChange={setActiveView} />
+            <AppRail
+                activeView={activeView}
+                onViewChange={setActiveView}
+                onSettingsClick={() => setSettingsOpen(true)}
+            />
             <Box
                 component="main"
                 sx={{ flexGrow: 1, minWidth: 0, height: '100%' }}
             >
                 <ActiveViewComponent />
             </Box>
+            <SettingsDialog
+                open={settingsOpen}
+                onClose={() => setSettingsOpen(false)}
+            />
         </Box>
     );
 }
