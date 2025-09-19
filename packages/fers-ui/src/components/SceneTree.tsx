@@ -3,7 +3,7 @@
 
 import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
 import { useScenarioStore, findItemInStore } from '@/stores/scenarioStore';
-import { Box, Typography, IconButton, Tooltip } from '@mui/material';
+import { Box, Typography, IconButton, Tooltip, Divider } from '@mui/material';
 
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -27,7 +27,6 @@ const SectionHeader = ({
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            pr: 1,
         }}
     >
         <Typography variant="overline" sx={{ color: 'text.secondary' }}>
@@ -79,41 +78,49 @@ export default function SceneTree() {
     return (
         <Box
             sx={{
+                height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
-                height: '100%',
-                overflow: 'hidden', // Prevent overflow at container level
             }}
         >
+            {/* 1. Fixed Header */}
             <Box
                 sx={{
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
+                    flexShrink: 0,
                     px: 2,
-                    pt: 1,
+                    pt: 2,
                     pb: 1,
-                    flexShrink: 0, // Prevent header from shrinking
                 }}
             >
                 <Typography variant="overline" sx={{ color: 'text.secondary' }}>
                     Scenario Explorer
                 </Typography>
-                <Box>
-                    <Tooltip title="Remove Selected Item">
-                        <span>
-                            <IconButton
-                                size="small"
-                                onClick={removeSelectedItem}
-                                disabled={!canRemove}
-                            >
-                                <RemoveIcon />
-                            </IconButton>
-                        </span>
-                    </Tooltip>
-                </Box>
+                <Tooltip title="Remove Selected Item">
+                    <span>
+                        <IconButton
+                            size="small"
+                            onClick={removeSelectedItem}
+                            disabled={!canRemove}
+                        >
+                            <RemoveIcon />
+                        </IconButton>
+                    </span>
+                </Tooltip>
             </Box>
-            <Box sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+            <Divider sx={{ mx: 2, mb: 1 }} />
+
+            {/* 2. Scrollable Content Area */}
+            <Box
+                sx={{
+                    flexGrow: 1, // Takes up all remaining space
+                    overflowY: 'auto', // Enables vertical scrolling
+                    minHeight: 0, // Crucial for flexbox scrolling
+                    px: 2, // Apply horizontal padding inside scroll area
+                }}
+            >
                 <SimpleTreeView
                     selectedItems={selectedItemId}
                     onSelectedItemsChange={handleSelect}
@@ -122,9 +129,7 @@ export default function SceneTree() {
                         expandIcon: ChevronRightIcon,
                     }}
                     sx={{
-                        '& .MuiTreeItem-content': {
-                            py: 0.5,
-                        },
+                        '& .MuiTreeItem-content': { py: 0.5 },
                     }}
                 >
                     <TreeItem
@@ -167,6 +172,7 @@ export default function SceneTree() {
                             />
                         ))}
                     </TreeItem>
+                    {/* ... other TreeItems ... */}
                     <TreeItem
                         itemId="timings-root"
                         label={

@@ -33,7 +33,6 @@ const ResizablePanel: React.FC<ResizablePanelProps> = ({
                 newSize =
                     side === 'left' ? e.clientX : window.innerWidth - e.clientX;
             } else {
-                // vertical
                 newSize =
                     side === 'top' ? e.clientY : window.innerHeight - e.clientY;
             }
@@ -63,7 +62,6 @@ const ResizablePanel: React.FC<ResizablePanelProps> = ({
         document.body.style.userSelect = 'none';
     };
 
-    // Cleanup listeners on unmount
     useEffect(() => {
         return () => {
             document.removeEventListener('mousemove', handleMouseMove);
@@ -76,58 +74,38 @@ const ResizablePanel: React.FC<ResizablePanelProps> = ({
         width: direction === 'horizontal' ? '4px' : '100%',
         height: direction === 'horizontal' ? '100%' : '4px',
         position: 'absolute' as const,
-        // Position the resizer handle inside the panel boundaries
         ...(direction === 'horizontal' && side === 'left' ? { right: 0 } : {}),
         ...(direction === 'horizontal' && side === 'right' ? { left: 0 } : {}),
         ...(direction === 'vertical' && side === 'top' ? { bottom: 0 } : {}),
         ...(direction === 'vertical' && side === 'bottom' ? { top: 0 } : {}),
         zIndex: 10,
-        '&:hover': {
-            backgroundColor: 'action.hover',
-        },
-        // Add a wider hit area for better usability
+        '&:hover': { backgroundColor: 'action.hover' },
         '&::before': {
             content: '""',
             position: 'absolute' as const,
             ...(direction === 'horizontal'
-                ? {
-                      top: 0,
-                      bottom: 0,
-                      left: '-2px',
-                      right: '-2px',
-                  }
-                : {
-                      left: 0,
-                      right: 0,
-                      top: '-2px',
-                      bottom: '-2px',
-                  }),
+                ? { top: 0, bottom: 0, left: '-2px', right: '-2px' }
+                : { left: 0, right: 0, top: '-2px', bottom: '-2px' }),
         },
     };
 
     const panelStyles = {
         [direction === 'horizontal' ? 'width' : 'height']: `${size}px`,
         position: 'relative' as const,
-        display: 'flex',
+        display: 'flex', // This makes the panel a flex container
         flexDirection: 'column' as const,
         flexShrink: 0,
-        overflow: 'hidden', // Prevent content from causing overflow
+        // The child will now handle its own overflow
     };
 
     return (
         <Box sx={panelStyles} {...boxProps}>
             <Box onMouseDown={handleMouseDown} sx={resizerStyles} />
-            <Box
-                sx={{
-                    flex: 1,
-                    overflow: 'auto',
-                    p: 1,
-                    minHeight: 0, // Allow proper flex shrinking
-                    minWidth: 0, // Allow proper flex shrinking
-                }}
-            >
-                {children}
-            </Box>
+            {/*
+              By rendering children directly, they become flex items that can grow
+              to fill this container. No intermediate wrapper box is needed.
+            */}
+            {children}
         </Box>
     );
 };

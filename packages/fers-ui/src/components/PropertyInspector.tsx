@@ -15,7 +15,7 @@ function InspectorContent() {
 
     if (!selectedItem) {
         return (
-            <Typography sx={{ p: 2 }} color="text.secondary">
+            <Typography color="text.secondary">
                 Select an item to see its properties.
             </Typography>
         );
@@ -45,7 +45,7 @@ function InspectorContent() {
     }
 
     return (
-        <Box sx={{ p: 1 }}>
+        <Box>
             <Typography variant="overline" color="text.secondary">
                 {selectedItem.type}
             </Typography>
@@ -62,17 +62,24 @@ export default function PropertyInspector() {
                 height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
-                overflow: 'hidden',
+                // This component fills its parent (ResizablePanel)
             }}
         >
-            <Typography
-                variant="h6"
-                gutterBottom
-                sx={{ px: 1, pt: 0.5, mb: 1 }}
+            {/* 1. Fixed Header */}
+            <Box sx={{ flexShrink: 0, px: 2, pt: 2, pb: 1 }}>
+                <Typography variant="h6">Properties</Typography>
+            </Box>
+            <Divider sx={{ mx: 2 }} />
+
+            {/* 2. Scrollable Content Area */}
+            <Box
+                sx={{
+                    flexGrow: 1, // Takes up all remaining space
+                    overflowY: 'auto', // Enables vertical scrolling
+                    minHeight: 0, // Crucial for flexbox scrolling
+                    p: 2, // Apply padding inside the scrollable area
+                }}
             >
-                Properties
-            </Typography>
-            <Box sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
                 <InspectorContent />
             </Box>
         </Box>
