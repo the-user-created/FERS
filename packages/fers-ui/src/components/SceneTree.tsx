@@ -77,7 +77,14 @@ export default function SceneTree() {
     const canRemove = selectedItem && selectedItem.type !== 'GlobalParameters';
 
     return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <Box
+            sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                height: '100%',
+                overflow: 'hidden', // Prevent overflow at container level
+            }}
+        >
             <Box
                 sx={{
                     display: 'flex',
@@ -86,6 +93,7 @@ export default function SceneTree() {
                     px: 2,
                     pt: 1,
                     pb: 1,
+                    flexShrink: 0, // Prevent header from shrinking
                 }}
             >
                 <Typography variant="overline" sx={{ color: 'text.secondary' }}>
@@ -105,145 +113,155 @@ export default function SceneTree() {
                     </Tooltip>
                 </Box>
             </Box>
-            <SimpleTreeView
-                selectedItems={selectedItemId}
-                onSelectedItemsChange={handleSelect}
-                slots={{
-                    collapseIcon: ExpandMoreIcon,
-                    expandIcon: ChevronRightIcon,
-                }}
-                sx={{
-                    flexGrow: 1,
-                    overflowY: 'auto',
-                    '& .MuiTreeItem-content': {
-                        py: 0.5,
-                    },
-                }}
-            >
-                <TreeItem
-                    itemId={globalParameters.id}
-                    label={
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <PublicIcon sx={{ mr: 1 }} fontSize="small" />
-                            <Typography variant="body2">
-                                Global Parameters
-                            </Typography>
-                        </Box>
-                    }
-                />
-                <TreeItem
-                    itemId="pulses-root"
-                    label={<SectionHeader title="Pulses" onAdd={addPulse} />}
+            <Box sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+                <SimpleTreeView
+                    selectedItems={selectedItemId}
+                    onSelectedItemsChange={handleSelect}
+                    slots={{
+                        collapseIcon: ExpandMoreIcon,
+                        expandIcon: ChevronRightIcon,
+                    }}
+                    sx={{
+                        '& .MuiTreeItem-content': {
+                            py: 0.5,
+                        },
+                    }}
                 >
-                    {pulses.map((pulse) => (
-                        <TreeItem
-                            key={pulse.id}
-                            itemId={pulse.id}
-                            label={
-                                <Box
-                                    sx={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                    }}
-                                >
-                                    <WavesIcon
-                                        sx={{ mr: 1 }}
-                                        fontSize="small"
-                                    />
-                                    <Typography variant="body2">
-                                        {pulse.name}
-                                    </Typography>
-                                </Box>
-                            }
-                        />
-                    ))}
-                </TreeItem>
-                <TreeItem
-                    itemId="timings-root"
-                    label={<SectionHeader title="Timings" onAdd={addTiming} />}
-                >
-                    {timings.map((timing) => (
-                        <TreeItem
-                            key={timing.id}
-                            itemId={timing.id}
-                            label={
-                                <Box
-                                    sx={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                    }}
-                                >
-                                    <TimerIcon
-                                        sx={{ mr: 1 }}
-                                        fontSize="small"
-                                    />
-                                    <Typography variant="body2">
-                                        {timing.name}
-                                    </Typography>
-                                </Box>
-                            }
-                        />
-                    ))}
-                </TreeItem>
-                <TreeItem
-                    itemId="antennas-root"
-                    label={
-                        <SectionHeader title="Antennas" onAdd={addAntenna} />
-                    }
-                >
-                    {antennas.map((antenna) => (
-                        <TreeItem
-                            key={antenna.id}
-                            itemId={antenna.id}
-                            label={
-                                <Box
-                                    sx={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                    }}
-                                >
-                                    <SettingsInputAntennaIcon
-                                        sx={{ mr: 1 }}
-                                        fontSize="small"
-                                    />
-                                    <Typography variant="body2">
-                                        {antenna.name}
-                                    </Typography>
-                                </Box>
-                            }
-                        />
-                    ))}
-                </TreeItem>
-                <TreeItem
-                    itemId="platforms-root"
-                    label={
-                        <SectionHeader title="Platforms" onAdd={addPlatform} />
-                    }
-                >
-                    {platforms.map((platform) => (
-                        <TreeItem
-                            key={platform.id}
-                            itemId={platform.id}
-                            label={
-                                <Box
-                                    sx={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                    }}
-                                >
-                                    <FlightIcon
-                                        sx={{ mr: 1 }}
-                                        fontSize="small"
-                                    />
-                                    <Typography variant="body2">
-                                        {platform.name}
-                                    </Typography>
-                                </Box>
-                            }
-                        />
-                    ))}
-                </TreeItem>
-            </SimpleTreeView>
+                    <TreeItem
+                        itemId={globalParameters.id}
+                        label={
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                <PublicIcon sx={{ mr: 1 }} fontSize="small" />
+                                <Typography variant="body2">
+                                    Global Parameters
+                                </Typography>
+                            </Box>
+                        }
+                    />
+                    <TreeItem
+                        itemId="pulses-root"
+                        label={
+                            <SectionHeader title="Pulses" onAdd={addPulse} />
+                        }
+                    >
+                        {pulses.map((pulse) => (
+                            <TreeItem
+                                key={pulse.id}
+                                itemId={pulse.id}
+                                label={
+                                    <Box
+                                        sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                        }}
+                                    >
+                                        <WavesIcon
+                                            sx={{ mr: 1 }}
+                                            fontSize="small"
+                                        />
+                                        <Typography variant="body2">
+                                            {pulse.name}
+                                        </Typography>
+                                    </Box>
+                                }
+                            />
+                        ))}
+                    </TreeItem>
+                    <TreeItem
+                        itemId="timings-root"
+                        label={
+                            <SectionHeader title="Timings" onAdd={addTiming} />
+                        }
+                    >
+                        {timings.map((timing) => (
+                            <TreeItem
+                                key={timing.id}
+                                itemId={timing.id}
+                                label={
+                                    <Box
+                                        sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                        }}
+                                    >
+                                        <TimerIcon
+                                            sx={{ mr: 1 }}
+                                            fontSize="small"
+                                        />
+                                        <Typography variant="body2">
+                                            {timing.name}
+                                        </Typography>
+                                    </Box>
+                                }
+                            />
+                        ))}
+                    </TreeItem>
+                    <TreeItem
+                        itemId="antennas-root"
+                        label={
+                            <SectionHeader
+                                title="Antennas"
+                                onAdd={addAntenna}
+                            />
+                        }
+                    >
+                        {antennas.map((antenna) => (
+                            <TreeItem
+                                key={antenna.id}
+                                itemId={antenna.id}
+                                label={
+                                    <Box
+                                        sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                        }}
+                                    >
+                                        <SettingsInputAntennaIcon
+                                            sx={{ mr: 1 }}
+                                            fontSize="small"
+                                        />
+                                        <Typography variant="body2">
+                                            {antenna.name}
+                                        </Typography>
+                                    </Box>
+                                }
+                            />
+                        ))}
+                    </TreeItem>
+                    <TreeItem
+                        itemId="platforms-root"
+                        label={
+                            <SectionHeader
+                                title="Platforms"
+                                onAdd={addPlatform}
+                            />
+                        }
+                    >
+                        {platforms.map((platform) => (
+                            <TreeItem
+                                key={platform.id}
+                                itemId={platform.id}
+                                label={
+                                    <Box
+                                        sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                        }}
+                                    >
+                                        <FlightIcon
+                                            sx={{ mr: 1 }}
+                                            fontSize="small"
+                                        />
+                                        <Typography variant="body2">
+                                            {platform.name}
+                                        </Typography>
+                                    </Box>
+                                }
+                            />
+                        ))}
+                    </TreeItem>
+                </SimpleTreeView>
+            </Box>
         </Box>
     );
 }

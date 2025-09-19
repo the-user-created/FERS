@@ -36,7 +36,7 @@ export default function AppRail({
         <Box
             sx={{
                 width: 60,
-                height: '100vh',
+                height: '100%', // Use percentage instead of vh
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
@@ -44,9 +44,10 @@ export default function AppRail({
                 borderColor: 'divider',
                 bgcolor: 'background.paper',
                 flexShrink: 0,
+                overflow: 'hidden', // Prevent overflow
             }}
         >
-            <List sx={{ flexGrow: 1 }}>
+            <List sx={{ flexGrow: 1, overflow: 'auto', width: '100%' }}>
                 {views.map((view) => (
                     <Tooltip title={view.label} placement="right" key={view.id}>
                         <ListItemButton
@@ -68,7 +69,7 @@ export default function AppRail({
                     </Tooltip>
                 ))}
             </List>
-            <Box>
+            <Box sx={{ pb: 1 }}>
                 <Tooltip title="Settings" placement="right">
                     <ListItemButton
                         onClick={onSettingsClick}

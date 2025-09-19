@@ -14,9 +14,11 @@ export default function Timeline() {
                 alignItems: 'center',
                 gap: 2,
                 height: '100%',
+                px: 2, // Add horizontal padding
+                overflow: 'hidden', // Prevent overflow
             }}
         >
-            <Box>
+            <Box sx={{ flexShrink: 0 }}>
                 <IconButton size="small">
                     <SkipPreviousIcon />
                 </IconButton>
@@ -27,17 +29,25 @@ export default function Timeline() {
                     <SkipNextIcon />
                 </IconButton>
             </Box>
-            <Typography variant="caption">0.00s</Typography>
+            <Typography variant="caption" sx={{ flexShrink: 0 }}>
+                0.00s
+            </Typography>
             <Slider
                 defaultValue={0}
                 step={0.1}
                 min={0}
                 max={30}
-                sx={{ mx: 1 }}
+                sx={{
+                    mx: 1,
+                    flexGrow: 1,
+                    minWidth: 50, // Ensure minimum usable width
+                }}
                 valueLabelDisplay="auto"
                 valueLabelFormat={(value) => `${value.toFixed(2)}s`}
             />
-            <Typography variant="caption">30.00s</Typography>
+            <Typography variant="caption" sx={{ flexShrink: 0 }}>
+                30.00s
+            </Typography>
         </Box>
     );
 }
