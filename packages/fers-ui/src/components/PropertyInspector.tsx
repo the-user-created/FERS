@@ -57,11 +57,24 @@ function InspectorContent() {
 
 export default function PropertyInspector() {
     return (
-        <Box>
-            <Typography variant="h6" gutterBottom sx={{ px: 1, pt: 0.5 }}>
+        <Box
+            sx={{
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden',
+            }}
+        >
+            <Typography
+                variant="h6"
+                gutterBottom
+                sx={{ px: 1, pt: 0.5, mb: 1 }}
+            >
                 Properties
             </Typography>
-            <InspectorContent />
+            <Box sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+                <InspectorContent />
+            </Box>
         </Box>
     );
 }

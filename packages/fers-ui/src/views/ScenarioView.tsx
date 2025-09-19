@@ -20,6 +20,7 @@ export function ScenarioView() {
                 height: '100%',
                 width: '100%',
                 overflow: 'hidden',
+                position: 'relative', // Establish positioning context
             }}
         >
             <ResizablePanel
@@ -38,10 +39,18 @@ export function ScenarioView() {
                     flex: 1,
                     display: 'flex',
                     flexDirection: 'column',
-                    minWidth: 0,
+                    minWidth: 0, // Allow flex item to shrink below content size
+                    overflow: 'hidden', // Prevent overflow
                 }}
             >
-                <Box sx={{ flex: 1, position: 'relative' }}>
+                <Box
+                    sx={{
+                        flex: 1,
+                        position: 'relative',
+                        minHeight: 0, // Allow flex item to shrink
+                        overflow: 'hidden',
+                    }}
+                >
                     <Canvas camera={{ position: [10, 10, 10], fov: 25 }}>
                         <WorldView />
                     </Canvas>
