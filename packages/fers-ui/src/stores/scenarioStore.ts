@@ -166,7 +166,7 @@ type ScenarioActions = {
     addRotationWaypoint: (platformId: string) => void;
     removeRotationWaypoint: (platformId: string, waypointId: string) => void;
     // Update Action
-    updateItem: (itemId: string, propertyPath: string, value: any) => void;
+    updateItem: (itemId: string, propertyPath: string, value: unknown) => void;
     setPlatformComponentType: (
         platformId: string,
         componentType: PlatformComponent['type']
@@ -226,9 +226,10 @@ const defaultPlatform: Omit<Platform, 'id' | 'name'> = {
 };
 
 // Helper to set nested properties safely
-const setPropertyByPath = (obj: any, path: string, value: any) => {
+const setPropertyByPath = (obj: object, path: string, value: unknown) => {
     const keys = path.split('.');
-    let current = obj;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let current: any = obj;
     for (let i = 0; i < keys.length - 1; i++) {
         if (current[keys[i]] === undefined) return; // Path does not exist
         current = current[keys[i]];
