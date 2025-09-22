@@ -1,25 +1,110 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
 
+import { useState } from 'react';
 import {
     Box,
     Button,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
     FormControl,
     IconButton,
     InputLabel,
     MenuItem,
     Select,
     TextField,
+    Typography,
 } from '@mui/material';
 import {
     useScenarioStore,
     Platform,
     PlatformComponent,
+    PositionWaypoint,
+    RotationWaypoint,
 } from '@/stores/scenarioStore';
 import { Section, NumberField } from './InspectorControls';
 import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
 import { v4 as uuidv4 } from 'uuid';
 import { PlatformComponentInspector } from './PlatformComponentInspector';
+
+interface WaypointEditDialogProps {
+    open: boolean;
+    onClose: () => void;
+    waypoint: PositionWaypoint | RotationWaypoint | null;
+    waypointType: 'position' | 'rotation';
+    onFieldChange: (field: string, value: number | null) => void;
+}
+
+function WaypointEditDialog({
+                                open,
+                                onClose,
+                                waypoint,
+                                waypointType,
+                                onFieldChange,
+                            }: WaypointEditDialogProps) {
+    if (!waypoint) return null;
+
+    return (
+        <Dialog open={open} onClose={onClose}>
+            <DialogTitle>Edit Waypoint</DialogTitle>
+            <DialogContent>
+                <Box
+                    sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 2,
+                        pt: 1,
+                    }}
+                >
+                    {waypointType === 'position' && 'x' in waypoint && (
+                        <>
+                            <NumberField
+                                label="X"
+                                value={waypoint.x}
+                                onChange={(v) => onFieldChange('x', v)}
+                            />
+                            <NumberField
+                                label="Y"
+                                value={waypoint.y}
+                                onChange={(v) => onFieldChange('y', v)}
+                            />
+                            <NumberField
+                                label="Altitude"
+                                value={waypoint.altitude}
+                                onChange={(v) => onFieldChange('altitude', v)}
+                            />
+                        </>
+                    )}
+                    {waypointType === 'rotation' && 'azimuth' in waypoint && (
+                        <>
+                            <NumberField
+                                label="Azimuth (deg)"
+                                value={waypoint.azimuth}
+                                onChange={(v) => onFieldChange('azimuth', v)}
+                            />
+                            <NumberField
+                                label="Elevation (deg)"
+                                value={waypoint.elevation}
+                                onChange={(v) => onFieldChange('elevation', v)}
+                            />
+                        </>
+                    )}
+                    <NumberField
+                        label="Time (s)"
+                        value={waypoint.time}
+                        onChange={(v) => onFieldChange('time', v)}
+                    />
+                </Box>
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={onClose}>Close</Button>
+            </DialogActions>
+        </Dialog>
+    );
+}
 
 export function PlatformInspector({ item }: { item: Platform }) {
     const {
@@ -34,6 +119,26 @@ export function PlatformInspector({ item }: { item: Platform }) {
         updateItem(item.id, path, value);
     const allowMultiplePosWaypoints =
         item.motionPath.interpolation !== 'static';
+
+    const [editingWaypointInfo, setEditingWaypointInfo] = useState<{
+        type: 'position' | 'rotation';
+        index: number;
+    } | null>(null);
+
+    const handleWaypointFieldChange = (field: string, value: number | null) => {
+        if (!editingWaypointInfo) return;
+        const { type, index } = editingWaypointInfo;
+        const pathPrefix = type === 'position' ? 'motionPath' : 'rotation';
+        handleChange(`${pathPrefix}.waypoints.${index}.${field}`, value);
+    };
+
+    const currentEditingWaypoint = editingWaypointInfo
+        ? editingWaypointInfo.type === 'position'
+            ? item.motionPath.waypoints[editingWaypointInfo.index]
+            : item.rotation.type === 'path'
+                ? item.rotation.waypoints[editingWaypointInfo.index]
+                : null
+        : null;
 
     const handleRotationTypeChange = (newType: 'fixed' | 'path') => {
         if (newType === 'fixed' && item.rotation.type !== 'fixed') {
@@ -96,60 +201,56 @@ export function PlatformInspector({ item }: { item: Platform }) {
                             key={wp.id}
                             sx={{
                                 display: 'flex',
-                                gap: 1,
                                 alignItems: 'center',
+                                justifyContent: 'space-between',
+                                p: 1,
+                                border: 1,
+                                borderColor: 'divider',
+                                borderRadius: 1,
                             }}
                         >
-                            <NumberField
-                                label="X"
-                                value={wp.x}
-                                onChange={(v) =>
-                                    handleChange(
-                                        `motionPath.waypoints.${i}.x`,
-                                        v
-                                    )
-                                }
-                            />
-                            <NumberField
-                                label="Y"
-                                value={wp.y}
-                                onChange={(v) =>
-                                    handleChange(
-                                        `motionPath.waypoints.${i}.y`,
-                                        v
-                                    )
-                                }
-                            />
-                            <NumberField
-                                label="Alt"
-                                value={wp.altitude}
-                                onChange={(v) =>
-                                    handleChange(
-                                        `motionPath.waypoints.${i}.altitude`,
-                                        v
-                                    )
-                                }
-                            />
-                            <NumberField
-                                label="T"
-                                value={wp.time}
-                                onChange={(v) =>
-                                    handleChange(
-                                        `motionPath.waypoints.${i}.time`,
-                                        v
-                                    )
-                                }
-                            />
-                            {allowMultiplePosWaypoints && (
+                            <Typography
+                                variant="body2"
+                                sx={{
+                                    flexGrow: 1,
+                                    mr: 1,
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                }}
+                            >
+                                {`T: ${wp.time}s, X: ${wp.x}, Y: ${wp.y}, Alt: ${wp.altitude}`}
+                            </Typography>
+                            <Box sx={{ display: 'flex', flexShrink: 0 }}>
                                 <IconButton
                                     size="small"
                                     onClick={() =>
-                                        removePositionWaypoint(item.id, wp.id)
+                                        setEditingWaypointInfo({
+                                            type: 'position',
+                                            index: i,
+                                        })
                                     }
                                 >
-                                    <DeleteIcon />
+                                    <EditIcon fontSize="small" />
                                 </IconButton>
-                            )}
+                                {allowMultiplePosWaypoints && (
+                                    <IconButton
+                                        size="small"
+                                        onClick={() =>
+                                            removePositionWaypoint(
+                                                item.id,
+                                                wp.id
+                                            )
+                                        }
+                                        disabled={
+                                            item.motionPath.waypoints.length <=
+                                            1
+                                        }
+                                    >
+                                        <DeleteIcon fontSize="small" />
+                                    </IconButton>
+                                )}
+                            </Box>
                         </Box>
                     ))}
                 {allowMultiplePosWaypoints && (
@@ -250,53 +351,61 @@ export function PlatformInspector({ item }: { item: Platform }) {
                                             key={wp.id}
                                             sx={{
                                                 display: 'flex',
-                                                gap: 1,
                                                 alignItems: 'center',
+                                                justifyContent: 'space-between',
+                                                p: 1,
+                                                border: 1,
+                                                borderColor: 'divider',
+                                                borderRadius: 1,
                                             }}
                                         >
-                                            <NumberField
-                                                label="Az (deg)"
-                                                value={wp.azimuth}
-                                                onChange={(v) =>
-                                                    handleChange(
-                                                        `rotation.waypoints.${i}.azimuth`,
-                                                        v
-                                                    )
-                                                }
-                                            />
-                                            <NumberField
-                                                label="El (deg)"
-                                                value={wp.elevation}
-                                                onChange={(v) =>
-                                                    handleChange(
-                                                        `rotation.waypoints.${i}.elevation`,
-                                                        v
-                                                    )
-                                                }
-                                            />
-                                            <NumberField
-                                                label="Time (s)"
-                                                value={wp.time}
-                                                onChange={(v) =>
-                                                    handleChange(
-                                                        `rotation.waypoints.${i}.time`,
-                                                        v
-                                                    )
-                                                }
-                                            />
-                                            {allowMultipleWaypoints && (
+                                            <Typography
+                                                variant="body2"
+                                                sx={{
+                                                    flexGrow: 1,
+                                                    mr: 1,
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                }}
+                                            >
+                                                {`T: ${wp.time}s, Az: ${wp.azimuth}°, El: ${wp.elevation}°`}
+                                            </Typography>
+                                            <Box
+                                                sx={{
+                                                    display: 'flex',
+                                                    flexShrink: 0,
+                                                }}
+                                            >
                                                 <IconButton
                                                     size="small"
                                                     onClick={() =>
-                                                        removeRotationWaypoint(
-                                                            item.id,
-                                                            wp.id
-                                                        )
+                                                        setEditingWaypointInfo({
+                                                            type: 'rotation',
+                                                            index: i,
+                                                        })
                                                     }
                                                 >
-                                                    <DeleteIcon />
+                                                    <EditIcon fontSize="small" />
                                                 </IconButton>
-                                            )}
+                                                {allowMultipleWaypoints && (
+                                                    <IconButton
+                                                        size="small"
+                                                        onClick={() =>
+                                                            removeRotationWaypoint(
+                                                                item.id,
+                                                                wp.id
+                                                            )
+                                                        }
+                                                        disabled={
+                                                            rotation.waypoints
+                                                                .length <= 1
+                                                        }
+                                                    >
+                                                        <DeleteIcon fontSize="small" />
+                                                    </IconButton>
+                                                )}
+                                            </Box>
                                         </Box>
                                     ))}
                                 {allowMultipleWaypoints && (
@@ -319,7 +428,11 @@ export function PlatformInspector({ item }: { item: Platform }) {
                     <InputLabel>Component Type</InputLabel>
                     <Select
                         label="Component Type"
-                        value={item.component.type}
+                        value={
+                            item.component.type === 'none'
+                                ? ''
+                                : item.component.type
+                        }
                         onChange={(e) =>
                             setPlatformComponentType(
                                 item.id,
@@ -327,7 +440,6 @@ export function PlatformInspector({ item }: { item: Platform }) {
                             )
                         }
                     >
-                        <MenuItem value="none">None</MenuItem>
                         <MenuItem value="monostatic">Monostatic Radar</MenuItem>
                         <MenuItem value="transmitter">Transmitter</MenuItem>
                         <MenuItem value="receiver">Receiver</MenuItem>
@@ -339,6 +451,13 @@ export function PlatformInspector({ item }: { item: Platform }) {
                     platformId={item.id}
                 />
             </Section>
+            <WaypointEditDialog
+                open={!!editingWaypointInfo}
+                onClose={() => setEditingWaypointInfo(null)}
+                waypoint={currentEditingWaypoint}
+                waypointType={editingWaypointInfo?.type ?? 'position'}
+                onFieldChange={handleWaypointFieldChange}
+            />
         </Box>
     );
 }

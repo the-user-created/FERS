@@ -13,9 +13,9 @@ import { useScenarioStore, PlatformComponent } from '@/stores/scenarioStore';
 import { NumberField, FileInput } from './InspectorControls';
 
 export function PlatformComponentInspector({
-    component,
-    platformId,
-}: {
+                                               component,
+                                               platformId,
+                                           }: {
     component: PlatformComponent;
     platformId: string;
 }) {
@@ -26,7 +26,7 @@ export function PlatformComponentInspector({
 
     const renderCommonFields = (c: {
         name: string;
-        radarType: 'pulsed' | 'continuous' | 'cw';
+        radarType: 'pulsed' | 'cw';
         prf: number;
         antennaId: string | null;
         pulseId: string | null;
@@ -47,15 +47,16 @@ export function PlatformComponentInspector({
                     onChange={(e) => handleChange('radarType', e.target.value)}
                 >
                     <MenuItem value="pulsed">Pulsed</MenuItem>
-                    <MenuItem value="continuous">Continuous</MenuItem>
                     <MenuItem value="cw">CW</MenuItem>
                 </Select>
             </FormControl>
-            <NumberField
-                label="PRF (Hz)"
-                value={c.prf}
-                onChange={(v) => handleChange('prf', v)}
-            />
+            {c.radarType === 'pulsed' && (
+                <NumberField
+                    label="PRF (Hz)"
+                    value={c.prf}
+                    onChange={(v) => handleChange('prf', v)}
+                />
+            )}
             <FormControl fullWidth size="small">
                 <InputLabel>Antenna</InputLabel>
                 <Select

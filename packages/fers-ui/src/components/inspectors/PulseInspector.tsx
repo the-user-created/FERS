@@ -34,8 +34,7 @@ export function PulseInspector({ item }: { item: Pulse }) {
                     value={item.pulseType}
                     onChange={(e) => handleChange('pulseType', e.target.value)}
                 >
-                    <MenuItem value="file">File</MenuItem>
-                    <MenuItem value="continuous">Continuous</MenuItem>
+                    <MenuItem value="file">Pulse File</MenuItem>
                     <MenuItem value="cw">CW</MenuItem>
                 </Select>
             </FormControl>
