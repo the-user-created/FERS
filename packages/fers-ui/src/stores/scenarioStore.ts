@@ -87,43 +87,43 @@ export interface RotationPath {
 export type PlatformComponent =
     | { type: 'none' }
     | {
-    type: 'monostatic';
-    name: string;
-    radarType: 'pulsed' | 'cw';
-    window_skip: number;
-    window_length: number;
-    prf: number;
-    antennaId: string | null;
-    pulseId: string | null;
-    timingId: string | null;
-}
+          type: 'monostatic';
+          name: string;
+          radarType: 'pulsed' | 'cw';
+          window_skip: number;
+          window_length: number;
+          prf: number;
+          antennaId: string | null;
+          pulseId: string | null;
+          timingId: string | null;
+      }
     | {
-    type: 'transmitter';
-    name: string;
-    radarType: 'pulsed' | 'cw';
-    prf: number;
-    antennaId: string | null;
-    pulseId: string | null;
-    timingId: string | null;
-}
+          type: 'transmitter';
+          name: string;
+          radarType: 'pulsed' | 'cw';
+          prf: number;
+          antennaId: string | null;
+          pulseId: string | null;
+          timingId: string | null;
+      }
     | {
-    type: 'receiver';
-    name: string;
-    window_skip: number;
-    window_length: number;
-    prf: number;
-    antennaId: string | null;
-    timingId: string | null;
-}
+          type: 'receiver';
+          name: string;
+          window_skip: number;
+          window_length: number;
+          prf: number;
+          antennaId: string | null;
+          timingId: string | null;
+      }
     | {
-    type: 'target';
-    name: string;
-    rcs_type: 'isotropic' | 'file';
-    rcs_value?: number;
-    rcs_filename?: string;
-    rcs_model: 'constant' | 'chisquare' | 'gamma';
-    rcs_k?: number;
-};
+          type: 'target';
+          name: string;
+          rcs_type: 'isotropic' | 'file';
+          rcs_value?: number;
+          rcs_filename?: string;
+          rcs_model: 'constant' | 'chisquare' | 'gamma';
+          rcs_k?: number;
+      };
 
 export interface Platform {
     id: string;

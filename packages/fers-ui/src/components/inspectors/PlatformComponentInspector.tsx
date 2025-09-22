@@ -13,9 +13,9 @@ import { useScenarioStore, PlatformComponent } from '@/stores/scenarioStore';
 import { NumberField, FileInput } from './InspectorControls';
 
 export function PlatformComponentInspector({
-                                               component,
-                                               platformId,
-                                           }: {
+    component,
+    platformId,
+}: {
     component: PlatformComponent;
     platformId: string;
 }) {
