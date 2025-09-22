@@ -39,12 +39,12 @@ interface WaypointEditDialogProps {
 }
 
 function WaypointEditDialog({
-                                open,
-                                onClose,
-                                waypoint,
-                                waypointType,
-                                onFieldChange,
-                            }: WaypointEditDialogProps) {
+    open,
+    onClose,
+    waypoint,
+    waypointType,
+    onFieldChange,
+}: WaypointEditDialogProps) {
     if (!waypoint) return null;
 
     return (
@@ -136,8 +136,8 @@ export function PlatformInspector({ item }: { item: Platform }) {
         ? editingWaypointInfo.type === 'position'
             ? item.motionPath.waypoints[editingWaypointInfo.index]
             : item.rotation.type === 'path'
-                ? item.rotation.waypoints[editingWaypointInfo.index]
-                : null
+              ? item.rotation.waypoints[editingWaypointInfo.index]
+              : null
         : null;
 
     const handleRotationTypeChange = (newType: 'fixed' | 'path') => {

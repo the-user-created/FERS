@@ -4,7 +4,6 @@
 import { Box } from '@mui/material';
 import { Canvas } from '@react-three/fiber';
 import WorldView from '@/components/WorldView';
-import ResizablePanel from '@/components/ResizablePanel';
 import SceneTree from '@/components/SceneTree';
 import PropertyInspector from '@/components/PropertyInspector';
 import Timeline from '@/components/Timeline';
@@ -23,16 +22,16 @@ export function ScenarioView() {
                 position: 'relative', // Establish positioning context
             }}
         >
-            <ResizablePanel
-                direction="horizontal"
-                side="left"
-                initialSize={280}
-                minSize={200}
-                maxSize={500}
-                sx={{ borderRight: 1, borderColor: 'divider' }}
+            <Box
+                sx={{
+                    width: 280,
+                    flexShrink: 0,
+                    borderRight: 1,
+                    borderColor: 'divider',
+                }}
             >
                 <SceneTree />
-            </ResizablePanel>
+            </Box>
 
             <Box
                 sx={{
@@ -55,28 +54,28 @@ export function ScenarioView() {
                         <WorldView />
                     </Canvas>
                 </Box>
-                <ResizablePanel
-                    direction="vertical"
-                    side="bottom"
-                    initialSize={100}
-                    minSize={60}
-                    maxSize={400}
-                    sx={{ borderTop: 1, borderColor: 'divider' }}
+                <Box
+                    sx={{
+                        height: 100,
+                        flexShrink: 0,
+                        borderTop: 1,
+                        borderColor: 'divider',
+                    }}
                 >
                     <Timeline />
-                </ResizablePanel>
+                </Box>
             </Box>
 
-            <ResizablePanel
-                direction="horizontal"
-                side="right"
-                initialSize={320}
-                minSize={250}
-                maxSize={600}
-                sx={{ borderLeft: 1, borderColor: 'divider' }}
+            <Box
+                sx={{
+                    width: 320,
+                    flexShrink: 0,
+                    borderLeft: 1,
+                    borderColor: 'divider',
+                }}
             >
                 <PropertyInspector />
-            </ResizablePanel>
+            </Box>
         </Box>
     );
 }
