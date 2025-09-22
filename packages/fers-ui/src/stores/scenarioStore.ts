@@ -159,7 +159,7 @@ type ScenarioActions = {
     addTiming: () => void;
     addAntenna: () => void;
     addPlatform: () => void;
-    removeSelectedItem: () => void;
+    removeItem: (itemId: string) => void;
     // Waypoint Actions
     addPositionWaypoint: (platformId: string) => void;
     removePositionWaypoint: (platformId: string, waypointId: string) => void;
@@ -209,7 +209,7 @@ const defaultAntenna: Omit<Antenna, 'id' | 'name'> = {
     pattern: 'sinc',
 };
 
-const defaultPlatform: Omit<Platform, 'id' | 'name'> = {
+const createDefaultPlatform = (): Omit<Platform, 'id' | 'name'> => ({
     type: 'Platform',
     motionPath: {
         interpolation: 'static',
@@ -233,7 +233,7 @@ const defaultPlatform: Omit<Platform, 'id' | 'name'> = {
         pulseId: null,
         timingId: null,
     },
-};
+});
 
 // Helper to set nested properties safely
 const setPropertyByPath = (obj: object, path: string, value: unknown) => {
@@ -290,7 +290,7 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                 const id = uuidv4();
                 const newName = `Platform ${state.platforms.length + 1}`;
                 const newPlatform: Platform = {
-                    ...defaultPlatform,
+                    ...createDefaultPlatform(),
                     id,
                     name: newName,
                 };
@@ -303,10 +303,9 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                 state.platforms.push(newPlatform);
             }),
 
-        removeSelectedItem: () =>
+        removeItem: (itemId) =>
             set((state) => {
-                const id = state.selectedItemId;
-                if (!id) return;
+                if (!itemId) return;
 
                 const collections = [
                     'pulses',
@@ -316,11 +315,13 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                 ] as const;
                 for (const key of collections) {
                     const index = state[key].findIndex(
-                        (item: { id: string }) => item.id === id
+                        (item: { id: string }) => item.id === itemId
                     );
                     if (index > -1) {
                         state[key].splice(index, 1);
-                        state.selectedItemId = null;
+                        if (state.selectedItemId === itemId) {
+                            state.selectedItemId = null;
+                        }
                         return;
                     }
                 }

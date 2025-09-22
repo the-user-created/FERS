@@ -2,7 +2,7 @@
 // Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
 
 import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
-import { useScenarioStore, findItemInStore } from '@/stores/scenarioStore';
+import { useScenarioStore } from '@/stores/scenarioStore';
 import { Box, Typography, IconButton, Tooltip, Divider } from '@mui/material';
 
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -33,7 +33,13 @@ const SectionHeader = ({
             {title}
         </Typography>
         <Tooltip title={`Add ${title.slice(0, -1)}`}>
-            <IconButton size="small" onClick={onAdd}>
+            <IconButton
+                size="small"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onAdd();
+                }}
+            >
                 <AddIcon fontSize="inherit" />
             </IconButton>
         </Tooltip>
@@ -53,7 +59,7 @@ export default function SceneTree() {
         addTiming,
         addAntenna,
         addPlatform,
-        removeSelectedItem,
+        removeItem,
     } = useScenarioStore();
 
     const handleSelect = (
@@ -71,9 +77,6 @@ export default function SceneTree() {
         }
         selectItem(nodeId);
     };
-
-    const selectedItem = findItemInStore(selectedItemId);
-    const canRemove = selectedItem && selectedItem.type !== 'GlobalParameters';
 
     return (
         <Box
@@ -98,17 +101,6 @@ export default function SceneTree() {
                 <Typography variant="overline" sx={{ color: 'text.secondary' }}>
                     Scenario Explorer
                 </Typography>
-                <Tooltip title="Remove Selected Item">
-                    <span>
-                        <IconButton
-                            size="small"
-                            onClick={removeSelectedItem}
-                            disabled={!canRemove}
-                        >
-                            <RemoveIcon />
-                        </IconButton>
-                    </span>
-                </Tooltip>
             </Box>
             <Divider sx={{ mx: 2, mb: 1 }} />
 
@@ -129,6 +121,13 @@ export default function SceneTree() {
                         expandIcon: ChevronRightIcon,
                     }}
                     sx={{
+                        // Show remove button on hover
+                        '& .MuiTreeItem-content .remove-button': {
+                            visibility: 'hidden',
+                        },
+                        '& .MuiTreeItem-content:hover .remove-button': {
+                            visibility: 'visible',
+                        },
                         '& .MuiTreeItem-content': { py: 0.5 },
                     }}
                 >
@@ -158,21 +157,34 @@ export default function SceneTree() {
                                         sx={{
                                             display: 'flex',
                                             alignItems: 'center',
+                                            width: '100%',
                                         }}
                                     >
                                         <WavesIcon
                                             sx={{ mr: 1 }}
                                             fontSize="small"
                                         />
-                                        <Typography variant="body2">
+                                        <Typography
+                                            variant="body2"
+                                            sx={{ flexGrow: 1 }}
+                                        >
                                             {pulse.name}
                                         </Typography>
+                                        <IconButton
+                                            size="small"
+                                            className="remove-button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                removeItem(pulse.id);
+                                            }}
+                                        >
+                                            <RemoveIcon fontSize="inherit" />
+                                        </IconButton>
                                     </Box>
                                 }
                             />
                         ))}
                     </TreeItem>
-                    {/* ... other TreeItems ... */}
                     <TreeItem
                         itemId="timings-root"
                         label={
@@ -188,15 +200,29 @@ export default function SceneTree() {
                                         sx={{
                                             display: 'flex',
                                             alignItems: 'center',
+                                            width: '100%',
                                         }}
                                     >
                                         <TimerIcon
                                             sx={{ mr: 1 }}
                                             fontSize="small"
                                         />
-                                        <Typography variant="body2">
+                                        <Typography
+                                            variant="body2"
+                                            sx={{ flexGrow: 1 }}
+                                        >
                                             {timing.name}
                                         </Typography>
+                                        <IconButton
+                                            size="small"
+                                            className="remove-button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                removeItem(timing.id);
+                                            }}
+                                        >
+                                            <RemoveIcon fontSize="inherit" />
+                                        </IconButton>
                                     </Box>
                                 }
                             />
@@ -220,15 +246,29 @@ export default function SceneTree() {
                                         sx={{
                                             display: 'flex',
                                             alignItems: 'center',
+                                            width: '100%',
                                         }}
                                     >
                                         <SettingsInputAntennaIcon
                                             sx={{ mr: 1 }}
                                             fontSize="small"
                                         />
-                                        <Typography variant="body2">
+                                        <Typography
+                                            variant="body2"
+                                            sx={{ flexGrow: 1 }}
+                                        >
                                             {antenna.name}
                                         </Typography>
+                                        <IconButton
+                                            size="small"
+                                            className="remove-button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                removeItem(antenna.id);
+                                            }}
+                                        >
+                                            <RemoveIcon fontSize="inherit" />
+                                        </IconButton>
                                     </Box>
                                 }
                             />
@@ -252,15 +292,29 @@ export default function SceneTree() {
                                         sx={{
                                             display: 'flex',
                                             alignItems: 'center',
+                                            width: '100%',
                                         }}
                                     >
                                         <FlightIcon
                                             sx={{ mr: 1 }}
                                             fontSize="small"
                                         />
-                                        <Typography variant="body2">
+                                        <Typography
+                                            variant="body2"
+                                            sx={{ flexGrow: 1 }}
+                                        >
                                             {platform.name}
                                         </Typography>
+                                        <IconButton
+                                            size="small"
+                                            className="remove-button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                removeItem(platform.id);
+                                            }}
+                                        >
+                                            <RemoveIcon fontSize="inherit" />
+                                        </IconButton>
                                     </Box>
                                 }
                             />
