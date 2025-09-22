@@ -29,7 +29,7 @@ export interface Pulse {
     id: string;
     type: 'Pulse';
     name: string;
-    pulseType: 'file' | 'continuous' | 'cw';
+    pulseType: 'file' | 'cw';
     power: number;
     carrier: number;
     filename?: string;
@@ -87,43 +87,43 @@ export interface RotationPath {
 export type PlatformComponent =
     | { type: 'none' }
     | {
-          type: 'monostatic';
-          name: string;
-          radarType: 'pulsed' | 'continuous' | 'cw';
-          window_skip: number;
-          window_length: number;
-          prf: number;
-          antennaId: string | null;
-          pulseId: string | null;
-          timingId: string | null;
-      }
+    type: 'monostatic';
+    name: string;
+    radarType: 'pulsed' | 'cw';
+    window_skip: number;
+    window_length: number;
+    prf: number;
+    antennaId: string | null;
+    pulseId: string | null;
+    timingId: string | null;
+}
     | {
-          type: 'transmitter';
-          name: string;
-          radarType: 'pulsed' | 'continuous' | 'cw';
-          prf: number;
-          antennaId: string | null;
-          pulseId: string | null;
-          timingId: string | null;
-      }
+    type: 'transmitter';
+    name: string;
+    radarType: 'pulsed' | 'cw';
+    prf: number;
+    antennaId: string | null;
+    pulseId: string | null;
+    timingId: string | null;
+}
     | {
-          type: 'receiver';
-          name: string;
-          window_skip: number;
-          window_length: number;
-          prf: number;
-          antennaId: string | null;
-          timingId: string | null;
-      }
+    type: 'receiver';
+    name: string;
+    window_skip: number;
+    window_length: number;
+    prf: number;
+    antennaId: string | null;
+    timingId: string | null;
+}
     | {
-          type: 'target';
-          name: string;
-          rcs_type: 'isotropic' | 'file';
-          rcs_value?: number;
-          rcs_filename?: string;
-          rcs_model: 'constant' | 'chisquare' | 'gamma';
-          rcs_k?: number;
-      };
+    type: 'target';
+    name: string;
+    rcs_type: 'isotropic' | 'file';
+    rcs_value?: number;
+    rcs_filename?: string;
+    rcs_model: 'constant' | 'chisquare' | 'gamma';
+    rcs_k?: number;
+};
 
 export interface Platform {
     id: string;
@@ -222,7 +222,17 @@ const defaultPlatform: Omit<Platform, 'id' | 'name'> = {
         azimuthRate: 0,
         elevationRate: 0,
     },
-    component: { type: 'none' },
+    component: {
+        type: 'monostatic',
+        name: 'Monostatic Radar', // Generic name, updated on creation
+        radarType: 'pulsed',
+        window_skip: 0,
+        window_length: 0,
+        prf: 1000,
+        antennaId: null,
+        pulseId: null,
+        timingId: null,
+    },
 };
 
 // Helper to set nested properties safely
@@ -278,11 +288,19 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
         addPlatform: () =>
             set((state) => {
                 const id = uuidv4();
-                state.platforms.push({
+                const newName = `Platform ${state.platforms.length + 1}`;
+                const newPlatform: Platform = {
                     ...defaultPlatform,
                     id,
-                    name: `Platform ${state.platforms.length + 1}`,
-                });
+                    name: newName,
+                };
+
+                // Update the default component's name to match the new platform's name
+                if (newPlatform.component.type === 'monostatic') {
+                    newPlatform.component.name = `${newName} Monostatic`;
+                }
+
+                state.platforms.push(newPlatform);
             }),
 
         removeSelectedItem: () =>
@@ -329,7 +347,7 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                 const platform = state.platforms.find(
                     (p) => p.id === platformId
                 );
-                if (platform) {
+                if (platform && platform.motionPath.waypoints.length > 1) {
                     const index = platform.motionPath.waypoints.findIndex(
                         (wp) => wp.id === waypointId
                     );
@@ -358,7 +376,11 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                 const platform = state.platforms.find(
                     (p) => p.id === platformId
                 );
-                if (platform && platform.rotation.type === 'path') {
+                if (
+                    platform &&
+                    platform.rotation.type === 'path' &&
+                    platform.rotation.waypoints.length > 1
+                ) {
                     const index = platform.rotation.waypoints.findIndex(
                         (wp) => wp.id === waypointId
                     );
@@ -399,13 +421,10 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                 const platform = state.platforms.find(
                     (p) => p.id === platformId
                 );
-                if (!platform) return;
+                if (!platform || componentType === 'none') return;
 
                 const name = `${platform.name} ${componentType}`;
                 switch (componentType) {
-                    case 'none':
-                        platform.component = { type: 'none' };
-                        break;
                     case 'monostatic':
                         platform.component = {
                             type: 'monostatic',
