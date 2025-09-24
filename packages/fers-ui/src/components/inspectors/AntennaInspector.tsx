@@ -1,4 +1,3 @@
-// ./packages/fers-ui/src/components/inspectors/AntennaInspector.tsx
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
 
@@ -40,6 +39,7 @@ export function AntennaInspector({ item }: { item: Antenna }) {
                         )
                     }
                 >
+                    <MenuItem value="isotropic">Isotropic</MenuItem>
                     <MenuItem value="sinc">Sinc</MenuItem>
                     <MenuItem value="gaussian">Gaussian</MenuItem>
                     <MenuItem value="squarehorn">Square Horn</MenuItem>
@@ -57,17 +57,17 @@ export function AntennaInspector({ item }: { item: Antenna }) {
                 <>
                     <NumberField
                         label="Alpha"
-                        value={item.alpha}
+                        value={item.alpha ?? null}
                         onChange={(v) => handleChange('alpha', v)}
                     />
                     <NumberField
                         label="Beta"
-                        value={item.beta}
+                        value={item.beta ?? null}
                         onChange={(v) => handleChange('beta', v)}
                     />
                     <NumberField
                         label="Gamma"
-                        value={item.gamma}
+                        value={item.gamma ?? null}
                         onChange={(v) => handleChange('gamma', v)}
                     />
                 </>
@@ -76,12 +76,12 @@ export function AntennaInspector({ item }: { item: Antenna }) {
                 <>
                     <NumberField
                         label="Azimuth Scale"
-                        value={item.azscale}
+                        value={item.azscale ?? null}
                         onChange={(v) => handleChange('azscale', v)}
                     />
                     <NumberField
                         label="Elevation Scale"
-                        value={item.elscale}
+                        value={item.elscale ?? null}
                         onChange={(v) => handleChange('elscale', v)}
                     />
                 </>
@@ -90,7 +90,7 @@ export function AntennaInspector({ item }: { item: Antenna }) {
                 item.pattern === 'parabolic') && (
                 <NumberField
                     label="Diameter (m)"
-                    value={item.diameter}
+                    value={item.diameter ?? null}
                     onChange={(v) => handleChange('diameter', v)}
                 />
             )}

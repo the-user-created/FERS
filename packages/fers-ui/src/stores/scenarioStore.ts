@@ -1,4 +1,3 @@
-// ./packages/fers-ui/src/stores/scenarioStore.ts
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
 
@@ -15,7 +14,7 @@ export interface GlobalParameters {
     start: number;
     end: number;
     rate: number;
-    simSamplingRate: number | null; // ADDED
+    simSamplingRate: number | null;
     c: number;
     random_seed: number | null;
     adc_bits: number;
@@ -37,7 +36,6 @@ export interface Pulse {
     filename?: string;
 }
 
-// ADDED: NoiseEntry type
 export interface NoiseEntry {
     id: string;
     alpha: number;
@@ -49,7 +47,6 @@ export interface Timing {
     type: 'Timing';
     name: string;
     frequency: number;
-    // ADDED: New timing properties
     freqOffset: number | null;
     randomFreqOffsetStdev: number | null;
     phaseOffset: number | null;
@@ -61,9 +58,15 @@ export interface Antenna {
     id: string;
     type: 'Antenna';
     name: string;
-    pattern: 'sinc' | 'gaussian' | 'squarehorn' | 'parabolic' | 'xml' | 'file';
+    pattern:
+        | 'isotropic'
+        | 'sinc'
+        | 'gaussian'
+        | 'squarehorn'
+        | 'parabolic'
+        | 'xml'
+        | 'file';
     filename?: string;
-    // ADDED: New antenna properties
     efficiency: number | null;
     // sinc
     alpha?: number | null;
@@ -122,7 +125,6 @@ export type PlatformComponent =
           antennaId: string | null;
           pulseId: string | null;
           timingId: string | null;
-          // ADDED
           noiseTemperature: number | null;
           noDirectPaths: boolean;
           noPropagationLoss: boolean;
@@ -144,7 +146,6 @@ export type PlatformComponent =
           prf: number;
           antennaId: string | null;
           timingId: string | null;
-          // ADDED
           noiseTemperature: number | null;
           noDirectPaths: boolean;
           noPropagationLoss: boolean;
@@ -167,6 +168,16 @@ export interface Platform {
     rotation: FixedRotation | RotationPath;
     component: PlatformComponent;
 }
+// --- ZUSTAND STORE DEFINITION ---
+
+/** The data structure that is imported from/exported to XML */
+export type ScenarioData = {
+    globalParameters: GlobalParameters;
+    pulses: Pulse[];
+    timings: Timing[];
+    antennas: Antenna[];
+    platforms: Platform[];
+};
 
 export type ScenarioItem =
     | GlobalParameters
@@ -174,15 +185,7 @@ export type ScenarioItem =
     | Timing
     | Antenna
     | Platform;
-
-// --- ZUSTAND STORE DEFINITION ---
-
-type ScenarioState = {
-    globalParameters: GlobalParameters;
-    pulses: Pulse[];
-    timings: Timing[];
-    antennas: Antenna[];
-    platforms: Platform[];
+type ScenarioState = ScenarioData & {
     selectedItemId: string | null;
 };
 
@@ -199,7 +202,6 @@ type ScenarioActions = {
     removePositionWaypoint: (platformId: string, waypointId: string) => void;
     addRotationWaypoint: (platformId: string) => void;
     removeRotationWaypoint: (platformId: string, waypointId: string) => void;
-    // ADDED Actions
     addNoiseEntry: (timingId: string) => void;
     removeNoiseEntry: (timingId: string, entryId: string) => void;
     setAntennaPattern: (
@@ -212,6 +214,7 @@ type ScenarioActions = {
         platformId: string,
         componentType: PlatformComponent['type']
     ) => void;
+    loadScenario: (newData: ScenarioData) => void;
 };
 
 // --- DEFAULTS ---
@@ -222,7 +225,7 @@ const defaultGlobalParameters: GlobalParameters = {
     start: 0.0,
     end: 10.0,
     rate: 10000.0,
-    simSamplingRate: null, // ADDED
+    simSamplingRate: null,
     c: 299792458.0,
     random_seed: null,
     adc_bits: 12,
@@ -244,7 +247,6 @@ const defaultPulse: Omit<Pulse, 'id' | 'name'> = {
 const defaultTiming: Omit<Timing, 'id' | 'name'> = {
     type: 'Timing',
     frequency: 10e6,
-    // ADDED
     freqOffset: null,
     randomFreqOffsetStdev: null,
     phaseOffset: null,
@@ -254,8 +256,7 @@ const defaultTiming: Omit<Timing, 'id' | 'name'> = {
 
 const defaultAntenna: Omit<Antenna, 'id' | 'name'> = {
     type: 'Antenna',
-    pattern: 'sinc',
-    // ADDED
+    pattern: 'isotropic',
     efficiency: 1.0,
     alpha: 1.0,
     beta: 1.0,
@@ -288,7 +289,6 @@ const createDefaultPlatform = (): Omit<Platform, 'id' | 'name'> => ({
         antennaId: null,
         pulseId: null,
         timingId: null,
-        // ADDED
         noiseTemperature: 290,
         noDirectPaths: false,
         noPropagationLoss: false,
@@ -309,6 +309,7 @@ const setPropertyByPath = (obj: object, path: string, value: unknown) => {
 
 export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
     immer((set) => ({
+        scenarioId: uuidv4(), // A unique ID for the scenario instance
         globalParameters: defaultGlobalParameters,
         pulses: [],
         timings: [],
@@ -449,8 +450,6 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                         platform.rotation.waypoints.splice(index, 1);
                 }
             }),
-
-        // ADDED ACTIONS
         addNoiseEntry: (timingId) =>
             set((state) => {
                 const timing = state.timings.find((t) => t.id === timingId);
@@ -554,7 +553,6 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                             antennaId: null,
                             pulseId: null,
                             timingId: null,
-                            // ADDED
                             noiseTemperature: 290,
                             noDirectPaths: false,
                             noPropagationLoss: false,
@@ -580,7 +578,6 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                             prf: 1000,
                             antennaId: null,
                             timingId: null,
-                            // ADDED
                             noiseTemperature: 290,
                             noDirectPaths: false,
                             noPropagationLoss: false,
@@ -597,13 +594,36 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                         break;
                 }
             }),
+        loadScenario: (newData) =>
+            set((state) => {
+                console.log('[DEBUG] Store state BEFORE loadScenario:', {
+                    ...state,
+                });
+
+                state.globalParameters = {
+                    ...newData.globalParameters,
+                    id: 'global-parameters',
+                    type: 'GlobalParameters',
+                };
+                state.pulses = newData.pulses;
+                state.timings = newData.timings;
+                state.antennas = newData.antennas;
+                state.platforms = newData.platforms;
+                state.selectedItemId = null; // Deselect item on new load
+
+                console.log('[DEBUG] Store state AFTER loadScenario:', {
+                    ...state,
+                });
+            }),
     }))
 );
 
 // Helper function to find any item in the store by its ID
-export const findItemInStore = (id: string | null): ScenarioItem | null => {
+export const findItemInStore = (
+    state: ScenarioState,
+    id: string | null
+): ScenarioItem | null => {
     if (!id) return null;
-    const state = useScenarioStore.getState();
     if (id === 'global-parameters') return state.globalParameters;
 
     const collections = [

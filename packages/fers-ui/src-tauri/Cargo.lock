@@ -962,12 +962,15 @@ dependencies = [
 name = "fers-ui"
 version = "0.1.0"
 dependencies = [
+ "quick-xml 0.38.3",
  "serde",
  "serde_json",
  "tauri",
  "tauri-build",
  "tauri-plugin-dialog",
+ "tauri-plugin-fs",
  "tauri-plugin-opener",
+ "uuid",
 ]
 
 [[package]]
@@ -2841,6 +2844,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "42a232e7487fc2ef313d96dde7948e7a3c05101870d8985e4fd8d26aedd27b89"
 dependencies = [
  "memchr",
+ "serde",
 ]
 
 [[package]]

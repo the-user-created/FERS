@@ -10,8 +10,8 @@ import { AntennaInspector } from './inspectors/AntennaInspector';
 import { PlatformInspector } from './inspectors/PlatformInspector';
 
 function InspectorContent() {
-    const { selectedItemId } = useScenarioStore();
-    const selectedItem = findItemInStore(selectedItemId);
+    const state = useScenarioStore();
+    const selectedItem = findItemInStore(state, state.selectedItemId);
 
     if (!selectedItem) {
         return (

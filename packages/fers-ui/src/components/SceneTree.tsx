@@ -15,6 +15,8 @@ import FlightIcon from '@mui/icons-material/Flight';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 
+import ScenarioIO from './ScenarioIO';
+
 const SectionHeader = ({
     title,
     onAdd,
@@ -62,6 +64,11 @@ export default function SceneTree() {
         removeItem,
     } = useScenarioStore();
 
+    console.log(
+        '[DEBUG] SceneTree rendering with selectedItemId:',
+        selectedItemId
+    );
+
     const handleSelect = (
         _event: React.SyntheticEvent | null,
         nodeId: string | null
@@ -101,6 +108,9 @@ export default function SceneTree() {
                 <Typography variant="overline" sx={{ color: 'text.secondary' }}>
                     Scenario Explorer
                 </Typography>
+                <Box>
+                    <ScenarioIO />
+                </Box>
             </Box>
             <Divider sx={{ mx: 2, mb: 1 }} />
 
