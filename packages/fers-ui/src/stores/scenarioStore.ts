@@ -1,3 +1,4 @@
+// ./packages/fers-ui/src/stores/scenarioStore.ts
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
 
@@ -14,6 +15,7 @@ export interface GlobalParameters {
     start: number;
     end: number;
     rate: number;
+    simSamplingRate: number | null; // ADDED
     c: number;
     random_seed: number | null;
     adc_bits: number;
@@ -35,11 +37,24 @@ export interface Pulse {
     filename?: string;
 }
 
+// ADDED: NoiseEntry type
+export interface NoiseEntry {
+    id: string;
+    alpha: number;
+    weight: number;
+}
+
 export interface Timing {
     id: string;
     type: 'Timing';
     name: string;
     frequency: number;
+    // ADDED: New timing properties
+    freqOffset: number | null;
+    randomFreqOffsetStdev: number | null;
+    phaseOffset: number | null;
+    randomPhaseOffsetStdev: number | null;
+    noiseEntries: NoiseEntry[];
 }
 
 export interface Antenna {
@@ -48,6 +63,17 @@ export interface Antenna {
     name: string;
     pattern: 'sinc' | 'gaussian' | 'squarehorn' | 'parabolic' | 'xml' | 'file';
     filename?: string;
+    // ADDED: New antenna properties
+    efficiency: number | null;
+    // sinc
+    alpha?: number | null;
+    beta?: number | null;
+    gamma?: number | null;
+    // gaussian
+    azscale?: number | null;
+    elscale?: number | null;
+    // squarehorn, parabolic
+    diameter?: number | null;
 }
 
 export interface PositionWaypoint {
@@ -96,6 +122,10 @@ export type PlatformComponent =
           antennaId: string | null;
           pulseId: string | null;
           timingId: string | null;
+          // ADDED
+          noiseTemperature: number | null;
+          noDirectPaths: boolean;
+          noPropagationLoss: boolean;
       }
     | {
           type: 'transmitter';
@@ -114,6 +144,10 @@ export type PlatformComponent =
           prf: number;
           antennaId: string | null;
           timingId: string | null;
+          // ADDED
+          noiseTemperature: number | null;
+          noDirectPaths: boolean;
+          noPropagationLoss: boolean;
       }
     | {
           type: 'target';
@@ -165,6 +199,13 @@ type ScenarioActions = {
     removePositionWaypoint: (platformId: string, waypointId: string) => void;
     addRotationWaypoint: (platformId: string) => void;
     removeRotationWaypoint: (platformId: string, waypointId: string) => void;
+    // ADDED Actions
+    addNoiseEntry: (timingId: string) => void;
+    removeNoiseEntry: (timingId: string, entryId: string) => void;
+    setAntennaPattern: (
+        antennaId: string,
+        newPattern: Antenna['pattern']
+    ) => void;
     // Update Action
     updateItem: (itemId: string, propertyPath: string, value: unknown) => void;
     setPlatformComponentType: (
@@ -181,6 +222,7 @@ const defaultGlobalParameters: GlobalParameters = {
     start: 0.0,
     end: 10.0,
     rate: 10000.0,
+    simSamplingRate: null, // ADDED
     c: 299792458.0,
     random_seed: null,
     adc_bits: 12,
@@ -202,11 +244,25 @@ const defaultPulse: Omit<Pulse, 'id' | 'name'> = {
 const defaultTiming: Omit<Timing, 'id' | 'name'> = {
     type: 'Timing',
     frequency: 10e6,
+    // ADDED
+    freqOffset: null,
+    randomFreqOffsetStdev: null,
+    phaseOffset: null,
+    randomPhaseOffsetStdev: null,
+    noiseEntries: [],
 };
 
 const defaultAntenna: Omit<Antenna, 'id' | 'name'> = {
     type: 'Antenna',
     pattern: 'sinc',
+    // ADDED
+    efficiency: 1.0,
+    alpha: 1.0,
+    beta: 1.0,
+    gamma: 0.0,
+    azscale: null,
+    elscale: null,
+    diameter: null,
 };
 
 const createDefaultPlatform = (): Omit<Platform, 'id' | 'name'> => ({
@@ -232,6 +288,10 @@ const createDefaultPlatform = (): Omit<Platform, 'id' | 'name'> => ({
         antennaId: null,
         pulseId: null,
         timingId: null,
+        // ADDED
+        noiseTemperature: 290,
+        noDirectPaths: false,
+        noPropagationLoss: false,
     },
 });
 
@@ -390,6 +450,63 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                 }
             }),
 
+        // ADDED ACTIONS
+        addNoiseEntry: (timingId) =>
+            set((state) => {
+                const timing = state.timings.find((t) => t.id === timingId);
+                if (timing) {
+                    timing.noiseEntries.push({
+                        id: uuidv4(),
+                        alpha: 0,
+                        weight: 0,
+                    });
+                }
+            }),
+        removeNoiseEntry: (timingId, entryId) =>
+            set((state) => {
+                const timing = state.timings.find((t) => t.id === timingId);
+                if (timing) {
+                    const index = timing.noiseEntries.findIndex(
+                        (e) => e.id === entryId
+                    );
+                    if (index > -1) {
+                        timing.noiseEntries.splice(index, 1);
+                    }
+                }
+            }),
+        setAntennaPattern: (antennaId, newPattern) =>
+            set((state) => {
+                const antenna = state.antennas.find((a) => a.id === antennaId);
+                if (antenna) {
+                    antenna.pattern = newPattern;
+                    // Reset all pattern-specific fields
+                    antenna.alpha = null;
+                    antenna.beta = null;
+                    antenna.gamma = null;
+                    antenna.azscale = null;
+                    antenna.elscale = null;
+                    antenna.diameter = null;
+                    antenna.filename = undefined;
+
+                    // Set defaults for the new pattern
+                    switch (newPattern) {
+                        case 'sinc':
+                            antenna.alpha = 1.0;
+                            antenna.beta = 1.0;
+                            antenna.gamma = 0.0;
+                            break;
+                        case 'gaussian':
+                            antenna.azscale = 1.0;
+                            antenna.elscale = 1.0;
+                            break;
+                        case 'squarehorn':
+                        case 'parabolic':
+                            antenna.diameter = 0.5;
+                            break;
+                    }
+                }
+            }),
+
         updateItem: (itemId, propertyPath, value) =>
             set((state) => {
                 if (itemId === 'global-parameters') {
@@ -437,6 +554,10 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                             antennaId: null,
                             pulseId: null,
                             timingId: null,
+                            // ADDED
+                            noiseTemperature: 290,
+                            noDirectPaths: false,
+                            noPropagationLoss: false,
                         };
                         break;
                     case 'transmitter':
@@ -459,6 +580,10 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                             prf: 1000,
                             antennaId: null,
                             timingId: null,
+                            // ADDED
+                            noiseTemperature: 290,
+                            noDirectPaths: false,
+                            noPropagationLoss: false,
                         };
                         break;
                     case 'target':
