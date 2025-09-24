@@ -1,8 +1,11 @@
+// ./packages/fers-ui/src/components/inspectors/PlatformComponentInspector.tsx
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
 
 import {
+    Checkbox,
     FormControl,
+    FormControlLabel,
     InputLabel,
     MenuItem,
     Select,
@@ -117,6 +120,39 @@ export function PlatformComponentInspector({
                         value={component.window_length}
                         onChange={(v) => handleChange('window_length', v)}
                     />
+                    <NumberField
+                        label="Noise Temperature (K)"
+                        value={component.noiseTemperature}
+                        onChange={(v) => handleChange('noiseTemperature', v)}
+                    />
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                checked={component.noDirectPaths}
+                                onChange={(e) =>
+                                    handleChange(
+                                        'noDirectPaths',
+                                        e.target.checked
+                                    )
+                                }
+                            />
+                        }
+                        label="Ignore Direct Paths"
+                    />
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                checked={component.noPropagationLoss}
+                                onChange={(e) =>
+                                    handleChange(
+                                        'noPropagationLoss',
+                                        e.target.checked
+                                    )
+                                }
+                            />
+                        }
+                        label="Ignore Propagation Loss"
+                    />
                 </>
             );
         case 'transmitter':
@@ -177,6 +213,39 @@ export function PlatformComponentInspector({
                             ))}
                         </Select>
                     </FormControl>
+                    <NumberField
+                        label="Noise Temperature (K)"
+                        value={component.noiseTemperature}
+                        onChange={(v) => handleChange('noiseTemperature', v)}
+                    />
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                checked={component.noDirectPaths}
+                                onChange={(e) =>
+                                    handleChange(
+                                        'noDirectPaths',
+                                        e.target.checked
+                                    )
+                                }
+                            />
+                        }
+                        label="Ignore Direct Paths"
+                    />
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                checked={component.noPropagationLoss}
+                                onChange={(e) =>
+                                    handleChange(
+                                        'noPropagationLoss',
+                                        e.target.checked
+                                    )
+                                }
+                            />
+                        }
+                        label="Ignore Propagation Loss"
+                    />
                 </>
             );
         case 'target':

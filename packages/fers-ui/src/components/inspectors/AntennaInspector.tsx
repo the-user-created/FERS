@@ -1,3 +1,4 @@
+// ./packages/fers-ui/src/components/inspectors/AntennaInspector.tsx
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
 
@@ -10,10 +11,10 @@ import {
     TextField,
 } from '@mui/material';
 import { useScenarioStore, Antenna } from '@/stores/scenarioStore';
-import { FileInput } from './InspectorControls';
+import { FileInput, NumberField } from './InspectorControls';
 
 export function AntennaInspector({ item }: { item: Antenna }) {
-    const { updateItem } = useScenarioStore.getState();
+    const { updateItem, setAntennaPattern } = useScenarioStore.getState();
     const handleChange = (path: string, value: unknown) =>
         updateItem(item.id, path, value);
 
@@ -32,7 +33,12 @@ export function AntennaInspector({ item }: { item: Antenna }) {
                 <Select
                     label="Pattern"
                     value={item.pattern}
-                    onChange={(e) => handleChange('pattern', e.target.value)}
+                    onChange={(e) =>
+                        setAntennaPattern(
+                            item.id,
+                            e.target.value as Antenna['pattern']
+                        )
+                    }
                 >
                     <MenuItem value="sinc">Sinc</MenuItem>
                     <MenuItem value="gaussian">Gaussian</MenuItem>
@@ -42,6 +48,52 @@ export function AntennaInspector({ item }: { item: Antenna }) {
                     <MenuItem value="file">File (H5)</MenuItem>
                 </Select>
             </FormControl>
+            <NumberField
+                label="Efficiency"
+                value={item.efficiency}
+                onChange={(v) => handleChange('efficiency', v)}
+            />
+            {item.pattern === 'sinc' && (
+                <>
+                    <NumberField
+                        label="Alpha"
+                        value={item.alpha}
+                        onChange={(v) => handleChange('alpha', v)}
+                    />
+                    <NumberField
+                        label="Beta"
+                        value={item.beta}
+                        onChange={(v) => handleChange('beta', v)}
+                    />
+                    <NumberField
+                        label="Gamma"
+                        value={item.gamma}
+                        onChange={(v) => handleChange('gamma', v)}
+                    />
+                </>
+            )}
+            {item.pattern === 'gaussian' && (
+                <>
+                    <NumberField
+                        label="Azimuth Scale"
+                        value={item.azscale}
+                        onChange={(v) => handleChange('azscale', v)}
+                    />
+                    <NumberField
+                        label="Elevation Scale"
+                        value={item.elscale}
+                        onChange={(v) => handleChange('elscale', v)}
+                    />
+                </>
+            )}
+            {(item.pattern === 'squarehorn' ||
+                item.pattern === 'parabolic') && (
+                <NumberField
+                    label="Diameter (m)"
+                    value={item.diameter}
+                    onChange={(v) => handleChange('diameter', v)}
+                />
+            )}
             {(item.pattern === 'xml' || item.pattern === 'file') && (
                 <FileInput
                     label="Pattern File"

@@ -1,3 +1,4 @@
+// ./packages/fers-ui/src/components/inspectors/GlobalParametersInspector.tsx
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
 
@@ -45,9 +46,14 @@ export function GlobalParametersInspector({
                 onChange={(v) => handleChange('end', v)}
             />
             <NumberField
-                label="Sampling Rate (Hz)"
+                label="Output Sampling Rate (Hz)"
                 value={item.rate}
                 onChange={(v) => handleChange('rate', v)}
+            />
+            <NumberField
+                label="Internal Sim Sampling Rate (Hz)"
+                value={item.simSamplingRate}
+                onChange={(v) => handleChange('simSamplingRate', v)}
             />
             <NumberField
                 label="Speed of Light (m/s)"
