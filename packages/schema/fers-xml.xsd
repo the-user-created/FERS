@@ -180,8 +180,6 @@
             <xs:attribute name="name" use="required"/>
             <xs:attribute name="pattern" use="required"/>
             <xs:attribute name="filename"/>
-            <xs:attribute name="module"/>
-            <xs:attribute name="function"/>
         </xs:complexType>
     </xs:element>
 
