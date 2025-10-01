@@ -5,62 +5,43 @@
 ![Desktop App](https://img.shields.io/badge/Tauri-v2-FFC336)
 [![License: GPL v2](https://img.shields.io/badge/License-GPLv2-blue.svg)](../../LICENSE)
 
-**fers-ui** is the official graphical user interface for the **Flexible Extensible Radar Simulator (FERS)**. It provides
-an intuitive, visual workbench for constructing, configuring, and visualizing complex radar simulation scenarios,
-dramatically improving the usability and accessibility of the core FERS engine.
+**fers-ui** is the official graphical user interface for the **Flexible Extensible Radar Simulator (FERS)**. It provides a professional-grade, visual workbench designed to streamline the entire simulation pipeline—from asset creation and scenario construction to simulation execution and results analysis. By offering an intuitive and powerful toolset, fers-ui dramatically improves the usability and accessibility of the core FERS engine.
 
 ## Planned Features
 
-- **Visual 3D Scenario Builder:** Interactively place and configure platforms, targets, transmitters, and receivers in a
-  3D environment.
-- **Hierarchical Scene View:** A tree view of all elements in the simulation for easy selection and organization.
-- **Dynamic Property Inspector:** A context-sensitive panel to edit the parameters of any selected simulation element.
-- **FERS XML Exporter:** Generate a valid FERS XML configuration file from the visual scenario.
-- **Dynamic Simulation Replay & Animation:** Load FERS output data to visualize target trajectories and platform
-  movements.
-- **Integrated Asset Editors:** UI-driven tools for creating basic waveforms, defining target RCS, and specifying
-  antenna patterns.
+- **Multi-Panel Scenario Builder:** A fully resizable workspace featuring an interactive 3D viewport for object placement, a hierarchical scene tree for organization, and a context-sensitive property inspector for detailed configuration.
+- **Interactive Timeline:** A dedicated panel for visualizing and editing time-based events, such as platform motion paths and radar pulse schedules.
+- **Centralized Asset Library:** A dedicated view for creating, managing, and reusing simulation components like radar pulses, antenna patterns, and timing sources across different scenarios.
+- **Hierarchical Scene Tree:** An intuitive tree view for all simulation elements, enabling easy selection, parenting, and organization of complex scenarios.
+- **Integrated Simulation Runner:** A focused workspace to configure global simulation parameters, trigger the FERS core engine, and monitor progress.
+- **FERS XML Exporter:** Generate a valid FERS XML configuration file directly from the visual scenario, ensuring compatibility and correctness.
+- **Dynamic Results Analysis:** A post-simulation view for loading FERS output data to visualize target trajectories, platform movements, and analyze collected signals.
 
 ## Technology Stack
 
 fers-ui is built with a modern technology stack to provide a powerful, cross-platform, and maintainable application.
 
-- **Application Framework:** [**Tauri**](https://tauri.app/) (v2) - Provides a lightweight, secure, and performant way
-  to build a native desktop application using a web front-end.
-- **UI Library:** [**React**](https://react.dev/) with [**TypeScript**](https://www.typescriptlang.org/) - Offers a
-  robust, component-based architecture for building complex UIs with the safety of static typing.
-- **Component Library:** [**Material-UI**](https://mui.com/material-ui/) - A comprehensive library of UI components that
-  accelerates development and ensures a consistent, modern design.
-- **3D Rendering:** [**Three.js**](https://threejs.org/) via [**React Three Fiber**](https://docs.pmnd.rs/react-three-fiber) - Simplifies managing a 3D scene within a React application, powering the
-  visual scenario builder.
-- **State Management:** [**Zustand**](https://docs.pmnd.rs/zustand) - A minimal, fast, and scalable state management
-  solution that serves as the single source of truth for all simulation data.
+- **Application Framework:** [**Tauri**](https://tauri.app/) (v2) - Provides a lightweight, secure, and performant way to build a native desktop application using a web front-end.
+- **UI Library:** [**React**](https://react.dev/) with [**TypeScript**](https://www.typescriptlang.org/) - Offers a robust, component-based architecture for building complex UIs with the safety of static typing.
+- **Component Library:** [**Material-UI (MUI)**](https://mui.com/material-ui/) & [**MUI X**](https://mui.com/x/) - A comprehensive library of UI components that accelerates development and ensures a consistent, modern design.
+- **3D Rendering:** [**Three.js**](https://threejs.org/) via [**React Three Fiber**](https://docs.pmnd.rs/react-three-fiber) - Simplifies managing a 3D scene within a React application, powering the visual scenario builder.
+- **State Management:** [**Zustand**](https://docs.pmnd.rs/zustand) - A minimal, fast, and scalable state management solution for a centralized application state.
 
 ## Software Architecture
 
-The application is architected around modern design principles to ensure it is robust, maintainable, and extensible.
+The application is architected as a multi-modal "Workbench" to provide a clean, context-focused user experience.
 
-### Single Source of Truth
+- **App Rail & Views:** The primary navigation is a vertical `AppRail` that allows switching between distinct workspaces called "Views" (e.g., `ScenarioView`, `AssetLibraryView`). This isolates different stages of the simulation workflow, preventing UI clutter.
+- **Layouts:** The top-level `MainLayout` component orchestrates the active view and global UI structure.
+- **Views:** These are high-level components that represent a complete user workspace. Each view is self-contained and manages its own panel arrangement (e.g., `ScenarioView` combines the 3D world, scene tree, and timeline).
+- **Components:** The UI is built from small, reusable React components (`SceneTree`, `Timeline`, `PropertyInspector`, `ResizablePanel`) that encapsulate specific functionality and are composed within Views.
 
-The UI's architecture is centered around a **Zustand store**, which acts as the single source of truth for all
-simulation configuration data. UI components do not communicate directly; instead, they read from the store and dispatch
-actions to modify state, creating a clean, reactive, and one-way data flow.
+## Design Principles
 
-### Component-Based UI
-
-The interface is built from small, reusable React components. Business logic is encapsulated in custom hooks to be
-shared across components, adhering to the DRY (Don't Repeat Yourself) principle.
-
-### Data-Driven Views
-
-The UI is generated dynamically based on the state in the Zustand store. For example, the property inspector renders the
-correct editor component (`PulseEditor`, `PlatformEditor`, etc.) based on the selected element's type, and dropdowns are
-populated at runtime by querying the store.
-
-### Project Structure
-
-The project adheres to community best practices for organizing a React/Tauri application, with a clear separation of
-concerns between `components`, `views`, `layouts`, `store`, and `types`.
+- **Context-Focused Workflow:** The UI is designed to only present tools and information relevant to the user's current task. Switching from the "Scenario" to the "Asset Library" view changes the entire workspace context.
+- **Component Modularity:** By breaking the UI into a clear hierarchy of `Layouts`, `Views`, and `Components`, we ensure the codebase is maintainable, testable, and easy to extend.
+- **State-Driven UI:** The application relies on a centralized state managed by Zustand. UI components react to state changes, ensuring consistency across all panels and views.
+- **Ergonomic Layout:** The use of resizable panels gives users full control over their workspace, allowing them to tailor the interface to their specific needs and monitor size.
 
 ## Getting Started
 
