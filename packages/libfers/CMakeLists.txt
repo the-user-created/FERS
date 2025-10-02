@@ -46,8 +46,8 @@ target_include_directories(libfers PRIVATE
 )
 
 # --- Third-Party Dependencies ---
-add_subdirectory(third_party/highfive)
-add_subdirectory(third_party/geographiclib)
+add_subdirectory(third_party/highfive EXCLUDE_FROM_ALL)
+add_subdirectory(third_party/geographiclib EXCLUDE_FROM_ALL)
 
 # Link dependencies privately. Consumers of libfers don't need to know about them.
 target_link_libraries(libfers PRIVATE HighFive GeographicLib::GeographicLib)

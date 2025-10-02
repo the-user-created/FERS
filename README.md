@@ -32,10 +32,10 @@ semi-independent packages.
 
 This monorepo contains the following packages:
 
-- `packages/fers`: The core C++ radar simulation engine. This is a command-line tool that reads an XML scenario file
-  and produces simulation output data.
+- `packages/libfers`: The core C++ radar simulation library. It contains all the core logic, physics, and file processing capabilities, exposed through a C-style API.
+- `packages/fers-cli`: A lightweight command-line interface that acts as a wrapper around `libfers`, providing backward compatibility with the original FERS executable.
 - `packages/fers-ui`: A modern desktop application built with Tauri and React. It provides a graphical interface for
-  creating, editing, and visualizing FERS scenarios.
+  creating, editing, and visualizing FERS scenarios by linking against `libfers`.
 - `packages/schema`: The XML Schema Definition (XSD) and Document Type Definition (DTD) that define the structure of
   FERS scenario files. This schema is the contract between the UI and the core simulator.
 
@@ -44,7 +44,8 @@ This monorepo contains the following packages:
 To get started with a specific package, please refer to its dedicated README file for detailed instructions on
 dependencies, building, and usage.
 
-- **For the core simulator engine, see:** [`packages/fers/README.md`](packages/fers/README.md)
+- **For the core C++ library, see:** [`packages/libfers/README.md`](packages/libfers/README.md)
+- **For the command-line interface, see:** [`packages/fers-cli/README.md`](packages/fers-cli/README.md)
 - **For the graphical user interface, see:** [`packages/fers-ui/README.md`](packages/fers-ui/README.md)
 
 ## Contributing
