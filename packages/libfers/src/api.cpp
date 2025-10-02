@@ -124,7 +124,7 @@ void fers_free_string(char* str)
 	free(str);
 }
 
-int fers_run_simulation(fers_context* context, FersProgressCallback callback, void* user_data)
+int fers_run_simulation(fers_context* context, void* user_data)
 {
 	if (!context)
 	{
@@ -135,37 +135,24 @@ int fers_run_simulation(fers_context* context, FersProgressCallback callback, vo
 
 	try
 	{
-		core::ProgressReporter reporter{callback, user_data};
-
-		reporter.report(0.0, "Initializing simulation...");
-
 		// The number of threads is now controlled by a global parameter,
 		// which would have been set during XML parsing.
 		pool::ThreadPool pool(params::renderThreads());
 
-		reporter.report(0.1, "Running simulation physics...");
-
 		if (params::isCwSimulation())
 		{
-			core::runThreadedCwSim(ctx->getWorld(), pool, &reporter);
+			core::runThreadedCwSim(ctx->getWorld(), pool);
 		}
 		else
 		{
-			core::runThreadedSim(ctx->getWorld(), pool, &reporter);
+			core::runThreadedSim(ctx->getWorld(), pool);
 		}
-
-		reporter.report(1.0, "Simulation complete.");
 
 		return 0; // Success
 	}
 	catch (const std::exception& e)
 	{
 		LOG(logging::Level::FATAL, "Simulation encountered an unrecoverable error: {}", e.what());
-		// Report failure via callback if possible
-		if (callback)
-		{
-			callback(-1.0, e.what(), user_data);
-		}
 		return 1;
 	}
 }

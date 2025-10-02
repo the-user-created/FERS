@@ -415,16 +415,12 @@ namespace
 
 namespace core
 {
-	void runThreadedSim(const World* world, pool::ThreadPool& pool, const ProgressReporter* reporter)
+	void runThreadedSim(const World* world, pool::ThreadPool& pool)
 	{
 		const auto& receivers = world->getReceivers();
 		const auto& transmitters = world->getTransmitters();
 
 		LOG(Level::INFO, "Running radar simulation for {} receivers", receivers.size());
-		if (reporter)
-		{
-			reporter->report(0.2, "Calculating receiver responses...");
-		}
 
 		for (const auto& receiver : receivers)
 		{
@@ -439,11 +435,6 @@ namespace core
 
 		pool.wait();
 
-		if (reporter)
-		{
-			reporter->report(0.5, "Rendering responses...");
-		}
-
 		for (const auto& receiver : receivers)
 		{
 			LOG(Level::DEBUG, "{} responses added to '{}'", receiver->getResponseCount(), receiver->getName());
@@ -451,32 +442,18 @@ namespace core
 
 		LOG(Level::INFO, "Rendering responses for {} receivers", receivers.size());
 
-		// Progress for rendering can be incremental
-		const double render_start_progress = 0.5;
-		const double render_end_progress = 0.95;
-		const double progress_per_receiver = receivers.empty()
-			? 0
-			: (render_end_progress - render_start_progress) / receivers.size();
-		std::atomic<int> receivers_done = 0;
-
 		for (const auto& receiver : receivers)
 		{
 			pool.enqueue([&]
 			{
 				receiver->render(pool);
-				int done_count = ++receivers_done;
-				if (reporter)
-				{
-					std::string msg = "Rendering receiver: " + receiver->getName();
-					reporter->report(render_start_progress + done_count * progress_per_receiver, msg.c_str());
-				}
 			});
 		}
 
 		pool.wait();
 	}
 
-	void runThreadedCwSim(const World* world, pool::ThreadPool& pool, const ProgressReporter* reporter)
+	void runThreadedCwSim(const World* world, pool::ThreadPool& pool)
 	{
 		const auto& receivers = world->getReceivers();
 		const auto& transmitters = world->getTransmitters();
@@ -488,18 +465,12 @@ namespace core
 		const auto num_samples = static_cast<size_t>(std::ceil((end_time - start_time) / dt));
 
 		LOG(Level::INFO, "Running CW simulation for {} receivers over {} samples", receivers.size(), num_samples);
-		if (reporter)
-			reporter->report(0.2, "Pre-allocating CW data buffers...");
 
 		// Pre-allocate memory for I/Q data in each receiver
 		for (const auto& receiver : receivers)
 		{
 			receiver->prepareCwData(num_samples);
 		}
-
-		const double sim_start_progress = 0.2;
-		const double sim_end_progress = 0.8;
-		const int progress_report_interval = std::max(1, static_cast<int>(num_samples / 100)); // Report ~100 times
 
 		size_t sample_index = 0;
 		for (RealType t_k = start_time; t_k < end_time; t_k += dt)
@@ -532,22 +503,11 @@ namespace core
 				}
 			});
 
-			if (reporter && (sample_index % progress_report_interval == 0))
-			{
-				double progress = sim_start_progress + (static_cast<double>(sample_index) / num_samples) * (
-					sim_end_progress - sim_start_progress);
-				std::string msg = "Calculating CW samples: " + std::to_string(sample_index) + "/" + std::to_string(
-					num_samples);
-				reporter->report(progress, msg.c_str());
-			}
-
 			++sample_index;
 		}
 		pool.wait();
 
 		LOG(Level::INFO, "Rendering CW data for {} receivers", receivers.size());
-		if (reporter)
-			reporter->report(0.9, "Rendering CW data...");
 		for (const auto& receiver : receivers)
 		{
 			pool.enqueue([&receiver, &pool] { receiver->render(pool); });

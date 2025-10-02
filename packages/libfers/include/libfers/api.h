@@ -92,28 +92,15 @@ void fers_free_string(char* str);
 // --- Simulation Execution ---
 
 /**
- * @brief A callback function pointer for reporting simulation progress.
- *
- * @param progress A value between 0.0 and 1.0 indicating the simulation progress.
- * @param status_message A descriptive message about the current simulation phase.
- * @param user_data An opaque pointer passed from the fers_run_simulation call,
- *                  useful for identifying context in the calling language.
- */
-typedef void (*FersProgressCallback)(double progress, const char* status_message, void* user_data);
-
-/**
  * @brief Runs the simulation defined in the provided context.
  *
  * This function is synchronous and will block until the simulation is complete.
- * The provided callback will be invoked periodically to report progress.
  *
  * @param context A valid fers_context handle containing a loaded scenario.
- * @param callback A function pointer for progress reporting. Can be NULL if no
- *                 progress reporting is needed.
  * @param user_data An opaque pointer that will be passed back to the callback.
  * @return 0 on success, a non-zero error code on failure.
  */
-int fers_run_simulation(fers_context* context, FersProgressCallback callback, void* user_data);
+int fers_run_simulation(fers_context* context, void* user_data);
 
 // --- Utility Functions ---
 
