@@ -1,7 +1,7 @@
 # FERS: The Flexible Extensible Radar Simulator
 
 <!-- TODO: Build status should be present for both ui and core -->
-[![FERS Core CI](https://github.com/the-user-created/FERS/actions/workflows/CMake.yml/badge.svg)](https://github.com/the-user-created/FERS/actions/workflows/CMake.yml)
+[![FERS Core CI](https://github.com/the-user-created/FERS/actions/workflows/CMake.yml/badge.svg)](https://github.com/the-user-created/FERS/actions/workflows/CMake.yml) [![Documentation](https://github.com/the-user-created/FERS/actions/workflows/docs.yml/badge.svg)](https://the-user-created.github.io/FERS/)
 [![GitHub issues](https://img.shields.io/github/issues/the-user-created/FERS.svg)](https://github.com/the-user-created/FERS/issues)
 [![License: GPL v2](https://img.shields.io/badge/License-GPLv2-blue.svg)](LICENSE)
 
@@ -16,6 +16,10 @@ semi-independent packages.
 
 ---
 
+**[View the Live Documentation](https://the-user-created.github.io/FERS/)**
+
+---
+
 ## Key Features
 
 - **High-Performance Core:** A modernized C++23 engine capable of detailed signal-level simulation with optimized
@@ -25,6 +29,8 @@ semi-independent packages.
   continuous wave (CW).
 - **Advanced Data Export:** Output simulation data in HDF5, CSV, and XML formats for analysis.
 - **Geographic Visualization:** Generate KML files from scenarios for accurate visualization in tools like Google Earth.
+- **Modern Documentation:** A continuously updated and deployed [documentation site](https://the-user-created.github.io/FERS/) 
+  with a searchable interface, generated directly from the source code.
 - **Unified Schema:** A central XML schema ensures consistency and serves as the single source of truth for scenarios
   across the simulator and the UI.
 
