@@ -62,6 +62,7 @@ void fers_destroy_context(fers_context* context);
  * @param xml_filepath A null-terminated UTF-8 string containing the path to the FERS XML scenario file.
  * @param validate A boolean flag indicating whether to perform schema validation (true by default).
  * @return 0 on success, a non-zero error code on failure (e.g., file not found, parsing error).
+ *         On failure, a detailed error message can be retrieved with fers_get_last_error_message().
  */
 int fers_load_scenario_from_xml_file(fers_context* context, const char* xml_filepath, int validate);
 
@@ -75,14 +76,33 @@ int fers_load_scenario_from_xml_file(fers_context* context, const char* xml_file
  * @param xml_content A null-terminated UTF-8 string containing the FERS XML scenario.
  * @param validate A boolean flag indicating whether to perform schema validation (true by default).
  * @return 0 on success, a non-zero error code on failure (e.g., parsing error).
+ *         On failure, a detailed error message can be retrieved with fers_get_last_error_message().
  */
 int fers_load_scenario_from_xml_string(fers_context* context, const char* xml_content, int validate);
+
+// --- Error Handling ---
+
+/**
+ * @brief Retrieves the last error message that occurred on the current thread.
+ *
+ * If a libfers API function returns an error code, this function can be called
+ * immediately to get a human-readable description of the error. The error
+ * state is thread-local and is cleared at the beginning of each fallible API call.
+ *
+ * @return A dynamically allocated, null-terminated C-string containing the last
+ *         error message. This string is owned by the caller and MUST be freed
+ *         using fers_free_string() to prevent memory leaks.
+ *         Returns NULL if no error has occurred since the last successful call
+ *         on this thread.
+ */
+const char* fers_get_last_error_message();
 
 /**
  * @brief Frees a string that was allocated and returned by the libfers API.
  *
- * Some API functions return dynamically allocated strings. The caller is
- * responsible for freeing these strings using this function to prevent memory leaks.
+ * Some API functions (like fers_get_last_error_message) return dynamically
+ * allocated strings. The caller is responsible for freeing these strings using
+ * this function to prevent memory leaks.
  *
  * @param str A pointer to the string to be freed. Can be NULL.
  */
@@ -99,6 +119,7 @@ void fers_free_string(char* str);
  * @param context A valid fers_context handle containing a loaded scenario.
  * @param user_data An opaque pointer that will be passed back to the callback.
  * @return 0 on success, a non-zero error code on failure.
+ *         On failure, a detailed error message can be retrieved with fers_get_last_error_message().
  */
 int fers_run_simulation(fers_context* context, void* user_data);
 
@@ -113,8 +134,9 @@ int fers_run_simulation(fers_context* context, void* user_data);
  * @param context A valid fers_context handle containing a loaded scenario.
  * @param output_kml_filepath A null-terminated UTF-8 string for the output KML file path.
  * @return 0 on success, a non-zero error code on failure.
+ *         On failure, a detailed error message can be retrieved with fers_get_last_error_message().
  */
-int fers_generate_kml(fers_context* context, const char* output_kml_filepath);
+int fers_generate_kml(const fers_context* context, const char* output_kml_filepath);
 
 #ifdef __cplusplus
 }
