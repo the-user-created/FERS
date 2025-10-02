@@ -1,7 +1,8 @@
 # FERS: The Flexible Extensible Radar Simulator
 
 <!-- TODO: Build status should be present for both ui and core -->
-[![FERS Core CI](https://github.com/the-user-created/FERS/actions/workflows/CMake.yml/badge.svg)](https://github.com/the-user-created/FERS/actions/workflows/CMake.yml) [![Documentation](https://github.com/the-user-created/FERS/actions/workflows/docs.yml/badge.svg)](https://the-user-created.github.io/FERS/)
+[![FERS Core CI](https://github.com/the-user-created/FERS/actions/workflows/CMake.yml/badge.svg)](https://github.com/the-user-created/FERS/actions/workflows/CMake.yml)
+[![Documentation](https://github.com/the-user-created/FERS/actions/workflows/docs.yml/badge.svg)](https://github.com/the-user-created/FERS/actions/workflows/docs.yml)
 [![GitHub issues](https://img.shields.io/github/issues/the-user-created/FERS.svg)](https://github.com/the-user-created/FERS/issues)
 [![License: GPL v2](https://img.shields.io/badge/License-GPLv2-blue.svg)](https://github.com/the-user-created/FERS/blob/master/LICENSE)
 
