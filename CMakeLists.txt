@@ -13,6 +13,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON) # For simpler DLL exports
 
 # --- Options and Build Type ---
 include(FersOptions)
@@ -26,6 +27,16 @@ if (APPLE AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 	message(STATUS "If you are not using the system compiler, please configure with:")
 	message(STATUS "  CC=/path/to/clang CXX=/path/to/clang++ cmake ..")
 	# link_directories(/usr/local/opt/llvm/lib/c++)
+endif ()
+
+# --- Documentation ---
+if (FERS_BUILD_DOCS)
+	find_package(Doxygen)
+	if (Doxygen_FOUND)
+		message(STATUS "Doxygen found, documentation target will be available.")
+	else ()
+		message(WARNING "Doxygen not found, documentation will not be built.")
+	endif ()
 endif ()
 
 # Add the subdirectory containing the C++ packages.
