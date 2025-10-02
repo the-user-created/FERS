@@ -3,7 +3,7 @@
 <!-- TODO: Build status should be present for both ui and core -->
 [![FERS Core CI](https://github.com/the-user-created/FERS/actions/workflows/CMake.yml/badge.svg)](https://github.com/the-user-created/FERS/actions/workflows/CMake.yml) [![Documentation](https://github.com/the-user-created/FERS/actions/workflows/docs.yml/badge.svg)](https://the-user-created.github.io/FERS/)
 [![GitHub issues](https://img.shields.io/github/issues/the-user-created/FERS.svg)](https://github.com/the-user-created/FERS/issues)
-[![License: GPL v2](https://img.shields.io/badge/License-GPLv2-blue.svg)](LICENSE)
+[![License: GPL v2](https://img.shields.io/badge/License-GPLv2-blue.svg)](https://github.com/the-user-created/FERS/blob/master/LICENSE)
 
 ![Tech Stack](https://img.shields.io/badge/Core-C%2B%2B%2023-00599C?logo=cplusplus)
 ![Tech Stack](https://img.shields.io/badge/UI-Tauri%20%7C%20React-20232A?logo=react)
@@ -57,7 +57,7 @@ dependencies, building, and usage.
 ## Contributing
 
 We welcome contributions to the FERS project! Whether you're interested in improving the C++ core, enhancing the UI, or
-refining the documentation, your help is appreciated. Please read our [CONTRIBUTING.md](.github/CONTRIBUTING.md)
+refining the documentation, your help is appreciated. Please read our [CONTRIBUTING.md](CONTRIBUTING.md)
 guide to get started.
 
 ## License
@@ -66,13 +66,13 @@ guide to get started.
 - Copyright (C) 2008-present FERS contributors (see [AUTHORS.md](AUTHORS.md)).
 
 This program is free software; you can redistribute it and/or modify it under the terms of the
-[GNU General Public License](LICENSE) as published by the Free Software Foundation; version 2 of the License.
+[GNU General Public License](https://github.com/the-user-created/FERS/blob/master/LICENSE) as published by the Free Software Foundation; version 2 of the License.
 
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
-warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the [GNU General Public License](LICENSE) for
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the [GNU General Public License](https://github.com/the-user-created/FERS/blob/master/LICENSE) for
 more details.
 
-You should have received a copy of the [GNU General Public License](LICENSE) along with this program; if not, write to
+You should have received a copy of the [GNU General Public License](https://github.com/the-user-created/FERS/blob/master/LICENSE) along with this program; if not, write to
 the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 ### User-Generated Files

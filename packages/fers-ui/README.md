@@ -3,7 +3,7 @@
 ![Framework](https://img.shields.io/badge/Framework-React-61DAFB?logo=react)
 ![Language](https://img.shields.io/badge/Language-TypeScript-3178C6?logo=typescript)
 ![Desktop App](https://img.shields.io/badge/Tauri-v2-FFC336)
-[![License: GPL v2](https://img.shields.io/badge/License-GPLv2-blue.svg)](../../LICENSE)
+[![License: GPL v2](https://img.shields.io/badge/License-GPLv2-blue.svg)](https://github.com/the-user-created/FERS/blob/master/LICENSE)
 
 **fers-ui** is the official graphical user interface for the **Flexible Extensible Radar Simulator (FERS)**. It provides a professional-grade, visual workbench designed to streamline the entire simulation pipeline—from asset creation and scenario construction to simulation execution and results analysis. By offering an intuitive and powerful toolset, fers-ui dramatically improves the usability and accessibility of the core FERS engine.
 
