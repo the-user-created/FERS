@@ -3,9 +3,12 @@
 [![Build Status](https://github.com/the-user-created/FERS/actions/workflows/CMake.yml/badge.svg)](https://github.com/the-user-created/FERS/actions/workflows/CMake.yml)
 [![License: GPL v2](https://img.shields.io/badge/License-GPLv2-blue.svg)](../../LICENSE)
 
-**libfers** is the core C++ simulation engine for the **Flexible Extensible Radar Simulator (FERS)**. It contains all the logic for parsing scenarios, modeling physics, executing simulations, and processing output data.
+**libfers** is the core C++ simulation engine for the **Flexible Extensible Radar Simulator (FERS)**. It contains all
+the logic for parsing scenarios, modeling physics, executing simulations, and processing output data.
 
-This library is built with modern C++23 standards for optimal performance and maintainability. It exposes a stable C-style Foreign Function Interface (FFI) in `include/libfers/api.h`, allowing it to be used by various frontends, including the official `fers-cli` and `fers-ui` applications.
+This library is built with modern C++23 standards for optimal performance and maintainability. It exposes a stable
+C-style Foreign Function Interface (FFI) in `include/libfers/api.h`, allowing it to be used by various frontends,
+including the official `fers-cli` and `fers-ui` applications.
 
 ## Features
 
@@ -18,7 +21,7 @@ This library is built with modern C++23 standards for optimal performance and ma
 
 ## Dependencies
 
-- **CMake** (3.13+)
+- **CMake** (3.22+)
 - A C++23 compatible compiler (e.g., GCC 11+, Clang 14+)
 - **libhdf5** (HDF5 support)
 - **libxml2** (XML handling)
@@ -26,7 +29,7 @@ This library is built with modern C++23 standards for optimal performance and ma
 
 ## Building the Library and CLI
 
-The build process will create both the `libfers` static library and the `fers-cli` executable.
+The build process can create shared libraries (`.so`/`.dll`), static libraries (`.a`), and the `fers-cli` executable.
 
 ### 1. Clone the Repository
 
@@ -49,14 +52,14 @@ git submodule update --init --recursive
 **On Ubuntu/Debian:**
 
 ```bash
-sudo apt-get update && sudo apt-get install build-essential cmake libhdf5-dev libxml2-dev xxd
+sudo apt-get update && sudo apt-get install build-essential cmake libhdf5-dev libxml2-dev xxd doxygen graphviz
 ```
 
 **On macOS (using Homebrew):**
 A modern LLVM toolchain is required, as the default system Clang may be outdated.
 
 ```bash
-brew install cmake hdf5 libxml2 llvm
+brew install cmake hdf5 libxml2 llvm doxygen graphviz
 ```
 
 ### 3. Configure and Build
@@ -72,13 +75,6 @@ cmake ..
 make -j$(nproc)
 ```
 
-> **Note on HDF5 on Ubuntu:** If you encounter linking issues with HDF5, you may need to specify paths manually:
-> ```bash
-> cmake .. -D FERS_LIB_HDF5="/usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5.so" \
-> -D FERS_LIB_HDF5_HL="/usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5_hl.so" \
-> -D CMAKE_CXX_FLAGS="-I/usr/include/hdf5/serial/"
-> ```
-
 **On macOS:**
 You must point CMake to the Homebrew LLVM toolchain.
 
@@ -89,46 +85,49 @@ CC=/usr/local/opt/llvm/bin/clang CXX=/usr/local/opt/llvm/bin/clang++ cmake ..
 make -j$(sysctl -n hw.ncpu)
 ```
 
-The compiled `libfers.a` library will be located in `packages/build/libfers/` and the `fers-cli` executable will be in `packages/build/fers-cli/`.
+The compiled artifacts will be located in the `packages/build/` directory. Libraries (`.a`, `.so`) are in `libfers/`,
+and the `fers-cli` executable is in `fers-cli/`. DLLs on Windows will be placed in `bin/`.
 
-> **Debug Build**: To create a debug build, add `-DCMAKE_BUILD_TYPE=Debug` to your `cmake` command. It's best practice
-> to use separate build directories for release and debug versions.
+### Build Options
+
+You can customize the build using the following CMake options:
+
+| Option                        | Description                                     | Default |
+|-------------------------------|-------------------------------------------------|---------|
+| `-DCMAKE_BUILD_TYPE=Debug`    | Create a debug build with symbols.              | Release |
+| `-DFERS_BUILD_SHARED_LIBS=ON` | Build the shared library (`.so`/`.dll`).        | ON      |
+| `-DFERS_BUILD_STATIC_LIBS=ON` | Build the static library (`.a`).                | ON      |
+| `-DFERS_BUILD_DOCS=ON`        | Enable the `doc` target for Doxygen generation. | OFF     |
+
+Example of a debug build that only creates a static library:
+
+```bash
+cmake .. -DCMAKE_BUILD_TYPE=Debug -DFERS_BUILD_SHARED_LIBS=OFF
+```
 
 ### 4. Install (Optional)
 
-You can install the library, headers, and CLI executable system-wide.
+You can install the libraries, headers, and CLI executable to your system.
 
 ```bash
 # From the build directory
 sudo make install
-sudo ldconfig # On Linux
+sudo ldconfig # On Linux, to update the cache
 ```
-
-## Regression Testing
-
-A Python-based regression testing suite is available to validate simulation output.
-
-To run the tests locally:
-
-```bash
-# Ensure you are in the packages/libfers directory
-# Ensure a Release build exists at ../build
-
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-python3 run_sim_tests.py
-```
-
-The suite is integrated into our CI pipeline to ensure code changes do not introduce regressions.
 
 ## Documentation
 
-Source code documentation can be generated using Doxygen.
+Source code documentation can be generated using Doxygen via the build system.
 
-```bash
-# From the packages/libfers directory
-doxygen Doxyfile
-```
+1. **Configure with documentation enabled:**
+   ```bash
+   # From your build directory
+   cmake .. -DFERS_BUILD_DOCS=ON
+   ```
 
-The output will be generated in the `docs/` directory.
+2. **Build the `doc` target:**
+   ```bash
+   make doc
+   ```
+
+The HTML output will be generated in the `packages/build/libfers/docs/html/` directory.
