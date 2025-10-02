@@ -130,19 +130,3 @@ install(EXPORT libfers-targets
 	NAMESPACE fers::
 	DESTINATION lib/cmake/libfers
 )
-
-# --- Doxygen Documentation ---
-if (Doxygen_FOUND AND FERS_BUILD_DOCS)
-	set(FERS_DOXYGEN_HAVE_DOT ${DOXYGEN_DOT_FOUND})
-	configure_file(
-		${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in
-		${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
-		@ONLY
-	)
-	add_custom_target(doc
-		COMMAND ${Doxygen_EXECUTABLE} Doxyfile
-		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-		COMMENT "Generating Doxygen documentation for libfers..."
-		VERBATIM
-	)
-endif()

@@ -1,10 +1,10 @@
-# Doxyfile 1.9.2
+# Doxyfile 1.9.x
 
 # Project related configuration options
 PROJECT_NAME           = "@PROJECT_NAME@"
 PROJECT_BRIEF          = "FERS: Flexible Extensible Radar Simulator"
 PROJECT_NUMBER         = "@PROJECT_VERSION@"
-OUTPUT_DIRECTORY       = "@CMAKE_CURRENT_BINARY_DIR@/docs"
+OUTPUT_DIRECTORY       = "@DOXYGEN_OUTPUT_DIR@"
 CREATE_SUBDIRS         = YES
 OUTPUT_LANGUAGE        = English
 BRIEF_MEMBER_DESC      = YES
@@ -12,17 +12,12 @@ REPEAT_BRIEF           = YES
 ALWAYS_DETAILED_SEC    = NO
 INLINE_INHERITED_MEMB  = YES
 FULL_PATH_NAMES        = YES
-STRIP_FROM_PATH        = "@CMAKE_CURRENT_SOURCE_DIR@"
+STRIP_FROM_PATH        = "@PROJECT_SOURCE_DIR@"
 STRIP_FROM_INC_PATH    =
 SHORT_NAMES            = NO
 JAVADOC_AUTOBRIEF      = YES
 QT_AUTOBRIEF           = YES
 MULTILINE_CPP_IS_BRIEF = NO
-OPTIMIZE_OUTPUT_FOR_C  = NO
-OPTIMIZE_OUTPUT_JAVA   = NO
-OPTIMIZE_FOR_FORTRAN   = NO
-OPTIMIZE_OUTPUT_VHDL   = NO
-OPTIMIZE_OUTPUT_SLICE  = NO
 
 # Build related configuration options
 EXTRACT_ALL            = YES
@@ -52,23 +47,23 @@ GENERATE_TESTLIST      = YES
 GENERATE_BUGLIST       = YES
 GENERATE_DEPRECATEDLIST= YES
 
-# Repository settings (if using git for versioning)
+# Repository settings
 SHOW_USED_FILES        = YES
 SHOW_FILES             = YES
 SHOW_NAMESPACES        = YES
 SHOW_DIRECTORIES       = YES
 
 # C++ related configuration options
-OPTIMIZE_OUTPUT_FOR_CPP= YES
+OPTIMIZE_OUTPUT_FOR_CPP = YES
 
 # Input/output settings
-INPUT                  = "@CMAKE_CURRENT_SOURCE_DIR@/include" \
-                         "@CMAKE_CURRENT_SOURCE_DIR@/src" \
-                         "@CMAKE_CURRENT_SOURCE_DIR@/../schema" \
-                         "@CMAKE_CURRENT_SOURCE_DIR@/README.md"
+INPUT                  = "@PROJECT_SOURCE_DIR@/packages/libfers/include" \
+                         "@PROJECT_SOURCE_DIR@/packages/libfers/src" \
+                         "@PROJECT_SOURCE_DIR@/packages/schema" \
+                         "@PROJECT_SOURCE_DIR@/README.md"
 FILE_PATTERNS          = *.cpp *.h *.xsd *.dtd *.md
 RECURSIVE              = YES
-EXCLUDE                = "@CMAKE_CURRENT_SOURCE_DIR@/third_party"
+EXCLUDE                = "@PROJECT_SOURCE_DIR@/packages/libfers/third_party"
 EXCLUDE_SYMLINKS       = NO
 EXCLUDE_PATTERNS       =
 EXCLUDE_SYMBOLS        =
@@ -81,18 +76,28 @@ REFERENCED_BY_RELATION = YES
 REFERENCES_RELATION    = YES
 REFERENCES_LINK_SOURCE = YES
 GENERATE_LATEX         = NO
-GENERATE_HTML          = YES
-GENERATE_TREEVIEW      = YES
-HTML_OUTPUT            = html
-HTML_FILE_EXTENSION    = .html
-HTML_COLORSTYLE        = LIGHT
-HTML_DYNAMIC_SECTIONS  = YES
-HTML_FOOTER            =
-HTML_TIMESTAMP         = YES
-DISABLE_INDEX          = NO
 GENERATE_MAN           = NO
 GENERATE_RTF           = NO
 GENERATE_XML           = NO
+
+# HTML output configuration
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+HTML_FILE_EXTENSION    = .html
+HTML_TIMESTAMP         = YES
+DISABLE_INDEX          = NO
+
+# --- Doxygen Awesome CSS Settings ---
+GENERATE_TREEVIEW      = YES
+HTML_DYNAMIC_SECTIONS  = YES
+HTML_COLORSTYLE        = LIGHT
+HTML_HEADER            = "@DOXYGEN_HEADER_FILE@"
+HTML_EXTRA_STYLESHEET  = "@DOXYGEN_AWESOME_CSS@" \
+                         "@DOXYGEN_CUSTOM_CSS@"
+HTML_EXTRA_FILES       = @DOXYGEN_EXTRA_FILES@
+# Disable Doxygen's default copy buttons to use the awesome-css extension
+HTML_COPY_CLIPBOARD    = NO
+
 
 # Dot tool (graph generation)
 HAVE_DOT               = @FERS_DOXYGEN_HAVE_DOT@
@@ -100,6 +105,7 @@ DOT_NUM_THREADS        = 2
 DOT_FONTNAME           = Helvetica
 DOT_FONTSIZE           = 10
 DOT_TRANSPARENT        = YES
+DOT_IMAGE_FORMAT       = svg
 CALL_GRAPH             = YES
 CALLER_GRAPH           = YES
 CLASS_GRAPH            = YES
@@ -110,9 +116,7 @@ INCLUDE_GRAPH          = YES
 INCLUDED_BY_GRAPH      = YES
 GRAPHICAL_HIERARCHY    = YES
 DIRECTORY_GRAPH        = YES
-DOT_IMAGE_FORMAT       = svg
 
 # Document formatting options
-USE_MDFILE_AS_MAINPAGE = "@CMAKE_CURRENT_SOURCE_DIR@/README.md"
+USE_MDFILE_AS_MAINPAGE = "@PROJECT_SOURCE_DIR@/README.md"
 TAB_SIZE               = 4
-ALIASES                = "fileHeader=@file @brief Brief description.\n\n@author"
