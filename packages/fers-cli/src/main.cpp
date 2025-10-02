@@ -125,7 +125,6 @@ int main(const int argc, char* argv[])
 		fers_destroy_context(context);
 		return 1;
 	}
-	std::cout << std::endl;
 	LOG(Level::INFO, "Simulation completed successfully.");
 
 	fers_destroy_context(context);

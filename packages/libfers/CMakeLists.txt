@@ -5,18 +5,25 @@ add_library(libfers STATIC)
 
 set_target_properties(libfers PROPERTIES OUTPUT_NAME "fers")
 
-# --- Source Files ---
-# Gather all .cpp files from the src directory recursively
-file(GLOB_RECURSE LIBFERS_SOURCES "src/*.cpp")
-target_sources(libfers PRIVATE ${LIBFERS_SOURCES})
+# --- Source and Header Files ---
+include(include/libfers/CMakeLists.txt)
+include(src/CMakeLists.txt)
+
+target_sources(libfers PRIVATE
+	${LIBFERS_SOURCES}
+	${LIBFERS_PUBLIC_HEADERS}
+	${LIBFERS_PRIVATE_HEADERS}
+)
+
+source_group("Source Files" FILES ${LIBFERS_SOURCES})
+source_group("Header Files\\Public" FILES ${LIBFERS_PUBLIC_HEADERS})
+source_group("Header Files\\Private" FILES ${LIBFERS_PRIVATE_HEADERS})
 
 # --- Include Directories ---
-# PUBLIC: Consumers of this library will automatically get this include path.
 target_include_directories(libfers PUBLIC
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 	$<INSTALL_INTERFACE:include>
 )
-# PRIVATE: Only for compiling this library's internals.
 target_include_directories(libfers PRIVATE
 	${CMAKE_CURRENT_SOURCE_DIR}/src
 )
@@ -46,31 +53,27 @@ target_include_directories(libfers PRIVATE
 )
 
 # --- Third-Party Dependencies ---
+# The third_party directory is inside libfers, so we can use add_subdirectory directly.
 add_subdirectory(third_party/highfive EXCLUDE_FROM_ALL)
 add_subdirectory(third_party/geographiclib EXCLUDE_FROM_ALL)
 
 # Link dependencies privately. Consumers of libfers don't need to know about them.
-target_link_libraries(libfers PRIVATE HighFive GeographicLib::GeographicLib)
+target_link_libraries(libfers PRIVATE HighFive::HighFive GeographicLib::GeographicLib)
 
 # Find libxml2
 find_package(LibXml2 REQUIRED)
 if (LIBXML2_FOUND)
 	target_include_directories(libfers PRIVATE ${LIBXML2_INCLUDE_DIR})
 	target_link_libraries(libfers PRIVATE ${LIBXML2_LIBRARIES})
-endif()
+endif ()
 
 # Find HDF5
-set(FERS_LIB_HDF5 "$ENV{FERS_LIB_HDF5}" CACHE STRING "HDF5 library path")
-set(FERS_LIB_HDF5_HL "$ENV{FERS_LIB_HDF5_HL}" CACHE STRING "HDF5 HL library path")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I/usr/include/hdf5/serial/" CACHE STRING "Additional compiler flags")
-
-find_library(HDF5_LIBRARY NAMES hdf5 PATHS ${FERS_LIB_HDF5})
-find_library(HDF5_HL_LIBRARY NAMES hdf5_hl PATHS ${FERS_LIB_HDF5_HL})
-
-if (HDF5_LIBRARY AND HDF5_HL_LIBRARY)
-	target_link_libraries(libfers PRIVATE ${HDF5_LIBRARY} ${HDF5_HL_LIBRARY})
+find_package(HDF5 COMPONENTS C HL REQUIRED)
+if (HDF5_FOUND)
+	# Use the variables provided by FindHDF5 instead of the IMPORTED targets
+	target_link_libraries(libfers PRIVATE ${HDF5_C_LIBRARIES} ${HDF5_HL_LIBRARIES}) # <-- FIX HERE
 	target_compile_definitions(libfers PRIVATE HAVE_LIBHDF5)
-endif()
+endif ()
 
 # --- Installation ---
 # This defines where the library and its headers will be installed.
@@ -80,7 +83,12 @@ install(TARGETS libfers
 	LIBRARY DESTINATION lib
 	RUNTIME DESTINATION bin
 )
-install(DIRECTORY include/ DESTINATION include)
+
+# Install the public headers using the explicit file list.
+install(FILES ${LIBFERS_PUBLIC_HEADERS}
+	DESTINATION include/libfers
+)
+
 install(EXPORT libfers-targets
 	FILE libfers-config.cmake
 	NAMESPACE fers::
