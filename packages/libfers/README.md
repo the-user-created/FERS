@@ -1,7 +1,7 @@
 # libfers: The FERS Core Simulation Library
 
 [![Build Status](https://github.com/the-user-created/FERS/actions/workflows/CMake.yml/badge.svg)](https://github.com/the-user-created/FERS/actions/workflows/CMake.yml)
-[![License: GPL v2](https://img.shields.io/badge/License-GPLv2-blue.svg)](../../LICENSE)
+[![License: GPL v2](https://img.shields.io/badge/License-GPLv2-blue.svg)](https://github.com/the-user-created/FERS/blob/master/LICENSE)
 
 **libfers** is the core C++ simulation engine for the **Flexible Extensible Radar Simulator (FERS)**. It contains all
 the logic for parsing scenarios, modeling physics, executing simulations, and processing output data.

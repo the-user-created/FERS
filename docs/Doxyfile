@@ -51,21 +51,29 @@ GENERATE_DEPRECATEDLIST= YES
 SHOW_USED_FILES        = YES
 SHOW_FILES             = YES
 SHOW_NAMESPACES        = YES
-SHOW_DIRECTORIES       = YES
 
-# C++ related configuration options
-OPTIMIZE_OUTPUT_FOR_CPP = YES
+OPTIMIZE_OUTPUT_JAVA   = YES
 
 # Input/output settings
 INPUT                  = "@PROJECT_SOURCE_DIR@/packages/libfers/include" \
                          "@PROJECT_SOURCE_DIR@/packages/libfers/src" \
                          "@PROJECT_SOURCE_DIR@/packages/schema" \
-                         "@PROJECT_SOURCE_DIR@/README.md"
-FILE_PATTERNS          = *.cpp *.h *.xsd *.dtd *.md
+                         "@PROJECT_SOURCE_DIR@/packages/fers-cli/src" \
+                         "@PROJECT_SOURCE_DIR@/packages/fers-ui/src" \
+                         "@PROJECT_SOURCE_DIR@/packages/fers-ui/src-tauri/src" \
+                         "@PROJECT_SOURCE_DIR@/README.md" \
+                         "@PROJECT_SOURCE_DIR@/AUTHORS.md" \
+                         "@PROJECT_SOURCE_DIR@/CONTRIBUTING.md" \
+                         "@PROJECT_SOURCE_DIR@/packages/libfers/README.md" \
+                         "@PROJECT_SOURCE_DIR@/packages/fers-cli/README.md" \
+                         "@PROJECT_SOURCE_DIR@/packages/fers-ui/README.md"
+FILE_PATTERNS          = *.cpp *.h *.xsd *.dtd *.md *.ts *.tsx *.rs
 RECURSIVE              = YES
 EXCLUDE                = "@PROJECT_SOURCE_DIR@/packages/libfers/third_party"
 EXCLUDE_SYMLINKS       = NO
-EXCLUDE_PATTERNS       =
+EXCLUDE_PATTERNS       = */node_modules/* \
+                         */pnpm-lock.yaml \
+                         */src-tauri/gen/*
 EXCLUDE_SYMBOLS        =
 
 # Source browser related configuration options
@@ -84,7 +92,6 @@ GENERATE_XML           = NO
 GENERATE_HTML          = YES
 HTML_OUTPUT            = html
 HTML_FILE_EXTENSION    = .html
-HTML_TIMESTAMP         = YES
 DISABLE_INDEX          = NO
 
 # --- Doxygen Awesome CSS Settings ---
@@ -94,23 +101,18 @@ HTML_COLORSTYLE        = LIGHT
 HTML_HEADER            = "@DOXYGEN_HEADER_FILE@"
 HTML_EXTRA_STYLESHEET  = "@DOXYGEN_AWESOME_CSS@" \
                          "@DOXYGEN_CUSTOM_CSS@"
-HTML_EXTRA_FILES       = @DOXYGEN_EXTRA_FILES@
-# Disable Doxygen's default copy buttons to use the awesome-css extension
-HTML_COPY_CLIPBOARD    = NO
+HTML_EXTRA_FILES       = @DOXYGEN_EXTRA_FILES_STR@
 
 
 # Dot tool (graph generation)
 HAVE_DOT               = @FERS_DOXYGEN_HAVE_DOT@
 DOT_NUM_THREADS        = 2
-DOT_FONTNAME           = Helvetica
-DOT_FONTSIZE           = 10
-DOT_TRANSPARENT        = YES
 DOT_IMAGE_FORMAT       = svg
 CALL_GRAPH             = YES
 CALLER_GRAPH           = YES
 CLASS_GRAPH            = YES
 COLLABORATION_GRAPH    = YES
-GROUP_GRAPS            = YES
+GROUP_GRAPHS           = YES
 TEMPLATE_RELATIONS     = YES
 INCLUDE_GRAPH          = YES
 INCLUDED_BY_GRAPH      = YES

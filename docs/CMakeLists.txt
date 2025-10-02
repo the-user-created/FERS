@@ -37,6 +37,9 @@ set(DOXYGEN_EXTRA_FILES
 	${DOXYGEN_AWESOME_TOC_JS}
 )
 
+# Convert the CMake list to a space-separated string for Doxygen
+string(REPLACE ";" " " DOXYGEN_EXTRA_FILES_STR "${DOXYGEN_EXTRA_FILES}")
+
 # Configure Doxyfile
 set(FERS_DOXYGEN_HAVE_DOT ${Doxygen_DOT_FOUND})
 configure_file(

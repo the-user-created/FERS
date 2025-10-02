@@ -1,6 +1,6 @@
 # FERS-CLI: Command-Line Interface for FERS
 
-[![License: GPL v2](https://img.shields.io/badge/License-GPLv2-blue.svg)](../../LICENSE)
+[![License: GPL v2](https://img.shields.io/badge/License-GPLv2-blue.svg)](https://github.com/the-user-created/FERS/blob/master/LICENSE)
 
 **FERS-CLI** is the command-line interface for the FERS simulation engine. It is a lightweight executable that acts as a
 client to the core `libfers` library.
