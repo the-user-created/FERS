@@ -64,12 +64,12 @@ brew install cmake hdf5 libxml2 llvm doxygen graphviz
 
 ### 3. Configure and Build
 
-It is recommended to create a single build directory at the `packages` level.
+It is recommended to create a single build directory at the repository's root level.
 
 **On Linux:**
 
 ```bash
-# From the FERS/packages/ directory
+# From the root FERS directory
 mkdir build && cd build
 cmake ..
 make -j$(nproc)
@@ -79,7 +79,7 @@ make -j$(nproc)
 You must point CMake to the Homebrew LLVM toolchain.
 
 ```bash
-# From the FERS/packages/ directory
+# From the FERS/ directory
 mkdir build && cd build
 CC=/usr/local/opt/llvm/bin/clang CXX=/usr/local/opt/llvm/bin/clang++ cmake ..
 make -j$(sysctl -n hw.ncpu)
@@ -117,7 +117,7 @@ sudo ldconfig # On Linux, to update the cache
 
 ## Documentation
 
-Source code documentation can be generated using Doxygen via the build system.
+The source code documentation is automatically built and deployed to our [GitHub Pages site](https://the-user-created.github.io/FERS/). If you wish to build it locally, you will need **Doxygen** and **Graphviz** installed. They are included in the dependency installation commands above.
 
 1. **Configure with documentation enabled:**
    ```bash
@@ -130,4 +130,4 @@ Source code documentation can be generated using Doxygen via the build system.
    make doc
    ```
 
-The HTML output will be generated in the `packages/build/libfers/docs/html/` directory.
+The HTML output will be generated in the `build/docs/html/` directory. You can open `index.html` in your browser to view the documentation.
