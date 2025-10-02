@@ -29,15 +29,8 @@ if (APPLE AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 	# link_directories(/usr/local/opt/llvm/lib/c++)
 endif ()
 
-# --- Documentation ---
-if (FERS_BUILD_DOCS)
-	find_package(Doxygen)
-	if (Doxygen_FOUND)
-		message(STATUS "Doxygen found, documentation target will be available.")
-	else ()
-		message(WARNING "Doxygen not found, documentation will not be built.")
-	endif ()
-endif ()
-
 # Add the subdirectory containing the C++ packages.
 add_subdirectory(packages)
+
+# --- Documentation ---
+add_subdirectory(docs)
