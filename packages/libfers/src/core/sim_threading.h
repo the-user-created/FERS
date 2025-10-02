@@ -18,7 +18,6 @@
 #include <exception>
 #include <functional>
 
-#include <libfers/api.h>
 #include <libfers/config.h>
 
 namespace pool
@@ -36,25 +35,6 @@ namespace radar
 namespace core
 {
 	class World;
-
-	/**
-	 * @struct ProgressReporter
-	 * @brief A helper to safely invoke the progress callback.
-	 */
-	struct ProgressReporter
-	{
-		FersProgressCallback callback;
-
-		void* user_data;
-
-		void report(double progress, const char* message) const
-		{
-			if (callback)
-			{
-				callback(progress, message, user_data);
-			}
-		}
-	};
 
 	/**
      * @struct ReResults
@@ -84,7 +64,7 @@ namespace core
 		[[nodiscard]] const char* what() const noexcept override { return "Range error in RE calculations"; }
 	};
 
-	void runThreadedSim(const World* world, pool::ThreadPool& pool, const ProgressReporter* reporter);
+	void runThreadedSim(const World* world, pool::ThreadPool& pool);
 
-	void runThreadedCwSim(const World* world, pool::ThreadPool& pool, const ProgressReporter* reporter);
+	void runThreadedCwSim(const World* world, pool::ThreadPool& pool);
 }

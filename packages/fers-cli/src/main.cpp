@@ -39,33 +39,6 @@ std::string readFileToString(const std::string& filename)
 	return {(std::istreambuf_iterator(file)), std::istreambuf_iterator<char>()};
 }
 
-/**
- * @brief A progress callback function for the CLI.
- * Prints progress updates to the standard error stream.
- */
-void cli_progress_callback(const double progress, const char* statusMessage, void* /*user_data*/)
-{
-	if (progress < 0)
-	{
-		std::cerr << "\n[SIMULATION ERROR] " << statusMessage << std::endl;
-		return;
-	}
-	constexpr int bar_width = 50;
-	std::cout << "[";
-	const int pos = static_cast<int>(bar_width * progress);
-	for (int i = 0; i < bar_width; ++i)
-	{
-		if (i < pos)
-			std::cout << "=";
-		else if (i == pos)
-			std::cout << ">";
-		else
-			std::cout << " ";
-	}
-	std::cout << "] " << static_cast<int>(progress * 100.0) << "% - " << statusMessage << "\r";
-	std::cout.flush();
-}
-
 int main(const int argc, char* argv[])
 {
 	// Parse command-line arguments using the local arg parser
@@ -146,7 +119,7 @@ int main(const int argc, char* argv[])
 
 	// Run the simulation via the C-API, providing the console callback
 	LOG(Level::INFO, "Starting simulation...");
-	if (fers_run_simulation(context, cli_progress_callback, nullptr) != 0)
+	if (fers_run_simulation(context, nullptr) != 0)
 	{
 		LOG(Level::FATAL, "Simulation run failed.");
 		fers_destroy_context(context);
