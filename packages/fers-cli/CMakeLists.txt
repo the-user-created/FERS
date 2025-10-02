@@ -3,6 +3,9 @@ project(fers-cli)
 # Create the executable target
 add_executable(fers-cli)
 
+# Apply project-wide compiler warnings and flags
+apply_fers_warnings(fers-cli)
+
 # Add its own source files
 target_sources(fers-cli PRIVATE
 	src/main.cpp
@@ -14,8 +17,7 @@ target_include_directories(fers-cli PRIVATE
 	${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-# Link against libfers. This is the key connection.
-# CMake will automatically handle include paths and transitive dependencies.
+# Link against libfers. CMake handles transitive dependencies and include paths.
 target_link_libraries(fers-cli PRIVATE libfers)
 
 # Install the executable
