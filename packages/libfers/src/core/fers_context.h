@@ -26,11 +26,11 @@ public:
 	/**
 	 * @brief Constructs a new simulation context, initializing an empty world.
 	 */
+	// NOLINTNEXTLINE(cert-msc51-cpp)
 	FersContext() :
 		_world(std::make_unique<core::World>())
 	{
-		// The master seeder is default-constructed for now. It will be seeded
-		// later, either randomly or from the simulation XML file.
+
 	}
 
 	/**
