@@ -42,13 +42,10 @@ static void handle_api_exception(const std::exception& e, const std::string& fun
 
 extern "C" {
 
-fers_context* fers_create_context()
+fers_context_t* fers_context_create()
 {
 	last_error_message.clear();
-	try
-	{
-		return new fers_context();
-	}
+	try { return new fers_context_t(); }
 	catch (const std::bad_alloc& e)
 	{
 		handle_api_exception(e, "fers_create_context");
@@ -61,16 +58,13 @@ fers_context* fers_create_context()
 	}
 }
 
-void fers_destroy_context(fers_context* context)
+void fers_context_destroy(fers_context_t* context)
 {
-	if (!context)
-	{
-		return;
-	}
+	if (!context) { return; }
 	delete context;
 }
 
-int fers_load_scenario_from_xml_file(fers_context* context, const char* xml_filepath, const int validate)
+int fers_load_scenario_from_xml_file(fers_context_t* context, const char* xml_filepath, const int validate)
 {
 	last_error_message.clear();
 	if (!context || !xml_filepath)
@@ -106,7 +100,7 @@ int fers_load_scenario_from_xml_file(fers_context* context, const char* xml_file
 	}
 }
 
-int fers_load_scenario_from_xml_string(fers_context* context, const char* xml_content, const int validate)
+int fers_load_scenario_from_xml_string(fers_context_t* context, const char* xml_content, const int validate)
 {
 	last_error_message.clear();
 	if (!context || !xml_content)
@@ -119,8 +113,10 @@ int fers_load_scenario_from_xml_string(fers_context* context, const char* xml_co
 	auto* ctx = reinterpret_cast<FersContext*>(context);
 	try
 	{
-		serial::parseSimulationFromString(xml_content, ctx->getWorld(), static_cast<bool>(validate),
-		                                  ctx->getMasterSeeder());
+		serial::parseSimulationFromString
+			(xml_content, ctx->getWorld(), static_cast<bool>(validate),
+			ctx->getMasterSeeder()
+				);
 
 		// Initialize the master seeder after parsing
 		if (params::params.random_seed)
@@ -155,15 +151,9 @@ const char* fers_get_last_error_message()
 	return strdup(last_error_message.c_str());
 }
 
-void fers_free_string(char* str)
-{
-	if (str)
-	{
-		free(str);
-	}
-}
+void fers_free_string(char* str) { if (str) { free(str); } }
 
-int fers_run_simulation(fers_context* context, void* user_data)
+int fers_run_simulation(fers_context_t* context, void* user_data)
 {
 	last_error_message.clear();
 	if (!context)
@@ -179,14 +169,8 @@ int fers_run_simulation(fers_context* context, void* user_data)
 	{
 		pool::ThreadPool pool(params::renderThreads());
 
-		if (params::isCwSimulation())
-		{
-			core::runThreadedCwSim(ctx->getWorld(), pool);
-		}
-		else
-		{
-			core::runThreadedSim(ctx->getWorld(), pool);
-		}
+		if (params::isCwSimulation()) { core::runThreadedCwSim(ctx->getWorld(), pool); }
+		else { core::runThreadedSim(ctx->getWorld(), pool); }
 
 		return 0; // Success
 	}
@@ -197,7 +181,7 @@ int fers_run_simulation(fers_context* context, void* user_data)
 	}
 }
 
-int fers_generate_kml(const fers_context* context, const char* output_kml_filepath)
+int fers_generate_kml(const fers_context_t* context, const char* output_kml_filepath)
 {
 	last_error_message.clear();
 	if (!context || !output_kml_filepath)
@@ -226,6 +210,5 @@ int fers_generate_kml(const fers_context* context, const char* output_kml_filepa
 		return 1; // Exception thrown
 	}
 }
-
 
 }

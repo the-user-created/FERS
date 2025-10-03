@@ -25,7 +25,7 @@ extern "C" {
  */
 struct fers_context;
 
-typedef struct fers_context fers_context;
+typedef struct fers_context fers_context_t;
 
 /**
  * @brief Creates a new FERS simulation context.
@@ -36,7 +36,7 @@ typedef struct fers_context fers_context;
  * @return A non-null opaque pointer (handle) to the simulation context on success.
  *         Returns NULL on failure (e.g., out of memory).
  */
-fers_context* fers_create_context();
+fers_context_t* fers_context_create();
 
 /**
  * @brief Destroys a FERS simulation context and releases all associated memory.
@@ -48,7 +48,7 @@ fers_context* fers_create_context();
  * @param context A valid pointer to a fers_context handle. If context is NULL,
  *                the function does nothing.
  */
-void fers_destroy_context(fers_context* context);
+void fers_context_destroy(fers_context_t* context);
 
 // --- Scenario Loading & Serialization ---
 
@@ -64,7 +64,7 @@ void fers_destroy_context(fers_context* context);
  * @return 0 on success, a non-zero error code on failure (e.g., file not found, parsing error).
  *         On failure, a detailed error message can be retrieved with fers_get_last_error_message().
  */
-int fers_load_scenario_from_xml_file(fers_context* context, const char* xml_filepath, int validate);
+int fers_load_scenario_from_xml_file(fers_context_t* context, const char* xml_filepath, int validate);
 
 /**
  * @brief Loads a simulation scenario from an XML string into the context.
@@ -78,7 +78,7 @@ int fers_load_scenario_from_xml_file(fers_context* context, const char* xml_file
  * @return 0 on success, a non-zero error code on failure (e.g., parsing error).
  *         On failure, a detailed error message can be retrieved with fers_get_last_error_message().
  */
-int fers_load_scenario_from_xml_string(fers_context* context, const char* xml_content, int validate);
+int fers_load_scenario_from_xml_string(fers_context_t* context, const char* xml_content, int validate);
 
 // --- Error Handling ---
 
@@ -108,7 +108,6 @@ const char* fers_get_last_error_message();
  */
 void fers_free_string(char* str);
 
-
 // --- Simulation Execution ---
 
 /**
@@ -121,7 +120,7 @@ void fers_free_string(char* str);
  * @return 0 on success, a non-zero error code on failure.
  *         On failure, a detailed error message can be retrieved with fers_get_last_error_message().
  */
-int fers_run_simulation(fers_context* context, void* user_data);
+int fers_run_simulation(fers_context_t* context, void* user_data);
 
 // --- Utility Functions ---
 
@@ -136,7 +135,7 @@ int fers_run_simulation(fers_context* context, void* user_data);
  * @return 0 on success, a non-zero error code on failure.
  *         On failure, a detailed error message can be retrieved with fers_get_last_error_message().
  */
-int fers_generate_kml(const fers_context* context, const char* output_kml_filepath);
+int fers_generate_kml(const fers_context_t* context, const char* output_kml_filepath);
 
 #ifdef __cplusplus
 }
