@@ -77,10 +77,8 @@ fn get_last_error() -> String {
     if error_ptr.is_null() {
         "An unknown FFI error occurred.".to_string()
     } else {
-        // The FersOwnedString wrapper will ensure the memory is freed.
-        // We cast from const to mut because fers_free_string expects a mutable pointer,
-        // but the getter returns a const pointer. This is safe as we own the pointer.
-        FersOwnedString(error_ptr as *mut c_char)
+        // The FersOwnedString wrapper ensures the memory is freed.
+        FersOwnedString(error_ptr)
             .into_string()
             .unwrap_or_else(|e| format!("FFI error message contained invalid UTF-8: {}", e))
     }
@@ -122,8 +120,7 @@ impl FersContext {
             return Err(get_last_error());
         }
         // FersOwnedString takes ownership and will free the memory on drop.
-        // We cast from const to mut because fers_free_string expects a mutable pointer.
-        FersOwnedString(json_ptr as *mut c_char)
+        FersOwnedString(json_ptr)
             .into_string()
             .map_err(|e| e.to_string())
     }
@@ -137,8 +134,7 @@ impl FersContext {
             return Err(get_last_error());
         }
         // FersOwnedString takes ownership and will free the memory on drop.
-        // We cast from const to mut because fers_free_string expects a mutable pointer.
-        FersOwnedString(xml_ptr as *mut c_char)
+        FersOwnedString(xml_ptr)
             .into_string()
             .map_err(|e| e.to_string())
     }
