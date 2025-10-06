@@ -12,9 +12,11 @@
 #include <libfers/logging.h>
 #include <libfers/parameters.h>
 
+#include <nlohmann/json.hpp>
 #include "core/fers_context.h"
 #include "core/sim_threading.h"
 #include "core/thread_pool.h"
+#include "serial/json_serializer.h"
 #include "serial/kml_generator.h"
 #include "serial/xml_parser.h"
 
@@ -115,7 +117,7 @@ int fers_load_scenario_from_xml_string(fers_context_t* context, const char* xml_
 	{
 		serial::parseSimulationFromString
 			(xml_content, ctx->getWorld(), static_cast<bool>(validate),
-			ctx->getMasterSeeder()
+			 ctx->getMasterSeeder()
 				);
 
 		// Initialize the master seeder after parsing
@@ -137,6 +139,33 @@ int fers_load_scenario_from_xml_string(fers_context_t* context, const char* xml_
 	{
 		handle_api_exception(e, "fers_load_scenario_from_xml_string");
 		return 1; // Parsing or logic error
+	}
+}
+
+const char* fers_get_scenario_as_json(fers_context_t* context)
+{
+	last_error_message.clear();
+	if (!context)
+	{
+		last_error_message = "Invalid context provided to fers_get_scenario_as_json.";
+		LOG(logging::Level::ERROR, last_error_message);
+		return nullptr;
+	}
+
+	const auto* ctx = reinterpret_cast<FersContext*>(context);
+	try
+	{
+		LOG(logging::Level::INFO, "Converting scenario to JSON.");
+		const nlohmann::json j = serial::world_to_json(*ctx->getWorld());
+		LOG(logging::Level::INFO, "Conversion complete. Serializing to string.");
+		const std::string json_str = j.dump(2);
+		LOG(logging::Level::INFO, "Serialization complete. Returning string.");
+		return strdup(json_str.c_str());
+	}
+	catch (const std::exception& e)
+	{
+		handle_api_exception(e, "fers_get_scenario_as_json");
+		return nullptr;
 	}
 }
 

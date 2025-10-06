@@ -53,6 +53,22 @@ void fers_context_destroy(fers_context_t* context);
 // --- Scenario Loading & Serialization ---
 
 /**
+* @brief Serializes the current simulation scenario into a JSON string.
+*
+* This function converts the entire state of the simulation world (platforms,
+* antennas, etc.) held in the context into a JSON formatted string. This is
+* intended for use with a UI to synchronize state.
+*
+* The returned string is dynamically allocated and must be freed by the caller
+* using fers_free_string() to prevent memory leaks.
+*
+* @param context A valid fers_context handle.
+* @return A dynamically allocated, null-terminated C-string containing the
+*         JSON representation of the scenario. Returns NULL on failure.
+*/
+const char* fers_get_scenario_as_json(fers_context_t* context);
+
+/**
  * @brief Loads a simulation scenario from an XML file into the context.
  *
  * This function parses the provided XML file and populates the simulation
