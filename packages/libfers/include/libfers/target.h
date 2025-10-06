@@ -134,10 +134,6 @@ namespace radar
 		*/
 		virtual RealType getRcs(math::SVec3& inAngle, math::SVec3& outAngle, RealType time) const = 0;
 
-		// [[nodiscard]] virtual math::PsMatrix getPolarization() const { return _psm; }
-
-		// virtual void setPolarization(const math::PsMatrix& in) { _psm = in; }
-
 		/**
 		* @brief Gets the target's internal random number generator engine.
 		* @return A mutable reference to the RNG engine.
@@ -159,7 +155,6 @@ namespace radar
 		[[nodiscard]] const RcsModel* getFluctuationModel() const { return _model.get(); }
 
 	protected:
-		// math::PsMatrix _psm; ///< The polarization matrix for the target.
 		std::unique_ptr<RcsModel> _model{nullptr}; ///< The RCS fluctuation model for the target.
 		std::mt19937 _rng; ///< Per-object random number generator for statistical independence.
 	};
