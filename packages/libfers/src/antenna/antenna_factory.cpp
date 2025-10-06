@@ -130,6 +130,7 @@ namespace antenna
 
 	void XmlAntenna::loadAntennaDescription(const std::string_view filename)
 	{
+		_filename = filename;
 		XmlDocument doc;
 		if (!doc.loadFile(std::string(filename)))
 		{

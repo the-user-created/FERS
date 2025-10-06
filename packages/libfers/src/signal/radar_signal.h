@@ -13,6 +13,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <span>
 #include <string>
 #include <tuple>
@@ -143,6 +144,18 @@ namespace fers_signal
 		RadarSignal& operator=(RadarSignal&&) noexcept = delete;
 
 		/**
+		 * @brief Sets the filename associated with this signal.
+		 * @param filename The source filename.
+		 */
+		void setFilename(const std::string& filename) noexcept { _filename = filename; }
+
+		/**
+		 * @brief Gets the filename associated with this signal.
+		 * @return The source filename, if one was set.
+		 */
+		[[nodiscard]] const std::optional<std::string>& getFilename() const noexcept { return _filename; }
+
+		/**
 		 * @brief Gets the power of the radar signal.
 		 *
 		 * @return The power of the radar signal.
@@ -200,6 +213,7 @@ namespace fers_signal
 		RealType _carrierfreq; ///< The carrier frequency of the radar signal.
 		RealType _length; ///< The length of the radar signal.
 		std::unique_ptr<Signal> _signal; ///< The `Signal` object containing the radar signal data.
+		std::optional<std::string> _filename; ///< The original filename for file-based signals.
 	};
 
 	class CwSignal final : public Signal

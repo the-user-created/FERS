@@ -115,8 +115,18 @@ namespace serial
 		const std::filesystem::path filepath = filename;
 		const auto extension = filepath.extension().string();
 
-		if (hasExtension(extension, ".csv")) { return loadPulseFromCsvFile(name, filepath, power, carrierFreq); }
-		if (hasExtension(extension, ".h5")) { return loadPulseFromHdf5File(name, filepath, power, carrierFreq); }
+		if (hasExtension(extension, ".csv"))
+		{
+			auto pulse = loadPulseFromCsvFile(name, filepath, power, carrierFreq);
+			pulse->setFilename(filename);
+			return pulse;
+		}
+		if (hasExtension(extension, ".h5"))
+		{
+			auto pulse = loadPulseFromHdf5File(name, filepath, power, carrierFreq);
+			pulse->setFilename(filename);
+			return pulse;
+		}
 
 		LOG(logging::Level::FATAL, "Unrecognized file extension '{}' for file: '{}'", extension, filename);
 		throw std::runtime_error("Unrecognized file extension '" + extension + "' for file: " + filename);

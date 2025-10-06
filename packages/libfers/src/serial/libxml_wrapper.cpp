@@ -47,7 +47,7 @@ bool XmlDocument::validateWithXsd(const std::span<const unsigned char> xsdData) 
 	const std::unique_ptr<xmlSchemaParserCtxt, decltype(&xmlSchemaFreeParserCtxt)> schema_parser_ctxt(
 		xmlSchemaNewMemParserCtxt(reinterpret_cast<const char*>(xsdData.data()), static_cast<int>(xsdData.size())),
 		xmlSchemaFreeParserCtxt
-	);
+		);
 	if (!schema_parser_ctxt) { throw XmlException("Failed to create schema parser context."); }
 
 	const std::unique_ptr<xmlSchema, decltype(&xmlSchemaFree)> schema(xmlSchemaParse(schema_parser_ctxt.get()),
@@ -106,4 +106,24 @@ bool XmlDocument::loadString(const std::string& content)
 {
 	_doc.reset(xmlReadMemory(content.c_str(), static_cast<int>(content.length()), "in_memory.xml", nullptr, 0));
 	return _doc != nullptr;
+}
+
+std::string XmlDocument::dumpToString() const
+{
+	if (!_doc)
+	{
+		LOG(logging::Level::ERROR, "Document is null; Cannot dump to string");
+		return "";
+	}
+	xmlChar* buffer = nullptr;
+	int size = 0;
+	xmlDocDumpFormatMemory(_doc.get(), &buffer, &size, 1);
+	if (!buffer)
+	{
+		LOG(logging::Level::ERROR, "Failed to dump XML document to memory buffer.");
+		return "";
+	}
+	const std::string result(reinterpret_cast<const char*>(buffer), static_cast<size_t>(size));
+	xmlFree(buffer);
+	return result;
 }
