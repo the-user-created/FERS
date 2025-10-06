@@ -623,7 +623,7 @@ namespace
 		transmitter_obj->setAntenna(ant);
 
 		const std::string timing_name = XmlElement::getSafeAttribute(transmitter, "timing");
-		const auto timing = std::make_shared<Timing>(name, masterSeeder());
+		const auto timing = std::make_shared<Timing>(timing_name, masterSeeder());
 		const PrototypeTiming* proto = world->findTiming(timing_name);
 		timing->initializeModel(proto);
 		transmitter_obj->setTiming(timing);
