@@ -11,7 +11,6 @@ set(LIBFERS_PRIVATE_HEADERS
 	${CMAKE_CURRENT_LIST_DIR}/interpolation/interpolation_point.h
 	${CMAKE_CURRENT_LIST_DIR}/interpolation/interpolation_set.h
 	${CMAKE_CURRENT_LIST_DIR}/math/path_utils.h
-	${CMAKE_CURRENT_LIST_DIR}/math/polarization_matrix.h
 	${CMAKE_CURRENT_LIST_DIR}/noise/falpha_branch.h
 	${CMAKE_CURRENT_LIST_DIR}/noise/noise_generators.h
 	${CMAKE_CURRENT_LIST_DIR}/serial/json_serializer.h
@@ -40,7 +39,6 @@ set(LIBFERS_SOURCES
 	${CMAKE_CURRENT_LIST_DIR}/interpolation/interpolation_set.cpp
 	${CMAKE_CURRENT_LIST_DIR}/math/geometry_ops.cpp
 	${CMAKE_CURRENT_LIST_DIR}/math/path.cpp
-	${CMAKE_CURRENT_LIST_DIR}/math/polarization_matrix.cpp
 	${CMAKE_CURRENT_LIST_DIR}/math/rotation_path.cpp
 	${CMAKE_CURRENT_LIST_DIR}/noise/falpha_branch.cpp
 	${CMAKE_CURRENT_LIST_DIR}/noise/noise_generators.cpp
