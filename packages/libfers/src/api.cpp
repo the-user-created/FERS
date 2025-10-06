@@ -19,6 +19,7 @@
 #include "serial/json_serializer.h"
 #include "serial/kml_generator.h"
 #include "serial/xml_parser.h"
+#include "serial/xml_serializer.h"
 
 // The fers_context struct is defined here as an alias for our C++ class.
 // This definition is hidden from the C API consumer.
@@ -168,6 +169,33 @@ const char* fers_get_scenario_as_json(fers_context_t* context)
 		return nullptr;
 	}
 }
+
+const char* fers_get_scenario_as_xml(fers_context_t* context)
+{
+	last_error_message.clear();
+	if (!context)
+	{
+		last_error_message = "Invalid context provided to fers_get_scenario_as_xml.";
+		LOG(logging::Level::ERROR, last_error_message);
+		return nullptr;
+	}
+
+	const auto* ctx = reinterpret_cast<FersContext*>(context);
+	try
+	{
+		LOG(logging::Level::INFO, "Serializing scenario to XML string.");
+		const std::string xml_str = serial::world_to_xml_string(*ctx->getWorld());
+		if (xml_str.empty()) { throw std::runtime_error("XML serialization resulted in an empty string."); }
+		LOG(logging::Level::INFO, "Serialization complete. Returning string.");
+		return strdup(xml_str.c_str());
+	}
+	catch (const std::exception& e)
+	{
+		handle_api_exception(e, "fers_get_scenario_as_xml");
+		return nullptr;
+	}
+}
+
 
 int fers_update_scenario_from_json(fers_context_t* context, const char* scenario_json)
 {

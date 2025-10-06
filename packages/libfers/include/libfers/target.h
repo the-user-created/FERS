@@ -228,9 +228,16 @@ namespace radar
 		*/
 		RealType getRcs(math::SVec3& inAngle, math::SVec3& outAngle, RealType time) const override;
 
+		/**
+		 * @brief Gets the filename associated with this target's RCS data.
+		 * @return The source filename.
+		 */
+		[[nodiscard]] const std::string& getFilename() const noexcept { return _filename; }
+
 	private:
 		std::unique_ptr<interp::InterpSet> _azi_samples; ///< The azimuthal RCS samples.
 		std::unique_ptr<interp::InterpSet> _elev_samples; ///< The elevation RCS samples.
+		std::string _filename; ///< The original filename for the RCS data.
 	};
 
 	/**

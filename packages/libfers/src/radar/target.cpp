@@ -59,7 +59,8 @@ namespace radar
 
 	FileTarget::FileTarget(Platform* platform, std::string name, const std::string& filename, const unsigned seed) :
 		Target(platform, std::move(name), seed), _azi_samples(std::make_unique_for_overwrite<interp::InterpSet>()),
-		_elev_samples(std::make_unique_for_overwrite<interp::InterpSet>())
+		_elev_samples(std::make_unique_for_overwrite<interp::InterpSet>()),
+		_filename(filename)
 	{
 		XmlDocument doc;
 		if (!doc.loadFile(filename)) { throw std::runtime_error("Could not load target description from " + filename); }
