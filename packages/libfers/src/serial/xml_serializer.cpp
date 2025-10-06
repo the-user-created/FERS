@@ -2,9 +2,14 @@
 // Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
 
 /**
- * @file xml_serializer.cpp
- * @brief Implementation for serializing the simulation world to XML.
- */
+* @file xml_serializer.cpp
+* @brief Implementation for serializing the simulation world to XML.
+*
+* This file contains the logic to traverse the in-memory C++ object representation
+* of a FERS simulation and build a corresponding XML document. The process involves
+* converting internal data representations (like angles in radians) back to the
+* user-facing format defined by the FERS XML schema (like compass degrees).
+*/
 
 #include "xml_serializer.h"
 
@@ -103,11 +108,16 @@ namespace
 		else
 		{
 			parent.setAttribute("type", "file");
-			if (const auto& filename = pulse.getFilename()) { parent.setAttribute("filename", *filename); }
+			if (const auto& filename = pulse.getFilename())
+			{
+				parent.setAttribute("filename", *filename);
+			}
 			else
 			{
-				// Fallback if filename was not set (e.g., created programmatically)
-				parent.setAttribute("filename", pulse.getName() + ".h5");
+				// If we reach this point, the in-memory state is invalid for XML serialization.
+				// We throw an exception to prevent generating an invalid XML file, which would fail to parse later.
+				throw std::logic_error("Attempted to serialize a file-based pulse named '" +
+					pulse.getName() + "' without a source filename.");
 			}
 		}
 		addChildWithNumber(parent, "power", pulse.getPower());
@@ -219,9 +229,11 @@ namespace
 			const auto start = rot_path.getStart();
 			const auto rate = rot_path.getRate();
 
-			const RealType start_az_deg = std::fmod(90.0 - (start.azimuth * 180.0 / PI) + 360.0, 360.0);
+			// Convert internal mathematical angles (radians, CCW from East) back to
+			// the XML format's compass degrees (CW from North) for user readability.
+			const RealType start_az_deg = std::fmod(90.0 - start.azimuth * 180.0 / PI + 360.0, 360.0);
 			const RealType start_el_deg = start.elevation * 180.0 / PI;
-			const RealType rate_az_deg_s = -rate.azimuth * 180.0 / PI;
+			const RealType rate_az_deg_s = -rate.azimuth * 180.0 / PI; // Invert for CW rotation
 			const RealType rate_el_deg_s = rate.elevation * 180.0 / PI;
 
 			addChildWithNumber(fixed_elem, "startazimuth", start_az_deg);
@@ -249,6 +261,7 @@ namespace
 			for (const auto& wp : rot_path.getCoords())
 			{
 				XmlElement wp_elem = rot_elem.addChild("rotationwaypoint");
+				// Convert angles back to compass degrees for XML output.
 				const RealType az_deg = std::fmod(90.0 - (wp.azimuth * 180.0 / PI) + 360.0, 360.0);
 				const RealType el_deg = wp.elevation * 180.0 / PI;
 				addChildWithNumber(wp_elem, "azimuth", az_deg);
@@ -328,6 +341,10 @@ namespace
 
 		serializeRotation(*platform.getRotationPath(), parent);
 
+		// A platform must have exactly one component. We iterate through the world's
+		// component lists to find which one is associated with this platform.
+		// We must check for monostatic transmitters first to avoid serializing them
+		// as separate transmitter/receiver components.
 		bool component_found = false;
 		for (const auto& tx : world.getTransmitters())
 		{
@@ -346,6 +363,8 @@ namespace
 		{
 			for (const auto& rx : world.getReceivers())
 			{
+				// This check ensures we only serialize standalone receivers, as monostatic
+				// ones were handled in the transmitter loop.
 				if (rx->getPlatform() == &platform && !rx->getAttached())
 				{
 					serializeReceiver(*rx, parent);
@@ -383,6 +402,7 @@ namespace serial
 		XmlElement params_elem = root.addChild("parameters");
 		serializeParameters(params_elem);
 
+		// Serialize all assets (pulses, timings, antennas) first, as platforms will reference them by name.
 		for (const auto& [name, pulse] : world.getPulses())
 		{
 			XmlElement pulse_elem = root.addChild("pulse");

@@ -2,9 +2,13 @@
 // Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
 
 /**
- * @file api.cpp
- * @brief Implementation of the C-style FFI for the libfers core library.
- */
+* @file api.cpp
+* @brief Implementation of the C-style FFI for the libfers core library.
+*
+* This file provides the C implementations for the functions declared in `api.h`.
+* It acts as the bridge between the C ABI and the C++ core, handling object
+* creation/destruction, exception catching, error reporting, and type casting.
+*/
 
 #include <cstring>
 #include <string>
@@ -22,21 +26,23 @@
 #include "serial/xml_serializer.h"
 
 // The fers_context struct is defined here as an alias for our C++ class.
-// This definition is hidden from the C API consumer.
+// This allows the C-API to return an opaque pointer, hiding the C++ implementation.
 struct fers_context : public FersContext {};
 
-// Thread-local storage for the last error message. Each thread gets its own
-// copy, preventing race conditions in a multithreaded FFI consumer.
+// A thread-local error message string ensures that error details from one
+// thread's API call do not interfere with another's. This is crucial for a
+// thread-safe FFI layer.
 thread_local std::string last_error_message;
 
 /**
- * @brief Centralized exception handler for the C-API.
- *
- * Logs the exception, stores its message in the thread-local storage,
- * and standardizes the log output.
- * @param e The exception that was caught.
- * @param function_name The name of the API function where the error occurred.
- */
+* @brief Centralized exception handler for the C-API boundary.
+*
+* This function catches standard C++ exceptions, records their `what()` message
+* into the thread-local error storage, and logs the error. This prevents C++
+* exceptions from propagating across the FFI boundary, which would be undefined behavior.
+* @param e The exception that was caught.
+* @param function_name The name of the API function where the error occurred.
+*/
 static void handle_api_exception(const std::exception& e, const std::string& function_name)
 {
 	last_error_message = e.what();
@@ -51,12 +57,12 @@ fers_context_t* fers_context_create()
 	try { return new fers_context_t(); }
 	catch (const std::bad_alloc& e)
 	{
-		handle_api_exception(e, "fers_create_context");
+		handle_api_exception(e, "fers_context_create");
 		return nullptr;
 	}
 	catch (const std::exception& e)
 	{
-		handle_api_exception(e, "fers_create_context");
+		handle_api_exception(e, "fers_context_create");
 		return nullptr;
 	}
 }
@@ -82,7 +88,8 @@ int fers_load_scenario_from_xml_file(fers_context_t* context, const char* xml_fi
 	{
 		serial::parseSimulation(xml_filepath, ctx->getWorld(), static_cast<bool>(validate), ctx->getMasterSeeder());
 
-		// Initialize the master seeder after parsing
+		// The master seeder must be initialized after parsing, as the seed
+		// value may be specified within the XML file itself.
 		if (params::params.random_seed)
 		{
 			LOG(logging::Level::INFO, "Using master seed: {}", *params::params.random_seed);
@@ -121,7 +128,6 @@ int fers_load_scenario_from_xml_string(fers_context_t* context, const char* xml_
 			 ctx->getMasterSeeder()
 				);
 
-		// Initialize the master seeder after parsing
 		if (params::params.random_seed)
 		{
 			LOG(logging::Level::INFO, "Using master seed: {}", *params::params.random_seed);
@@ -156,11 +162,8 @@ char* fers_get_scenario_as_json(fers_context_t* context)
 	const auto* ctx = reinterpret_cast<FersContext*>(context);
 	try
 	{
-		LOG(logging::Level::INFO, "Converting scenario to JSON.");
 		const nlohmann::json j = serial::world_to_json(*ctx->getWorld());
-		LOG(logging::Level::INFO, "Conversion complete. Serializing to string.");
 		const std::string json_str = j.dump(2);
-		LOG(logging::Level::INFO, "Serialization complete. Returning string.");
 		return strdup(json_str.c_str());
 	}
 	catch (const std::exception& e)
@@ -183,10 +186,8 @@ char* fers_get_scenario_as_xml(fers_context_t* context)
 	const auto* ctx = reinterpret_cast<FersContext*>(context);
 	try
 	{
-		LOG(logging::Level::INFO, "Serializing scenario to XML string.");
 		const std::string xml_str = serial::world_to_xml_string(*ctx->getWorld());
 		if (xml_str.empty()) { throw std::runtime_error("XML serialization resulted in an empty string."); }
-		LOG(logging::Level::INFO, "Serialization complete. Returning string.");
 		return strdup(xml_str.c_str());
 	}
 	catch (const std::exception& e)
@@ -213,7 +214,7 @@ int fers_update_scenario_from_json(fers_context_t* context, const char* scenario
 		const nlohmann::json j = nlohmann::json::parse(scenario_json);
 		serial::json_to_world(j, *ctx->getWorld(), ctx->getMasterSeeder());
 
-		// Initialize the master seeder after parsing
+		// Re-seed the random number generator based on the newly loaded scenario.
 		if (params::params.random_seed)
 		{
 			LOG(logging::Level::INFO, "Using master seed: {}", *params::params.random_seed);
@@ -229,7 +230,7 @@ int fers_update_scenario_from_json(fers_context_t* context, const char* scenario
 	}
 	catch (const nlohmann::json::exception& e)
 	{
-		// More specific error for JSON parsing
+		// Provide a more specific error for JSON parsing issues.
 		last_error_message = "JSON parsing/deserialization error: " + std::string(e.what());
 		LOG(logging::Level::ERROR, "API Error in {}: {}", "fers_update_scenario_from_json", last_error_message);
 		return 2; // JSON error
@@ -247,8 +248,9 @@ char* fers_get_last_error_message()
 	{
 		return nullptr; // No error to report
 	}
-	// strdup allocates with malloc, which is part of the C standard ABI.
-	// The caller must free this with fers_free_string (which calls free).
+	// `strdup` allocates with `malloc`, which is part of the C standard ABI,
+	// making it safe to transfer ownership across the FFI boundary. The caller
+	// must then free this memory using `fers_free_string`.
 	return strdup(last_error_message.c_str());
 }
 
