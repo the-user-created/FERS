@@ -83,6 +83,9 @@ find_package(HDF5 COMPONENTS C HL REQUIRED)
 if (FERS_BUILD_STATIC_LIBS)
 	add_library(fers_static STATIC)
 	set_target_properties(fers_static PROPERTIES OUTPUT_NAME "fers")
+	# Ensure the static library is built with Position-Independent Code,
+	# which is required when linking it into a shared library (like the Rust cdylib).
+	set_target_properties(fers_static PROPERTIES POSITION_INDEPENDENT_CODE ON)
 	fers_configure_library_target(fers_static)
 	add_library(fers::fers_static ALIAS fers_static)
 endif ()
