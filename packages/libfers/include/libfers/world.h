@@ -167,7 +167,7 @@ namespace core
 		 * @return A const reference to the map of signal names to RadarSignal objects.
 		 */
 		[[nodiscard]] const std::unordered_map<std::string, std::unique_ptr<fers_signal::RadarSignal>>& getPulses()
-			const noexcept
+		const noexcept
 		{
 			return _pulses;
 		}
@@ -177,7 +177,7 @@ namespace core
 		 * @return A const reference to the map of antenna names to Antenna objects.
 		 */
 		[[nodiscard]] const std::unordered_map<std::string, std::unique_ptr<antenna::Antenna>>& getAntennas()
-			const noexcept
+		const noexcept
 		{
 			return _antennas;
 		}
@@ -187,10 +187,15 @@ namespace core
 		 * @return A const reference to the map of timing names to PrototypeTiming objects.
 		 */
 		[[nodiscard]] const std::unordered_map<std::string, std::unique_ptr<timing::PrototypeTiming>>& getTimings()
-			const noexcept
+		const noexcept
 		{
 			return _timings;
 		}
+
+		/**
+		 * @brief Clears all objects and assets from the simulation world.
+		 */
+		void clear() noexcept;
 
 	private:
 		std::vector<std::unique_ptr<radar::Platform>> _platforms;

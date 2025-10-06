@@ -96,6 +96,20 @@ int fers_load_scenario_from_xml_file(fers_context_t* context, const char* xml_fi
  */
 int fers_load_scenario_from_xml_string(fers_context_t* context, const char* xml_content, int validate);
 
+/**
+* @brief Updates the simulation scenario from a JSON string.
+*
+* This function deserializes the provided JSON content and rebuilds the
+* simulation world within the context. Any existing scenario in the context
+* will be cleared. This is intended for use with a UI to synchronize state.
+*
+* @param context A valid fers_context handle.
+* @param scenario_json A null-terminated UTF-8 string containing the FERS scenario in JSON format.
+* @return 0 on success, a non-zero error code on failure (e.g., JSON parsing error).
+*         On failure, a detailed error message can be retrieved with fers_get_last_error_message().
+*/
+int fers_update_scenario_from_json(fers_context_t* context, const char* scenario_json);
+
 // --- Error Handling ---
 
 /**
