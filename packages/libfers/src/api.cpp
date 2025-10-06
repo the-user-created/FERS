@@ -143,7 +143,7 @@ int fers_load_scenario_from_xml_string(fers_context_t* context, const char* xml_
 	}
 }
 
-const char* fers_get_scenario_as_json(fers_context_t* context)
+char* fers_get_scenario_as_json(fers_context_t* context)
 {
 	last_error_message.clear();
 	if (!context)
@@ -170,7 +170,7 @@ const char* fers_get_scenario_as_json(fers_context_t* context)
 	}
 }
 
-const char* fers_get_scenario_as_xml(fers_context_t* context)
+char* fers_get_scenario_as_xml(fers_context_t* context)
 {
 	last_error_message.clear();
 	if (!context)
@@ -241,7 +241,7 @@ int fers_update_scenario_from_json(fers_context_t* context, const char* scenario
 	}
 }
 
-const char* fers_get_last_error_message()
+char* fers_get_last_error_message()
 {
 	if (last_error_message.empty())
 	{

@@ -66,7 +66,7 @@ void fers_context_destroy(fers_context_t* context);
 * @return A dynamically allocated, null-terminated C-string containing the
 *         JSON representation of the scenario. Returns NULL on failure.
 */
-const char* fers_get_scenario_as_json(fers_context_t* context);
+char* fers_get_scenario_as_json(fers_context_t* context);
 
 /**
  * @brief Serializes the current simulation scenario into an XML string.
@@ -82,7 +82,7 @@ const char* fers_get_scenario_as_json(fers_context_t* context);
  * @return A dynamically allocated, null-terminated C-string containing the
  *         XML representation of the scenario. Returns NULL on failure.
  */
-const char* fers_get_scenario_as_xml(fers_context_t* context);
+char* fers_get_scenario_as_xml(fers_context_t* context);
 
 /**
  * @brief Loads a simulation scenario from an XML file into the context.
@@ -141,7 +141,7 @@ int fers_update_scenario_from_json(fers_context_t* context, const char* scenario
  *         Returns NULL if no error has occurred since the last successful call
  *         on this thread.
  */
-const char* fers_get_last_error_message();
+char* fers_get_last_error_message();
 
 /**
  * @brief Frees a string that was allocated and returned by the libfers API.
