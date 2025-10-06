@@ -87,7 +87,13 @@ namespace radar
 		* @param k The degrees of freedom for the chi-square distribution.
 		*/
 		explicit RcsChiSquare(std::mt19937& rngEngine, RealType k) :
-			_gen(std::make_unique<noise::GammaGenerator>(rngEngine, k)) {}
+			_gen(std::make_unique<noise::GammaGenerator>(rngEngine, k)), _k(k) {}
+
+		/**
+		* @brief Gets the 'k' parameter (degrees of freedom) of the distribution.
+		* @return The k value.
+		*/
+		[[nodiscard]] RealType getK() const noexcept { return _k; }
 
 		/**
 		* @brief Samples the chi-square RCS model.
@@ -98,6 +104,7 @@ namespace radar
 
 	private:
 		std::unique_ptr<noise::GammaGenerator> _gen; ///< The gamma generator for sampling the chi-square distribution.
+		RealType _k; ///< The 'k' parameter (degrees of freedom).
 	};
 
 	/**
@@ -145,6 +152,12 @@ namespace radar
 		*/
 		void setFluctuationModel(std::unique_ptr<RcsModel> in) { _model = std::move(in); }
 
+		/**
+		* @brief Gets the RCS fluctuation model.
+		* @return A const pointer to the RcsModel.
+		*/
+		[[nodiscard]] const RcsModel* getFluctuationModel() const { return _model.get(); }
+
 	protected:
 		// math::PsMatrix _psm; ///< The polarization matrix for the target.
 		std::unique_ptr<RcsModel> _model{nullptr}; ///< The RCS fluctuation model for the target.
@@ -179,10 +192,10 @@ namespace radar
 		RealType getRcs(math::SVec3& /*inAngle*/, math::SVec3& /*outAngle*/, RealType /*time*/) const noexcept override;
 
 		/**
-		 * @brief Gets the constant RCS value (without fluctuation model applied).
-		 *
-		 * @return The constant RCS value.
-		 */
+		* @brief Gets the constant RCS value (without fluctuation model applied).
+		*
+		* @return The constant RCS value.
+		*/
 		[[nodiscard]] RealType getConstRcs() const noexcept { return _rcs; }
 
 	private:
@@ -229,9 +242,9 @@ namespace radar
 		RealType getRcs(math::SVec3& inAngle, math::SVec3& outAngle, RealType time) const override;
 
 		/**
-		 * @brief Gets the filename associated with this target's RCS data.
-		 * @return The source filename.
-		 */
+		* @brief Gets the filename associated with this target's RCS data.
+		* @return The source filename.
+		*/
 		[[nodiscard]] const std::string& getFilename() const noexcept { return _filename; }
 
 	private:
