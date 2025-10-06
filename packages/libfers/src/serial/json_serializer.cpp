@@ -1,15 +1,18 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
 
+/**
+* @file json_serializer.cpp
+* @brief JSON serialization and deserialization for FERS objects.
+*/
+
 #include "serial/json_serializer.h"
 
-#include <map>
-#include <nlohmann/json.hpp>
 #include <random>
+#include <nlohmann/json.hpp>
 
 #include <libfers/antenna_factory.h>
 #include <libfers/coord.h>
-#include <libfers/logging.h>
 #include <libfers/parameters.h>
 #include <libfers/path.h>
 #include <libfers/platform.h>
@@ -18,6 +21,8 @@
 #include <libfers/target.h>
 #include <libfers/transmitter.h>
 #include <libfers/world.h>
+
+#include "pulse_factory.h"
 #include "signal/radar_signal.h"
 #include "timing/prototype_timing.h"
 #include "timing/timing.h"
@@ -186,7 +191,11 @@ namespace fers_signal
 	{
 		j = nlohmann::json{{"name", rs.getName()}, {"power", rs.getPower()}, {"carrier", rs.getCarrier()}};
 		if (dynamic_cast<const CwSignal*>(rs.getSignal())) { j["type"] = "continuous"; }
-		else { j["type"] = "file"; }
+		else
+		{
+			j["type"] = "file";
+			if (const auto& filename = rs.getFilename(); filename.has_value()) { j["filename"] = *filename; }
+		}
 	}
 
 	void from_json(const nlohmann::json& j, std::unique_ptr<RadarSignal>& rs)
@@ -204,11 +213,9 @@ namespace fers_signal
 		}
 		else if (type == "file")
 		{
-			// Cannot fully reconstruct file-based signals as filename is not serialized.
-			// Create a dummy/placeholder signal.
-			// This part of the logic is lossy by design of the current `to_json`.
-			auto empty_signal = std::make_unique<Signal>();
-			rs = std::make_unique<RadarSignal>(name, power, carrier, 0.0, std::move(empty_signal));
+			if (!j.contains("filename")) { throw std::runtime_error("File-based pulse requires a filename."); }
+			const auto filename = j.at("filename").get<std::string>();
+			rs = serial::loadPulseFromFile(name, filename, power, carrier);
 		}
 		else { throw std::runtime_error("Unsupported pulse type in from_json: " + type); }
 	}
@@ -244,9 +251,16 @@ namespace antenna
 			j["pattern"] = "parabolic";
 			j["diameter"] = parabolic->getDiameter();
 		}
-		else if (const auto* xml = dynamic_cast<const XmlAntenna*>(&a)) { j["pattern"] = "xml"; }
-		else
-			if (const auto* h5 = dynamic_cast<const H5Antenna*>(&a)) { j["pattern"] = "file"; }
+		else if (const auto* xml = dynamic_cast<const XmlAntenna*>(&a))
+		{
+			j["pattern"] = "xml";
+			j["filename"] = xml->getFilename();
+		}
+		else if (const auto* h5 = dynamic_cast<const H5Antenna*>(&a))
+		{
+			j["pattern"] = "file";
+			j["filename"] = h5->getFilename();
+		}
 	}
 
 	void from_json(const nlohmann::json& j, std::unique_ptr<Antenna>& ant)
@@ -272,15 +286,18 @@ namespace antenna
 		{
 			ant = std::make_unique<Parabolic>(name, j.at("diameter").get<RealType>());
 		}
-		else if (pattern == "xml" || pattern == "file")
+		else if (pattern == "xml")
 		{
-			// File-based antennas cannot be fully reconstructed as filename is not serialized.
-			// Creating a placeholder Isotropic antenna to prevent crashes.
-			// This part of the logic is lossy by design of the current `to_json`.
-			LOG(logging::Level::WARNING,
-			    "Deserializing file-based antenna '{}' as Isotropic due to missing filename in JSON.",
-			    name);
-			ant = std::make_unique<Isotropic>(name);
+			if (!j.contains("filename")) { throw std::runtime_error("XML antenna pattern requires a 'filename'."); }
+			ant = std::make_unique<XmlAntenna>(name, j.at("filename").get<std::string>());
+		}
+		else if (pattern == "file")
+		{
+			if (!j.contains("filename"))
+			{
+				throw std::runtime_error("H5 file antenna pattern requires a 'filename'.");
+			}
+			ant = std::make_unique<H5Antenna>(name, j.at("filename").get<std::string>());
 		}
 		else { throw std::runtime_error("Unsupported antenna pattern in from_json: " + pattern); }
 
@@ -323,8 +340,11 @@ namespace radar
 			rcs_json["type"] = "isotropic";
 			rcs_json["value"] = iso->getConstRcs();
 		}
-		else
-			if (const auto* file = dynamic_cast<const FileTarget*>(&t)) { rcs_json["type"] = "file"; }
+		else if (const auto* file = dynamic_cast<const FileTarget*>(&t))
+		{
+			rcs_json["type"] = "file";
+			rcs_json["filename"] = file->getFilename();
+		}
 		j["rcs"] = rcs_json;
 	}
 
@@ -632,12 +652,13 @@ namespace serial
 						}
 						else if (rcs_type == "file")
 						{
-							// Lossy conversion
-							target_obj = radar::createIsoTarget(
-								plat.get(), comp_json.at("name").get<std::string>(), 1.0, masterSeeder());
-							LOG(logging::Level::WARNING,
-							    "Deserializing file-based target '{}' as Isotropic (1.0 m^2) due to missing filename in JSON.",
-							    comp_json.at("name").get<std::string>());
+							if (!rcs_json.contains("filename"))
+							{
+								throw std::runtime_error("File target requires an RCS filename.");
+							}
+							target_obj = radar::createFileTarget(
+								plat.get(), comp_json.at("name").get<std::string>(),
+								rcs_json.at("filename").get<std::string>(), masterSeeder());
 						}
 						else { throw std::runtime_error("Unsupported target RCS type: " + rcs_type); }
 						world.add(std::move(target_obj));
