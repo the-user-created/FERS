@@ -4,6 +4,7 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { v4 as uuidv4 } from 'uuid';
+import { invoke } from '@tauri-apps/api/core';
 
 // --- TYPE DEFINITIONS (Based on fers-xml.xsd) ---
 
@@ -214,7 +215,10 @@ type ScenarioActions = {
         platformId: string,
         componentType: PlatformComponent['type']
     ) => void;
-    loadScenario: (newData: ScenarioData) => void;
+    loadScenario: (backendData: any) => void;
+    // New actions for backend synchronization
+    syncBackend: () => Promise<void>;
+    fetchFromBackend: () => Promise<void>;
 };
 
 // --- DEFAULTS ---
@@ -308,7 +312,7 @@ const setPropertyByPath = (obj: object, path: string, value: unknown) => {
 };
 
 export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
-    immer((set) => ({
+    immer((set, get) => ({
         scenarioId: uuidv4(), // A unique ID for the scenario instance
         globalParameters: defaultGlobalParameters,
         pulses: [],
@@ -594,27 +598,240 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                         break;
                 }
             }),
-        loadScenario: (newData) =>
-            set((state) => {
-                console.log('[DEBUG] Store state BEFORE loadScenario:', {
-                    ...state,
-                });
 
+        loadScenario: (backendData) =>
+            set((state) => {
+                const data = backendData.simulation || backendData;
+                const nameToIdMap = new Map<string, string>();
+
+                // 1. Parameters
+                const params = data.parameters || {};
                 state.globalParameters = {
-                    ...newData.globalParameters,
                     id: 'global-parameters',
                     type: 'GlobalParameters',
+                    simulation_name: data.name || 'FERS Simulation',
+                    start: params.starttime ?? 0.0,
+                    end: params.endtime ?? 10.0,
+                    rate: params.rate ?? 10000.0,
+                    simSamplingRate: params.simSamplingRate ?? null,
+                    c: params.c ?? 299792458.0,
+                    random_seed: params.randomseed ?? null,
+                    adc_bits: params.adc_bits ?? 12,
+                    oversample_ratio: params.oversample ?? 1,
+                    export: {
+                        xml: params.export?.xml ?? false,
+                        csv: params.export?.csv ?? false,
+                        binary: params.export?.binary ?? true,
+                    },
                 };
-                state.pulses = newData.pulses;
-                state.timings = newData.timings;
-                state.antennas = newData.antennas;
-                state.platforms = newData.platforms;
-                state.selectedItemId = null; // Deselect item on new load
 
-                console.log('[DEBUG] Store state AFTER loadScenario:', {
-                    ...state,
+                const assignId = (item: any) => ({ ...item, id: uuidv4() });
+
+                // 2. Assets (and build name-to-id map)
+                state.pulses = (data.pulses || []).map((p: any) => {
+                    const pulse = {
+                        ...assignId(p),
+                        type: 'Pulse',
+                        pulseType: p.type === 'continuous' ? 'cw' : 'file',
+                    };
+                    nameToIdMap.set(pulse.name, pulse.id);
+                    return pulse;
                 });
+
+                state.timings = (data.timings || []).map((t: any) => {
+                    const timing = {
+                        ...assignId(t),
+                        type: 'Timing',
+                        freqOffset: t.freq_offset ?? null,
+                        randomFreqOffsetStdev:
+                            t.random_freq_offset_stdev ?? null,
+                        phaseOffset: t.phase_offset ?? null,
+                        randomPhaseOffsetStdev:
+                            t.random_phase_offset_stdev ?? null,
+                        noiseEntries: (t.noise_entries || []).map(assignId),
+                    };
+                    nameToIdMap.set(timing.name, timing.id);
+                    return timing;
+                });
+
+                state.antennas = (data.antennas || []).map((a: any) => {
+                    const antenna = { ...assignId(a), type: 'Antenna' };
+                    nameToIdMap.set(antenna.name, antenna.id);
+                    return antenna;
+                });
+
+                // 3. Platforms
+                state.platforms = (data.platforms || []).map((p: any) => {
+                    // Motion Path Transformation
+                    const motionPath: MotionPath = {
+                        interpolation: p.motionpath?.interpolation ?? 'static',
+                        waypoints: (p.motionpath?.positionwaypoints ?? []).map(
+                            (wp: any) => ({ ...assignId(wp), ...wp })
+                        ),
+                    };
+
+                    // Rotation Transformation
+                    let rotation: FixedRotation | RotationPath;
+                    if (p.fixedrotation) {
+                        rotation = {
+                            type: 'fixed',
+                            startAzimuth: p.fixedrotation.startazimuth,
+                            startElevation: p.fixedrotation.startelevation,
+                            azimuthRate: p.fixedrotation.azimuthrate,
+                            elevationRate: p.fixedrotation.elevationrate,
+                        };
+                    } else if (p.rotationpath) {
+                        rotation = {
+                            type: 'path',
+                            interpolation: p.rotationpath.interpolation,
+                            waypoints: (
+                                p.rotationpath.rotationwaypoints || []
+                            ).map((wp: any) => ({ ...assignId(wp), ...wp })),
+                        };
+                    } else {
+                        rotation = createDefaultPlatform().rotation;
+                    }
+
+                    // Component Transformation
+                    let component: PlatformComponent = { type: 'none' };
+                    if (p.component && Object.keys(p.component).length > 0) {
+                        const cType = Object.keys(p.component)[0];
+                        const cData = p.component[cType];
+                        component = {
+                            type: cType as PlatformComponent['type'],
+                            name: cData.name,
+                            radarType: cData.type === 'cw' ? 'cw' : 'pulsed',
+                            window_skip: cData.window_skip,
+                            window_length: cData.window_length,
+                            prf: cData.prf,
+                            antennaId: nameToIdMap.get(cData.antenna) ?? null,
+                            pulseId: nameToIdMap.get(cData.pulse) ?? null,
+                            timingId: nameToIdMap.get(cData.timing) ?? null,
+                            noiseTemperature: cData.noise_temp ?? null,
+                            noDirectPaths: cData.nodirect ?? false,
+                            noPropagationLoss: cData.nopropagationloss ?? false,
+                            rcs_type: cData.rcs?.type ?? 'isotropic',
+                            rcs_value: cData.rcs?.value,
+                            rcs_filename: cData.rcs?.filename,
+                            rcs_model: cData.model?.type ?? 'constant',
+                            rcs_k: cData.model?.k,
+                        };
+                    }
+
+                    return {
+                        id: uuidv4(),
+                        type: 'Platform',
+                        name: p.name,
+                        motionPath,
+                        rotation,
+                        component,
+                    };
+                });
+
+                state.selectedItemId = null;
             }),
+        // --- New Synchronization Actions ---
+
+        /** Pushes the current Zustand state to the C++ backend */
+        syncBackend: async () => {
+            const { globalParameters, pulses, timings, antennas, platforms } =
+                get();
+
+            const backendPlatforms = platforms.map((p) => {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const { component, motionPath, rotation, type, id, ...rest } =
+                    p;
+
+                const backendComponent =
+                    component.type !== 'none'
+                        ? // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                          {
+                              [component.type]: (({ type, ...c }) => c)(
+                                  component
+                              ),
+                          }
+                        : {};
+
+                const backendRotation: any = {};
+                if (rotation.type === 'fixed') {
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    const { type, ...r } = rotation;
+                    backendRotation.fixedrotation = {
+                        startazimuth: r.startAzimuth,
+                        startelevation: r.startElevation,
+                        azimuthrate: r.azimuthRate,
+                        elevationrate: r.elevationRate,
+                    };
+                } else {
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    const { type, ...r } = rotation;
+                    backendRotation.rotationpath = {
+                        interpolation: r.interpolation,
+                        rotationwaypoints: r.waypoints.map(
+                            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                            ({ id, ...wp }) => wp
+                        ),
+                    };
+                }
+
+                return {
+                    ...rest,
+                    motionpath: {
+                        interpolation: motionPath.interpolation,
+                        positionwaypoints: motionPath.waypoints.map(
+                            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                            ({ id, ...wp }) => wp
+                        ),
+                    },
+                    ...backendRotation,
+                    component: backendComponent,
+                };
+            });
+
+            const stripFrontendFields = (items: any[]) =>
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                items.map(({ id, type, ...rest }) => rest);
+
+            const gp_params = { ...globalParameters };
+            // Map names back to backend convention for sync
+            (gp_params as any).starttime = gp_params.start;
+            (gp_params as any).endtime = gp_params.end;
+            (gp_params as any).randomseed = gp_params.random_seed;
+            (gp_params as any).oversample = gp_params.oversample_ratio;
+
+            const scenarioJson = {
+                simulation: {
+                    name: globalParameters.simulation_name,
+                    parameters: gp_params,
+                    pulses: stripFrontendFields(pulses),
+                    timings: stripFrontendFields(timings),
+                    antennas: stripFrontendFields(antennas),
+                    platforms: backendPlatforms,
+                },
+            };
+
+            try {
+                await invoke('update_scenario_from_json', {
+                    json: JSON.stringify(scenarioJson),
+                });
+                console.log('Successfully synced state to backend.');
+            } catch (error) {
+                console.error('Failed to sync state to backend:', error);
+                throw error;
+            }
+        },
+
+        /** Fetches the state from the C++ backend and updates the Zustand store */
+        fetchFromBackend: async () => {
+            try {
+                const jsonState = await invoke<string>('get_scenario_as_json');
+                const scenarioData = JSON.parse(jsonState);
+                get().loadScenario(scenarioData);
+            } catch (error) {
+                console.error('Failed to fetch state from backend:', error);
+                throw error;
+            }
+        },
     }))
 );
 
