@@ -34,6 +34,8 @@
 #include "timing/prototype_timing.h"
 #include "timing/timing.h"
 
+// TODO: Add file path validation and error handling as needed.
+
 namespace math
 {
 	void to_json(nlohmann::json& j, const Vec3& v) { j = {{"x", v.x}, {"y", v.y}, {"z", v.z}}; }
@@ -356,6 +358,22 @@ namespace radar
 			rcs_json["filename"] = file->getFilename();
 		}
 		j["rcs"] = rcs_json;
+
+		// Serialize the fluctuation model if it exists.
+		if (const auto* model_base = t.getFluctuationModel())
+		{
+			nlohmann::json model_json;
+			if (const auto* chi_model = dynamic_cast<const RcsChiSquare*>(model_base))
+			{
+				model_json["type"] = "chisquare";
+				model_json["k"] = chi_model->getK();
+			}
+			else // Default to constant if it's not a recognized type (e.g., RcsConst)
+			{
+				model_json["type"] = "constant";
+			}
+			j["model"] = model_json;
+		}
 	}
 
 	void to_json(nlohmann::json& j, const Platform& p)
@@ -676,6 +694,21 @@ namespace serial
 						}
 						else { throw std::runtime_error("Unsupported target RCS type: " + rcs_type); }
 						world.add(std::move(target_obj));
+
+						// After creating the target, check for and apply the fluctuation model.
+						if (comp_json.contains("model"))
+						{
+							const auto& model_json = comp_json.at("model");
+							const auto model_type = model_json.at("type").get<std::string>();
+							if (model_type == "chisquare" || model_type == "gamma")
+							{
+								auto model = std::make_unique<radar::RcsChiSquare>(
+									world.getTargets().back()->getRngEngine(),
+									model_json.at("k").get<RealType>());
+								world.getTargets().back()->setFluctuationModel(std::move(model));
+							}
+							// "constant" is the default, so no action is needed if that's the type.
+						}
 					}
 					else if (comp_json_outer.contains("monostatic"))
 					{

@@ -742,15 +742,39 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                 const { component, motionPath, rotation, type, id, ...rest } =
                     p;
 
-                const backendComponent =
-                    component.type !== 'none'
-                        ? // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                          {
-                              [component.type]: (({ type, ...c }) => c)(
-                                  component
-                              ),
-                          }
-                        : {};
+                let backendComponent = {};
+                if (component.type !== 'none') {
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    const { type, ...c_rest } = component;
+
+                    // Special handling for Target to include the 'model'
+                    if (component.type === 'target') {
+                        backendComponent = {
+                            target: {
+                                name: component.name,
+                                rcs: {
+                                    type: component.rcs_type,
+                                    value: component.rcs_value,
+                                    filename: component.rcs_filename,
+                                },
+                                model: {
+                                    type: component.rcs_model,
+                                    // Only include 'k' if the model requires it
+                                    ...(component.rcs_model !== 'constant' && {
+                                        k: component.rcs_k,
+                                    }),
+                                },
+                            },
+                        };
+                    } else {
+                        // Generic handling for other components
+                        backendComponent = {
+                            [component.type]: (({ type, ...c }) => c)(
+                                component
+                            ),
+                        };
+                    }
+                }
 
                 const backendRotation: any = {};
                 if (rotation.type === 'fixed') {
