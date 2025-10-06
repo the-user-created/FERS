@@ -101,19 +101,20 @@ auto get_child_real_type = [](const XmlElement& element, const std::string& elem
 };
 
 /**
- * @brief Helper function to extract a boolean value from an element.
+ * @brief Helper function to extract a boolean value from an attribute.
  *
  * @param element The XmlElement to extract the value from.
- * @param elementName The name of the child element to extract the value from.
- * @param defaultVal The default value to return if the element is empty or cannot be parsed.
+ * @param attributeName The name of the attribute to extract the value from.
+ * @param defaultVal The default value to return if the attribute is empty or cannot be parsed.
  * @return The extracted boolean value or the default value.
  */
-auto get_child_bool = [](const XmlElement& element, const std::string& elementName, const bool defaultVal) -> bool
+auto get_attribute_bool = [](const XmlElement& element, const std::string& attributeName, const bool defaultVal) -> bool
 {
-	try { return XmlElement::getSafeAttribute(element, elementName) == "true"; }
+	try { return XmlElement::getSafeAttribute(element, attributeName) == "true"; }
 	catch (const XmlException&)
 	{
-		LOG(Level::WARNING, "Failed to get boolean value for element {}. Defaulting to {}.", elementName, defaultVal);
+		LOG(Level::WARNING, "Failed to get boolean value for attribute '{}'. Defaulting to {}.", attributeName,
+		    defaultVal);
 		return defaultVal;
 	}
 };
@@ -174,9 +175,9 @@ namespace
 		if (const XmlElement export_element = parameters.childElement("export", 0); export_element.isValid())
 		{
 			params::setExporters(
-				get_child_bool(export_element, "xml", params::exportXml()),
-				get_child_bool(export_element, "csv", params::exportCsv()),
-				get_child_bool(export_element, "binary", params::exportBinary())
+				get_attribute_bool(export_element, "xml", params::exportXml()),
+				get_attribute_bool(export_element, "csv", params::exportCsv()),
+				get_attribute_bool(export_element, "binary", params::exportBinary())
 				);
 		}
 
@@ -354,7 +355,7 @@ namespace
 		try { timing_obj->setRandomPhaseOffsetStdev(get_child_real_type(timing, "random_phase_offset_stdev")); }
 		catch (XmlException&) { LOG(Level::WARNING, "Clock section '{}' does not specify random phase offset.", name); }
 
-		if (get_child_bool(timing, "synconpulse", false)) { timing_obj->setSyncOnPulse(); }
+		if (get_attribute_bool(timing, "synconpulse", false)) { timing_obj->setSyncOnPulse(); }
 
 		world->add(std::move(timing_obj));
 	}
@@ -687,14 +688,14 @@ namespace
 		timing->initializeModel(proto);
 		receiver_obj->setTiming(timing);
 
-		if (get_child_bool(receiver, "nodirect", false))
+		if (get_attribute_bool(receiver, "nodirect", false))
 		{
 			receiver_obj->setFlag(Receiver::RecvFlag::FLAG_NODIRECT);
 			LOG(Level::DEBUG, "Ignoring direct signals for receiver '{}'",
 			    receiver_obj->getName().c_str());
 		}
 
-		if (get_child_bool(receiver, "nopropagationloss", false))
+		if (get_attribute_bool(receiver, "nopropagationloss", false))
 		{
 			receiver_obj->setFlag(Receiver::RecvFlag::FLAG_NOPROPLOSS);
 			LOG(Level::DEBUG, "Ignoring propagation losses for receiver '{}'",
@@ -934,7 +935,9 @@ namespace
 		LOG(Level::DEBUG, "{} XML file passed XSD validation.", didCombine ? "Combined" : "Main");
 	}
 
-	void processParsedDocument(const XmlDocument& doc, World* world, const fs::path& baseDir, std::mt19937& masterSeeder) {
+	void processParsedDocument(const XmlDocument& doc, World* world, const fs::path& baseDir,
+	                           std::mt19937& masterSeeder)
+	{
 		simulation_type = SimType::UNSET;
 
 		const XmlElement root = doc.getRootElement();
@@ -970,8 +973,9 @@ namespace
 namespace serial
 {
 	void parseSimulation(const std::string& filename, World* world, const bool validate,
-						 std::mt19937& masterSeeder)
+	                     std::mt19937& masterSeeder)
 	{
+		world->clear();
 		XmlDocument main_doc;
 		if (!main_doc.loadFile(filename))
 		{
@@ -988,15 +992,18 @@ namespace serial
 	}
 
 	void parseSimulationFromString(const std::string& xml_content, World* world, const bool validate,
-								   std::mt19937& masterSeeder)
+	                               std::mt19937& masterSeeder)
 	{
+		world->clear();
 		XmlDocument doc;
 		// Use the internal loadFromString method for libxml2
-		if (!doc.loadString(xml_content)) {
+		if (!doc.loadString(xml_content))
+		{
 			throw XmlException("Failed to parse XML from memory string.");
 		}
 
-		if (validate) {
+		if (validate)
+		{
 			// Note: <include> tags are not processed when loading from a string.
 			validateXml(false, doc);
 		}

@@ -169,6 +169,50 @@ const char* fers_get_scenario_as_json(fers_context_t* context)
 	}
 }
 
+int fers_update_scenario_from_json(fers_context_t* context, const char* scenario_json)
+{
+	last_error_message.clear();
+	if (!context || !scenario_json)
+	{
+		last_error_message = "Invalid arguments: context or scenario_json is NULL.";
+		LOG(logging::Level::ERROR, last_error_message);
+		return -1;
+	}
+
+	auto* ctx = reinterpret_cast<FersContext*>(context);
+	try
+	{
+		const nlohmann::json j = nlohmann::json::parse(scenario_json);
+		serial::json_to_world(j, *ctx->getWorld(), ctx->getMasterSeeder());
+
+		// Initialize the master seeder after parsing
+		if (params::params.random_seed)
+		{
+			LOG(logging::Level::INFO, "Using master seed: {}", *params::params.random_seed);
+			ctx->getMasterSeeder().seed(*params::params.random_seed);
+		}
+		else
+		{
+			const auto seed = std::random_device{}();
+			LOG(logging::Level::INFO, "No master seed provided. Using random_device seed: {}", seed);
+			ctx->getMasterSeeder().seed(seed);
+		}
+		return 0; // Success
+	}
+	catch (const nlohmann::json::exception& e)
+	{
+		// More specific error for JSON parsing
+		last_error_message = "JSON parsing/deserialization error: " + std::string(e.what());
+		LOG(logging::Level::ERROR, "API Error in {}: {}", "fers_update_scenario_from_json", last_error_message);
+		return 2; // JSON error
+	}
+	catch (const std::exception& e)
+	{
+		handle_api_exception(e, "fers_update_scenario_from_json");
+		return 1; // Generic error
+	}
+}
+
 const char* fers_get_last_error_message()
 {
 	if (last_error_message.empty())
