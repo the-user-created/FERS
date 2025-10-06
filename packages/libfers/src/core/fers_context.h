@@ -21,17 +21,15 @@
  * exposed by the C-FFI. It owns the core::World object and the master random
  * number generator for the simulation instance.
  */
-class FersContext {
+class FersContext
+{
 public:
 	/**
 	 * @brief Constructs a new simulation context, initializing an empty world.
 	 */
 	// NOLINTNEXTLINE(cert-msc51-cpp)
 	FersContext() :
-		_world(std::make_unique<core::World>())
-	{
-
-	}
+		_world(std::make_unique<core::World>()) {}
 
 	/**
 	 * @brief Retrieves a pointer to the simulation world.
@@ -53,5 +51,6 @@ public:
 
 private:
 	std::unique_ptr<core::World> _world;
+
 	std::mt19937 _master_seeder;
 };

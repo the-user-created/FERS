@@ -123,6 +123,16 @@ namespace core
 		[[nodiscard]] timing::PrototypeTiming* findTiming(const std::string& name);
 
 		/**
+		* @brief Retrieves the list of platforms.
+		*
+		* @return A const reference to a vector of unique pointers to Platform objects.
+		*/
+		[[nodiscard]] const std::vector<std::unique_ptr<radar::Platform>>& getPlatforms() const noexcept
+		{
+			return _platforms;
+		}
+
+		/**
 		* @brief Retrieves the list of radar targets.
 		*
 		* @return A const reference to a vector of unique pointers to Target objects.
@@ -150,6 +160,36 @@ namespace core
 		[[nodiscard]] const std::vector<std::unique_ptr<radar::Transmitter>>& getTransmitters() const noexcept
 		{
 			return _transmitters;
+		}
+
+		/**
+		 * @brief Retrieves the map of radar signals (pulses).
+		 * @return A const reference to the map of signal names to RadarSignal objects.
+		 */
+		[[nodiscard]] const std::unordered_map<std::string, std::unique_ptr<fers_signal::RadarSignal>>& getPulses()
+			const noexcept
+		{
+			return _pulses;
+		}
+
+		/**
+		 * @brief Retrieves the map of antennas.
+		 * @return A const reference to the map of antenna names to Antenna objects.
+		 */
+		[[nodiscard]] const std::unordered_map<std::string, std::unique_ptr<antenna::Antenna>>& getAntennas()
+			const noexcept
+		{
+			return _antennas;
+		}
+
+		/**
+		 * @brief Retrieves the map of timing prototypes.
+		 * @return A const reference to the map of timing names to PrototypeTiming objects.
+		 */
+		[[nodiscard]] const std::unordered_map<std::string, std::unique_ptr<timing::PrototypeTiming>>& getTimings()
+			const noexcept
+		{
+			return _timings;
 		}
 
 	private:

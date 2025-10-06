@@ -34,6 +34,18 @@ namespace fers_signal
 	class Signal
 	{
 	public:
+		virtual ~Signal() = default;
+
+		Signal() = default;
+
+		Signal(const Signal&) = delete;
+
+		Signal& operator=(const Signal&) = delete;
+
+		Signal(Signal&&) = default;
+
+		Signal& operator=(Signal&&) = default;
+
 		/**
 		 * @brief Clears the internal signal data.
 		 */
@@ -63,8 +75,8 @@ namespace fers_signal
 		 * @param fracWinDelay Fractional window delay to apply during rendering.
 		 * @return A vector of rendered complex signal data.
 		 */
-		std::vector<ComplexType> render(const std::vector<interp::InterpPoint>& points, unsigned& size,
-		                                double fracWinDelay) const;
+		virtual std::vector<ComplexType> render(const std::vector<interp::InterpPoint>& points, unsigned& size,
+		                                        double fracWinDelay) const;
 
 	private:
 		std::vector<ComplexType> _data; ///< The complex signal data.
@@ -166,6 +178,12 @@ namespace fers_signal
 		[[nodiscard]] RealType getLength() const noexcept { return _length; }
 
 		/**
+		 * @brief Gets the underlying signal object.
+		 * @return A const pointer to the Signal object.
+		 */
+		[[nodiscard]] const Signal* getSignal() const noexcept { return _signal.get(); }
+
+		/**
 		 * @brief Renders the radar signal.
 		 *
 		 * @param points A vector of interpolation points.
@@ -189,7 +207,7 @@ namespace fers_signal
 	public:
 		CwSignal() = default;
 
-		~CwSignal() = default;
+		~CwSignal() override = default;
 
 		CwSignal(const CwSignal&) noexcept = delete;
 
@@ -204,6 +222,6 @@ namespace fers_signal
 		 * @return An empty vector of complex signal data.
 		 */
 		std::vector<ComplexType> render(const std::vector<interp::InterpPoint>& points, unsigned& size,
-		                                RealType fracWinDelay) const;
+		                                RealType fracWinDelay) const override;
 	};
 }

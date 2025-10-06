@@ -178,6 +178,13 @@ namespace radar
 		*/
 		RealType getRcs(math::SVec3& /*inAngle*/, math::SVec3& /*outAngle*/, RealType /*time*/) const noexcept override;
 
+		/**
+		 * @brief Gets the constant RCS value (without fluctuation model applied).
+		 *
+		 * @return The constant RCS value.
+		 */
+		[[nodiscard]] RealType getConstRcs() const noexcept { return _rcs; }
+
 	private:
 		RealType _rcs; ///< The constant RCS value for the target.
 	};
