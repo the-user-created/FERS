@@ -795,6 +795,16 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
             const findTimingName = (id: string | null) =>
                 get().timings.find((t) => t.id === id)?.name;
 
+            // Helper to strip null/undefined values from an object
+            const cleanObject = (obj: any) => {
+                Object.keys(obj).forEach((key) => {
+                    if (obj[key] === null || obj[key] === undefined) {
+                        delete obj[key];
+                    }
+                });
+                return obj;
+            };
+
             const backendPlatforms = platforms.map((p) => {
                 const { component, motionPath, rotation, id, type, ...rest } =
                     p;
@@ -804,9 +814,9 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                     switch (component.type) {
                         case 'monostatic':
                             backendComponent = {
-                                monostatic: {
+                                monostatic: cleanObject({
                                     name: component.name,
-                                    type: component.radarType, // Map radarType -> type
+                                    type: component.radarType,
                                     window_skip: component.window_skip,
                                     window_length: component.window_length,
                                     prf: component.prf,
@@ -822,14 +832,14 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                                     nodirect: component.noDirectPaths,
                                     nopropagationloss:
                                         component.noPropagationLoss,
-                                },
+                                }),
                             };
                             break;
                         case 'transmitter':
                             backendComponent = {
                                 transmitter: {
                                     name: component.name,
-                                    type: component.radarType, // Map radarType -> type
+                                    type: component.radarType,
                                     prf: component.prf,
                                     antenna:
                                         findAntennaName(component.antennaId) ??
@@ -844,7 +854,7 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                             break;
                         case 'receiver':
                             backendComponent = {
-                                receiver: {
+                                receiver: cleanObject({
                                     name: component.name,
                                     window_skip: component.window_skip,
                                     window_length: component.window_length,
@@ -859,27 +869,27 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                                     nodirect: component.noDirectPaths,
                                     nopropagationloss:
                                         component.noPropagationLoss,
-                                },
+                                }),
                             };
                             break;
                         case 'target':
-                            backendComponent = {
-                                target: {
+                            {
+                                const targetObj: any = {
                                     name: component.name,
-                                    rcs: {
+                                    rcs: cleanObject({
                                         type: component.rcs_type,
                                         value: component.rcs_value,
                                         filename: component.rcs_filename,
-                                    },
-                                    model: {
+                                    }),
+                                };
+                                if (component.rcs_model !== 'constant') {
+                                    targetObj.model = {
                                         type: component.rcs_model,
-                                        ...(component.rcs_model !==
-                                            'constant' && {
-                                            k: component.rcs_k,
-                                        }),
-                                    },
-                                },
-                            };
+                                        k: component.rcs_k,
+                                    };
+                                }
+                                backendComponent = { target: targetObj };
+                            }
                             break;
                     }
                 }
@@ -888,6 +898,7 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                 if (rotation.type === 'fixed') {
                     const { type, ...r } = rotation;
                     backendRotation.fixedrotation = {
+                        interpolation: 'constant',
                         startazimuth: r.startAzimuth,
                         startelevation: r.startElevation,
                         azimuthrate: r.azimuthRate,
@@ -916,27 +927,38 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                 };
             });
 
-            const backendPulses = pulses.map((p) => ({
-                name: p.name,
-                type: p.pulseType === 'cw' ? 'continuous' : 'file',
-                power: p.power,
-                carrier: p.carrier,
-                filename: p.filename,
-            }));
+            const backendPulses = pulses.map((p) =>
+                cleanObject({
+                    name: p.name,
+                    type: p.pulseType === 'cw' ? 'continuous' : 'file',
+                    power: p.power,
+                    carrier: p.carrier,
+                    filename: p.filename, // TODO: need to be dependent on pulseType
+                })
+            );
 
-            const backendTimings = timings.map((t) => ({
-                name: t.name,
-                frequency: t.frequency,
-                synconpulse: false, // Not currently editable in UI
-                freq_offset: t.freqOffset,
-                random_freq_offset_stdev: t.randomFreqOffsetStdev,
-                phase_offset: t.phaseOffset,
-                random_phase_offset_stdev: t.randomPhaseOffsetStdev,
-                noise_entries: t.noiseEntries.map(({ id, ...rest }) => rest),
-            }));
+            const backendTimings = timings.map((t) => {
+                const timingObj = cleanObject({
+                    name: t.name,
+                    frequency: t.frequency,
+                    synconpulse: false,
+                    freq_offset: t.freqOffset,
+                    random_freq_offset_stdev: t.randomFreqOffsetStdev,
+                    phase_offset: t.phaseOffset,
+                    random_phase_offset_stdev: t.randomPhaseOffsetStdev,
+                    noise_entries: t.noiseEntries.map(({ id, ...rest }) =>
+                        cleanObject(rest)
+                    ),
+                });
+                // Remove noise_entries array if it's empty
+                if (timingObj.noise_entries?.length === 0) {
+                    delete timingObj.noise_entries;
+                }
+                return timingObj;
+            });
 
-            const backendAntennas = antennas.map(
-                ({ id, type, ...rest }) => rest
+            const backendAntennas = antennas.map(({ id, type, ...rest }) =>
+                cleanObject(rest)
             );
 
             const gp_params: any = { ...globalParameters };
@@ -955,11 +977,12 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
             delete gp_params.random_seed;
             delete gp_params.oversample_ratio;
             delete gp_params.coordinateSystem;
+            delete gp_params.simulation_name;
 
             const scenarioJson = {
                 simulation: {
                     name: globalParameters.simulation_name,
-                    parameters: gp_params,
+                    parameters: cleanObject(gp_params),
                     pulses: backendPulses,
                     timings: backendTimings,
                     antennas: backendAntennas,
@@ -968,10 +991,14 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
             };
 
             try {
+                const jsonPayload = JSON.stringify(scenarioJson);
                 await invoke('update_scenario_from_json', {
-                    json: JSON.stringify(scenarioJson),
+                    json: jsonPayload,
                 });
-                console.log('Successfully synced state to backend.');
+                console.log(
+                    'Successfully synced state to backend:',
+                    jsonPayload
+                );
             } catch (error) {
                 console.error('Failed to sync state to backend:', error);
                 throw error;
