@@ -87,9 +87,7 @@
         <!ELEMENT antenna (alpha?,beta?,gamma?,diameter?,azscale?,elscale?,efficiency?)>
         <!ATTLIST antenna name CDATA #REQUIRED
                 pattern CDATA #REQUIRED
-                filename CDATA #IMPLIED
-                module CDATA #IMPLIED
-                function CDATA #IMPLIED>
+                filename CDATA #IMPLIED>
 
         <!-- Parameters of antenna model -->
         <!-- Element for beta -->

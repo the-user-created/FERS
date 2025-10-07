@@ -20,6 +20,16 @@ export interface GlobalParameters {
     random_seed: number | null;
     adc_bits: number;
     oversample_ratio: number;
+    origin: {
+        latitude: number;
+        longitude: number;
+        altitude: number;
+    };
+    coordinateSystem: {
+        frame: 'ENU' | 'UTM' | 'ECEF';
+        zone?: number;
+        hemisphere?: 'N' | 'S';
+    };
     export: {
         xml: boolean;
         csv: boolean;
@@ -171,6 +181,9 @@ export interface Platform {
 }
 // --- ZUSTAND STORE DEFINITION ---
 
+/** Extract the Target component type from the union for safer access */
+export type TargetComponent = Extract<PlatformComponent, { type: 'target' }>;
+
 /** The data structure that is imported from/exported to XML */
 export type ScenarioData = {
     globalParameters: GlobalParameters;
@@ -215,6 +228,10 @@ type ScenarioActions = {
         platformId: string,
         componentType: PlatformComponent['type']
     ) => void;
+    setPlatformRcsModel: (
+        platformId: string,
+        newModel: TargetComponent['rcs_model']
+    ) => void;
     loadScenario: (backendData: any) => void;
     // New actions for backend synchronization
     syncBackend: () => Promise<void>;
@@ -234,6 +251,14 @@ const defaultGlobalParameters: GlobalParameters = {
     random_seed: null,
     adc_bits: 12,
     oversample_ratio: 1,
+    origin: {
+        latitude: -33.957652, // Default: UCT, South Africa
+        longitude: 18.4611991,
+        altitude: 111.01,
+    },
+    coordinateSystem: {
+        frame: 'ENU',
+    },
     export: {
         xml: false,
         csv: false,
@@ -599,6 +624,22 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                 }
             }),
 
+        setPlatformRcsModel: (platformId, newModel) =>
+            set((state) => {
+                const platform = state.platforms.find(
+                    (p) => p.id === platformId
+                );
+                if (platform?.component.type === 'target') {
+                    platform.component.rcs_model = newModel;
+                    if (newModel === 'chisquare' || newModel === 'gamma') {
+                        // Initialize k if it's not already a valid number
+                        if (typeof platform.component.rcs_k !== 'number') {
+                            platform.component.rcs_k = 1.0;
+                        }
+                    }
+                }
+            }),
+
         loadScenario: (backendData) =>
             set((state) => {
                 const data = backendData.simulation || backendData;
@@ -618,6 +659,16 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                     random_seed: params.randomseed ?? null,
                     adc_bits: params.adc_bits ?? 12,
                     oversample_ratio: params.oversample ?? 1,
+                    origin: {
+                        latitude: params.origin?.latitude ?? -33.957652,
+                        longitude: params.origin?.longitude ?? 18.4611991,
+                        altitude: params.origin?.altitude ?? 111.01,
+                    },
+                    coordinateSystem: {
+                        frame: params.coordinatesystem?.frame ?? 'ENU',
+                        zone: params.coordinatesystem?.zone,
+                        hemisphere: params.coordinatesystem?.hemisphere,
+                    },
                     export: {
                         xml: params.export?.xml ?? false,
                         csv: params.export?.csv ?? false,
@@ -730,55 +781,111 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
 
                 state.selectedItemId = null;
             }),
-        // --- New Synchronization Actions ---
 
         /** Pushes the current Zustand state to the C++ backend */
         syncBackend: async () => {
             const { globalParameters, pulses, timings, antennas, platforms } =
                 get();
 
+            // Helper functions to map frontend asset IDs back to names for the backend
+            const findAntennaName = (id: string | null) =>
+                get().antennas.find((a) => a.id === id)?.name;
+            const findPulseName = (id: string | null) =>
+                get().pulses.find((p) => p.id === id)?.name;
+            const findTimingName = (id: string | null) =>
+                get().timings.find((t) => t.id === id)?.name;
+
             const backendPlatforms = platforms.map((p) => {
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                const { component, motionPath, rotation, type, id, ...rest } =
+                const { component, motionPath, rotation, id, type, ...rest } =
                     p;
 
                 let backendComponent = {};
                 if (component.type !== 'none') {
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    const { type, ...c_rest } = component;
-
-                    // Special handling for Target to include the 'model'
-                    if (component.type === 'target') {
-                        backendComponent = {
-                            target: {
-                                name: component.name,
-                                rcs: {
-                                    type: component.rcs_type,
-                                    value: component.rcs_value,
-                                    filename: component.rcs_filename,
+                    switch (component.type) {
+                        case 'monostatic':
+                            backendComponent = {
+                                monostatic: {
+                                    name: component.name,
+                                    type: component.radarType, // Map radarType -> type
+                                    window_skip: component.window_skip,
+                                    window_length: component.window_length,
+                                    prf: component.prf,
+                                    antenna:
+                                        findAntennaName(component.antennaId) ??
+                                        '',
+                                    pulse:
+                                        findPulseName(component.pulseId) ?? '',
+                                    timing:
+                                        findTimingName(component.timingId) ??
+                                        '',
+                                    noise_temp: component.noiseTemperature,
+                                    nodirect: component.noDirectPaths,
+                                    nopropagationloss:
+                                        component.noPropagationLoss,
                                 },
-                                model: {
-                                    type: component.rcs_model,
-                                    // Only include 'k' if the model requires it
-                                    ...(component.rcs_model !== 'constant' && {
-                                        k: component.rcs_k,
-                                    }),
+                            };
+                            break;
+                        case 'transmitter':
+                            backendComponent = {
+                                transmitter: {
+                                    name: component.name,
+                                    type: component.radarType, // Map radarType -> type
+                                    prf: component.prf,
+                                    antenna:
+                                        findAntennaName(component.antennaId) ??
+                                        '',
+                                    pulse:
+                                        findPulseName(component.pulseId) ?? '',
+                                    timing:
+                                        findTimingName(component.timingId) ??
+                                        '',
                                 },
-                            },
-                        };
-                    } else {
-                        // Generic handling for other components
-                        backendComponent = {
-                            [component.type]: (({ type, ...c }) => c)(
-                                component
-                            ),
-                        };
+                            };
+                            break;
+                        case 'receiver':
+                            backendComponent = {
+                                receiver: {
+                                    name: component.name,
+                                    window_skip: component.window_skip,
+                                    window_length: component.window_length,
+                                    prf: component.prf,
+                                    antenna:
+                                        findAntennaName(component.antennaId) ??
+                                        '',
+                                    timing:
+                                        findTimingName(component.timingId) ??
+                                        '',
+                                    noise_temp: component.noiseTemperature,
+                                    nodirect: component.noDirectPaths,
+                                    nopropagationloss:
+                                        component.noPropagationLoss,
+                                },
+                            };
+                            break;
+                        case 'target':
+                            backendComponent = {
+                                target: {
+                                    name: component.name,
+                                    rcs: {
+                                        type: component.rcs_type,
+                                        value: component.rcs_value,
+                                        filename: component.rcs_filename,
+                                    },
+                                    model: {
+                                        type: component.rcs_model,
+                                        ...(component.rcs_model !==
+                                            'constant' && {
+                                            k: component.rcs_k,
+                                        }),
+                                    },
+                                },
+                            };
+                            break;
                     }
                 }
 
                 const backendRotation: any = {};
                 if (rotation.type === 'fixed') {
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     const { type, ...r } = rotation;
                     backendRotation.fixedrotation = {
                         startazimuth: r.startAzimuth,
@@ -787,12 +894,10 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                         elevationrate: r.elevationRate,
                     };
                 } else {
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     const { type, ...r } = rotation;
                     backendRotation.rotationpath = {
                         interpolation: r.interpolation,
                         rotationwaypoints: r.waypoints.map(
-                            // eslint-disable-next-line @typescript-eslint/no-unused-vars
                             ({ id, ...wp }) => wp
                         ),
                     };
@@ -803,7 +908,6 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                     motionpath: {
                         interpolation: motionPath.interpolation,
                         positionwaypoints: motionPath.waypoints.map(
-                            // eslint-disable-next-line @typescript-eslint/no-unused-vars
                             ({ id, ...wp }) => wp
                         ),
                     },
@@ -812,24 +916,53 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                 };
             });
 
-            const stripFrontendFields = (items: any[]) =>
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                items.map(({ id, type, ...rest }) => rest);
+            const backendPulses = pulses.map((p) => ({
+                name: p.name,
+                type: p.pulseType === 'cw' ? 'continuous' : 'file',
+                power: p.power,
+                carrier: p.carrier,
+                filename: p.filename,
+            }));
 
-            const gp_params = { ...globalParameters };
+            const backendTimings = timings.map((t) => ({
+                name: t.name,
+                frequency: t.frequency,
+                synconpulse: false, // Not currently editable in UI
+                freq_offset: t.freqOffset,
+                random_freq_offset_stdev: t.randomFreqOffsetStdev,
+                phase_offset: t.phaseOffset,
+                random_phase_offset_stdev: t.randomPhaseOffsetStdev,
+                noise_entries: t.noiseEntries.map(({ id, ...rest }) => rest),
+            }));
+
+            const backendAntennas = antennas.map(
+                ({ id, type, ...rest }) => rest
+            );
+
+            const gp_params: any = { ...globalParameters };
             // Map names back to backend convention for sync
-            (gp_params as any).starttime = gp_params.start;
-            (gp_params as any).endtime = gp_params.end;
-            (gp_params as any).randomseed = gp_params.random_seed;
-            (gp_params as any).oversample = gp_params.oversample_ratio;
+            gp_params.starttime = gp_params.start;
+            gp_params.endtime = gp_params.end;
+            gp_params.randomseed = gp_params.random_seed;
+            gp_params.oversample = gp_params.oversample_ratio;
+            gp_params.coordinatesystem = gp_params.coordinateSystem;
+
+            // Remove frontend-specific fields before sending
+            delete gp_params.id;
+            delete gp_params.type;
+            delete gp_params.start;
+            delete gp_params.end;
+            delete gp_params.random_seed;
+            delete gp_params.oversample_ratio;
+            delete gp_params.coordinateSystem;
 
             const scenarioJson = {
                 simulation: {
                     name: globalParameters.simulation_name,
                     parameters: gp_params,
-                    pulses: stripFrontendFields(pulses),
-                    timings: stripFrontendFields(timings),
-                    antennas: stripFrontendFields(antennas),
+                    pulses: backendPulses,
+                    timings: backendTimings,
+                    antennas: backendAntennas,
                     platforms: backendPlatforms,
                 },
             };
