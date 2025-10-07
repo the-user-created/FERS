@@ -7,11 +7,14 @@ import {
     FormControl,
     FormControlLabel,
     FormGroup,
+    InputLabel,
+    MenuItem,
+    Select,
     TextField,
     Typography,
 } from '@mui/material';
 import { useScenarioStore, GlobalParameters } from '@/stores/scenarioStore';
-import { NumberField } from './InspectorControls';
+import { NumberField, Section } from './InspectorControls';
 
 export function GlobalParametersInspector({
     item,
@@ -74,6 +77,69 @@ export function GlobalParametersInspector({
                 value={item.oversample_ratio}
                 onChange={(v) => handleChange('oversample_ratio', v)}
             />
+
+            <Section title="Georeference">
+                <NumberField
+                    label="Origin Latitude (deg)"
+                    value={item.origin.latitude}
+                    onChange={(v) => handleChange('origin.latitude', v)}
+                />
+                <NumberField
+                    label="Origin Longitude (deg)"
+                    value={item.origin.longitude}
+                    onChange={(v) => handleChange('origin.longitude', v)}
+                />
+                <NumberField
+                    label="Origin Altitude (m)"
+                    value={item.origin.altitude}
+                    onChange={(v) => handleChange('origin.altitude', v)}
+                />
+                <FormControl fullWidth size="small">
+                    <InputLabel>Coordinate System</InputLabel>
+                    <Select
+                        label="Coordinate System"
+                        value={item.coordinateSystem.frame}
+                        onChange={(e) =>
+                            handleChange(
+                                'coordinateSystem.frame',
+                                e.target.value
+                            )
+                        }
+                    >
+                        <MenuItem value="ENU">ENU (East-North-Up)</MenuItem>
+                        <MenuItem value="UTM">UTM</MenuItem>
+                        <MenuItem value="ECEF">ECEF</MenuItem>
+                    </Select>
+                </FormControl>
+                {item.coordinateSystem.frame === 'UTM' && (
+                    <>
+                        <NumberField
+                            label="UTM Zone"
+                            value={item.coordinateSystem.zone ?? null}
+                            onChange={(v) =>
+                                handleChange('coordinateSystem.zone', v)
+                            }
+                        />
+                        <FormControl fullWidth size="small">
+                            <InputLabel>UTM Hemisphere</InputLabel>
+                            <Select
+                                label="UTM Hemisphere"
+                                value={item.coordinateSystem.hemisphere ?? 'N'}
+                                onChange={(e) =>
+                                    handleChange(
+                                        'coordinateSystem.hemisphere',
+                                        e.target.value
+                                    )
+                                }
+                            >
+                                <MenuItem value="N">North</MenuItem>
+                                <MenuItem value="S">South</MenuItem>
+                            </Select>
+                        </FormControl>
+                    </>
+                )}
+            </Section>
+
             <FormControl component="fieldset">
                 <Typography variant="body2">Export Options</Typography>
                 <FormGroup row>

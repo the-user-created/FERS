@@ -11,7 +11,11 @@ import {
     TextField,
     Typography,
 } from '@mui/material';
-import { useScenarioStore, PlatformComponent } from '@/stores/scenarioStore';
+import {
+    useScenarioStore,
+    PlatformComponent,
+    TargetComponent,
+} from '@/stores/scenarioStore';
 import { NumberField, FileInput } from './InspectorControls';
 
 export function PlatformComponentInspector({
@@ -21,7 +25,7 @@ export function PlatformComponentInspector({
     component: PlatformComponent;
     platformId: string;
 }) {
-    const { updateItem, pulses, timings, antennas } =
+    const { updateItem, pulses, timings, antennas, setPlatformRcsModel } =
         useScenarioStore.getState();
     const handleChange = (path: string, value: unknown) =>
         updateItem(platformId, `component.${path}`, value);
@@ -291,7 +295,11 @@ export function PlatformComponentInspector({
                             label="RCS Model"
                             value={component.rcs_model}
                             onChange={(e) =>
-                                handleChange('rcs_model', e.target.value)
+                                setPlatformRcsModel(
+                                    platformId,
+                                    e.target
+                                        .value as TargetComponent['rcs_model']
+                                )
                             }
                         >
                             <MenuItem value="constant">Constant</MenuItem>
