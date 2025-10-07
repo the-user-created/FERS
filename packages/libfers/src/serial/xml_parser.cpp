@@ -682,7 +682,7 @@ namespace
 		receiver_obj->setWindowProperties(window_length, prf, window_skip);
 
 		const std::string timing_name = XmlElement::getSafeAttribute(receiver, "timing");
-		const auto timing = std::make_shared<Timing>(name, masterSeeder());
+		const auto timing = std::make_shared<Timing>(timing_name, masterSeeder());
 
 		const PrototypeTiming* proto = world->findTiming(timing_name);
 		timing->initializeModel(proto);
