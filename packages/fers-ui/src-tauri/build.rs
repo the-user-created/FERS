@@ -82,8 +82,16 @@ fn main() {
     // Path to the C-style API header file that defines the FFI boundary.
     let header_path = manifest_dir.join("../../libfers/include/libfers/api.h");
 
-    // Instruct Cargo to re-run this build script if the header file changes.
-    println!("cargo:rerun-if-changed={}", header_path.display());
+    let libfers_path = libfers_lib_dir.join("libfers.a");
+    if libfers_path.exists() {
+        println!("cargo:rerun-if-changed={}", libfers_path.display());
+    }
+
+    // Also watch the GeographicLib library.
+    let geographiclib_path = geographiclib_lib_dir.join("libGeographicLib.so");
+    if geographiclib_path.exists() {
+        println!("cargo:rerun-if-changed={}", geographiclib_path.display());
+    }
 
     // Generate Rust FFI bindings using `bindgen`.
     // - Only functions matching the `fers_*` pattern are exposed.
