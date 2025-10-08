@@ -17,3 +17,23 @@
 export function assertNever(x: never): never {
     throw new Error(`Unexpected object: ${JSON.stringify(x)}`);
 }
+
+/**
+ * Creates a new object by omitting specified keys from an existing object.
+ * This is a type-safe alternative to using destructuring with rest syntax
+ * when trying to avoid `no-unused-vars` linting errors.
+ *
+ * @param obj The source object.
+ * @param keys The keys to omit from the new object.
+ * @returns A new object without the specified keys.
+ */
+export function omit<T extends Record<string, unknown>, K extends keyof T>(
+    obj: T,
+    ...keys: K[]
+): Omit<T, K> {
+    const ret = { ...obj };
+    for (const key of keys) {
+        delete ret[key];
+    }
+    return ret;
+}
