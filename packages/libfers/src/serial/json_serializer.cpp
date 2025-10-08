@@ -8,9 +8,9 @@
 * This file leverages the `nlohmann/json` library's support for automatic
 * serialization via `to_json` and `from_json` free functions. By placing these
 * functions within the namespaces of the objects they serialize, we enable
-* Argument-Dependent Lookup (ADL), allowing the library to automatically find
-* and use these functions for conversion. This approach keeps the serialization
-* logic decoupled from the core object definitions.
+* Argument-Dependent Lookup (ADL). This design choice allows the library to
+* automatically find the correct conversion functions, keeping the serialization
+* logic decoupled from the core object definitions and improving modularity.
 */
 
 #include "serial/json_serializer.h"
@@ -64,7 +64,8 @@ namespace math
 	{
 		// The internal engine uses mathematical angles (radians, CCW from East),
 		// but the UI and XML format use compass degrees (CW from North). This
-		// conversion is performed at the serialization boundary for consistency.
+		// conversion is performed at the serialization boundary to provide a
+		// consistent, user-friendly format to the frontend.
 		const RealType az_deg = std::fmod(90.0 - rc.azimuth * 180.0 / PI + 360.0, 360.0);
 		const RealType el_deg = rc.elevation * 180.0 / PI;
 		j = {{"time", rc.t}, {"azimuth", az_deg}, {"elevation", el_deg}};
@@ -76,8 +77,9 @@ namespace math
 		const RealType az_deg = j.at("azimuth").get<RealType>();
 		const RealType el_deg = j.at("elevation").get<RealType>();
 
-		// Convert from compass degrees (from JSON/UI) to the internal engine's
-		// mathematical angle representation (radians, CCW from East).
+		// Convert from compass degrees (from JSON/UI) back to the internal engine's
+		// mathematical angle representation (radians, CCW from East). This keeps
+		// all internal physics calculations consistent.
 		rc.azimuth = (90.0 - az_deg) * (PI / 180.0);
 		rc.elevation = el_deg * (PI / 180.0);
 	}
@@ -113,6 +115,9 @@ namespace math
 	void to_json(nlohmann::json& j, const RotationPath& p)
 	{
 		j["interpolation"] = p.getType();
+		// This logic exists to map the two different rotation definitions from the
+		// XML schema (<fixedrotation> and <rotationpath>) into a unified JSON
+		// structure that the frontend can more easily handle.
 		if (p.getType() == RotationPath::InterpType::INTERP_CONSTANT)
 		{
 			// A constant-rate rotation path corresponds to the <fixedrotation> XML element.
@@ -478,16 +483,15 @@ namespace serial
 			nlohmann::json plat_json = *p;
 
 			bool component_set = false;
-			// Find the component associated with this platform. The logic must check for
-			// monostatic pairs (a transmitter with an attached receiver) first to ensure
-			// they are serialized as a single 'monostatic' component.
+			// Find the component for this platform. This logic must handle the special
+			// case of a monostatic radar. In the C++ model, this is a transmitter with
+			// an attached receiver.
 			for (const auto& t : world.getTransmitters())
 			{
 				if (t->getPlatform() == p.get())
 				{
 					if (t->getAttached() != nullptr)
 					{
-						// This is a monostatic pair. Serialize it as a single component.
 						nlohmann::json monostatic_comp;
 						monostatic_comp["name"] = t->getName();
 						monostatic_comp["type"] = t->getPulsed() ? "pulsed" : "cw";
@@ -551,12 +555,17 @@ namespace serial
 
 	void json_to_world(const nlohmann::json& j, core::World& world, std::mt19937& masterSeeder)
 	{
+		// 1. Clear the existing world state. This function always performs a full
+		//    replacement to ensure the C++ state is a perfect mirror of the UI state.
 		world.clear();
 
 		const auto& sim = j.at("simulation");
 
 		auto new_params = sim.at("parameters").get<params::Parameters>();
 
+		// If a random seed is present in the incoming JSON, it is used to re-seed
+		// the master generator. This is crucial for allowing the UI to control
+		// simulation reproducibility.
 		if (sim.at("parameters").contains("randomseed"))
 		{
 			params::params.random_seed = new_params.random_seed;
@@ -572,8 +581,9 @@ namespace serial
 
 		params::params.simulation_name = sim.value("name", "");
 
-		// 2. Restore assets (Pulses, Antennas, Timings). These must be created first
-		//    as platforms will reference them by name.
+		// 2. Restore assets (Pulses, Antennas, Timings). This order is critical
+		//    because platforms, which are restored next, will reference these
+		//    assets by name. The assets must exist before they can be linked.
 		if (sim.contains("pulses"))
 		{
 			auto pulses = sim.at("pulses").get<std::vector<std::unique_ptr<fers_signal::RadarSignal>>>();
@@ -620,6 +630,8 @@ namespace serial
 				}
 				else if (plat_json.contains("fixedrotation"))
 				{
+					// This logic reconstructs a constant-rate rotation path from the
+					// JSON representation that corresponds to the <fixedrotation> XML element.
 					auto rot_path = std::make_unique<math::RotationPath>();
 					const auto& fixed_json = plat_json.at("fixedrotation");
 					const RealType start_az_deg = fixed_json.at("startazimuth").get<RealType>();
@@ -723,6 +735,9 @@ namespace serial
 					}
 					else if (comp_json_outer.contains("monostatic"))
 					{
+						// This block reconstructs the internal C++ representation of a
+						// monostatic radar (a linked Transmitter and Receiver) from the
+						// single 'monostatic' component in the JSON.
 						const auto& comp_json = comp_json_outer.at("monostatic");
 
 						// Transmitter part

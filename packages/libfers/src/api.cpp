@@ -88,6 +88,10 @@ int fers_load_scenario_from_xml_file(fers_context_t* context, const char* xml_fi
 	{
 		serial::parseSimulation(xml_filepath, ctx->getWorld(), static_cast<bool>(validate), ctx->getMasterSeeder());
 
+		// After parsing, seed the master random number generator. This is done
+		// to ensure simulation reproducibility. If the scenario specifies a seed,
+		// it is used; otherwise, a non-deterministic seed is generated so that
+		// subsequent runs are unique by default.
 		if (params::params.random_seed)
 		{
 			LOG(logging::Level::INFO, "Using master seed from scenario file: {}", *params::params.random_seed);
@@ -127,6 +131,9 @@ int fers_load_scenario_from_xml_string(fers_context_t* context, const char* xml_
 			 ctx->getMasterSeeder()
 				);
 
+		// After parsing, seed the master random number generator. This ensures
+		// that if the scenario provides a seed, the simulation will be
+		// reproducible. If not, a random seed is used to ensure unique runs.
 		if (params::params.random_seed)
 		{
 			LOG(logging::Level::INFO, "Using master seed from scenario string: {}", *params::params.random_seed);
@@ -164,6 +171,9 @@ char* fers_get_scenario_as_json(fers_context_t* context)
 	{
 		const nlohmann::json j = serial::world_to_json(*ctx->getWorld());
 		const std::string json_str = j.dump(2);
+		// A heap-allocated copy of the string is returned. This is necessary
+		// to transfer ownership of the memory across the FFI boundary to a
+		// client that will free it using `fers_free_string`.
 		return strdup(json_str.c_str());
 	}
 	catch (const std::exception& e)
@@ -188,6 +198,9 @@ char* fers_get_scenario_as_xml(fers_context_t* context)
 	{
 		const std::string xml_str = serial::world_to_xml_string(*ctx->getWorld());
 		if (xml_str.empty()) { throw std::runtime_error("XML serialization resulted in an empty string."); }
+		// `strdup` is used to create a heap-allocated string that can be safely
+		// passed across the FFI boundary. The client is responsible for freeing
+		// this memory with `fers_free_string`.
 		return strdup(xml_str.c_str());
 	}
 	catch (const std::exception& e)
@@ -217,7 +230,9 @@ int fers_update_scenario_from_json(fers_context_t* context, const char* scenario
 	}
 	catch (const nlohmann::json::exception& e)
 	{
-		// Provide a more specific error for JSON parsing issues.
+		// A specific catch block for JSON errors is used to provide more
+		// detailed feedback to the client (e.g., the UI), which can help
+		// developers diagnose schema or data format issues more easily.
 		last_error_message = "JSON parsing/deserialization error: " + std::string(e.what());
 		LOG(logging::Level::ERROR, "API Error in {}: {}", "fers_update_scenario_from_json", last_error_message);
 		return 2; // JSON error
@@ -259,6 +274,9 @@ int fers_run_simulation(fers_context_t* context, void* user_data)
 	{
 		pool::ThreadPool pool(params::renderThreads());
 
+		// The simulation loop is chosen based on the scenario configuration.
+		// Continuous Wave (CW) and Pulsed simulations require fundamentally
+		// different processing models, so we dispatch to the appropriate one.
 		if (params::isCwSimulation()) { core::runThreadedCwSim(ctx->getWorld(), pool); }
 		else { core::runThreadedSim(ctx->getWorld(), pool); }
 
