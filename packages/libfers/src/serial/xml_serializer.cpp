@@ -42,11 +42,29 @@ namespace
 	}
 
 	template <typename T>
-	void addChildWithNumber(const XmlElement& parent, const std::string& name, T value)
+	void addChildWithNumber(const XmlElement& parent, const std::string& name,
+	                        T value)
 	{
-		std::stringstream ss;
-		ss << std::fixed << std::setprecision(10) << value;
-		addChildWithText(parent, name, ss.str());
+		if constexpr (std::is_floating_point_v<T>)
+		{
+			std::array<char, 64> buffer{};
+			if (auto [ptr, ec] = std::to_chars(buffer.data(), buffer.data() + buffer.size(), value); ec == std::errc())
+			{
+				addChildWithText(parent, name, std::string(buffer.data(), ptr - buffer.data()));
+			}
+			else
+			{
+				// Fallback for the rare case that std::to_chars fails.
+				std::stringstream ss;
+				ss << std::setprecision(std::numeric_limits<T>::max_digits10) << value;
+				addChildWithText(parent, name, ss.str());
+			}
+		}
+		else
+		{
+			// For integer types, std::to_string is sufficient and clear.
+			addChildWithText(parent, name, std::to_string(value));
+		}
 	}
 
 	void setAttributeFromBool(XmlElement& element, const std::string& name, const bool value)
