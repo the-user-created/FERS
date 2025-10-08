@@ -16,11 +16,13 @@ import {
 import { useScenarioStore, GlobalParameters } from '@/stores/scenarioStore';
 import { NumberField, Section } from './InspectorControls';
 
+interface GlobalParametersInspectorProps {
+    item: GlobalParameters;
+}
+
 export function GlobalParametersInspector({
     item,
-}: {
-    item: GlobalParameters;
-}) {
+}: GlobalParametersInspectorProps) {
     const { updateItem } = useScenarioStore.getState();
     const handleChange = (path: string, value: unknown) =>
         updateItem(item.id, path, value);
