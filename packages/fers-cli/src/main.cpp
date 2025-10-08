@@ -75,7 +75,7 @@ int main(const int argc, char* argv[])
 	    config.log_file.value_or("None"));
 
 	// Create a simulation context using the C-API
-	fers_context* context = fers_create_context();
+	fers_context_t* context = fers_context_create();
 	if (!context)
 	{
 		LOG(Level::FATAL, "Failed to create FERS simulation context.");
@@ -87,7 +87,7 @@ int main(const int argc, char* argv[])
 	if (fers_load_scenario_from_xml_file(context, config.script_file.c_str(), config.validate) != 0)
 	{
 		LOG(Level::FATAL, "Failed to load scenario. Check logs for parsing errors.");
-		fers_destroy_context(context);
+		fers_context_destroy(context);
 		return 1;
 	}
 
@@ -107,7 +107,7 @@ int main(const int argc, char* argv[])
 			LOG(Level::FATAL, "Failed to generate KML file.");
 		}
 
-		fers_destroy_context(context);
+		fers_context_destroy(context);
 		return 0; // Exit after generating KML
 	}
 
@@ -122,12 +122,12 @@ int main(const int argc, char* argv[])
 	if (fers_run_simulation(context, nullptr) != 0)
 	{
 		LOG(Level::FATAL, "Simulation run failed.");
-		fers_destroy_context(context);
+		fers_context_destroy(context);
 		return 1;
 	}
 	LOG(Level::INFO, "Simulation completed successfully.");
 
-	fers_destroy_context(context);
+	fers_context_destroy(context);
 
 	return 0;
 }

@@ -43,19 +43,41 @@ export const NumberField = ({
     label: string;
     value: number | null;
     onChange: (val: number | null) => void;
-}) => (
-    <TextField
-        label={label}
-        type="number"
-        variant="outlined"
-        size="small"
-        fullWidth
-        value={value ?? ''}
-        onChange={(e) =>
-            onChange(e.target.value === '' ? null : parseFloat(e.target.value))
+}) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const strValue = e.target.value;
+
+        // If the field is cleared, represent it as null.
+        if (strValue === '') {
+            onChange(null);
+            return;
         }
-    />
-);
+
+        const numValue = parseFloat(strValue);
+
+        // Only update the parent state if the parsed value is a valid number.
+        // This prevents NaN from being stored and allows the user to type
+        // intermediate invalid states (e.g., "1.2.3", "-") without
+        // corrupting the application state.
+        if (!isNaN(numValue)) {
+            onChange(numValue);
+        }
+    };
+
+    return (
+        <TextField
+            label={label}
+            type="number"
+            variant="outlined"
+            size="small"
+            fullWidth
+            value={value ?? ''}
+            onChange={handleChange}
+            // Allow floating point numbers in the number input's spinners.
+            inputProps={{ step: 'any' }}
+        />
+    );
+};
 
 export const FileInput = ({
     label,

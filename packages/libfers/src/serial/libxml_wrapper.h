@@ -39,7 +39,8 @@ public:
 	*
 	* @param message The error message associated with the exception.
 	*/
-	explicit XmlException(const std::string_view message) : std::runtime_error(std::string(message)) {}
+	explicit XmlException(const std::string_view message) :
+		std::runtime_error(std::string(message)) {}
 };
 
 /**
@@ -60,12 +61,17 @@ public:
 	*
 	* @param node The xmlNode pointer representing the XML element.
 	*/
-	explicit XmlElement(const xmlNode* node) : _node(const_cast<xmlNode*>(node)) {}
+	explicit XmlElement(const xmlNode* node) :
+		_node(const_cast<xmlNode*>(node)) {}
 
 	XmlElement(const XmlElement&) = default;
+
 	XmlElement(XmlElement&&) noexcept = default;
+
 	XmlElement& operator=(const XmlElement&) = default;
+
 	XmlElement& operator=(XmlElement&&) noexcept = default;
+
 	~XmlElement() = default;
 
 	/**
@@ -195,15 +201,20 @@ public:
 	*
 	* @throws std::runtime_error if the document creation fails.
 	*/
-	XmlDocument() : _doc(xmlNewDoc(reinterpret_cast<const xmlChar*>("1.0")), &xmlFreeDoc)
+	XmlDocument() :
+		_doc(xmlNewDoc(reinterpret_cast<const xmlChar*>("1.0")), &xmlFreeDoc)
 	{
 		if (!_doc) { throw XmlException("Failed to create XML document."); }
 	}
 
 	~XmlDocument() = default;
+
 	XmlDocument(const XmlDocument&) = delete;
+
 	XmlDocument(XmlDocument&&) noexcept = default;
+
 	XmlDocument& operator=(const XmlDocument&) = delete;
+
 	XmlDocument& operator=(XmlDocument&&) noexcept = default;
 
 	/**
@@ -237,6 +248,13 @@ public:
 		}
 		return xmlSaveFormatFileEnc(filename.data(), _doc.get(), "UTF-8", 1) != -1;
 	}
+
+	/**
+	 * @brief Dumps the document to a string.
+	 *
+	 * @return A string containing the XML document.
+	 */
+	[[nodiscard]] std::string dumpToString() const;
 
 	/**
 	* @brief Set the root element of the document.

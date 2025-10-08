@@ -30,6 +30,10 @@ import EditIcon from '@mui/icons-material/Edit';
 import { v4 as uuidv4 } from 'uuid';
 import { PlatformComponentInspector } from './PlatformComponentInspector';
 
+interface PlatformInspectorProps {
+    item: Platform;
+}
+
 interface WaypointEditDialogProps {
     open: boolean;
     onClose: () => void;
@@ -106,7 +110,7 @@ function WaypointEditDialog({
     );
 }
 
-export function PlatformInspector({ item }: { item: Platform }) {
+export function PlatformInspector({ item }: PlatformInspectorProps) {
     const {
         updateItem,
         addPositionWaypoint,

@@ -11,9 +11,10 @@ set(LIBFERS_PRIVATE_HEADERS
 	${CMAKE_CURRENT_LIST_DIR}/interpolation/interpolation_point.h
 	${CMAKE_CURRENT_LIST_DIR}/interpolation/interpolation_set.h
 	${CMAKE_CURRENT_LIST_DIR}/math/path_utils.h
-	${CMAKE_CURRENT_LIST_DIR}/math/polarization_matrix.h
 	${CMAKE_CURRENT_LIST_DIR}/noise/falpha_branch.h
 	${CMAKE_CURRENT_LIST_DIR}/noise/noise_generators.h
+	${CMAKE_CURRENT_LIST_DIR}/serial/json_serializer.h
+	${CMAKE_CURRENT_LIST_DIR}/serial/xml_serializer.h
 	${CMAKE_CURRENT_LIST_DIR}/serial/hdf5_handler.h
 	${CMAKE_CURRENT_LIST_DIR}/serial/kml_generator.h
 	${CMAKE_CURRENT_LIST_DIR}/serial/libxml_wrapper.h
@@ -38,7 +39,6 @@ set(LIBFERS_SOURCES
 	${CMAKE_CURRENT_LIST_DIR}/interpolation/interpolation_set.cpp
 	${CMAKE_CURRENT_LIST_DIR}/math/geometry_ops.cpp
 	${CMAKE_CURRENT_LIST_DIR}/math/path.cpp
-	${CMAKE_CURRENT_LIST_DIR}/math/polarization_matrix.cpp
 	${CMAKE_CURRENT_LIST_DIR}/math/rotation_path.cpp
 	${CMAKE_CURRENT_LIST_DIR}/noise/falpha_branch.cpp
 	${CMAKE_CURRENT_LIST_DIR}/noise/noise_generators.cpp
@@ -46,6 +46,8 @@ set(LIBFERS_SOURCES
 	${CMAKE_CURRENT_LIST_DIR}/radar/receiver.cpp
 	${CMAKE_CURRENT_LIST_DIR}/radar/target.cpp
 	${CMAKE_CURRENT_LIST_DIR}/radar/transmitter.cpp
+	${CMAKE_CURRENT_LIST_DIR}/serial/json_serializer.cpp
+	${CMAKE_CURRENT_LIST_DIR}/serial/xml_serializer.cpp
 	${CMAKE_CURRENT_LIST_DIR}/serial/hdf5_handler.cpp
 	${CMAKE_CURRENT_LIST_DIR}/serial/kml_generator.cpp
 	${CMAKE_CURRENT_LIST_DIR}/serial/libxml_wrapper.cpp

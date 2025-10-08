@@ -1,4 +1,4 @@
-# FERS: The Flexible Extensible Radar Simulator
+# The Flexible Extensible Radar Simulator
 
 <!-- TODO: Build status should be present for both ui and core -->
 [![FERS Core CI](https://github.com/the-user-created/FERS/actions/workflows/CMake.yml/badge.svg)](https://github.com/the-user-created/FERS/actions/workflows/CMake.yml)
@@ -17,10 +17,6 @@ semi-independent packages.
 
 ---
 
-**[View the Live Documentation](https://the-user-created.github.io/FERS/)**
-
----
-
 ## Key Features
 
 - **High-Performance Core:** A modernized C++23 engine capable of detailed signal-level simulation with optimized
@@ -30,7 +26,7 @@ semi-independent packages.
   continuous wave (CW).
 - **Advanced Data Export:** Output simulation data in HDF5, CSV, and XML formats for analysis.
 - **Geographic Visualization:** Generate KML files from scenarios for accurate visualization in tools like Google Earth.
-- **Modern Documentation:** A continuously updated and deployed [documentation site](https://the-user-created.github.io/FERS/) 
+- **Modern Documentation:** A continuously updated and deployed [documentation site](https://the-user-created.github.io/FERS/)
   with a searchable interface, generated directly from the source code.
 - **Unified Schema:** A central XML schema ensures consistency and serves as the single source of truth for scenarios
   across the simulator and the UI.
@@ -94,6 +90,20 @@ text for these licenses can be found in the `THIRD_PARTY_LICENSES` directory.
   the [MIT License](THIRD_PARTY_LICENSES/GeographicLib-LICENSE.txt).
 * **libhdf5:** Used for HDF5 file handling. Licensed under
   the [BSD 3-Clause License](THIRD_PARTY_LICENSES/libhdf5-LICENSE.txt).
+* **nlohmann/json:** A JSON library for C++. Licensed under the
+  [MIT License](THIRD_PARTY_LICENSES/nlohmann-json-LICENSE.txt).
+* **Tauri:** A framework for building desktop applications. Licensed under the 
+  [MIT License](THIRD_PARTY_LICENSES/tauri-LICENSE.txt).
+* **React:** A JavaScript library for building user interfaces. Licensed under the 
+  [MIT License](THIRD_PARTY_LICENSES/react-LICENSE.txt).
+* **MUI:** A React component library. Licensed under the [MIT License](THIRD_PARTY_LICENSES/mui-LICENSE.txt).
+* **Three.js:** A 3D JavaScript library. Licensed under the [MIT License](THIRD_PARTY_LICENSES/threejs-LICENSE.txt).
+* **Zustand:** A small, fast state-management library for React. Licensed under the 
+  [MIT License](THIRD_PARTY_LICENSES/zustand-LICENSE.txt).
+* **Zod:** A TypeScript-first schema declaration and validation library. Licensed under the 
+  [MIT License](THIRD_PARTY_LICENSES/zod-LICENSE.txt).
+* **React Three Fiber:** A React renderer for Three.js. Licensed under the 
+  [MIT License](THIRD_PARTY_LICENSES/react-three-fiber-LICENSE.txt).
 
 ### Historical Notice from Original Distribution
 

@@ -10,18 +10,9 @@ import { SimulationView } from '@/views/SimulationView';
 import { ResultsView } from '@/views/ResultsView';
 import SettingsDialog from '@/components/SettingsDialog';
 
-const views: { [key: string]: React.ComponentType } = {
-    scenario: ScenarioView,
-    assets: AssetLibraryView,
-    simulation: SimulationView,
-    results: ResultsView,
-};
-
 export function MainLayout() {
     const [activeView, setActiveView] = useState('scenario');
     const [settingsOpen, setSettingsOpen] = useState(false);
-
-    const ActiveViewComponent = views[activeView] || ScenarioView;
 
     return (
         <Box
@@ -50,7 +41,43 @@ export function MainLayout() {
                     position: 'relative',
                 }}
             >
-                <ActiveViewComponent />
+                {/* Render all views but only display the active one */}
+                <Box
+                    sx={{
+                        display: activeView === 'scenario' ? 'flex' : 'none',
+                        height: '100%',
+                        width: '100%',
+                    }}
+                >
+                    <ScenarioView />
+                </Box>
+                <Box
+                    sx={{
+                        display: activeView === 'assets' ? 'block' : 'none',
+                        height: '100%',
+                        width: '100%',
+                    }}
+                >
+                    <AssetLibraryView />
+                </Box>
+                <Box
+                    sx={{
+                        display: activeView === 'simulation' ? 'block' : 'none',
+                        height: '100%',
+                        width: '100%',
+                    }}
+                >
+                    <SimulationView />
+                </Box>
+                <Box
+                    sx={{
+                        display: activeView === 'results' ? 'block' : 'none',
+                        height: '100%',
+                        width: '100%',
+                    }}
+                >
+                    <ResultsView />
+                </Box>
             </Box>
             <SettingsDialog
                 open={settingsOpen}

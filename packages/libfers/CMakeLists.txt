@@ -27,6 +27,10 @@ function(fers_configure_library_target target_name)
 		$<BUILD_INTERFACE:${GENERATED_HEADERS_DIR}>
 	)
 
+	target_include_directories(${target_name} PRIVATE
+		$<TARGET_PROPERTY:nlohmann_json::nlohmann_json,INTERFACE_INCLUDE_DIRECTORIES>
+	)
+
 	# --- Third-Party Dependencies ---
 	target_link_libraries(${target_name} PRIVATE
 		HighFive::HighFive
@@ -71,6 +75,7 @@ add_custom_target(generate_schemas ALL DEPENDS
 # --- Third-Party Dependencies ---
 add_subdirectory(third_party/highfive EXCLUDE_FROM_ALL)
 add_subdirectory(third_party/geographiclib EXCLUDE_FROM_ALL)
+add_subdirectory(third_party/json EXCLUDE_FROM_ALL)
 find_package(LibXml2 REQUIRED)
 find_package(HDF5 COMPONENTS C HL REQUIRED)
 
@@ -78,6 +83,9 @@ find_package(HDF5 COMPONENTS C HL REQUIRED)
 if (FERS_BUILD_STATIC_LIBS)
 	add_library(fers_static STATIC)
 	set_target_properties(fers_static PROPERTIES OUTPUT_NAME "fers")
+	# Ensure the static library is built with Position-Independent Code,
+	# which is required when linking it into a shared library (like the Rust cdylib).
+	set_target_properties(fers_static PROPERTIES POSITION_INDEPENDENT_CODE ON)
 	fers_configure_library_target(fers_static)
 	add_library(fers::fers_static ALIAS fers_static)
 endif ()
@@ -103,6 +111,10 @@ add_library(fers::fers ALIAS libfers)
 source_group("Source Files" FILES ${LIBFERS_SOURCES})
 source_group("Header Files\\Public" FILES ${LIBFERS_PUBLIC_HEADERS})
 source_group("Header Files\\Private" FILES ${LIBFERS_PRIVATE_HEADERS})
+
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/third_party/json/include/nlohmann
+	DESTINATION include
+)
 
 # --- Installation ---
 if (FERS_BUILD_STATIC_LIBS)
