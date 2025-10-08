@@ -8,15 +8,23 @@ export const setPropertyByPath = (
     obj: object,
     path: string,
     value: unknown
-) => {
+): void => {
     const keys = path.split('.');
-    let current: any = obj;
-    for (let i = 0; i < keys.length - 1; i++) {
-        const key = keys[i];
-        if (current[key] === undefined || current[key] === null) return;
-        current = current[key];
+    const lastKey = keys.pop();
+    if (!lastKey) return;
+
+    let current: Record<string, unknown> = obj as Record<string, unknown>;
+
+    for (const key of keys) {
+        const next = current[key];
+        if (typeof next !== 'object' || next === null) {
+            // Path does not exist, so we cannot set the value.
+            return;
+        }
+        current = next as Record<string, unknown>;
     }
-    current[keys[keys.length - 1]] = value;
+
+    current[lastKey] = value;
 };
 
 // Helper function to find any item in the store by its ID

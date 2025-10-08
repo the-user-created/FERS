@@ -3,7 +3,43 @@
 
 import { StateCreator } from 'zustand';
 import { invoke } from '@tauri-apps/api/core';
-import { ScenarioStore, BackendActions } from '../types';
+import {
+    ScenarioStore,
+    BackendActions,
+    TargetComponent,
+    Timing,
+} from '../types';
+
+// Helper to strip null/undefined values from an object before sending to backend
+const cleanObject = <T>(obj: T): T => {
+    if (Array.isArray(obj)) {
+        return obj.map(cleanObject) as unknown as T;
+    }
+    if (obj !== null && typeof obj === 'object') {
+        const newObj = {} as Record<string, unknown>;
+        for (const [key, value] of Object.entries(obj)) {
+            if (value !== null && value !== undefined) {
+                newObj[key] = cleanObject(value);
+            }
+        }
+        return newObj as T;
+    }
+    return obj;
+};
+
+// --- Backend-specific type definitions ---
+type BackendTarget = {
+    name: string;
+    rcs: {
+        type: TargetComponent['rcs_type'];
+        value?: number;
+        filename?: string;
+    };
+    model?: {
+        type: Exclude<TargetComponent['rcs_model'], 'constant'>;
+        k?: number;
+    };
+};
 
 export const createBackendSlice: StateCreator<
     ScenarioStore,
@@ -23,24 +59,8 @@ export const createBackendSlice: StateCreator<
         const findTimingName = (id: string | null) =>
             timings.find((t) => t.id === id)?.name;
 
-        // Helper to strip null/undefined values from an object before sending to backend
-        const cleanObject = (obj: any): any => {
-            if (Array.isArray(obj)) {
-                return obj.map(cleanObject);
-            }
-            if (obj !== null && typeof obj === 'object') {
-                return Object.entries(obj).reduce((acc, [key, value]) => {
-                    if (value !== null && value !== undefined) {
-                        acc[key] = cleanObject(value);
-                    }
-                    return acc;
-                }, {} as any);
-            }
-            return obj;
-        };
-
         const backendPlatforms = platforms.map((p) => {
-            const { component, motionPath, rotation, id, type, ...rest } = p;
+            const { component, motionPath, rotation, ...rest } = p;
 
             let backendComponent = {};
             if (component.type !== 'none') {
@@ -91,7 +111,7 @@ export const createBackendSlice: StateCreator<
                         break;
                     case 'target':
                         {
-                            const targetObj: any = {
+                            const targetObj: BackendTarget = {
                                 name: component.name,
                                 rcs: {
                                     type: component.rcs_type,
@@ -111,9 +131,9 @@ export const createBackendSlice: StateCreator<
                 }
             }
 
-            const backendRotation: any = {};
+            const backendRotation: Record<string, unknown> = {};
             if (rotation.type === 'fixed') {
-                const { type, ...r } = rotation;
+                const { type: _type, ...r } = rotation;
                 backendRotation.fixedrotation = {
                     interpolation: 'constant',
                     startazimuth: r.startAzimuth,
@@ -122,7 +142,7 @@ export const createBackendSlice: StateCreator<
                     elevationrate: r.elevationRate,
                 };
             } else {
-                const { type, ...r } = rotation;
+                const { type: _type, ...r } = rotation;
                 backendRotation.rotationpath = {
                     interpolation: r.interpolation,
                     rotationwaypoints: r.waypoints.map(({ id, ...wp }) => wp),
@@ -134,6 +154,7 @@ export const createBackendSlice: StateCreator<
                 motionpath: {
                     interpolation: motionPath.interpolation,
                     positionwaypoints: motionPath.waypoints.map(
+                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
                         ({ id, ...wp }) => wp
                     ),
                 },
@@ -150,7 +171,7 @@ export const createBackendSlice: StateCreator<
             filename: p.pulseType === 'file' ? p.filename : undefined,
         }));
 
-        const backendTimings = timings.map((t) => {
+        const backendTimings = timings.map((t: Timing) => {
             const { id, type, ...rest } = t;
             const timingObj = {
                 ...rest,
@@ -159,34 +180,36 @@ export const createBackendSlice: StateCreator<
                 random_freq_offset_stdev: t.randomFreqOffsetStdev,
                 phase_offset: t.phaseOffset,
                 random_phase_offset_stdev: t.randomPhaseOffsetStdev,
-                noise_entries: t.noiseEntries.map(({ id, ...rest }) => rest),
+                noise_entries: t.noiseEntries.map(
+                    ({ id, ...noiseRest }) => noiseRest
+                ),
             };
             // Remove noise_entries array if it's empty
             if (timingObj.noise_entries?.length === 0) {
-                delete (timingObj as any).noise_entries;
+                delete (timingObj as Partial<typeof timingObj>).noise_entries;
             }
             return timingObj;
         });
 
         const backendAntennas = antennas.map(({ id, type, ...rest }) => rest);
 
-        const gp_params: any = { ...globalParameters };
-        // Map names back to backend convention for sync
-        gp_params.starttime = gp_params.start;
-        gp_params.endtime = gp_params.end;
-        gp_params.randomseed = gp_params.random_seed;
-        gp_params.oversample = gp_params.oversample_ratio;
-        gp_params.coordinatesystem = gp_params.coordinateSystem;
+        const {
+            start,
+            end,
+            random_seed,
+            oversample_ratio,
+            coordinateSystem,
+            ...gpRest
+        } = globalParameters;
 
-        // Remove frontend-specific fields before sending
-        delete gp_params.id;
-        delete gp_params.type;
-        delete gp_params.start;
-        delete gp_params.end;
-        delete gp_params.random_seed;
-        delete gp_params.oversample_ratio;
-        delete gp_params.coordinateSystem;
-        delete gp_params.simulation_name;
+        const gp_params = {
+            ...gpRest,
+            starttime: start,
+            endtime: end,
+            randomseed: random_seed,
+            oversample: oversample_ratio,
+            coordinatesystem: coordinateSystem,
+        };
 
         const scenarioJson = {
             simulation: {

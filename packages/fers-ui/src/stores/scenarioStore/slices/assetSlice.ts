@@ -69,11 +69,10 @@ export const createAssetSlice: StateCreator<
         }),
     setAntennaPattern: (antennaId, newPattern) =>
         set((state) => {
-            const antenna = state.antennas.find((a) => a.id === antennaId);
-            if (!antenna) return;
+            const index = state.antennas.findIndex((a) => a.id === antennaId);
+            if (index === -1) return;
 
-            const baseAntenna: Omit<Antenna, 'pattern'> = { ...antenna };
-            delete (baseAntenna as any).pattern; // Remove pattern to avoid discriminated union issues
+            const { pattern, ...baseAntenna } = state.antennas[index];
 
             let newAntennaState: Antenna;
 
@@ -118,10 +117,7 @@ export const createAssetSlice: StateCreator<
                     };
                     break;
             }
-            const index = state.antennas.findIndex((a) => a.id === antennaId);
-            if (index > -1) {
-                state.antennas[index] = newAntennaState;
-                state.isDirty = true;
-            }
+            state.antennas[index] = newAntennaState;
+            state.isDirty = true;
         }),
 });
