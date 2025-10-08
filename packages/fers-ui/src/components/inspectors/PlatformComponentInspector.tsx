@@ -18,13 +18,15 @@ import {
 } from '@/stores/scenarioStore';
 import { NumberField, FileInput } from './InspectorControls';
 
+interface PlatformComponentInspectorProps {
+    component: PlatformComponent;
+    platformId: string;
+}
+
 export function PlatformComponentInspector({
     component,
     platformId,
-}: {
-    component: PlatformComponent;
-    platformId: string;
-}) {
+}: PlatformComponentInspectorProps) {
     const { updateItem, pulses, timings, antennas, setPlatformRcsModel } =
         useScenarioStore.getState();
     const handleChange = (path: string, value: unknown) =>
