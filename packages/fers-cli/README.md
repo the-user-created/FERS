@@ -19,7 +19,7 @@ terminal and to maintain backward compatibility with the original FERS workflow.
 ## Building
 
 The `fers-cli` executable is built as part of the main C++ build process for the monorepo. Please see the build
-instructions in the [`packages/libfers/README.md`](../libfers/README.md) file.
+instructions in the [`packages/libfers/README.md`](https://github.com/the-user-created/FERS/blob/master/packages/libfers/README.md) file.
 
 After a successful build, the executable can be found at `packages/build/fers-cli/fers-cli`.
 

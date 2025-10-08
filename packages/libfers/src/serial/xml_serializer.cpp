@@ -47,6 +47,10 @@ namespace
 	{
 		if constexpr (std::is_floating_point_v<T>)
 		{
+			// `std::to_chars` is used for floating-point types to ensure that the
+			// serialization is locale-independent and maintains full precision.
+			// This avoids issues where stream-based methods might be affected by
+			// the system's locale or might truncate precision.
 			std::array<char, 64> buffer{};
 			if (auto [ptr, ec] = std::to_chars(buffer.data(), buffer.data() + buffer.size(), value); ec == std::errc())
 			{
@@ -248,7 +252,9 @@ namespace
 			const auto rate = rot_path.getRate();
 
 			// Convert internal mathematical angles (radians, CCW from East) back to
-			// the XML format's compass degrees (CW from North) for user readability.
+			// the XML format's compass degrees (CW from North). This transformation
+			// is necessary at the serialization boundary to ensure the output XML
+			// conforms to the user-facing FERS schema and is human-readable.
 			const RealType start_az_deg = std::fmod(90.0 - start.azimuth * 180.0 / PI + 360.0, 360.0);
 			const RealType start_el_deg = start.elevation * 180.0 / PI;
 			const RealType rate_az_deg_s = -rate.azimuth * 180.0 / PI; // Invert for CW rotation
@@ -279,7 +285,8 @@ namespace
 			for (const auto& wp : rot_path.getCoords())
 			{
 				XmlElement wp_elem = rot_elem.addChild("rotationwaypoint");
-				// Convert angles back to compass degrees for XML output.
+				// Convert angles back to compass degrees for XML output. This is
+				// done to ensure the output conforms to the FERS XML schema.
 				const RealType az_deg = std::fmod(90.0 - (wp.azimuth * 180.0 / PI) + 360.0, 360.0);
 				const RealType el_deg = wp.elevation * 180.0 / PI;
 				addChildWithNumber(wp_elem, "azimuth", az_deg);
@@ -361,8 +368,9 @@ namespace
 
 		// A platform must have exactly one component. We iterate through the world's
 		// component lists to find which one is associated with this platform.
-		// We must check for monostatic transmitters first to avoid serializing them
-		// as separate transmitter/receiver components.
+		// Monostatic transmitters are checked first to ensure they are serialized
+		// as a single `<monostatic>` element, as per the schema, rather than as
+		// separate transmitter/receiver components.
 		bool component_found = false;
 		for (const auto& tx : world.getTransmitters())
 		{
@@ -420,7 +428,10 @@ namespace serial
 		XmlElement params_elem = root.addChild("parameters");
 		serializeParameters(params_elem);
 
-		// Serialize all assets (pulses, timings, antennas) first, as platforms will reference them by name.
+		// Assets (pulses, timings, antennas) are serialized first. This is
+		// necessary because platforms reference these assets by name. By defining
+		// them at the top of the document, we ensure that any XML parser can
+		// resolve these references when it later encounters the platform definitions.
 		for (const auto& [name, pulse] : world.getPulses())
 		{
 			XmlElement pulse_elem = root.addChild("pulse");

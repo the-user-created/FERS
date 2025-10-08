@@ -2,7 +2,7 @@
 
 # Project related configuration options
 PROJECT_NAME           = "@PROJECT_NAME@"
-PROJECT_BRIEF          = "FERS: Flexible Extensible Radar Simulator"
+PROJECT_BRIEF          = "The Flexible Extensible Radar Simulator"
 PROJECT_NUMBER         = "@PROJECT_VERSION@"
 OUTPUT_DIRECTORY       = "@DOXYGEN_OUTPUT_DIR@"
 CREATE_SUBDIRS         = YES
