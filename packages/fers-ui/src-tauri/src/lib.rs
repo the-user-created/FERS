@@ -170,6 +170,44 @@ fn update_scenario_from_json(json: String, state: State<'_, FersState>) -> Resul
         .update_scenario_from_json(&json)
 }
 
+/// Runs the simulation based on the current in-memory scenario.
+///
+/// This command first ensures the backend state is synchronized with any UI changes,
+/// then triggers the blocking simulation run. Tauri executes this in a separate thread,
+/// preventing the UI from freezing.
+///
+/// # Parameters
+///
+/// * `state` - Tauri-managed state containing the shared `FersContext`.
+///
+/// # Returns
+///
+/// * `Ok(())` if the simulation completed successfully.
+/// * `Err(String)` if the simulation failed.
+#[tauri::command]
+fn run_simulation(state: State<'_, FersState>) -> Result<(), String> {
+    state.lock().map_err(|e| e.to_string())?.run_simulation()
+}
+
+/// Generates a KML visualization file for the current in-memory scenario.
+///
+/// # Parameters
+///
+/// * `output_path` - The absolute file path where the KML file should be saved.
+/// * `state` - Tauri-managed state containing the shared `FersContext`.
+///
+/// # Returns
+///
+/// * `Ok(())` if the KML was generated successfully.
+/// * `Err(String)` if KML generation failed.
+#[tauri::command]
+fn generate_kml(output_path: String, state: State<'_, FersState>) -> Result<(), String> {
+    state
+        .lock()
+        .map_err(|e| e.to_string())?
+        .generate_kml(&output_path)
+}
+
 /// Initializes and runs the Tauri application.
 ///
 /// This function is the main entry point for the desktop application. It performs
@@ -215,7 +253,9 @@ pub fn run() {
             load_scenario_from_xml_file,
             get_scenario_as_json,
             get_scenario_as_xml,
-            update_scenario_from_json
+            update_scenario_from_json,
+            run_simulation,
+            generate_kml
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
