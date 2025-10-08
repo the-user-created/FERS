@@ -1,30 +1,28 @@
-// SPDX-License-Identifier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2-0-only
 // Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
 
 import { IconButton, Tooltip } from '@mui/material';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
-import { useScenarioStore, type ScenarioData } from '@/stores/scenarioStore';
+import { useScenarioStore } from '@/stores/scenarioStore';
 import { invoke } from '@tauri-apps/api/core';
 import { save, open } from '@tauri-apps/plugin-dialog';
-import { writeTextFile, readTextFile } from '@tauri-apps/plugin-fs';
+import { writeTextFile } from '@tauri-apps/plugin-fs';
+import { useState } from 'react';
+import ConfirmDialog from './ConfirmDialog';
 
 export default function ScenarioIO() {
+    const loadScenario = useScenarioStore((state) => state.loadScenario);
+    const isDirty = useScenarioStore((state) => state.isDirty);
+    const resetScenario = useScenarioStore((state) => state.resetScenario);
+
+    const [isConfirmOpen, setConfirmOpen] = useState(false);
+
     const handleExport = async () => {
         try {
-            // Get the latest state directly inside the handler
-            const currentState = useScenarioStore.getState();
-            const scenarioState: ScenarioData = {
-                globalParameters: currentState.globalParameters,
-                pulses: currentState.pulses,
-                timings: currentState.timings,
-                antennas: currentState.antennas,
-                platforms: currentState.platforms,
-            };
+            await useScenarioStore.getState().syncBackend();
 
-            const xmlContent = await invoke<string>('generate_xml', {
-                scenario: scenarioState,
-            });
+            const xmlContent = await invoke<string>('get_scenario_as_xml');
 
             const filePath = await save({
                 title: 'Export Scenario',
@@ -42,11 +40,10 @@ export default function ScenarioIO() {
             }
         } catch (error) {
             console.error('Failed to export scenario:', error);
-            // Here you could show an error dialog/snackbar
         }
     };
 
-    const handleImport = async () => {
+    const performImport = async () => {
         try {
             const selectedPath = await open({
                 title: 'Import Scenario',
@@ -60,27 +57,44 @@ export default function ScenarioIO() {
             });
 
             if (typeof selectedPath === 'string') {
-                const xmlContent = await readTextFile(selectedPath);
-                const newStateJson = await invoke<string>('parse_xml', {
-                    xmlContent,
+                // Load the XML file into the C++ core
+                await invoke('load_scenario_from_xml_file', {
+                    filepath: selectedPath,
                 });
-                const newState: ScenarioData = JSON.parse(newStateJson);
+
+                // Fetch the new state as JSON from the C++ core
+                const jsonState = await invoke<string>('get_scenario_as_json');
+                const scenarioData = JSON.parse(jsonState);
+
+                // Update the UI's Zustand store with the new state after resetting the current state
+                resetScenario();
+                loadScenario(scenarioData);
 
                 console.log(
-                    '[DEBUG] Parsed state from Rust:',
-                    JSON.stringify(newState, null, 2)
-                );
-
-                useScenarioStore.getState().loadScenario(newState);
-                console.log(
-                    'Scenario imported successfully from:',
+                    'Scenario imported and synchronized successfully from:',
                     selectedPath
                 );
             }
         } catch (error) {
             console.error('Failed to import scenario:', error);
-            // Here you could show an error dialog/snackbar
         }
+    };
+
+    const handleImport = () => {
+        if (isDirty) {
+            setConfirmOpen(true);
+        } else {
+            void performImport();
+        }
+    };
+
+    const handleConfirmImport = () => {
+        setConfirmOpen(false);
+        void performImport();
+    };
+
+    const handleCancelImport = () => {
+        setConfirmOpen(false);
     };
 
     return (
@@ -95,6 +109,13 @@ export default function ScenarioIO() {
                     <FileDownloadIcon fontSize="inherit" />
                 </IconButton>
             </Tooltip>
+            <ConfirmDialog
+                open={isConfirmOpen}
+                onConfirm={handleConfirmImport}
+                onCancel={handleCancelImport}
+                title="Overwrite Current Scenario?"
+                message="Importing a new scenario will discard all unsaved changes. Are you sure you want to proceed?"
+            />
         </>
     );
 }

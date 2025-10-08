@@ -6,6 +6,7 @@ issue_verification_tests/
 testing_files/
 design_docs/
 latex/
+build/
 
 # JetBrains IDEs
 .idea/

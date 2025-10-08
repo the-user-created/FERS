@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
 
+import React from 'react';
 import { Box } from '@mui/material';
 import { Canvas } from '@react-three/fiber';
 import WorldView from '@/components/WorldView';
@@ -11,7 +12,7 @@ import Timeline from '@/components/Timeline';
 /**
  * ScenarioView is the primary workbench for building and visualizing 3D scenes.
  */
-export function ScenarioView() {
+export const ScenarioView = React.memo(function ScenarioView() {
     return (
         <Box
             sx={{
@@ -78,4 +79,4 @@ export function ScenarioView() {
             </Box>
         </Box>
     );
-}
+});

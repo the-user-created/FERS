@@ -12,7 +12,11 @@ import {
 import { useScenarioStore, Antenna } from '@/stores/scenarioStore';
 import { FileInput, NumberField } from './InspectorControls';
 
-export function AntennaInspector({ item }: { item: Antenna }) {
+interface AntennaInspectorProps {
+    item: Antenna;
+}
+
+export function AntennaInspector({ item }: AntennaInspectorProps) {
     const { updateItem, setAntennaPattern } = useScenarioStore.getState();
     const handleChange = (path: string, value: unknown) =>
         updateItem(item.id, path, value);

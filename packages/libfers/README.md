@@ -13,6 +13,7 @@ including the official `fers-cli` and `fers-ui` applications.
 ## Features
 
 - **C-API:** A stable C-style API for creating and managing simulation contexts.
+- **JSON & XML Serialization:** Robust serialization of the entire simulation state to and from JSON (for UI interoperability) and XML (for file-based workflows).
 - **Signal-Level Modeling:** Creation of radar signal returns, including Doppler and phase modeling.
 - **System Simulation:** Support for Monostatic, Multistatic, Continuous Wave (CW), and Pulsed radar systems.
 - **Data Export:** Advanced data export in HDF5, CSV, and XML formats.
@@ -21,11 +22,13 @@ including the official `fers-cli` and `fers-ui` applications.
 
 ## Dependencies
 
-- **CMake** (3.22+)
 - A C++23 compatible compiler (e.g., GCC 11+, Clang 14+)
+- **CMake** (3.22+)
 - **libhdf5** (HDF5 support)
 - **libxml2** (XML handling)
-- **HighFive** & **GeographicLib** (included as git submodules)
+- **HighFive**, **GeographicLib**, & **nlohmann/json** (included as git submodules)
+- **Doxygen** & **Graphviz** (for documentation generation, optional)
+- **doxygen-awesome-css** (for enhanced Doxygen themes, optional)
 
 ## Building the Library and CLI
 

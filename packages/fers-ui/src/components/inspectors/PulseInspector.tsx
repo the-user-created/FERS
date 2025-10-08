@@ -12,7 +12,11 @@ import {
 import { useScenarioStore, Pulse } from '@/stores/scenarioStore';
 import { NumberField, FileInput } from './InspectorControls';
 
-export function PulseInspector({ item }: { item: Pulse }) {
+interface PulseInspectorProps {
+    item: Pulse;
+}
+
+export function PulseInspector({ item }: PulseInspectorProps) {
     const { updateItem } = useScenarioStore.getState();
     const handleChange = (path: string, value: unknown) =>
         updateItem(item.id, path, value);

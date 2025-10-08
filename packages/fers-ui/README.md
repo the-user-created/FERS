@@ -26,6 +26,7 @@ fers-ui is built with a modern technology stack to provide a powerful, cross-pla
 - **Component Library:** [**Material-UI (MUI)**](https://mui.com/material-ui/) & [**MUI X**](https://mui.com/x/) - A comprehensive library of UI components that accelerates development and ensures a consistent, modern design.
 - **3D Rendering:** [**Three.js**](https://threejs.org/) via [**React Three Fiber**](https://docs.pmnd.rs/react-three-fiber) - Simplifies managing a 3D scene within a React application, powering the visual scenario builder.
 - **State Management:** [**Zustand**](https://docs.pmnd.rs/zustand) - A minimal, fast, and scalable state management solution for a centralized application state.
+- **Schema Validation:** [**Zod**](https://zod.dev/) - A TypeScript-first schema declaration and validation library, used for ensuring the integrity of scenario data on the front-end.
 
 ## Software Architecture
 
@@ -47,26 +48,42 @@ The application is architected as a multi-modal "Workbench" to provide a clean, 
 
 ### Prerequisites
 
-1. [**Node.js**](https://nodejs.org/) and [**pnpm**](https://pnpm.io/).
-2. The [**Rust toolchain**](https://www.rust-lang.org/tools/install).
-3. [**Tauri prerequisites**](https://tauri.app/start/prerequisites/) for your operating system.
+1. A C++23 compatible compiler and **CMake** (see [`packages/libfers/README.md`](https://github.com/the-user-created/FERS/blob/master/packages/libfers/README.md) for details).
+2. [**Node.js**](https://nodejs.org/) and [**pnpm**](https://pnpm.io/).
+3. The [**Rust toolchain**](https://www.rust-lang.org/tools/install).
+4. [**Tauri prerequisites**](https://tauri.app/start/prerequisites/) for your operating system.
 
 ### Installation & Running
 
-1. **Clone the repository:** (If you haven't already)
+The `fers-ui` application depends on the compiled `libfers` C++ library. You must build the C++ components before running the UI.
 
+1. **Clone the repository:** (If you haven't already)
     ```bash
-    git clone https://github.com/the-user-created/FERS.git
+    git clone --recursive https://github.com/the-user-created/FERS.git
+    cd FERS
     ```
 
-2. **Navigate to the `fers-ui` package and install dependencies:**
-
+2. **Build the C++ core libraries:**
+   From the root of the repository, run the following commands.
     ```bash
-    cd FERS/packages/fers-ui
+    mkdir build && cd build
+    cmake ..
+    make -j$(nproc) # or make -j$(sysctl -n hw.ncpu) on macOS
+    ```
+   For more detailed C++ build instructions, see [`packages/libfers/README.md`](https://github.com/the-user-created/FERS/blob/master/packages/libfers/README.md).
+
+3. **Navigate to the `fers-ui` package and install dependencies:**
+    ```bash
+    cd ../packages/fers-ui
     pnpm install
     ```
 
-3. **Run the application in development mode:**
+4. **Run the application in development mode:**
     ```bash
     pnpm tauri dev
+    ```
+
+5. **Build the application for production (Optional):**
+    ```bash
+    pnpm tauri build
     ```

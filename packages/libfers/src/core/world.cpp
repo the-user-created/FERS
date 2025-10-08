@@ -76,4 +76,15 @@ namespace core
 	{
 		return _timings.contains(name) ? _timings[name].get() : nullptr;
 	}
+
+	void World::clear() noexcept
+	{
+		_platforms.clear();
+		_transmitters.clear();
+		_receivers.clear();
+		_targets.clear();
+		_pulses.clear();
+		_antennas.clear();
+		_timings.clear();
+	}
 }

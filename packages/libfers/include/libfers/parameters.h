@@ -41,7 +41,7 @@ namespace params
 		constexpr static RealType DEFAULT_C = 299792458.0; ///< Speed of light (m/s)
 		constexpr static RealType DEFAULT_BOLTZMANN_K = 1.3806503e-23; ///< Boltzmann constant
 		RealType c = DEFAULT_C; ///< Speed of light (modifiable)
-		RealType boltzmann_k = DEFAULT_BOLTZMANN_K; ///< Boltzmann constant (modifiable)
+		RealType boltzmann_k = DEFAULT_BOLTZMANN_K; ///< Boltzmann constant
 		RealType start = 0; ///< Start time for the simulation.
 		RealType end = 0; ///< End time for the simulation.
 		RealType sim_sampling_rate = 1000;
@@ -64,8 +64,17 @@ namespace params
 		unsigned render_threads = 1; ///< Number of rendering threads to use.
 		std::string simulation_name; ///< The name of the simulation, from the XML.
 		unsigned oversample_ratio = 1; ///< Oversampling ratio.
-		std::optional<RealType> optional_rate = std::nullopt; ///< Optional sample rate.
 		bool is_cw_simulation = false; ///< Simulation is operating in unmodulated continuous wave (CW) mode.
+
+		/**
+		 * @brief Resets the parameters to their default-constructed state.
+		 * This ensures all members are restored to the values specified by their
+		 * default member initializers.
+		 */
+		void reset() noexcept
+		{
+			*this = Parameters{};
+		}
 	};
 
 	inline Parameters params;

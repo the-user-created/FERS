@@ -6,7 +6,11 @@ import { useScenarioStore, Timing } from '@/stores/scenarioStore';
 import { NumberField, Section } from './InspectorControls';
 import DeleteIcon from '@mui/icons-material/Delete';
 
-export function TimingInspector({ item }: { item: Timing }) {
+interface TimingInspectorProps {
+    item: Timing;
+}
+
+export function TimingInspector({ item }: TimingInspectorProps) {
     const { updateItem, addNoiseEntry, removeNoiseEntry } =
         useScenarioStore.getState();
     const handleChange = (path: string, value: unknown) =>

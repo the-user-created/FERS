@@ -5,8 +5,13 @@
  * @file api.h
  * @brief C-style Foreign Function Interface (FFI) for the libfers core library.
  *
- * This header defines the public API for creating, managing, and interacting with
- * a FERS simulation context from non-C++ languages like Rust.
+ * This header defines the public API for creating, managing, and interacting
+ * with a FERS simulation context from non-C++ languages like Rust. It is
+ * designed to be a stable ABI boundary, free of C++-specific features like
+ * classes, templates, or exceptions. All functions use standard C types and
+ * error handling conventions to ensure maximum compatibility. The design
+ * philosophy is to provide a simple, stateful interface where the client
+ * manages the lifecycle of a simulation "context" object.
  */
 
 #ifndef FERS_API_H
@@ -19,92 +24,168 @@ extern "C" {
 /**
  * @brief An opaque handle to an in-memory FERS simulation context.
  *
- * This pointer represents a live simulation instance. All API functions operate
- * on this handle. It is created by fers_create_context() and must be destroyed
- * by fers_destroy_context() to prevent memory leaks.
+ * This pointer represents a live simulation instance. It is an "opaque" type,
+ * meaning its internal structure is hidden from the API consumer. This design
+ * is intentional to decouple the client from the C++ implementation details of
+ * the simulator core. It ensures that the client code (e.g., in Rust) will not
+ * break even if the internal C++ `FersContext` class is changed, maintaining ABI
+ * stability across library versions.
+ *
+ * @note The client is responsible for managing the lifetime of this handle via
+ *       `fers_context_create()` and `fers_context_destroy()`.
  */
 struct fers_context;
 
-typedef struct fers_context fers_context;
+typedef struct fers_context fers_context_t;
+
+
+// --- Context Lifecycle ---
 
 /**
  * @brief Creates a new FERS simulation context.
  *
- * Allocates and initializes a new simulation context in memory. This context
- * will hold the simulation world (scenario) and other relevant state.
+ * Allocates and initializes a new, empty simulation context in memory. This
+ * context serves as the container for a scenario loaded via one of the
+ * `fers_load_...` or `fers_update_...` functions.
+ *
+ * @note In a C API, RAII is not available. The caller is responsible for
+ *       destroying the returned context using `fers_context_destroy()` to
+ *       prevent resource leaks.
  *
  * @return A non-null opaque pointer (handle) to the simulation context on success.
  *         Returns NULL on failure (e.g., out of memory).
  */
-fers_context* fers_create_context();
+fers_context_t* fers_context_create();
 
 /**
  * @brief Destroys a FERS simulation context and releases all associated memory.
  *
- * This function must be called for every context created by fers_create_context()
- * to ensure proper cleanup and to avoid memory leaks. Accessing the context
+ * This function must be called for every context created by `fers_context_create()`
+ * to ensure proper cleanup of the underlying C++ objects. Accessing the context
  * handle after calling this function results in undefined behavior.
  *
- * @param context A valid pointer to a fers_context handle. If context is NULL,
- *                the function does nothing.
+ * @param context A valid pointer to a `fers_context_t` handle. If context is NULL,
+ *                the function performs no action for safety.
  */
-void fers_destroy_context(fers_context* context);
+void fers_context_destroy(fers_context_t* context);
+
 
 // --- Scenario Loading & Serialization ---
 
 /**
- * @brief Loads a simulation scenario from an XML file into the context.
+ * @brief Loads a scenario into the context from a FERS XML file.
  *
- * This function parses the provided XML file and populates the simulation
- * world within the context. Any existing scenario in the context will be cleared.
+ * This is the standard method for initializing a simulation context from a file on
+ * disk. It is essential for interoperability with the CLI and legacy workflows that
+ * rely on the FERS XML format.
  *
- * @param context A valid fers_context handle.
- * @param xml_filepath A null-terminated UTF-8 string containing the path to the FERS XML scenario file.
- * @param validate A boolean flag indicating whether to perform schema validation (true by default).
- * @return 0 on success, a non-zero error code on failure (e.g., file not found, parsing error).
- *         On failure, a detailed error message can be retrieved with fers_get_last_error_message().
+ * @param context A valid `fers_context_t` handle.
+ * @param xml_filepath A null-terminated UTF-8 string for the input XML file path.
+ * @param validate A boolean (0 or 1) indicating whether to validate the XML
+ *                 against the embedded FERS schema. Validation is recommended to
+ *                 ensure scenario correctness.
+ * @return 0 on success, a non-zero error code on failure. Use
+ *         `fers_get_last_error_message()` to retrieve error details.
  */
-int fers_load_scenario_from_xml_file(fers_context* context, const char* xml_filepath, int validate);
+int fers_load_scenario_from_xml_file(fers_context_t* context, const char* xml_filepath, int validate);
 
 /**
- * @brief Loads a simulation scenario from an XML string into the context.
+ * @brief Loads a scenario into the context from a FERS XML string.
  *
- * This function parses the provided XML content and populates the simulation
- * world within the context. Any existing scenario in the context will be cleared.
+ * This function provides a way to load a scenario from an in-memory string,
+ * avoiding file I/O. It is useful for test harnesses or for UIs that manage
+ * scenarios as text content before parsing.
  *
- * @param context A valid fers_context handle.
- * @param xml_content A null-terminated UTF-8 string containing the FERS XML scenario.
- * @param validate A boolean flag indicating whether to perform schema validation (true by default).
- * @return 0 on success, a non-zero error code on failure (e.g., parsing error).
- *         On failure, a detailed error message can be retrieved with fers_get_last_error_message().
+ * @param context A valid `fers_context_t` handle.
+ * @param xml_content A null-terminated UTF-8 string containing the FERS scenario in XML format.
+ * @param validate A boolean (0 or 1) indicating whether to validate the XML
+ *                 against the embedded FERS schema.
+ * @return 0 on success, a non-zero error code on failure. Use
+ *         `fers_get_last_error_message()` to retrieve error details.
  */
-int fers_load_scenario_from_xml_string(fers_context* context, const char* xml_content, int validate);
+int fers_load_scenario_from_xml_string(fers_context_t* context, const char* xml_content, int validate);
+
+/**
+ * @brief Serializes the current simulation scenario into a JSON string.
+ *
+ * This function is the primary method for the UI to retrieve the full state of
+ * the simulation. JSON is used as the interchange format because it is lightweight,
+ * human-readable, and natively supported by web technologies, making it trivial
+ * to parse and use in the React/TypeScript frontend.
+ *
+ * @note Memory Management: The returned string is allocated by this library and
+ *       its ownership is transferred to the caller. It is crucial to free this
+ *       string using `fers_free_string()` to prevent memory leaks.
+ *
+ * @param context A valid `fers_context_t` handle.
+ * @return A dynamically allocated, null-terminated C-string containing the
+ *         JSON representation of the scenario. Returns NULL on failure.
+ */
+char* fers_get_scenario_as_json(fers_context_t* context);
+
+/**
+ * @brief Serializes the current simulation scenario into a FERS XML string.
+ *
+ * This function enables exporting the in-memory state back into the standard FERS
+ * XML file format. This is essential for interoperability with legacy tools and
+ * for allowing a user to save a scenario that was created or modified in the UI.
+ *
+ * @note Memory Management: The returned string is dynamically allocated and
+ *       its ownership is transferred to the caller. It must be freed using
+ *       `fers_free_string()` to prevent memory leaks.
+ *
+ * @param context A valid `fers_context_t` handle.
+ * @return A dynamically allocated, null-terminated C-string containing the
+ *         XML representation of the scenario. Returns NULL on failure.
+ */
+char* fers_get_scenario_as_xml(fers_context_t* context);
+
+/**
+ * @brief Updates the simulation scenario from a JSON string.
+ *
+ * This is the primary method for the UI to push its state back to the C++
+ * core. It performs a full replacement of the existing scenario. This "replace"
+ * strategy was chosen over a more complex "patch" or "diff" approach to simplify
+ * state management and ensure the C++ core is always perfectly synchronized with
+ * the UI's state representation.
+ *
+ * @param context A valid `fers_context_t` handle.
+ * @param scenario_json A null-terminated UTF-8 string containing the FERS scenario in JSON format.
+ * @return 0 on success, a non-zero error code on failure. Use
+ *         `fers_get_last_error_message()` to retrieve error details.
+ */
+int fers_update_scenario_from_json(fers_context_t* context, const char* scenario_json);
+
 
 // --- Error Handling ---
 
 /**
  * @brief Retrieves the last error message that occurred on the current thread.
  *
- * If a libfers API function returns an error code, this function can be called
- * immediately to get a human-readable description of the error. The error
- * state is thread-local and is cleared at the beginning of each fallible API call.
+ * Because C++ exceptions cannot safely propagate across the FFI boundary into
+ * other languages, this function provides the standard C-style error reporting
+ * mechanism. The error state is stored in a thread-local variable to ensure that
+ * concurrent API calls from different threads do not overwrite each other's error
+ * messages. The error is cleared at the start of each fallible API call.
+ *
+ * @note Memory Management: The returned string's ownership is transferred to the
+ *       caller. It MUST be freed using `fers_free_string()` to prevent memory leaks.
  *
  * @return A dynamically allocated, null-terminated C-string containing the last
- *         error message. This string is owned by the caller and MUST be freed
- *         using fers_free_string() to prevent memory leaks.
- *         Returns NULL if no error has occurred since the last successful call
- *         on this thread.
+ *         error message, or NULL if no error has occurred.
  */
-const char* fers_get_last_error_message();
+char* fers_get_last_error_message();
 
 /**
  * @brief Frees a string that was allocated and returned by the libfers API.
  *
- * Some API functions (like fers_get_last_error_message) return dynamically
- * allocated strings. The caller is responsible for freeing these strings using
- * this function to prevent memory leaks.
+ * This function must be used to release memory for any string returned by
+ * functions like `fers_get_scenario_as_json` or `fers_get_last_error_message`.
+ * It exists to ensure that the memory deallocation mechanism (`free`) matches the
+ * allocation mechanism (`strdup`/`malloc`) used within the C++ library, preventing
+ * potential crashes from mismatched allocators across language boundaries.
  *
- * @param str A pointer to the string to be freed. Can be NULL.
+ * @param str A pointer to the string to be freed. If str is NULL, no action is taken.
  */
 void fers_free_string(char* str);
 
@@ -114,29 +195,35 @@ void fers_free_string(char* str);
 /**
  * @brief Runs the simulation defined in the provided context.
  *
- * This function is synchronous and will block until the simulation is complete.
+ * This function is synchronous and will block the calling thread until the
+ * simulation is complete. This design keeps the API simple. For use in a
+ * responsive UI, it is the responsibility of the caller (e.g., the Tauri
+ * backend) to invoke this function on a separate worker thread to avoid
+ * freezing the user interface.
  *
- * @param context A valid fers_context handle containing a loaded scenario.
- * @param user_data An opaque pointer that will be passed back to the callback.
- * @return 0 on success, a non-zero error code on failure.
- *         On failure, a detailed error message can be retrieved with fers_get_last_error_message().
+ * @param context A valid `fers_context_t` handle containing a loaded scenario.
+ * @param user_data An opaque pointer passed for potential future use with callbacks. Currently unused.
+ * @return 0 on success, a non-zero error code on failure. Use
+ *         `fers_get_last_error_message()` to retrieve error details.
  */
-int fers_run_simulation(fers_context* context, void* user_data);
+int fers_run_simulation(fers_context_t* context, void* user_data);
+
 
 // --- Utility Functions ---
 
 /**
  * @brief Generates a KML file for visualizing the scenario in the context.
  *
- * This function uses the state of the loaded world within the context to generate
- * a KML file for visualization in applications like Google Earth.
+ * This utility exists to provide a simple, out-of-the-box method for users to
+ * validate and visualize the geographic layout and motion paths of their
+ * scenarios in common external tools like Google Earth.
  *
- * @param context A valid fers_context handle containing a loaded scenario.
+ * @param context A valid `fers_context_t` handle containing a loaded scenario.
  * @param output_kml_filepath A null-terminated UTF-8 string for the output KML file path.
- * @return 0 on success, a non-zero error code on failure.
- *         On failure, a detailed error message can be retrieved with fers_get_last_error_message().
+ * @return 0 on success, a non-zero error code on failure. Use
+ *         `fers_get_last_error_message()` to retrieve error details.
  */
-int fers_generate_kml(const fers_context* context, const char* output_kml_filepath);
+int fers_generate_kml(const fers_context_t* context, const char* output_kml_filepath);
 
 #ifdef __cplusplus
 }
