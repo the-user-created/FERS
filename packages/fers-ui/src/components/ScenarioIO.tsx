@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2-0-only
 // Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
 
 import { IconButton, Tooltip } from '@mui/material';
@@ -8,18 +8,20 @@ import { useScenarioStore } from '@/stores/scenarioStore';
 import { invoke } from '@tauri-apps/api/core';
 import { save, open } from '@tauri-apps/plugin-dialog';
 import { writeTextFile } from '@tauri-apps/plugin-fs';
+import { useState } from 'react';
+import ConfirmDialog from './ConfirmDialog';
 
 export default function ScenarioIO() {
-    const { loadScenario } = useScenarioStore.getState();
+    const loadScenario = useScenarioStore((state) => state.loadScenario);
+    const isDirty = useScenarioStore((state) => state.isDirty);
+    const resetScenario = useScenarioStore((state) => state.resetScenario);
+
+    const [isConfirmOpen, setConfirmOpen] = useState(false);
 
     const handleExport = async () => {
         try {
-            // First, ensure the backend has the latest UI state.
-            // A more robust implementation might do this on every change,
-            // but for an explicit export, syncing first is sufficient.
             await useScenarioStore.getState().syncBackend();
 
-            // Now, get the canonical XML from the C++ core.
             const xmlContent = await invoke<string>('get_scenario_as_xml');
 
             const filePath = await save({
@@ -38,11 +40,10 @@ export default function ScenarioIO() {
             }
         } catch (error) {
             console.error('Failed to export scenario:', error);
-            // Here you could show an error dialog/snackbar
         }
     };
 
-    const handleImport = async () => {
+    const performImport = async () => {
         try {
             const selectedPath = await open({
                 title: 'Import Scenario',
@@ -65,7 +66,8 @@ export default function ScenarioIO() {
                 const jsonState = await invoke<string>('get_scenario_as_json');
                 const scenarioData = JSON.parse(jsonState);
 
-                // Update the UI's Zustand store with the new state
+                // Update the UI's Zustand store with the new state after resetting the current state
+                resetScenario();
                 loadScenario(scenarioData);
 
                 console.log(
@@ -76,6 +78,23 @@ export default function ScenarioIO() {
         } catch (error) {
             console.error('Failed to import scenario:', error);
         }
+    };
+
+    const handleImport = () => {
+        if (isDirty) {
+            setConfirmOpen(true);
+        } else {
+            void performImport();
+        }
+    };
+
+    const handleConfirmImport = () => {
+        setConfirmOpen(false);
+        void performImport();
+    };
+
+    const handleCancelImport = () => {
+        setConfirmOpen(false);
     };
 
     return (
@@ -90,6 +109,13 @@ export default function ScenarioIO() {
                     <FileDownloadIcon fontSize="inherit" />
                 </IconButton>
             </Tooltip>
+            <ConfirmDialog
+                open={isConfirmOpen}
+                onConfirm={handleConfirmImport}
+                onCancel={handleCancelImport}
+                title="Overwrite Current Scenario?"
+                message="Importing a new scenario will discard all unsaved changes. Are you sure you want to proceed?"
+            />
         </>
     );
 }

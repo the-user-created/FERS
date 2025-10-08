@@ -976,6 +976,7 @@ namespace serial
 	                     std::mt19937& masterSeeder)
 	{
 		world->clear();
+		params::params.reset();
 		XmlDocument main_doc;
 		if (!main_doc.loadFile(filename))
 		{
@@ -995,8 +996,8 @@ namespace serial
 	                               std::mt19937& masterSeeder)
 	{
 		world->clear();
+		params::params.reset();
 		XmlDocument doc;
-		// Use the internal loadFromString method for libxml2
 		if (!doc.loadString(xml_content))
 		{
 			throw XmlException("Failed to parse XML from memory string.");

@@ -553,7 +553,7 @@ namespace serial
 	{
 		// Clear the existing world state to ensure a clean slate for the new scenario.
 		world.clear();
-		params::params = {}; // Reset global params to default
+		params::params.reset();
 
 		const auto& sim = j.at("simulation");
 
