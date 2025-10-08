@@ -9,6 +9,7 @@ import {
     TargetComponent,
     Timing,
 } from '../types';
+import { omit } from '@/utils/typeUtils.ts';
 
 // Helper to strip null/undefined values from an object before sending to backend
 const cleanObject = <T>(obj: T): T => {
@@ -133,7 +134,7 @@ export const createBackendSlice: StateCreator<
 
             const backendRotation: Record<string, unknown> = {};
             if (rotation.type === 'fixed') {
-                const { type: _type, ...r } = rotation;
+                const r = omit(rotation, 'type');
                 backendRotation.fixedrotation = {
                     interpolation: 'constant',
                     startazimuth: r.startAzimuth,
@@ -142,10 +143,10 @@ export const createBackendSlice: StateCreator<
                     elevationrate: r.elevationRate,
                 };
             } else {
-                const { type: _type, ...r } = rotation;
+                const r = omit(rotation, 'type');
                 backendRotation.rotationpath = {
                     interpolation: r.interpolation,
-                    rotationwaypoints: r.waypoints.map(({ id, ...wp }) => wp),
+                    rotationwaypoints: r.waypoints.map((wp) => omit(wp, 'id')),
                 };
             }
 
@@ -153,9 +154,8 @@ export const createBackendSlice: StateCreator<
                 ...rest,
                 motionpath: {
                     interpolation: motionPath.interpolation,
-                    positionwaypoints: motionPath.waypoints.map(
-                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                        ({ id, ...wp }) => wp
+                    positionwaypoints: motionPath.waypoints.map((wp) =>
+                        omit(wp, 'id')
                     ),
                 },
                 ...backendRotation,
@@ -172,7 +172,7 @@ export const createBackendSlice: StateCreator<
         }));
 
         const backendTimings = timings.map((t: Timing) => {
-            const { id, type, ...rest } = t;
+            const rest = omit(t, 'id', 'type');
             const timingObj = {
                 ...rest,
                 synconpulse: false,
@@ -180,9 +180,7 @@ export const createBackendSlice: StateCreator<
                 random_freq_offset_stdev: t.randomFreqOffsetStdev,
                 phase_offset: t.phaseOffset,
                 random_phase_offset_stdev: t.randomPhaseOffsetStdev,
-                noise_entries: t.noiseEntries.map(
-                    ({ id, ...noiseRest }) => noiseRest
-                ),
+                noise_entries: t.noiseEntries.map((entry) => omit(entry, 'id')),
             };
             // Remove noise_entries array if it's empty
             if (timingObj.noise_entries?.length === 0) {
@@ -191,7 +189,7 @@ export const createBackendSlice: StateCreator<
             return timingObj;
         });
 
-        const backendAntennas = antennas.map(({ id, type, ...rest }) => rest);
+        const backendAntennas = antennas.map((a) => omit(a, 'id', 'type'));
 
         const {
             start,

@@ -72,7 +72,13 @@ export const createAssetSlice: StateCreator<
             const index = state.antennas.findIndex((a) => a.id === antennaId);
             if (index === -1) return;
 
-            const { pattern, ...baseAntenna } = state.antennas[index];
+            const oldAntenna = state.antennas[index];
+            const baseAntenna = {
+                id: oldAntenna.id,
+                type: oldAntenna.type,
+                name: oldAntenna.name,
+                efficiency: oldAntenna.efficiency,
+            };
 
             let newAntennaState: Antenna;
 
