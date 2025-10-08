@@ -551,14 +551,25 @@ namespace serial
 
 	void json_to_world(const nlohmann::json& j, core::World& world, std::mt19937& masterSeeder)
 	{
-		// Clear the existing world state to ensure a clean slate for the new scenario.
 		world.clear();
-		params::params.reset();
 
 		const auto& sim = j.at("simulation");
 
-		// 1. Restore global parameters.
-		params::params = sim.at("parameters").get<params::Parameters>();
+		auto new_params = sim.at("parameters").get<params::Parameters>();
+
+		if (sim.at("parameters").contains("randomseed"))
+		{
+			params::params.random_seed = new_params.random_seed;
+			if (params::params.random_seed)
+			{
+				LOG(logging::Level::INFO, "Master seed updated from JSON to: {}", *params::params.random_seed);
+				masterSeeder.seed(*params::params.random_seed);
+			}
+		}
+
+		new_params.random_seed = params::params.random_seed;
+		params::params = new_params;
+
 		params::params.simulation_name = sim.value("name", "");
 
 		// 2. Restore assets (Pulses, Antennas, Timings). These must be created first

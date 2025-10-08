@@ -88,17 +88,16 @@ int fers_load_scenario_from_xml_file(fers_context_t* context, const char* xml_fi
 	{
 		serial::parseSimulation(xml_filepath, ctx->getWorld(), static_cast<bool>(validate), ctx->getMasterSeeder());
 
-		// The master seeder must be initialized after parsing, as the seed
-		// value may be specified within the XML file itself.
 		if (params::params.random_seed)
 		{
-			LOG(logging::Level::INFO, "Using master seed: {}", *params::params.random_seed);
+			LOG(logging::Level::INFO, "Using master seed from scenario file: {}", *params::params.random_seed);
 			ctx->getMasterSeeder().seed(*params::params.random_seed);
 		}
 		else
 		{
 			const auto seed = std::random_device{}();
-			LOG(logging::Level::INFO, "No master seed provided. Using random_device seed: {}", seed);
+			LOG(logging::Level::INFO, "No master seed provided in scenario. Using random_device seed: {}", seed);
+			params::params.random_seed = seed;
 			ctx->getMasterSeeder().seed(seed);
 		}
 		return 0; // Success
@@ -130,13 +129,14 @@ int fers_load_scenario_from_xml_string(fers_context_t* context, const char* xml_
 
 		if (params::params.random_seed)
 		{
-			LOG(logging::Level::INFO, "Using master seed: {}", *params::params.random_seed);
+			LOG(logging::Level::INFO, "Using master seed from scenario string: {}", *params::params.random_seed);
 			ctx->getMasterSeeder().seed(*params::params.random_seed);
 		}
 		else
 		{
 			const auto seed = std::random_device{}();
-			LOG(logging::Level::INFO, "No master seed provided. Using random_device seed: {}", seed);
+			LOG(logging::Level::INFO, "No master seed provided in scenario. Using random_device seed: {}", seed);
+			params::params.random_seed = seed;
 			ctx->getMasterSeeder().seed(seed);
 		}
 
@@ -197,7 +197,6 @@ char* fers_get_scenario_as_xml(fers_context_t* context)
 	}
 }
 
-
 int fers_update_scenario_from_json(fers_context_t* context, const char* scenario_json)
 {
 	last_error_message.clear();
@@ -214,18 +213,6 @@ int fers_update_scenario_from_json(fers_context_t* context, const char* scenario
 		const nlohmann::json j = nlohmann::json::parse(scenario_json);
 		serial::json_to_world(j, *ctx->getWorld(), ctx->getMasterSeeder());
 
-		// Re-seed the random number generator based on the newly loaded scenario.
-		if (params::params.random_seed)
-		{
-			LOG(logging::Level::INFO, "Using master seed: {}", *params::params.random_seed);
-			ctx->getMasterSeeder().seed(*params::params.random_seed);
-		}
-		else
-		{
-			const auto seed = std::random_device{}();
-			LOG(logging::Level::INFO, "No master seed provided. Using random_device seed: {}", seed);
-			ctx->getMasterSeeder().seed(seed);
-		}
 		return 0; // Success
 	}
 	catch (const nlohmann::json::exception& e)
