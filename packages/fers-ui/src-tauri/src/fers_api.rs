@@ -379,4 +379,45 @@ impl FersContext {
             Err(get_last_error())
         }
     }
+
+    /// Runs the simulation defined in the context.
+    ///
+    /// This is a blocking call that executes the simulation on a separate thread pool
+    /// managed by the C++ core.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` - If the simulation completed successfully.
+    /// * `Err(String)` - If the simulation failed.
+    pub fn run_simulation(&self) -> Result<(), String> {
+        // SAFETY: We pass a valid context pointer. The function is synchronous.
+        // The `user_data` pointer is null as it's currently unused.
+        let result = unsafe { ffi::fers_run_simulation(self.ptr, std::ptr::null_mut()) };
+        if result == 0 {
+            Ok(())
+        } else {
+            Err(get_last_error())
+        }
+    }
+
+    /// Generates a KML file for the current scenario.
+    ///
+    /// # Parameters
+    ///
+    /// * `output_path` - The path where the KML file will be saved.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` - If the KML file was generated successfully.
+    /// * `Err(String)` - If KML generation failed.
+    pub fn generate_kml(&self, output_path: &str) -> Result<(), String> {
+        let c_output_path = CString::new(output_path).map_err(|e| e.to_string())?;
+        // SAFETY: We pass a valid context pointer and a null-terminated C string for the path.
+        let result = unsafe { ffi::fers_generate_kml(self.ptr, c_output_path.as_ptr()) };
+        if result == 0 {
+            Ok(())
+        } else {
+            Err(get_last_error())
+        }
+    }
 }
