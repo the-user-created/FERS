@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
     Box,
     Typography,
@@ -19,7 +19,7 @@ import { useScenarioStore } from '@/stores/scenarioStore';
 import { invoke } from '@tauri-apps/api/core';
 import { save } from '@tauri-apps/plugin-dialog';
 
-export function SimulationView() {
+export const SimulationView = React.memo(function SimulationView() {
     const [isSimulating, setIsSimulating] = useState(false);
     const [isGeneratingKml, setIsGeneratingKml] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -78,8 +78,8 @@ export function SimulationView() {
                 proceeding.
             </Typography>
 
-            <Grid container spacing={4}>
-                <Grid item xs={12} md={6}>
+            <Grid container spacing={4} sx={{ width: '100%' }}>
+                <Grid size={{ xs: 12, md: 6 }}>
                     <Card sx={{ height: '100%' }}>
                         <CardContent>
                             <Typography variant="h5" component="div">
@@ -115,7 +115,7 @@ export function SimulationView() {
                         </CardActions>
                     </Card>
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                     <Card sx={{ height: '100%' }}>
                         <CardContent>
                             <Typography variant="h5" component="div">
@@ -183,4 +183,4 @@ export function SimulationView() {
             )}
         </Box>
     );
-}
+});
