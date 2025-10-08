@@ -51,6 +51,7 @@ export type ScenarioItem =
     | Platform;
 type ScenarioState = ScenarioData & {
     selectedItemId: string | null;
+    isDirty: boolean;
 };
 
 type ScenarioActions = {
@@ -83,7 +84,7 @@ type ScenarioActions = {
         newModel: TargetComponent['rcs_model']
     ) => void;
     loadScenario: (backendData: any) => void;
-    // New actions for backend synchronization
+    resetScenario: () => void;
     syncBackend: () => Promise<void>;
     fetchFromBackend: () => Promise<void>;
 };
@@ -101,8 +102,9 @@ const defaultGlobalParameters: GlobalParameters = {
     random_seed: null,
     adc_bits: 12,
     oversample_ratio: 1,
+    // Default: UCT, South Africa
     origin: {
-        latitude: -33.957652, // Default: UCT, South Africa
+        latitude: -33.957652,
         longitude: 18.4611991,
         altitude: 111.01,
     },
@@ -158,7 +160,7 @@ const createDefaultPlatform = (): Omit<Platform, 'id' | 'name'> => ({
     },
     component: {
         type: 'monostatic',
-        name: 'Monostatic Radar', // Generic name, updated on creation
+        name: 'Monostatic Radar',
         radarType: 'pulsed',
         window_skip: 0,
         window_length: 0,
@@ -175,11 +177,10 @@ const createDefaultPlatform = (): Omit<Platform, 'id' | 'name'> => ({
 // Helper to set nested properties safely
 const setPropertyByPath = (obj: object, path: string, value: unknown) => {
     const keys = path.split('.');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let current: any = obj;
     for (let i = 0; i < keys.length - 1; i++) {
         const key = keys[i];
-        if (current[key] === undefined || current[key] === null) return; // Path does not exist
+        if (current[key] === undefined || current[key] === null) return;
         current = current[key];
     }
     current[keys[keys.length - 1]] = value;
@@ -193,6 +194,7 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
         antennas: [],
         platforms: [],
         selectedItemId: null,
+        isDirty: false,
 
         selectItem: (itemId) => set({ selectedItemId: itemId }),
 
@@ -204,6 +206,7 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                     id,
                     name: `Pulse ${state.pulses.length + 1}`,
                 });
+                state.isDirty = true;
             }),
         addTiming: () =>
             set((state) => {
@@ -213,6 +216,7 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                     id,
                     name: `Timing ${state.timings.length + 1}`,
                 });
+                state.isDirty = true;
             }),
         addAntenna: () =>
             set((state) => {
@@ -222,6 +226,7 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                     id,
                     name: `Antenna ${state.antennas.length + 1}`,
                 });
+                state.isDirty = true;
             }),
         addPlatform: () =>
             set((state) => {
@@ -237,6 +242,7 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                     newPlatform.component.name = `${newName} Monostatic`;
                 }
                 state.platforms.push(newPlatform);
+                state.isDirty = true;
             }),
 
         removeItem: (itemId) =>
@@ -257,6 +263,7 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                         if (state.selectedItemId === itemId) {
                             state.selectedItemId = null;
                         }
+                        state.isDirty = true;
                         return;
                     }
                 }
@@ -275,6 +282,7 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                         altitude: 0,
                         time: 0,
                     });
+                    state.isDirty = true;
                 }
             }),
 
@@ -287,8 +295,10 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                     const index = platform.motionPath.waypoints.findIndex(
                         (wp) => wp.id === waypointId
                     );
-                    if (index > -1)
+                    if (index > -1) {
                         platform.motionPath.waypoints.splice(index, 1);
+                        state.isDirty = true;
+                    }
                 }
             }),
 
@@ -304,6 +314,7 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                         elevation: 0,
                         time: 0,
                     });
+                    state.isDirty = true;
                 }
             }),
 
@@ -319,8 +330,10 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                     const index = platform.rotation.waypoints.findIndex(
                         (wp) => wp.id === waypointId
                     );
-                    if (index > -1)
+                    if (index > -1) {
                         platform.rotation.waypoints.splice(index, 1);
+                        state.isDirty = true;
+                    }
                 }
             }),
 
@@ -333,6 +346,7 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                         alpha: 0,
                         weight: 0,
                     });
+                    state.isDirty = true;
                 }
             }),
 
@@ -343,7 +357,10 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                     const index = timing.noiseEntries.findIndex(
                         (e) => e.id === entryId
                     );
-                    if (index > -1) timing.noiseEntries.splice(index, 1);
+                    if (index > -1) {
+                        timing.noiseEntries.splice(index, 1);
+                        state.isDirty = true;
+                    }
                 }
             }),
 
@@ -401,7 +418,10 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                 const index = state.antennas.findIndex(
                     (a) => a.id === antennaId
                 );
-                if (index > -1) state.antennas[index] = newAntennaState;
+                if (index > -1) {
+                    state.antennas[index] = newAntennaState;
+                    state.isDirty = true;
+                }
             }),
 
         updateItem: (itemId, propertyPath, value) =>
@@ -412,6 +432,7 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                         propertyPath,
                         value
                     );
+                    state.isDirty = true;
                     return;
                 }
                 const collections = [
@@ -426,6 +447,7 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                     );
                     if (item) {
                         setPropertyByPath(item, propertyPath, value);
+                        state.isDirty = true;
                         return;
                     }
                 }
@@ -497,6 +519,7 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                         break;
                 }
                 platform.component = newComponent;
+                state.isDirty = true;
             }),
 
         setPlatformRcsModel: (platformId, newModel) =>
@@ -513,7 +536,19 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                     } else {
                         delete platform.component.rcs_k;
                     }
+                    state.isDirty = true;
                 }
+            }),
+
+        resetScenario: () =>
+            set({
+                globalParameters: defaultGlobalParameters,
+                pulses: [],
+                timings: [],
+                antennas: [],
+                platforms: [],
+                selectedItemId: null,
+                isDirty: false,
             }),
 
         loadScenario: (backendData: any) => {
@@ -735,7 +770,6 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                         'Data validation failed after loading from backend:',
                         result.error.flatten()
                     );
-                    // Optionally, show an error notification to the user here.
                     return;
                 }
 
@@ -743,6 +777,7 @@ export const useScenarioStore = create<ScenarioState & ScenarioActions>()(
                 set({
                     ...result.data,
                     selectedItemId: null,
+                    isDirty: true,
                 });
             } catch (error) {
                 console.error(

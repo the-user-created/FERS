@@ -65,6 +65,16 @@ namespace params
 		std::string simulation_name; ///< The name of the simulation, from the XML.
 		unsigned oversample_ratio = 1; ///< Oversampling ratio.
 		bool is_cw_simulation = false; ///< Simulation is operating in unmodulated continuous wave (CW) mode.
+
+		/**
+		 * @brief Resets the parameters to their default-constructed state.
+		 * This ensures all members are restored to the values specified by their
+		 * default member initializers.
+		 */
+		void reset() noexcept
+		{
+			*this = Parameters{};
+		}
 	};
 
 	inline Parameters params;
