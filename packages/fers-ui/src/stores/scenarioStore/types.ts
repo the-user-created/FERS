@@ -79,7 +79,7 @@ export type ScenarioActions = {
     selectItem: (itemId: string | null) => void;
     updateItem: (itemId: string, propertyPath: string, value: unknown) => void;
     removeItem: (itemId: string) => void;
-    loadScenario: (backendData: any) => void;
+    loadScenario: (backendData: unknown) => void;
     resetScenario: () => void;
 };
 
