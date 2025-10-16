@@ -95,23 +95,23 @@ export default function WorldView() {
                 shadow-mapSize-width={2048}
                 shadow-mapSize-height={2048}
                 shadow-camera-near={0.5}
-                shadow-camera-far={200}
-                shadow-camera-left={-100}
-                shadow-camera-right={100}
-                shadow-camera-top={100}
-                shadow-camera-bottom={-100}
+                shadow-camera-far={500}
+                shadow-camera-left={-200}
+                shadow-camera-right={200}
+                shadow-camera-top={200}
+                shadow-camera-bottom={-200}
             />
             {/* Environment for realistic reflections and ambient light */}
             <Environment preset="city" />
 
             {/* Scenery */}
-            <gridHelper args={[200, 200]} />
+            <gridHelper args={[1000, 100]} />
             <mesh
                 rotation={[-Math.PI / 2, 0, 0]}
                 position={[0, -0.01, 0]}
                 receiveShadow
             >
-                <planeGeometry args={[200, 200]} />
+                <planeGeometry args={[1000, 1000]} />
                 <shadowMaterial opacity={0.3} />
             </mesh>
 
