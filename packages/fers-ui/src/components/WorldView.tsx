@@ -1,58 +1,90 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
 
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
-import { Mesh } from 'three';
+import { useMemo } from 'react';
+import { MapControls, Environment } from '@react-three/drei';
+import { Vector3 } from 'three';
+import { useScenarioStore, Platform } from '@/stores/scenarioStore';
 
-function SpinningBox() {
-    const meshRef = useRef<Mesh>(null!);
-
-    useFrame((_state, delta) => {
-        if (meshRef.current) {
-            meshRef.current.rotation.x += delta * 0.2;
-            meshRef.current.rotation.y += delta * 0.2;
+/**
+ * Represents a single platform in the 3D world as a sphere.
+ * @param {object} props - The component props.
+ * @param {Platform} props.platform - The platform data from the store.
+ */
+function PlatformSphere({ platform }: { platform: Platform }) {
+    const position = useMemo(() => {
+        // Use the first waypoint for the platform's initial position.
+        // If no waypoints exist, default to the origin.
+        const waypoint = platform.motionPath.waypoints[0];
+        if (!waypoint) {
+            return new Vector3(0, 0, 0);
         }
-    });
+
+        // The FERS coordinate system is ENU (East-North-Up).
+        // Map to Three.js's coordinate system (Y-up):
+        // ENU X (East) -> Three.js X
+        // ENU Altitude (Up) -> Three.js Y
+        // ENU Y (North) -> Three.js -Z
+        return new Vector3(waypoint.x, waypoint.altitude, -waypoint.y);
+    }, [platform.motionPath.waypoints]);
 
     return (
-        <mesh ref={meshRef} position={[0, 1.5, 0]}>
-            <boxGeometry args={[2, 2, 2]} />
-            <meshStandardMaterial color={'#f48fb1'} />
+        <mesh position={position} castShadow>
+            <sphereGeometry args={[0.5, 32, 32]} />
+            <meshStandardMaterial
+                color="#90caf9"
+                roughness={0.3}
+                metalness={0.5}
+            />
         </mesh>
     );
 }
 
 /**
  * WorldView represents the 3D scene where simulation elements are visualized.
+ * It provides an interactive camera and renders platforms from the current scenario.
  */
 export default function WorldView() {
+    const platforms = useScenarioStore((state) => state.platforms);
+
     return (
         <>
-            {/* Controls */}
-            <OrbitControls makeDefault />
+            {/* Controls - More suitable for map-like navigation */}
+            <MapControls makeDefault />
 
-            {/* Lights */}
-            <ambientLight intensity={Math.PI / 2} />
-            <spotLight
-                position={[10, 15, 10]}
-                angle={0.3}
-                penumbra={1}
-                decay={0}
-                intensity={Math.PI}
+            {/* Lighting */}
+            <ambientLight intensity={0.5} />
+            <directionalLight
+                castShadow
+                position={[50, 50, 25]}
+                intensity={2.5}
+                shadow-mapSize-width={2048}
+                shadow-mapSize-height={2048}
+                shadow-camera-near={0.5}
+                shadow-camera-far={200}
+                shadow-camera-left={-100}
+                shadow-camera-right={100}
+                shadow-camera-top={100}
+                shadow-camera-bottom={-100}
             />
-            <pointLight
-                position={[-10, -15, -10]}
-                decay={0}
-                intensity={Math.PI}
-            />
+            {/* Environment for realistic reflections and ambient light */}
+            <Environment preset="city" />
 
             {/* Scenery */}
-            <gridHelper args={[100, 100]} />
+            <gridHelper args={[200, 200]} />
+            <mesh
+                rotation={[-Math.PI / 2, 0, 0]}
+                position={[0, -0.01, 0]}
+                receiveShadow
+            >
+                <planeGeometry args={[200, 200]} />
+                <shadowMaterial opacity={0.3} />
+            </mesh>
 
             {/* Objects */}
-            <SpinningBox />
+            {platforms.map((platform) => (
+                <PlatformSphere key={platform.id} platform={platform} />
+            ))}
         </>
     );
 }
