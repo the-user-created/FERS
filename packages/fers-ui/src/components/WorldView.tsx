@@ -1,41 +1,75 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
 
-import { useMemo } from 'react';
-import { MapControls, Environment } from '@react-three/drei';
+import { useMemo, useState } from 'react';
+import { MapControls, Environment, Html } from '@react-three/drei';
 import { Vector3 } from 'three';
 import { useScenarioStore, Platform } from '@/stores/scenarioStore';
 
 /**
- * Represents a single platform in the 3D world as a sphere.
+ * Represents a single platform in the 3D world as a sphere with an identifying label.
  * @param {object} props - The component props.
  * @param {Platform} props.platform - The platform data from the store.
  */
 function PlatformSphere({ platform }: { platform: Platform }) {
+    const [isHovered, setIsHovered] = useState(false);
+    const selectedItemId = useScenarioStore((state) => state.selectedItemId);
+    const isSelected = platform.id === selectedItemId;
+
+    const waypoint = platform.motionPath.waypoints[0];
+
     const position = useMemo(() => {
-        // Use the first waypoint for the platform's initial position.
-        // If no waypoints exist, default to the origin.
-        const waypoint = platform.motionPath.waypoints[0];
         if (!waypoint) {
             return new Vector3(0, 0, 0);
         }
-
-        // The FERS coordinate system is ENU (East-North-Up).
-        // Map to Three.js's coordinate system (Y-up):
+        // ENU to Three.js coordinate system mapping:
         // ENU X (East) -> Three.js X
         // ENU Altitude (Up) -> Three.js Y
         // ENU Y (North) -> Three.js -Z
         return new Vector3(waypoint.x, waypoint.altitude, -waypoint.y);
-    }, [platform.motionPath.waypoints]);
+    }, [waypoint]);
 
     return (
-        <mesh position={position} castShadow>
+        <mesh
+            position={position}
+            castShadow
+            onPointerOver={(e) => {
+                e.stopPropagation();
+                setIsHovered(true);
+            }}
+            onPointerOut={() => setIsHovered(false)}
+        >
             <sphereGeometry args={[0.5, 32, 32]} />
             <meshStandardMaterial
-                color="#90caf9"
+                color={isHovered || isSelected ? '#f48fb1' : '#90caf9'}
                 roughness={0.3}
                 metalness={0.5}
+                emissive={isSelected ? '#f48fb1' : '#000000'}
+                emissiveIntensity={isSelected ? 0.25 : 0}
             />
+            <Html
+                position={[0, 1.2, 0]} // Position label above the sphere
+                occlude // Hide label if behind another object
+                center // Center the label on its anchor point
+                style={{
+                    backgroundColor: 'rgba(20, 20, 20, 0.8)',
+                    color: 'white',
+                    padding: '4px 8px',
+                    borderRadius: '6px',
+                    fontSize: '12px',
+                    whiteSpace: 'nowrap',
+                    pointerEvents: 'none', // Allow clicking/dragging "through" the label
+                    transition: 'opacity 0.2s, border 0.2s',
+                    opacity: isHovered || isSelected ? 1 : 0.75,
+                    border: isSelected ? '2px solid #f48fb1' : 'none',
+                    userSelect: 'none',
+                }}
+            >
+                <div style={{ fontWeight: 'bold' }}>{platform.name}</div>
+                <div>{`X: ${waypoint?.x.toFixed(2) ?? 'N/A'}`}</div>
+                <div>{`Y: ${waypoint?.y.toFixed(2) ?? 'N/A'}`}</div>
+                <div>{`Alt: ${waypoint?.altitude.toFixed(2) ?? 'N/A'}`}</div>
+            </Html>
         </mesh>
     );
 }
