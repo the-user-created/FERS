@@ -66,9 +66,9 @@ function PlatformSphere({ platform }: { platform: Platform }) {
                 }}
             >
                 <div style={{ fontWeight: 'bold' }}>{platform.name}</div>
-                <div>{`X: ${waypoint?.x.toFixed(2) ?? 'N/A'}`}</div>
-                <div>{`Y: ${waypoint?.y.toFixed(2) ?? 'N/A'}`}</div>
-                <div>{`Alt: ${waypoint?.altitude.toFixed(2) ?? 'N/A'}`}</div>
+                <div>{`X: ${(waypoint?.x ?? 0).toFixed(2)}`}</div>
+                <div>{`Y: ${(waypoint?.y ?? 0).toFixed(2)}`}</div>
+                <div>{`Alt: ${(waypoint?.altitude ?? 0).toFixed(2)}`}</div>
             </Html>
         </mesh>
     );
