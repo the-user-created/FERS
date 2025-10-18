@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Box,
     Button,
@@ -36,10 +36,11 @@ interface PlatformInspectorProps {
 
 interface WaypointEditDialogProps {
     open: boolean;
-    onClose: () => void;
+    onClose: (
+        finalWaypoint: PositionWaypoint | RotationWaypoint | null
+    ) => void;
     waypoint: PositionWaypoint | RotationWaypoint | null;
     waypointType: 'position' | 'rotation';
-    onFieldChange: (field: string, value: number | null) => void;
 }
 
 function WaypointEditDialog({
@@ -47,12 +48,50 @@ function WaypointEditDialog({
     onClose,
     waypoint,
     waypointType,
-    onFieldChange,
 }: WaypointEditDialogProps) {
-    if (!waypoint) return null;
+    const [editedWaypoint, setEditedWaypoint] = useState(waypoint);
+
+    useEffect(() => {
+        if (open) {
+            setEditedWaypoint(waypoint);
+        }
+    }, [waypoint, open]);
+
+    const handleFieldChange = (field: string, value: number | null) => {
+        setEditedWaypoint((prev) => {
+            if (!prev) return null;
+            return { ...prev, [field]: value };
+        });
+    };
+
+    const handleClose = () => {
+        if (!editedWaypoint) {
+            onClose(null);
+            return;
+        }
+
+        // Create a mutable copy and cast to a record for safe dynamic access.
+        const sanitizedWaypoint: Record<string, unknown> = {
+            ...editedWaypoint,
+        };
+
+        // Sanitize the local state on close: convert any nulls back to 0.
+        for (const key in sanitizedWaypoint) {
+            if (
+                Object.prototype.hasOwnProperty.call(sanitizedWaypoint, key) &&
+                sanitizedWaypoint[key] === null
+            ) {
+                sanitizedWaypoint[key] = 0;
+            }
+        }
+        // Cast back to the original type before calling the parent callback.
+        onClose(sanitizedWaypoint as PositionWaypoint | RotationWaypoint);
+    };
+
+    if (!editedWaypoint) return null;
 
     return (
-        <Dialog open={open} onClose={onClose}>
+        <Dialog open={open} onClose={handleClose}>
             <DialogTitle>Edit Waypoint</DialogTitle>
             <DialogContent>
                 <Box
@@ -63,48 +102,55 @@ function WaypointEditDialog({
                         pt: 1,
                     }}
                 >
-                    {waypointType === 'position' && 'x' in waypoint && (
+                    {waypointType === 'position' && 'x' in editedWaypoint && (
                         <>
                             <NumberField
                                 label="X"
-                                value={waypoint.x}
-                                onChange={(v) => onFieldChange('x', v)}
+                                value={editedWaypoint.x}
+                                onChange={(v) => handleFieldChange('x', v)}
                             />
                             <NumberField
                                 label="Y"
-                                value={waypoint.y}
-                                onChange={(v) => onFieldChange('y', v)}
+                                value={editedWaypoint.y}
+                                onChange={(v) => handleFieldChange('y', v)}
                             />
                             <NumberField
                                 label="Altitude"
-                                value={waypoint.altitude}
-                                onChange={(v) => onFieldChange('altitude', v)}
+                                value={editedWaypoint.altitude}
+                                onChange={(v) =>
+                                    handleFieldChange('altitude', v)
+                                }
                             />
                         </>
                     )}
-                    {waypointType === 'rotation' && 'azimuth' in waypoint && (
-                        <>
-                            <NumberField
-                                label="Azimuth (deg)"
-                                value={waypoint.azimuth}
-                                onChange={(v) => onFieldChange('azimuth', v)}
-                            />
-                            <NumberField
-                                label="Elevation (deg)"
-                                value={waypoint.elevation}
-                                onChange={(v) => onFieldChange('elevation', v)}
-                            />
-                        </>
-                    )}
+                    {waypointType === 'rotation' &&
+                        'azimuth' in editedWaypoint && (
+                            <>
+                                <NumberField
+                                    label="Azimuth (deg)"
+                                    value={editedWaypoint.azimuth}
+                                    onChange={(v) =>
+                                        handleFieldChange('azimuth', v)
+                                    }
+                                />
+                                <NumberField
+                                    label="Elevation (deg)"
+                                    value={editedWaypoint.elevation}
+                                    onChange={(v) =>
+                                        handleFieldChange('elevation', v)
+                                    }
+                                />
+                            </>
+                        )}
                     <NumberField
                         label="Time (s)"
-                        value={waypoint.time}
-                        onChange={(v) => onFieldChange('time', v)}
+                        value={editedWaypoint.time}
+                        onChange={(v) => handleFieldChange('time', v)}
                     />
                 </Box>
             </DialogContent>
             <DialogActions>
-                <Button onClick={onClose}>Close</Button>
+                <Button onClick={handleClose}>Close</Button>
             </DialogActions>
         </Dialog>
     );
@@ -129,11 +175,15 @@ export function PlatformInspector({ item }: PlatformInspectorProps) {
         index: number;
     } | null>(null);
 
-    const handleWaypointFieldChange = (field: string, value: number | null) => {
-        if (!editingWaypointInfo) return;
-        const { type, index } = editingWaypointInfo;
-        const pathPrefix = type === 'position' ? 'motionPath' : 'rotation';
-        handleChange(`${pathPrefix}.waypoints.${index}.${field}`, value);
+    const handleDialogClose = (
+        finalWaypoint: PositionWaypoint | RotationWaypoint | null
+    ) => {
+        if (finalWaypoint && editingWaypointInfo) {
+            const { type, index } = editingWaypointInfo;
+            const pathPrefix = type === 'position' ? 'motionPath' : 'rotation';
+            handleChange(`${pathPrefix}.waypoints.${index}`, finalWaypoint);
+        }
+        setEditingWaypointInfo(null);
     };
 
     const currentEditingWaypoint = editingWaypointInfo
@@ -457,10 +507,9 @@ export function PlatformInspector({ item }: PlatformInspectorProps) {
             </Section>
             <WaypointEditDialog
                 open={!!editingWaypointInfo}
-                onClose={() => setEditingWaypointInfo(null)}
+                onClose={handleDialogClose}
                 waypoint={currentEditingWaypoint}
                 waypointType={editingWaypointInfo?.type ?? 'position'}
-                onFieldChange={handleWaypointFieldChange}
             />
         </Box>
     );
