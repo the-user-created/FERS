@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import { MapControls, Environment, Html } from '@react-three/drei';
 import { Vector3 } from 'three';
 import { useScenarioStore, Platform } from '@/stores/scenarioStore';
+import { MotionPathLine } from './MotionPathLine';
 
 /**
  * Represents a single platform in the 3D world as a sphere with an identifying label.
@@ -117,7 +118,10 @@ export default function WorldView() {
 
             {/* Objects */}
             {platforms.map((platform) => (
-                <PlatformSphere key={platform.id} platform={platform} />
+                <group key={platform.id}>
+                    <PlatformSphere platform={platform} />
+                    <MotionPathLine platform={platform} />
+                </group>
             ))}
         </>
     );
