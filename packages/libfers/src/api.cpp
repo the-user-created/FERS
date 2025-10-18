@@ -15,6 +15,8 @@
 #include <libfers/api.h>
 #include <libfers/logging.h>
 #include <libfers/parameters.h>
+#include <libfers/path.h>
+#include <libfers/rotation_path.h>
 
 #include <nlohmann/json.hpp>
 #include "core/fers_context.h"
@@ -318,5 +320,204 @@ int fers_generate_kml(const fers_context_t* context, const char* output_kml_file
 		return 1; // Exception thrown
 	}
 }
+
+// --- Helper to convert C-API enum to C++ enum ---
+math::Path::InterpType to_cpp_interp_type(const fers_interp_type_t type)
+{
+	switch (type)
+	{
+	case FERS_INTERP_LINEAR:
+		return math::Path::InterpType::INTERP_LINEAR;
+	case FERS_INTERP_CUBIC:
+		return math::Path::InterpType::INTERP_CUBIC;
+	case FERS_INTERP_STATIC:
+	default:
+		return math::Path::InterpType::INTERP_STATIC;
+	}
+}
+
+math::RotationPath::InterpType to_cpp_rot_interp_type(const fers_interp_type_t type)
+{
+	switch (type)
+	{
+	case FERS_INTERP_LINEAR:
+		return math::RotationPath::InterpType::INTERP_LINEAR;
+	case FERS_INTERP_CUBIC:
+		return math::RotationPath::InterpType::INTERP_CUBIC;
+	case FERS_INTERP_STATIC:
+	default:
+		return math::RotationPath::InterpType::INTERP_STATIC;
+	}
+}
+
+
+fers_interpolated_path_t* fers_get_interpolated_motion_path(const fers_motion_waypoint_t* waypoints,
+                                                            const size_t waypoint_count,
+                                                            const fers_interp_type_t interp_type,
+                                                            const size_t num_points)
+{
+	last_error_message.clear();
+	if (!waypoints || waypoint_count == 0 || num_points == 0)
+	{
+		last_error_message = "Invalid arguments: waypoints cannot be null and counts must be > 0.";
+		LOG(logging::Level::ERROR, last_error_message);
+		return nullptr;
+	}
+	if (interp_type == FERS_INTERP_CUBIC && waypoint_count < 2)
+	{
+		last_error_message = "Cubic interpolation requires at least 2 waypoints.";
+		LOG(logging::Level::ERROR, last_error_message);
+		return nullptr;
+	}
+
+	try
+	{
+		math::Path path;
+		path.setInterp(to_cpp_interp_type(interp_type));
+
+		for (size_t i = 0; i < waypoint_count; ++i)
+		{
+			math::Coord c;
+			c.t = waypoints[i].time;
+			c.pos.x = waypoints[i].x;
+			c.pos.y = waypoints[i].y;
+			c.pos.z = waypoints[i].z;
+			path.addCoord(c);
+		}
+
+		path.finalize();
+
+		auto* result_path = new fers_interpolated_path_t();
+		result_path->points = new fers_interpolated_point_t[num_points];
+		result_path->count = num_points;
+
+		const double start_time = waypoints[0].time;
+		const double end_time = waypoints[waypoint_count - 1].time;
+		const double duration = end_time - start_time;
+
+		// Handle static case separately
+		if (waypoint_count < 2 || duration <= 0)
+		{
+			const math::Vec3 pos = path.getPosition(start_time);
+			for (size_t i = 0; i < num_points; ++i) { result_path->points[i] = {pos.x, pos.y, pos.z}; }
+			return result_path;
+		}
+
+		const double time_step = duration / (num_points > 1 ? num_points - 1 : 1);
+
+		for (size_t i = 0; i < num_points; ++i)
+		{
+			const double t = start_time + i * time_step;
+			const math::Vec3 pos = path.getPosition(t);
+			result_path->points[i] = {pos.x, pos.y, pos.z};
+		}
+
+		return result_path;
+	}
+	catch (const std::exception& e)
+	{
+		handle_api_exception(e, "fers_get_interpolated_motion_path");
+		return nullptr;
+	}
+}
+
+void fers_free_interpolated_motion_path(fers_interpolated_path_t* path)
+{
+	if (path)
+	{
+		delete[] path->points;
+		delete path;
+	}
+}
+
+fers_interpolated_rotation_path_t* fers_get_interpolated_rotation_path(const fers_rotation_waypoint_t* waypoints,
+                                                                       const size_t waypoint_count,
+                                                                       const fers_interp_type_t interp_type,
+                                                                       const size_t num_points)
+{
+	last_error_message.clear();
+	if (!waypoints || waypoint_count == 0 || num_points == 0)
+	{
+		last_error_message = "Invalid arguments: waypoints cannot be null and counts must be > 0.";
+		LOG(logging::Level::ERROR, last_error_message);
+		return nullptr;
+	}
+	if (interp_type == FERS_INTERP_CUBIC && waypoint_count < 2)
+	{
+		last_error_message = "Cubic interpolation requires at least 2 waypoints.";
+		LOG(logging::Level::ERROR, last_error_message);
+		return nullptr;
+	}
+
+	try
+	{
+		math::RotationPath path;
+		path.setInterp(to_cpp_rot_interp_type(interp_type));
+
+		for (size_t i = 0; i < waypoint_count; ++i)
+		{
+			const RealType az_deg = waypoints[i].azimuth_deg;
+			const RealType el_deg = waypoints[i].elevation_deg;
+
+			// Convert from compass degrees (from C-API) to internal mathematical radians
+			const RealType az_rad = (90.0 - az_deg) * (PI / 180.0);
+			const RealType el_rad = el_deg * (PI / 180.0);
+
+			path.addCoord({az_rad, el_rad, waypoints[i].time});
+		}
+
+		path.finalize();
+
+		auto* result_path = new fers_interpolated_rotation_path_t();
+		result_path->points = new fers_interpolated_rotation_point_t[num_points];
+		result_path->count = num_points;
+
+		const double start_time = waypoints[0].time;
+		const double end_time = waypoints[waypoint_count - 1].time;
+		const double duration = end_time - start_time;
+
+		// Handle static case separately
+		if (waypoint_count < 2 || duration <= 0)
+		{
+			const math::SVec3 rot = path.getPosition(start_time);
+			// Convert back to compass degrees for output
+			const RealType az_deg = std::fmod(90.0 - rot.azimuth * 180.0 / PI + 360.0, 360.0);
+			const RealType el_deg = rot.elevation * 180.0 / PI;
+			for (size_t i = 0; i < num_points; ++i) { result_path->points[i] = {az_deg, el_deg}; }
+			return result_path;
+		}
+
+		const double time_step = duration / (num_points > 1 ? num_points - 1 : 1);
+
+		for (size_t i = 0; i < num_points; ++i)
+		{
+			const double t = start_time + i * time_step;
+			const math::SVec3 rot = path.getPosition(t);
+
+			// Convert from internal mathematical radians back to compass degrees for C-API output
+			const RealType az_deg = std::fmod(90.0 - rot.azimuth * 180.0 / PI + 360.0, 360.0);
+			const RealType el_deg = rot.elevation * 180.0 / PI;
+
+			result_path->points[i] = {az_deg, el_deg};
+		}
+
+		return result_path;
+	}
+	catch (const std::exception& e)
+	{
+		handle_api_exception(e, "fers_get_interpolated_rotation_path");
+		return nullptr;
+	}
+}
+
+void fers_free_interpolated_rotation_path(fers_interpolated_rotation_path_t* path)
+{
+	if (path)
+	{
+		delete[] path->points;
+		delete path;
+	}
+}
+
 
 }
