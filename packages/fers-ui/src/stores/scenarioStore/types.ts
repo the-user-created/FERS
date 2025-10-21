@@ -46,6 +46,7 @@ export type ScenarioState = ScenarioData & {
     isDirty: boolean;
     isPlaying: boolean;
     currentTime: number;
+    targetPlaybackDuration: number | null;
 };
 
 // --- Action Slice Types ---
@@ -93,6 +94,7 @@ export type BackendActions = {
 export type PlaybackActions = {
     togglePlayPause: () => void;
     setCurrentTime: (time: number | ((prevTime: number) => number)) => void;
+    setTargetPlaybackDuration: (duration: number | null) => void;
 };
 
 // --- Full Store Type ---
