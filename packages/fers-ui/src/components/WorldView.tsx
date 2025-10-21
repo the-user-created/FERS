@@ -1,11 +1,107 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { MapControls, Environment, Html } from '@react-three/drei';
 import { Vector3 } from 'three';
+import { invoke } from '@tauri-apps/api/core';
 import { useScenarioStore, Platform } from '@/stores/scenarioStore';
 import { MotionPathLine } from './MotionPathLine';
+
+// --- Type definitions for Tauri backend communication (from MotionPathLine.tsx) ---
+const NUM_PATH_POINTS = 100;
+type InterpolationType = 'static' | 'linear' | 'cubic';
+interface InterpolatedPoint {
+    x: number;
+    y: number;
+    z: number;
+}
+
+/**
+ * Custom hook to calculate a platform's position at a given simulation time.
+ * It fetches a high-resolution path from the backend once, then performs
+ * client-side interpolation for smooth animation.
+ * @param {Platform} platform The platform data.
+ * @param {number} currentTime The current global simulation time.
+ * @returns {Vector3} The interpolated position in Three.js coordinates.
+ */
+function useInterpolatedPosition(platform: Platform, currentTime: number) {
+    const [pathPoints, setPathPoints] = useState<Vector3[]>([]);
+    const { waypoints, interpolation } = platform.motionPath;
+
+    useEffect(() => {
+        const fetchPath = async () => {
+            if (waypoints.length < 2 || interpolation === 'static') {
+                const staticPoints = waypoints.map(
+                    (wp) => new Vector3(wp.x, wp.altitude, -wp.y)
+                );
+                setPathPoints(staticPoints);
+                return;
+            }
+            try {
+                const points = await invoke<InterpolatedPoint[]>(
+                    'get_interpolated_motion_path',
+                    {
+                        waypoints,
+                        interpType: interpolation as InterpolationType,
+                        numPoints: NUM_PATH_POINTS,
+                    }
+                );
+                setPathPoints(points.map((p) => new Vector3(p.x, p.z, -p.y)));
+            } catch (error) {
+                console.error(
+                    'Failed to fetch motion path for interpolation:',
+                    error
+                );
+                setPathPoints([]);
+            }
+        };
+        void fetchPath();
+    }, [waypoints, interpolation]);
+
+    return useMemo(() => {
+        const firstWaypoint = waypoints[0];
+        const lastWaypoint = waypoints[waypoints.length - 1];
+
+        if (!firstWaypoint) return new Vector3(0, 0, 0);
+
+        const staticPosition = new Vector3(
+            firstWaypoint.x,
+            firstWaypoint.altitude,
+            -firstWaypoint.y
+        );
+
+        if (
+            interpolation === 'static' ||
+            waypoints.length < 2 ||
+            pathPoints.length < 2
+        ) {
+            return staticPosition;
+        }
+
+        const pathStartTime = firstWaypoint.time;
+        const pathEndTime = lastWaypoint.time;
+        const pathDuration = pathEndTime - pathStartTime;
+
+        if (pathDuration <= 0) return staticPosition;
+
+        const timeRatio = (currentTime - pathStartTime) / pathDuration;
+        const clampedRatio = Math.max(0, Math.min(1, timeRatio));
+
+        const floatIndex = clampedRatio * (pathPoints.length - 1);
+        const index1 = Math.floor(floatIndex);
+        const index2 = Math.min(pathPoints.length - 1, Math.ceil(floatIndex));
+
+        const point1 = pathPoints[index1];
+        const point2 = pathPoints[index2];
+
+        if (!point1 || !point2) return staticPosition;
+        if (index1 === index2) return point1.clone();
+
+        const interPointRatio = floatIndex - index1;
+        return point1.clone().lerp(point2, interPointRatio);
+    }, [currentTime, pathPoints, waypoints, interpolation]);
+}
 
 /**
  * Represents a single platform in the 3D world as a sphere with an identifying label.
@@ -15,20 +111,19 @@ import { MotionPathLine } from './MotionPathLine';
 function PlatformSphere({ platform }: { platform: Platform }) {
     const [isHovered, setIsHovered] = useState(false);
     const selectedItemId = useScenarioStore((state) => state.selectedItemId);
+    const currentTime = useScenarioStore((state) => state.currentTime);
     const isSelected = platform.id === selectedItemId;
 
-    const waypoint = platform.motionPath.waypoints[0];
+    const position = useInterpolatedPosition(platform, currentTime);
 
-    const position = useMemo(() => {
-        if (!waypoint) {
-            return new Vector3(0, 0, 0);
-        }
-        // ENU to Three.js coordinate system mapping:
-        // ENU X (East) -> Three.js X
-        // ENU Altitude (Up) -> Three.js Y
-        // ENU Y (North) -> Three.js -Z
-        return new Vector3(waypoint.x, waypoint.altitude, -waypoint.y);
-    }, [waypoint]);
+    const labelData = useMemo(
+        () => ({
+            x: position.x,
+            y: -position.z, // Convert from Three.js Z back to ENU Y
+            altitude: position.y, // Convert from Three.js Y back to ENU Altitude
+        }),
+        [position]
+    );
 
     return (
         <mesh
@@ -67,9 +162,9 @@ function PlatformSphere({ platform }: { platform: Platform }) {
                 }}
             >
                 <div style={{ fontWeight: 'bold' }}>{platform.name}</div>
-                <div>{`X: ${(waypoint?.x ?? 0).toFixed(2)}`}</div>
-                <div>{`Y: ${(waypoint?.y ?? 0).toFixed(2)}`}</div>
-                <div>{`Alt: ${(waypoint?.altitude ?? 0).toFixed(2)}`}</div>
+                <div>{`X: ${labelData.x.toFixed(2)}`}</div>
+                <div>{`Y: ${labelData.y.toFixed(2)}`}</div>
+                <div>{`Alt: ${labelData.altitude.toFixed(2)}`}</div>
             </Html>
         </mesh>
     );

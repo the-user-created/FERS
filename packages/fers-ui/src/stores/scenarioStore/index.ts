@@ -22,11 +22,24 @@ export const useScenarioStore = create<ScenarioStore>()(
         platforms: [],
         selectedItemId: null,
         isDirty: false,
+        isPlaying: false,
+        currentTime: 0,
 
         // Slices
         ...createAssetSlice(set, get, store),
         ...createBackendSlice(set, get, store),
         ...createPlatformSlice(set, get, store),
         ...createScenarioSlice(set, get, store),
+
+        // Playback Actions
+        togglePlayPause: () =>
+            set((state) => ({ isPlaying: !state.isPlaying })),
+        setCurrentTime: (time) => {
+            const { start, end } = get().globalParameters;
+            const newTime =
+                typeof time === 'function' ? time(get().currentTime) : time;
+            const clampedTime = Math.max(start, Math.min(end, newTime));
+            set({ currentTime: clampedTime });
+        },
     }))
 );
