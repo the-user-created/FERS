@@ -20,7 +20,8 @@ import { invoke } from '@tauri-apps/api/core';
 import { save } from '@tauri-apps/plugin-dialog';
 
 export const SimulationView = React.memo(function SimulationView() {
-    const [isSimulating, setIsSimulating] = useState(false);
+    const isSimulating = useScenarioStore((state) => state.isSimulating);
+    const setIsSimulating = useScenarioStore((state) => state.setIsSimulating);
     const [isGeneratingKml, setIsGeneratingKml] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
