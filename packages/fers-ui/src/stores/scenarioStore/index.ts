@@ -24,6 +24,7 @@ export const useScenarioStore = create<ScenarioStore>()(
         isDirty: false,
         isPlaying: false,
         currentTime: 0,
+        targetPlaybackDuration: null,
 
         // Slices
         ...createAssetSlice(set, get, store),
@@ -38,8 +39,14 @@ export const useScenarioStore = create<ScenarioStore>()(
             const { start, end } = get().globalParameters;
             const newTime =
                 typeof time === 'function' ? time(get().currentTime) : time;
+            // Clamp time to simulation bounds
             const clampedTime = Math.max(start, Math.min(end, newTime));
             set({ currentTime: clampedTime });
         },
+        setTargetPlaybackDuration: (duration) =>
+            set({
+                targetPlaybackDuration:
+                    duration !== null && duration > 0 ? duration : null,
+            }),
     }))
 );

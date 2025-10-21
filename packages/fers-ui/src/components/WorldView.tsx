@@ -8,7 +8,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { useScenarioStore, Platform } from '@/stores/scenarioStore';
 import { MotionPathLine } from './MotionPathLine';
 
-// --- Type definitions for Tauri backend communication (from MotionPathLine.tsx) ---
+// --- Type definitions for Tauri backend communication ---
 const NUM_PATH_POINTS = 100;
 type InterpolationType = 'static' | 'linear' | 'cubic';
 interface InterpolatedPoint {
@@ -25,7 +25,10 @@ interface InterpolatedPoint {
  * @param {number} currentTime The current global simulation time.
  * @returns {Vector3} The interpolated position in Three.js coordinates.
  */
-function useInterpolatedPosition(platform: Platform, currentTime: number) {
+function useInterpolatedPosition(
+    platform: Platform,
+    currentTime: number
+): Vector3 {
     const [pathPoints, setPathPoints] = useState<Vector3[]>([]);
     const { waypoints, interpolation } = platform.motionPath;
 
@@ -66,9 +69,9 @@ function useInterpolatedPosition(platform: Platform, currentTime: number) {
         if (!firstWaypoint) return new Vector3(0, 0, 0);
 
         const staticPosition = new Vector3(
-            firstWaypoint.x,
-            firstWaypoint.altitude,
-            -firstWaypoint.y
+            firstWaypoint.x ?? 0,
+            firstWaypoint.altitude ?? 0,
+            -(firstWaypoint.y ?? 0)
         );
 
         if (
@@ -118,9 +121,9 @@ function PlatformSphere({ platform }: { platform: Platform }) {
 
     const labelData = useMemo(
         () => ({
-            x: position.x,
-            y: -position.z, // Convert from Three.js Z back to ENU Y
-            altitude: position.y, // Convert from Three.js Y back to ENU Altitude
+            x: position?.x,
+            y: -position?.z, // Convert from Three.js Z back to ENU Y
+            altitude: position?.y, // Convert from Three.js Y back to ENU Altitude
         }),
         [position]
     );
@@ -162,9 +165,9 @@ function PlatformSphere({ platform }: { platform: Platform }) {
                 }}
             >
                 <div style={{ fontWeight: 'bold' }}>{platform.name}</div>
-                <div>{`X: ${labelData.x.toFixed(2)}`}</div>
-                <div>{`Y: ${labelData.y.toFixed(2)}`}</div>
-                <div>{`Alt: ${labelData.altitude.toFixed(2)}`}</div>
+                <div>{`X: ${(labelData?.x ?? 0).toFixed(2)}`}</div>
+                <div>{`Y: ${(labelData?.y ?? 0).toFixed(2)}`}</div>
+                <div>{`Alt: ${(labelData?.altitude ?? 0).toFixed(2)}`}</div>
             </Html>
         </mesh>
     );
@@ -179,7 +182,7 @@ export default function WorldView() {
 
     return (
         <>
-            {/* Controls - More suitable for map-like navigation */}
+            {/* Controls */}
             <MapControls makeDefault />
 
             {/* Lighting */}
