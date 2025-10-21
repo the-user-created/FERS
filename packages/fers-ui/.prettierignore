@@ -4,6 +4,7 @@ dist
 
 # Dependencies
 node_modules
+pnpm-lock.yaml
 
 # Tauri files
 src-tauri/target

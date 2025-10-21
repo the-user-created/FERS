@@ -1,21 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
-// Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
-
-/**
- * @file api.h
- * @brief C-style Foreign Function Interface (FFI) for the libfers core library.
- *
- * This header defines the public API for creating, managing, and interacting
- * with a FERS simulation context from non-C++ languages like Rust. It is
- * designed to be a stable ABI boundary, free of C++-specific features like
- * classes, templates, or exceptions. All functions use standard C types and
- * error handling conventions to ensure maximum compatibility. The design
- * philosophy is to provide a simple, stateful interface where the client
- * manages the lifecycle of a simulation "context" object.
- */
-
 #ifndef FERS_API_H
 #define FERS_API_H
+
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -224,6 +210,143 @@ int fers_run_simulation(fers_context_t* context, void* user_data);
  *         `fers_get_last_error_message()` to retrieve error details.
  */
 int fers_generate_kml(const fers_context_t* context, const char* output_kml_filepath);
+
+// --- Path Interpolation Utilities ---
+
+/**
+ * @brief Defines the interpolation methods available for path generation.
+ * This enum provides a language-agnostic way to specify the desired
+ * interpolation algorithm when calling the path generation functions.
+ */
+typedef enum
+{
+	FERS_INTERP_STATIC,
+	FERS_INTERP_LINEAR,
+	FERS_INTERP_CUBIC
+} fers_interp_type_t;
+
+/**
+ * @brief Represents a single waypoint for a motion path.
+ * Coordinates are in the scenario's defined coordinate system (e.g., ENU meters).
+ */
+typedef struct
+{
+	double time;
+
+	double x;
+
+	double y;
+
+	double z;
+} fers_motion_waypoint_t;
+
+/**
+ * @brief Represents a single waypoint for a rotation path.
+ * Angles are in compass degrees (CW from North).
+ */
+typedef struct
+{
+	double time;
+
+	double azimuth_deg;
+
+	double elevation_deg;
+} fers_rotation_waypoint_t;
+
+/**
+ * @brief Represents a single interpolated point on a motion path.
+ */
+typedef struct
+{
+	double x;
+
+	double y;
+
+	double z;
+} fers_interpolated_point_t;
+
+/**
+ * @brief Represents a single interpolated point on a rotation path.
+ * Angles are in compass degrees (CW from North).
+ */
+typedef struct
+{
+	double azimuth_deg;
+
+	double elevation_deg;
+} fers_interpolated_rotation_point_t;
+
+
+/**
+ * @brief A container for an array of interpolated motion path points.
+ * @note The `points` array must be freed using `fers_free_interpolated_motion_path`.
+ */
+typedef struct
+{
+	fers_interpolated_point_t* points;
+
+	size_t count;
+} fers_interpolated_path_t;
+
+/**
+ * @brief A container for an array of interpolated rotation path points.
+ * @note The `points` array must be freed using `fers_free_interpolated_rotation_path`.
+ */
+typedef struct
+{
+	fers_interpolated_rotation_point_t* points;
+
+	size_t count;
+} fers_interpolated_rotation_path_t;
+
+
+/**
+ * @brief Calculates an interpolated motion path from a set of waypoints.
+ * This function is a stateless utility that computes the path without needing a
+ * full simulation context. It is useful for UI previews.
+ *
+ * @param waypoints An array of `fers_motion_waypoint_t` structs.
+ * @param waypoint_count The number of waypoints in the array.
+ * @param interp_type The interpolation algorithm to use.
+ * @param num_points The desired number of points in the output interpolated path.
+ * @return A pointer to a `fers_interpolated_path_t` struct containing the results.
+ *         Returns NULL on failure. The caller owns the returned struct and must
+ *         free it with `fers_free_interpolated_motion_path`.
+ */
+fers_interpolated_path_t* fers_get_interpolated_motion_path(const fers_motion_waypoint_t* waypoints,
+                                                            size_t waypoint_count,
+                                                            fers_interp_type_t interp_type,
+                                                            size_t num_points);
+
+/**
+ * @brief Frees the memory allocated for an interpolated motion path.
+ * @param path A pointer to the `fers_interpolated_path_t` struct to free.
+ */
+void fers_free_interpolated_motion_path(fers_interpolated_path_t* path);
+
+/**
+ * @brief Calculates an interpolated rotation path from a set of waypoints.
+ * This function is a stateless utility for UI previews.
+ *
+ * @param waypoints An array of `fers_rotation_waypoint_t` structs.
+ * @param waypoint_count The number of waypoints in the array.
+ * @param interp_type The interpolation algorithm to use (STATIC, LINEAR, CUBIC).
+ * @param num_points The desired number of points in the output interpolated path.
+ * @return A pointer to a `fers_interpolated_rotation_path_t` struct containing the results.
+ *         Returns NULL on failure. The caller owns the returned struct and must
+ *         free it with `fers_free_interpolated_rotation_path`.
+ */
+fers_interpolated_rotation_path_t* fers_get_interpolated_rotation_path(const fers_rotation_waypoint_t* waypoints,
+                                                                       size_t waypoint_count,
+                                                                       fers_interp_type_t interp_type,
+                                                                       size_t num_points);
+
+/**
+ * @brief Frees the memory allocated for an interpolated rotation path.
+ * @param path A pointer to the `fers_interpolated_rotation_path_t` struct to free.
+ */
+void fers_free_interpolated_rotation_path(fers_interpolated_rotation_path_t* path);
+
 
 #ifdef __cplusplus
 }

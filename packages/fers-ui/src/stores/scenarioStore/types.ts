@@ -44,6 +44,9 @@ export type ScenarioItem =
 export type ScenarioState = ScenarioData & {
     selectedItemId: string | null;
     isDirty: boolean;
+    isPlaying: boolean;
+    currentTime: number;
+    targetPlaybackDuration: number | null;
 };
 
 // --- Action Slice Types ---
@@ -88,10 +91,17 @@ export type BackendActions = {
     fetchFromBackend: () => Promise<void>;
 };
 
+export type PlaybackActions = {
+    togglePlayPause: () => void;
+    setCurrentTime: (time: number | ((prevTime: number) => number)) => void;
+    setTargetPlaybackDuration: (duration: number | null) => void;
+};
+
 // --- Full Store Type ---
 export type FullScenarioActions = AssetActions &
     PlatformActions &
     ScenarioActions &
-    BackendActions;
+    BackendActions &
+    PlaybackActions;
 
 export type ScenarioStore = ScenarioState & FullScenarioActions;

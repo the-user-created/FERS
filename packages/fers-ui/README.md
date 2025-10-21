@@ -58,6 +58,7 @@ The application is architected as a multi-modal "Workbench" to provide a clean, 
 The `fers-ui` application depends on the compiled `libfers` C++ library. You must build the C++ components before running the UI.
 
 1. **Clone the repository:** (If you haven't already)
+
     ```bash
     git clone --recursive https://github.com/the-user-created/FERS.git
     cd FERS
@@ -65,20 +66,24 @@ The `fers-ui` application depends on the compiled `libfers` C++ library. You mus
 
 2. **Build the C++ core libraries:**
    From the root of the repository, run the following commands.
+
     ```bash
     mkdir build && cd build
     cmake ..
     make -j$(nproc) # or make -j$(sysctl -n hw.ncpu) on macOS
     ```
-   For more detailed C++ build instructions, see [`packages/libfers/README.md`](https://github.com/the-user-created/FERS/blob/master/packages/libfers/README.md).
+
+    For more detailed C++ build instructions, see [`packages/libfers/README.md`](https://github.com/the-user-created/FERS/blob/master/packages/libfers/README.md).
 
 3. **Navigate to the `fers-ui` package and install dependencies:**
+
     ```bash
     cd ../packages/fers-ui
     pnpm install
     ```
 
 4. **Run the application in development mode:**
+
     ```bash
     pnpm tauri dev
     ```
