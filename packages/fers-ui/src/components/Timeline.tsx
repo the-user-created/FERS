@@ -5,6 +5,8 @@ import { useEffect, useMemo, useRef } from 'react';
 import { Box, Typography, Slider, IconButton } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
+import FastRewindIcon from '@mui/icons-material/FastRewind';
+import FastForwardIcon from '@mui/icons-material/FastForward';
 import { useScenarioStore } from '@/stores/scenarioStore';
 
 export default function Timeline() {
@@ -21,56 +23,60 @@ export default function Timeline() {
     const lastTimeRef = useRef(performance.now());
 
     // Calculate dynamic values based on simulation duration and user settings.
-    const { simulationDuration, speedFactor, sliderStep } = useMemo(() => {
-        const duration = Math.max(
-            0,
-            globalParameters.end - globalParameters.start
-        );
+    const { simulationDuration, speedFactor, sliderStep, timeStep } =
+        useMemo(() => {
+            const duration = Math.max(
+                0,
+                globalParameters.end - globalParameters.start
+            );
 
-        let realPlaybackDuration: number;
+            let realPlaybackDuration: number;
 
-        if (targetPlaybackDuration !== null && targetPlaybackDuration > 0) {
-            // User override is active
-            realPlaybackDuration = targetPlaybackDuration;
-        } else {
-            // Default behavior
-            if (duration > 0 && duration < 5) {
-                // Slow down short simulations to last at least 5 seconds.
-                realPlaybackDuration = 5;
+            if (targetPlaybackDuration !== null && targetPlaybackDuration > 0) {
+                realPlaybackDuration = targetPlaybackDuration;
             } else {
-                // Otherwise, play in real-time (or not at all if duration is 0).
-                realPlaybackDuration = duration;
+                if (duration > 0 && duration < 5) {
+                    realPlaybackDuration = 5;
+                } else {
+                    realPlaybackDuration = duration;
+                }
             }
+
+            const factor =
+                realPlaybackDuration > 0 ? duration / realPlaybackDuration : 0;
+            const sStep = duration > 0 ? duration / 1000 : 0.01;
+            const tStep = duration > 0 ? duration / 100 : 0.01;
+
+            return {
+                simulationDuration: duration,
+                speedFactor: factor,
+                sliderStep: sStep,
+                timeStep: tStep,
+            };
+        }, [
+            globalParameters.start,
+            globalParameters.end,
+            targetPlaybackDuration,
+        ]);
+
+    // Effect to stop playback when the end is reached.
+    useEffect(() => {
+        if (isPlaying && currentTime >= globalParameters.end) {
+            togglePlayPause();
         }
-
-        const factor =
-            realPlaybackDuration > 0 ? duration / realPlaybackDuration : 0;
-        const step = duration > 0 ? duration / 1000 : 0.01;
-
-        return {
-            simulationDuration: duration,
-            speedFactor: factor,
-            sliderStep: step,
-        };
-    }, [globalParameters.start, globalParameters.end, targetPlaybackDuration]);
+    }, [isPlaying, currentTime, globalParameters.end, togglePlayPause]);
 
     useEffect(() => {
         const animate = (now: number) => {
-            const deltaTime = (now - lastTimeRef.current) / 1000; // in seconds
+            const deltaTime = (now - lastTimeRef.current) / 1000;
             lastTimeRef.current = now;
 
-            setCurrentTime((prevTime) => {
-                const nextTime = prevTime + deltaTime * speedFactor;
-                // Loop simulation when it reaches the end
-                return nextTime >= globalParameters.end
-                    ? globalParameters.start
-                    : nextTime;
-            });
+            // Let the store handle clamping. The effect above will stop playback.
+            setCurrentTime((prevTime) => prevTime + deltaTime * speedFactor);
 
             animationFrameRef.current = requestAnimationFrame(animate);
         };
 
-        // Only run the animation if playing AND there is a duration to play through.
         if (isPlaying && simulationDuration > 0) {
             lastTimeRef.current = performance.now();
             animationFrameRef.current = requestAnimationFrame(animate);
@@ -82,10 +88,9 @@ export default function Timeline() {
     }, [
         isPlaying,
         setCurrentTime,
-        globalParameters.start,
-        globalParameters.end,
         simulationDuration,
         speedFactor,
+        globalParameters.end,
     ]);
 
     const handleSliderChange = (_event: Event, newValue: number | number[]) => {
@@ -99,13 +104,25 @@ export default function Timeline() {
                 alignItems: 'center',
                 gap: 2,
                 height: '100%',
-                px: 2, // Add horizontal padding
-                overflow: 'hidden', // Prevent overflow
+                px: 2,
+                overflow: 'hidden',
             }}
         >
             <Box sx={{ flexShrink: 0 }}>
+                <IconButton
+                    size="small"
+                    onClick={() => setCurrentTime((t) => t - timeStep)}
+                >
+                    <FastRewindIcon />
+                </IconButton>
                 <IconButton onClick={togglePlayPause}>
                     {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
+                </IconButton>
+                <IconButton
+                    size="small"
+                    onClick={() => setCurrentTime((t) => t + timeStep)}
+                >
+                    <FastForwardIcon />
                 </IconButton>
             </Box>
             <Typography
@@ -123,7 +140,11 @@ export default function Timeline() {
                 sx={{
                     mx: 1,
                     flexGrow: 1,
-                    minWidth: 50, // Ensure minimum usable width
+                    minWidth: 50,
+                    // Disable transitions to ensure precise, immediate tracking
+                    '& .MuiSlider-thumb, & .MuiSlider-track': {
+                        transition: 'none',
+                    },
                 }}
                 valueLabelDisplay="auto"
                 valueLabelFormat={(value) => `${value.toFixed(2)}s`}

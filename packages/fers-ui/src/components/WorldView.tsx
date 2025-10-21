@@ -148,7 +148,6 @@ function PlatformSphere({ platform }: { platform: Platform }) {
             />
             <Html
                 position={[0, 1.2, 0]} // Position label above the sphere
-                occlude // Hide label if behind another object
                 center // Center the label on its anchor point
                 style={{
                     backgroundColor: 'rgba(20, 20, 20, 0.8)',
