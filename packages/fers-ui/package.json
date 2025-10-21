@@ -27,7 +27,7 @@
         "@mui/x-tree-view": "^8.14.1",
         "@react-three/drei": "^10.7.6",
         "@react-three/fiber": "^9.4.0",
-        "@tauri-apps/api": "^2.8.0",
+        "@tauri-apps/api": "^2.9.0",
         "@tauri-apps/plugin-dialog": "~2.4.0",
         "@tauri-apps/plugin-fs": "~2.4.2",
         "@tauri-apps/plugin-opener": "^2.5.0",
@@ -41,7 +41,7 @@
     },
     "devDependencies": {
         "@eslint/js": "^9.38.0",
-        "@tauri-apps/cli": "^2.8.4",
+        "@tauri-apps/cli": "^2.9.0",
         "@types/react": "^19.2.2",
         "@types/react-dom": "^19.2.2",
         "@types/three": "^0.180.0",
@@ -54,8 +54,8 @@
         "globals": "^16.4.0",
         "prettier": "^3.6.2",
         "typescript": "~5.8.3",
-        "typescript-eslint": "^8.46.1",
-        "vite": "^7.1.10",
+        "typescript-eslint": "^8.46.2",
+        "vite": "^7.1.11",
         "vite-tsconfig-paths": "^5.1.4"
     },
     "packageManager": "pnpm@10.18.1+sha512.77a884a165cbba2d8d1c19e3b4880eee6d2fcabd0d879121e282196b80042351d5eb3ca0935fa599da1dc51265cc68816ad2bddd2a2de5ea9fdf92adbec7cd34"
