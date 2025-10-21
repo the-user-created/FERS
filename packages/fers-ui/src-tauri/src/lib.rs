@@ -32,7 +32,7 @@
 mod fers_api;
 
 use std::sync::Mutex;
-use tauri::State;
+use tauri::{AppHandle, Emitter, Manager, State};
 
 /// Data structure for a single motion waypoint received from the UI.
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -196,45 +196,93 @@ fn update_scenario_from_json(json: String, state: State<'_, FersState>) -> Resul
         .update_scenario_from_json(&json)
 }
 
-/// Runs the simulation based on the current in-memory scenario.
+/// Triggers the simulation based on the current in-memory scenario.
 ///
-/// This is a long-running, computationally intensive operation. It is defined as an
-/// `async` command to ensure it runs on a background thread, preventing the UI
-/// from freezing.
+/// This command immediately returns `Ok(())` and spawns a background thread to
+/// perform the actual computationally intensive simulation. This prevents the UI
+/// from freezing. The result of the simulation (success or failure) is
+/// communicated back to the frontend via Tauri events.
 ///
 /// # Parameters
 ///
-/// * `state` - Tauri-managed state containing the shared `FersContext`.
+/// * `app_handle` - The Tauri application handle, used to access managed state
+///   and emit events.
 ///
-/// # Returns
+/// # Events Emitted
 ///
-/// * `Ok(())` if the simulation completed successfully.
-/// * `Err(String)` if the simulation failed.
+/// * `simulation-complete` - Emitted with `()` as payload on successful completion.
+/// * `simulation-error` - Emitted with a `String` error message on failure.
 #[tauri::command]
-async fn run_simulation(state: State<'_, FersState>) -> Result<(), String> {
-    state.lock().map_err(|e| e.to_string())?.run_simulation()
+fn run_simulation(app_handle: AppHandle) -> Result<(), String> {
+    // Clone the AppHandle so we can move it into the background thread.
+    let app_handle_clone = app_handle.clone();
+
+    // Spawn a new thread to run the blocking C++ simulation.
+    std::thread::spawn(move || {
+        // Retrieve the managed state within the new thread.
+        let fers_state: State<'_, FersState> = app_handle_clone.state();
+        let result = fers_state
+            .lock()
+            .map_err(|e| e.to_string())
+            .and_then(|context| context.run_simulation());
+
+        // Emit an event to the frontend based on the simulation result.
+        match result {
+            Ok(_) => {
+                app_handle_clone
+                    .emit("simulation-complete", ())
+                    .expect("Failed to emit simulation-complete event");
+            }
+            Err(e) => {
+                app_handle_clone
+                    .emit("simulation-error", e)
+                    .expect("Failed to emit simulation-error event");
+            }
+        }
+    });
+
+    // Return immediately, allowing the UI to remain responsive.
+    Ok(())
 }
 
 /// Generates a KML visualization file for the current in-memory scenario.
 ///
-/// As this can involve significant I/O and processing, it is an `async` command
-/// that runs on a background thread to keep the UI responsive.
+/// This command spawns a background thread to handle file I/O and KML generation,
+/// preventing the UI from freezing. The result is communicated via events.
 ///
 /// # Parameters
 ///
 /// * `output_path` - The absolute file path where the KML file should be saved.
-/// * `state` - Tauri-managed state containing the shared `FersContext`.
+/// * `app_handle` - The Tauri application handle.
 ///
-/// # Returns
+/// # Events Emitted
 ///
-/// * `Ok(())` if the KML was generated successfully.
-/// * `Err(String)` if KML generation failed.
+/// * `kml-generation-complete` - Emitted with the output path `String` on success.
+/// * `kml-generation-error` - Emitted with a `String` error message on failure.
 #[tauri::command]
-async fn generate_kml(output_path: String, state: State<'_, FersState>) -> Result<(), String> {
-    state
-        .lock()
-        .map_err(|e| e.to_string())?
-        .generate_kml(&output_path)
+fn generate_kml(output_path: String, app_handle: AppHandle) -> Result<(), String> {
+    let app_handle_clone = app_handle.clone();
+    std::thread::spawn(move || {
+        let fers_state: State<'_, FersState> = app_handle_clone.state();
+        let result = fers_state
+            .lock()
+            .map_err(|e| e.to_string())
+            .and_then(|context| context.generate_kml(&output_path));
+
+        match result {
+            Ok(_) => {
+                app_handle_clone
+                    .emit("kml-generation-complete", &output_path)
+                    .expect("Failed to emit kml-generation-complete event");
+            }
+            Err(e) => {
+                app_handle_clone
+                    .emit("kml-generation-error", e)
+                    .expect("Failed to emit kml-generation-error event");
+            }
+        }
+    });
+    Ok(())
 }
 
 /// A stateless command to calculate an interpolated motion path.
