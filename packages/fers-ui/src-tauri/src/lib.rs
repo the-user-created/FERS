@@ -198,9 +198,9 @@ fn update_scenario_from_json(json: String, state: State<'_, FersState>) -> Resul
 
 /// Runs the simulation based on the current in-memory scenario.
 ///
-/// This command first ensures the backend state is synchronized with any UI changes,
-/// then triggers the blocking simulation run. Tauri executes this in a separate thread,
-/// preventing the UI from freezing.
+/// This is a long-running, computationally intensive operation. It is defined as an
+/// `async` command to ensure it runs on a background thread, preventing the UI
+/// from freezing.
 ///
 /// # Parameters
 ///
@@ -211,11 +211,14 @@ fn update_scenario_from_json(json: String, state: State<'_, FersState>) -> Resul
 /// * `Ok(())` if the simulation completed successfully.
 /// * `Err(String)` if the simulation failed.
 #[tauri::command]
-fn run_simulation(state: State<'_, FersState>) -> Result<(), String> {
+async fn run_simulation(state: State<'_, FersState>) -> Result<(), String> {
     state.lock().map_err(|e| e.to_string())?.run_simulation()
 }
 
 /// Generates a KML visualization file for the current in-memory scenario.
+///
+/// As this can involve significant I/O and processing, it is an `async` command
+/// that runs on a background thread to keep the UI responsive.
 ///
 /// # Parameters
 ///
@@ -227,7 +230,7 @@ fn run_simulation(state: State<'_, FersState>) -> Result<(), String> {
 /// * `Ok(())` if the KML was generated successfully.
 /// * `Err(String)` if KML generation failed.
 #[tauri::command]
-fn generate_kml(output_path: String, state: State<'_, FersState>) -> Result<(), String> {
+async fn generate_kml(output_path: String, state: State<'_, FersState>) -> Result<(), String> {
     state
         .lock()
         .map_err(|e| e.to_string())?
