@@ -421,3 +421,88 @@ impl FersContext {
         }
     }
 }
+
+/// A safe wrapper for the stateless `fers_get_interpolated_motion_path` C-API function.
+///
+/// This function converts Rust-native waypoint data into C-compatible types,
+/// calls the FFI function, and then converts the result back into a `Vec` of points,
+/// ensuring that all C-allocated memory is properly freed.
+///
+/// # Parameters
+/// * `waypoints` - A vector of motion waypoints from the frontend.
+/// * `interp_type` - The interpolation algorithm to use.
+/// * `num_points` - The desired number of points in the output path.
+///
+/// # Returns
+/// * `Ok(Vec<InterpolatedPoint>)` - A vector of points representing the calculated path.
+/// * `Err(String)` - An error message if the FFI call failed.
+pub fn get_interpolated_motion_path(
+    waypoints: Vec<crate::MotionWaypoint>,
+    interp_type: crate::InterpolationType,
+    num_points: usize,
+) -> Result<Vec<crate::InterpolatedPoint>, String> {
+    if waypoints.is_empty() || num_points == 0 {
+        return Ok(Vec::new());
+    }
+
+    let c_waypoints: Vec<ffi::fers_motion_waypoint_t> = waypoints
+        .into_iter()
+        .map(|wp| ffi::fers_motion_waypoint_t {
+            time: wp.time,
+            x: wp.x,
+            y: wp.y,
+            z: wp.altitude,
+        })
+        .collect();
+
+    let c_interp_type = match interp_type {
+        crate::InterpolationType::Static => ffi::fers_interp_type_t_FERS_INTERP_STATIC,
+        crate::InterpolationType::Linear => ffi::fers_interp_type_t_FERS_INTERP_LINEAR,
+        crate::InterpolationType::Cubic => ffi::fers_interp_type_t_FERS_INTERP_CUBIC,
+    };
+
+    // SAFETY: We are calling the stateless FFI function with valid, well-formed arguments.
+    // The pointer returned is owned by us and must be freed.
+    let result_ptr = unsafe {
+        ffi::fers_get_interpolated_motion_path(
+            c_waypoints.as_ptr(),
+            c_waypoints.len(),
+            c_interp_type,
+            num_points,
+        )
+    };
+
+    if result_ptr.is_null() {
+        return Err(get_last_error());
+    }
+
+    // RAII wrapper to ensure the C-allocated path is freed.
+    struct FersInterpolatedPath(*mut ffi::fers_interpolated_path_t);
+
+    impl Drop for FersInterpolatedPath {
+        fn drop(&mut self) {
+            if !self.0.is_null() {
+                // SAFETY: The pointer is valid and owned by this struct.
+                unsafe { ffi::fers_free_interpolated_motion_path(self.0) };
+            }
+        }
+    }
+
+    let owned_path = FersInterpolatedPath(result_ptr);
+
+    // SAFETY: We are accessing the fields of a non-null pointer returned by the FFI.
+    // The `count` and `points` fields are guaranteed to be valid for the lifetime of `owned_path`.
+    let result_slice =
+        unsafe { std::slice::from_raw_parts((*owned_path.0).points, (*owned_path.0).count) };
+
+    let points: Vec<crate::InterpolatedPoint> = result_slice
+        .iter()
+        .map(|p| crate::InterpolatedPoint {
+            x: p.x,
+            y: p.y,
+            z: p.z,
+        })
+        .collect();
+
+    Ok(points)
+}

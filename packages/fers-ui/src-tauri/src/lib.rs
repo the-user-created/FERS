@@ -34,6 +34,32 @@ mod fers_api;
 use std::sync::Mutex;
 use tauri::State;
 
+/// Data structure for a single motion waypoint received from the UI.
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct MotionWaypoint {
+    time: f64,
+    x: f64,
+    y: f64,
+    altitude: f64,
+}
+
+/// Enum for the interpolation type received from the UI.
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum InterpolationType {
+    Static,
+    Linear,
+    Cubic,
+}
+
+/// Data structure for a single interpolated point sent back to the UI.
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct InterpolatedPoint {
+    x: f64,
+    y: f64,
+    z: f64,
+}
+
 /// Type alias for the managed Tauri state that holds the simulation context.
 ///
 /// The `FersContext` is wrapped in a `Mutex` to ensure thread-safe access, as Tauri
@@ -208,6 +234,29 @@ fn generate_kml(output_path: String, state: State<'_, FersState>) -> Result<(), 
         .generate_kml(&output_path)
 }
 
+/// A stateless command to calculate an interpolated motion path.
+///
+/// This command delegates to the `libfers` core to calculate a path from a given
+/// set of waypoints, ensuring the UI visualization is identical to the path
+/// the simulation would use.
+///
+/// # Parameters
+/// * `waypoints` - A vector of motion waypoints.
+/// * `interp_type` - The interpolation algorithm to use ('static', 'linear', 'cubic').
+/// * `num_points` - The desired number of points for the final path.
+///
+/// # Returns
+/// * `Ok(Vec<InterpolatedPoint>)` - The calculated path points.
+/// * `Err(String)` - An error message if the path calculation failed.
+#[tauri::command]
+fn get_interpolated_motion_path(
+    waypoints: Vec<MotionWaypoint>,
+    interp_type: InterpolationType,
+    num_points: usize,
+) -> Result<Vec<InterpolatedPoint>, String> {
+    fers_api::get_interpolated_motion_path(waypoints, interp_type, num_points)
+}
+
 /// Initializes and runs the Tauri application.
 ///
 /// This function is the main entry point for the desktop application. It performs
@@ -255,7 +304,8 @@ pub fn run() {
             get_scenario_as_xml,
             update_scenario_from_json,
             run_simulation,
-            generate_kml
+            generate_kml,
+            get_interpolated_motion_path
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

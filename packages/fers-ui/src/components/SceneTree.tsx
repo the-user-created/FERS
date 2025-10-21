@@ -16,6 +16,7 @@ import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 
 import ScenarioIO from './ScenarioIO';
+import React from 'react';
 
 const SectionHeader = ({
     title,
@@ -63,11 +64,6 @@ export default function SceneTree() {
         addPlatform,
         removeItem,
     } = useScenarioStore();
-
-    console.log(
-        '[DEBUG] SceneTree rendering with selectedItemId:',
-        selectedItemId
-    );
 
     const handleSelect = (
         _event: React.SyntheticEvent | null,

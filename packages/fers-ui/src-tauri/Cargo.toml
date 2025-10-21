@@ -25,3 +25,4 @@ tauri = { version = "2", features = [] }
 tauri-plugin-opener = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-fs = "2"
+serde = { version = "1.0.225", features = ["derive"] }

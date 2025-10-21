@@ -51,7 +51,18 @@ export const ScenarioView = React.memo(function ScenarioView() {
                         overflow: 'hidden',
                     }}
                 >
-                    <Canvas camera={{ position: [10, 10, 10], fov: 25 }}>
+                    <Canvas
+                        shadows
+                        camera={{
+                            position: [100, 100, 100],
+                            fov: 25,
+                            near: 1,
+                            far: 100000,
+                        }}
+                        gl={{
+                            logarithmicDepthBuffer: true,
+                        }}
+                    >
                         <WorldView />
                     </Canvas>
                 </Box>
