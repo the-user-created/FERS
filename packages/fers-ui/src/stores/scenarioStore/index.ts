@@ -25,6 +25,7 @@ export const useScenarioStore = create<ScenarioStore>()(
         isPlaying: false,
         currentTime: 0,
         targetPlaybackDuration: null,
+        isSimulating: false,
 
         // Slices
         ...createAssetSlice(set, get, store),
@@ -48,5 +49,6 @@ export const useScenarioStore = create<ScenarioStore>()(
                 targetPlaybackDuration:
                     duration !== null && duration > 0 ? duration : null,
             }),
+        setIsSimulating: (isSimulating) => set({ isSimulating }),
     }))
 );

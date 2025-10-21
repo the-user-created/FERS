@@ -8,11 +8,14 @@ import WorldView from '@/components/WorldView';
 import SceneTree from '@/components/SceneTree';
 import PropertyInspector from '@/components/PropertyInspector';
 import Timeline from '@/components/Timeline';
+import { useScenarioStore } from '@/stores/scenarioStore';
 
 /**
  * ScenarioView is the primary workbench for building and visualizing 3D scenes.
  */
 export const ScenarioView = React.memo(function ScenarioView() {
+    const isSimulating = useScenarioStore((state) => state.isSimulating);
+
     return (
         <Box
             sx={{
@@ -21,6 +24,9 @@ export const ScenarioView = React.memo(function ScenarioView() {
                 width: '100%',
                 overflow: 'hidden',
                 position: 'relative', // Establish positioning context
+                pointerEvents: isSimulating ? 'none' : 'auto',
+                opacity: isSimulating ? 0.5 : 1,
+                transition: 'opacity 0.3s ease-in-out',
             }}
         >
             <Box
