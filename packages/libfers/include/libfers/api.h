@@ -24,6 +24,20 @@ struct fers_context;
 
 typedef struct fers_context fers_context_t;
 
+/**
+ * @brief A function pointer type for progress reporting callbacks.
+ *
+ * This callback can be implemented by the client to receive progress updates
+ * during long-running operations like `fers_run_simulation`.
+ *
+ * @param message A descriptive message about the current operation.
+ * @param current The current progress step.
+ * @param total The total number of steps for the operation.
+ * @param user_data An opaque pointer passed back to the caller, useful for
+ *                  maintaining state (e.g., a class instance or application handle).
+ */
+typedef void (*fers_progress_callback_t)(const char* message, int current, int total, void* user_data);
+
 
 // --- Context Lifecycle ---
 
@@ -188,11 +202,12 @@ void fers_free_string(char* str);
  * freezing the user interface.
  *
  * @param context A valid `fers_context_t` handle containing a loaded scenario.
- * @param user_data An opaque pointer passed for potential future use with callbacks. Currently unused.
+ * @param callback A function pointer to a progress callback. Can be NULL.
+ * @param user_data An opaque pointer passed to the callback function.
  * @return 0 on success, a non-zero error code on failure. Use
  *         `fers_get_last_error_message()` to retrieve error details.
  */
-int fers_run_simulation(fers_context_t* context, void* user_data);
+int fers_run_simulation(fers_context_t* context, fers_progress_callback_t callback, void* user_data);
 
 
 // --- Utility Functions ---

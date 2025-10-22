@@ -13,8 +13,10 @@
 #include "sim_threading.h"
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <cmath>
+#include <format>
 #include <functional>
 #include <memory>
 #include <stdexcept>
@@ -415,24 +417,36 @@ namespace
 
 namespace core
 {
-	void runThreadedSim(const World* world, pool::ThreadPool& pool)
+	void runThreadedSim(const World* world, pool::ThreadPool& pool,
+	                    const std::function<void(const std::string&, int, int)>& progress_callback)
 	{
 		const auto& receivers = world->getReceivers();
 		const auto& transmitters = world->getTransmitters();
+		const unsigned total_pairs = receivers.size() * transmitters.size();
+		const unsigned total_renders = receivers.size();
+		const unsigned total_steps = total_pairs + total_renders;
 
-		LOG(Level::INFO, "Running radar simulation for {} receivers", receivers.size());
+		if (progress_callback) { progress_callback("Initializing Pulsed simulation...", 0, total_steps); }
 
+		LOG(Level::INFO, "Running radar simulation for {} Tx/Rx pairs", total_pairs);
+
+		std::atomic<unsigned> pairs_completed = 0;
 		for (const auto& receiver : receivers)
 		{
 			for (const auto& transmitter : transmitters)
 			{
-				pool.enqueue([&transmitter, &receiver, world]
+				pool.enqueue([&]
 				{
 					simulatePair(transmitter.get(), receiver.get(), world);
+					unsigned completed = ++pairs_completed;
+					if (progress_callback)
+					{
+						progress_callback(std::format("Simulating Tx/Rx pairs ({}/{})", completed, total_pairs),
+						                  completed, total_steps);
+					}
 				});
 			}
 		}
-
 		pool.wait();
 
 		for (const auto& receiver : receivers)
@@ -440,20 +454,29 @@ namespace core
 			LOG(Level::DEBUG, "{} responses added to '{}'", receiver->getResponseCount(), receiver->getName());
 		}
 
-		LOG(Level::INFO, "Rendering responses for {} receivers", receivers.size());
+		LOG(Level::INFO, "Rendering responses for {} receivers", total_renders);
 
+		std::atomic<unsigned> renders_completed = 0;
 		for (const auto& receiver : receivers)
 		{
 			pool.enqueue([&]
 			{
 				receiver->render(pool);
+				unsigned completed = ++renders_completed;
+				if (progress_callback)
+				{
+					progress_callback(std::format("Rendering receivers ({}/{})", completed, total_renders),
+					                  total_pairs + completed, total_steps);
+				}
 			});
 		}
-
 		pool.wait();
+
+		if (progress_callback) { progress_callback("Simulation complete", total_steps, total_steps); }
 	}
 
-	void runThreadedCwSim(const World* world, pool::ThreadPool& pool)
+	void runThreadedCwSim(const World* world, pool::ThreadPool& pool,
+	                      const std::function<void(const std::string&, int, int)>& progress_callback)
 	{
 		const auto& receivers = world->getReceivers();
 		const auto& transmitters = world->getTransmitters();
@@ -461,57 +484,77 @@ namespace core
 
 		const RealType start_time = params::startTime();
 		const RealType end_time = params::endTime();
-		const RealType dt = 1.0 / params::rate(); // TODO: No oversampling of the data yet
+		const RealType dt = 1.0 / params::rate();
 		const auto num_samples = static_cast<size_t>(std::ceil((end_time - start_time) / dt));
+		const unsigned total_renders = receivers.size();
+		const unsigned total_steps = num_samples + total_renders;
+
+		if (progress_callback) { progress_callback("Initializing CW simulation...", 0, total_steps); }
 
 		LOG(Level::INFO, "Running CW simulation for {} receivers over {} samples", receivers.size(), num_samples);
 
-		// Pre-allocate memory for I/Q data in each receiver
 		for (const auto& receiver : receivers)
 		{
 			receiver->prepareCwData(num_samples);
 		}
 
-		size_t sample_index = 0;
-		for (RealType t_k = start_time; t_k < end_time; t_k += dt)
+		std::atomic<size_t> samples_completed = 0;
+		for (size_t sample_index = 0; sample_index < num_samples; ++sample_index)
 		{
-			if (sample_index >= num_samples) { continue; }
-
+			const RealType t_k = start_time + sample_index * dt;
 			pool.enqueue([&, t_k, sample_index]
 			{
 				for (const auto& receiver : receivers)
 				{
 					ComplexType total_sample{0.0, 0.0};
-
 					for (const auto& transmitter : transmitters)
 					{
-						// Direct Path
 						if (!receiver->checkFlag(Receiver::RecvFlag::FLAG_NODIRECT))
 						{
 							total_sample += calculateDirectPathContribution(transmitter.get(), receiver.get(), t_k);
 						}
-
-						// Reflected Paths
 						for (const auto& target : targets)
 						{
 							total_sample += calculateReflectedPathContribution(
-								transmitter.get(), receiver.get(),
-								target.get(), t_k);
+								transmitter.get(), receiver.get(), target.get(), t_k);
 						}
 					}
 					receiver->setCwSample(sample_index, total_sample);
 				}
-			});
 
-			++sample_index;
+				// After work is done, increment and report progress
+				size_t completed = ++samples_completed;
+				if (progress_callback)
+				{
+					// Throttle updates to avoid flooding the UI thread
+					if (completed % (num_samples / 100 + 1) == 0 || completed == num_samples)
+					{
+						progress_callback(std::format("Calculating samples ({}/{})", completed, num_samples),
+						                  completed, total_steps);
+					}
+				}
+			});
 		}
 		pool.wait();
 
-		LOG(Level::INFO, "Rendering CW data for {} receivers", receivers.size());
+		LOG(Level::INFO, "Rendering CW data for {} receivers", total_renders);
+
+		std::atomic<unsigned> renders_completed = 0;
 		for (const auto& receiver : receivers)
 		{
-			pool.enqueue([&receiver, &pool] { receiver->render(pool); });
+			pool.enqueue([&]
+			{
+				receiver->render(pool);
+				unsigned completed = ++renders_completed;
+				if (progress_callback)
+				{
+					progress_callback(std::format("Rendering CW data ({}/{})", completed, total_renders),
+					                  num_samples + completed, total_steps);
+				}
+			});
 		}
 		pool.wait();
+
+		if (progress_callback) { progress_callback("CW simulation complete", total_steps, total_steps); }
 	}
 }

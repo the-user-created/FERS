@@ -2,17 +2,22 @@
 // Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
 
 import React, { useState } from 'react';
-import { Box } from '@mui/material';
+import { Box, Snackbar, Alert } from '@mui/material';
 import AppRail from '@/components/AppRail';
 import { ScenarioView } from '@/views/ScenarioView';
 import { AssetLibraryView } from '@/views/AssetLibraryView';
 import { SimulationView } from '@/views/SimulationView';
 import { ResultsView } from '@/views/ResultsView';
 import SettingsDialog from '@/components/SettingsDialog';
+import { useScenarioStore } from '@/stores/scenarioStore';
 
 export function MainLayout() {
     const [activeView, setActiveView] = useState('scenario');
     const [settingsOpen, setSettingsOpen] = useState(false);
+    const { open: errorOpen, message: errorMessage } = useScenarioStore(
+        (state) => state.errorSnackbar
+    );
+    const hideError = useScenarioStore((state) => state.hideError);
 
     return (
         <Box
@@ -83,6 +88,21 @@ export function MainLayout() {
                 open={settingsOpen}
                 onClose={() => setSettingsOpen(false)}
             />
+            <Snackbar
+                open={errorOpen}
+                autoHideDuration={6000}
+                onClose={hideError}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            >
+                <Alert
+                    onClose={hideError}
+                    severity="error"
+                    variant="filled"
+                    sx={{ width: '100%' }}
+                >
+                    {errorMessage}
+                </Alert>
+            </Snackbar>
         </Box>
     );
 }

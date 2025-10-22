@@ -2,7 +2,7 @@
 // Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
 
 import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
-import { useScenarioStore } from '@/stores/scenarioStore';
+import { useScenarioStore, Platform } from '@/stores/scenarioStore';
 import { Box, Typography, IconButton, Tooltip, Divider } from '@mui/material';
 
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -14,6 +14,10 @@ import SettingsInputAntennaIcon from '@mui/icons-material/SettingsInputAntenna';
 import FlightIcon from '@mui/icons-material/Flight';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
+import SensorsIcon from '@mui/icons-material/Sensors';
+import PodcastsIcon from '@mui/icons-material/Podcasts';
+import RssFeedIcon from '@mui/icons-material/RssFeed';
+import AdjustIcon from '@mui/icons-material/Adjust';
 
 import ScenarioIO from './ScenarioIO';
 import React from 'react';
@@ -30,9 +34,20 @@ const SectionHeader = ({
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
+            width: '100%',
+            minWidth: 0, // Allow the component to shrink within its flex container
         }}
     >
-        <Typography variant="overline" sx={{ color: 'text.secondary' }}>
+        <Typography
+            variant="overline"
+            sx={{
+                color: 'text.secondary',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                pr: 1, // Padding between text and add button
+            }}
+        >
             {title}
         </Typography>
         <Tooltip title={`Add ${title.slice(0, -1)}`}>
@@ -48,6 +63,21 @@ const SectionHeader = ({
         </Tooltip>
     </Box>
 );
+
+const getPlatformIcon = (platform: Platform) => {
+    switch (platform.component.type) {
+        case 'monostatic':
+            return <SensorsIcon sx={{ mr: 1 }} fontSize="small" />;
+        case 'transmitter':
+            return <PodcastsIcon sx={{ mr: 1 }} fontSize="small" />;
+        case 'receiver':
+            return <RssFeedIcon sx={{ mr: 1 }} fontSize="small" />;
+        case 'target':
+            return <AdjustIcon sx={{ mr: 1 }} fontSize="small" />;
+        default:
+            return <FlightIcon sx={{ mr: 1 }} fontSize="small" />;
+    }
+};
 
 export default function SceneTree() {
     const {
@@ -151,7 +181,19 @@ export default function SceneTree() {
                     <TreeItem
                         itemId="pulses-root"
                         label={
-                            <SectionHeader title="Pulses" onAdd={addPulse} />
+                            <Box
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    width: '100%',
+                                }}
+                            >
+                                <WavesIcon sx={{ mr: 1 }} fontSize="small" />
+                                <SectionHeader
+                                    title="Pulses"
+                                    onAdd={addPulse}
+                                />
+                            </Box>
                         }
                     >
                         {pulses.map((pulse) => (
@@ -172,7 +214,14 @@ export default function SceneTree() {
                                         />
                                         <Typography
                                             variant="body2"
-                                            sx={{ flexGrow: 1 }}
+                                            sx={{
+                                                flexGrow: 1,
+                                                whiteSpace: 'nowrap',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                minWidth: 0,
+                                                pr: 1,
+                                            }}
                                         >
                                             {pulse.name}
                                         </Typography>
@@ -194,7 +243,19 @@ export default function SceneTree() {
                     <TreeItem
                         itemId="timings-root"
                         label={
-                            <SectionHeader title="Timings" onAdd={addTiming} />
+                            <Box
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    width: '100%',
+                                }}
+                            >
+                                <TimerIcon sx={{ mr: 1 }} fontSize="small" />
+                                <SectionHeader
+                                    title="Timings"
+                                    onAdd={addTiming}
+                                />
+                            </Box>
                         }
                     >
                         {timings.map((timing) => (
@@ -215,7 +276,14 @@ export default function SceneTree() {
                                         />
                                         <Typography
                                             variant="body2"
-                                            sx={{ flexGrow: 1 }}
+                                            sx={{
+                                                flexGrow: 1,
+                                                whiteSpace: 'nowrap',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                minWidth: 0,
+                                                pr: 1,
+                                            }}
                                         >
                                             {timing.name}
                                         </Typography>
@@ -237,10 +305,22 @@ export default function SceneTree() {
                     <TreeItem
                         itemId="antennas-root"
                         label={
-                            <SectionHeader
-                                title="Antennas"
-                                onAdd={addAntenna}
-                            />
+                            <Box
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    width: '100%',
+                                }}
+                            >
+                                <SettingsInputAntennaIcon
+                                    sx={{ mr: 1 }}
+                                    fontSize="small"
+                                />
+                                <SectionHeader
+                                    title="Antennas"
+                                    onAdd={addAntenna}
+                                />
+                            </Box>
                         }
                     >
                         {antennas.map((antenna) => (
@@ -261,7 +341,14 @@ export default function SceneTree() {
                                         />
                                         <Typography
                                             variant="body2"
-                                            sx={{ flexGrow: 1 }}
+                                            sx={{
+                                                flexGrow: 1,
+                                                whiteSpace: 'nowrap',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                minWidth: 0,
+                                                pr: 1,
+                                            }}
                                         >
                                             {antenna.name}
                                         </Typography>
@@ -283,10 +370,19 @@ export default function SceneTree() {
                     <TreeItem
                         itemId="platforms-root"
                         label={
-                            <SectionHeader
-                                title="Platforms"
-                                onAdd={addPlatform}
-                            />
+                            <Box
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    width: '100%',
+                                }}
+                            >
+                                <FlightIcon sx={{ mr: 1 }} fontSize="small" />
+                                <SectionHeader
+                                    title="Platforms"
+                                    onAdd={addPlatform}
+                                />
+                            </Box>
                         }
                     >
                         {platforms.map((platform) => (
@@ -301,13 +397,17 @@ export default function SceneTree() {
                                             width: '100%',
                                         }}
                                     >
-                                        <FlightIcon
-                                            sx={{ mr: 1 }}
-                                            fontSize="small"
-                                        />
+                                        {getPlatformIcon(platform)}
                                         <Typography
                                             variant="body2"
-                                            sx={{ flexGrow: 1 }}
+                                            sx={{
+                                                flexGrow: 1,
+                                                whiteSpace: 'nowrap',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                minWidth: 0,
+                                                pr: 1,
+                                            }}
                                         >
                                             {platform.name}
                                         </Typography>
