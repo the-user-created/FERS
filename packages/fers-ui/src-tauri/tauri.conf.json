@@ -12,9 +12,10 @@
     "app": {
         "windows": [
             {
-                "title": "fers-ui",
-                "width": 800,
-                "height": 600
+                "title": "FERS",
+                "width": 1280,
+                "height": 720,
+                "resizable": true
             }
         ],
         "security": {

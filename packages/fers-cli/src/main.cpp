@@ -119,7 +119,7 @@ int main(const int argc, char* argv[])
 
 	// Run the simulation via the C-API, providing the console callback
 	LOG(Level::INFO, "Starting simulation...");
-	if (fers_run_simulation(context, nullptr) != 0)
+	if (fers_run_simulation(context, nullptr, nullptr) != 0)
 	{
 		LOG(Level::FATAL, "Simulation run failed.");
 		fers_context_destroy(context);
