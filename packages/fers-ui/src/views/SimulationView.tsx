@@ -12,6 +12,7 @@ import {
     Button,
     CircularProgress,
     Fade,
+    LinearProgress,
 } from '@mui/material';
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 import MapIcon from '@mui/icons-material/Map';
@@ -20,16 +21,24 @@ import { invoke } from '@tauri-apps/api/core';
 import { save } from '@tauri-apps/plugin-dialog';
 import { listen } from '@tauri-apps/api/event';
 
+interface ProgressState {
+    message: string;
+    current: number;
+    total: number;
+}
+
 export const SimulationView = React.memo(function SimulationView() {
     const isSimulating = useScenarioStore((state) => state.isSimulating);
     const setIsSimulating = useScenarioStore((state) => state.setIsSimulating);
     const [isGeneratingKml, setIsGeneratingKml] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [progress, setProgress] = useState<ProgressState | null>(null);
 
     useEffect(() => {
         const unlistenSimComplete = listen<void>('simulation-complete', () => {
             console.log('Simulation completed successfully.');
             setIsSimulating(false);
+            setProgress(null);
         });
 
         const unlistenSimError = listen<string>('simulation-error', (event) => {
@@ -37,7 +46,15 @@ export const SimulationView = React.memo(function SimulationView() {
             console.error(errorMessage);
             setError(errorMessage);
             setIsSimulating(false);
+            setProgress(null);
         });
+
+        const unlistenSimProgress = listen<ProgressState>(
+            'simulation-progress',
+            (event) => {
+                setProgress(event.payload);
+            }
+        );
 
         const unlistenKmlComplete = listen<string>(
             'kml-generation-complete',
@@ -62,16 +79,18 @@ export const SimulationView = React.memo(function SimulationView() {
             Promise.all([
                 unlistenSimComplete,
                 unlistenSimError,
+                unlistenSimProgress,
                 unlistenKmlComplete,
                 unlistenKmlError,
             ]).then((unlisteners) => {
                 unlisteners.forEach((unlisten) => unlisten());
             });
         };
-    }, []); // Empty dependency array ensures this effect runs only once
+    }, [setIsSimulating]);
 
     const handleRunSimulation = async () => {
         setError(null);
+        setProgress(null);
         setIsSimulating(true);
         try {
             // Ensure the C++ backend has the latest scenario from the UI
@@ -202,18 +221,52 @@ export const SimulationView = React.memo(function SimulationView() {
                     sx={{
                         mt: 4,
                         p: 2,
-                        backgroundColor: 'primary.main',
-                        color: 'primary.contrastText',
+                        backgroundColor: 'action.hover',
                         borderRadius: 1,
-                        textAlign: 'center',
                     }}
                 >
-                    <Typography variant="h6">
-                        Simulation is running... Please wait.
+                    <Typography
+                        variant="h6"
+                        sx={{ mb: 1, textAlign: 'center' }}
+                    >
+                        {progress
+                            ? progress.message
+                            : 'Preparing simulation...'}
                     </Typography>
-                    <Typography variant="body2">
+                    {progress && progress.total > 0 && (
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                mt: 2,
+                            }}
+                        >
+                            <Box sx={{ width: '100%', mr: 1 }}>
+                                <LinearProgress
+                                    variant="determinate"
+                                    value={
+                                        (progress.current / progress.total) *
+                                        100
+                                    }
+                                />
+                            </Box>
+                            <Box sx={{ minWidth: 40 }}>
+                                <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                >{`${Math.round(
+                                    (progress.current / progress.total) * 100
+                                )}%`}</Typography>
+                            </Box>
+                        </Box>
+                    )}
+                    <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mt: 1, textAlign: 'center' }}
+                    >
                         This may take several minutes depending on scenario
-                        complexity. The application will remain responsive.
+                        complexity.
                     </Typography>
                 </Box>
             </Fade>

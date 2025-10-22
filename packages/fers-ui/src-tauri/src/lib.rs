@@ -212,6 +212,7 @@ fn update_scenario_from_json(json: String, state: State<'_, FersState>) -> Resul
 ///
 /// * `simulation-complete` - Emitted with `()` as payload on successful completion.
 /// * `simulation-error` - Emitted with a `String` error message on failure.
+/// * `simulation-progress` - Emitted periodically with `{ message: String, current: i32, total: i32 }`.
 #[tauri::command]
 fn run_simulation(app_handle: AppHandle) -> Result<(), String> {
     // Clone the AppHandle so we can move it into the background thread.
@@ -224,7 +225,7 @@ fn run_simulation(app_handle: AppHandle) -> Result<(), String> {
         let result = fers_state
             .lock()
             .map_err(|e| e.to_string())
-            .and_then(|context| context.run_simulation());
+            .and_then(|context| context.run_simulation(&app_handle_clone));
 
         // Emit an event to the frontend based on the simulation result.
         match result {
