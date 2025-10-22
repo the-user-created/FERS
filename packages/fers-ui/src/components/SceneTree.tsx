@@ -35,9 +35,19 @@ const SectionHeader = ({
             justifyContent: 'space-between',
             alignItems: 'center',
             width: '100%',
+            minWidth: 0, // Allow the component to shrink within its flex container
         }}
     >
-        <Typography variant="overline" sx={{ color: 'text.secondary' }}>
+        <Typography
+            variant="overline"
+            sx={{
+                color: 'text.secondary',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                pr: 1, // Padding between text and add button
+            }}
+        >
             {title}
         </Typography>
         <Tooltip title={`Add ${title.slice(0, -1)}`}>
@@ -204,7 +214,14 @@ export default function SceneTree() {
                                         />
                                         <Typography
                                             variant="body2"
-                                            sx={{ flexGrow: 1 }}
+                                            sx={{
+                                                flexGrow: 1,
+                                                whiteSpace: 'nowrap',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                minWidth: 0,
+                                                pr: 1,
+                                            }}
                                         >
                                             {pulse.name}
                                         </Typography>
@@ -259,7 +276,14 @@ export default function SceneTree() {
                                         />
                                         <Typography
                                             variant="body2"
-                                            sx={{ flexGrow: 1 }}
+                                            sx={{
+                                                flexGrow: 1,
+                                                whiteSpace: 'nowrap',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                minWidth: 0,
+                                                pr: 1,
+                                            }}
                                         >
                                             {timing.name}
                                         </Typography>
@@ -317,7 +341,14 @@ export default function SceneTree() {
                                         />
                                         <Typography
                                             variant="body2"
-                                            sx={{ flexGrow: 1 }}
+                                            sx={{
+                                                flexGrow: 1,
+                                                whiteSpace: 'nowrap',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                minWidth: 0,
+                                                pr: 1,
+                                            }}
                                         >
                                             {antenna.name}
                                         </Typography>
@@ -369,7 +400,14 @@ export default function SceneTree() {
                                         {getPlatformIcon(platform)}
                                         <Typography
                                             variant="body2"
-                                            sx={{ flexGrow: 1 }}
+                                            sx={{
+                                                flexGrow: 1,
+                                                whiteSpace: 'nowrap',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                minWidth: 0,
+                                                pr: 1,
+                                            }}
                                         >
                                             {platform.name}
                                         </Typography>
