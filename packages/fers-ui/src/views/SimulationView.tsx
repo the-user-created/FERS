@@ -30,8 +30,8 @@ interface ProgressState {
 export const SimulationView = React.memo(function SimulationView() {
     const isSimulating = useScenarioStore((state) => state.isSimulating);
     const setIsSimulating = useScenarioStore((state) => state.setIsSimulating);
+    const showError = useScenarioStore((state) => state.showError);
     const [isGeneratingKml, setIsGeneratingKml] = useState(false);
-    const [error, setError] = useState<string | null>(null);
     const [progress, setProgress] = useState<ProgressState | null>(null);
 
     useEffect(() => {
@@ -44,7 +44,7 @@ export const SimulationView = React.memo(function SimulationView() {
         const unlistenSimError = listen<string>('simulation-error', (event) => {
             const errorMessage = `Simulation failed: ${event.payload}`;
             console.error(errorMessage);
-            setError(errorMessage);
+            showError(errorMessage);
             setIsSimulating(false);
             setProgress(null);
         });
@@ -69,7 +69,7 @@ export const SimulationView = React.memo(function SimulationView() {
             (event) => {
                 const errorMessage = `KML generation failed: ${event.payload}`;
                 console.error(errorMessage);
-                setError(errorMessage);
+                showError(errorMessage);
                 setIsGeneratingKml(false);
             }
         );
@@ -86,10 +86,9 @@ export const SimulationView = React.memo(function SimulationView() {
                 unlisteners.forEach((unlisten) => unlisten());
             });
         };
-    }, [setIsSimulating]);
+    }, [setIsSimulating, showError]);
 
     const handleRunSimulation = async () => {
-        setError(null);
         setProgress(null);
         setIsSimulating(true);
         try {
@@ -100,13 +99,12 @@ export const SimulationView = React.memo(function SimulationView() {
             const errorMessage =
                 err instanceof Error ? err.message : String(err);
             console.error('Failed to invoke simulation:', errorMessage);
-            setError(`Failed to start simulation: ${errorMessage}`);
+            showError(`Failed to start simulation: ${errorMessage}`);
             setIsSimulating(false); // Stop on invocation failure
         }
     };
 
     const handleGenerateKml = async () => {
-        setError(null);
         try {
             const outputPath = await save({
                 title: 'Save KML File',
@@ -123,7 +121,7 @@ export const SimulationView = React.memo(function SimulationView() {
             const errorMessage =
                 err instanceof Error ? err.message : String(err);
             console.error('Failed to invoke KML generation:', errorMessage);
-            setError(`Failed to start KML generation: ${errorMessage}`);
+            showError(`Failed to start KML generation: ${errorMessage}`);
             setIsGeneratingKml(false); // Stop on invocation failure
         }
     };
@@ -270,12 +268,6 @@ export const SimulationView = React.memo(function SimulationView() {
                     </Typography>
                 </Box>
             </Fade>
-
-            {error && (
-                <Typography color="error" sx={{ mt: 4, textAlign: 'center' }}>
-                    {error}
-                </Typography>
-            )}
         </Box>
     );
 });
