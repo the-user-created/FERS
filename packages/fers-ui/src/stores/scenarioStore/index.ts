@@ -25,6 +25,11 @@ export const useScenarioStore = create<ScenarioStore>()(
         isPlaying: false,
         currentTime: 0,
         targetPlaybackDuration: null,
+        isSimulating: false,
+        errorSnackbar: {
+            open: false,
+            message: '',
+        },
 
         // Slices
         ...createAssetSlice(set, get, store),
@@ -48,5 +53,13 @@ export const useScenarioStore = create<ScenarioStore>()(
                 targetPlaybackDuration:
                     duration !== null && duration > 0 ? duration : null,
             }),
+        setIsSimulating: (isSimulating) => set({ isSimulating }),
+
+        // Error Actions
+        showError: (message) => set({ errorSnackbar: { open: true, message } }),
+        hideError: () =>
+            set((state) => ({
+                errorSnackbar: { ...state.errorSnackbar, open: false },
+            })),
     }))
 );

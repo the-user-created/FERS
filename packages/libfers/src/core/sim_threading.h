@@ -17,6 +17,7 @@
 
 #include <exception>
 #include <functional>
+#include <string>
 
 #include <libfers/config.h>
 
@@ -37,9 +38,9 @@ namespace core
 	class World;
 
 	/**
-     * @struct ReResults
-     * @brief Stores the results of a radar simulation.
-     */
+	 * @struct ReResults
+	 * @brief Stores the results of a radar simulation.
+	 */
 	struct ReResults
 	{
 		RealType power; /**< Power of the radar signal. */
@@ -64,7 +65,9 @@ namespace core
 		[[nodiscard]] const char* what() const noexcept override { return "Range error in RE calculations"; }
 	};
 
-	void runThreadedSim(const World* world, pool::ThreadPool& pool);
+	void runThreadedSim(const World* world, pool::ThreadPool& pool,
+	                    const std::function<void(const std::string&, int, int)>& progress_callback);
 
-	void runThreadedCwSim(const World* world, pool::ThreadPool& pool);
+	void runThreadedCwSim(const World* world, pool::ThreadPool& pool,
+	                      const std::function<void(const std::string&, int, int)>& progress_callback);
 }

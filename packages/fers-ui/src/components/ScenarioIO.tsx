@@ -15,6 +15,7 @@ export default function ScenarioIO() {
     const loadScenario = useScenarioStore((state) => state.loadScenario);
     const isDirty = useScenarioStore((state) => state.isDirty);
     const resetScenario = useScenarioStore((state) => state.resetScenario);
+    const showError = useScenarioStore((state) => state.showError);
 
     const [isConfirmOpen, setConfirmOpen] = useState(false);
 
@@ -39,7 +40,10 @@ export default function ScenarioIO() {
                 console.log('Scenario exported successfully to:', filePath);
             }
         } catch (error) {
-            console.error('Failed to export scenario:', error);
+            const errorMessage =
+                error instanceof Error ? error.message : String(error);
+            console.error('Failed to export scenario:', errorMessage);
+            showError(`Export failed: ${errorMessage}`);
         }
     };
 
@@ -76,7 +80,10 @@ export default function ScenarioIO() {
                 );
             }
         } catch (error) {
-            console.error('Failed to import scenario:', error);
+            const errorMessage =
+                error instanceof Error ? error.message : String(error);
+            console.error('Failed to import scenario:', errorMessage);
+            showError(`Import failed: ${errorMessage}`);
         }
     };
 

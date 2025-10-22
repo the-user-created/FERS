@@ -11,6 +11,7 @@
 */
 
 #include <cstring>
+#include <functional>
 #include <string>
 #include <libfers/api.h>
 #include <libfers/logging.h>
@@ -260,7 +261,7 @@ char* fers_get_last_error_message()
 
 void fers_free_string(char* str) { if (str) { free(str); } }
 
-int fers_run_simulation(fers_context_t* context, void* user_data)
+int fers_run_simulation(fers_context_t* context, fers_progress_callback_t callback, void* user_data)
 {
 	last_error_message.clear();
 	if (!context)
@@ -272,6 +273,17 @@ int fers_run_simulation(fers_context_t* context, void* user_data)
 
 	auto* ctx = reinterpret_cast<FersContext*>(context);
 
+	// Wrap the C-style callback in a std::function for easier use in C++.
+	// This also handles the case where the callback is null.
+	std::function<void(const std::string&, int, int)> progress_fn;
+	if (callback)
+	{
+		progress_fn = [callback, user_data](const std::string& msg, int current, int total)
+		{
+			callback(msg.c_str(), current, total, user_data);
+		};
+	}
+
 	try
 	{
 		pool::ThreadPool pool(params::renderThreads());
@@ -279,8 +291,8 @@ int fers_run_simulation(fers_context_t* context, void* user_data)
 		// The simulation loop is chosen based on the scenario configuration.
 		// Continuous Wave (CW) and Pulsed simulations require fundamentally
 		// different processing models, so we dispatch to the appropriate one.
-		if (params::isCwSimulation()) { core::runThreadedCwSim(ctx->getWorld(), pool); }
-		else { core::runThreadedSim(ctx->getWorld(), pool); }
+		if (params::isCwSimulation()) { core::runThreadedCwSim(ctx->getWorld(), pool, progress_fn); }
+		else { core::runThreadedSim(ctx->getWorld(), pool, progress_fn); }
 
 		return 0; // Success
 	}

@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Line } from '@react-three/drei';
 import { Vector3 } from 'three';
 import { invoke } from '@tauri-apps/api/core';
-import { Platform } from '@/stores/scenarioStore';
+import { useScenarioStore, Platform } from '@/stores/scenarioStore';
 
 const NUM_PATH_POINTS = 100; // The resolution of the rendered path line.
 
@@ -26,6 +26,7 @@ interface InterpolatedPoint {
  */
 export function MotionPathLine({ platform }: { platform: Platform }) {
     const [pathPoints, setPathPoints] = useState<Vector3[] | null>(null);
+    const showError = useScenarioStore((state) => state.showError);
 
     const { waypoints, interpolation } = platform.motionPath;
 
@@ -65,16 +66,21 @@ export function MotionPathLine({ platform }: { platform: Platform }) {
                 );
                 setPathPoints(vectors);
             } catch (error) {
+                const errorMessage =
+                    error instanceof Error ? error.message : String(error);
                 console.error(
                     `Failed to fetch motion path for platform ${platform.name}:`,
-                    error
+                    errorMessage
+                );
+                showError(
+                    `Failed to get motion path for ${platform.name}: ${errorMessage}`
                 );
                 setPathPoints(null);
             }
         };
 
         void fetchPath();
-    }, [waypoints, interpolation, platform.name]);
+    }, [waypoints, interpolation, platform.name, showError]);
 
     const linePoints = useMemo(() => {
         if (!pathPoints || pathPoints.length < 2) return undefined;
