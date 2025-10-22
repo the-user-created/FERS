@@ -104,6 +104,11 @@ export const ScenarioView = React.memo(function ScenarioView() {
                                     logarithmicDepthBuffer: true,
                                 }}
                             >
+                                <color attach="background" args={['#202025']} />
+                                <fog
+                                    attach="fog"
+                                    args={['#202025', 2000, 20000]}
+                                />
                                 <WorldView />
                             </Canvas>
                             <Box
