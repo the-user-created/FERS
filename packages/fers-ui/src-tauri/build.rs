@@ -41,7 +41,7 @@ fn main() {
     let libfers_lib_dir = build_dir.join("packages/libfers");
 
     // Directory containing the compiled `GeographicLib` shared library.
-    let geographiclib_lib_dir = build_dir.join("packages/libfers/third_party/geographiclib/src");
+    let geographiclib_lib_dir = build_dir.join("packages/libfers/third_party/geographiclib/src/");
 
     // Tell Cargo where to find our custom-built libraries.
     println!(
@@ -50,6 +50,11 @@ fn main() {
     );
     println!(
         "cargo:rustc-link-search=native={}",
+        geographiclib_lib_dir.display()
+    );
+
+    println!(
+        "cargo:rustc-link-arg=-Wl,-rpath,{}",
         geographiclib_lib_dir.display()
     );
 
