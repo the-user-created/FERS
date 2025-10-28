@@ -15,6 +15,7 @@ import WorldView from '@/components/WorldView';
 import SceneTree from '@/components/SceneTree';
 import PropertyInspector from '@/components/PropertyInspector';
 import Timeline from '@/components/Timeline';
+import ViewControls from '@/components/ViewControls';
 import { useScenarioStore } from '@/stores/scenarioStore';
 
 /**
@@ -105,6 +106,16 @@ export const ScenarioView = React.memo(function ScenarioView() {
                             >
                                 <WorldView />
                             </Canvas>
+                            <Box
+                                sx={{
+                                    position: 'absolute',
+                                    top: 16,
+                                    left: 16,
+                                    zIndex: 1,
+                                }}
+                            >
+                                <ViewControls />
+                            </Box>
                         </Box>
                         <Box
                             sx={{

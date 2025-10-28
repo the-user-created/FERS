@@ -3,6 +3,8 @@
 
 import { StateCreator } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
+import { invoke } from '@tauri-apps/api/core';
+import { Vector3 } from 'three';
 import {
     ScenarioStore,
     PlatformActions,
@@ -11,12 +13,20 @@ import {
 } from '../types';
 import { createDefaultPlatform } from '../defaults';
 
+const NUM_PATH_POINTS = 100;
+type InterpolationType = 'static' | 'linear' | 'cubic';
+interface InterpolatedPoint {
+    x: number;
+    y: number;
+    z: number;
+}
+
 export const createPlatformSlice: StateCreator<
     ScenarioStore,
     [['zustand/immer', never]],
     [],
     PlatformActions
-> = (set) => ({
+> = (set, get) => ({
     addPlatform: () =>
         set((state) => {
             const id = uuidv4();
@@ -170,4 +180,50 @@ export const createPlatformSlice: StateCreator<
                 state.isDirty = true;
             }
         }),
+    fetchPlatformPath: async (platformId) => {
+        const { platforms, showError } = get();
+        const platform = platforms.find((p) => p.id === platformId);
+
+        if (!platform) return;
+
+        const { waypoints, interpolation } = platform.motionPath;
+
+        if (waypoints.length < 2 || interpolation === 'static') {
+            const staticPoints = waypoints.map(
+                (wp) => new Vector3(wp.x, wp.altitude, -wp.y)
+            );
+            set((state) => {
+                const p = state.platforms.find((p) => p.id === platformId);
+                if (p) p.pathPoints = staticPoints;
+            });
+            return;
+        }
+
+        try {
+            const points = await invoke<InterpolatedPoint[]>(
+                'get_interpolated_motion_path',
+                {
+                    waypoints,
+                    interpType: interpolation as InterpolationType,
+                    numPoints: NUM_PATH_POINTS,
+                }
+            );
+            const vectors = points.map((p) => new Vector3(p.x, p.z, -p.y));
+            set((state) => {
+                const p = state.platforms.find((p) => p.id === platformId);
+                if (p) p.pathPoints = vectors;
+            });
+        } catch (error) {
+            const msg = error instanceof Error ? error.message : String(error);
+            console.error(
+                `Failed to fetch motion path for ${platform.name}:`,
+                msg
+            );
+            showError(`Failed to get path for ${platform.name}: ${msg}`);
+            set((state) => {
+                const p = state.platforms.find((p) => p.id === platformId);
+                if (p) p.pathPoints = [];
+            });
+        }
+    },
 });

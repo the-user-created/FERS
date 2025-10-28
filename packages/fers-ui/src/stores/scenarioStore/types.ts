@@ -2,6 +2,7 @@
 // Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
 
 import { z } from 'zod';
+import { Vector3 } from 'three';
 import {
     GlobalParametersSchema,
     PulseSchema,
@@ -30,9 +31,18 @@ export type FixedRotation = z.infer<typeof FixedRotationSchema>;
 export type RotationWaypoint = z.infer<typeof RotationWaypointSchema>;
 export type RotationPath = z.infer<typeof RotationPathSchema>;
 export type PlatformComponent = z.infer<typeof PlatformComponentSchema>;
-export type Platform = z.infer<typeof PlatformSchema>;
+export type Platform = z.infer<typeof PlatformSchema> & {
+    pathPoints?: Vector3[];
+};
 export type TargetComponent = Extract<PlatformComponent, { type: 'target' }>;
-export type ScenarioData = z.infer<typeof ScenarioDataSchema>;
+
+export type ScenarioData = Omit<
+    z.infer<typeof ScenarioDataSchema>,
+    'platforms'
+> & {
+    platforms: Platform[];
+};
+
 export type ScenarioItem =
     | GlobalParameters
     | Pulse
@@ -41,6 +51,12 @@ export type ScenarioItem =
     | Platform;
 
 // --- Store Shape ---
+export type ViewControlAction = {
+    type: 'frame' | 'focus' | 'follow' | null;
+    targetId?: string;
+    timestamp: number;
+};
+
 export type ScenarioState = ScenarioData & {
     selectedItemId: string | null;
     isDirty: boolean;
@@ -52,6 +68,7 @@ export type ScenarioState = ScenarioData & {
         open: boolean;
         message: string;
     };
+    viewControlAction: ViewControlAction;
 };
 
 // --- Action Slice Types ---
@@ -81,6 +98,7 @@ export type PlatformActions = {
         platformId: string,
         newModel: TargetComponent['rcs_model']
     ) => void;
+    fetchPlatformPath: (platformId: string) => Promise<void>;
 };
 
 export type ScenarioActions = {
@@ -108,12 +126,20 @@ export type ErrorActions = {
     hideError: () => void;
 };
 
+export type ViewControlActions = {
+    frameScene: () => void;
+    focusOnItem: (itemId: string) => void;
+    toggleFollowItem: (itemId: string) => void;
+    clearViewControlAction: () => void;
+};
+
 // --- Full Store Type ---
 export type FullScenarioActions = AssetActions &
     PlatformActions &
     ScenarioActions &
     BackendActions &
     PlaybackActions &
-    ErrorActions;
+    ErrorActions &
+    ViewControlActions;
 
 export type ScenarioStore = ScenarioState & FullScenarioActions;
