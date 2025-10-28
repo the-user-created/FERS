@@ -1,26 +1,21 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { MapControls, Environment, Html } from '@react-three/drei';
 import { Vector3 } from 'three';
-import { invoke } from '@tauri-apps/api/core';
-import { useScenarioStore, Platform } from '@/stores/scenarioStore';
+import {
+    useScenarioStore,
+    Platform,
+    calculateInterpolatedPosition,
+} from '@/stores/scenarioStore';
 import { MotionPathLine } from './MotionPathLine';
-
-// --- Type definitions for Tauri backend communication ---
-const NUM_PATH_POINTS = 100;
-type InterpolationType = 'static' | 'linear' | 'cubic';
-interface InterpolatedPoint {
-    x: number;
-    y: number;
-    z: number;
-}
+import CameraManager from './CameraManager';
+import { type MapControls as MapControlsImpl } from 'three-stdlib';
 
 /**
  * Custom hook to calculate a platform's position at a given simulation time.
- * It fetches a high-resolution path from the backend once, then performs
- * client-side interpolation for smooth animation.
+ * It relies on the pre-fetched path data stored in the Zustand store.
  * @param {Platform} platform The platform data.
  * @param {number} currentTime The current global simulation time.
  * @returns {Vector3} The interpolated position in Three.js coordinates.
@@ -29,81 +24,10 @@ function useInterpolatedPosition(
     platform: Platform,
     currentTime: number
 ): Vector3 {
-    const [pathPoints, setPathPoints] = useState<Vector3[]>([]);
-    const { waypoints, interpolation } = platform.motionPath;
-
-    useEffect(() => {
-        const fetchPath = async () => {
-            if (waypoints.length < 2 || interpolation === 'static') {
-                const staticPoints = waypoints.map(
-                    (wp) => new Vector3(wp.x, wp.altitude, -wp.y)
-                );
-                setPathPoints(staticPoints);
-                return;
-            }
-            try {
-                const points = await invoke<InterpolatedPoint[]>(
-                    'get_interpolated_motion_path',
-                    {
-                        waypoints,
-                        interpType: interpolation as InterpolationType,
-                        numPoints: NUM_PATH_POINTS,
-                    }
-                );
-                setPathPoints(points.map((p) => new Vector3(p.x, p.z, -p.y)));
-            } catch (error) {
-                console.error(
-                    'Failed to fetch motion path for interpolation:',
-                    error
-                );
-                setPathPoints([]);
-            }
-        };
-        void fetchPath();
-    }, [waypoints, interpolation]);
-
-    return useMemo(() => {
-        const firstWaypoint = waypoints[0];
-        const lastWaypoint = waypoints[waypoints.length - 1];
-
-        if (!firstWaypoint) return new Vector3(0, 0, 0);
-
-        const staticPosition = new Vector3(
-            firstWaypoint.x ?? 0,
-            firstWaypoint.altitude ?? 0,
-            -(firstWaypoint.y ?? 0)
-        );
-
-        if (
-            interpolation === 'static' ||
-            waypoints.length < 2 ||
-            pathPoints.length < 2
-        ) {
-            return staticPosition;
-        }
-
-        const pathStartTime = firstWaypoint.time;
-        const pathEndTime = lastWaypoint.time;
-        const pathDuration = pathEndTime - pathStartTime;
-
-        if (pathDuration <= 0) return staticPosition;
-
-        const timeRatio = (currentTime - pathStartTime) / pathDuration;
-        const clampedRatio = Math.max(0, Math.min(1, timeRatio));
-
-        const floatIndex = clampedRatio * (pathPoints.length - 1);
-        const index1 = Math.floor(floatIndex);
-        const index2 = Math.min(pathPoints.length - 1, Math.ceil(floatIndex));
-
-        const point1 = pathPoints[index1];
-        const point2 = pathPoints[index2];
-
-        if (!point1 || !point2) return staticPosition;
-        if (index1 === index2) return point1.clone();
-
-        const interPointRatio = floatIndex - index1;
-        return point1.clone().lerp(point2, interPointRatio);
-    }, [currentTime, pathPoints, waypoints, interpolation]);
+    return useMemo(
+        () => calculateInterpolatedPosition(platform, currentTime),
+        [platform, currentTime, platform.pathPoints] // Depend on pathPoints
+    );
 }
 
 /**
@@ -178,11 +102,42 @@ function PlatformSphere({ platform }: { platform: Platform }) {
  */
 export default function WorldView() {
     const platforms = useScenarioStore((state) => state.platforms);
+    const fetchPlatformPath = useScenarioStore(
+        (state) => state.fetchPlatformPath
+    );
+    const controlsRef = useRef<MapControlsImpl>(null);
+
+    // Memoize platform dependencies to avoid re-triggering the effect unnecessarily.
+    const platformDeps = useMemo(
+        () =>
+            platforms
+                .map((p) =>
+                    [
+                        p.id,
+                        p.motionPath.interpolation,
+                        p.motionPath.waypoints.length,
+                    ].join()
+                )
+                .join(';'),
+        [platforms]
+    );
+
+    useEffect(() => {
+        platforms.forEach((platform) => {
+            // Fetch path data for any platform that doesn't have it yet.
+            // This effect re-runs if waypoints or interpolation type changes.
+            if (!platform.pathPoints) {
+                void fetchPlatformPath(platform.id);
+            }
+        });
+    }, [platformDeps, fetchPlatformPath, platforms]);
 
     return (
         <>
+            <CameraManager controlsRef={controlsRef} />
+
             {/* Controls */}
-            <MapControls makeDefault />
+            <MapControls makeDefault ref={controlsRef} />
 
             {/* Lighting */}
             <ambientLight intensity={0.5} />
