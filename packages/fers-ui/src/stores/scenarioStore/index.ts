@@ -30,6 +30,7 @@ export const useScenarioStore = create<ScenarioStore>()(
             open: false,
             message: '',
         },
+        viewControlAction: { type: null, timestamp: 0 },
 
         // Slices
         ...createAssetSlice(set, get, store),
@@ -54,6 +55,51 @@ export const useScenarioStore = create<ScenarioStore>()(
                     duration !== null && duration > 0 ? duration : null,
             }),
         setIsSimulating: (isSimulating) => set({ isSimulating }),
+
+        frameScene: () =>
+            set({
+                viewControlAction: { type: 'frame', timestamp: Date.now() },
+            }),
+        focusOnItem: (itemId) =>
+            set({
+                viewControlAction: {
+                    type: 'focus',
+                    targetId: itemId,
+                    timestamp: Date.now(),
+                },
+            }),
+        toggleFollowItem: (itemId) => {
+            const currentAction = get().viewControlAction;
+            if (
+                currentAction.type === 'follow' &&
+                currentAction.targetId === itemId
+            ) {
+                set({
+                    viewControlAction: { type: null, timestamp: Date.now() },
+                });
+            } else {
+                set({
+                    viewControlAction: {
+                        type: 'follow',
+                        targetId: itemId,
+                        timestamp: Date.now(),
+                    },
+                });
+            }
+        },
+        clearViewControlAction: () =>
+            set((state) => {
+                // Don't clear a 'follow' action, as it's persistent until toggled off.
+                if (state.viewControlAction.type !== 'follow') {
+                    return {
+                        viewControlAction: {
+                            type: null,
+                            timestamp: state.viewControlAction.timestamp,
+                        },
+                    };
+                }
+                return {};
+            }),
 
         // Error Actions
         showError: (message) => set({ errorSnackbar: { open: true, message } }),
