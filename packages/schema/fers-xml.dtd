@@ -6,7 +6,9 @@
 
   This file is part of FERS. FERS is free software, licensed under the GPLv2.
 -->
-        <!ELEMENT simulation (parameters?, (pulse | timing | antenna | platform | include)*)>
+        <!-- Note: DTD cannot enforce the XSD's implicit requirement of "at least one of each" of waveform, timing, etc. in any order. -->
+        <!-- This model enforces that parameters is present, followed by at least one of the other main elements, preserving flexible ordering. -->
+        <!ELEMENT simulation (parameters, (waveform | timing | antenna | platform | include)+)>
         <!ATTLIST simulation name CDATA #REQUIRED>
 
         <!-- Simulation Parameters -->
@@ -43,21 +45,26 @@
                 >
         <!-- Formats to export -->
         <!ELEMENT export EMPTY>
-        <!ATTLIST export xml (true|false) "false">
-        <!ATTLIST export csv (true|false) "false">
-        <!ATTLIST export binary (true|false) "true">
+        <!ATTLIST export
+                xml (true|false) "false"
+                csv (true|false) "false"
+                binary (true|false) "true"
+                >
 
-        <!-- Pulsed Radar Pulse -->
-        <!ELEMENT pulse (power?,carrier?)>
-        <!ATTLIST pulse name CDATA #REQUIRED
-                type (file|cw) #REQUIRED
-                filename CDATA #IMPLIED> <!-- Filename required only for specific types -->
+        <!-- Waveform definition -->
+        <!ELEMENT waveform (power, carrier_frequency, (pulsed_from_file | cw))>
+        <!ATTLIST waveform name CDATA #REQUIRED>
 
-        <!-- Pulse power and carrier frequency -->
+        <!-- Waveform power and carrier frequency -->
         <!-- Pulse power (Watts) -->
         <!ELEMENT power (#PCDATA)>
-        <!-- Frequency (Hz) -->
-        <!ELEMENT carrier (#PCDATA)>
+        <!-- Carrier frequency (Hz) -->
+        <!ELEMENT carrier_frequency (#PCDATA)>
+
+        <!-- Waveform types -->
+        <!ELEMENT pulsed_from_file EMPTY>
+        <!ATTLIST pulsed_from_file filename CDATA #REQUIRED>
+        <!ELEMENT cw EMPTY>
 
         <!-- Timing Source -->
         <!ELEMENT timing (frequency,freq_offset?,random_freq_offset_stdev?,phase_offset?,random_phase_offset_stdev?,noise_entry*)>
@@ -104,11 +111,11 @@
         <!ELEMENT efficiency (#PCDATA)>
 
         <!-- Platform -->
-        <!ELEMENT platform (motionpath,(rotationpath|fixedrotation),(monostatic|transmitter|receiver|target)?)>
+        <!ELEMENT platform (motionpath,(rotationpath|fixedrotation),(monostatic|transmitter|receiver|target)*)>
         <!ATTLIST platform name CDATA #REQUIRED>
 
         <!-- Motion paths and Position Waypoints -->
-        <!ELEMENT motionpath (positionwaypoint*)>
+        <!ELEMENT motionpath (positionwaypoint+)>
         <!ATTLIST motionpath interpolation (static|linear|cubic) "static">
 
         <!-- Position Waypoints -->
@@ -140,12 +147,16 @@
         <!ELEMENT azimuth (#PCDATA)>
         <!ELEMENT elevation (#PCDATA)>
 
+        <!-- Elements for defining radar operational modes -->
+        <!ELEMENT pulsed_mode (prf, window_skip?, window_length?)>
+        <!ELEMENT cw_mode EMPTY>
+
         <!-- Monostatic radar installations -->
-        <!ELEMENT monostatic (window_skip?,window_length?,prf,noise_temp?)>
-        <!ATTLIST monostatic name CDATA #REQUIRED
-                type (pulsed|continuous|cw) #REQUIRED
+        <!ELEMENT monostatic ((pulsed_mode | cw_mode), noise_temp?)>
+        <!ATTLIST monostatic
+                name CDATA #REQUIRED
                 antenna CDATA #REQUIRED
-                pulse CDATA #REQUIRED
+                waveform CDATA #REQUIRED
                 timing CDATA #REQUIRED
                 nodirect (true|false) "false"
                 nopropagationloss (true|false) "false">
@@ -153,16 +164,17 @@
         <!ELEMENT noise_temp (#PCDATA)>
 
         <!-- Standalone Transmitter -->
-        <!ELEMENT transmitter (prf)>
-        <!ATTLIST transmitter name CDATA #REQUIRED
-                type (pulsed|continuous|cw) #REQUIRED
-                pulse CDATA #REQUIRED
+        <!ELEMENT transmitter (pulsed_mode | cw_mode)>
+        <!ATTLIST transmitter
+                name CDATA #REQUIRED
+                waveform CDATA #REQUIRED
                 antenna CDATA #REQUIRED
                 timing CDATA #REQUIRED>
 
         <!-- Standalone Receiver -->
-        <!ELEMENT receiver (window_skip?,window_length?,prf,noise_temp?)>
-        <!ATTLIST receiver name CDATA #REQUIRED
+        <!ELEMENT receiver ((pulsed_mode | cw_mode), noise_temp?)>
+        <!ATTLIST receiver
+                name CDATA #REQUIRED
                 antenna CDATA #REQUIRED
                 timing CDATA #REQUIRED
                 nodirect (true|false) "false"

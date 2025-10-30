@@ -120,30 +120,32 @@ namespace
 		setAttributeFromBool(exp, "binary", params::exportBinary());
 	}
 
-	void serializePulse(const fers_signal::RadarSignal& pulse, XmlElement& parent)
+	void serializeWaveform(const fers_signal::RadarSignal& waveform, XmlElement& parent)
 	{
-		parent.setAttribute("name", pulse.getName());
-		if (dynamic_cast<const fers_signal::CwSignal*>(pulse.getSignal()))
+		parent.setAttribute("name", waveform.getName());
+
+		addChildWithNumber(parent, "power", waveform.getPower());
+		addChildWithNumber(parent, "carrier_frequency", waveform.getCarrier());
+
+		if (dynamic_cast<const fers_signal::CwSignal*>(waveform.getSignal()))
 		{
-			parent.setAttribute("type", "continuous");
+			(void)parent.addChild("cw"); // Empty element
 		}
 		else
 		{
-			parent.setAttribute("type", "file");
-			if (const auto& filename = pulse.getFilename())
+			XmlElement pulsed_file = parent.addChild("pulsed_from_file");
+			if (const auto& filename = waveform.getFilename())
 			{
-				parent.setAttribute("filename", *filename);
+				pulsed_file.setAttribute("filename", *filename);
 			}
 			else
 			{
 				// If we reach this point, the in-memory state is invalid for XML serialization.
 				// We throw an exception to prevent generating an invalid XML file, which would fail to parse later.
-				throw std::logic_error("Attempted to serialize a file-based pulse named '" +
-					pulse.getName() + "' without a source filename.");
+				throw std::logic_error("Attempted to serialize a file-based waveform named '" +
+					waveform.getName() + "' without a source filename.");
 			}
 		}
-		addChildWithNumber(parent, "power", pulse.getPower());
-		addChildWithNumber(parent, "carrier", pulse.getCarrier());
 	}
 
 	void serializeTiming(const timing::PrototypeTiming& timing, XmlElement& parent)
@@ -300,11 +302,19 @@ namespace
 	{
 		XmlElement tx_elem = parent.addChild("transmitter");
 		tx_elem.setAttribute("name", tx.getName());
-		tx_elem.setAttribute("type", tx.getPulsed() ? "pulsed" : "cw");
-		tx_elem.setAttribute("pulse", tx.getSignal() ? tx.getSignal()->getName() : "");
+		tx_elem.setAttribute("waveform", tx.getSignal() ? tx.getSignal()->getName() : "");
 		tx_elem.setAttribute("antenna", tx.getAntenna() ? tx.getAntenna()->getName() : "");
 		tx_elem.setAttribute("timing", tx.getTiming() ? tx.getTiming()->getName() : "");
-		addChildWithNumber(tx_elem, "prf", tx.getPrf());
+
+		if (tx.getPulsed())
+		{
+			XmlElement mode_elem = tx_elem.addChild("pulsed_mode");
+			addChildWithNumber(mode_elem, "prf", tx.getPrf());
+		}
+		else
+		{
+			(void)tx_elem.addChild("cw_mode");
+		}
 	}
 
 	void serializeReceiver(const radar::Receiver& rx, XmlElement& parent)
@@ -316,9 +326,18 @@ namespace
 		setAttributeFromBool(rx_elem, "nodirect", rx.checkFlag(radar::Receiver::RecvFlag::FLAG_NODIRECT));
 		setAttributeFromBool(rx_elem, "nopropagationloss", rx.checkFlag(radar::Receiver::RecvFlag::FLAG_NOPROPLOSS));
 
-		addChildWithNumber(rx_elem, "window_skip", rx.getWindowSkip());
-		addChildWithNumber(rx_elem, "window_length", rx.getWindowLength());
-		addChildWithNumber(rx_elem, "prf", rx.getWindowPrf());
+		if (rx.getWindowPrf() > 0)
+		{
+			XmlElement mode_elem = rx_elem.addChild("pulsed_mode");
+			addChildWithNumber(mode_elem, "prf", rx.getWindowPrf());
+			addChildWithNumber(mode_elem, "window_skip", rx.getWindowSkip());
+			addChildWithNumber(mode_elem, "window_length", rx.getWindowLength());
+		}
+		else
+		{
+			(void)rx_elem.addChild("cw_mode");
+		}
+
 		if (rx.getNoiseTemperature() > 0) { addChildWithNumber(rx_elem, "noise_temp", rx.getNoiseTemperature()); }
 	}
 
@@ -326,16 +345,24 @@ namespace
 	{
 		XmlElement mono_elem = parent.addChild("monostatic");
 		mono_elem.setAttribute("name", tx.getName());
-		mono_elem.setAttribute("type", tx.getPulsed() ? "pulsed" : "cw");
 		mono_elem.setAttribute("antenna", tx.getAntenna() ? tx.getAntenna()->getName() : "");
-		mono_elem.setAttribute("pulse", tx.getSignal() ? tx.getSignal()->getName() : "");
+		mono_elem.setAttribute("waveform", tx.getSignal() ? tx.getSignal()->getName() : "");
 		mono_elem.setAttribute("timing", tx.getTiming() ? tx.getTiming()->getName() : "");
 		setAttributeFromBool(mono_elem, "nodirect", rx.checkFlag(radar::Receiver::RecvFlag::FLAG_NODIRECT));
 		setAttributeFromBool(mono_elem, "nopropagationloss", rx.checkFlag(radar::Receiver::RecvFlag::FLAG_NOPROPLOSS));
 
-		addChildWithNumber(mono_elem, "window_skip", rx.getWindowSkip());
-		addChildWithNumber(mono_elem, "window_length", rx.getWindowLength());
-		addChildWithNumber(mono_elem, "prf", tx.getPrf());
+		if (tx.getPulsed())
+		{
+			XmlElement mode_elem = mono_elem.addChild("pulsed_mode");
+			addChildWithNumber(mode_elem, "prf", tx.getPrf());
+			addChildWithNumber(mode_elem, "window_skip", rx.getWindowSkip());
+			addChildWithNumber(mode_elem, "window_length", rx.getWindowLength());
+		}
+		else
+		{
+			(void)mono_elem.addChild("cw_mode");
+		}
+
 		if (rx.getNoiseTemperature() > 0) { addChildWithNumber(mono_elem, "noise_temp", rx.getNoiseTemperature()); }
 	}
 
@@ -428,14 +455,14 @@ namespace serial
 		XmlElement params_elem = root.addChild("parameters");
 		serializeParameters(params_elem);
 
-		// Assets (pulses, timings, antennas) are serialized first. This is
+		// Assets (waveforms, timings, antennas) are serialized first. This is
 		// necessary because platforms reference these assets by name. By defining
 		// them at the top of the document, we ensure that any XML parser can
 		// resolve these references when it later encounters the platform definitions.
-		for (const auto& [name, pulse] : world.getPulses())
+		for (const auto& [name, waveform] : world.getWaveforms())
 		{
-			XmlElement pulse_elem = root.addChild("pulse");
-			serializePulse(*pulse, pulse_elem);
+			XmlElement waveform_elem = root.addChild("waveform");
+			serializeWaveform(*waveform, waveform_elem);
 		}
 		for (const auto& [name, timing] : world.getTimings())
 		{

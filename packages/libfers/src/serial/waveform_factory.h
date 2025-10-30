@@ -6,8 +6,8 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file pulse_factory.h
-* @brief Interface for loading pulse data into RadarSignal objects.
+* @file waveform_factory.h
+* @brief Interface for loading waveform data into RadarSignal objects.
 */
 
 #pragma once
@@ -25,15 +25,15 @@ namespace fers_signal
 namespace serial
 {
 	/**
-	* @brief Loads a radar pulse from a file and returns a RadarSignal object.
+	* @brief Loads a radar waveform from a file and returns a RadarSignal object.
 	*
 	* @param name The name of the radar signal.
-	* @param filename The path to the file containing the pulse data.
-	* @param power The power of the radar signal in the pulse.
+	* @param filename The path to the file containing the waveform data.
+	* @param power The power of the radar signal in the waveform.
 	* @param carrierFreq The carrier frequency of the radar signal.
-	* @return A unique pointer to a RadarSignal object loaded with the pulse data.
+	* @return A unique pointer to a RadarSignal object loaded with the waveform data.
 	* @throws std::runtime_error If the file cannot be opened or the file format is unrecognized.
 	*/
-	[[nodiscard]] std::unique_ptr<fers_signal::RadarSignal> loadPulseFromFile(
+	[[nodiscard]] std::unique_ptr<fers_signal::RadarSignal> loadWaveformFromFile(
 		const std::string& name, const std::string& filename, RealType power, RealType carrierFreq);
 }

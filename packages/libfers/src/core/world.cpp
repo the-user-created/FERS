@@ -35,13 +35,13 @@ namespace core
 
 	void World::add(std::unique_ptr<Target> target) noexcept { _targets.push_back(std::move(target)); }
 
-	void World::add(std::unique_ptr<RadarSignal> pulse)
+	void World::add(std::unique_ptr<RadarSignal> waveform)
 	{
-		if (_pulses.contains(pulse->getName()))
+		if (_waveforms.contains(waveform->getName()))
 		{
-			throw std::runtime_error("A pulse with the name " + pulse->getName() + " already exists.");
+			throw std::runtime_error("A waveform with the name " + waveform->getName() + " already exists.");
 		}
-		_pulses[pulse->getName()] = std::move(pulse);
+		_waveforms[waveform->getName()] = std::move(waveform);
 	}
 
 	void World::add(std::unique_ptr<Antenna> antenna)
@@ -62,9 +62,9 @@ namespace core
 		_timings[timing->getName()] = std::move(timing);
 	}
 
-	RadarSignal* World::findSignal(const std::string& name)
+	RadarSignal* World::findWaveform(const std::string& name)
 	{
-		return _pulses.contains(name) ? _pulses[name].get() : nullptr;
+		return _waveforms.contains(name) ? _waveforms[name].get() : nullptr;
 	}
 
 	Antenna* World::findAntenna(const std::string& name)
@@ -83,7 +83,7 @@ namespace core
 		_transmitters.clear();
 		_receivers.clear();
 		_targets.clear();
-		_pulses.clear();
+		_waveforms.clear();
 		_antennas.clear();
 		_timings.clear();
 	}
