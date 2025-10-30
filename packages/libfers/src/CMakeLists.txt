@@ -6,6 +6,8 @@
 set(LIBFERS_PRIVATE_HEADERS
 	${CMAKE_CURRENT_LIST_DIR}/core/fers_context.h
 	${CMAKE_CURRENT_LIST_DIR}/core/sim_threading.h
+	${CMAKE_CURRENT_LIST_DIR}/simulation/channel_model.h
+	${CMAKE_CURRENT_LIST_DIR}/processing/signal_processor.h
 	${CMAKE_CURRENT_LIST_DIR}/core/thread_pool.h
 	${CMAKE_CURRENT_LIST_DIR}/interpolation/interpolation_filter.h
 	${CMAKE_CURRENT_LIST_DIR}/interpolation/interpolation_point.h
@@ -32,6 +34,8 @@ set(LIBFERS_SOURCES
 	${CMAKE_CURRENT_LIST_DIR}/api.cpp
 	${CMAKE_CURRENT_LIST_DIR}/core/logging.cpp
 	${CMAKE_CURRENT_LIST_DIR}/core/sim_threading.cpp
+	${CMAKE_CURRENT_LIST_DIR}/simulation/channel_model.cpp
+	${CMAKE_CURRENT_LIST_DIR}/processing/signal_processor.cpp
 	${CMAKE_CURRENT_LIST_DIR}/core/thread_pool.cpp
 	${CMAKE_CURRENT_LIST_DIR}/core/world.cpp
 	${CMAKE_CURRENT_LIST_DIR}/antenna/antenna_factory.cpp
