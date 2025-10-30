@@ -20,7 +20,7 @@ set(LIBFERS_PRIVATE_HEADERS
 	${CMAKE_CURRENT_LIST_DIR}/serial/hdf5_handler.h
 	${CMAKE_CURRENT_LIST_DIR}/serial/kml_generator.h
 	${CMAKE_CURRENT_LIST_DIR}/serial/libxml_wrapper.h
-	${CMAKE_CURRENT_LIST_DIR}/serial/pulse_factory.h
+	${CMAKE_CURRENT_LIST_DIR}/serial/waveform_factory.h
 	${CMAKE_CURRENT_LIST_DIR}/serial/receiver_export.h
 	${CMAKE_CURRENT_LIST_DIR}/serial/xml_parser.h
 	${CMAKE_CURRENT_LIST_DIR}/signal/dsp_filters.h
@@ -55,7 +55,7 @@ set(LIBFERS_SOURCES
 	${CMAKE_CURRENT_LIST_DIR}/serial/hdf5_handler.cpp
 	${CMAKE_CURRENT_LIST_DIR}/serial/kml_generator.cpp
 	${CMAKE_CURRENT_LIST_DIR}/serial/libxml_wrapper.cpp
-	${CMAKE_CURRENT_LIST_DIR}/serial/pulse_factory.cpp
+	${CMAKE_CURRENT_LIST_DIR}/serial/waveform_factory.cpp
 	${CMAKE_CURRENT_LIST_DIR}/serial/receiver_export.cpp
 	${CMAKE_CURRENT_LIST_DIR}/serial/response.cpp
 	${CMAKE_CURRENT_LIST_DIR}/serial/xml_parser.cpp

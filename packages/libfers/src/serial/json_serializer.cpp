@@ -29,7 +29,7 @@
 #include <libfers/transmitter.h>
 #include <libfers/world.h>
 
-#include "pulse_factory.h"
+#include "waveform_factory.h"
 #include "signal/radar_signal.h"
 #include "timing/prototype_timing.h"
 #include "timing/timing.h"
@@ -206,12 +206,20 @@ namespace fers_signal
 {
 	void to_json(nlohmann::json& j, const RadarSignal& rs)
 	{
-		j = nlohmann::json{{"name", rs.getName()}, {"power", rs.getPower()}, {"carrier", rs.getCarrier()}};
-		if (dynamic_cast<const CwSignal*>(rs.getSignal())) { j["type"] = "continuous"; }
+		j = nlohmann::json{
+			{"name", rs.getName()}, {"power", rs.getPower()}, {"carrier_frequency", rs.getCarrier()}};
+		if (dynamic_cast<const CwSignal*>(rs.getSignal())) { j["cw"] = nlohmann::json::object(); }
 		else
 		{
-			j["type"] = "file";
-			if (const auto& filename = rs.getFilename(); filename.has_value()) { j["filename"] = *filename; }
+			if (const auto& filename = rs.getFilename(); filename.has_value())
+			{
+				j["pulsed_from_file"] = {{"filename", *filename}};
+			}
+			else
+			{
+				throw std::logic_error("Attempted to serialize a file-based waveform named '" +
+					rs.getName() + "' without a source filename.");
+			}
 		}
 	}
 
@@ -219,22 +227,25 @@ namespace fers_signal
 	{
 		const auto name = j.at("name").get<std::string>();
 		const auto power = j.at("power").get<RealType>();
-		const auto carrier = j.at("carrier").get<RealType>();
-		const auto type = j.at("type").get<std::string>();
+		const auto carrier = j.at("carrier_frequency").get<RealType>();
 
-		if (type == "continuous")
+		if (j.contains("cw"))
 		{
 			auto cw_signal = std::make_unique<CwSignal>();
 			rs = std::make_unique<RadarSignal>(name, power, carrier, params::endTime() - params::startTime(),
 			                                   std::move(cw_signal));
 		}
-		else if (type == "file")
+		else if (j.contains("pulsed_from_file"))
 		{
-			if (!j.contains("filename")) { throw std::runtime_error("File-based pulse requires a filename."); }
-			const auto filename = j.at("filename").get<std::string>();
-			rs = serial::loadPulseFromFile(name, filename, power, carrier);
+			const auto& pulsed_file = j.at("pulsed_from_file");
+			if (!pulsed_file.contains("filename"))
+			{
+				throw std::runtime_error("File-based waveform requires a filename.");
+			}
+			const auto filename = pulsed_file.at("filename").get<std::string>();
+			rs = serial::loadWaveformFromFile(name, filename, power, carrier);
 		}
-		else { throw std::runtime_error("Unsupported pulse type in from_json: " + type); }
+		else { throw std::runtime_error("Unsupported waveform type in from_json for '" + name + "'"); }
 	}
 }
 
@@ -328,24 +339,30 @@ namespace radar
 	void to_json(nlohmann::json& j, const Transmitter& t)
 	{
 		j = nlohmann::json{{"name", t.getName()},
-		                   {"type", t.getPulsed() ? "pulsed" : "cw"},
-		                   {"prf", t.getPrf()},
-		                   {"pulse", t.getSignal() ? t.getSignal()->getName() : ""},
+		                   {"waveform", t.getSignal() ? t.getSignal()->getName() : ""},
 		                   {"antenna", t.getAntenna() ? t.getAntenna()->getName() : ""},
 		                   {"timing", t.getTiming() ? t.getTiming()->getName() : ""}};
+
+		if (t.getPulsed()) { j["pulsed_mode"] = {{"prf", t.getPrf()}}; }
+		else { j["cw_mode"] = nlohmann::json::object(); }
 	}
 
 	void to_json(nlohmann::json& j, const Receiver& r)
 	{
 		j = nlohmann::json{{"name", r.getName()},
-		                   {"window_skip", r.getWindowSkip()},
-		                   {"window_length", r.getWindowLength()},
-		                   {"prf", r.getWindowPrf()},
 		                   {"noise_temp", r.getNoiseTemperature()},
 		                   {"antenna", r.getAntenna() ? r.getAntenna()->getName() : ""},
 		                   {"timing", r.getTiming() ? r.getTiming()->getName() : ""},
 		                   {"nodirect", r.checkFlag(Receiver::RecvFlag::FLAG_NODIRECT)},
 		                   {"nopropagationloss", r.checkFlag(Receiver::RecvFlag::FLAG_NOPROPLOSS)}};
+
+		if (r.getWindowPrf() > 0)
+		{
+			j["pulsed_mode"] = {{"prf", r.getWindowPrf()},
+			                    {"window_skip", r.getWindowSkip()},
+			                    {"window_length", r.getWindowLength()}};
+		}
+		else { j["cw_mode"] = nlohmann::json::object(); }
 	}
 
 	void to_json(nlohmann::json& j, const Target& t)
@@ -468,8 +485,8 @@ namespace serial
 		sim_json["name"] = params::params.simulation_name;
 		sim_json["parameters"] = params::params;
 
-		sim_json["pulses"] = nlohmann::json::array();
-		for (const auto& [name, pulse] : world.getPulses()) { sim_json["pulses"].push_back(*pulse); }
+		sim_json["waveforms"] = nlohmann::json::array();
+		for (const auto& [name, waveform] : world.getWaveforms()) { sim_json["waveforms"].push_back(*waveform); }
 
 		sim_json["antennas"] = nlohmann::json::array();
 		for (const auto& [name, antenna] : world.getAntennas()) { sim_json["antennas"].push_back(*antenna); }
@@ -494,20 +511,24 @@ namespace serial
 					{
 						nlohmann::json monostatic_comp;
 						monostatic_comp["name"] = t->getName();
-						monostatic_comp["type"] = t->getPulsed() ? "pulsed" : "cw";
-						monostatic_comp["pulse"] = t->getSignal() ? t->getSignal()->getName() : "";
+						monostatic_comp["waveform"] = t->getSignal() ? t->getSignal()->getName() : "";
 						monostatic_comp["antenna"] = t->getAntenna() ? t->getAntenna()->getName() : "";
 						monostatic_comp["timing"] = t->getTiming() ? t->getTiming()->getName() : "";
-						monostatic_comp["prf"] = t->getPrf();
 
 						if (const auto* recv = dynamic_cast<const radar::Receiver*>(t->getAttached()))
 						{
-							monostatic_comp["window_skip"] = recv->getWindowSkip();
-							monostatic_comp["window_length"] = recv->getWindowLength();
 							monostatic_comp["noise_temp"] = recv->getNoiseTemperature();
 							monostatic_comp["nodirect"] = recv->checkFlag(radar::Receiver::RecvFlag::FLAG_NODIRECT);
 							monostatic_comp["nopropagationloss"] =
 								recv->checkFlag(radar::Receiver::RecvFlag::FLAG_NOPROPLOSS);
+
+							if (t->getPulsed())
+							{
+								monostatic_comp["pulsed_mode"] = {{"prf", t->getPrf()},
+								                                  {"window_skip", recv->getWindowSkip()},
+								                                  {"window_length", recv->getWindowLength()}};
+							}
+							else { monostatic_comp["cw_mode"] = nlohmann::json::object(); }
 						}
 						plat_json["component"] = {{"monostatic", monostatic_comp}};
 					}
@@ -581,13 +602,13 @@ namespace serial
 
 		params::params.simulation_name = sim.value("name", "");
 
-		// 2. Restore assets (Pulses, Antennas, Timings). This order is critical
+		// 2. Restore assets (Waveforms, Antennas, Timings). This order is critical
 		//    because platforms, which are restored next, will reference these
 		//    assets by name. The assets must exist before they can be linked.
-		if (sim.contains("pulses"))
+		if (sim.contains("waveforms"))
 		{
-			auto pulses = sim.at("pulses").get<std::vector<std::unique_ptr<fers_signal::RadarSignal>>>();
-			for (auto& pulse : pulses) { world.add(std::move(pulse)); }
+			auto waveforms = sim.at("waveforms").get<std::vector<std::unique_ptr<fers_signal::RadarSignal>>>();
+			for (auto& waveform : waveforms) { world.add(std::move(waveform)); }
 		}
 
 		if (sim.contains("antennas"))
@@ -656,11 +677,14 @@ namespace serial
 					if (comp_json_outer.contains("transmitter"))
 					{
 						const auto& comp_json = comp_json_outer.at("transmitter");
+						const bool is_pulsed = comp_json.contains("pulsed_mode");
 						auto trans = std::make_unique<radar::Transmitter>(
-							plat.get(), comp_json.at("name").get<std::string>(),
-							comp_json.at("type").get<std::string>() == "pulsed");
-						trans->setPrf(comp_json.at("prf").get<RealType>());
-						trans->setWave(world.findSignal(comp_json.at("pulse").get<std::string>()));
+							plat.get(), comp_json.at("name").get<std::string>(), is_pulsed);
+						if (is_pulsed)
+						{
+							trans->setPrf(comp_json.at("pulsed_mode").at("prf").get<RealType>());
+						}
+						trans->setWave(world.findWaveform(comp_json.at("waveform").get<std::string>()));
 						trans->setAntenna(world.findAntenna(comp_json.at("antenna").get<std::string>()));
 						const auto timing_name = comp_json.at("timing").get<std::string>();
 						const auto timing = std::make_shared<timing::Timing>(timing_name, masterSeeder());
@@ -674,9 +698,13 @@ namespace serial
 						auto recv = std::make_unique<radar::Receiver>(plat.get(),
 						                                              comp_json.at("name").get<std::string>(),
 						                                              masterSeeder());
-						recv->setWindowProperties(comp_json.at("window_length").get<RealType>(),
-						                          comp_json.at("prf").get<RealType>(),
-						                          comp_json.at("window_skip").get<RealType>());
+						if (comp_json.contains("pulsed_mode"))
+						{
+							const auto& mode_json = comp_json.at("pulsed_mode");
+							recv->setWindowProperties(mode_json.at("window_length").get<RealType>(),
+							                          mode_json.at("prf").get<RealType>(),
+							                          mode_json.at("window_skip").get<RealType>());
+						}
 						recv->setNoiseTemperature(comp_json.value("noise_temp", 0.0));
 						recv->setAntenna(world.findAntenna(comp_json.at("antenna").get<std::string>()));
 						if (comp_json.value("nodirect", false))
@@ -739,13 +767,16 @@ namespace serial
 						// monostatic radar (a linked Transmitter and Receiver) from the
 						// single 'monostatic' component in the JSON.
 						const auto& comp_json = comp_json_outer.at("monostatic");
+						const bool is_pulsed = comp_json.contains("pulsed_mode");
 
 						// Transmitter part
 						auto trans = std::make_unique<radar::Transmitter>(
-							plat.get(), comp_json.at("name").get<std::string>(),
-							comp_json.at("type").get<std::string>() == "pulsed");
-						trans->setPrf(comp_json.at("prf").get<RealType>());
-						trans->setWave(world.findSignal(comp_json.at("pulse").get<std::string>()));
+							plat.get(), comp_json.at("name").get<std::string>(), is_pulsed);
+						if (is_pulsed)
+						{
+							trans->setPrf(comp_json.at("pulsed_mode").at("prf").get<RealType>());
+						}
+						trans->setWave(world.findWaveform(comp_json.at("waveform").get<std::string>()));
 						trans->setAntenna(world.findAntenna(comp_json.at("antenna").get<std::string>()));
 						const auto timing_name = comp_json.at("timing").get<std::string>();
 						const auto tx_timing = std::make_shared<timing::Timing>(timing_name, masterSeeder());
@@ -755,8 +786,13 @@ namespace serial
 						// Receiver part
 						auto recv = std::make_unique<radar::Receiver>(
 							plat.get(), comp_json.at("name").get<std::string>(), masterSeeder());
-						recv->setWindowProperties(comp_json.at("window_length").get<RealType>(),
-						                          trans->getPrf(), comp_json.at("window_skip").get<RealType>());
+						if (is_pulsed)
+						{
+							const auto& mode_json = comp_json.at("pulsed_mode");
+							recv->setWindowProperties(mode_json.at("window_length").get<RealType>(),
+							                          trans->getPrf(), // Use transmitter's PRF
+							                          mode_json.at("window_skip").get<RealType>());
+						}
 						recv->setNoiseTemperature(comp_json.value("noise_temp", 0.0));
 						recv->setAntenna(world.findAntenna(comp_json.at("antenna").get<std::string>()));
 						if (comp_json.value("nodirect", false))
