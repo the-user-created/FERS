@@ -20,8 +20,9 @@
 
 namespace radar
 {
-	Receiver::Receiver(Platform* platform, std::string name, const unsigned seed) noexcept :
+	Receiver::Receiver(Platform* platform, std::string name, const unsigned seed, OperationMode mode) noexcept :
 		Radar(platform, std::move(name)),
+		_mode(mode),
 		_rng(seed) {}
 
 	void Receiver::addResponse(std::unique_ptr<serial::Response> response) noexcept

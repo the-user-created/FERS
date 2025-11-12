@@ -2,6 +2,8 @@
 build_and_run.sh
 collect_files.py
 list_files.py
+prompts.txt
+output.txt
 issue_verification_tests/
 testing_files/
 design_docs/

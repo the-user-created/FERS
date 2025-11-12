@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
+//
+// Copyright (c) 2024-present FERS Contributors (see AUTHORS.md).
+//
+// See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
 * @file xml_serializer.cpp
@@ -306,7 +309,7 @@ namespace
 		tx_elem.setAttribute("antenna", tx.getAntenna() ? tx.getAntenna()->getName() : "");
 		tx_elem.setAttribute("timing", tx.getTiming() ? tx.getTiming()->getName() : "");
 
-		if (tx.getPulsed())
+		if (tx.getMode() == radar::OperationMode::PULSED_MODE)
 		{
 			XmlElement mode_elem = tx_elem.addChild("pulsed_mode");
 			addChildWithNumber(mode_elem, "prf", tx.getPrf());
@@ -326,7 +329,7 @@ namespace
 		setAttributeFromBool(rx_elem, "nodirect", rx.checkFlag(radar::Receiver::RecvFlag::FLAG_NODIRECT));
 		setAttributeFromBool(rx_elem, "nopropagationloss", rx.checkFlag(radar::Receiver::RecvFlag::FLAG_NOPROPLOSS));
 
-		if (rx.getWindowPrf() > 0)
+		if (rx.getMode() == radar::OperationMode::PULSED_MODE)
 		{
 			XmlElement mode_elem = rx_elem.addChild("pulsed_mode");
 			addChildWithNumber(mode_elem, "prf", rx.getWindowPrf());
@@ -351,7 +354,7 @@ namespace
 		setAttributeFromBool(mono_elem, "nodirect", rx.checkFlag(radar::Receiver::RecvFlag::FLAG_NODIRECT));
 		setAttributeFromBool(mono_elem, "nopropagationloss", rx.checkFlag(radar::Receiver::RecvFlag::FLAG_NOPROPLOSS));
 
-		if (tx.getPulsed())
+		if (tx.getMode() == radar::OperationMode::PULSED_MODE)
 		{
 			XmlElement mode_elem = mono_elem.addChild("pulsed_mode");
 			addChildWithNumber(mode_elem, "prf", tx.getPrf());
