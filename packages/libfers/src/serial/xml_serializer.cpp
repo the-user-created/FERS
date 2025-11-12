@@ -116,11 +116,6 @@ namespace
 			cs.setAttribute("frame", "ECEF");
 			break;
 		}
-
-		XmlElement exp = parent.addChild("export");
-		setAttributeFromBool(exp, "xml", params::exportXml());
-		setAttributeFromBool(exp, "csv", params::exportCsv());
-		setAttributeFromBool(exp, "binary", params::exportBinary());
 	}
 
 	void serializeWaveform(const fers_signal::RadarSignal& waveform, XmlElement& parent)

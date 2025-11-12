@@ -45,7 +45,6 @@
                 <xs:element minOccurs="0" name="oversample" type="xs:string"/>
                 <xs:element minOccurs="0" ref="origin"/>
                 <xs:element minOccurs="0" ref="coordinatesystem"/>
-                <xs:element minOccurs="0" ref="export"/>
             </xs:sequence>
         </xs:complexType>
     </xs:element>
@@ -77,35 +76,6 @@
                     <xs:restriction base="xs:token">
                         <xs:enumeration value="N"/>
                         <xs:enumeration value="S"/>
-                    </xs:restriction>
-                </xs:simpleType>
-            </xs:attribute>
-        </xs:complexType>
-    </xs:element>
-
-    <xs:element name="export">
-        <xs:complexType>
-            <xs:attribute name="xml" default="false">
-                <xs:simpleType>
-                    <xs:restriction base="xs:token">
-                        <xs:enumeration value="true"/>
-                        <xs:enumeration value="false"/>
-                    </xs:restriction>
-                </xs:simpleType>
-            </xs:attribute>
-            <xs:attribute name="csv" default="false">
-                <xs:simpleType>
-                    <xs:restriction base="xs:token">
-                        <xs:enumeration value="true"/>
-                        <xs:enumeration value="false"/>
-                    </xs:restriction>
-                </xs:simpleType>
-            </xs:attribute>
-            <xs:attribute name="binary" default="true">
-                <xs:simpleType>
-                    <xs:restriction base="xs:token">
-                        <xs:enumeration value="true"/>
-                        <xs:enumeration value="false"/>
                     </xs:restriction>
                 </xs:simpleType>
             </xs:attribute>

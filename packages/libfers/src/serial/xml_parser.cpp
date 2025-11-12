@@ -122,10 +122,6 @@ auto get_attribute_bool = [](const XmlElement& element, const std::string& attri
 
 namespace
 {
-	enum class SimType { UNSET, PULSED, CW };
-
-	SimType simulation_type = SimType::UNSET;
-
 	/**
 	 * @brief Parses the <parameters> element of the XML document.
 	 *
@@ -172,15 +168,6 @@ namespace
 		set_param_with_exception_handling(parameters, "adc_bits", params::adcBits(), params::setAdcBits);
 		set_param_with_exception_handling(parameters, "oversample", params::oversampleRatio(),
 		                                  params::setOversampleRatio);
-
-		if (const XmlElement export_element = parameters.childElement("export", 0); export_element.isValid())
-		{
-			params::setExporters(
-				get_attribute_bool(export_element, "xml", params::exportXml()),
-				get_attribute_bool(export_element, "csv", params::exportCsv()),
-				get_attribute_bool(export_element, "binary", params::exportBinary())
-				);
-		}
 
 		// Parse the origin element for the KML generator
 		bool origin_set = false;
@@ -591,23 +578,6 @@ namespace
 			throw XmlException("Transmitter '" + name + "' must specify a radar mode (<pulsed_mode> or <cw_mode>).");
 		}
 
-		// TODO: Need to remove usage of SimType once mixed-mode simulation is implemented
-		if (simulation_type == SimType::UNSET)
-		{
-			simulation_type = is_pulsed ? SimType::PULSED : SimType::CW;
-			LOG(Level::INFO, "First radar component detected is {}, setting simulation mode.",
-			    is_pulsed ? "PULSED" : "CW");
-		}
-		else if ((is_pulsed && simulation_type == SimType::CW) ||
-			(!is_pulsed && simulation_type == SimType::PULSED))
-		{
-			LOG(Level::INFO, "Mixed PULSED and CW components detected. This is a mixed-mode simulation.");
-			// In the future, a unified simulation loop will handle this.
-			// For now, the check is removed to allow parsing.
-		}
-
-		if (!is_pulsed) { params::params.is_cw_simulation = true; }
-
 		auto transmitter_obj = std::make_unique<Transmitter>(platform, name, mode);
 
 		const std::string waveform_name = XmlElement::getSafeAttribute(transmitter, "waveform");
@@ -947,8 +917,6 @@ namespace
 	void processParsedDocument(const XmlDocument& doc, World* world, const fs::path& baseDir,
 	                           std::mt19937& masterSeeder)
 	{
-		simulation_type = SimType::UNSET;
-
 		const XmlElement root = doc.getRootElement();
 		if (root.name() != "simulation")
 		{
@@ -976,6 +944,20 @@ namespace
 
 		auto platform_parser = [&](const XmlElement& p, World* w) { parsePlatform(p, w, masterSeeder); };
 		parseElements(root, "platform", world, platform_parser);
+
+		// Prepare CW receiver buffers before starting simulation
+		const RealType start_time = params::startTime();
+		const RealType end_time = params::endTime();
+		const RealType dt_sim = 1.0 / (params::rate() * params::oversampleRatio());
+		const auto num_samples = static_cast<size_t>(std::ceil((end_time - start_time) / dt_sim));
+
+		for (const auto& receiver : world->getReceivers())
+		{
+			if (receiver->getMode() == OperationMode::CW_MODE)
+			{
+				receiver->prepareCwData(num_samples);
+			}
+		}
 
 		// Schedule initial events after all objects are loaded
 		world->scheduleInitialEvents();

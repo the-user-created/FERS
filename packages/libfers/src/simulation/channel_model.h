@@ -20,10 +20,10 @@
 
 #include <chrono>
 #include <exception>
+#include <memory>
 
 #include <libfers/config.h>
 
-// Forward declarations to avoid including full headers
 namespace radar
 {
 	class Receiver;
@@ -31,6 +31,11 @@ namespace radar
 	class Transmitter;
 
 	class Target;
+}
+
+namespace serial
+{
+	class Response;
 }
 
 namespace fers_signal
@@ -132,4 +137,25 @@ namespace simulation
 	 */
 	ComplexType calculateReflectedPathContribution(const radar::Transmitter* trans, const radar::Receiver* recv,
 	                                               const radar::Target* targ, RealType timeK);
+
+	/**
+	 * @brief Creates a Response object by simulating a signal's interaction over its duration.
+	 *
+	 * This function iterates over the duration of a transmitted pulse, calling the
+	 * appropriate channel model function (`solveRe` or `solveReDirect`) at discrete
+	 * time steps to generate a series of `InterpPoint`s. These points capture the
+	 * time-varying properties of the received signal and are collected into a `Response` object.
+	 *
+	 * @param trans Pointer to the transmitter.
+	 * @param recv Pointer to the receiver.
+	 * @param signal Pointer to the transmitted pulse signal.
+	 * @param start_time The absolute simulation time when the pulse transmission starts.
+	 * @param targ Optional pointer to a target. If null, a direct path is simulated.
+	 * @return A unique pointer to the generated Response object.
+	 * @throws RangeError If the channel model reports an invalid geometry.
+	 * @throws std::runtime_error If the simulation parameters result in zero time steps.
+	 */
+	std::unique_ptr<serial::Response> calculateResponse(const radar::Transmitter* trans, const radar::Receiver* recv,
+	                                                    const fers_signal::RadarSignal* signal, RealType start_time,
+	                                                    const radar::Target* targ = nullptr);
 }

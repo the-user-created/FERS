@@ -440,8 +440,6 @@ namespace params
 			j["coordinatesystem"]["zone"] = p.utm_zone;
 			j["coordinatesystem"]["hemisphere"] = p.utm_north_hemisphere ? "N" : "S";
 		}
-
-		j["export"] = {{"xml", p.export_xml}, {"csv", p.export_csv}, {"binary", p.export_binary}};
 	}
 
 	void from_json(const nlohmann::json& j, Parameters& p)
@@ -467,11 +465,6 @@ namespace params
 			p.utm_zone = cs.at("zone").get<int>();
 			p.utm_north_hemisphere = (cs.at("hemisphere").get<std::string>() == "N");
 		}
-
-		const auto& exp = j.at("export");
-		p.export_xml = exp.value("xml", false);
-		p.export_csv = exp.value("csv", false);
-		p.export_binary = exp.value("binary", true);
 	}
 }
 

@@ -58,13 +58,9 @@ namespace params
 		std::optional<unsigned> random_seed; ///< Random seed for simulation.
 		unsigned adc_bits = 0; ///< ADC quantization bits.
 		unsigned filter_length = 33; ///< Default render filter length.
-		bool export_xml = false; ///< Enable or disable XML export.
-		bool export_csv = false; ///< Enable or disable CSV export.
-		bool export_binary = true; ///< Enable or disable binary export.
-		unsigned render_threads = 1; ///< Number of rendering threads to use.
+		unsigned render_threads = 1; ///< Number of worker threads to use for parallel tasks.
 		std::string simulation_name; ///< The name of the simulation, from the XML.
 		unsigned oversample_ratio = 1; ///< Oversampling ratio.
-		bool is_cw_simulation = false; ///< Simulation is operating in unmodulated continuous wave (CW) mode.
 
 		/**
 		 * @brief Resets the parameters to their default-constructed state.
@@ -128,32 +124,14 @@ namespace params
 	inline unsigned adcBits() noexcept { return params.adc_bits; }
 
 	/**
-	* @brief Check if XML export is enabled.
-	* @return True if XML export is enabled, otherwise false.
-	*/
-	inline bool exportXml() noexcept { return params.export_xml; }
-
-	/**
-	* @brief Check if CSV export is enabled.
-	* @return True if CSV export is enabled, otherwise false.
-	*/
-	inline bool exportCsv() noexcept { return params.export_csv; }
-
-	/**
-	* @brief Check if binary export is enabled.
-	* @return True if binary export is enabled, otherwise false.
-	*/
-	inline bool exportBinary() noexcept { return params.export_binary; }
-
-	/**
 	* @brief Get the render filter length.
 	* @return The length of the render filter.
 	*/
 	inline unsigned renderFilterLength() noexcept { return params.filter_length; }
 
 	/**
-	* @brief Get the number of rendering threads.
-	* @return The number of rendering threads.
+	* @brief Get the number of worker threads.
+	* @return The number of worker threads.
 	*/
 	inline unsigned renderThreads() noexcept { return params.render_threads; }
 
@@ -217,20 +195,6 @@ namespace params
 	}
 
 	/**
-	* @brief Set the export options for XML, CSV, and binary formats.
-	* @param xml Enable or disable XML export.
-	* @param csv Enable or disable CSV export.
-	* @param binary Enable or disable binary export.
-	*/
-	inline void setExporters(const bool xml, const bool csv, const bool binary) noexcept
-	{
-		params.export_xml = xml;
-		params.export_csv = csv;
-		params.export_binary = binary;
-		LOG(logging::Level::DEBUG, "Export flags set - XML: {}, CSV: {}, Binary: {}", xml, csv, binary);
-	}
-
-	/**
 	* @brief Set the ADC quantization bits.
 	* @param bits The new ADC quantization bits.
 	*/
@@ -272,18 +236,16 @@ namespace params
 
 	inline double originAltitude() noexcept { return params.origin_altitude; }
 
-	inline bool isCwSimulation() noexcept { return params.is_cw_simulation; }
-
 	/**
-	* @brief Set the number of rendering threads.
-	* @param threads The number of rendering threads.
+	* @brief Set the number of worker threads.
+	* @param threads The number of worker threads.
 	* @return A `std::expected<void, std::string>` indicating success or an error message if the number of threads is invalid.
 	*/
 	inline std::expected<void, std::string> setThreads(const unsigned threads) noexcept
 	{
 		if (threads == 0) { return std::unexpected("Thread count must be >= 1"); }
 		params.render_threads = threads;
-		LOG(logging::Level::INFO, "Number of rendering threads set to: {}", threads);
+		LOG(logging::Level::INFO, "Number of worker threads set to: {}", threads);
 		return {};
 	}
 

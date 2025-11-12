@@ -9,9 +9,8 @@
  * @file sim_threading.h
  * @brief Header file for the main simulation runner.
  *
- * This file contains the declarations for the high-level functions that
- * orchestrate and manage a multi-threaded radar simulation. It defines the main
- * entry points for running both pulsed and Continuous Wave (CW) simulations.
+ * This file contains the declarations for the high-level function that
+ * orchestrates and manages the event-driven radar simulation.
  */
 
 #pragma once
@@ -19,7 +18,6 @@
 #include <functional>
 #include <string>
 
-// Forward declarations
 namespace pool
 {
 	class ThreadPool;
@@ -33,30 +31,17 @@ namespace core
 namespace core
 {
 	/**
-	 * @brief Runs a multi-threaded pulsed radar simulation.
+	 * @brief Runs the unified, event-driven radar simulation.
 	 *
-	 * This function orchestrates the simulation of all transmitter-receiver pairs
-	 * for a pulsed radar scenario. It uses a thread pool to parallelize the
-	 * simulation of each pair and the subsequent rendering of receiver data.
+	 * This function is the core engine of the simulator. It advances time by
+	 * processing events from a global priority queue. It handles both pulsed
+	 * and continuous-wave (CW) physics, dispatching finalization tasks to
+	 * worker threads for asynchronous processing.
 	 *
-	 * @param world A pointer to the simulation world containing all entities.
+	 * @param world A pointer to the simulation world containing all entities and state.
 	 * @param pool A reference to the thread pool for executing tasks.
 	 * @param progress_callback An optional callback function for reporting progress.
 	 */
-	void runThreadedSim(const World* world, pool::ThreadPool& pool,
-	                    const std::function<void(const std::string&, int, int)>& progress_callback);
-
-	/**
-	 * @brief Runs a multi-threaded Continuous Wave (CW) radar simulation.
-	 *
-	 * This function orchestrates the simulation for a CW radar scenario. It divides
-	 * the simulation time into discrete samples and uses a thread pool to calculate
-	 * the I/Q value at each receiver for each time step.
-	 *
-	 * @param world A pointer to the simulation world containing all entities.
-	 * @param pool A reference to the thread pool for executing tasks.
-	 * @param progress_callback An optional callback function for reporting progress.
-	 */
-	void runThreadedCwSim(const World* world, pool::ThreadPool& pool,
-	                      const std::function<void(const std::string&, int, int)>& progress_callback);
+	void runEventDrivenSim(World* world, pool::ThreadPool& pool,
+	                       const std::function<void(const std::string&, int, int)>& progress_callback);
 }

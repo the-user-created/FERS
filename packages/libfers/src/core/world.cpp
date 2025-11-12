@@ -90,11 +90,8 @@ namespace core
 		_waveforms.clear();
 		_antennas.clear();
 		_timings.clear();
-		// Clear the event queue as well
-		while (!_event_queue.empty())
-		{
-			_event_queue.pop();
-		}
+		_event_queue = {};
+		_simulation_state = {};
 	}
 
 	void World::scheduleInitialEvents()
