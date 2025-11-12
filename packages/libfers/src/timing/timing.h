@@ -118,6 +118,13 @@ namespace timing
 		// NOLINTNEXTLINE(readability-make-member-function-const)
 		void reset() noexcept { if (_model) { _model->reset(); } }
 
+		/**
+		 * @brief Creates a new Timing instance based on the same prototype.
+		 * @return A unique_ptr to the new Timing object.
+		 * @throws std::logic_error if the timing object was not initialized from a prototype.
+		 */
+		[[nodiscard]] std::unique_ptr<Timing> clone() const;
+
 	private:
 		std::string _name; ///< The name of the timing source.
 		bool _enabled{false}; ///< Flag indicating if the timing source is enabled.
@@ -129,5 +136,7 @@ namespace timing
 		RealType _phase_offset{}; ///< The phase offset of the timing source.
 		bool _sync_on_pulse{false}; ///< Flag indicating if the timing source synchronizes on pulse.
 		std::mt19937 _rng; ///< Per-object random number generator for statistical independence.
+		const PrototypeTiming* _prototype{nullptr}; ///< Pointer to the prototype used for initialization.
+		unsigned _seed; ///< The initial seed for the RNG.
 	};
 }

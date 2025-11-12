@@ -12,11 +12,14 @@
 
 #pragma once
 
-#include <random>
+#include <condition_variable>
 #include <mutex>
+#include <queue>
+#include <random>
 
 #include <libfers/radar_obj.h>
 #include <libfers/response.h>
+#include "core/rendering_job.h"
 
 namespace pool
 {
@@ -59,11 +62,16 @@ namespace radar
 		Receiver& operator=(Receiver&&) = delete;
 
 		/**
-		 * @brief Adds a response to the receiver.
-		 *
+		 * @brief Adds a response to the receiver's pulsed-mode inbox.
 		 * @param response A unique pointer to the response object.
 		 */
-		void addResponse(std::unique_ptr<serial::Response> response) noexcept;
+		void addResponseToInbox(std::unique_ptr<serial::Response> response) noexcept;
+
+		/**
+		 * @brief Adds a pulsed interference response to the receiver's CW-mode log.
+		 * @param response A unique pointer to the response object.
+		 */
+		void addInterferenceToLog(std::unique_ptr<serial::Response> response) noexcept;
 
 		/**
 		 * @brief Checks if a specific flag is set.
@@ -72,11 +80,6 @@ namespace radar
 		 * @return True if the flag is set, false otherwise.
 		 */
 		[[nodiscard]] bool checkFlag(RecvFlag flag) const noexcept { return _flags & static_cast<int>(flag); }
-
-		/**
-		 * @brief Renders the responses and exports the data to a file.
-		 */
-		void render(pool::ThreadPool& pool);
 
 		/**
 		 * @brief Retrieves the noise temperature of the receiver.
@@ -131,13 +134,6 @@ namespace radar
 		[[nodiscard]] unsigned getWindowCount() const noexcept;
 
 		/**
-		 * @brief Gets the number of responses collected by the receiver.
-		 *
-		 * @return The number of collected responses.
-		 */
-		[[nodiscard]] int getResponseCount() const noexcept;
-
-		/**
 		* @brief Gets the receiver's internal random number generator engine.
 		* @return A mutable reference to the RNG engine.
 		*/
@@ -149,6 +145,40 @@ namespace radar
 		 * @return The operational mode (PULSED_MODE or CW_MODE).
 		 */
 		[[nodiscard]] OperationMode getMode() const noexcept { return _mode; }
+
+		/**
+		 * @brief Checks if the receiver is currently active (listening).
+		 * @return True if active, false otherwise.
+		 */
+		[[nodiscard]] bool isActive() const noexcept { return _is_active; }
+
+		/**
+		 * @brief Sets the active state of the receiver.
+		 * @param active The new active state.
+		 */
+		void setActive(bool active) noexcept { _is_active = active; }
+
+		/**
+		 * @brief Moves all responses from the inbox into a RenderingJob.
+		 * @return A vector of unique pointers to the responses.
+		 */
+		std::vector<std::unique_ptr<serial::Response>> drainInbox() noexcept;
+
+		/**
+		 * @brief Adds a completed RenderingJob to the finalizer queue.
+		 * @param job The RenderingJob to enqueue.
+		 */
+		void enqueueFinalizerJob(core::RenderingJob&& job);
+
+		/**
+		 * @brief Waits for and dequeues a RenderingJob from the finalizer queue.
+		 *
+		 * This is a blocking call, intended for use by the dedicated finalizer thread.
+		 *
+		 * @param job A reference to a RenderingJob to be filled.
+		 * @return `false` if a shutdown signal is received, `true` otherwise.
+		 */
+		bool waitAndDequeueFinalizerJob(core::RenderingJob& job);
 
 		/**
 		 * @brief Sets the properties for radar windows.
@@ -181,7 +211,7 @@ namespace radar
 		void prepareCwData(size_t numSamples);
 
 		/**
-		 * @brief Sets a single IQW sample at a specific index for CW simulation.
+		 * @brief Sets a single IQ sample at a specific index for CW simulation.
 		 * @param index The index at which to store the sample.
 		 * @param sample The complex IQ sample.
 		 */
@@ -193,17 +223,43 @@ namespace radar
 		 */
 		[[nodiscard]] const std::vector<ComplexType>& getCwData() const { return _cw_iq_data; }
 
+		/**
+		 * @brief Retrieves the collected CW IQ data for modification.
+		 * @return A mutable reference to the vector of complex IQ samples.
+		 */
+		[[nodiscard]] std::vector<ComplexType>& getMutableCwData() { return _cw_iq_data; }
+
+		/**
+		 * @brief Retrieves the log of pulsed interferences for CW mode.
+		 * @return A const reference to the vector of interference responses.
+		 */
+		[[nodiscard]] const std::vector<std::unique_ptr<serial::Response>>& getPulsedInterferenceLog() const
+		{
+			return _pulsed_interference_log;
+		}
+
 	private:
-		std::vector<std::unique_ptr<serial::Response>> _responses; ///< The list of responses.
-		std::mutex _responses_mutex; ///< Mutex for handling responses.
+		// --- Common Members ---
+		bool _is_active = false;
 		RealType _noise_temperature = 0; ///< The noise temperature of the receiver.
+		int _flags = 0; ///< Flags for receiver configuration.
+		OperationMode _mode; ///< The operational mode of the receiver.
+		std::mt19937 _rng; ///< Per-object random number generator for statistical independence.
+
+		// --- Pulsed Mode Members ---
 		RealType _window_length = 0; ///< The length of the radar window.
 		RealType _window_prf = 0; ///< The pulse repetition frequency (PRF) of the radar window.
 		RealType _window_skip = 0; ///< The skip time between radar windows.
-		int _flags = 0; ///< Flags for receiver configuration.
-		std::vector<ComplexType> _cw_iq_data; ///< IQ data for CW simulations.
+		std::vector<std::unique_ptr<serial::Response>> _inbox; /// Mailbox for incoming Response objects during a receive window.
+		std::mutex _inbox_mutex;
+		std::queue<core::RenderingJob> _finalizer_queue; /// Queue of completed windows waiting for final processing.
+		std::mutex _finalizer_queue_mutex;
+		std::condition_variable _finalizer_queue_cv;
+
+		// --- CW Mode Members ---
+		std::vector<std::unique_ptr<serial::Response>> _pulsed_interference_log; /// Log of pulsed signals that interfere with CW reception.
+		std::mutex _interference_log_mutex;
+		std::vector<ComplexType> _cw_iq_data; /// Buffer for raw, simulation-long I/Q data.
 		std::mutex _cw_mutex; ///< Mutex for handling CW data.
-		OperationMode _mode; ///< The operational mode of the receiver.
-		std::mt19937 _rng; ///< Per-object random number generator for statistical independence.
 	};
 }

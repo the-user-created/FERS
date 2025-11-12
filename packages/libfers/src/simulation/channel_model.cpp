@@ -23,8 +23,10 @@
 #include <libfers/parameters.h>
 #include <libfers/radar_obj.h>
 #include <libfers/receiver.h>
+#include <libfers/response.h>
 #include <libfers/target.h>
 #include <libfers/transmitter.h>
+#include "interpolation/interpolation_point.h"
 #include "signal/radar_signal.h"
 #include "timing/timing.h"
 
@@ -34,6 +36,7 @@ using radar::Target;
 using math::SVec3;
 using fers_signal::RadarSignal;
 using logging::Level;
+
 
 namespace simulation
 {
@@ -268,5 +271,61 @@ namespace simulation
 		contribution *= std::polar(1.0, non_coherent_phase);
 
 		return contribution;
+	}
+
+	std::unique_ptr<serial::Response> calculateResponse(const Transmitter* trans, const Receiver* recv,
+	                                                    const RadarSignal* signal,
+	                                                    const RealType start_time, const Target* targ)
+	{
+		if (targ == nullptr && trans->getAttached() == recv) { return nullptr; }
+
+		const auto start_time_chrono = std::chrono::duration<RealType>(start_time);
+		const auto end_time_chrono = start_time_chrono + std::chrono::duration<RealType>(signal->getLength());
+		const auto sample_time_chrono = std::chrono::duration<RealType>(1.0 / params::simSamplingRate());
+		const int point_count = static_cast<int>(std::ceil(signal->getLength() / sample_time_chrono.count()));
+
+		if (targ && point_count == 0)
+		{
+			LOG(Level::FATAL, "No time points are available for execution!");
+			throw std::runtime_error("No time points are available for execution!");
+		}
+
+		auto response = std::make_unique<serial::Response>(signal, trans);
+
+		try
+		{
+			for (int i = 0; i <= point_count; ++i)
+			{
+				const auto current_time =
+					i < point_count ? start_time_chrono + i * sample_time_chrono : end_time_chrono;
+
+				ReResults results{};
+				if (targ)
+				{
+					solveRe(trans, recv, targ, current_time, sample_time_chrono, signal, results);
+				}
+				else
+				{
+					solveReDirect(trans, recv, current_time, sample_time_chrono, signal, results);
+				}
+
+				interp::InterpPoint point{
+					.power = results.power,
+					.time = current_time.count() + results.delay,
+					.delay = results.delay,
+					.doppler_factor = results.doppler_factor,
+					.phase = results.phase,
+					.noise_temperature = results.noise_temperature
+				};
+				response->addInterpPoint(point);
+			}
+		}
+		catch (const RangeError&)
+		{
+			LOG(Level::FATAL, "Receiver or Transmitter too close for accurate simulation");
+			throw; // Re-throw to be caught by the runner
+		}
+
+		return response;
 	}
 }

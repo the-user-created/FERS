@@ -24,6 +24,7 @@
 #include <libfers/target.h>
 #include <libfers/transmitter.h>
 #include "core/sim_events.h"
+#include "core/simulation_state.h"
 #include "signal/radar_signal.h"
 #include "timing/prototype_timing.h"
 
@@ -211,6 +212,21 @@ namespace core
 		 */
 		[[nodiscard]] std::string dumpEventQueue() const;
 
+		/**
+		 * @brief Gets a mutable reference to the global event queue.
+		 * @return A reference to the priority queue of events.
+		 */
+		[[nodiscard]] std::priority_queue<Event, std::vector<Event>, EventComparator>& getEventQueue() noexcept
+		{
+			return _event_queue;
+		}
+
+		/**
+		 * @brief Gets a mutable reference to the global simulation state.
+		 * @return A reference to the SimulationState object.
+		 */
+		[[nodiscard]] SimulationState& getSimulationState() noexcept { return _simulation_state; }
+
 	private:
 		std::vector<std::unique_ptr<radar::Platform>> _platforms;
 
@@ -227,5 +243,7 @@ namespace core
 		std::unordered_map<std::string, std::unique_ptr<timing::PrototypeTiming>> _timings;
 
 		std::priority_queue<Event, std::vector<Event>, EventComparator> _event_queue;
+
+		SimulationState _simulation_state;
 	};
 }
