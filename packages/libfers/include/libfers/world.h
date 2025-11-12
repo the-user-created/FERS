@@ -13,6 +13,7 @@
 #pragma once
 
 #include <memory>
+#include <queue>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -22,6 +23,7 @@
 #include <libfers/receiver.h>
 #include <libfers/target.h>
 #include <libfers/transmitter.h>
+#include "core/sim_events.h"
 #include "signal/radar_signal.h"
 #include "timing/prototype_timing.h"
 
@@ -197,6 +199,18 @@ namespace core
 		 */
 		void clear() noexcept;
 
+		/**
+		 * @brief Populates the event queue with the initial events for the simulation.
+		 * This method should be called after all simulation objects have been parsed and added to the world.
+		 */
+		void scheduleInitialEvents();
+
+		/**
+		 * @brief Dumps the current state of the event queue to a string for debugging.
+		 * @return A formatted string representing the contents of the event queue.
+		 */
+		[[nodiscard]] std::string dumpEventQueue() const;
+
 	private:
 		std::vector<std::unique_ptr<radar::Platform>> _platforms;
 
@@ -211,5 +225,7 @@ namespace core
 		std::unordered_map<std::string, std::unique_ptr<antenna::Antenna>> _antennas;
 
 		std::unordered_map<std::string, std::unique_ptr<timing::PrototypeTiming>> _timings;
+
+		std::priority_queue<Event, std::vector<Event>, EventComparator> _event_queue;
 	};
 }

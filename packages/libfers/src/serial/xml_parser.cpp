@@ -63,6 +63,7 @@ using timing::Timing;
 using timing::PrototypeTiming;
 using radar::Transmitter;
 using radar::Receiver;
+using radar::OperationMode;
 
 /**
  * @brief Parses elements with child iteration (e.g., waveforms, timings, antennas).
@@ -583,26 +584,31 @@ namespace
 		const std::string name = XmlElement::getSafeAttribute(transmitter, "name");
 		const XmlElement pulsed_mode_element = transmitter.childElement("pulsed_mode", 0);
 		const bool is_pulsed = pulsed_mode_element.isValid();
+		const OperationMode mode = is_pulsed ? OperationMode::PULSED_MODE : OperationMode::CW_MODE;
 
 		if (!is_pulsed && !transmitter.childElement("cw_mode", 0).isValid())
 		{
 			throw XmlException("Transmitter '" + name + "' must specify a radar mode (<pulsed_mode> or <cw_mode>).");
 		}
 
+		// TODO: Need to remove usage of SimType once mixed-mode simulation is implemented
 		if (simulation_type == SimType::UNSET)
 		{
 			simulation_type = is_pulsed ? SimType::PULSED : SimType::CW;
-			LOG(Level::INFO, "Simulation type set to: {}", is_pulsed ? "PULSED" : "CW");
+			LOG(Level::INFO, "First radar component detected is {}, setting simulation mode.",
+			    is_pulsed ? "PULSED" : "CW");
 		}
 		else if ((is_pulsed && simulation_type == SimType::CW) ||
 			(!is_pulsed && simulation_type == SimType::PULSED))
 		{
-			throw XmlException("Cannot mix pulsed and CW transmitters in the same simulation!");
+			LOG(Level::INFO, "Mixed PULSED and CW components detected. This is a mixed-mode simulation.");
+			// In the future, a unified simulation loop will handle this.
+			// For now, the check is removed to allow parsing.
 		}
 
 		if (!is_pulsed) { params::params.is_cw_simulation = true; }
 
-		auto transmitter_obj = std::make_unique<Transmitter>(platform, name, is_pulsed);
+		auto transmitter_obj = std::make_unique<Transmitter>(platform, name, mode);
 
 		const std::string waveform_name = XmlElement::getSafeAttribute(transmitter, "waveform");
 		RadarSignal* wave = world->findWaveform(waveform_name);
@@ -640,8 +646,11 @@ namespace
 	Receiver* parseReceiver(const XmlElement& receiver, Platform* platform, World* world, std::mt19937& masterSeeder)
 	{
 		const std::string name = XmlElement::getSafeAttribute(receiver, "name");
+		const XmlElement pulsed_mode_element = receiver.childElement("pulsed_mode", 0);
+		const bool is_pulsed = pulsed_mode_element.isValid();
+		const OperationMode mode = is_pulsed ? OperationMode::PULSED_MODE : OperationMode::CW_MODE;
 
-		auto receiver_obj = std::make_unique<Receiver>(platform, name, masterSeeder());
+		auto receiver_obj = std::make_unique<Receiver>(platform, name, masterSeeder(), mode);
 
 		const std::string ant_name = XmlElement::getSafeAttribute(receiver, "antenna");
 
@@ -655,8 +664,7 @@ namespace
 			    receiver_obj->getName().c_str());
 		}
 
-		if (const XmlElement pulsed_mode_element = receiver.childElement("pulsed_mode", 0); pulsed_mode_element.
-			isValid())
+		if (is_pulsed)
 		{
 			const RealType window_length = get_child_real_type(pulsed_mode_element, "window_length");
 			if (window_length <= 0)
@@ -968,6 +976,11 @@ namespace
 
 		auto platform_parser = [&](const XmlElement& p, World* w) { parsePlatform(p, w, masterSeeder); };
 		parseElements(root, "platform", world, platform_parser);
+
+		// Schedule initial events after all objects are loaded
+		world->scheduleInitialEvents();
+
+		LOG(Level::DEBUG, "Initial Event Queue State:\n{}", world->dumpEventQueue());
 	}
 }
 

@@ -12,8 +12,12 @@
 
 #include <libfers/world.h>
 
+#include <iomanip>
+#include <sstream>
 #include <libfers/antenna_factory.h>
+#include <libfers/parameters.h>
 #include <libfers/radar_obj.h>
+#include "core/sim_events.h"
 #include "signal/radar_signal.h"
 #include "timing/prototype_timing.h"
 
@@ -86,5 +90,82 @@ namespace core
 		_waveforms.clear();
 		_antennas.clear();
 		_timings.clear();
+		// Clear the event queue as well
+		while (!_event_queue.empty())
+		{
+			_event_queue.pop();
+		}
+	}
+
+	void World::scheduleInitialEvents()
+	{
+		for (const auto& transmitter : _transmitters)
+		{
+			if (transmitter->getMode() == radar::OperationMode::PULSED_MODE)
+			{
+				// Schedule the first pulse at t=0
+				_event_queue.push({0.0, EventType::TxPulsedStart, transmitter.get()});
+			}
+			else // CW_MODE
+			{
+				_event_queue.push({params::startTime(), EventType::TxCwStart, transmitter.get()});
+				_event_queue.push({params::endTime(), EventType::TxCwEnd, transmitter.get()});
+			}
+		}
+
+		for (const auto& receiver : _receivers)
+		{
+			if (receiver->getMode() == radar::OperationMode::PULSED_MODE)
+			{
+				// Schedule the first receive window
+				const RealType first_window_start = receiver->getWindowStart(0);
+				if (first_window_start < params::endTime())
+				{
+					_event_queue.push({first_window_start, EventType::RxPulsedWindowStart, receiver.get()});
+				}
+			}
+			else // CW_MODE
+			{
+				_event_queue.push({params::startTime(), EventType::RxCwStart, receiver.get()});
+				_event_queue.push({params::endTime(), EventType::RxCwEnd, receiver.get()});
+			}
+		}
+	}
+
+	std::string World::dumpEventQueue() const
+	{
+		if (_event_queue.empty())
+		{
+			return "Event Queue is empty.\n";
+		}
+
+		std::stringstream ss;
+		ss << std::fixed << std::setprecision(6);
+
+		const std::string separator = "--------------------------------------------------------------------";
+		std::string title = "| Event Queue Contents (" + std::to_string(_event_queue.size()) + " events)";
+
+		ss << separator << "\n"
+			<< std::left << std::setw(separator.length() - 1) << title << "|\n"
+			<< separator << "\n"
+			<< "| " << std::left << std::setw(12) << "Timestamp"
+			<< " | " << std::setw(21) << "Event Type"
+			<< " | " << std::setw(25) << "Source Object" << " |\n"
+			<< separator << "\n";
+
+		auto queue_copy = _event_queue;
+
+		while (!queue_copy.empty())
+		{
+			const Event event = queue_copy.top();
+			queue_copy.pop();
+
+			ss << "| " << std::right << std::setw(12) << event.timestamp
+				<< " | " << std::left << std::setw(21) << toString(event.type)
+				<< " | " << std::left << std::setw(25) << event.source_object->getName() << " |\n";
+		}
+		ss << separator << "\n";
+
+		return ss.str();
 	}
 }

@@ -335,7 +335,6 @@ namespace antenna
 
 namespace radar
 {
-
 	void to_json(nlohmann::json& j, const Transmitter& t)
 	{
 		j = nlohmann::json{{"name", t.getName()},
@@ -343,7 +342,7 @@ namespace radar
 		                   {"antenna", t.getAntenna() ? t.getAntenna()->getName() : ""},
 		                   {"timing", t.getTiming() ? t.getTiming()->getName() : ""}};
 
-		if (t.getPulsed()) { j["pulsed_mode"] = {{"prf", t.getPrf()}}; }
+		if (t.getMode() == OperationMode::PULSED_MODE) { j["pulsed_mode"] = {{"prf", t.getPrf()}}; }
 		else { j["cw_mode"] = nlohmann::json::object(); }
 	}
 
@@ -356,7 +355,7 @@ namespace radar
 		                   {"nodirect", r.checkFlag(Receiver::RecvFlag::FLAG_NODIRECT)},
 		                   {"nopropagationloss", r.checkFlag(Receiver::RecvFlag::FLAG_NOPROPLOSS)}};
 
-		if (r.getWindowPrf() > 0)
+		if (r.getMode() == OperationMode::PULSED_MODE)
 		{
 			j["pulsed_mode"] = {{"prf", r.getWindowPrf()},
 			                    {"window_skip", r.getWindowSkip()},
@@ -522,7 +521,7 @@ namespace serial
 							monostatic_comp["nopropagationloss"] =
 								recv->checkFlag(radar::Receiver::RecvFlag::FLAG_NOPROPLOSS);
 
-							if (t->getPulsed())
+							if (t->getMode() == radar::OperationMode::PULSED_MODE)
 							{
 								monostatic_comp["pulsed_mode"] = {{"prf", t->getPrf()},
 								                                  {"window_skip", recv->getWindowSkip()},
@@ -677,10 +676,12 @@ namespace serial
 					if (comp_json_outer.contains("transmitter"))
 					{
 						const auto& comp_json = comp_json_outer.at("transmitter");
-						const bool is_pulsed = comp_json.contains("pulsed_mode");
+						const radar::OperationMode mode = comp_json.contains("pulsed_mode")
+							? radar::OperationMode::PULSED_MODE
+							: radar::OperationMode::CW_MODE;
 						auto trans = std::make_unique<radar::Transmitter>(
-							plat.get(), comp_json.at("name").get<std::string>(), is_pulsed);
-						if (is_pulsed)
+							plat.get(), comp_json.at("name").get<std::string>(), mode);
+						if (mode == radar::OperationMode::PULSED_MODE)
 						{
 							trans->setPrf(comp_json.at("pulsed_mode").at("prf").get<RealType>());
 						}
@@ -695,10 +696,13 @@ namespace serial
 					else if (comp_json_outer.contains("receiver"))
 					{
 						const auto& comp_json = comp_json_outer.at("receiver");
+						const radar::OperationMode mode = comp_json.contains("pulsed_mode")
+							? radar::OperationMode::PULSED_MODE
+							: radar::OperationMode::CW_MODE;
 						auto recv = std::make_unique<radar::Receiver>(plat.get(),
 						                                              comp_json.at("name").get<std::string>(),
-						                                              masterSeeder());
-						if (comp_json.contains("pulsed_mode"))
+						                                              masterSeeder(), mode);
+						if (mode == radar::OperationMode::PULSED_MODE)
 						{
 							const auto& mode_json = comp_json.at("pulsed_mode");
 							recv->setWindowProperties(mode_json.at("window_length").get<RealType>(),
@@ -767,12 +771,14 @@ namespace serial
 						// monostatic radar (a linked Transmitter and Receiver) from the
 						// single 'monostatic' component in the JSON.
 						const auto& comp_json = comp_json_outer.at("monostatic");
-						const bool is_pulsed = comp_json.contains("pulsed_mode");
+						const radar::OperationMode mode = comp_json.contains("pulsed_mode")
+							? radar::OperationMode::PULSED_MODE
+							: radar::OperationMode::CW_MODE;
 
 						// Transmitter part
 						auto trans = std::make_unique<radar::Transmitter>(
-							plat.get(), comp_json.at("name").get<std::string>(), is_pulsed);
-						if (is_pulsed)
+							plat.get(), comp_json.at("name").get<std::string>(), mode);
+						if (mode == radar::OperationMode::PULSED_MODE)
 						{
 							trans->setPrf(comp_json.at("pulsed_mode").at("prf").get<RealType>());
 						}
@@ -785,8 +791,8 @@ namespace serial
 
 						// Receiver part
 						auto recv = std::make_unique<radar::Receiver>(
-							plat.get(), comp_json.at("name").get<std::string>(), masterSeeder());
-						if (is_pulsed)
+							plat.get(), comp_json.at("name").get<std::string>(), masterSeeder(), mode);
+						if (mode == radar::OperationMode::PULSED_MODE)
 						{
 							const auto& mode_json = comp_json.at("pulsed_mode");
 							recv->setWindowProperties(mode_json.at("window_length").get<RealType>(),

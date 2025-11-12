@@ -42,10 +42,11 @@ namespace radar
 		 * @brief Constructs a Receiver object.
 		 *
 		 * @param platform The platform associated with this receiver.
-		 * @param name The name of the receiver. Defaults to "defRecv".
+		 * @param name The name of the receiver.
 		 * @param seed The seed for the receiver's internal random number generator.
+		 * @param mode The operational mode (PULSED_MODE or CW_MODE).
 		 */
-		explicit Receiver(Platform* platform, std::string name, unsigned seed) noexcept;
+		explicit Receiver(Platform* platform, std::string name, unsigned seed, OperationMode mode) noexcept;
 
 		~Receiver() override = default;
 
@@ -143,6 +144,13 @@ namespace radar
 		[[nodiscard]] std::mt19937& getRngEngine() noexcept { return _rng; }
 
 		/**
+		 * @brief Gets the operational mode of the receiver.
+		 *
+		 * @return The operational mode (PULSED_MODE or CW_MODE).
+		 */
+		[[nodiscard]] OperationMode getMode() const noexcept { return _mode; }
+
+		/**
 		 * @brief Sets the properties for radar windows.
 		 *
 		 * @param length The length of the radar window.
@@ -195,6 +203,7 @@ namespace radar
 		int _flags = 0; ///< Flags for receiver configuration.
 		std::vector<ComplexType> _cw_iq_data; ///< IQ data for CW simulations.
 		std::mutex _cw_mutex; ///< Mutex for handling CW data.
+		OperationMode _mode; ///< The operational mode of the receiver.
 		std::mt19937 _rng; ///< Per-object random number generator for statistical independence.
 	};
 }

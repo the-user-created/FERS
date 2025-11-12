@@ -4,6 +4,7 @@
 
 # --- Private Headers ---
 set(LIBFERS_PRIVATE_HEADERS
+	${CMAKE_CURRENT_LIST_DIR}/core/sim_events.h
 	${CMAKE_CURRENT_LIST_DIR}/core/fers_context.h
 	${CMAKE_CURRENT_LIST_DIR}/core/sim_threading.h
 	${CMAKE_CURRENT_LIST_DIR}/simulation/channel_model.h
