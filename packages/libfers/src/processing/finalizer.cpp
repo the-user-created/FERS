@@ -6,7 +6,24 @@
 
 /**
  * @file finalizer.cpp
- * @brief Implements the asynchronous receiver finalization pipelines.
+ * @brief Implements the asynchronous receiver data processing and output pipelines.
+ *
+ * This file contains the core logic for finalizing received radar data.
+ * Finalization is performed asynchronously to the main simulation loop to avoid
+ * blocking physics calculations with expensive tasks like signal rendering,
+ * processing, and file I/O.
+ *
+ * Two distinct finalization pipelines are implemented:
+ * 1.  `runPulsedFinalizer`: A long-running function executed in a dedicated
+ *     thread for each pulsed-mode receiver. It processes data in chunks
+ *     (`RenderingJob`) as they become available from the simulation loop.
+ * 2.  `finalizeCwReceiver`: A one-shot task submitted to the main thread pool
+ *     for each continuous-wave receiver at the end of its operation. It processes
+ *     the entire collected data buffer at once.
+ *
+ * Both pipelines apply effects like thermal noise, phase noise (jitter),
+ * interference, downsampling, and ADC quantization before writing the final
+ * I/Q data to an HDF5 file.
  */
 
 #include "finalizer.h"
@@ -33,7 +50,7 @@
 namespace
 {
 	/**
-	 * @brief Adds phase noise to a window of complex samples.
+	 * @brief Applies phase noise to a window of complex I/Q samples.
 	 * @param noise A span of phase noise samples in radians.
 	 * @param window The window of complex I/Q samples to modify.
 	 */
@@ -51,7 +68,8 @@ namespace processing
 	void runPulsedFinalizer(radar::Receiver* receiver, pool::ThreadPool* pool,
 	                        const std::vector<std::unique_ptr<radar::Target>>* targets)
 	{
-		// 1. Setup: Clone timing model, open HDF5 file
+		// Each finalizer thread gets a private, stateful clone of the timing model
+		// to ensure thread safety and independent state progression.
 		auto timing_model = receiver->getTiming()->clone();
 		if (!timing_model)
 		{
@@ -65,16 +83,16 @@ namespace processing
 		LOG(logging::Level::INFO, "Finalizer thread started for receiver '{}'. Outputting to '{}'.",
 		    receiver->getName(), hdf5_filename);
 
-		// 2. Main processing loop
+		// Main processing loop for this receiver's dedicated thread.
 		while (true)
 		{
 			core::RenderingJob job;
 			if (!receiver->waitAndDequeueFinalizerJob(job))
 			{
-				break; // Shutdown signal received
+				break; // Shutdown signal ("poison pill" job) received.
 			}
 
-			// 11. Process RenderingJob Sequentially
+			// Process the RenderingJob for one receive window.
 			const RealType rate = params::rate() * params::oversampleRatio();
 			const RealType dt = 1.0 / rate;
 
@@ -85,30 +103,32 @@ namespace processing
 
 			if (timing_model->isEnabled())
 			{
-				// Advance the private, stateful clock model to the start of the current window.
+				// Advance the private clock model to the start of the current window.
 				if (timing_model->getSyncOnPulse())
 				{
-					// For sync-on-pulse models, reset the phase and skip to the window start delay.
+					// For sync-on-pulse models, reset phase and skip to the window start.
 					timing_model->reset();
 					timing_model->skipSamples(static_cast<int>(std::floor(rate * receiver->getWindowSkip())));
 				}
 				else
 				{
-					// For free-running models, skip the "dead time" between the previous window and this one.
+					// For free-running models, skip the "dead time" between windows.
 					const RealType inter_pulse_skip_duration = 1.0 / receiver->getWindowPrf() - receiver->
 						getWindowLength();
 					const auto samples_to_skip = static_cast<long>(std::floor(rate * inter_pulse_skip_duration));
 					timing_model->skipSamples(samples_to_skip);
 				}
 
-				// Generate phase noise for the window
+				// Generate phase noise for the entire window.
 				std::ranges::generate(pnoise, [&] { return timing_model->getNextSample(); });
 
-				// Use first noise sample to calculate jittered start time and fractional delay
+				// The first phase noise sample determines the time jitter for this window.
 				const RealType carrier = timing_model->getFrequency();
 				actual_start += pnoise[0] / (2.0 * PI * carrier);
 			}
 
+			// Decompose the jittered start time into a sample-aligned start and a
+			// fractional delay, which is passed to the rendering engine.
 			RealType frac_delay;
 			std::tie(actual_start, frac_delay) = [&actual_start, rate]
 			{
@@ -117,14 +137,14 @@ namespace processing
 				return std::tuple{rounded_start, fractional_delay};
 			}();
 
-			// 12. Execute Raw Signal Rendering
+			// --- Signal Rendering and Processing Pipeline ---
 			std::vector<ComplexType> window_buffer(window_samples);
 
-			// Add thermal noise
+			// 1. Apply thermal noise.
 			applyThermalNoise(window_buffer, receiver->getNoiseTemperature(receiver->getRotation(actual_start)),
 			                  receiver->getRngEngine());
 
-			// Add CW interference
+			// 2. Add interference from active continuous-wave sources.
 			for (size_t i = 0; i < window_buffer.size(); ++i)
 			{
 				const RealType t_sample = actual_start + i * dt;
@@ -142,20 +162,20 @@ namespace processing
 				window_buffer[i] += cw_interference_sample;
 			}
 
-			// Render pulsed responses
+			// 3. Render the primary pulsed responses.
 			renderWindow(window_buffer, job.duration, actual_start, frac_delay, job.responses, *pool);
 
-			// Apply phase noise
+			// 4. Apply phase noise (jitter).
 			if (timing_model->isEnabled()) { addPhaseNoiseToWindow(pnoise, window_buffer); }
 
-			// 13. Apply Final Effects and Write to File
-			// Downsample if oversampling was used
+			// --- Finalization and Output ---
+			// 5. Downsample if oversampling was used.
 			if (params::oversampleRatio() > 1) { window_buffer = std::move(fers_signal::downsample(window_buffer)); }
 
-			// Quantize and scale
+			// 6. Quantize and scale to simulate ADC effects.
 			const RealType fullscale = quantizeAndScaleWindow(window_buffer);
 
-			// Write chunk to HDF5 file
+			// 7. Write the processed chunk to the HDF5 file.
 			serial::addChunkToFile(h5_file, window_buffer, actual_start, fullscale, chunk_index++);
 		}
 
@@ -166,7 +186,7 @@ namespace processing
 	{
 		LOG(logging::Level::INFO, "Finalization task started for CW receiver '{}'.", receiver->getName());
 
-		// 14. Process Full CW Buffer
+		// Process the entire collected I/Q buffer for the CW receiver.
 		auto& iq_buffer = receiver->getMutableCwData();
 		const auto& interference_log = receiver->getPulsedInterferenceLog();
 
@@ -176,7 +196,8 @@ namespace processing
 			return;
 		}
 
-		// Render pulsed interferences into the main buffer
+		// --- Signal Rendering and Processing Pipeline ---
+		// 1. Render pulsed interference signals into the main I/Q buffer.
 		for (const auto& response : interference_log)
 		{
 			unsigned psize;
@@ -192,7 +213,7 @@ namespace processing
 			}
 		}
 
-		// Clone the timing model to ensure thread safety, especially if the model is shared.
+		// Clone the timing model to ensure thread safety.
 		auto timing_model = receiver->getTiming()->clone();
 		if (!timing_model)
 		{
@@ -200,10 +221,10 @@ namespace processing
 			return;
 		}
 
-		// Apply thermal noise
+		// 2. Apply thermal noise.
 		applyThermalNoise(iq_buffer, receiver->getNoiseTemperature(), receiver->getRngEngine());
 
-		// Generate and apply a single continuous phase noise sequence from the cloned model
+		// 3. Generate and apply a single continuous phase noise sequence.
 		std::vector pnoise(iq_buffer.size(), 0.0);
 		if (timing_model->isEnabled())
 		{
@@ -211,13 +232,14 @@ namespace processing
 			addPhaseNoiseToWindow(pnoise, iq_buffer);
 		}
 
-		// Downsample if oversampling was used
+		// --- Finalization and Output ---
+		// 4. Downsample if oversampling was used.
 		if (params::oversampleRatio() > 1) { iq_buffer = std::move(fers_signal::downsample(iq_buffer)); }
 
-		// Apply ADC quantization
+		// 5. Apply ADC quantization and scaling.
 		quantizeAndScaleWindow(iq_buffer);
 
-		// 15. Write CW Data to File
+		// 6. Write the entire processed buffer to an HDF5 file.
 		const auto hdf5_filename = std::format("{}_results.h5", receiver->getName());
 		try
 		{
