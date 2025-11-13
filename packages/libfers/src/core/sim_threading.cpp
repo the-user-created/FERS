@@ -7,11 +7,19 @@
 
 /**
  * @file sim_threading.cpp
- * @brief Implementation of the main simulation runner.
+ * @brief Implements the core event-driven simulation engine.
  *
- * This file contains the logic for the unified, event-driven simulation loop.
- * It manages the processing of discrete time events, calculates physics for
- * continuous-wave systems between events, and dispatches tasks to worker threads.
+ * This file contains the primary simulation loop, which orchestrates the entire
+ * simulation process. It operates on a unified, event-driven model capable of
+ * handling both pulsed and continuous-wave (CW) radar systems concurrently.
+ * The loop advances simulation time by processing events from a priority queue.
+ *
+ * A key feature is the time-stepped inner loop that calculates physics for
+ * active CW systems between discrete events. This hybrid approach allows for
+ * efficient simulation of both event-based (pulsed) and continuous (CW) phenomena.
+ * To maintain performance, expensive post-processing tasks are offloaded to
+ * worker threads, decoupling the main physics calculations from I/O and signal
+ * rendering.
  */
 
 #include "sim_threading.h"
@@ -56,7 +64,8 @@ namespace core
 
 		if (progress_callback) { progress_callback("Initializing event-driven simulation...", 0, 100); }
 
-		// Phase 3: Start dedicated finalizer threads for each pulsed receiver
+		// Start dedicated finalizer threads for each pulsed receiver. This creates a
+		// one-thread-per-receiver pipeline for asynchronous data processing.
 		std::vector<std::jthread> finalizer_threads;
 		for (const auto& receiver_ptr : world->getReceivers())
 		{
@@ -69,16 +78,18 @@ namespace core
 
 		LOG(Level::INFO, "Starting unified event-driven simulation loop.");
 
-		// 6. Start Main Simulation Loop
+		// Main Simulation Loop
 		while (!event_queue.empty() && sim_state.t_current <= end_time)
 		{
-			// 7. Advance Clock and Process Events
+			// Advance Clock to the next scheduled event
 			const Event current_event = event_queue.top();
 			event_queue.pop();
 
 			const RealType t_event = current_event.timestamp;
 
-			// 8. Calculate Raw Samples for Active CW Receivers (Time-Stepped Inner Loop)
+			// Before processing the event, run a time-stepped inner loop to calculate
+			// physics for any active continuous-wave systems. This handles the "continuous"
+			// part of the simulation between discrete events.
 			if (t_event > sim_state.t_current)
 			{
 				const RealType t_next_event = t_event;
@@ -89,10 +100,10 @@ namespace core
 						if (receiver_ptr->getMode() == OperationMode::CW_MODE && receiver_ptr->isActive())
 						{
 							ComplexType total_sample{0.0, 0.0};
-							// 8.3.1 Query active CW sources
+							// Query active CW sources
 							for (const auto& cw_source : sim_state.active_cw_transmitters)
 							{
-								// 8.3.2 Calculate direct and reflected paths
+								// Calculate direct and reflected paths
 								total_sample += simulation::calculateDirectPathContribution(
 									cw_source, receiver_ptr.get(), t_step);
 								for (const auto& target_ptr : world->getTargets())
@@ -101,7 +112,7 @@ namespace core
 										cw_source, receiver_ptr.get(), target_ptr.get(), t_step);
 								}
 							}
-							// 8.3.3 Store sample in buffer
+							// Store sample in the receiver's main buffer
 							const auto sample_index = static_cast<size_t>((t_step - params::startTime()) / dt_sim);
 							receiver_ptr->setCwSample(sample_index, total_sample);
 						}
@@ -111,17 +122,16 @@ namespace core
 
 			sim_state.t_current = t_event;
 
-			// 7. Process event by type
+			// Process the discrete event
 			switch (current_event.type)
 			{
 			case EventType::TxPulsedStart:
 			{
 				auto* tx = static_cast<Transmitter*>(current_event.source_object);
-				// 7.1.1 Iterate through every receiver
+				// For each pulse, calculate its interaction with every receiver and target.
 				for (const auto& rx_ptr : world->getReceivers())
 				{
-					// 7.1.2 Calculate unique Response objects
-					// Direct path
+					// Calculate unique Response objects for direct and reflected paths.
 					if (!rx_ptr->checkFlag(Receiver::RecvFlag::FLAG_NODIRECT))
 					{
 						if (auto response = simulation::calculateResponse(tx, rx_ptr.get(), tx->getSignal(),
@@ -134,7 +144,6 @@ namespace core
 							else { rx_ptr->addInterferenceToLog(std::move(response)); }
 						}
 					}
-					// Reflected paths
 					for (const auto& target_ptr : world->getTargets())
 					{
 						if (auto response = simulation::calculateResponse(tx, rx_ptr.get(), tx->getSignal(),
@@ -148,7 +157,7 @@ namespace core
 						}
 					}
 				}
-				// 7.1.4 Schedule next TxPulsedStart event
+				// Schedule the next pulse transmission for this transmitter.
 				const RealType next_pulse_time = t_event + 1.0 / tx->getPrf();
 				if (next_pulse_time <= end_time)
 				{
@@ -159,27 +168,24 @@ namespace core
 			case EventType::RxPulsedWindowStart:
 			{
 				auto* rx = static_cast<Receiver*>(current_event.source_object);
-				// 7.2.1 Mark receiver as active
 				rx->setActive(true);
-				// 7.2.2 Schedule RxPulsedWindowEnd event
 				event_queue.push({t_event + rx->getWindowLength(), EventType::RxPulsedWindowEnd, rx});
 				break;
 			}
 			case EventType::RxPulsedWindowEnd:
 			{
 				auto* rx = static_cast<Receiver*>(current_event.source_object);
-				// 7.3.1 Mark receiver as inactive
 				rx->setActive(false);
-				// 7.3.2 Create RenderingJob
+				// The receive window is over. Package all received data into a RenderingJob.
 				RenderingJob job{
 					.ideal_start_time = t_event - rx->getWindowLength(),
 					.duration = rx->getWindowLength(),
 					.responses = rx->drainInbox(),
 					.active_cw_sources = sim_state.active_cw_transmitters
 				};
-				// 7.3.3 Move RenderingJob to finalizer queue
+				// Offload the job to the dedicated finalizer thread for this receiver.
 				rx->enqueueFinalizerJob(std::move(job));
-				// 7.3.4 Schedule next RxPulsedWindowStart event
+				// Schedule the start of the next receive window.
 				const RealType next_window_start = t_event - rx->getWindowLength() + 1.0 / rx->getWindowPrf();
 				if (next_window_start <= end_time)
 				{
@@ -189,31 +195,27 @@ namespace core
 			}
 			case EventType::TxCwStart:
 			{
-				// 7.4.1 Add to global list of active CW sources
 				auto* tx = static_cast<Transmitter*>(current_event.source_object);
 				sim_state.active_cw_transmitters.push_back(tx);
 				break;
 			}
 			case EventType::TxCwEnd:
 			{
-				// 7.5.1 Remove from global list
 				auto* tx = static_cast<Transmitter*>(current_event.source_object);
 				std::erase(sim_state.active_cw_transmitters, tx);
 				break;
 			}
 			case EventType::RxCwStart:
 			{
-				// 7.6.1 Mark receiver as active
 				auto* rx = static_cast<Receiver*>(current_event.source_object);
 				rx->setActive(true);
 				break;
 			}
 			case EventType::RxCwEnd:
 			{
-				// 7.7.1 Mark receiver as inactive
 				auto* rx = static_cast<Receiver*>(current_event.source_object);
 				rx->setActive(false);
-				// 7.7.2 Enqueue finalization task
+				// The CW receiver is done. Enqueue a one-shot finalization task to the main pool.
 				pool.enqueue(processing::finalizeCwReceiver, rx, &pool);
 				break;
 			}
@@ -227,24 +229,23 @@ namespace core
 			}
 		}
 
-		// Phase 4: Shutdown
+		// Shutdown Phase
 		LOG(Level::INFO, "Main simulation loop finished. Waiting for finalization tasks...");
 
-		// Signal pulsed finalizer threads to shut down
+		// Signal pulsed finalizer threads to shut down by sending a "poison pill" job.
 		for (const auto& receiver_ptr : world->getReceivers())
 		{
 			if (receiver_ptr->getMode() == OperationMode::PULSED_MODE)
 			{
-				// Enqueue a "poison pill" job to terminate the finalizer loop
 				RenderingJob shutdown_job{.duration = -1.0};
 				receiver_ptr->enqueueFinalizerJob(std::move(shutdown_job));
 			}
 		}
 
-		// Wait for CW finalization tasks in the main pool to complete
+		// Wait for any remaining CW finalization tasks in the main pool to complete.
 		pool.wait();
 
-		// The std::jthread finalizer threads will be automatically joined here at the end of scope.
+		// The std::jthread finalizer threads are automatically joined here at the end of scope.
 		LOG(Level::INFO, "All finalization tasks complete.");
 
 		if (progress_callback) { progress_callback("Simulation complete", 100, 100); }
