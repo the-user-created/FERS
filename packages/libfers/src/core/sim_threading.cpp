@@ -93,8 +93,14 @@ namespace core
 			if (t_event > t_current)
 			{
 				const RealType t_next_event = t_event;
-				for (RealType t_step = t_current; t_step < t_next_event; t_step += dt_sim)
+
+				const auto start_index = static_cast<size_t>(std::ceil((t_current - params::startTime()) / dt_sim));
+				const auto end_index = static_cast<size_t>(std::ceil((t_next_event - params::startTime()) / dt_sim));
+
+				for (size_t sample_index = start_index; sample_index < end_index; ++sample_index)
 				{
+					const RealType t_step = params::startTime() + static_cast<RealType>(sample_index) * dt_sim;
+
 					for (const auto& receiver_ptr : world->getReceivers())
 					{
 						if (receiver_ptr->getMode() == OperationMode::CW_MODE && receiver_ptr->isActive())
@@ -112,8 +118,7 @@ namespace core
 										cw_source, receiver_ptr.get(), target_ptr.get(), t_step);
 								}
 							}
-							// Store sample in the receiver's main buffer
-							const auto sample_index = static_cast<size_t>((t_step - params::startTime()) / dt_sim);
+							// Store sample in the receiver's main buffer using the correct index
 							receiver_ptr->setCwSample(sample_index, total_sample);
 						}
 					}
@@ -127,6 +132,7 @@ namespace core
 			{
 			case EventType::TX_PULSED_START:
 			{
+				// NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast): Type is guaranteed by event_type
 				auto* tx = static_cast<Transmitter*>(source_object);
 				// For each pulse, calculate its interaction with every receiver and target.
 				for (const auto& rx_ptr : world->getReceivers())
@@ -166,6 +172,7 @@ namespace core
 			}
 			case EventType::RX_PULSED_WINDOW_START:
 			{
+				// NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast): Type is guaranteed by event_type
 				auto* rx = static_cast<Receiver*>(source_object);
 				rx->setActive(true);
 				event_queue.push({t_event + rx->getWindowLength(), EventType::RX_PULSED_WINDOW_END, rx});
@@ -173,6 +180,7 @@ namespace core
 			}
 			case EventType::RX_PULSED_WINDOW_END:
 			{
+				// NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast): Type is guaranteed by event_type
 				auto* rx = static_cast<Receiver*>(source_object);
 				rx->setActive(false);
 				// The receive window is over. Package all received data into a RenderingJob.
@@ -194,24 +202,28 @@ namespace core
 			}
 			case EventType::TX_CW_START:
 			{
+				// NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast): Type is guaranteed by event_type
 				auto* tx = static_cast<Transmitter*>(source_object);
 				active_cw_transmitters.push_back(tx);
 				break;
 			}
 			case EventType::TX_CW_END:
 			{
+				// NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast): Type is guaranteed by event_type
 				auto* tx = static_cast<Transmitter*>(source_object);
 				std::erase(active_cw_transmitters, tx);
 				break;
 			}
 			case EventType::RX_CW_START:
 			{
+				// NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast): Type is guaranteed by event_type
 				auto* rx = static_cast<Receiver*>(source_object);
 				rx->setActive(true);
 				break;
 			}
 			case EventType::RX_CW_END:
 			{
+				// NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast): Type is guaranteed by event_type
 				auto* rx = static_cast<Receiver*>(source_object);
 				rx->setActive(false);
 				// The CW receiver is done. Enqueue a one-shot finalization task to the main pool.

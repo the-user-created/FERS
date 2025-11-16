@@ -145,9 +145,9 @@ namespace processing
 			                  receiver->getRngEngine());
 
 			// 2. Add interference from active continuous-wave sources.
-			for (size_t i = 0; i < window_buffer.size(); ++i)
+			RealType t_sample = actual_start;
+			for (auto& window_sample : window_buffer)
 			{
-				const RealType t_sample = actual_start + i * dt;
 				ComplexType cw_interference_sample{0.0, 0.0};
 				for (const auto* cw_source : job.active_cw_sources)
 				{
@@ -159,7 +159,8 @@ namespace processing
 							cw_source, receiver, target_ptr.get(), t_sample);
 					}
 				}
-				window_buffer[i] += cw_interference_sample;
+				window_sample += cw_interference_sample;
+				t_sample += dt;
 			}
 
 			// 3. Render the primary pulsed responses.
