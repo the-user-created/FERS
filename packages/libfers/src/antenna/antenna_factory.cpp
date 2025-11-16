@@ -18,9 +18,9 @@
 #include <optional>
 #include <stdexcept>
 
+#include <libfers/geometry_ops.h>
 #include <libfers/logging.h>
 #include <libfers/portable_utils.h>
-#include <libfers/geometry_ops.h>
 #include "serial/libxml_wrapper.h"
 
 using logging::Level;

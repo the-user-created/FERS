@@ -47,7 +47,7 @@ namespace radar
 		* @param name Name of the transmitter.
 		* @param mode The operational mode (PULSED_MODE or CW_MODE).
 		*/
-		Transmitter(Platform* platform, std::string name, OperationMode mode) noexcept :
+		Transmitter(Platform* platform, std::string name, const OperationMode mode) noexcept :
 			Radar(platform, std::move(name)), _mode(mode) {}
 
 		~Transmitter() override = default;

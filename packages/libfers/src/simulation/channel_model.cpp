@@ -113,7 +113,7 @@ namespace simulation
 		const RealType term2_num = 1.0 - dotProduct(beta_r, u_tgtr);
 		const RealType term2_den = 1.0 - dotProduct(beta_tgt, u_tgtr);
 
-		results.doppler_factor = (term1_num / term1_den) * (term2_num / term2_den) * (gamma_r / gamma_t);
+		results.doppler_factor = term1_num / term1_den * (term2_num / term2_den) * (gamma_r / gamma_t);
 
 		results.noise_temperature = recv->getNoiseTemperature(recv->getRotation(time.count() + results.delay));
 	}
@@ -169,7 +169,7 @@ namespace simulation
 		const RealType num = 1.0 - dotProduct(beta_r, u_tr);
 		const RealType den = 1.0 - dotProduct(beta_t, u_tr);
 
-		results.doppler_factor = (num / den) * (gamma_r / gamma_t);
+		results.doppler_factor = num / den * (gamma_r / gamma_t);
 
 		results.phase = -results.delay * 2 * PI * wave->getCarrier();
 
@@ -275,11 +275,11 @@ namespace simulation
 
 	std::unique_ptr<serial::Response> calculateResponse(const Transmitter* trans, const Receiver* recv,
 	                                                    const RadarSignal* signal,
-	                                                    const RealType start_time, const Target* targ)
+	                                                    const RealType startTime, const Target* targ)
 	{
 		if (targ == nullptr && trans->getAttached() == recv) { return nullptr; }
 
-		const auto start_time_chrono = std::chrono::duration<RealType>(start_time);
+		const auto start_time_chrono = std::chrono::duration<RealType>(startTime);
 		const auto end_time_chrono = start_time_chrono + std::chrono::duration<RealType>(signal->getLength());
 		const auto sample_time_chrono = std::chrono::duration<RealType>(1.0 / params::simSamplingRate());
 		const int point_count = static_cast<int>(std::ceil(signal->getLength() / sample_time_chrono.count()));

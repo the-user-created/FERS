@@ -26,13 +26,13 @@ namespace core
 	 */
 	enum class EventType
 	{
-		TxPulsedStart, ///< A pulsed transmitter begins emitting a pulse.
-		RxPulsedWindowStart, ///< A pulsed receiver opens its listening window.
-		RxPulsedWindowEnd, ///< A pulsed receiver closes its listening window.
-		TxCwStart, ///< A continuous-wave transmitter starts transmitting.
-		TxCwEnd, ///< A continuous-wave transmitter stops transmitting.
-		RxCwStart, ///< A continuous-wave receiver starts listening.
-		RxCwEnd, ///< A continuous-wave receiver stops listening.
+		TX_PULSED_START, ///< A pulsed transmitter begins emitting a pulse.
+		RX_PULSED_WINDOW_START, ///< A pulsed receiver opens its listening window.
+		RX_PULSED_WINDOW_END, ///< A pulsed receiver closes its listening window.
+		TX_CW_START, ///< A continuous-wave transmitter starts transmitting.
+		TX_CW_END, ///< A continuous-wave transmitter stops transmitting.
+		RX_CW_START, ///< A continuous-wave receiver starts listening.
+		RX_CW_END, ///< A continuous-wave receiver stops listening.
 	};
 
 	/**
@@ -76,19 +76,19 @@ namespace core
 	{
 		switch (type)
 		{
-		case EventType::TxPulsedStart:
+		case EventType::TX_PULSED_START:
 			return "TxPulsedStart";
-		case EventType::RxPulsedWindowStart:
+		case EventType::RX_PULSED_WINDOW_START:
 			return "RxPulsedWindowStart";
-		case EventType::RxPulsedWindowEnd:
+		case EventType::RX_PULSED_WINDOW_END:
 			return "RxPulsedWindowEnd";
-		case EventType::TxCwStart:
+		case EventType::TX_CW_START:
 			return "TxCwStart";
-		case EventType::TxCwEnd:
+		case EventType::TX_CW_END:
 			return "TxCwEnd";
-		case EventType::RxCwStart:
+		case EventType::RX_CW_START:
 			return "RxCwStart";
-		case EventType::RxCwEnd:
+		case EventType::RX_CW_END:
 			return "RxCwEnd";
 		default:
 			return "UnknownEvent";

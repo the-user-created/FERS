@@ -19,7 +19,6 @@
 #include <cmath>
 #include <future>
 #include <queue>
-#include <stdexcept>
 #include <tuple>
 #include <vector>
 
@@ -188,6 +187,7 @@ namespace processing
 		// params::boltzmannK() * temperature * bandwidth
 		const RealType power = params::boltzmannK() * noiseTemperature * (params::rate() * params::oversampleRatio() /
 			2);
+		// TODO: Confirm that the division by 2 is correct
 		noise::WgnGenerator generator(rngEngine, std::sqrt(power) / 2.0);
 		for (auto& sample : window)
 		{

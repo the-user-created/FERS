@@ -15,9 +15,9 @@
 #include <algorithm>
 
 #include <libfers/coord.h>
-#include "path_utils.h"
-#include <libfers/logging.h>
 #include <libfers/geometry_ops.h>
+#include <libfers/logging.h>
+#include "path_utils.h"
 
 using logging::Level;
 

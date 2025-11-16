@@ -87,7 +87,7 @@ namespace noise
 
 		std::reference_wrapper<std::mt19937> _rng_engine_ref; ///< Reference to the RNG engine.
 
-		std::normal_distribution<RealType> _normal_dist; ///< Normal distribution for generating white Gaussian noise.
+		std::normal_distribution<> _normal_dist; ///< Normal distribution for generating white Gaussian noise.
 
 		std::unique_ptr<fers_signal::IirFilter> _shape_filter; ///< Filter used for shaping the noise signal.
 

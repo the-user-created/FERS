@@ -18,11 +18,11 @@
 #include <unordered_map>
 #include <vector>
 
-#include "antenna_factory.h"
-#include "platform.h"
 #include <libfers/receiver.h>
 #include <libfers/target.h>
 #include <libfers/transmitter.h>
+#include "antenna_factory.h"
+#include "platform.h"
 #include "core/sim_events.h"
 #include "core/simulation_state.h"
 #include "signal/radar_signal.h"

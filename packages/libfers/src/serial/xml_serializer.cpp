@@ -17,6 +17,7 @@
 #include "xml_serializer.h"
 
 #include <iomanip>
+#include <ranges>
 #include <sstream>
 
 #include <libfers/antenna_factory.h>
@@ -74,14 +75,14 @@ namespace
 		}
 	}
 
-	void setAttributeFromBool(XmlElement& element, const std::string& name, const bool value)
+	void setAttributeFromBool(const XmlElement& element, const std::string& name, const bool value)
 	{
 		element.setAttribute(name, value ? "true" : "false");
 	}
 
 	// --- Component Serialization Functions ---
 
-	void serializeParameters(XmlElement& parent)
+	void serializeParameters(const XmlElement& parent)
 	{
 		addChildWithNumber(parent, "starttime", params::startTime());
 		addChildWithNumber(parent, "endtime", params::endTime());
@@ -96,12 +97,12 @@ namespace
 		if (params::adcBits() != 0) { addChildWithNumber(parent, "adc_bits", params::adcBits()); }
 		if (params::oversampleRatio() != 1) { addChildWithNumber(parent, "oversample", params::oversampleRatio()); }
 
-		XmlElement origin = parent.addChild("origin");
+		const XmlElement origin = parent.addChild("origin");
 		origin.setAttribute("latitude", std::to_string(params::originLatitude()));
 		origin.setAttribute("longitude", std::to_string(params::originLongitude()));
 		origin.setAttribute("altitude", std::to_string(params::originAltitude()));
 
-		XmlElement cs = parent.addChild("coordinatesystem");
+		const XmlElement cs = parent.addChild("coordinatesystem");
 		switch (params::coordinateFrame())
 		{
 		case params::CoordinateFrame::ENU:
@@ -118,7 +119,7 @@ namespace
 		}
 	}
 
-	void serializeWaveform(const fers_signal::RadarSignal& waveform, XmlElement& parent)
+	void serializeWaveform(const fers_signal::RadarSignal& waveform, const XmlElement& parent)
 	{
 		parent.setAttribute("name", waveform.getName());
 
@@ -131,7 +132,7 @@ namespace
 		}
 		else
 		{
-			XmlElement pulsed_file = parent.addChild("pulsed_from_file");
+			const XmlElement pulsed_file = parent.addChild("pulsed_from_file");
 			if (const auto& filename = waveform.getFilename())
 			{
 				pulsed_file.setAttribute("filename", *filename);
@@ -146,19 +147,19 @@ namespace
 		}
 	}
 
-	void serializeTiming(const timing::PrototypeTiming& timing, XmlElement& parent)
+	void serializeTiming(const timing::PrototypeTiming& timing, const XmlElement& parent)
 	{
 		parent.setAttribute("name", timing.getName());
 		setAttributeFromBool(parent, "synconpulse", timing.getSyncOnPulse());
 
 		addChildWithNumber(parent, "frequency", timing.getFrequency());
-		if (auto val = timing.getFreqOffset()) { addChildWithNumber(parent, "freq_offset", *val); }
-		if (auto val = timing.getRandomFreqOffsetStdev())
+		if (const auto val = timing.getFreqOffset()) { addChildWithNumber(parent, "freq_offset", *val); }
+		if (const auto val = timing.getRandomFreqOffsetStdev())
 		{
 			addChildWithNumber(parent, "random_freq_offset_stdev", *val);
 		}
-		if (auto val = timing.getPhaseOffset()) { addChildWithNumber(parent, "phase_offset", *val); }
-		if (auto val = timing.getRandomPhaseOffsetStdev())
+		if (const auto val = timing.getPhaseOffset()) { addChildWithNumber(parent, "phase_offset", *val); }
+		if (const auto val = timing.getRandomPhaseOffsetStdev())
 		{
 			addChildWithNumber(parent, "random_phase_offset_stdev", *val);
 		}
@@ -173,7 +174,7 @@ namespace
 		}
 	}
 
-	void serializeAntenna(const antenna::Antenna& antenna, XmlElement& parent)
+	void serializeAntenna(const antenna::Antenna& antenna, const XmlElement& parent)
 	{
 		parent.setAttribute("name", antenna.getName());
 
@@ -218,7 +219,7 @@ namespace
 		}
 	}
 
-	void serializeMotionPath(const math::Path& path, XmlElement& parent)
+	void serializeMotionPath(const math::Path& path, const XmlElement& parent)
 	{
 		switch (path.getType())
 		{
@@ -233,23 +234,23 @@ namespace
 			break;
 		}
 
-		for (const auto& wp : path.getCoords())
+		for (const auto& [pos, t] : path.getCoords())
 		{
 			XmlElement wp_elem = parent.addChild("positionwaypoint");
-			addChildWithNumber(wp_elem, "x", wp.pos.x);
-			addChildWithNumber(wp_elem, "y", wp.pos.y);
-			addChildWithNumber(wp_elem, "altitude", wp.pos.z);
-			addChildWithNumber(wp_elem, "time", wp.t);
+			addChildWithNumber(wp_elem, "x", pos.x);
+			addChildWithNumber(wp_elem, "y", pos.y);
+			addChildWithNumber(wp_elem, "altitude", pos.z);
+			addChildWithNumber(wp_elem, "time", t);
 		}
 	}
 
-	void serializeRotation(const math::RotationPath& rot_path, XmlElement& parent)
+	void serializeRotation(const math::RotationPath& rotPath, const XmlElement& parent)
 	{
-		if (rot_path.getType() == math::RotationPath::InterpType::INTERP_CONSTANT)
+		if (rotPath.getType() == math::RotationPath::InterpType::INTERP_CONSTANT)
 		{
-			XmlElement fixed_elem = parent.addChild("fixedrotation");
-			const auto start = rot_path.getStart();
-			const auto rate = rot_path.getRate();
+			const XmlElement fixed_elem = parent.addChild("fixedrotation");
+			const auto start = rotPath.getStart();
+			const auto rate = rotPath.getRate();
 
 			// Convert internal mathematical angles (radians, CCW from East) back to
 			// the XML format's compass degrees (CW from North). This transformation
@@ -267,8 +268,8 @@ namespace
 		}
 		else
 		{
-			XmlElement rot_elem = parent.addChild("rotationpath");
-			switch (rot_path.getType())
+			const XmlElement rot_elem = parent.addChild("rotationpath");
+			switch (rotPath.getType())
 			{
 			case math::RotationPath::InterpType::INTERP_STATIC:
 				rot_elem.setAttribute("interpolation", "static");
@@ -282,12 +283,12 @@ namespace
 			default:
 				break; // Should not happen
 			}
-			for (const auto& wp : rot_path.getCoords())
+			for (const auto& wp : rotPath.getCoords())
 			{
 				XmlElement wp_elem = rot_elem.addChild("rotationwaypoint");
 				// Convert angles back to compass degrees for XML output. This is
 				// done to ensure the output conforms to the FERS XML schema.
-				const RealType az_deg = std::fmod(90.0 - (wp.azimuth * 180.0 / PI) + 360.0, 360.0);
+				const RealType az_deg = std::fmod(90.0 - wp.azimuth * 180.0 / PI + 360.0, 360.0);
 				const RealType el_deg = wp.elevation * 180.0 / PI;
 				addChildWithNumber(wp_elem, "azimuth", az_deg);
 				addChildWithNumber(wp_elem, "elevation", el_deg);
@@ -296,9 +297,9 @@ namespace
 		}
 	}
 
-	void serializeTransmitter(const radar::Transmitter& tx, XmlElement& parent)
+	void serializeTransmitter(const radar::Transmitter& tx, const XmlElement& parent)
 	{
-		XmlElement tx_elem = parent.addChild("transmitter");
+		const XmlElement tx_elem = parent.addChild("transmitter");
 		tx_elem.setAttribute("name", tx.getName());
 		tx_elem.setAttribute("waveform", tx.getSignal() ? tx.getSignal()->getName() : "");
 		tx_elem.setAttribute("antenna", tx.getAntenna() ? tx.getAntenna()->getName() : "");
@@ -306,7 +307,7 @@ namespace
 
 		if (tx.getMode() == radar::OperationMode::PULSED_MODE)
 		{
-			XmlElement mode_elem = tx_elem.addChild("pulsed_mode");
+			const XmlElement mode_elem = tx_elem.addChild("pulsed_mode");
 			addChildWithNumber(mode_elem, "prf", tx.getPrf());
 		}
 		else
@@ -315,9 +316,9 @@ namespace
 		}
 	}
 
-	void serializeReceiver(const radar::Receiver& rx, XmlElement& parent)
+	void serializeReceiver(const radar::Receiver& rx, const XmlElement& parent)
 	{
-		XmlElement rx_elem = parent.addChild("receiver");
+		const XmlElement rx_elem = parent.addChild("receiver");
 		rx_elem.setAttribute("name", rx.getName());
 		rx_elem.setAttribute("antenna", rx.getAntenna() ? rx.getAntenna()->getName() : "");
 		rx_elem.setAttribute("timing", rx.getTiming() ? rx.getTiming()->getName() : "");
@@ -326,7 +327,7 @@ namespace
 
 		if (rx.getMode() == radar::OperationMode::PULSED_MODE)
 		{
-			XmlElement mode_elem = rx_elem.addChild("pulsed_mode");
+			const XmlElement mode_elem = rx_elem.addChild("pulsed_mode");
 			addChildWithNumber(mode_elem, "prf", rx.getWindowPrf());
 			addChildWithNumber(mode_elem, "window_skip", rx.getWindowSkip());
 			addChildWithNumber(mode_elem, "window_length", rx.getWindowLength());
@@ -339,9 +340,9 @@ namespace
 		if (rx.getNoiseTemperature() > 0) { addChildWithNumber(rx_elem, "noise_temp", rx.getNoiseTemperature()); }
 	}
 
-	void serializeMonostatic(const radar::Transmitter& tx, const radar::Receiver& rx, XmlElement& parent)
+	void serializeMonostatic(const radar::Transmitter& tx, const radar::Receiver& rx, const XmlElement& parent)
 	{
-		XmlElement mono_elem = parent.addChild("monostatic");
+		const XmlElement mono_elem = parent.addChild("monostatic");
 		mono_elem.setAttribute("name", tx.getName());
 		mono_elem.setAttribute("antenna", tx.getAntenna() ? tx.getAntenna()->getName() : "");
 		mono_elem.setAttribute("waveform", tx.getSignal() ? tx.getSignal()->getName() : "");
@@ -351,7 +352,7 @@ namespace
 
 		if (tx.getMode() == radar::OperationMode::PULSED_MODE)
 		{
-			XmlElement mode_elem = mono_elem.addChild("pulsed_mode");
+			const XmlElement mode_elem = mono_elem.addChild("pulsed_mode");
 			addChildWithNumber(mode_elem, "prf", tx.getPrf());
 			addChildWithNumber(mode_elem, "window_skip", rx.getWindowSkip());
 			addChildWithNumber(mode_elem, "window_length", rx.getWindowLength());
@@ -364,12 +365,12 @@ namespace
 		if (rx.getNoiseTemperature() > 0) { addChildWithNumber(mono_elem, "noise_temp", rx.getNoiseTemperature()); }
 	}
 
-	void serializeTarget(const radar::Target& target, XmlElement& parent)
+	void serializeTarget(const radar::Target& target, const XmlElement& parent)
 	{
-		XmlElement target_elem = parent.addChild("target");
+		const XmlElement target_elem = parent.addChild("target");
 		target_elem.setAttribute("name", target.getName());
 
-		XmlElement rcs_elem = target_elem.addChild("rcs");
+		const XmlElement rcs_elem = target_elem.addChild("rcs");
 		if (const auto* iso = dynamic_cast<const radar::IsoTarget*>(&target))
 		{
 			rcs_elem.setAttribute("type", "isotropic");
@@ -382,11 +383,11 @@ namespace
 		}
 	}
 
-	void serializePlatform(const radar::Platform& platform, const core::World& world, XmlElement& parent)
+	void serializePlatform(const radar::Platform& platform, const core::World& world, const XmlElement& parent)
 	{
 		parent.setAttribute("name", platform.getName());
 
-		XmlElement motion_elem = parent.addChild("motionpath");
+		const XmlElement motion_elem = parent.addChild("motionpath");
 		serializeMotionPath(*platform.getMotionPath(), motion_elem);
 
 		serializeRotation(*platform.getRotationPath(), parent);
@@ -450,24 +451,24 @@ namespace serial
 		if (!params::params.simulation_name.empty()) { root.setAttribute("name", params::params.simulation_name); }
 		else { root.setAttribute("name", "FERS Scenario"); }
 
-		XmlElement params_elem = root.addChild("parameters");
+		const XmlElement params_elem = root.addChild("parameters");
 		serializeParameters(params_elem);
 
 		// Assets (waveforms, timings, antennas) are serialized first. This is
 		// necessary because platforms reference these assets by name. By defining
 		// them at the top of the document, we ensure that any XML parser can
 		// resolve these references when it later encounters the platform definitions.
-		for (const auto& [name, waveform] : world.getWaveforms())
+		for (const auto& waveform : world.getWaveforms() | std::views::values)
 		{
 			XmlElement waveform_elem = root.addChild("waveform");
 			serializeWaveform(*waveform, waveform_elem);
 		}
-		for (const auto& [name, timing] : world.getTimings())
+		for (const auto& timing : world.getTimings() | std::views::values)
 		{
 			XmlElement timing_elem = root.addChild("timing");
 			serializeTiming(*timing, timing_elem);
 		}
-		for (const auto& [name, antenna] : world.getAntennas())
+		for (const auto& antenna : world.getAntennas() | std::views::values)
 		{
 			XmlElement antenna_elem = root.addChild("antenna");
 			serializeAntenna(*antenna, antenna_elem);

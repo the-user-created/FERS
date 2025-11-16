@@ -15,9 +15,9 @@
 #include <algorithm>
 #include <cmath>
 
-#include "path_utils.h"
 #include <libfers/coord.h>
 #include <libfers/geometry_ops.h>
+#include "path_utils.h"
 
 namespace math
 {
