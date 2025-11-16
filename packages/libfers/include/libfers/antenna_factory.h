@@ -441,8 +441,8 @@ namespace antenna
 		 */
 		H5Antenna(const std::string_view name, const std::string& filename) :
 			Antenna(name.data()),
-			_filename(filename),
-			_pattern(serial::readPattern(filename, "antenna")) {}
+			_pattern(serial::readPattern(filename, "antenna")),
+			_filename(filename) {}
 
 		~H5Antenna() override = default;
 

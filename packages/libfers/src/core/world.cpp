@@ -101,12 +101,12 @@ namespace core
 			if (transmitter->getMode() == radar::OperationMode::PULSED_MODE)
 			{
 				// Schedule the first pulse at t=0
-				_event_queue.push({0.0, EventType::TxPulsedStart, transmitter.get()});
+				_event_queue.push({0.0, EventType::TX_PULSED_START, transmitter.get()});
 			}
 			else // CW_MODE
 			{
-				_event_queue.push({params::startTime(), EventType::TxCwStart, transmitter.get()});
-				_event_queue.push({params::endTime(), EventType::TxCwEnd, transmitter.get()});
+				_event_queue.push({params::startTime(), EventType::TX_CW_START, transmitter.get()});
+				_event_queue.push({params::endTime(), EventType::TX_CW_END, transmitter.get()});
 			}
 		}
 
@@ -115,16 +115,16 @@ namespace core
 			if (receiver->getMode() == radar::OperationMode::PULSED_MODE)
 			{
 				// Schedule the first receive window
-				const RealType first_window_start = receiver->getWindowStart(0);
-				if (first_window_start < params::endTime())
+				if (const RealType first_window_start = receiver->getWindowStart(0); first_window_start <
+					params::endTime())
 				{
-					_event_queue.push({first_window_start, EventType::RxPulsedWindowStart, receiver.get()});
+					_event_queue.push({first_window_start, EventType::RX_PULSED_WINDOW_START, receiver.get()});
 				}
 			}
 			else // CW_MODE
 			{
-				_event_queue.push({params::startTime(), EventType::RxCwStart, receiver.get()});
-				_event_queue.push({params::endTime(), EventType::RxCwEnd, receiver.get()});
+				_event_queue.push({params::startTime(), EventType::RX_CW_START, receiver.get()});
+				_event_queue.push({params::endTime(), EventType::RX_CW_END, receiver.get()});
 			}
 		}
 	}
@@ -140,7 +140,7 @@ namespace core
 		ss << std::fixed << std::setprecision(6);
 
 		const std::string separator = "--------------------------------------------------------------------";
-		std::string title = "| Event Queue Contents (" + std::to_string(_event_queue.size()) + " events)";
+		const std::string title = "| Event Queue Contents (" + std::to_string(_event_queue.size()) + " events)";
 
 		ss << separator << "\n"
 			<< std::left << std::setw(separator.length() - 1) << title << "|\n"
@@ -154,12 +154,12 @@ namespace core
 
 		while (!queue_copy.empty())
 		{
-			const Event event = queue_copy.top();
+			const auto [timestamp, event_type, source_object] = queue_copy.top();
 			queue_copy.pop();
 
-			ss << "| " << std::right << std::setw(12) << event.timestamp
-				<< " | " << std::left << std::setw(21) << toString(event.type)
-				<< " | " << std::left << std::setw(25) << event.source_object->getName() << " |\n";
+			ss << "| " << std::right << std::setw(12) << timestamp
+				<< " | " << std::left << std::setw(21) << toString(event_type)
+				<< " | " << std::left << std::setw(25) << source_object->getName() << " |\n";
 		}
 		ss << separator << "\n";
 

@@ -156,7 +156,7 @@ namespace radar
 		 * @brief Sets the active state of the receiver.
 		 * @param active The new active state.
 		 */
-		void setActive(bool active) noexcept { _is_active = active; }
+		void setActive(const bool active) noexcept { _is_active = active; }
 
 		/**
 		 * @brief Moves all responses from the inbox into a RenderingJob.

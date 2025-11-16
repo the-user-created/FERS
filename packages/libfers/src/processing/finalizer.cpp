@@ -70,7 +70,7 @@ namespace processing
 	{
 		// Each finalizer thread gets a private, stateful clone of the timing model
 		// to ensure thread safety and independent state progression.
-		auto timing_model = receiver->getTiming()->clone();
+		const auto timing_model = receiver->getTiming()->clone();
 		if (!timing_model)
 		{
 			LOG(logging::Level::FATAL, "Failed to clone timing model for receiver '{}'", receiver->getName());
@@ -214,7 +214,7 @@ namespace processing
 		}
 
 		// Clone the timing model to ensure thread safety.
-		auto timing_model = receiver->getTiming()->clone();
+		const auto timing_model = receiver->getTiming()->clone();
 		if (!timing_model)
 		{
 			LOG(logging::Level::FATAL, "Failed to clone timing model for CW receiver '{}'", receiver->getName());

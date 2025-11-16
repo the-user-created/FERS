@@ -15,10 +15,9 @@
 
 #include <stack>
 
-#include <libfers/receiver.h>
-#include <libfers/transmitter.h>
 #include <libfers/antenna_factory.h>
 #include <libfers/logging.h>
+#include <libfers/receiver.h>
 
 using logging::Level;
 

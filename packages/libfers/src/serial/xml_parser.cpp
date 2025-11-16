@@ -757,10 +757,10 @@ namespace
 	void parsePlatformElements(const XmlElement& platform, World* world, Platform* plat,
 	                           std::mt19937& masterSeeder)
 	{
-		XmlElement monostatic = platform.childElement("monostatic", 0);
-		XmlElement transmitter = platform.childElement("transmitter", 0);
-		XmlElement receiver = platform.childElement("receiver", 0);
-		XmlElement target = platform.childElement("target", 0);
+		const XmlElement monostatic = platform.childElement("monostatic", 0);
+		const XmlElement transmitter = platform.childElement("transmitter", 0);
+		const XmlElement receiver = platform.childElement("receiver", 0);
+		const XmlElement target = platform.childElement("target", 0);
 
 		int component_count = 0;
 		if (monostatic.isValid()) { component_count++; }
@@ -988,13 +988,13 @@ namespace serial
 		processParsedDocument(main_doc, world, main_dir, masterSeeder);
 	}
 
-	void parseSimulationFromString(const std::string& xml_content, World* world, const bool validate,
+	void parseSimulationFromString(const std::string& xmlContent, World* world, const bool validate,
 	                               std::mt19937& masterSeeder)
 	{
 		world->clear();
 		params::params.reset();
 		XmlDocument doc;
-		if (!doc.loadString(xml_content))
+		if (!doc.loadString(xmlContent))
 		{
 			throw XmlException("Failed to parse XML from memory string.");
 		}

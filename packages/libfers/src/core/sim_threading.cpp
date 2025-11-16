@@ -58,7 +58,7 @@ namespace core
 	                       const std::function<void(const std::string&, int, int)>& progress_callback)
 	{
 		auto& event_queue = world->getEventQueue();
-		auto& sim_state = world->getSimulationState();
+		auto& [t_current, active_cw_transmitters] = world->getSimulationState();
 		const RealType end_time = params::endTime();
 		const RealType dt_sim = 1.0 / (params::rate() * params::oversampleRatio());
 
@@ -79,21 +79,21 @@ namespace core
 		LOG(Level::INFO, "Starting unified event-driven simulation loop.");
 
 		// Main Simulation Loop
-		while (!event_queue.empty() && sim_state.t_current <= end_time)
+		while (!event_queue.empty() && t_current <= end_time)
 		{
 			// Advance Clock to the next scheduled event
-			const Event current_event = event_queue.top();
+			const auto [timestamp, event_type, source_object] = event_queue.top();
 			event_queue.pop();
 
-			const RealType t_event = current_event.timestamp;
+			const RealType t_event = timestamp;
 
 			// Before processing the event, run a time-stepped inner loop to calculate
 			// physics for any active continuous-wave systems. This handles the "continuous"
 			// part of the simulation between discrete events.
-			if (t_event > sim_state.t_current)
+			if (t_event > t_current)
 			{
 				const RealType t_next_event = t_event;
-				for (RealType t_step = sim_state.t_current; t_step < t_next_event; t_step += dt_sim)
+				for (RealType t_step = t_current; t_step < t_next_event; t_step += dt_sim)
 				{
 					for (const auto& receiver_ptr : world->getReceivers())
 					{
@@ -101,7 +101,7 @@ namespace core
 						{
 							ComplexType total_sample{0.0, 0.0};
 							// Query active CW sources
-							for (const auto& cw_source : sim_state.active_cw_transmitters)
+							for (const auto& cw_source : active_cw_transmitters)
 							{
 								// Calculate direct and reflected paths
 								total_sample += simulation::calculateDirectPathContribution(
@@ -120,14 +120,14 @@ namespace core
 				}
 			}
 
-			sim_state.t_current = t_event;
+			t_current = t_event;
 
 			// Process the discrete event
-			switch (current_event.type)
+			switch (event_type)
 			{
-			case EventType::TxPulsedStart:
+			case EventType::TX_PULSED_START:
 			{
-				auto* tx = static_cast<Transmitter*>(current_event.source_object);
+				auto* tx = static_cast<Transmitter*>(source_object);
 				// For each pulse, calculate its interaction with every receiver and target.
 				for (const auto& rx_ptr : world->getReceivers())
 				{
@@ -158,62 +158,61 @@ namespace core
 					}
 				}
 				// Schedule the next pulse transmission for this transmitter.
-				const RealType next_pulse_time = t_event + 1.0 / tx->getPrf();
-				if (next_pulse_time <= end_time)
+				if (const RealType next_pulse_time = t_event + 1.0 / tx->getPrf(); next_pulse_time <= end_time)
 				{
-					event_queue.push({next_pulse_time, EventType::TxPulsedStart, tx});
+					event_queue.push({next_pulse_time, EventType::TX_PULSED_START, tx});
 				}
 				break;
 			}
-			case EventType::RxPulsedWindowStart:
+			case EventType::RX_PULSED_WINDOW_START:
 			{
-				auto* rx = static_cast<Receiver*>(current_event.source_object);
+				auto* rx = static_cast<Receiver*>(source_object);
 				rx->setActive(true);
-				event_queue.push({t_event + rx->getWindowLength(), EventType::RxPulsedWindowEnd, rx});
+				event_queue.push({t_event + rx->getWindowLength(), EventType::RX_PULSED_WINDOW_END, rx});
 				break;
 			}
-			case EventType::RxPulsedWindowEnd:
+			case EventType::RX_PULSED_WINDOW_END:
 			{
-				auto* rx = static_cast<Receiver*>(current_event.source_object);
+				auto* rx = static_cast<Receiver*>(source_object);
 				rx->setActive(false);
 				// The receive window is over. Package all received data into a RenderingJob.
 				RenderingJob job{
 					.ideal_start_time = t_event - rx->getWindowLength(),
 					.duration = rx->getWindowLength(),
 					.responses = rx->drainInbox(),
-					.active_cw_sources = sim_state.active_cw_transmitters
+					.active_cw_sources = active_cw_transmitters
 				};
 				// Offload the job to the dedicated finalizer thread for this receiver.
 				rx->enqueueFinalizerJob(std::move(job));
 				// Schedule the start of the next receive window.
-				const RealType next_window_start = t_event - rx->getWindowLength() + 1.0 / rx->getWindowPrf();
-				if (next_window_start <= end_time)
+				if (const RealType next_window_start = t_event - rx->getWindowLength() + 1.0 / rx->getWindowPrf();
+					next_window_start <= end_time)
 				{
-					event_queue.push({next_window_start, EventType::RxPulsedWindowStart, rx});
+					event_queue.push({next_window_start, EventType::RX_PULSED_WINDOW_START, rx});
 				}
 				break;
 			}
-			case EventType::TxCwStart:
+			case EventType::TX_CW_START:
 			{
-				auto* tx = static_cast<Transmitter*>(current_event.source_object);
-				sim_state.active_cw_transmitters.push_back(tx);
+				auto* tx = static_cast<Transmitter*>(source_object);
+				active_cw_transmitters.push_back(tx);
 				break;
 			}
-			case EventType::TxCwEnd:
+			case EventType::TX_CW_END:
 			{
-				auto* tx = static_cast<Transmitter*>(current_event.source_object);
-				std::erase(sim_state.active_cw_transmitters, tx);
+				auto* tx = static_cast<Transmitter*>(source_object);
+				std::erase(active_cw_transmitters, tx);
 				break;
 			}
-			case EventType::RxCwStart:
+			case EventType::RX_CW_START:
 			{
-				auto* rx = static_cast<Receiver*>(current_event.source_object);
+				auto* rx = static_cast<Receiver*>(source_object);
 				rx->setActive(true);
 				break;
 			}
-			case EventType::RxCwEnd:
+			case EventType::RX_CW_END:
 			{
-				auto* rx = static_cast<Receiver*>(current_event.source_object);
+				auto* rx = static_cast<Receiver*>(source_object);
 				rx->setActive(false);
 				// The CW receiver is done. Enqueue a one-shot finalization task to the main pool.
 				pool.enqueue(processing::finalizeCwReceiver, rx, &pool);
@@ -223,8 +222,8 @@ namespace core
 
 			if (progress_callback)
 			{
-				const int progress = static_cast<int>(sim_state.t_current / end_time * 100.0);
-				progress_callback(std::format("Simulating... {:.2f}s / {:.2f}s", sim_state.t_current, end_time),
+				const int progress = static_cast<int>(t_current / end_time * 100.0);
+				progress_callback(std::format("Simulating... {:.2f}s / {:.2f}s", t_current, end_time),
 				                  progress, 100);
 			}
 		}

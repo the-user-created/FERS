@@ -52,7 +52,7 @@ namespace processing
 	 * @param pool A reference to the thread pool for parallel processing.
 	 */
 	void renderWindow(std::vector<ComplexType>& window, RealType length, RealType start,
-	                  RealType fracDelay, const std::span<const std::unique_ptr<serial::Response>> responses,
+	                  RealType fracDelay, std::span<const std::unique_ptr<serial::Response>> responses,
 	                  pool::ThreadPool& pool);
 
 	/**

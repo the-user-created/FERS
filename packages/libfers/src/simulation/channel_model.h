@@ -149,13 +149,13 @@ namespace simulation
 	 * @param trans Pointer to the transmitter.
 	 * @param recv Pointer to the receiver.
 	 * @param signal Pointer to the transmitted pulse signal.
-	 * @param start_time The absolute simulation time when the pulse transmission starts.
+	 * @param startTime The absolute simulation time when the pulse transmission starts.
 	 * @param targ Optional pointer to a target. If null, a direct path is simulated.
 	 * @return A unique pointer to the generated Response object.
 	 * @throws RangeError If the channel model reports an invalid geometry.
 	 * @throws std::runtime_error If the simulation parameters result in zero time steps.
 	 */
 	std::unique_ptr<serial::Response> calculateResponse(const radar::Transmitter* trans, const radar::Receiver* recv,
-	                                                    const fers_signal::RadarSignal* signal, RealType start_time,
+	                                                    const fers_signal::RadarSignal* signal, RealType startTime,
 	                                                    const radar::Target* targ = nullptr);
 }

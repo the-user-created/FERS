@@ -11,12 +11,12 @@
 
 #include <libfers/logging.h>
 
+#include <chrono>
 #include <ctime>
 #include <filesystem>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
-#include <chrono>
 
 namespace logging
 {

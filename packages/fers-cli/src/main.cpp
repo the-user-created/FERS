@@ -54,13 +54,13 @@ int main(const int argc, char* argv[])
 		return 0;
 	}
 
-	const auto& config = config_result.value();
+	const auto& [script_file, log_level, num_threads, validate, log_file, generate_kml] = config_result.value();
 
 	// Configure logging
-	logging::logger.setLevel(config.log_level);
-	if (config.log_file)
+	logging::logger.setLevel(log_level);
+	if (log_file)
 	{
-		if (const auto result = logging::logger.logToFile(*config.log_file); !result)
+		if (const auto result = logging::logger.logToFile(*log_file); !result)
 		{
 			LOG(Level::ERROR, "Failed to open log file: {}", result.error());
 			return 1;
@@ -71,8 +71,8 @@ int main(const int argc, char* argv[])
 
 	LOG(Level::DEBUG,
 	    "Running FERS with arguments: script_file={}, log_level={}, num_threads={}, validate={}, log_file={}",
-	    config.script_file, logging::getLevelString(config.log_level), config.num_threads, config.validate,
-	    config.log_file.value_or("None"));
+	    script_file, logging::getLevelString(log_level), num_threads, validate,
+	    log_file.value_or("None"));
 
 	// Create a simulation context using the C-API
 	fers_context_t* context = fers_context_create();
@@ -83,17 +83,17 @@ int main(const int argc, char* argv[])
 	}
 
 	// Load the scenario from file via the C-API
-	LOG(Level::INFO, "Loading scenario from '{}'...", config.script_file);
-	if (fers_load_scenario_from_xml_file(context, config.script_file.c_str(), config.validate) != 0)
+	LOG(Level::INFO, "Loading scenario from '{}'...", script_file);
+	if (fers_load_scenario_from_xml_file(context, script_file.c_str(), validate) != 0)
 	{
 		LOG(Level::FATAL, "Failed to load scenario. Check logs for parsing errors.");
 		fers_context_destroy(context);
 		return 1;
 	}
 
-	if (config.generate_kml)
+	if (generate_kml)
 	{
-		std::filesystem::path kml_output_path = config.script_file;
+		std::filesystem::path kml_output_path = script_file;
 		kml_output_path.replace_extension(".kml");
 		const std::string kml_output_file = kml_output_path.string();
 
@@ -112,7 +112,7 @@ int main(const int argc, char* argv[])
 	}
 
 	// Set thread count via the parameters module
-	if (const auto result = params::setThreads(config.num_threads); !result)
+	if (const auto result = params::setThreads(num_threads); !result)
 	{
 		LOG(Level::ERROR, "Failed to set number of threads: {}", result.error());
 	}

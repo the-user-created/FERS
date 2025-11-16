@@ -99,8 +99,10 @@ namespace math
 	void from_json(const nlohmann::json& j, Path& p)
 	{
 		p.setInterp(j.at("interpolation").get<Path::InterpType>());
-		const auto waypoints = j.at("positionwaypoints").get<std::vector<Coord>>();
-		for (const auto& wp : waypoints) { p.addCoord(wp); }
+		for (const auto waypoints = j.at("positionwaypoints").get<std::vector<Coord>>(); const auto& wp : waypoints)
+		{
+			p.addCoord(wp);
+		}
 		p.finalize();
 	}
 
@@ -137,8 +139,8 @@ namespace math
 	void from_json(const nlohmann::json& j, RotationPath& p)
 	{
 		p.setInterp(j.at("interpolation").get<RotationPath::InterpType>());
-		const auto waypoints = j.at("rotationwaypoints").get<std::vector<RotationCoord>>();
-		for (const auto& wp : waypoints) { p.addCoord(wp); }
+		for (const auto waypoints = j.at("rotationwaypoints").get<std::vector<RotationCoord>>(); const auto& wp :
+		     waypoints) { p.addCoord(wp); }
 		p.finalize();
 	}
 
@@ -294,9 +296,11 @@ namespace antenna
 	void from_json(const nlohmann::json& j, std::unique_ptr<Antenna>& ant)
 	{
 		const auto name = j.at("name").get<std::string>();
-		const auto pattern = j.at("pattern").get<std::string>();
 
-		if (pattern == "isotropic") { ant = std::make_unique<Isotropic>(name); }
+		if (const auto pattern = j.at("pattern").get<std::string>(); pattern == "isotropic")
+		{
+			ant = std::make_unique<Isotropic>(name);
+		}
 		else if (pattern == "sinc")
 		{
 			ant = std::make_unique<Sinc>(name, j.at("alpha").get<RealType>(), j.at("beta").get<RealType>(),
@@ -463,7 +467,7 @@ namespace params
 		if (p.coordinate_frame == CoordinateFrame::UTM)
 		{
 			p.utm_zone = cs.at("zone").get<int>();
-			p.utm_north_hemisphere = (cs.at("hemisphere").get<std::string>() == "N");
+			p.utm_north_hemisphere = cs.at("hemisphere").get<std::string>() == "N";
 		}
 	}
 }
@@ -478,13 +482,19 @@ namespace serial
 		sim_json["parameters"] = params::params;
 
 		sim_json["waveforms"] = nlohmann::json::array();
-		for (const auto& [name, waveform] : world.getWaveforms()) { sim_json["waveforms"].push_back(*waveform); }
+		for (const auto& waveform : world.getWaveforms() | std::views::values)
+		{
+			sim_json["waveforms"].push_back(*waveform);
+		}
 
 		sim_json["antennas"] = nlohmann::json::array();
-		for (const auto& [name, antenna] : world.getAntennas()) { sim_json["antennas"].push_back(*antenna); }
+		for (const auto& antenna : world.getAntennas() | std::views::values)
+		{
+			sim_json["antennas"].push_back(*antenna);
+		}
 
 		sim_json["timings"] = nlohmann::json::array();
-		for (const auto& [name, timing] : world.getTimings()) { sim_json["timings"].push_back(*timing); }
+		for (const auto& timing : world.getTimings() | std::views::values) { sim_json["timings"].push_back(*timing); }
 
 		sim_json["platforms"] = nlohmann::json::array();
 		for (const auto& p : world.getPlatforms())
@@ -599,14 +609,14 @@ namespace serial
 		//    assets by name. The assets must exist before they can be linked.
 		if (sim.contains("waveforms"))
 		{
-			auto waveforms = sim.at("waveforms").get<std::vector<std::unique_ptr<fers_signal::RadarSignal>>>();
-			for (auto& waveform : waveforms) { world.add(std::move(waveform)); }
+			for (auto waveforms = sim.at("waveforms").get<std::vector<std::unique_ptr<fers_signal::RadarSignal>>>();
+			     auto& waveform : waveforms) { world.add(std::move(waveform)); }
 		}
 
 		if (sim.contains("antennas"))
 		{
-			auto antennas = sim.at("antennas").get<std::vector<std::unique_ptr<antenna::Antenna>>>();
-			for (auto& antenna : antennas) { world.add(std::move(antenna)); }
+			for (auto antennas = sim.at("antennas").get<std::vector<std::unique_ptr<antenna::Antenna>>>(); auto& antenna
+			     : antennas) { world.add(std::move(antenna)); }
 		}
 
 		if (sim.contains("timings"))
@@ -665,8 +675,8 @@ namespace serial
 				// Component
 				if (plat_json.contains("component"))
 				{
-					const auto& comp_json_outer = plat_json.at("component");
-					if (comp_json_outer.contains("transmitter"))
+					if (const auto& comp_json_outer = plat_json.at("component"); comp_json_outer.
+						contains("transmitter"))
 					{
 						const auto& comp_json = comp_json_outer.at("transmitter");
 						const radar::OperationMode mode = comp_json.contains("pulsed_mode")
@@ -747,8 +757,8 @@ namespace serial
 						if (comp_json.contains("model"))
 						{
 							const auto& model_json = comp_json.at("model");
-							const auto model_type = model_json.at("type").get<std::string>();
-							if (model_type == "chisquare" || model_type == "gamma")
+							if (const auto model_type = model_json.at("type").get<std::string>(); model_type ==
+								"chisquare" || model_type == "gamma")
 							{
 								auto model = std::make_unique<radar::RcsChiSquare>(
 									world.getTargets().back()->getRngEngine(),
