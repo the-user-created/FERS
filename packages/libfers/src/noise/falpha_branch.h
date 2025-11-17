@@ -111,7 +111,7 @@ namespace noise
 
 		RealType _ffrac; ///< Fractional part of the noise generation.
 
-		RealType _fint; ///< Integer part of the noise generation.
+		unsigned _fint; ///< Integer part of the noise generation.
 
 		RealType _offset_sample{}; ///< Offset applied to the final noise sample.
 

@@ -184,11 +184,14 @@ namespace processing
 	{
 		if (noiseTemperature == 0) { return; }
 
-		// params::boltzmannK() * temperature * bandwidth
-		const RealType power = params::boltzmannK() * noiseTemperature * (params::rate() * params::oversampleRatio() /
-			2);
-		// TODO: Confirm that the division by 2 is correct
-		noise::WgnGenerator generator(rngEngine, std::sqrt(power) / 2.0);
+		const RealType b = params::rate() / (2.0 * params::oversampleRatio());
+		const RealType total_power = params::boltzmannK() * noiseTemperature * b;
+
+		// Split total power equally between the I and Q channels
+		const RealType per_channel_power = total_power / 2.0;
+		const RealType stddev = std::sqrt(per_channel_power);
+
+		noise::WgnGenerator generator(rngEngine, stddev);
 		for (auto& sample : window)
 		{
 			sample += ComplexType(generator.getSample(), generator.getSample());
