@@ -110,7 +110,7 @@ namespace processing
 					timing_model->reset();
 					timing_model->skipSamples(static_cast<int>(std::floor(rate * receiver->getWindowSkip())));
 				}
-				else
+				else // TODO: should we use (else if chunk_index > 0) here to avoid skipping on the first window?
 				{
 					// For free-running models, skip the "dead time" between windows.
 					const RealType inter_pulse_skip_duration = 1.0 / receiver->getWindowPrf() - receiver->
