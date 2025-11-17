@@ -238,7 +238,7 @@ namespace processing
 		if (params::oversampleRatio() > 1) { iq_buffer = std::move(fers_signal::downsample(iq_buffer)); }
 
 		// 5. Apply ADC quantization and scaling.
-		quantizeAndScaleWindow(iq_buffer);
+		const RealType fullscale = quantizeAndScaleWindow(iq_buffer);
 
 		// 6. Write the entire processed buffer to an HDF5 file.
 		const auto hdf5_filename = std::format("{}_results.h5", receiver->getName());
@@ -258,6 +258,7 @@ namespace processing
 
 			file.createAttribute("sampling_rate", params::rate());
 			file.createAttribute("start_time", params::startTime());
+			file.createAttribute("fullscale", fullscale);
 			file.createAttribute("reference_carrier_frequency", timing_model->getFrequency());
 
 			LOG(logging::Level::INFO, "Successfully exported CW data for receiver '{}' to '{}'", receiver->getName(),

@@ -110,8 +110,11 @@ namespace core
 							for (const auto& cw_source : active_cw_transmitters)
 							{
 								// Calculate direct and reflected paths
-								total_sample += simulation::calculateDirectPathContribution(
-									cw_source, receiver_ptr.get(), t_step);
+								if (!receiver_ptr->checkFlag(Receiver::RecvFlag::FLAG_NODIRECT))
+								{
+									total_sample += simulation::calculateDirectPathContribution(
+										cw_source, receiver_ptr.get(), t_step);
+								}
 								for (const auto& target_ptr : world->getTargets())
 								{
 									total_sample += simulation::calculateReflectedPathContribution(
