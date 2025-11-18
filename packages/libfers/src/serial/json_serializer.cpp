@@ -15,6 +15,7 @@
 
 #include "serial/json_serializer.h"
 
+#include <cmath>
 #include <random>
 #include <nlohmann/json.hpp>
 
@@ -679,9 +680,16 @@ namespace serial
 						contains("transmitter"))
 					{
 						const auto& comp_json = comp_json_outer.at("transmitter");
-						const radar::OperationMode mode = comp_json.contains("pulsed_mode")
-							? radar::OperationMode::PULSED_MODE
-							: radar::OperationMode::CW_MODE;
+						radar::OperationMode mode;
+						if (comp_json.contains("pulsed_mode")) { mode = radar::OperationMode::PULSED_MODE; }
+						else if (comp_json.contains("cw_mode")) { mode = radar::OperationMode::CW_MODE; }
+						else
+						{
+							throw std::runtime_error("Transmitter component '" +
+								comp_json.at("name").get<std::string>() +
+								"' must have a 'pulsed_mode' or 'cw_mode' block.");
+						}
+
 						auto trans = std::make_unique<radar::Transmitter>(
 							plat.get(), comp_json.at("name").get<std::string>(), mode);
 						if (mode == radar::OperationMode::PULSED_MODE)
@@ -699,9 +707,15 @@ namespace serial
 					else if (comp_json_outer.contains("receiver"))
 					{
 						const auto& comp_json = comp_json_outer.at("receiver");
-						const radar::OperationMode mode = comp_json.contains("pulsed_mode")
-							? radar::OperationMode::PULSED_MODE
-							: radar::OperationMode::CW_MODE;
+						radar::OperationMode mode;
+						if (comp_json.contains("pulsed_mode")) { mode = radar::OperationMode::PULSED_MODE; }
+						else if (comp_json.contains("cw_mode")) { mode = radar::OperationMode::CW_MODE; }
+						else
+						{
+							throw std::runtime_error("Receiver component '" +
+								comp_json.at("name").get<std::string>() +
+								"' must have a 'pulsed_mode' or 'cw_mode' block.");
+						}
 						auto recv = std::make_unique<radar::Receiver>(plat.get(),
 						                                              comp_json.at("name").get<std::string>(),
 						                                              masterSeeder(), mode);
@@ -774,9 +788,15 @@ namespace serial
 						// monostatic radar (a linked Transmitter and Receiver) from the
 						// single 'monostatic' component in the JSON.
 						const auto& comp_json = comp_json_outer.at("monostatic");
-						const radar::OperationMode mode = comp_json.contains("pulsed_mode")
-							? radar::OperationMode::PULSED_MODE
-							: radar::OperationMode::CW_MODE;
+						radar::OperationMode mode;
+						if (comp_json.contains("pulsed_mode")) { mode = radar::OperationMode::PULSED_MODE; }
+						else if (comp_json.contains("cw_mode")) { mode = radar::OperationMode::CW_MODE; }
+						else
+						{
+							throw std::runtime_error("Monostatic component '" +
+								comp_json.at("name").get<std::string>() +
+								"' must have a 'pulsed_mode' or 'cw_mode' block.");
+						}
 
 						// Transmitter part
 						auto trans = std::make_unique<radar::Transmitter>(
@@ -827,5 +847,24 @@ namespace serial
 				world.add(std::move(plat));
 			}
 		}
+
+		// 4. Finalize world state after all objects are loaded.
+
+		// Prepare CW receiver buffers before starting simulation
+		const RealType start_time = params::startTime();
+		const RealType end_time = params::endTime();
+		const RealType dt_sim = 1.0 / (params::rate() * params::oversampleRatio());
+		const auto num_samples = static_cast<size_t>(std::ceil((end_time - start_time) / dt_sim));
+
+		for (const auto& receiver : world.getReceivers())
+		{
+			if (receiver->getMode() == radar::OperationMode::CW_MODE)
+			{
+				receiver->prepareCwData(num_samples);
+			}
+		}
+
+		// Schedule initial events after all objects are loaded.
+		world.scheduleInitialEvents();
 	}
 }
