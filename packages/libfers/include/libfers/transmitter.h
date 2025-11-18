@@ -82,13 +82,6 @@ namespace radar
 		[[nodiscard]] OperationMode getMode() const noexcept { return _mode; }
 
 		/**
-		* @brief Retrieves the pulse count over the transmission duration.
-		*
-		* @return Number of pulses transmitted.
-		*/
-		[[nodiscard]] int getPulseCount() const noexcept;
-
-		/**
 		* @brief Sets the radar signal wave to be transmitted.
 		*
 		* @param pulse Pointer to the RadarSignal object representing the wave.
