@@ -2,7 +2,7 @@
 // Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
 
 import { v4 as uuidv4 } from 'uuid';
-import { GlobalParameters, Pulse, Timing, Antenna, Platform } from './types';
+import { GlobalParameters, Waveform, Timing, Antenna, Platform } from './types';
 
 export const defaultGlobalParameters: GlobalParameters = {
     id: 'global-parameters',
@@ -24,19 +24,14 @@ export const defaultGlobalParameters: GlobalParameters = {
     },
     coordinateSystem: {
         frame: 'ENU',
-    },
-    export: {
-        xml: false,
-        csv: false,
-        binary: true,
-    },
+    }
 };
 
-export const defaultPulse: Omit<Pulse, 'id' | 'name'> = {
-    type: 'Pulse',
-    pulseType: 'file',
+export const defaultWaveform: Omit<Waveform, 'id' | 'name'> = {
+    type: 'Waveform',
+    waveformType: 'pulsed_from_file',
     power: 1000,
-    carrier: 1e9,
+    carrier_frequency: 1e9,
     filename: '',
 };
 
@@ -80,7 +75,7 @@ export const createDefaultPlatform = (): Omit<Platform, 'id' | 'name'> => ({
         window_length: 0,
         prf: 1000,
         antennaId: null,
-        pulseId: null,
+        waveformId: null,
         timingId: null,
         noiseTemperature: 290,
         noDirectPaths: false,

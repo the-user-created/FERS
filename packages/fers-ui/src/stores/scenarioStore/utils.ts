@@ -37,7 +37,7 @@ export const findItemInStore = (
     if (id === 'global-parameters') return state.globalParameters;
 
     const collections = [
-        state.pulses,
+        state.waveforms,
         state.timings,
         state.antennas,
         state.platforms,

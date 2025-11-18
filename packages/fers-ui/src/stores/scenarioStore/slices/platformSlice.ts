@@ -117,7 +117,7 @@ export const createPlatformSlice: StateCreator<
                         window_length: 0,
                         prf: 1000,
                         antennaId: null,
-                        pulseId: null,
+                        waveformId: null,
                         timingId: null,
                         noiseTemperature: 290,
                         noDirectPaths: false,
@@ -131,7 +131,7 @@ export const createPlatformSlice: StateCreator<
                         radarType: 'pulsed',
                         prf: 1000,
                         antennaId: null,
-                        pulseId: null,
+                        waveformId: null,
                         timingId: null,
                     };
                     break;

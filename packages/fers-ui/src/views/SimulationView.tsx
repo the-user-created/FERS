@@ -148,8 +148,7 @@ export const SimulationView = React.memo(function SimulationView() {
                                 Executes the entire simulation based on the
                                 current scenario settings. This is a
                                 computationally intensive process that will
-                                generate output files (HDF5, CSV, XML) as
-                                configured in the Global Parameters.
+                                generate output files.
                             </Typography>
                         </CardContent>
                         <CardActions sx={{ p: 2 }}>

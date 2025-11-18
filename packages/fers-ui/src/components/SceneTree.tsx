@@ -82,13 +82,13 @@ const getPlatformIcon = (platform: Platform) => {
 export default function SceneTree() {
     const {
         globalParameters,
-        pulses,
+        waveforms,
         timings,
         antennas,
         platforms,
         selectedItemId,
         selectItem,
-        addPulse,
+        addWaveform,
         addTiming,
         addAntenna,
         addPlatform,
@@ -100,7 +100,7 @@ export default function SceneTree() {
         nodeId: string | null
     ) => {
         const rootNodes = [
-            'pulses-root',
+            'waveforms-root',
             'timings-root',
             'antennas-root',
             'platforms-root',
@@ -179,7 +179,7 @@ export default function SceneTree() {
                         }
                     />
                     <TreeItem
-                        itemId="pulses-root"
+                        itemId="waveforms-root"
                         label={
                             <Box
                                 sx={{
@@ -190,16 +190,16 @@ export default function SceneTree() {
                             >
                                 <WavesIcon sx={{ mr: 1 }} fontSize="small" />
                                 <SectionHeader
-                                    title="Pulses"
-                                    onAdd={addPulse}
+                                    title="Waveforms"
+                                    onAdd={addWaveform}
                                 />
                             </Box>
                         }
                     >
-                        {pulses.map((pulse) => (
+                        {waveforms.map((waveform) => (
                             <TreeItem
-                                key={pulse.id}
-                                itemId={pulse.id}
+                                key={waveform.id}
+                                itemId={waveform.id}
                                 label={
                                     <Box
                                         sx={{
@@ -223,14 +223,14 @@ export default function SceneTree() {
                                                 pr: 1,
                                             }}
                                         >
-                                            {pulse.name}
+                                            {waveform.name}
                                         </Typography>
                                         <IconButton
                                             size="small"
                                             className="remove-button"
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                removeItem(pulse.id);
+                                                removeItem(waveform.id);
                                             }}
                                         >
                                             <RemoveIcon fontSize="inherit" />

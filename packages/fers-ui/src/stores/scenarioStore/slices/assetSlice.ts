@@ -4,7 +4,7 @@
 import { StateCreator } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 import { ScenarioStore, AssetActions, Antenna } from '../types';
-import { defaultPulse, defaultTiming, defaultAntenna } from '../defaults';
+import { defaultWaveform, defaultTiming, defaultAntenna } from '../defaults';
 
 export const createAssetSlice: StateCreator<
     ScenarioStore,
@@ -12,13 +12,13 @@ export const createAssetSlice: StateCreator<
     [],
     AssetActions
 > = (set) => ({
-    addPulse: () =>
+    addWaveform: () =>
         set((state) => {
             const id = uuidv4();
-            state.pulses.push({
-                ...defaultPulse,
+            state.waveforms.push({
+                ...defaultWaveform,
                 id,
-                name: `Pulse ${state.pulses.length + 1}`,
+                name: `Waveform ${state.waveforms.length + 1}`,
             });
             state.isDirty = true;
         }),

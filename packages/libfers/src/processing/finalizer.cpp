@@ -151,8 +151,12 @@ namespace processing
 				ComplexType cw_interference_sample{0.0, 0.0};
 				for (const auto* cw_source : job.active_cw_sources)
 				{
-					cw_interference_sample += simulation::calculateDirectPathContribution(cw_source, receiver,
-					                                                                      t_sample);
+					// TODO: use nodirect?
+					if (!receiver->checkFlag(radar::Receiver::RecvFlag::FLAG_NODIRECT))
+					{
+						cw_interference_sample += simulation::calculateDirectPathContribution(
+							cw_source, receiver, t_sample);
+					}
 					for (const auto& target_ptr : *targets)
 					{
 						cw_interference_sample += simulation::calculateReflectedPathContribution(
