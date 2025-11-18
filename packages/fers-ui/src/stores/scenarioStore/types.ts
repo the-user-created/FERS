@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { Vector3 } from 'three';
 import {
     GlobalParametersSchema,
-    PulseSchema,
+    WaveformSchema,
     TimingSchema,
     AntennaSchema,
     PlatformSchema,
@@ -21,7 +21,7 @@ import {
 
 // --- Zod Inferred Types ---
 export type GlobalParameters = z.infer<typeof GlobalParametersSchema>;
-export type Pulse = z.infer<typeof PulseSchema>;
+export type Waveform = z.infer<typeof WaveformSchema>;
 export type NoiseEntry = z.infer<typeof NoiseEntrySchema>;
 export type Timing = z.infer<typeof TimingSchema>;
 export type Antenna = z.infer<typeof AntennaSchema>;
@@ -45,7 +45,7 @@ export type ScenarioData = Omit<
 
 export type ScenarioItem =
     | GlobalParameters
-    | Pulse
+    | Waveform
     | Timing
     | Antenna
     | Platform;
@@ -73,7 +73,7 @@ export type ScenarioState = ScenarioData & {
 
 // --- Action Slice Types ---
 export type AssetActions = {
-    addPulse: () => void;
+    addWaveform: () => void;
     addTiming: () => void;
     addAntenna: () => void;
     addNoiseEntry: (timingId: string) => void;

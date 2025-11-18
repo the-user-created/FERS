@@ -47,32 +47,29 @@ export const GlobalParametersSchema = z.object({
             },
             { message: 'UTM frame requires a zone and hemisphere.' }
         ),
-    export: z.object({
-        xml: z.boolean(),
-        csv: z.boolean(),
-        binary: z.boolean(),
-    }),
 });
 
-export const PulseSchema = z
+export const WaveformSchema = z
     .object({
         id: z.string().uuid(),
-        type: z.literal('Pulse'),
-        name: z.string().min(1, 'Pulse name cannot be empty.'),
-        pulseType: z.enum(['file', 'cw']),
+        type: z.literal('Waveform'),
+        name: z.string().min(1, 'Waveform name cannot be empty.'),
+        waveformType: z.enum(['pulsed_from_file', 'cw']),
         power: z.number().min(0, 'Power cannot be negative.'),
-        carrier: z.number().positive('Carrier frequency must be positive.'),
+        carrier_frequency: z
+            .number()
+            .positive('Carrier frequency must be positive.'),
         filename: z.string().optional(),
     })
     .refine(
         (data) => {
-            if (data.pulseType === 'file') {
+            if (data.waveformType === 'pulsed_from_file') {
                 return data.filename !== undefined && data.filename.length > 0;
             }
             return true;
         },
         {
-            message: 'A filename is required for pulse type "file".',
+            message: 'A filename is required for this waveform type.',
             path: ['filename'],
         }
     );
@@ -186,7 +183,7 @@ const MonostaticComponentSchema = z.object({
     window_length: z.number().min(0),
     prf: z.number().positive(),
     antennaId: z.string().uuid().nullable(),
-    pulseId: z.string().uuid().nullable(),
+    waveformId: z.string().uuid().nullable(),
     timingId: z.string().uuid().nullable(),
     noiseTemperature: nullableNumber.pipe(z.number().min(0).nullable()),
     noDirectPaths: z.boolean(),
@@ -198,7 +195,7 @@ const TransmitterComponentSchema = z.object({
     radarType: z.enum(['pulsed', 'cw']),
     prf: z.number().positive(),
     antennaId: z.string().uuid().nullable(),
-    pulseId: z.string().uuid().nullable(),
+    waveformId: z.string().uuid().nullable(),
     timingId: z.string().uuid().nullable(),
 });
 const ReceiverComponentSchema = z.object({
@@ -242,7 +239,7 @@ export const PlatformSchema = z.object({
 
 export const ScenarioDataSchema = z.object({
     globalParameters: GlobalParametersSchema,
-    pulses: z.array(PulseSchema),
+    waveforms: z.array(WaveformSchema),
     timings: z.array(TimingSchema),
     antennas: z.array(AntennaSchema),
     platforms: z.array(PlatformSchema),

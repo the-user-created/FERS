@@ -3,15 +3,11 @@
 
 import {
     Box,
-    Checkbox,
     FormControl,
-    FormControlLabel,
-    FormGroup,
     InputLabel,
     MenuItem,
     Select,
     TextField,
-    Typography,
 } from '@mui/material';
 import { useScenarioStore, GlobalParameters } from '@/stores/scenarioStore';
 import { NumberField, Section } from './InspectorControls';
@@ -141,48 +137,6 @@ export function GlobalParametersInspector({
                     </>
                 )}
             </Section>
-
-            <FormControl component="fieldset">
-                <Typography variant="body2">Export Options</Typography>
-                <FormGroup row>
-                    <FormControlLabel
-                        control={
-                            <Checkbox
-                                checked={item.export.xml}
-                                onChange={(e) =>
-                                    handleChange('export.xml', e.target.checked)
-                                }
-                            />
-                        }
-                        label="XML"
-                    />
-                    <FormControlLabel
-                        control={
-                            <Checkbox
-                                checked={item.export.csv}
-                                onChange={(e) =>
-                                    handleChange('export.csv', e.target.checked)
-                                }
-                            />
-                        }
-                        label="CSV"
-                    />
-                    <FormControlLabel
-                        control={
-                            <Checkbox
-                                checked={item.export.binary}
-                                onChange={(e) =>
-                                    handleChange(
-                                        'export.binary',
-                                        e.target.checked
-                                    )
-                                }
-                            />
-                        }
-                        label="H5 (Binary)"
-                    />
-                </FormGroup>
-            </FormControl>
         </Box>
     );
 }

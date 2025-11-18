@@ -27,7 +27,7 @@ export function PlatformComponentInspector({
     component,
     platformId,
 }: PlatformComponentInspectorProps) {
-    const { updateItem, pulses, timings, antennas, setPlatformRcsModel } =
+    const { updateItem, waveforms, timings, antennas, setPlatformRcsModel } =
         useScenarioStore.getState();
     const handleChange = (path: string, value: unknown) =>
         updateItem(platformId, `component.${path}`, value);
@@ -37,7 +37,7 @@ export function PlatformComponentInspector({
         radarType: 'pulsed' | 'cw';
         prf: number;
         antennaId: string | null;
-        pulseId: string | null;
+        waveformId: string | null;
         timingId: string | null;
     }) => (
         <>
@@ -80,15 +80,15 @@ export function PlatformComponentInspector({
                 </Select>
             </FormControl>
             <FormControl fullWidth size="small">
-                <InputLabel>Pulse</InputLabel>
+                <InputLabel>Waveform</InputLabel>
                 <Select
-                    label="Pulse"
-                    value={c.pulseId ?? ''}
-                    onChange={(e) => handleChange('pulseId', e.target.value)}
+                    label="Waveform"
+                    value={c.waveformId ?? ''}
+                    onChange={(e) => handleChange('waveformId', e.target.value)}
                 >
-                    {pulses.map((p) => (
-                        <MenuItem key={p.id} value={p.id}>
-                            {p.name}
+                    {waveforms.map((w) => (
+                        <MenuItem key={w.id} value={w.id}>
+                            {w.name}
                         </MenuItem>
                     ))}
                 </Select>

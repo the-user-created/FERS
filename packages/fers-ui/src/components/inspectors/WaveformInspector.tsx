@@ -9,14 +9,14 @@ import {
     Select,
     TextField,
 } from '@mui/material';
-import { useScenarioStore, Pulse } from '@/stores/scenarioStore';
+import { useScenarioStore, Waveform } from '@/stores/scenarioStore';
 import { NumberField, FileInput } from './InspectorControls';
 
-interface PulseInspectorProps {
-    item: Pulse;
+interface WaveformInspectorProps {
+    item: Waveform;
 }
 
-export function PulseInspector({ item }: PulseInspectorProps) {
+export function WaveformInspector({ item }: WaveformInspectorProps) {
     const { updateItem } = useScenarioStore.getState();
     const handleChange = (path: string, value: unknown) =>
         updateItem(item.id, path, value);
@@ -35,10 +35,12 @@ export function PulseInspector({ item }: PulseInspectorProps) {
                 <InputLabel>Type</InputLabel>
                 <Select
                     label="Type"
-                    value={item.pulseType}
-                    onChange={(e) => handleChange('pulseType', e.target.value)}
+                    value={item.waveformType}
+                    onChange={(e) =>
+                        handleChange('waveformType', e.target.value)
+                    }
                 >
-                    <MenuItem value="file">Pulse File</MenuItem>
+                    <MenuItem value="pulsed_from_file">Pulse File</MenuItem>
                     <MenuItem value="cw">CW</MenuItem>
                 </Select>
             </FormControl>
@@ -49,10 +51,10 @@ export function PulseInspector({ item }: PulseInspectorProps) {
             />
             <NumberField
                 label="Carrier Frequency (Hz)"
-                value={item.carrier}
-                onChange={(v) => handleChange('carrier', v)}
+                value={item.carrier_frequency}
+                onChange={(v) => handleChange('carrier_frequency', v)}
             />
-            {item.pulseType === 'file' && (
+            {item.waveformType === 'pulsed_from_file' && (
                 <FileInput
                     label="Waveform File (.csv, .h5)"
                     value={item.filename}

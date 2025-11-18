@@ -16,7 +16,7 @@ export const useScenarioStore = create<ScenarioStore>()(
     immer((set, get, store) => ({
         // Initial State
         globalParameters: defaultGlobalParameters,
-        pulses: [],
+        waveforms: [],
         timings: [],
         antennas: [],
         platforms: [],

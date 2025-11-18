@@ -49,14 +49,14 @@ export const createBackendSlice: StateCreator<
     BackendActions
 > = (set, get) => ({
     syncBackend: async () => {
-        const { globalParameters, pulses, timings, antennas, platforms } =
+        const { globalParameters, waveforms, timings, antennas, platforms } =
             get();
 
         // Helper functions to map frontend asset IDs back to names for the backend
         const findAntennaName = (id: string | null) =>
             antennas.find((a) => a.id === id)?.name;
-        const findPulseName = (id: string | null) =>
-            pulses.find((p) => p.id === id)?.name;
+        const findWaveformName = (id: string | null) =>
+            waveforms.find((p) => p.id === id)?.name;
         const findTimingName = (id: string | null) =>
             timings.find((t) => t.id === id)?.name;
 
@@ -75,7 +75,9 @@ export const createBackendSlice: StateCreator<
                                 window_length: component.window_length,
                                 prf: component.prf,
                                 antenna: findAntennaName(component.antennaId),
-                                pulse: findPulseName(component.pulseId),
+                                waveform: findWaveformName(
+                                    component.waveformId
+                                ),
                                 timing: findTimingName(component.timingId),
                                 noise_temp: component.noiseTemperature,
                                 nodirect: component.noDirectPaths,
@@ -90,7 +92,9 @@ export const createBackendSlice: StateCreator<
                                 type: component.radarType,
                                 prf: component.prf,
                                 antenna: findAntennaName(component.antennaId),
-                                pulse: findPulseName(component.pulseId),
+                                waveform: findWaveformName(
+                                    component.waveformId
+                                ),
                                 timing: findTimingName(component.timingId),
                             },
                         };
@@ -163,13 +167,19 @@ export const createBackendSlice: StateCreator<
             });
         });
 
-        const backendPulses = pulses.map((p) => ({
-            name: p.name,
-            type: p.pulseType === 'cw' ? 'continuous' : 'file',
-            power: p.power,
-            carrier: p.carrier,
-            filename: p.pulseType === 'file' ? p.filename : undefined,
-        }));
+        const backendWaveforms = waveforms.map((w) => {
+            const waveformContent =
+                w.waveformType === 'cw'
+                    ? { cw: {} }
+                    : { pulsed_from_file: { filename: w.filename } };
+
+            return {
+                name: w.name,
+                power: w.power,
+                carrier_frequency: w.carrier_frequency,
+                ...waveformContent,
+            };
+        });
 
         const backendTimings = timings.map((t: Timing) => {
             const rest = omit(t, 'id', 'type');
@@ -213,7 +223,7 @@ export const createBackendSlice: StateCreator<
             simulation: {
                 name: globalParameters.simulation_name,
                 parameters: cleanObject(gp_params),
-                pulses: cleanObject(backendPulses),
+                waveforms: cleanObject(backendWaveforms),
                 timings: cleanObject(backendTimings),
                 antennas: cleanObject(backendAntennas),
                 platforms: backendPlatforms,
