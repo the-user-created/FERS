@@ -2,22 +2,22 @@
 // Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
 
 /**
-* @file api.cpp
-* @brief Implementation of the C-style FFI for the libfers core library.
-*
-* This file provides the C implementations for the functions declared in `api.h`.
-* It acts as the bridge between the C ABI and the C++ core, handling object
-* creation/destruction, exception catching, error reporting, and type casting.
-*/
+ * @file api.cpp
+ * @brief Implementation of the C-style FFI for the libfers core library.
+ *
+ * This file provides the C implementations for the functions declared in `api.h`.
+ * It acts as the bridge between the C ABI and the C++ core, handling object
+ * creation/destruction, exception catching, error reporting, and type casting.
+ */
 
 #include <cstring>
 #include <functional>
-#include <string>
 #include <libfers/api.h>
 #include <libfers/logging.h>
 #include <libfers/parameters.h>
 #include <libfers/path.h>
 #include <libfers/rotation_path.h>
+#include <string>
 
 #include <nlohmann/json.hpp>
 #include "core/fers_context.h"
@@ -30,7 +30,9 @@
 
 // The fers_context struct is defined here as an alias for our C++ class.
 // This allows the C-API to return an opaque pointer, hiding the C++ implementation.
-struct fers_context : public FersContext {};
+struct fers_context : public FersContext
+{
+};
 
 // A thread-local error message string ensures that error details from one
 // thread's API call do not interfere with another's. This is crucial for a
@@ -38,14 +40,14 @@ struct fers_context : public FersContext {};
 thread_local std::string last_error_message;
 
 /**
-* @brief Centralized exception handler for the C-API boundary.
-*
-* This function catches standard C++ exceptions, records their `what()` message
-* into the thread-local error storage, and logs the error. This prevents C++
-* exceptions from propagating across the FFI boundary, which would be undefined behavior.
-* @param e The exception that was caught.
-* @param function_name The name of the API function where the error occurred.
-*/
+ * @brief Centralized exception handler for the C-API boundary.
+ *
+ * This function catches standard C++ exceptions, records their `what()` message
+ * into the thread-local error storage, and logs the error. This prevents C++
+ * exceptions from propagating across the FFI boundary, which would be undefined behavior.
+ * @param e The exception that was caught.
+ * @param function_name The name of the API function where the error occurred.
+ */
 static void handle_api_exception(const std::exception& e, const std::string& function_name)
 {
 	last_error_message = e.what();
@@ -57,7 +59,10 @@ extern "C" {
 fers_context_t* fers_context_create()
 {
 	last_error_message.clear();
-	try { return new fers_context_t(); }
+	try
+	{
+		return new fers_context_t();
+	}
 	catch (const std::bad_alloc& e)
 	{
 		handle_api_exception(e, "fers_context_create");
@@ -72,7 +77,10 @@ fers_context_t* fers_context_create()
 
 void fers_context_destroy(fers_context_t* context)
 {
-	if (!context) { return; }
+	if (!context)
+	{
+		return;
+	}
 	delete context;
 }
 
@@ -129,10 +137,8 @@ int fers_load_scenario_from_xml_string(fers_context_t* context, const char* xml_
 	auto* ctx = reinterpret_cast<FersContext*>(context);
 	try
 	{
-		serial::parseSimulationFromString
-			(xml_content, ctx->getWorld(), static_cast<bool>(validate),
-			 ctx->getMasterSeeder()
-				);
+		serial::parseSimulationFromString(xml_content, ctx->getWorld(), static_cast<bool>(validate),
+										  ctx->getMasterSeeder());
 
 		// After parsing, seed the master random number generator. This ensures
 		// that if the scenario provides a seed, the simulation will be
@@ -200,7 +206,10 @@ char* fers_get_scenario_as_xml(fers_context_t* context)
 	try
 	{
 		const std::string xml_str = serial::world_to_xml_string(*ctx->getWorld());
-		if (xml_str.empty()) { throw std::runtime_error("XML serialization resulted in an empty string."); }
+		if (xml_str.empty())
+		{
+			throw std::runtime_error("XML serialization resulted in an empty string.");
+		}
 		// `strdup` is used to create a heap-allocated string that can be safely
 		// passed across the FFI boundary. The client is responsible for freeing
 		// this memory with `fers_free_string`.
@@ -259,7 +268,13 @@ char* fers_get_last_error_message()
 	return strdup(last_error_message.c_str());
 }
 
-void fers_free_string(char* str) { if (str) { free(str); } }
+void fers_free_string(char* str)
+{
+	if (str)
+	{
+		free(str);
+	}
+}
 
 int fers_run_simulation(fers_context_t* context, fers_progress_callback_t callback, void* user_data)
 {
@@ -279,9 +294,7 @@ int fers_run_simulation(fers_context_t* context, fers_progress_callback_t callba
 	if (callback)
 	{
 		progress_fn = [callback, user_data](const std::string& msg, const int current, const int total)
-		{
-			callback(msg.c_str(), current, total, user_data);
-		};
+		{ callback(msg.c_str(), current, total, user_data); };
 	}
 
 	try
@@ -360,9 +373,9 @@ math::RotationPath::InterpType to_cpp_rot_interp_type(const fers_interp_type_t t
 
 
 fers_interpolated_path_t* fers_get_interpolated_motion_path(const fers_motion_waypoint_t* waypoints,
-                                                            const size_t waypoint_count,
-                                                            const fers_interp_type_t interp_type,
-                                                            const size_t num_points)
+															const size_t waypoint_count,
+															const fers_interp_type_t interp_type,
+															const size_t num_points)
 {
 	last_error_message.clear();
 	if (!waypoints || waypoint_count == 0 || num_points == 0)
@@ -407,7 +420,10 @@ fers_interpolated_path_t* fers_get_interpolated_motion_path(const fers_motion_wa
 		if (waypoint_count < 2 || duration <= 0)
 		{
 			const math::Vec3 pos = path.getPosition(start_time);
-			for (size_t i = 0; i < num_points; ++i) { result_path->points[i] = {pos.x, pos.y, pos.z}; }
+			for (size_t i = 0; i < num_points; ++i)
+			{
+				result_path->points[i] = {pos.x, pos.y, pos.z};
+			}
 			return result_path;
 		}
 
@@ -439,9 +455,9 @@ void fers_free_interpolated_motion_path(fers_interpolated_path_t* path)
 }
 
 fers_interpolated_rotation_path_t* fers_get_interpolated_rotation_path(const fers_rotation_waypoint_t* waypoints,
-                                                                       const size_t waypoint_count,
-                                                                       const fers_interp_type_t interp_type,
-                                                                       const size_t num_points)
+																	   const size_t waypoint_count,
+																	   const fers_interp_type_t interp_type,
+																	   const size_t num_points)
 {
 	last_error_message.clear();
 	if (!waypoints || waypoint_count == 0 || num_points == 0)
@@ -491,7 +507,10 @@ fers_interpolated_rotation_path_t* fers_get_interpolated_rotation_path(const fer
 			// Convert back to compass degrees for output
 			const RealType az_deg = std::fmod(90.0 - rot.azimuth * 180.0 / PI + 360.0, 360.0);
 			const RealType el_deg = rot.elevation * 180.0 / PI;
-			for (size_t i = 0; i < num_points; ++i) { result_path->points[i] = {az_deg, el_deg}; }
+			for (size_t i = 0; i < num_points; ++i)
+			{
+				result_path->points[i] = {az_deg, el_deg};
+			}
 			return result_path;
 		}
 
@@ -526,6 +545,4 @@ void fers_free_interpolated_rotation_path(fers_interpolated_rotation_path_t* pat
 		delete path;
 	}
 }
-
-
 }

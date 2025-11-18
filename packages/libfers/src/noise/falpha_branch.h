@@ -6,9 +6,9 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file falpha_branch.h
-* @brief Implementation of the FAlphaBranch class for noise generation.
-*/
+ * @file falpha_branch.h
+ * @brief Implementation of the FAlphaBranch class for noise generation.
+ */
 
 #pragma once
 
@@ -23,26 +23,26 @@
 namespace noise
 {
 	/**
-    * @class FAlphaBranch
-    * @brief Class responsible for generating fractional and integer noise components.
-    *
-    * The FAlphaBranch class generates noise by applying a fractional integrator filter. It uses a series of
-    * filters and upsamplers to process and shape the noise signal.
-    */
+	 * @class FAlphaBranch
+	 * @brief Class responsible for generating fractional and integer noise components.
+	 *
+	 * The FAlphaBranch class generates noise by applying a fractional integrator filter. It uses a series of
+	 * filters and upsamplers to process and shape the noise signal.
+	 */
 	class FAlphaBranch
 	{
 	public:
 		/**
-		* @brief Constructor for FAlphaBranch.
-		*
-		* @param rngEngine The random number generator engine to use.
-		* @param ffrac Fractional part of the noise generation (e.g., 0.5 for 1/f noise).
-		* @param fint Integer part of the noise generation (e.g., 1 for integration).
-		* @param pre Previous stage of the FAlphaBranch for recursive noise processing.
-		* @param last Specifies if this is the last branch in the chain of processing.
-		*/
+		 * @brief Constructor for FAlphaBranch.
+		 *
+		 * @param rngEngine The random number generator engine to use.
+		 * @param ffrac Fractional part of the noise generation (e.g., 0.5 for 1/f noise).
+		 * @param fint Integer part of the noise generation (e.g., 1 for integration).
+		 * @param pre Previous stage of the FAlphaBranch for recursive noise processing.
+		 * @param last Specifies if this is the last branch in the chain of processing.
+		 */
 		FAlphaBranch(std::mt19937& rngEngine, RealType ffrac, unsigned fint, std::unique_ptr<FAlphaBranch> pre,
-		             bool last);
+					 bool last);
 
 		~FAlphaBranch() = default;
 
@@ -55,24 +55,24 @@ namespace noise
 		FAlphaBranch& operator=(FAlphaBranch&&) = delete;
 
 		/**
-		* @brief Retrieves the current noise sample.
-		*
-		* @return The current noise sample.
-		*/
+		 * @brief Retrieves the current noise sample.
+		 *
+		 * @return The current noise sample.
+		 */
 		RealType getSample() noexcept;
 
 		/**
-		* @brief Flushes the branch with a new scaling factor.
-		*
-		* @param scale New scale factor to apply to the previous stage.
-		*/
+		 * @brief Flushes the branch with a new scaling factor.
+		 *
+		 * @param scale New scale factor to apply to the previous stage.
+		 */
 		void flush(RealType scale);
 
 		/**
-		* @brief Retrieves the previous branch in the chain.
-		*
-		* @return Pointer to the previous FAlphaBranch, or nullptr if none exists.
-		*/
+		 * @brief Retrieves the previous branch in the chain.
+		 *
+		 * @return Pointer to the previous FAlphaBranch, or nullptr if none exists.
+		 */
 		[[nodiscard]] FAlphaBranch* getPre() const noexcept { return _pre.get(); }
 
 	private:
@@ -95,7 +95,8 @@ namespace noise
 
 		std::unique_ptr<fers_signal::IirFilter> _highpass; ///< High-pass filter to remove low-frequency components.
 
-		std::unique_ptr<fers_signal::DecadeUpsampler> _upsampler; ///< Upsampler for generating higher-frequency components.
+		std::unique_ptr<fers_signal::DecadeUpsampler>
+			_upsampler; ///< Upsampler for generating higher-frequency components.
 
 		std::unique_ptr<FAlphaBranch> _pre; ///< Previous FAlphaBranch in the chain for recursive noise processing.
 

@@ -6,9 +6,9 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file prototype_timing.h
-* @brief Header file for the PrototypeTiming class.
-*/
+ * @file prototype_timing.h
+ * @brief Header file for the PrototypeTiming class.
+ */
 
 #pragma once
 
@@ -22,19 +22,18 @@
 namespace timing
 {
 	/**
-	* @class PrototypeTiming
-	* @brief Manages timing properties such as frequency, offsets, and synchronization.
-	*/
+	 * @class PrototypeTiming
+	 * @brief Manages timing properties such as frequency, offsets, and synchronization.
+	 */
 	class PrototypeTiming
 	{
 	public:
 		/**
-		* @brief Constructor for PrototypeTiming.
-		*
-		* @param name The name of the timing source.
-		*/
-		explicit PrototypeTiming(std::string name) noexcept :
-			_name(std::move(name)) {}
+		 * @brief Constructor for PrototypeTiming.
+		 *
+		 * @param name The name of the timing source.
+		 */
+		explicit PrototypeTiming(std::string name) noexcept : _name(std::move(name)) {}
 
 		~PrototypeTiming() = default;
 
@@ -47,46 +46,46 @@ namespace timing
 		PrototypeTiming& operator=(PrototypeTiming&&) = default;
 
 		/**
-		* @brief Copies the alphas and weights vectors.
-		*
-		* @param alphas Reference to the vector where alpha values will be copied.
-		* @param weights Reference to the vector where weight values will be copied.
-		*/
+		 * @brief Copies the alphas and weights vectors.
+		 *
+		 * @param alphas Reference to the vector where alpha values will be copied.
+		 * @param weights Reference to the vector where weight values will be copied.
+		 */
 		void copyAlphas(std::vector<RealType>& alphas, std::vector<RealType>& weights) const noexcept;
 
 		/**
-		* @brief Gets the current frequency.
-		*
-		* @return The current frequency value.
-		*/
+		 * @brief Gets the current frequency.
+		 *
+		 * @return The current frequency value.
+		 */
 		[[nodiscard]] RealType getFrequency() const noexcept { return _frequency; }
 
 		/**
-		* @brief Gets the name of the timing source.
-		*
-		* @return The name of the timing source.
-		*/
+		 * @brief Gets the name of the timing source.
+		 *
+		 * @return The name of the timing source.
+		 */
 		[[nodiscard]] std::string getName() const { return _name; }
 
 		/**
-		* @brief Checks if synchronization on pulse is enabled.
-		*
-		* @return True if synchronization on pulse is enabled, false otherwise.
-		*/
+		 * @brief Checks if synchronization on pulse is enabled.
+		 *
+		 * @return True if synchronization on pulse is enabled, false otherwise.
+		 */
 		[[nodiscard]] bool getSyncOnPulse() const noexcept { return _sync_on_pulse; }
 
 		/**
-		* @brief Gets the phase offset.
-		*
-		* @return The phase offset value.
-		*/
+		 * @brief Gets the phase offset.
+		 *
+		 * @return The phase offset value.
+		 */
 		[[nodiscard]] std::optional<RealType> getPhaseOffset() const noexcept { return _phase_offset; }
 
 		/**
-		* @brief Gets the frequency offset.
-		*
-		* @return The frequency offset value.
-		*/
+		 * @brief Gets the frequency offset.
+		 *
+		 * @return The frequency offset value.
+		 */
 		[[nodiscard]] std::optional<RealType> getFreqOffset() const noexcept { return _freq_offset; }
 
 		[[nodiscard]] std::optional<RealType> getRandomFreqOffsetStdev() const noexcept { return _random_freq_stdev; }
@@ -94,51 +93,51 @@ namespace timing
 		[[nodiscard]] std::optional<RealType> getRandomPhaseOffsetStdev() const noexcept { return _random_phase_stdev; }
 
 		/**
-		* @brief Sets the frequency value.
-		*
-		* @param freq The frequency value to be set.
-		*/
+		 * @brief Sets the frequency value.
+		 *
+		 * @param freq The frequency value to be set.
+		 */
 		void setFrequency(const RealType freq) noexcept { _frequency = freq; }
 
 		/**
-		* @brief Enables synchronization on pulse.
-		*/
+		 * @brief Enables synchronization on pulse.
+		 */
 		void setSyncOnPulse() noexcept { _sync_on_pulse = true; }
 
 		/**
-		* @brief Sets an alpha and weight value.
-		*
-		* @param alpha The alpha value to be added.
-		* @param weight The weight value to be added.
-		*/
+		 * @brief Sets an alpha and weight value.
+		 *
+		 * @param alpha The alpha value to be added.
+		 * @param weight The weight value to be added.
+		 */
 		void setAlpha(RealType alpha, RealType weight) noexcept;
 
 		/**
-		* @brief Sets the frequency offset.
-		*
-		* @param offset The frequency offset to be set.
-		*/
+		 * @brief Sets the frequency offset.
+		 *
+		 * @param offset The frequency offset to be set.
+		 */
 		void setFreqOffset(RealType offset) noexcept { _freq_offset = offset; }
 
 		/**
-		* @brief Sets the phase offset.
-		*
-		* @param offset The phase offset to be set.
-		*/
+		 * @brief Sets the phase offset.
+		 *
+		 * @param offset The phase offset to be set.
+		 */
 		void setPhaseOffset(RealType offset) noexcept { _phase_offset = offset; }
 
 		/**
-		* @brief Sets a random frequency offset standard deviation.
-		*
-		* @param stdev The standard deviation for generating the random frequency offset.
-		*/
+		 * @brief Sets a random frequency offset standard deviation.
+		 *
+		 * @param stdev The standard deviation for generating the random frequency offset.
+		 */
 		void setRandomFreqOffsetStdev(RealType stdev) noexcept { _random_freq_stdev = stdev; }
 
 		/**
-		* @brief Sets a random phase offset standard deviation.
-		*
-		* @param stdev The standard deviation for generating the random phase offset.
-		*/
+		 * @brief Sets a random phase offset standard deviation.
+		 *
+		 * @param stdev The standard deviation for generating the random phase offset.
+		 */
 		void setRandomPhaseOffsetStdev(RealType stdev) noexcept { _random_phase_stdev = stdev; }
 
 	private:

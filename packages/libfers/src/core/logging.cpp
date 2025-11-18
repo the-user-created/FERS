@@ -5,9 +5,9 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file logging.cpp
-* @brief Implementation of the logging system.
-*/
+ * @file logging.cpp
+ * @brief Implementation of the logging system.
+ */
 
 #include <libfers/logging.h>
 
@@ -44,14 +44,15 @@ namespace logging
 			const std::string file_line = filename + ":" + std::to_string(location.line());
 
 			std::ostringstream oss;
-			oss << "[" << getCurrentTimestamp() << "] "
-				<< "[" << std::setw(7) << std::left << getLevelString(level) << "] "
-				<< "[" << std::setw(30) << std::left << file_line << "] "
-				<< message << std::endl;
+			oss << "[" << getCurrentTimestamp() << "] " << "[" << std::setw(7) << std::left << getLevelString(level)
+				<< "] " << "[" << std::setw(30) << std::left << file_line << "] " << message << std::endl;
 
 			std::cerr << oss.str();
 
-			if (_log_file && _log_file->is_open()) { *_log_file << oss.str(); }
+			if (_log_file && _log_file->is_open())
+			{
+				*_log_file << oss.str();
+			}
 		}
 	}
 
@@ -60,7 +61,10 @@ namespace logging
 		std::scoped_lock lock(_log_mutex);
 
 		std::ofstream file(filePath, std::ios::out | std::ios::trunc);
-		if (!file) { return std::unexpected("Unable to open log file: " + filePath); }
+		if (!file)
+		{
+			return std::unexpected("Unable to open log file: " + filePath);
+		}
 
 		_log_file = std::move(file);
 		return {};

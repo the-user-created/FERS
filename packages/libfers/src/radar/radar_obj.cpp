@@ -6,10 +6,10 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* radar_obj.cpp
-* @file
-* @brief Implementation of classes defined in radar_obj.h
-*/
+ * radar_obj.cpp
+ * @file
+ * @brief Implementation of classes defined in radar_obj.h
+ */
 
 #include <libfers/radar_obj.h>
 
@@ -23,8 +23,10 @@ using logging::Level;
 
 namespace radar
 {
-	RealType Radar::getGain(const math::SVec3& angle, const math::SVec3& refangle,
-	                        const RealType wavelength) const { return _antenna->getGain(angle, refangle, wavelength); }
+	RealType Radar::getGain(const math::SVec3& angle, const math::SVec3& refangle, const RealType wavelength) const
+	{
+		return _antenna->getGain(angle, refangle, wavelength);
+	}
 
 	RealType Radar::getNoiseTemperature(const math::SVec3& angle) const noexcept
 	{

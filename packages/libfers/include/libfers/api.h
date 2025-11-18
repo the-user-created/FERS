@@ -329,9 +329,8 @@ typedef struct
  *         free it with `fers_free_interpolated_motion_path`.
  */
 fers_interpolated_path_t* fers_get_interpolated_motion_path(const fers_motion_waypoint_t* waypoints,
-                                                            size_t waypoint_count,
-                                                            fers_interp_type_t interp_type,
-                                                            size_t num_points);
+															size_t waypoint_count, fers_interp_type_t interp_type,
+															size_t num_points);
 
 /**
  * @brief Frees the memory allocated for an interpolated motion path.
@@ -352,9 +351,9 @@ void fers_free_interpolated_motion_path(fers_interpolated_path_t* path);
  *         free it with `fers_free_interpolated_rotation_path`.
  */
 fers_interpolated_rotation_path_t* fers_get_interpolated_rotation_path(const fers_rotation_waypoint_t* waypoints,
-                                                                       size_t waypoint_count,
-                                                                       fers_interp_type_t interp_type,
-                                                                       size_t num_points);
+																	   size_t waypoint_count,
+																	   fers_interp_type_t interp_type,
+																	   size_t num_points);
 
 /**
  * @brief Frees the memory allocated for an interpolated rotation path.

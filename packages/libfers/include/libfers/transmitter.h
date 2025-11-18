@@ -6,9 +6,9 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file transmitter.h
-* @brief Header file for the Transmitter class in the radar namespace.
-*/
+ * @file transmitter.h
+ * @brief Header file for the Transmitter class in the radar namespace.
+ */
 
 #pragma once
 
@@ -22,10 +22,10 @@ namespace fers_signal
 namespace radar
 {
 	/**
-	* @struct TransmitterPulse
-	* @brief Struct representing a radar pulse emitted by the transmitter.
-	*
-	*/
+	 * @struct TransmitterPulse
+	 * @brief Struct representing a radar pulse emitted by the transmitter.
+	 *
+	 */
 	struct TransmitterPulse
 	{
 		fers_signal::RadarSignal* wave; ///< Pointer to the radar signal wave.
@@ -34,21 +34,23 @@ namespace radar
 	};
 
 	/**
-	* @class Transmitter
-	* @brief Represents a radar transmitter system.
-	*/
+	 * @class Transmitter
+	 * @brief Represents a radar transmitter system.
+	 */
 	class Transmitter final : public Radar
 	{
 	public:
 		/**
-		* @brief Constructor for the Transmitter class.
-		*
-		* @param platform Pointer to the platform object.
-		* @param name Name of the transmitter.
-		* @param mode The operational mode (PULSED_MODE or CW_MODE).
-		*/
+		 * @brief Constructor for the Transmitter class.
+		 *
+		 * @param platform Pointer to the platform object.
+		 * @param name Name of the transmitter.
+		 * @param mode The operational mode (PULSED_MODE or CW_MODE).
+		 */
 		Transmitter(Platform* platform, std::string name, const OperationMode mode) noexcept :
-			Radar(platform, std::move(name)), _mode(mode) {}
+			Radar(platform, std::move(name)), _mode(mode)
+		{
+		}
 
 		~Transmitter() override = default;
 
@@ -61,54 +63,54 @@ namespace radar
 		Transmitter& operator=(Transmitter&&) = delete;
 
 		/**
-		* @brief Retrieves the pulse repetition frequency (PRF).
-		*
-		* @return The current PRF of the transmitter.
-		*/
+		 * @brief Retrieves the pulse repetition frequency (PRF).
+		 *
+		 * @return The current PRF of the transmitter.
+		 */
 		[[nodiscard]] RealType getPrf() const noexcept { return _prf; }
 
 		/**
-		* @brief Retrieves the radar signal currently being transmitted.
-		*
-		* @return Pointer to the RadarSignal object being transmitted.
-		*/
+		 * @brief Retrieves the radar signal currently being transmitted.
+		 *
+		 * @return Pointer to the RadarSignal object being transmitted.
+		 */
 		[[nodiscard]] fers_signal::RadarSignal* getSignal() const noexcept { return _signal; }
 
 		/**
-		* @brief Gets the operational mode of the transmitter.
-		*
-		* @return The operational mode (PULSED_MODE or CW_MODE).
-		*/
+		 * @brief Gets the operational mode of the transmitter.
+		 *
+		 * @return The operational mode (PULSED_MODE or CW_MODE).
+		 */
 		[[nodiscard]] OperationMode getMode() const noexcept { return _mode; }
 
 		/**
-		* @brief Sets the radar signal wave to be transmitted.
-		*
-		* @param pulse Pointer to the RadarSignal object representing the wave.
-		*/
+		 * @brief Sets the radar signal wave to be transmitted.
+		 *
+		 * @param pulse Pointer to the RadarSignal object representing the wave.
+		 */
 		void setWave(fers_signal::RadarSignal* pulse) noexcept { _signal = pulse; }
 
 		/**
-		* @brief Sets the radar signal wave to be transmitted.
-		*
-		* @param signal Pointer to the RadarSignal object to be transmitted.
-		*/
+		 * @brief Sets the radar signal wave to be transmitted.
+		 *
+		 * @param signal Pointer to the RadarSignal object to be transmitted.
+		 */
 		void setSignal(fers_signal::RadarSignal* signal) noexcept { _signal = signal; }
 
 		/**
-		* @brief Assigns a pulse to be transmitted at a given time.
-		*
-		* @param pulse Pointer to the TransmitterPulse structure to hold the pulse data.
-		* @param number Pulse number for which to set the time and waveform.
-		* @throws std::logic_error If the transmitter is not associated with a timing source.
-		*/
+		 * @brief Assigns a pulse to be transmitted at a given time.
+		 *
+		 * @param pulse Pointer to the TransmitterPulse structure to hold the pulse data.
+		 * @param number Pulse number for which to set the time and waveform.
+		 * @throws std::logic_error If the transmitter is not associated with a timing source.
+		 */
 		void setPulse(TransmitterPulse* pulse, int number) const;
 
 		/**
-		* @brief Sets the pulse repetition frequency (PRF) of the transmitter.
-		*
-		* @param mprf Desired PRF to be set.
-		*/
+		 * @brief Sets the pulse repetition frequency (PRF) of the transmitter.
+		 *
+		 * @param mprf Desired PRF to be set.
+		 */
 		void setPrf(RealType mprf) noexcept;
 
 	private:

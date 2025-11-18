@@ -9,34 +9,34 @@ AlignOperands: false
 AlignTrailingComments: false
 AlwaysBreakTemplateDeclarations: Yes
 BraceWrapping:
-  AfterCaseLabel: true
-  AfterClass: true
-  AfterControlStatement: true
-  AfterEnum: true
-  AfterFunction: true
-  AfterNamespace: true
-  AfterStruct: true
-  AfterUnion: true
-  AfterExternBlock: false
-  BeforeCatch: true
-  BeforeElse: true
-  BeforeLambdaBody: true
-  BeforeWhile: true
-  SplitEmptyFunction: true
-  SplitEmptyRecord: true
-  SplitEmptyNamespace: true
+    AfterCaseLabel: true
+    AfterClass: true
+    AfterControlStatement: true
+    AfterEnum: true
+    AfterFunction: true
+    AfterNamespace: true
+    AfterStruct: true
+    AfterUnion: true
+    AfterExternBlock: false
+    BeforeCatch: true
+    BeforeElse: true
+    BeforeLambdaBody: true
+    BeforeWhile: true
+    SplitEmptyFunction: true
+    SplitEmptyRecord: true
+    SplitEmptyNamespace: true
 BreakBeforeBraces: Custom
 BreakConstructorInitializers: AfterColon
 BreakConstructorInitializersBeforeComma: false
 ColumnLimit: 120
 ConstructorInitializerAllOnOneLineOrOnePerLine: false
 IncludeCategories:
-  - Regex: '^<.*'
-    Priority: 1
-  - Regex: '^".*'
-    Priority: 2
-  - Regex: '.*'
-    Priority: 3
+    - Regex: '^<.*'
+      Priority: 1
+    - Regex: '^".*'
+      Priority: 2
+    - Regex: '.*'
+      Priority: 3
 IncludeIsMainRegex: '([-_](test|unittest))?$'
 IndentCaseBlocks: true
 IndentWidth: 4
@@ -53,4 +53,4 @@ SpacesInCStyleCastParentheses: false
 SpacesInParentheses: false
 TabWidth: 4
 UseTab: Always
-...
+FixNamespaceComments: false

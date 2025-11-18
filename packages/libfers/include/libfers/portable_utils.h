@@ -6,9 +6,9 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file portable_utils.h
-* @brief Utility functions for mathematical and system operations.
-*/
+ * @file portable_utils.h
+ * @brief Utility functions for mathematical and system operations.
+ */
 
 #pragma once
 

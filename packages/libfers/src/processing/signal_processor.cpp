@@ -45,10 +45,8 @@ namespace
 
 		for (auto& sample : data)
 		{
-			auto [i, q] = std::tuple{
-				std::clamp(std::floor(levels * sample.real() / fullscale) / levels, -1.0, 1.0),
-				std::clamp(std::floor(levels * sample.imag() / fullscale) / levels, -1.0, 1.0)
-			};
+			auto [i, q] = std::tuple{std::clamp(std::floor(levels * sample.real() / fullscale) / levels, -1.0, 1.0),
+									 std::clamp(std::floor(levels * sample.imag() / fullscale) / levels, -1.0, 1.0)};
 			sample = ComplexType(i, q);
 		}
 	}
@@ -63,14 +61,17 @@ namespace
 	 * @param localWindowSize The size of the local window in samples.
 	 */
 	void processResponse(const serial::Response* resp, std::vector<ComplexType>& localWindow, const RealType rate,
-	                     const RealType start, const RealType fracDelay, const unsigned localWindowSize)
+						 const RealType start, const RealType fracDelay, const unsigned localWindowSize)
 	{
 		unsigned psize;
 		RealType prate;
 		const auto array = resp->renderBinary(prate, psize, fracDelay);
 		int start_sample = static_cast<int>(std::round(rate * (resp->startTime() - start)));
 		const unsigned roffset = start_sample < 0 ? -start_sample : 0;
-		if (start_sample < 0) { start_sample = 0; }
+		if (start_sample < 0)
+		{
+			start_sample = 0;
+		}
 
 		for (unsigned i = roffset; i < psize && i + start_sample < localWindowSize; ++i)
 		{
@@ -88,8 +89,8 @@ namespace
 	 * @param localWindowSize The size of the local window in samples.
 	 */
 	void sequentialProcessing(std::queue<serial::Response*>& workList, std::vector<ComplexType>& window,
-	                          const RealType rate, const RealType start, const RealType fracDelay,
-	                          const unsigned localWindowSize)
+							  const RealType rate, const RealType start, const RealType fracDelay,
+							  const unsigned localWindowSize)
 	{
 		std::vector local_window(localWindowSize, ComplexType{});
 
@@ -100,7 +101,10 @@ namespace
 			processResponse(resp, local_window, rate, start, fracDelay, localWindowSize);
 		}
 
-		for (unsigned i = 0; i < localWindowSize; ++i) { window[i] += local_window[i]; }
+		for (unsigned i = 0; i < localWindowSize; ++i)
+		{
+			window[i] += local_window[i];
+		}
 	}
 
 	/**
@@ -115,8 +119,8 @@ namespace
 	 * @param numThreads The number of threads to use.
 	 */
 	void parallelProcessing(std::queue<serial::Response*>& workList, std::vector<ComplexType>& window,
-	                        const RealType rate, const RealType start, const RealType fracDelay,
-	                        const unsigned localWindowSize, pool::ThreadPool& pool, const unsigned numThreads)
+							const RealType rate, const RealType start, const RealType fracDelay,
+							const unsigned localWindowSize, pool::ThreadPool& pool, const unsigned numThreads)
 	{
 		std::mutex window_mutex, work_list_mutex;
 		auto worker = [&]
@@ -128,7 +132,10 @@ namespace
 				const serial::Response* resp = nullptr;
 				{
 					std::scoped_lock lock(work_list_mutex);
-					if (workList.empty()) { break; }
+					if (workList.empty())
+					{
+						break;
+					}
 					resp = workList.front();
 					workList.pop();
 				}
@@ -136,28 +143,40 @@ namespace
 			}
 
 			std::scoped_lock lock(window_mutex);
-			for (unsigned i = 0; i < localWindowSize; ++i) { window[i] += local_window[i]; }
+			for (unsigned i = 0; i < localWindowSize; ++i)
+			{
+				window[i] += local_window[i];
+			}
 		};
 
 		std::vector<std::future<void>> futures;
-		for (unsigned i = 0; i < numThreads; ++i) { futures.push_back(pool.enqueue(worker)); }
+		for (unsigned i = 0; i < numThreads; ++i)
+		{
+			futures.push_back(pool.enqueue(worker));
+		}
 
-		for (auto& future : futures) { future.get(); }
+		for (auto& future : futures)
+		{
+			future.get();
+		}
 	}
 }
 
 namespace processing
 {
 	void renderWindow(std::vector<ComplexType>& window, const RealType length, const RealType start,
-	                  const RealType fracDelay, const std::span<const std::unique_ptr<serial::Response>> responses,
-	                  pool::ThreadPool& pool)
+					  const RealType fracDelay, const std::span<const std::unique_ptr<serial::Response>> responses,
+					  pool::ThreadPool& pool)
 	{
 		const RealType end = start + length;
 		std::queue<serial::Response*> work_list;
 
 		for (const auto& response : responses)
 		{
-			if (response->startTime() <= end && response->endTime() >= start) { work_list.push(response.get()); }
+			if (response->startTime() <= end && response->endTime() >= start)
+			{
+				work_list.push(response.get());
+			}
 		}
 
 		unsigned num_responses = work_list.size();
@@ -168,21 +187,24 @@ namespace processing
 		if (num_responses < MIN_RESPONSES_FOR_PARALLEL_RENDERING || available_threads <= 1)
 		{
 			LOG(logging::Level::TRACE, "Using sequential processing for rendering: {} threads available, {} responses",
-			    available_threads, num_responses);
+				available_threads, num_responses);
 			sequentialProcessing(work_list, window, rate, start, fracDelay, local_window_size);
 		}
 		else
 		{
 			const unsigned num_threads = std::min(available_threads, num_responses);
 			LOG(logging::Level::TRACE, "Using {} threads for rendering: {} available, {} responses", num_threads,
-			    available_threads, num_responses);
+				available_threads, num_responses);
 			parallelProcessing(work_list, window, rate, start, fracDelay, local_window_size, pool, num_threads);
 		}
 	}
 
 	void applyThermalNoise(std::span<ComplexType> window, const RealType noiseTemperature, std::mt19937& rngEngine)
 	{
-		if (noiseTemperature == 0) { return; }
+		if (noiseTemperature == 0)
+		{
+			return;
+		}
 
 		const RealType b = params::rate() / (2.0 * params::oversampleRatio());
 		const RealType total_power = params::boltzmannK() * noiseTemperature * b;
@@ -209,7 +231,10 @@ namespace processing
 			max_value = std::max({max_value, real_abs, imag_abs});
 		}
 
-		if (const auto adc_bits = params::adcBits(); adc_bits > 0) { adcSimulate(window, adc_bits, max_value); }
+		if (const auto adc_bits = params::adcBits(); adc_bits > 0)
+		{
+			adcSimulate(window, adc_bits, max_value);
+		}
 		else if (max_value != 0)
 		{
 			for (auto& sample : window)

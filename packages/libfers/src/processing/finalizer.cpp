@@ -31,9 +31,9 @@
 #include <algorithm>
 #include <cmath>
 #include <format>
+#include <highfive/highfive.hpp>
 #include <ranges>
 #include <tuple>
-#include <highfive/highfive.hpp>
 
 #include <libfers/logging.h>
 #include <libfers/parameters.h>
@@ -66,7 +66,7 @@ namespace
 namespace processing
 {
 	void runPulsedFinalizer(radar::Receiver* receiver, pool::ThreadPool* pool,
-	                        const std::vector<std::unique_ptr<radar::Target>>* targets)
+							const std::vector<std::unique_ptr<radar::Target>>* targets)
 	{
 		// Each finalizer thread gets a private, stateful clone of the timing model
 		// to ensure thread safety and independent state progression.
@@ -81,7 +81,7 @@ namespace processing
 		HighFive::File h5_file(hdf5_filename, HighFive::File::Truncate);
 		unsigned chunk_index = 0;
 		LOG(logging::Level::INFO, "Finalizer thread started for receiver '{}'. Outputting to '{}'.",
-		    receiver->getName(), hdf5_filename);
+			receiver->getName(), hdf5_filename);
 
 		// Main processing loop for this receiver's dedicated thread.
 		while (true)
@@ -113,8 +113,8 @@ namespace processing
 				else // TODO: should we use (else if chunk_index > 0) here to avoid skipping on the first window?
 				{
 					// For free-running models, skip the "dead time" between windows.
-					const RealType inter_pulse_skip_duration = 1.0 / receiver->getWindowPrf() - receiver->
-						getWindowLength();
+					const RealType inter_pulse_skip_duration =
+						1.0 / receiver->getWindowPrf() - receiver->getWindowLength();
 					const auto samples_to_skip = static_cast<long>(std::floor(rate * inter_pulse_skip_duration));
 					timing_model->skipSamples(samples_to_skip);
 				}
@@ -142,7 +142,7 @@ namespace processing
 
 			// 1. Apply thermal noise.
 			applyThermalNoise(window_buffer, receiver->getNoiseTemperature(receiver->getRotation(actual_start)),
-			                  receiver->getRngEngine());
+							  receiver->getRngEngine());
 
 			// 2. Add interference from active continuous-wave sources.
 			RealType t_sample = actual_start;
@@ -154,8 +154,8 @@ namespace processing
 					// TODO: use nodirect?
 					if (!receiver->checkFlag(radar::Receiver::RecvFlag::FLAG_NODIRECT))
 					{
-						cw_interference_sample += simulation::calculateDirectPathContribution(
-							cw_source, receiver, t_sample);
+						cw_interference_sample +=
+							simulation::calculateDirectPathContribution(cw_source, receiver, t_sample);
 					}
 					for (const auto& target_ptr : *targets)
 					{
@@ -171,11 +171,17 @@ namespace processing
 			renderWindow(window_buffer, job.duration, actual_start, frac_delay, job.responses, *pool);
 
 			// 4. Apply phase noise (jitter).
-			if (timing_model->isEnabled()) { addPhaseNoiseToWindow(pnoise, window_buffer); }
+			if (timing_model->isEnabled())
+			{
+				addPhaseNoiseToWindow(pnoise, window_buffer);
+			}
 
 			// --- Finalization and Output ---
 			// 5. Downsample if oversampling was used.
-			if (params::oversampleRatio() > 1) { window_buffer = std::move(fers_signal::downsample(window_buffer)); }
+			if (params::oversampleRatio() > 1)
+			{
+				window_buffer = std::move(fers_signal::downsample(window_buffer));
+			}
 
 			// 6. Quantize and scale to simulate ADC effects.
 			const RealType fullscale = quantizeAndScaleWindow(window_buffer);
@@ -214,7 +220,10 @@ namespace processing
 
 			for (size_t i = 0; i < psize; ++i)
 			{
-				if (start_index + i < iq_buffer.size()) { iq_buffer[start_index + i] += rendered_pulse[i]; }
+				if (start_index + i < iq_buffer.size())
+				{
+					iq_buffer[start_index + i] += rendered_pulse[i];
+				}
 			}
 		}
 
@@ -239,7 +248,10 @@ namespace processing
 
 		// --- Finalization and Output ---
 		// 4. Downsample if oversampling was used.
-		if (params::oversampleRatio() > 1) { iq_buffer = std::move(fers_signal::downsample(iq_buffer)); }
+		if (params::oversampleRatio() > 1)
+		{
+			iq_buffer = std::move(fers_signal::downsample(iq_buffer));
+		}
 
 		// 5. Apply ADC quantization and scaling.
 		// TODO: Is there any point in normalizing the full buffer for CW receivers?
@@ -267,7 +279,7 @@ namespace processing
 			file.createAttribute("reference_carrier_frequency", timing_model->getFrequency());
 
 			LOG(logging::Level::INFO, "Successfully exported CW data for receiver '{}' to '{}'", receiver->getName(),
-			    hdf5_filename);
+				hdf5_filename);
 		}
 		catch (const HighFive::Exception& err)
 		{

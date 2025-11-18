@@ -6,9 +6,9 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file xml_parser.h
-* @brief Header file for parsing XML configuration files for simulation.
-*/
+ * @file xml_parser.h
+ * @brief Header file for parsing XML configuration files for simulation.
+ */
 
 #pragma once
 
@@ -36,9 +36,8 @@ namespace serial
 	 * @throws XmlException if the XML is malformed, fails validation, or contains invalid data.
 	 * @throws std::runtime_error for file I/O errors or other critical issues.
 	 */
-	void parseSimulation(const std::string& filename, core::World* world, bool validate,
-	                     std::mt19937& masterSeeder);
+	void parseSimulation(const std::string& filename, core::World* world, bool validate, std::mt19937& masterSeeder);
 
 	void parseSimulationFromString(const std::string& xmlContent, core::World* world, bool validate,
-	                               std::mt19937& masterSeeder);
+								   std::mt19937& masterSeeder);
 }

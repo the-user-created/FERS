@@ -15,8 +15,8 @@
 
 #pragma once
 
-#include <random>
 #include <nlohmann/json.hpp>
+#include <random>
 
 namespace core
 {

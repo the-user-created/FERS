@@ -6,9 +6,9 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file noise_generators.h
-* @brief Header file for noise generator classes.
-*/
+ * @file noise_generators.h
+ * @brief Header file for noise generator classes.
+ */
 
 #pragma once
 
@@ -23,9 +23,9 @@
 namespace noise
 {
 	/**
-	* @class NoiseGenerator
-	* @brief Abstract base class for noise generators.
-	*/
+	 * @class NoiseGenerator
+	 * @brief Abstract base class for noise generators.
+	 */
 	class NoiseGenerator
 	{
 	public:
@@ -42,36 +42,36 @@ namespace noise
 		NoiseGenerator& operator=(NoiseGenerator&&) = delete;
 
 		/**
-		* @brief Pure virtual method to generate a noise sample.
-		*
-		* @return A noise sample of type RealType.
-		*/
+		 * @brief Pure virtual method to generate a noise sample.
+		 *
+		 * @return A noise sample of type RealType.
+		 */
 		virtual RealType getSample() = 0;
 	};
 
 	/**
-	* @class WgnGenerator
-	* @brief Generates white Gaussian noise.
-	*/
+	 * @class WgnGenerator
+	 * @brief Generates white Gaussian noise.
+	 */
 	class WgnGenerator final : public NoiseGenerator
 	{
 	public:
 		/**
-		* @brief Constructor to initialize the WGN generator with a given standard deviation.
-		*
-		* @param rngEngine The random number engine to use for generation.
-		* @param stddev The standard deviation of the generated Gaussian noise. Default is 1.0.
-		*/
+		 * @brief Constructor to initialize the WGN generator with a given standard deviation.
+		 *
+		 * @param rngEngine The random number engine to use for generation.
+		 * @param stddev The standard deviation of the generated Gaussian noise. Default is 1.0.
+		 */
 		explicit WgnGenerator(std::mt19937& rngEngine, const RealType stddev = 1.0) noexcept :
-			_rng_engine(rngEngine),
-			_dist(0.0, stddev),
-			_stddev(stddev) {}
+			_rng_engine(rngEngine), _dist(0.0, stddev), _stddev(stddev)
+		{
+		}
 
 		/**
-		* @brief Generates a sample of white Gaussian noise.
-		*
-		* @return A noise sample of type RealType.
-		*/
+		 * @brief Generates a sample of white Gaussian noise.
+		 *
+		 * @return A noise sample of type RealType.
+		 */
 		RealType getSample() noexcept override { return _dist(_rng_engine.get()); }
 
 	private:
@@ -81,27 +81,28 @@ namespace noise
 	};
 
 	/**
-	* @class GammaGenerator
-	* @brief Generates Gamma-distributed noise.
-	*/
+	 * @class GammaGenerator
+	 * @brief Generates Gamma-distributed noise.
+	 */
 	class GammaGenerator final : public NoiseGenerator
 	{
 	public:
 		/**
-		* @brief Constructor to initialize the Gamma generator with a shape parameter.
-		*
-		* @param rngEngine The random number engine to use for generation.
-		* @param k The shape parameter of the Gamma distribution.
-		*/
+		 * @brief Constructor to initialize the Gamma generator with a shape parameter.
+		 *
+		 * @param rngEngine The random number engine to use for generation.
+		 * @param k The shape parameter of the Gamma distribution.
+		 */
 		explicit GammaGenerator(std::mt19937& rngEngine, const RealType k) noexcept :
-			_rng_engine(rngEngine),
-			_dist(k, 1.0) {}
+			_rng_engine(rngEngine), _dist(k, 1.0)
+		{
+		}
 
 		/**
-		* @brief Generates a sample of Gamma noise.
-		*
-		* @return A noise sample of type RealType.
-		*/
+		 * @brief Generates a sample of Gamma noise.
+		 *
+		 * @return A noise sample of type RealType.
+		 */
 		RealType getSample() noexcept override { return _dist(_rng_engine.get()); }
 
 	private:
@@ -110,38 +111,38 @@ namespace noise
 	};
 
 	/**
-	* @class MultirateGenerator
-	* @brief Generates multirate noise using a hierarchical tree structure.
-	*/
+	 * @class MultirateGenerator
+	 * @brief Generates multirate noise using a hierarchical tree structure.
+	 */
 	class MultirateGenerator final : public NoiseGenerator
 	{
 	public:
 		/**
-		* @brief Constructor to initialize the multirate generator.
-		*
-		* @param rngEngine The random number engine to use for generation.
-		* @param alpha The scaling parameter that controls the noise properties.
-		* @param branches The number of branches in the tree structure.
-		*/
+		 * @brief Constructor to initialize the multirate generator.
+		 *
+		 * @param rngEngine The random number engine to use for generation.
+		 * @param alpha The scaling parameter that controls the noise properties.
+		 * @param branches The number of branches in the tree structure.
+		 */
 		MultirateGenerator(std::mt19937& rngEngine, RealType alpha, unsigned branches);
 
 		/**
-		* @brief Generates a multirate noise sample.
-		*
-		* @return A noise sample of type RealType.
-		*/
+		 * @brief Generates a multirate noise sample.
+		 *
+		 * @return A noise sample of type RealType.
+		 */
 		RealType getSample() override { return _topbranch->getSample() * _scale; }
 
 		/**
-		* @brief Skips a number of samples in the noise sequence.
-		*
-		* @param samples The number of samples to skip.
-		*/
+		 * @brief Skips a number of samples in the noise sequence.
+		 *
+		 * @param samples The number of samples to skip.
+		 */
 		void skipSamples(long long samples) noexcept;
 
 		/**
-		* @brief Resets the noise generator state.
-		*/
+		 * @brief Resets the noise generator state.
+		 */
 		void reset() noexcept;
 
 	private:
@@ -150,63 +151,63 @@ namespace noise
 		std::reference_wrapper<std::mt19937> _rng_engine; ///< Reference to the RNG engine.
 
 		/**
-		* @brief Helper method to create the hierarchical tree structure.
-		*
-		* @param fAlpha Fractional alpha value.
-		* @param fInt Integer part of the scaling factor.
-		* @param branches The number of branches in the tree.
-		*/
+		 * @brief Helper method to create the hierarchical tree structure.
+		 *
+		 * @param fAlpha Fractional alpha value.
+		 * @param fInt Integer part of the scaling factor.
+		 * @param branches The number of branches in the tree.
+		 */
 		void createTree(RealType fAlpha, int fInt, unsigned branches);
 	};
 
 	/**
-	* @class ClockModelGenerator
-	* @brief Generates noise using a clock model with multiple rates.
-	*
-	* This is useful for simulating clock jitter or other similar phenomena.
-	*/
+	 * @class ClockModelGenerator
+	 * @brief Generates noise using a clock model with multiple rates.
+	 *
+	 * This is useful for simulating clock jitter or other similar phenomena.
+	 */
 	class ClockModelGenerator final : public NoiseGenerator
 	{
 	public:
 		/**
-		* @brief Constructor to initialize the clock model generator.
-		*
-		* @param rngEngine The random number engine to use for generation.
-		* @param alpha Vector of scaling parameters for the noise.
-		* @param inWeights Vector of weights for each rate process.
-		* @param frequency The base frequency of the clock model.
-		* @param phaseOffset The phase offset of the generated noise.
-		* @param freqOffset The frequency offset of the generated noise.
-		* @param branches The number of branches in each rate process.
-		*/
+		 * @brief Constructor to initialize the clock model generator.
+		 *
+		 * @param rngEngine The random number engine to use for generation.
+		 * @param alpha Vector of scaling parameters for the noise.
+		 * @param inWeights Vector of weights for each rate process.
+		 * @param frequency The base frequency of the clock model.
+		 * @param phaseOffset The phase offset of the generated noise.
+		 * @param freqOffset The frequency offset of the generated noise.
+		 * @param branches The number of branches in each rate process.
+		 */
 		ClockModelGenerator(std::mt19937& rngEngine, const std::vector<RealType>& alpha,
-		                    const std::vector<RealType>& inWeights,
-		                    RealType frequency, RealType phaseOffset, RealType freqOffset, int branches) noexcept;
+							const std::vector<RealType>& inWeights, RealType frequency, RealType phaseOffset,
+							RealType freqOffset, int branches) noexcept;
 
 		/**
-		* @brief Generates a clock model noise sample.
-		*
-		* @return A noise sample of type RealType.
-		*/
+		 * @brief Generates a clock model noise sample.
+		 *
+		 * @return A noise sample of type RealType.
+		 */
 		RealType getSample() override;
 
 		/**
-		* @brief Skips a number of samples in the noise sequence.
-		*
-		* @param samples The number of samples to skip.
-		*/
+		 * @brief Skips a number of samples in the noise sequence.
+		 *
+		 * @param samples The number of samples to skip.
+		 */
 		void skipSamples(long long samples);
 
 		/**
-		* @brief Resets the noise generator state.
-		*/
+		 * @brief Resets the noise generator state.
+		 */
 		void reset();
 
 		/**
-		* @brief Checks if the noise generator is enabled.
-		*
-		* @return True if the generator is enabled, false otherwise.
-		*/
+		 * @brief Checks if the noise generator is enabled.
+		 *
+		 * @return True if the generator is enabled, false otherwise.
+		 */
 		[[nodiscard]] bool enabled() const;
 
 	private:

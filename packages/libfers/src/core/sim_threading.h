@@ -43,5 +43,5 @@ namespace core
 	 * @param progress_callback An optional callback function for reporting progress.
 	 */
 	void runEventDrivenSim(World* world, pool::ThreadPool& pool,
-	                       const std::function<void(const std::string&, int, int)>& progress_callback);
+						   const std::function<void(const std::string&, int, int)>& progress_callback);
 }

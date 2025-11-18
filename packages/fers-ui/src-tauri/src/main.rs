@@ -45,9 +45,7 @@
 /// This is the standard entry point and should not typically be modified:
 ///
 /// ```no_run
-/// fn main() {
-///     fers_ui_lib::run();
-/// }
+/// fers_ui_lib::run();
 /// ```
 fn main() {
     fers_ui_lib::run()

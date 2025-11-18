@@ -5,9 +5,9 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file libxml_wrapper.cpp
-* @brief Wrapper for managing XML documents and elements using libxml2.
-*/
+ * @file libxml_wrapper.cpp
+ * @brief Wrapper for managing XML documents and elements using libxml2.
+ */
 
 #include "libxml_wrapper.h"
 
@@ -19,15 +19,18 @@
 
 bool XmlDocument::validateWithDtd(const std::span<const unsigned char> dtdData) const
 {
-	xmlDtdPtr dtd = xmlIOParseDTD(nullptr,
-	                              xmlParserInputBufferCreateMem(reinterpret_cast<const char*>(dtdData.data()),
-	                                                            static_cast<int>(dtdData.size()),
-	                                                            XML_CHAR_ENCODING_UTF8),
-	                              XML_CHAR_ENCODING_UTF8);
-	if (!dtd) { throw XmlException("Failed to parse DTD from memory."); }
+	xmlDtdPtr dtd =
+		xmlIOParseDTD(nullptr,
+					  xmlParserInputBufferCreateMem(reinterpret_cast<const char*>(dtdData.data()),
+													static_cast<int>(dtdData.size()), XML_CHAR_ENCODING_UTF8),
+					  XML_CHAR_ENCODING_UTF8);
+	if (!dtd)
+	{
+		throw XmlException("Failed to parse DTD from memory.");
+	}
 
-	const std::unique_ptr<xmlValidCtxt, decltype(&xmlFreeValidCtxt)> validation_ctxt(
-		xmlNewValidCtxt(), xmlFreeValidCtxt);
+	const std::unique_ptr<xmlValidCtxt, decltype(&xmlFreeValidCtxt)> validation_ctxt(xmlNewValidCtxt(),
+																					 xmlFreeValidCtxt);
 	if (!validation_ctxt)
 	{
 		xmlFreeDtd(dtd);
@@ -37,7 +40,10 @@ bool XmlDocument::validateWithDtd(const std::span<const unsigned char> dtdData) 
 	const bool is_valid = xmlValidateDtd(validation_ctxt.get(), _doc.get(), dtd);
 	xmlFreeDtd(dtd);
 
-	if (!is_valid) { throw XmlException("XML failed DTD validation."); }
+	if (!is_valid)
+	{
+		throw XmlException("XML failed DTD validation.");
+	}
 
 	return true;
 }
@@ -46,17 +52,25 @@ bool XmlDocument::validateWithXsd(const std::span<const unsigned char> xsdData) 
 {
 	const std::unique_ptr<xmlSchemaParserCtxt, decltype(&xmlSchemaFreeParserCtxt)> schema_parser_ctxt(
 		xmlSchemaNewMemParserCtxt(reinterpret_cast<const char*>(xsdData.data()), static_cast<int>(xsdData.size())),
-		xmlSchemaFreeParserCtxt
-		);
-	if (!schema_parser_ctxt) { throw XmlException("Failed to create schema parser context."); }
+		xmlSchemaFreeParserCtxt);
+	if (!schema_parser_ctxt)
+	{
+		throw XmlException("Failed to create schema parser context.");
+	}
 
 	const std::unique_ptr<xmlSchema, decltype(&xmlSchemaFree)> schema(xmlSchemaParse(schema_parser_ctxt.get()),
-	                                                                  xmlSchemaFree);
-	if (!schema) { throw XmlException("Failed to parse schema from memory."); }
+																	  xmlSchemaFree);
+	if (!schema)
+	{
+		throw XmlException("Failed to parse schema from memory.");
+	}
 
 	const std::unique_ptr<xmlSchemaValidCtxt, decltype(&xmlSchemaFreeValidCtxt)> schema_valid_ctxt(
 		xmlSchemaNewValidCtxt(schema.get()), xmlSchemaFreeValidCtxt);
-	if (!schema_valid_ctxt) { throw XmlException("Failed to create schema validation context."); }
+	if (!schema_valid_ctxt)
+	{
+		throw XmlException("Failed to create schema validation context.");
+	}
 
 	if (const bool is_valid = xmlSchemaValidateDoc(schema_valid_ctxt.get(), _doc.get()) == 0; !is_valid)
 	{
@@ -92,7 +106,10 @@ void removeIncludeElements(const XmlDocument& doc)
 			xmlUnlinkNode(include_element.getNode());
 			xmlFreeNode(include_element.getNode());
 		}
-		else { break; }
+		else
+		{
+			break;
+		}
 	}
 }
 

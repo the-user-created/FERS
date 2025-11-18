@@ -6,9 +6,9 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file hdf5_handler.cpp
-* @brief Source file for HDF5 data export and import functions.
-*/
+ * @file hdf5_handler.cpp
+ * @brief Source file for HDF5 data export and import functions.
+ */
 
 #include "hdf5_handler.h"
 
@@ -16,8 +16,8 @@
 #include <complex>
 #include <filesystem>
 #include <format>
-#include <stdexcept>
 #include <highfive/highfive.hpp>
+#include <stdexcept>
 
 #include <libfers/logging.h>
 #include <libfers/parameters.h>
@@ -66,12 +66,15 @@ namespace serial
 		}
 
 		data.resize(size);
-		for (size_t i = 0; i < size; ++i) { data[i] = ComplexType(buffer_i[i], buffer_q[i]); }
+		for (size_t i = 0; i < size; ++i)
+		{
+			data[i] = ComplexType(buffer_i[i], buffer_q[i]);
+		}
 		LOG(Level::TRACE, "Read dataset successfully");
 	}
 
 	void addChunkToFile(HighFive::File& file, const std::vector<ComplexType>& data, const RealType time,
-	                    const RealType fullscale, const unsigned count)
+						const RealType fullscale, const unsigned count)
 	{
 		const unsigned size = data.size();
 
@@ -87,8 +90,8 @@ namespace serial
 		{
 			try
 			{
-				HighFive::DataSet dataset = file.createDataSet<RealType>(
-					chunkName, HighFive::DataSpace::From(chunkData));
+				HighFive::DataSet dataset =
+					file.createDataSet<RealType>(chunkName, HighFive::DataSpace::From(chunkData));
 				dataset.write(chunkData);
 			}
 			catch (const HighFive::Exception& err)
@@ -136,8 +139,8 @@ namespace serial
 			if (dims.size() != 2)
 			{
 				LOG(Level::FATAL, "Invalid dataset dimensions for '{}' in file '{}'", datasetName, name);
-				throw std::runtime_error(std::format(R"(Invalid dataset dimensions for "{}" in file "{}")", datasetName,
-				                                     name));
+				throw std::runtime_error(
+					std::format(R"(Invalid dataset dimensions for "{}" in file "{}")", datasetName, name));
 			}
 
 			LOG(Level::TRACE, "Reading dataset with dimensions {}x{}", dims[0], dims[1]);

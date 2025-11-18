@@ -6,9 +6,9 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file radar_signal.h
-* @brief Classes for handling radar waveforms and signals.
-*/
+ * @file radar_signal.h
+ * @brief Classes for handling radar waveforms and signals.
+ */
 
 #pragma once
 
@@ -77,7 +77,7 @@ namespace fers_signal
 		 * @return A vector of rendered complex signal data.
 		 */
 		virtual std::vector<ComplexType> render(const std::vector<interp::InterpPoint>& points, unsigned& size,
-		                                        double fracWinDelay) const;
+												double fracWinDelay) const;
 
 	private:
 		std::vector<ComplexType> _data; ///< The complex signal data.
@@ -94,10 +94,10 @@ namespace fers_signal
 		 * @param fracWinDelay Fractional window delay to apply.
 		 * @return A tuple containing amplitude, phase, fractional delay, and sample unwrap index.
 		 */
-		[[nodiscard]] constexpr std::tuple<double, double, double, int> calculateWeightsAndDelays(
-			std::vector<interp::InterpPoint>::const_iterator iter,
-			std::vector<interp::InterpPoint>::const_iterator next, double sampleTime, double idelay,
-			double fracWinDelay) const noexcept;
+		[[nodiscard]] constexpr std::tuple<double, double, double, int>
+		calculateWeightsAndDelays(std::vector<interp::InterpPoint>::const_iterator iter,
+								  std::vector<interp::InterpPoint>::const_iterator next, double sampleTime,
+								  double idelay, double fracWinDelay) const noexcept;
 
 		/**
 		 * @brief Performs convolution with a filter.
@@ -110,7 +110,7 @@ namespace fers_signal
 		 * @return The result of the convolution for the given sample.
 		 */
 		ComplexType performConvolution(int i, const double* filt, int filtLength, double amplitude,
-		                               int iSampleUnwrap) const noexcept;
+									   int iSampleUnwrap) const noexcept;
 	};
 
 	/**
@@ -131,7 +131,7 @@ namespace fers_signal
 		 * @throws std::runtime_error if the signal is null.
 		 */
 		RadarSignal(std::string name, RealType power, RealType carrierfreq, RealType length,
-		            std::unique_ptr<Signal> signal);
+					std::unique_ptr<Signal> signal);
 
 		~RadarSignal() = default;
 
@@ -205,7 +205,7 @@ namespace fers_signal
 		 * @return A vector of rendered complex radar signal data.
 		 */
 		std::vector<ComplexType> render(const std::vector<interp::InterpPoint>& points, unsigned& size,
-		                                RealType fracWinDelay) const;
+										RealType fracWinDelay) const;
 
 	private:
 		std::string _name; ///< The name of the radar signal.
@@ -236,6 +236,6 @@ namespace fers_signal
 		 * @return An empty vector of complex signal data.
 		 */
 		std::vector<ComplexType> render(const std::vector<interp::InterpPoint>& points, unsigned& size,
-		                                RealType fracWinDelay) const override;
+										RealType fracWinDelay) const override;
 	};
 }

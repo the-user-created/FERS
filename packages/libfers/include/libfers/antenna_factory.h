@@ -6,21 +6,21 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file antenna_factory.h
-* @brief Header file defining various types of antennas and their gain patterns.
-*/
+ * @file antenna_factory.h
+ * @brief Header file defining various types of antennas and their gain patterns.
+ */
 
 #pragma once
 
+#include <libfers/config.h>
+#include <libfers/geometry_ops.h>
 #include <memory>
 #include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
-#include <libfers/config.h>
-#include <libfers/geometry_ops.h>
-#include "logging.h"
 #include "interpolation/interpolation_set.h"
+#include "logging.h"
 
 namespace serial
 {
@@ -41,8 +41,7 @@ namespace antenna
 		 *
 		 * @param name The name of the antenna.
 		 */
-		explicit Antenna(std::string name) noexcept :
-			_loss_factor(1), _name(std::move(name)) {}
+		explicit Antenna(std::string name) noexcept : _loss_factor(1), _name(std::move(name)) {}
 
 		virtual ~Antenna() = default;
 
@@ -63,7 +62,7 @@ namespace antenna
 		 * @return The gain of the antenna at the specified angle and wavelength.
 		 */
 		[[nodiscard]] virtual RealType getGain(const math::SVec3& angle, const math::SVec3& refangle,
-		                                       RealType wavelength) const = 0;
+											   RealType wavelength) const = 0;
 
 		/**
 		 * @brief Retrieves the efficiency factor of the antenna.
@@ -124,8 +123,7 @@ namespace antenna
 		 *
 		 * @param name The name of the antenna.
 		 */
-		explicit Isotropic(const std::string_view name) :
-			Antenna(name.data()) {}
+		explicit Isotropic(const std::string_view name) : Antenna(name.data()) {}
 
 		~Isotropic() override = default;
 
@@ -143,7 +141,7 @@ namespace antenna
 		 * @return The gain of the antenna, which is equal to the efficiency factor.
 		 */
 		[[nodiscard]] RealType getGain(const math::SVec3& /*angle*/, const math::SVec3& /*refangle*/,
-		                               RealType /*wavelength*/) const override
+									   RealType /*wavelength*/) const override
 		{
 			// David Young: Isotropic antennas have a directivity of 1 (or 0 dB),
 			// therefore, the gain of the antenna is the efficiency factor
@@ -169,7 +167,9 @@ namespace antenna
 		 * @param gamma The gamma parameter.
 		 */
 		Sinc(const std::string_view name, const RealType alpha, const RealType beta, const RealType gamma) :
-			Antenna(name.data()), _alpha(alpha), _beta(beta), _gamma(gamma) {}
+			Antenna(name.data()), _alpha(alpha), _beta(beta), _gamma(gamma)
+		{
+		}
 
 		~Sinc() override = default;
 
@@ -199,7 +199,7 @@ namespace antenna
 		 * @return The computed gain of the antenna.
 		 */
 		[[nodiscard]] RealType getGain(const math::SVec3& angle, const math::SVec3& refangle,
-		                               RealType wavelength) const noexcept override;
+									   RealType wavelength) const noexcept override;
 
 	private:
 		RealType _alpha; ///< Parameter defining the shape of the gain pattern.
@@ -224,8 +224,9 @@ namespace antenna
 		 * @param elscale The elevation scale factor.
 		 */
 		Gaussian(const std::string_view name, const RealType azscale, const RealType elscale) :
-			Antenna(name.data()),
-			_azscale(azscale), _elscale(elscale) {}
+			Antenna(name.data()), _azscale(azscale), _elscale(elscale)
+		{
+		}
 
 		~Gaussian() override = default;
 
@@ -246,7 +247,7 @@ namespace antenna
 		 * @return The computed gain of the antenna.
 		 */
 		[[nodiscard]] RealType getGain(const math::SVec3& angle, const math::SVec3& refangle,
-		                               RealType wavelength) const noexcept override;
+									   RealType wavelength) const noexcept override;
 
 		/** @brief Gets the azimuth scale factor. */
 		[[nodiscard]] RealType getAzimuthScale() const noexcept { return _azscale; }
@@ -274,9 +275,9 @@ namespace antenna
 		 * @param name The name of the antenna.
 		 * @param dimension The dimension of the square horn.
 		 */
-		SquareHorn(const std::string_view name, const RealType dimension) :
-			Antenna(name.data()),
-			_dimension(dimension) {}
+		SquareHorn(const std::string_view name, const RealType dimension) : Antenna(name.data()), _dimension(dimension)
+		{
+		}
 
 		~SquareHorn() override = default;
 
@@ -297,7 +298,7 @@ namespace antenna
 		 * @return The computed gain of the antenna.
 		 */
 		[[nodiscard]] RealType getGain(const math::SVec3& angle, const math::SVec3& refangle,
-		                               RealType wavelength) const noexcept override;
+									   RealType wavelength) const noexcept override;
 
 		/** @brief Gets the dimension of the square horn. */
 		[[nodiscard]] RealType getDimension() const noexcept { return _dimension; }
@@ -321,8 +322,7 @@ namespace antenna
 		 * @param name The name of the antenna.
 		 * @param diameter The diameter of the parabolic reflector.
 		 */
-		Parabolic(const std::string_view name, const RealType diameter) :
-			Antenna(name.data()), _diameter(diameter) {}
+		Parabolic(const std::string_view name, const RealType diameter) : Antenna(name.data()), _diameter(diameter) {}
 
 		~Parabolic() override = default;
 
@@ -343,7 +343,7 @@ namespace antenna
 		 * @return The computed gain of the antenna.
 		 */
 		[[nodiscard]] RealType getGain(const math::SVec3& angle, const math::SVec3& refangle,
-		                               RealType wavelength) const noexcept override;
+									   RealType wavelength) const noexcept override;
 
 		/** @brief Gets the diameter of the parabolic reflector. */
 		[[nodiscard]] RealType getDiameter() const noexcept { return _diameter; }
@@ -370,9 +370,11 @@ namespace antenna
 		 * @param filename The path to the XML file containing the antenna's gain pattern data.
 		 */
 		XmlAntenna(const std::string_view name, const std::string_view filename) :
-			Antenna(name.data()),
-			_azi_samples(std::make_unique<interp::InterpSet>()),
-			_elev_samples(std::make_unique<interp::InterpSet>()) { loadAntennaDescription(filename); }
+			Antenna(name.data()), _azi_samples(std::make_unique<interp::InterpSet>()),
+			_elev_samples(std::make_unique<interp::InterpSet>())
+		{
+			loadAntennaDescription(filename);
+		}
 
 		~XmlAntenna() override = default;
 
@@ -385,16 +387,16 @@ namespace antenna
 		XmlAntenna& operator=(XmlAntenna&&) = delete;
 
 		/**
-		* @brief Computes the gain of the antenna based on the input angle and reference angle.
-		*
-		* @param angle The angle at which the gain is to be computed.
-		* @param refangle The reference angle.
-		* @param wavelength The wavelength of the signal (not used in this antenna type).
-		* @return The gain of the antenna at the specified angle.
-		* @throws std::runtime_error If gain values cannot be retrieved from the interpolation sets.
-		*/
+		 * @brief Computes the gain of the antenna based on the input angle and reference angle.
+		 *
+		 * @param angle The angle at which the gain is to be computed.
+		 * @param refangle The reference angle.
+		 * @param wavelength The wavelength of the signal (not used in this antenna type).
+		 * @return The gain of the antenna at the specified angle.
+		 * @throws std::runtime_error If gain values cannot be retrieved from the interpolation sets.
+		 */
 		[[nodiscard]] RealType getGain(const math::SVec3& angle, const math::SVec3& refangle,
-		                               RealType wavelength) const override;
+									   RealType wavelength) const override;
 
 		/** @brief Gets the filename of the antenna description. */
 		[[nodiscard]] const std::string& getFilename() const noexcept { return _filename; }
@@ -440,9 +442,9 @@ namespace antenna
 		 * @param filename The path to the file containing the antenna's gain pattern.
 		 */
 		H5Antenna(const std::string_view name, const std::string& filename) :
-			Antenna(name.data()),
-			_pattern(serial::readPattern(filename, "antenna")),
-			_filename(filename) {}
+			Antenna(name.data()), _pattern(serial::readPattern(filename, "antenna")), _filename(filename)
+		{
+		}
 
 		~H5Antenna() override = default;
 
@@ -462,7 +464,7 @@ namespace antenna
 		 * @return The gain of the antenna at the specified angle.
 		 */
 		[[nodiscard]] RealType getGain(const math::SVec3& angle, const math::SVec3& refangle,
-		                               RealType /*wavelength*/) const override;
+									   RealType /*wavelength*/) const override;
 
 		/** @brief Gets the filename of the antenna description. */
 		[[nodiscard]] const std::string& getFilename() const noexcept { return _filename; }

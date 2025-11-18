@@ -6,9 +6,9 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file coord.h
-* @brief Coordinate and rotation structure operations.
-*/
+ * @file coord.h
+ * @brief Coordinate and rotation structure operations.
+ */
 
 #pragma once
 
@@ -102,14 +102,16 @@ namespace math
 		constexpr explicit RotationCoord(const RealType a = 0) noexcept : azimuth(a), elevation(a), t(a) {}
 
 		/**
-		* @brief Constructor to initialize azimuth, elevation, and time.
-		*
-		* @param az Azimuth angle.
-		* @param el Elevation angle.
-		* @param time Time component.
-		*/
-		RotationCoord(const RealType az, const RealType el, const RealType time) noexcept
-			: azimuth(az), elevation(el), t(time) {}
+		 * @brief Constructor to initialize azimuth, elevation, and time.
+		 *
+		 * @param az Azimuth angle.
+		 * @param el Elevation angle.
+		 * @param time Time component.
+		 */
+		RotationCoord(const RealType az, const RealType el, const RealType time) noexcept :
+			azimuth(az), elevation(el), t(time)
+		{
+		}
 	};
 
 	/// Multiplies two `RotationCoord` objects' components and copies the time.

@@ -96,10 +96,7 @@ fn load_scenario_from_xml_file(
     filepath: String,
     state: State<'_, FersState>,
 ) -> Result<(), String> {
-    state
-        .lock()
-        .map_err(|e| e.to_string())?
-        .load_scenario_from_xml_file(&filepath)
+    state.lock().map_err(|e| e.to_string())?.load_scenario_from_xml_file(&filepath)
 }
 
 /// Retrieves the current in-memory scenario as a JSON string.
@@ -127,10 +124,7 @@ fn load_scenario_from_xml_file(
 /// ```
 #[tauri::command]
 fn get_scenario_as_json(state: State<'_, FersState>) -> Result<String, String> {
-    state
-        .lock()
-        .map_err(|e| e.to_string())?
-        .get_scenario_as_json()
+    state.lock().map_err(|e| e.to_string())?.get_scenario_as_json()
 }
 
 /// Retrieves the current in-memory scenario as a FERS XML string.
@@ -158,10 +152,7 @@ fn get_scenario_as_json(state: State<'_, FersState>) -> Result<String, String> {
 /// ```
 #[tauri::command]
 fn get_scenario_as_xml(state: State<'_, FersState>) -> Result<String, String> {
-    state
-        .lock()
-        .map_err(|e| e.to_string())?
-        .get_scenario_as_xml()
+    state.lock().map_err(|e| e.to_string())?.get_scenario_as_xml()
 }
 
 /// Updates the in-memory scenario from a JSON string provided by the frontend.
@@ -190,10 +181,7 @@ fn get_scenario_as_xml(state: State<'_, FersState>) -> Result<String, String> {
 /// ```
 #[tauri::command]
 fn update_scenario_from_json(json: String, state: State<'_, FersState>) -> Result<(), String> {
-    state
-        .lock()
-        .map_err(|e| e.to_string())?
-        .update_scenario_from_json(&json)
+    state.lock().map_err(|e| e.to_string())?.update_scenario_from_json(&json)
 }
 
 /// Triggers the simulation based on the current in-memory scenario.
@@ -332,9 +320,7 @@ fn get_interpolated_motion_path(
 /// This function is typically called from `main.rs`:
 ///
 /// ```rust
-/// fn main() {
-///     fers_ui_lib::run();
-/// }
+/// fers_ui_lib::run();
 /// ```
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {

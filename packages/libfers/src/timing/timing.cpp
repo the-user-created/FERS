@@ -6,27 +6,29 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file timing.cpp
-* @brief Implementation of timing sources.
-*/
+ * @file timing.cpp
+ * @brief Implementation of timing sources.
+ */
 
 #include "timing.h"
 
-#include <stdexcept>
 #include <libfers/logging.h>
+#include <stdexcept>
 #include "prototype_timing.h"
 
 using logging::Level;
 
 namespace timing
 {
-	Timing::Timing(std::string name, const unsigned seed) noexcept :
-		_name(std::move(name)), _rng(seed), _seed(seed) {}
+	Timing::Timing(std::string name, const unsigned seed) noexcept : _name(std::move(name)), _rng(seed), _seed(seed) {}
 
 	// NOLINTNEXTLINE(readability-make-member-function-const)
 	void Timing::skipSamples(const long long samples) noexcept
 	{
-		if (_enabled && _model) { _model->skipSamples(samples); }
+		if (_enabled && _model)
+		{
+			_model->skipSamples(samples);
+		}
 	}
 
 	void Timing::initializeModel(const PrototypeTiming* timing) noexcept
@@ -46,7 +48,7 @@ namespace timing
 		if (const std::optional<RealType> random_freq_stdev = timing->getRandomFreqOffsetStdev(); random_freq_stdev)
 		{
 			LOG(Level::INFO, "Timing source '{}': applying random frequency offset with stdev {} Hz.", _name,
-			    random_freq_stdev.value());
+				random_freq_stdev.value());
 			_freq_offset += normal_dist(_rng) * random_freq_stdev.value();
 		}
 
@@ -54,14 +56,14 @@ namespace timing
 		if (const std::optional<RealType> random_phase_stdev = timing->getRandomPhaseOffsetStdev(); random_phase_stdev)
 		{
 			LOG(Level::INFO, "Timing source '{}': applying random phase offset with stdev {} radians.", _name,
-			    random_phase_stdev.value());
+				random_phase_stdev.value());
 			_phase_offset += normal_dist(_rng) * random_phase_stdev.value();
 		}
 
 		timing->copyAlphas(_alphas, _weights);
 
 		_model = std::make_unique<noise::ClockModelGenerator>(_rng, _alphas, _weights, _frequency, _phase_offset,
-		                                                      _freq_offset, 15);
+															  _freq_offset, 15);
 
 		if (timing->getFrequency() == 0.0f)
 		{

@@ -6,9 +6,9 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file interpolation_filter.h
-* @brief Interpolation filter implementation using Kaiser windowing.
-*/
+ * @file interpolation_filter.h
+ * @brief Interpolation filter implementation using Kaiser windowing.
+ */
 
 #pragma once
 

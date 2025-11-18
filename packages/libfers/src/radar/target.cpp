@@ -6,9 +6,9 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file target.cpp
-* @brief Defines classes for radar targets and their Radar Cross-Section (RCS) models.
-*/
+ * @file target.cpp
+ * @brief Defines classes for radar targets and their Radar Cross-Section (RCS) models.
+ */
 
 #include <libfers/target.h>
 
@@ -37,8 +37,7 @@ namespace
 		{
 			XmlElement angle_element = tmp.childElement("angle", 0);
 
-			if (XmlElement gain_element = tmp.childElement("rcs", 0); angle_element.isValid() && gain_element.
-				isValid())
+			if (XmlElement gain_element = tmp.childElement("rcs", 0); angle_element.isValid() && gain_element.isValid())
 			{
 				const RealType angle = std::stof(angle_element.getText());
 				const RealType gain = std::stof(gain_element.getText());
@@ -59,11 +58,13 @@ namespace radar
 
 	FileTarget::FileTarget(Platform* platform, std::string name, const std::string& filename, const unsigned seed) :
 		Target(platform, std::move(name), seed), _azi_samples(std::make_unique_for_overwrite<interp::InterpSet>()),
-		_elev_samples(std::make_unique_for_overwrite<interp::InterpSet>()),
-		_filename(filename)
+		_elev_samples(std::make_unique_for_overwrite<interp::InterpSet>()), _filename(filename)
 	{
 		XmlDocument doc;
-		if (!doc.loadFile(filename)) { throw std::runtime_error("Could not load target description from " + filename); }
+		if (!doc.loadFile(filename))
+		{
+			throw std::runtime_error("Could not load target description from " + filename);
+		}
 
 		const XmlElement root(doc.getRootElement());
 
@@ -85,8 +86,8 @@ namespace radar
 		// 4. Use the local aspect angle (bisector is halved) to look up RCS.
 		const auto azi_value = _azi_samples->getValueAt(local_aspect_angle.azimuth / 2.0);
 
-		if (const auto elev_value = _elev_samples->getValueAt(local_aspect_angle.elevation / 2.0); azi_value &&
-			elev_value)
+		if (const auto elev_value = _elev_samples->getValueAt(local_aspect_angle.elevation / 2.0);
+			azi_value && elev_value)
 		{
 			// Return the raw RCS value (proportional to power), not its square root.
 			const RealType rcs = *azi_value * *elev_value;

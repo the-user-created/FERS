@@ -6,9 +6,9 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file interpolation_set.cpp
-* @brief Implementation file for interpolation of sets of data.
-*/
+ * @file interpolation_set.cpp
+ * @brief Implementation file for interpolation of sets of data.
+ */
 
 #include "interpolation_set.h"
 
@@ -25,17 +25,26 @@ namespace interp
 	template <RealConcept T>
 	std::optional<T> InterpSetData::value(T x) const noexcept
 	{
-		if (_data.empty()) { return std::nullopt; }
+		if (_data.empty())
+		{
+			return std::nullopt;
+		}
 
 		const auto iter = _data.lower_bound(static_cast<double>(x));
 
-		if (iter == _data.begin()) { return static_cast<T>(iter->second); }
+		if (iter == _data.begin())
+		{
+			return static_cast<T>(iter->second);
+		}
 		if (iter == _data.end())
 		{
 			const auto prev = std::prev(iter);
 			return static_cast<T>(prev->second);
 		}
-		if (iter->first == static_cast<double>(x)) { return static_cast<T>(iter->second); }
+		if (iter->first == static_cast<double>(x))
+		{
+			return static_cast<T>(iter->second);
+		}
 
 		auto prev = std::prev(iter);
 		const auto [x1, y1] = *prev;
@@ -48,10 +57,8 @@ namespace interp
 	{
 		auto values = _data | std::views::values;
 
-		const auto max_element = std::ranges::max_element(values, [](const double a, const double b)
-		{
-			return std::abs(a) < std::abs(b);
-		});
+		const auto max_element =
+			std::ranges::max_element(values, [](const double a, const double b) { return std::abs(a) < std::abs(b); });
 
 		return max_element != values.end() ? std::abs(*max_element) : 0.0;
 	}
@@ -59,7 +66,10 @@ namespace interp
 	template <RealConcept T>
 	void InterpSetData::divide(T a)
 	{
-		if (a == 0) { throw std::invalid_argument("Division by zero is not allowed."); }
+		if (a == 0)
+		{
+			throw std::invalid_argument("Division by zero is not allowed.");
+		}
 
 		std::ranges::for_each(_data | std::views::values, [a](auto& value) { value /= static_cast<double>(a); });
 	}

@@ -6,9 +6,9 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file waveform_factory.cpp
-* @brief Implementation for loading waveform data into RadarSignal objects.
-*/
+ * @file waveform_factory.cpp
+ * @brief Implementation for loading waveform data into RadarSignal objects.
+ */
 
 #include "waveform_factory.h"
 
@@ -27,8 +27,8 @@
 #include "hdf5_handler.h"
 #include "signal/radar_signal.h"
 
-using fers_signal::Signal;
 using fers_signal::RadarSignal;
+using fers_signal::Signal;
 
 namespace
 {
@@ -43,8 +43,8 @@ namespace
 	 * @throws std::runtime_error If the file cannot be opened or the file format is unrecognized.
 	 */
 	std::unique_ptr<RadarSignal> loadWaveformFromHdf5File(const std::string& name,
-	                                                      const std::filesystem::path& filepath,
-	                                                      const RealType power, const RealType carrierFreq)
+														  const std::filesystem::path& filepath, const RealType power,
+														  const RealType carrierFreq)
 	{
 		std::vector<ComplexType> data;
 		serial::readPulseData(filepath.string(), data);
@@ -52,7 +52,7 @@ namespace
 		auto signal = std::make_unique<Signal>();
 		signal->load(data, data.size(), params::rate());
 		return std::make_unique<RadarSignal>(name, power, carrierFreq,
-		                                     static_cast<RealType>(data.size()) / params::rate(), std::move(signal));
+											 static_cast<RealType>(data.size()) / params::rate(), std::move(signal));
 	}
 
 	/**
@@ -65,9 +65,8 @@ namespace
 	 * @return A unique pointer to a RadarSignal object loaded with the waveform data.
 	 * @throws std::runtime_error If the file cannot be opened or the file format is unrecognized.
 	 */
-	std::unique_ptr<RadarSignal> loadWaveformFromCsvFile(const std::string& name,
-	                                                     const std::filesystem::path& filepath,
-	                                                     const RealType power, const RealType carrierFreq)
+	std::unique_ptr<RadarSignal> loadWaveformFromCsvFile(const std::string& name, const std::filesystem::path& filepath,
+														 const RealType power, const RealType carrierFreq)
 	{
 		std::ifstream ifile(filepath);
 		if (!ifile)
@@ -83,7 +82,9 @@ namespace
 		std::vector<ComplexType> data(length);
 
 		// Read the file data
-		for (std::size_t done = 0; done < length && ifile >> data[done]; ++done) {}
+		for (std::size_t done = 0; done < length && ifile >> data[done]; ++done)
+		{
+		}
 
 		if (ifile.fail() || data.size() != length)
 		{
@@ -112,7 +113,7 @@ namespace
 namespace serial
 {
 	std::unique_ptr<RadarSignal> loadWaveformFromFile(const std::string& name, const std::string& filename,
-	                                                  const RealType power, const RealType carrierFreq)
+													  const RealType power, const RealType carrierFreq)
 	{
 		const std::filesystem::path filepath = filename;
 		const auto extension = filepath.extension().string();

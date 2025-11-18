@@ -6,11 +6,11 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file timing.h
-* @brief Timing source for simulation objects.
-*
-* All objects must adhere to a common timing source, which is modeled and adjusted by the methods in this class.
-*/
+ * @file timing.h
+ * @brief Timing source for simulation objects.
+ *
+ * All objects must adhere to a common timing source, which is modeled and adjusted by the methods in this class.
+ */
 
 #pragma once
 
@@ -27,18 +27,18 @@ namespace timing
 	class PrototypeTiming;
 
 	/**
-	* @class Timing
-	* @brief Represents a timing source for simulation.
-	*/
+	 * @class Timing
+	 * @brief Represents a timing source for simulation.
+	 */
 	class Timing final
 	{
 	public:
 		/**
-		* @brief Constructs a Timing object.
-		*
-		* @param name The name of the timing source.
-		* @param seed The seed for the timing source's internal random number generator.
-		*/
+		 * @brief Constructs a Timing object.
+		 *
+		 * @param name The name of the timing source.
+		 * @param seed The seed for the timing source's internal random number generator.
+		 */
 		explicit Timing(std::string name, unsigned seed) noexcept;
 
 		~Timing() = default;
@@ -52,31 +52,31 @@ namespace timing
 		Timing& operator=(Timing&&) = delete;
 
 		/**
-		* @brief Gets the next sample from the timing source.
-		*
-		* @return The next sample value or 0.0f if not enabled.
-		*/
+		 * @brief Gets the next sample from the timing source.
+		 *
+		 * @return The next sample value or 0.0f if not enabled.
+		 */
 		[[nodiscard]] RealType getNextSample() const noexcept { return _enabled ? _model->getSample() : 0.0f; }
 
 		/**
-		* @brief Gets the name of the timing source.
-		*
-		* @return The name of the timing source.
-		*/
+		 * @brief Gets the name of the timing source.
+		 *
+		 * @return The name of the timing source.
+		 */
 		[[nodiscard]] std::string getName() const noexcept { return _name; }
 
 		/**
-		* @brief Checks if the timing source synchronizes on pulse.
-		*
-		* @return True if synchronized on pulse, otherwise false.
-		*/
+		 * @brief Checks if the timing source synchronizes on pulse.
+		 *
+		 * @return True if synchronized on pulse, otherwise false.
+		 */
 		[[nodiscard]] bool getSyncOnPulse() const noexcept { return _sync_on_pulse; }
 
 		/**
-		* @brief Gets the frequency of the timing source.
-		*
-		* @return The frequency of the timing source.
-		*/
+		 * @brief Gets the frequency of the timing source.
+		 *
+		 * @return The frequency of the timing source.
+		 */
 		[[nodiscard]] RealType getFrequency() const noexcept { return _frequency; }
 
 		/**
@@ -92,31 +92,37 @@ namespace timing
 		[[nodiscard]] RealType getPhaseOffset() const noexcept { return _phase_offset; }
 
 		/**
-		* @brief Checks if the timing source is enabled.
-		*
-		* @return True if enabled, otherwise false.
-		*/
+		 * @brief Checks if the timing source is enabled.
+		 *
+		 * @return True if enabled, otherwise false.
+		 */
 		[[nodiscard]] bool isEnabled() const noexcept { return _enabled && _model && _model->enabled(); }
 
 		/**
-		* @brief Skips a number of samples in the timing model.
-		*
-		* @param samples The number of samples to skip.
-		*/
+		 * @brief Skips a number of samples in the timing model.
+		 *
+		 * @param samples The number of samples to skip.
+		 */
 		void skipSamples(long long samples) noexcept;
 
 		/**
-		* @brief Initializes the timing model.
-		*
-		* @param timing The prototype timing configuration used for initialization.
-		*/
+		 * @brief Initializes the timing model.
+		 *
+		 * @param timing The prototype timing configuration used for initialization.
+		 */
 		void initializeModel(const PrototypeTiming* timing) noexcept;
 
 		/**
-		* @brief Resets the timing model.
-		*/
+		 * @brief Resets the timing model.
+		 */
 		// NOLINTNEXTLINE(readability-make-member-function-const)
-		void reset() noexcept { if (_model) { _model->reset(); } }
+		void reset() noexcept
+		{
+			if (_model)
+			{
+				_model->reset();
+			}
+		}
 
 		/**
 		 * @brief Creates a new Timing instance based on the same prototype.

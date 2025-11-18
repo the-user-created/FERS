@@ -6,9 +6,9 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file rotation_path.cpp
-* @brief Implementation of the RotationPath class.
-*/
+ * @file rotation_path.cpp
+ * @brief Implementation of the RotationPath class.
+ */
 
 #include <libfers/rotation_path.h>
 
@@ -30,7 +30,10 @@ namespace math
 
 	SVec3 RotationPath::getPosition(const RealType t) const
 	{
-		if (!_final) { throw PathException("Finalize not called before getPosition in RotationPath."); }
+		if (!_final)
+		{
+			throw PathException("Finalize not called before getPosition in RotationPath.");
+		}
 		RotationCoord coord{};
 
 		switch (_type)
@@ -59,7 +62,10 @@ namespace math
 	{
 		if (!_final)
 		{
-			if (_type == InterpType::INTERP_CUBIC) { finalizeCubic(_coords, _dd); }
+			if (_type == InterpType::INTERP_CUBIC)
+			{
+				finalizeCubic(_coords, _dd);
+			}
 			_final = true;
 		}
 	}

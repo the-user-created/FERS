@@ -5,14 +5,14 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file xml_serializer.cpp
-* @brief Implementation for serializing the simulation world to XML.
-*
-* This file contains the logic to traverse the in-memory C++ object representation
-* of a FERS simulation and build a corresponding XML document. The process involves
-* converting internal data representations (like angles in radians) back to the
-* user-facing format defined by the FERS XML schema (like compass degrees).
-*/
+ * @file xml_serializer.cpp
+ * @brief Implementation for serializing the simulation world to XML.
+ *
+ * This file contains the logic to traverse the in-memory C++ object representation
+ * of a FERS simulation and build a corresponding XML document. The process involves
+ * converting internal data representations (like angles in radians) back to the
+ * user-facing format defined by the FERS XML schema (like compass degrees).
+ */
 
 #include "xml_serializer.h"
 
@@ -46,8 +46,7 @@ namespace
 	}
 
 	template <typename T>
-	void addChildWithNumber(const XmlElement& parent, const std::string& name,
-	                        T value)
+	void addChildWithNumber(const XmlElement& parent, const std::string& name, T value)
 	{
 		if constexpr (std::is_floating_point_v<T>)
 		{
@@ -88,14 +87,26 @@ namespace
 		addChildWithNumber(parent, "endtime", params::endTime());
 		addChildWithNumber(parent, "rate", params::rate());
 
-		if (params::c() != params::Parameters::DEFAULT_C) { addChildWithNumber(parent, "c", params::c()); }
+		if (params::c() != params::Parameters::DEFAULT_C)
+		{
+			addChildWithNumber(parent, "c", params::c());
+		}
 		if (params::simSamplingRate() != 1000.0)
 		{
 			addChildWithNumber(parent, "simSamplingRate", params::simSamplingRate());
 		}
-		if (params::params.random_seed) { addChildWithNumber(parent, "randomseed", *params::params.random_seed); }
-		if (params::adcBits() != 0) { addChildWithNumber(parent, "adc_bits", params::adcBits()); }
-		if (params::oversampleRatio() != 1) { addChildWithNumber(parent, "oversample", params::oversampleRatio()); }
+		if (params::params.random_seed)
+		{
+			addChildWithNumber(parent, "randomseed", *params::params.random_seed);
+		}
+		if (params::adcBits() != 0)
+		{
+			addChildWithNumber(parent, "adc_bits", params::adcBits());
+		}
+		if (params::oversampleRatio() != 1)
+		{
+			addChildWithNumber(parent, "oversample", params::oversampleRatio());
+		}
 
 		const XmlElement origin = parent.addChild("origin");
 		origin.setAttribute("latitude", std::to_string(params::originLatitude()));
@@ -141,8 +152,8 @@ namespace
 			{
 				// If we reach this point, the in-memory state is invalid for XML serialization.
 				// We throw an exception to prevent generating an invalid XML file, which would fail to parse later.
-				throw std::logic_error("Attempted to serialize a file-based waveform named '" +
-					waveform.getName() + "' without a source filename.");
+				throw std::logic_error("Attempted to serialize a file-based waveform named '" + waveform.getName() +
+									   "' without a source filename.");
 			}
 		}
 	}
@@ -153,12 +164,18 @@ namespace
 		setAttributeFromBool(parent, "synconpulse", timing.getSyncOnPulse());
 
 		addChildWithNumber(parent, "frequency", timing.getFrequency());
-		if (const auto val = timing.getFreqOffset()) { addChildWithNumber(parent, "freq_offset", *val); }
+		if (const auto val = timing.getFreqOffset())
+		{
+			addChildWithNumber(parent, "freq_offset", *val);
+		}
 		if (const auto val = timing.getRandomFreqOffsetStdev())
 		{
 			addChildWithNumber(parent, "random_freq_offset_stdev", *val);
 		}
-		if (const auto val = timing.getPhaseOffset()) { addChildWithNumber(parent, "phase_offset", *val); }
+		if (const auto val = timing.getPhaseOffset())
+		{
+			addChildWithNumber(parent, "phase_offset", *val);
+		}
 		if (const auto val = timing.getRandomPhaseOffsetStdev())
 		{
 			addChildWithNumber(parent, "random_phase_offset_stdev", *val);
@@ -211,7 +228,10 @@ namespace
 			parent.setAttribute("pattern", "file");
 			parent.setAttribute("filename", h5_ant->getFilename());
 		}
-		else { parent.setAttribute("pattern", "isotropic"); }
+		else
+		{
+			parent.setAttribute("pattern", "isotropic");
+		}
 
 		if (antenna.getEfficiencyFactor() != 1.0)
 		{
@@ -337,7 +357,10 @@ namespace
 			(void)rx_elem.addChild("cw_mode");
 		}
 
-		if (rx.getNoiseTemperature() > 0) { addChildWithNumber(rx_elem, "noise_temp", rx.getNoiseTemperature()); }
+		if (rx.getNoiseTemperature() > 0)
+		{
+			addChildWithNumber(rx_elem, "noise_temp", rx.getNoiseTemperature());
+		}
 	}
 
 	void serializeMonostatic(const radar::Transmitter& tx, const radar::Receiver& rx, const XmlElement& parent)
@@ -362,7 +385,10 @@ namespace
 			(void)mono_elem.addChild("cw_mode");
 		}
 
-		if (rx.getNoiseTemperature() > 0) { addChildWithNumber(mono_elem, "noise_temp", rx.getNoiseTemperature()); }
+		if (rx.getNoiseTemperature() > 0)
+		{
+			addChildWithNumber(mono_elem, "noise_temp", rx.getNoiseTemperature());
+		}
 	}
 
 	void serializeTarget(const radar::Target& target, const XmlElement& parent)
@@ -406,7 +432,10 @@ namespace
 				{
 					serializeMonostatic(*tx, *dynamic_cast<const radar::Receiver*>(tx->getAttached()), parent);
 				}
-				else { serializeTransmitter(*tx, parent); }
+				else
+				{
+					serializeTransmitter(*tx, parent);
+				}
 				component_found = true;
 				break;
 			}
@@ -448,8 +477,14 @@ namespace serial
 		XmlElement root(sim_node);
 		doc.setRootElement(root);
 
-		if (!params::params.simulation_name.empty()) { root.setAttribute("name", params::params.simulation_name); }
-		else { root.setAttribute("name", "FERS Scenario"); }
+		if (!params::params.simulation_name.empty())
+		{
+			root.setAttribute("name", params::params.simulation_name);
+		}
+		else
+		{
+			root.setAttribute("name", "FERS Scenario");
+		}
 
 		const XmlElement params_elem = root.addChild("parameters");
 		serializeParameters(params_elem);
