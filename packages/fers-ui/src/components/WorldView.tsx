@@ -208,7 +208,7 @@ function useInterpolatedPosition(
 ): Vector3 {
     return useMemo(
         () => calculateInterpolatedPosition(platform, currentTime),
-        [platform, currentTime, platform.pathPoints] // Depend on pathPoints
+        [platform, currentTime]
     );
 }
 

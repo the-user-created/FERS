@@ -16,3 +16,4 @@ build/
 venv
 
 cmake-build-*/
+node_modules/

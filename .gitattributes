@@ -1,5 +1,0 @@
-packages/fers/test/sim_tests/** linguist-generated
-packages/fers/doc/** linguist-documentation
-packages/fers/tutorials/** linguist-documentation
-packages/fers/third_party/** linguist-vendored
-packages/fers/utilities/** linguist-documentation
