@@ -6,9 +6,9 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file interpolation_point.h
-* @brief Defines a structure to store interpolation point data for signal processing.
-*/
+ * @file interpolation_point.h
+ * @brief Defines a structure to store interpolation point data for signal processing.
+ */
 
 #pragma once
 

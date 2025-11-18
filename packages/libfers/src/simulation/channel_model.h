@@ -92,8 +92,8 @@ namespace simulation
 	 * @throws RangeError If the target is too close to the transmitter or receiver.
 	 */
 	void solveRe(const radar::Transmitter* trans, const radar::Receiver* recv, const radar::Target* targ,
-	             const std::chrono::duration<RealType>& time, const std::chrono::duration<RealType>& length,
-	             const fers_signal::RadarSignal* wave, ReResults& results);
+				 const std::chrono::duration<RealType>& time, const std::chrono::duration<RealType>& length,
+				 const fers_signal::RadarSignal* wave, ReResults& results);
 
 	/**
 	 * @brief Solves the radar equation for a direct path (Tx -> Rx).
@@ -110,8 +110,8 @@ namespace simulation
 	 * @throws RangeError If the transmitter and receiver are too close.
 	 */
 	void solveReDirect(const radar::Transmitter* trans, const radar::Receiver* recv,
-	                   const std::chrono::duration<RealType>& time, const std::chrono::duration<RealType>& length,
-	                   const fers_signal::RadarSignal* wave, ReResults& results);
+					   const std::chrono::duration<RealType>& time, const std::chrono::duration<RealType>& length,
+					   const fers_signal::RadarSignal* wave, ReResults& results);
 
 	/**
 	 * @brief Calculates the complex envelope contribution for a direct propagation path (Tx -> Rx) at a specific time.
@@ -123,7 +123,7 @@ namespace simulation
 	 * @return The complex I/Q sample contribution for this path.
 	 */
 	ComplexType calculateDirectPathContribution(const radar::Transmitter* trans, const radar::Receiver* recv,
-	                                            RealType timeK);
+												RealType timeK);
 
 	/**
 	 * @brief Calculates the complex envelope contribution for a reflected path (Tx -> Tgt -> Rx) at a specific time.
@@ -136,7 +136,7 @@ namespace simulation
 	 * @return The complex I/Q sample contribution for this path.
 	 */
 	ComplexType calculateReflectedPathContribution(const radar::Transmitter* trans, const radar::Receiver* recv,
-	                                               const radar::Target* targ, RealType timeK);
+												   const radar::Target* targ, RealType timeK);
 
 	/**
 	 * @brief Creates a Response object by simulating a signal's interaction over its duration.
@@ -156,6 +156,6 @@ namespace simulation
 	 * @throws std::runtime_error If the simulation parameters result in zero time steps.
 	 */
 	std::unique_ptr<serial::Response> calculateResponse(const radar::Transmitter* trans, const radar::Receiver* recv,
-	                                                    const fers_signal::RadarSignal* signal, RealType startTime,
-	                                                    const radar::Target* targ = nullptr);
+														const fers_signal::RadarSignal* signal, RealType startTime,
+														const radar::Target* targ = nullptr);
 }

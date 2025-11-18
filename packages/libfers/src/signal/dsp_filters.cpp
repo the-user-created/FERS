@@ -6,9 +6,9 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file dsp_filters.cpp
-* @brief Implementation file for Digital Signal Processing (DSP) filters and upsampling/downsampling functionality.
-*/
+ * @file dsp_filters.cpp
+ * @brief Implementation file for Digital Signal Processing (DSP) filters and upsampling/downsampling functionality.
+ */
 
 #include "dsp_filters.h"
 
@@ -51,14 +51,15 @@ namespace
 
 		// We use the Blackman window, for a suitable tradeoff between rolloff and stopband attenuation
 		// Equivalent Kaiser beta = 7.04 (Oppenhiem and Schaffer, Hamming)
-		std::ranges::for_each(coeffs, [cutoff, n, pi_n, i = 0u](RealType& coeff) mutable
-		{
-			const RealType sinc_val = sinc(cutoff * (i - n));
-			const RealType window = BLACKMAN_A0 - BLACKMAN_A1 * std::cos(pi_n * i) + BLACKMAN_A2 * std::cos(
-				2 * pi_n * i);
-			coeff = sinc_val * window;
-			++i;
-		});
+		std::ranges::for_each(coeffs,
+							  [cutoff, n, pi_n, i = 0u](RealType& coeff) mutable
+							  {
+								  const RealType sinc_val = sinc(cutoff * (i - n));
+								  const RealType window = BLACKMAN_A0 - BLACKMAN_A1 * std::cos(pi_n * i) +
+									  BLACKMAN_A2 * std::cos(2 * pi_n * i);
+								  coeff = sinc_val * window;
+								  ++i;
+							  });
 
 		return coeffs;
 	}
@@ -77,7 +78,10 @@ namespace fers_signal
 
 		std::vector tmp(size * ratio + filt_length, ComplexType{0.0, 0.0});
 
-		for (unsigned i = 0; i < size; ++i) { tmp[i * ratio] = in[i]; }
+		for (unsigned i = 0; i < size; ++i)
+		{
+			tmp[i * ratio] = in[i];
+		}
 
 		const FirFilter filt(coeffs);
 		filt.filter(tmp);
@@ -88,7 +92,10 @@ namespace fers_signal
 
 	std::vector<ComplexType> downsample(std::span<const ComplexType> in)
 	{
-		if (in.empty()) { throw std::invalid_argument("Input span is empty in Downsample"); }
+		if (in.empty())
+		{
+			throw std::invalid_argument("Input span is empty in Downsample");
+		}
 
 		const unsigned ratio = params::oversampleRatio();
 		// TODO: Replace with a more efficient multirate downsampling implementation.
@@ -113,7 +120,9 @@ namespace fers_signal
 	}
 
 	IirFilter::IirFilter(const RealType* denCoeffs, const RealType* numCoeffs, const unsigned order) noexcept :
-		_a(denCoeffs, denCoeffs + order), _b(numCoeffs, numCoeffs + order), _w(order, 0.0), _order(order) {}
+		_a(denCoeffs, denCoeffs + order), _b(numCoeffs, numCoeffs + order), _w(order, 0.0), _order(order)
+	{
+	}
 
 	RealType IirFilter::filter(const RealType sample) noexcept
 	{
@@ -121,7 +130,10 @@ namespace fers_signal
 
 		_w[0] = sample;
 
-		for (unsigned j = 1; j < _order; ++j) { _w[0] -= _a[j] * _w[j]; }
+		for (unsigned j = 1; j < _order; ++j)
+		{
+			_w[0] -= _a[j] * _w[j];
+		}
 
 		return std::inner_product(_b.begin(), _b.end(), _w.begin(), 0.0);
 	}
@@ -134,7 +146,10 @@ namespace fers_signal
 
 			_w[0] = sample;
 
-			for (unsigned j = 1; j < _order; ++j) { _w[0] -= _a[j] * _w[j]; }
+			for (unsigned j = 1; j < _order; ++j)
+			{
+				_w[0] -= _a[j] * _w[j];
+			}
 
 			sample = std::inner_product(_b.begin(), _b.end(), _w.begin(), 0.0);
 		}
@@ -149,12 +164,9 @@ namespace fers_signal
 			line[0] = sample;
 			ComplexType result{0.0, 0.0};
 
-			result = std::transform_reduce(
-				line.rbegin(), line.rend(), _filter.begin(),
-				ComplexType{0.0, 0.0},
-				std::plus<ComplexType>{},
-				[](const ComplexType& x, const RealType coeff) { return x * coeff; }
-			);
+			result = std::transform_reduce(line.rbegin(), line.rend(), _filter.begin(), ComplexType{0.0, 0.0},
+										   std::plus<ComplexType>{},
+										   [](const ComplexType& x, const RealType coeff) { return x * coeff; });
 
 			sample = result;
 
@@ -165,24 +177,33 @@ namespace fers_signal
 	DecadeUpsampler::DecadeUpsampler()
 	{
 		/// 11th order elliptic lowpass at 0.1fs
-		constexpr std::array den_coeffs = {
-			1.0, -10.301102119865, 48.5214567642597, -137.934509572412, 262.914952985445,
-			-352.788381841481, 340.027874008585, -235.39260470286, 114.698499845697,
-			-37.4634653062448, 7.38208765922137, -0.664807695826097
-		};
+		constexpr std::array den_coeffs = {1.0,
+										   -10.301102119865,
+										   48.5214567642597,
+										   -137.934509572412,
+										   262.914952985445,
+										   -352.788381841481,
+										   340.027874008585,
+										   -235.39260470286,
+										   114.698499845697,
+										   -37.4634653062448,
+										   7.38208765922137,
+										   -0.664807695826097};
 
-		constexpr std::array num_coeffs = {
-			2.7301694322809e-06, -1.8508123430239e-05, 5.75739466753894e-05, -0.000104348734423658,
-			0.000111949190289715, -4.9384188225528e-05, -4.9384188225522e-05, 0.00011194919028971,
-			-0.000104348734423656, 5.75739466753884e-05, -1.85081234302388e-05, 2.73016943228086e-06
-		};
+		constexpr std::array num_coeffs = {2.7301694322809e-06,	  -1.8508123430239e-05,	 5.75739466753894e-05,
+										   -0.000104348734423658, 0.000111949190289715,	 -4.9384188225528e-05,
+										   -4.9384188225522e-05,  0.00011194919028971,	 -0.000104348734423656,
+										   5.75739466753884e-05,  -1.85081234302388e-05, 2.73016943228086e-06};
 
 		_filter = std::make_unique<IirFilter>(den_coeffs.data(), num_coeffs.data(), den_coeffs.size());
 	}
 
 	void DecadeUpsampler::upsample(const RealType sample, std::span<RealType> out) const
 	{
-		if (out.size() != 10) { throw std::invalid_argument("Output span must have a size of 10."); }
+		if (out.size() != 10)
+		{
+			throw std::invalid_argument("Output span must have a size of 10.");
+		}
 		out[0] = sample;
 		std::fill(out.begin() + 1, out.end(), 0);
 		_filter->filter(out);

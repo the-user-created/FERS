@@ -6,9 +6,9 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file noise_generators.cpp
-* @brief Implementation file for noise generator classes.
-*/
+ * @file noise_generators.cpp
+ * @brief Implementation file for noise generator classes.
+ */
 
 #include "noise_generators.h"
 
@@ -50,12 +50,24 @@ namespace noise
 			if (branch)
 			{
 				const auto reduced_samples = samples / static_cast<long long>(std::pow(10.0, skip_branches));
-				for (long long i = 0; i < reduced_samples; ++i) { branch->getSample(); }
+				for (long long i = 0; i < reduced_samples; ++i)
+				{
+					branch->getSample();
+				}
 			}
 
-			for (const auto& fb : std::ranges::reverse_view(flushbranches)) { fb->flush(1.0); }
+			for (const auto& fb : std::ranges::reverse_view(flushbranches))
+			{
+				fb->flush(1.0);
+			}
 		}
-		else { for (long long i = 0; i < samples; ++i) { _topbranch->getSample(); } }
+		else
+		{
+			for (long long i = 0; i < samples; ++i)
+			{
+				_topbranch->getSample();
+			}
+		}
 	}
 
 	void MultirateGenerator::createTree(const RealType fAlpha, const int fInt, const unsigned branches)
@@ -64,8 +76,7 @@ namespace noise
 		for (unsigned i = 0; i < branches; ++i)
 		{
 			previous_branch = std::make_unique<FAlphaBranch>(_rng_engine.get(), fAlpha, fInt,
-			                                                 std::move(previous_branch),
-			                                                 i == branches - 1);
+															 std::move(previous_branch), i == branches - 1);
 		}
 		_topbranch = std::move(previous_branch);
 	}
@@ -82,17 +93,17 @@ namespace noise
 			branch = branch->getPre();
 		}
 
-		for (const auto& b : std::ranges::reverse_view(branches)) { b->flush(1.0); }
+		for (const auto& b : std::ranges::reverse_view(branches))
+		{
+			b->flush(1.0);
+		}
 	}
 
 	ClockModelGenerator::ClockModelGenerator(std::mt19937& rngEngine, const std::vector<RealType>& alpha,
-	                                         const std::vector<RealType>& inWeights,
-	                                         const RealType frequency, const RealType phaseOffset,
-	                                         const RealType freqOffset, int branches) noexcept :
-		_rng_engine(rngEngine),
-		_weights(inWeights),
-		_phase_offset(phaseOffset),
-		_freq_offset(freqOffset),
+											 const std::vector<RealType>& inWeights, const RealType frequency,
+											 const RealType phaseOffset, const RealType freqOffset,
+											 int branches) noexcept :
+		_rng_engine(rngEngine), _weights(inWeights), _phase_offset(phaseOffset), _freq_offset(freqOffset),
 		_frequency(frequency)
 	{
 		for (size_t i = 0; i < alpha.size(); ++i)
@@ -126,7 +137,10 @@ namespace noise
 	RealType ClockModelGenerator::getSample()
 	{
 		RealType sample = 0;
-		for (size_t i = 0; i < _generators.size(); ++i) { sample += _generators[i]->getSample() * _weights[i]; }
+		for (size_t i = 0; i < _generators.size(); ++i)
+		{
+			sample += _generators[i]->getSample() * _weights[i];
+		}
 
 		sample += _phase_offset;
 		sample += 2 * PI * _freq_offset * static_cast<double>(_count) / params::rate();
@@ -137,7 +151,10 @@ namespace noise
 
 	void ClockModelGenerator::skipSamples(const long long samples)
 	{
-		for (const auto& generator : _generators) { generator->skipSamples(samples); }
+		for (const auto& generator : _generators)
+		{
+			generator->skipSamples(samples);
+		}
 		_count += samples;
 	}
 
@@ -145,7 +162,10 @@ namespace noise
 	{
 		// reset() call chain is only called if sync on pulse is enabled,
 		// otherwise the all generators and counts remain as-is
-		for (const auto& generator : _generators) { generator->reset(); }
+		for (const auto& generator : _generators)
+		{
+			generator->reset();
+		}
 		_count = 0;
 	}
 

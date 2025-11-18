@@ -6,9 +6,9 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file prototype_timing.cpp
-* @brief Implementation file for the PrototypeTiming class.
-*/
+ * @file prototype_timing.cpp
+ * @brief Implementation file for the PrototypeTiming class.
+ */
 
 #include "prototype_timing.h"
 

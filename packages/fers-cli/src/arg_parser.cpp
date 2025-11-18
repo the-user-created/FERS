@@ -5,9 +5,9 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file arg_parser.cpp
-* @brief Implementation of the command-line argument parser for the application.
-*/
+ * @file arg_parser.cpp
+ * @brief Implementation of the command-line argument parser for the application.
+ */
 
 #include "arg_parser.h"
 
@@ -49,15 +49,13 @@ namespace
 	std::optional<Level> parseLogLevel(const std::string& level) noexcept
 	{
 		static const std::unordered_map<std::string, Level> LEVEL_MAP = {
-			{"TRACE", Level::TRACE},
-			{"DEBUG", Level::DEBUG},
-			{"INFO", Level::INFO},
-			{"WARNING", Level::WARNING},
-			{"ERROR", Level::ERROR},
-			{"FATAL", Level::FATAL}
-		};
+			{"TRACE", Level::TRACE},	 {"DEBUG", Level::DEBUG}, {"INFO", Level::INFO},
+			{"WARNING", Level::WARNING}, {"ERROR", Level::ERROR}, {"FATAL", Level::FATAL}};
 
-		if (const auto it = LEVEL_MAP.find(level); it != LEVEL_MAP.end()) { return it->second; }
+		if (const auto it = LEVEL_MAP.find(level); it != LEVEL_MAP.end())
+		{
+			return it->second;
+		}
 		return std::nullopt;
 	}
 
@@ -86,7 +84,8 @@ namespace
 	 *
 	 * @param arg The log-file argument string.
 	 * @param config The configuration object to update.
-	 * @return std::expected<void, std::string> An expected object with an error message if the log file path is invalid.
+	 * @return std::expected<void, std::string> An expected object with an error message if the log file path is
+	 * invalid.
 	 */
 	std::expected<void, std::string> handleLogFile(const std::string& arg, core::Config& config) noexcept
 	{
@@ -107,24 +106,30 @@ namespace
 	 *
 	 * @param arg The number of threads argument string.
 	 * @param config The configuration object to update.
-	 * @return std::expected<void, std::string> An expected object with an error message if the number of threads is invalid.
+	 * @return std::expected<void, std::string> An expected object with an error message if the number of threads is
+	 * invalid.
 	 */
 	std::expected<void, std::string> handleNumThreads(const std::string& arg, core::Config& config) noexcept
 	{
 		try
 		{
 			config.num_threads = std::stoi(arg.substr(3));
-			if (config.num_threads == 0) { return std::unexpected("Number of threads must be greater than 0"); }
+			if (config.num_threads == 0)
+			{
+				return std::unexpected("Number of threads must be greater than 0");
+			}
 
 			if (const unsigned max_threads = core::countProcessors(); config.num_threads > max_threads)
 			{
-				LOG(Level::WARNING,
-				    "Number of threads exceeds available processors. Defaulting to max processors.");
+				LOG(Level::WARNING, "Number of threads exceeds available processors. Defaulting to max processors.");
 				config.num_threads = max_threads;
 			}
 			return {};
 		}
-		catch (const std::exception&) { return std::unexpected("Invalid number of threads specified."); }
+		catch (const std::exception&)
+		{
+			return std::unexpected("Invalid number of threads specified.");
+		}
 	}
 
 	/**
@@ -137,7 +142,7 @@ namespace
 	 * @return std::expected<void, std::string> An expected object with an error message if the argument is invalid.
 	 */
 	std::expected<void, std::string> handleArgument(const std::string& arg, core::Config& config, bool& scriptFileSet,
-	                                                const char* programName) noexcept
+													const char* programName) noexcept
 	{
 		if (arg == "--help" || arg == "-h")
 		{
@@ -149,9 +154,18 @@ namespace
 			core::showVersion();
 			return std::unexpected("Version requested.");
 		}
-		if (arg.rfind("--log-level=", 0) == 0) { return handleLogLevel(arg, config); }
-		if (arg.rfind("--log-file=", 0) == 0) { return handleLogFile(arg, config); }
-		if (arg.rfind("-n=", 0) == 0) { return handleNumThreads(arg, config); }
+		if (arg.rfind("--log-level=", 0) == 0)
+		{
+			return handleLogLevel(arg, config);
+		}
+		if (arg.rfind("--log-file=", 0) == 0)
+		{
+			return handleLogFile(arg, config);
+		}
+		if (arg.rfind("-n=", 0) == 0)
+		{
+			return handleNumThreads(arg, config);
+		}
 		if (arg == "--no-validate")
 		{
 			config.validate = false;
@@ -182,7 +196,8 @@ namespace core
 | FERS - The Flexible Extensible Radar Simulator |
 | Version 1.0.0                                  |
 \------------------------------------------------/
-Usage: )" << programName << R"( <scriptfile> [options]
+Usage: )" << programName
+				  << R"( <scriptfile> [options]
 
 Options:
   --help, -h              Show this help message and exit
@@ -198,7 +213,8 @@ Arguments:
   <scriptfile>            Path to the simulation script file (XML)
 
 Example:
-  )" << programName << R"( simulation.fersxml --log-level=DEBUG --log-file=output.log -n=4
+  )" << programName
+				  << R"( simulation.fersxml --log-level=DEBUG --log-file=output.log -n=4
 
 This program runs radar simulations based on an XML script file.
 Make sure the script file follows the correct format to avoid errors.
@@ -235,7 +251,10 @@ Make sure the script file follows the correct format to avoid errors.
 			}
 		}
 
-		if (!script_file_set) { return std::unexpected("No script file provided."); }
+		if (!script_file_set)
+		{
+			return std::unexpected("No script file provided.");
+		}
 		return config;
 	}
 }

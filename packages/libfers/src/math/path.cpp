@@ -6,9 +6,9 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file path.cpp
-* @brief Implementation of the Path class.
-*/
+ * @file path.cpp
+ * @brief Implementation of the Path class.
+ */
 
 #include <libfers/path.h>
 

@@ -6,10 +6,10 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file path.h
-* @brief Provides the definition and functionality of the Path class
-* for handling coordinate-based paths with different interpolation types.
-*/
+ * @file path.h
+ * @brief Provides the definition and functionality of the Path class
+ * for handling coordinate-based paths with different interpolation types.
+ */
 
 #pragma once
 
@@ -32,15 +32,19 @@ namespace math
 		/**
 		 * @brief Types of interpolation supported by the Path class.
 		 */
-		enum class InterpType { INTERP_STATIC, INTERP_LINEAR, INTERP_CUBIC };
+		enum class InterpType
+		{
+			INTERP_STATIC,
+			INTERP_LINEAR,
+			INTERP_CUBIC
+		};
 
 		/**
 		 * @brief Constructs a Path object with a specified interpolation type.
 		 *
 		 * @param type The interpolation type (default is INTERP_STATIC).
 		 */
-		explicit Path(const InterpType type = InterpType::INTERP_STATIC) noexcept :
-			_type(type) {}
+		explicit Path(const InterpType type = InterpType::INTERP_STATIC) noexcept : _type(type) {}
 
 		~Path() = default;
 

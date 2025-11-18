@@ -6,9 +6,9 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file antenna_factory.cpp
-* @brief Implementation of the Antenna class and its derived classes.
-*/
+ * @file antenna_factory.cpp
+ * @brief Implementation of the Antenna class and its derived classes.
+ */
 
 #include <libfers/antenna_factory.h>
 
@@ -58,8 +58,8 @@ namespace
 		{
 			XmlElement angle_element = tmp.childElement("angle", 0);
 
-			if (XmlElement gain_element = tmp.childElement("gain", 0); angle_element.isValid() && gain_element.
-				isValid())
+			if (XmlElement gain_element = tmp.childElement("gain", 0);
+				angle_element.isValid() && gain_element.isValid())
 			{
 				const RealType angle = std::stof(angle_element.getText());
 				const RealType gain = std::stof(gain_element.getText());
@@ -75,7 +75,10 @@ namespace antenna
 {
 	void Antenna::setEfficiencyFactor(const RealType loss) noexcept
 	{
-		if (loss > 1) { LOG(Level::INFO, "Using greater than unity antenna efficiency."); }
+		if (loss > 1)
+		{
+			LOG(Level::INFO, "Using greater than unity antenna efficiency.");
+		}
 		_loss_factor = loss;
 	}
 
@@ -96,8 +99,8 @@ namespace antenna
 	{
 		const RealType theta = getAngle(angle, refangle);
 		const ComplexType complex_sinc(sinc(_beta * theta), 0.0);
-		const ComplexType complex_gain = _alpha * std::pow(complex_sinc, ComplexType(_gamma, 0.0)) *
-			getEfficiencyFactor();
+		const ComplexType complex_gain =
+			_alpha * std::pow(complex_sinc, ComplexType(_gamma, 0.0)) * getEfficiencyFactor();
 		return std::abs(complex_gain);
 	}
 
@@ -122,7 +125,10 @@ namespace antenna
 		const std::optional<RealType> azi_value = _azi_samples->getValueAt(std::abs(delta_angle.azimuth));
 
 		if (const std::optional<RealType> elev_value = _elev_samples->getValueAt(std::abs(delta_angle.elevation));
-			azi_value && elev_value) { return *azi_value * *elev_value * _max_gain * getEfficiencyFactor(); }
+			azi_value && elev_value)
+		{
+			return *azi_value * *elev_value * _max_gain * getEfficiencyFactor();
+		}
 
 		LOG(Level::FATAL, "Could not get antenna gain value");
 		throw std::runtime_error("Could not get antenna gain value");
@@ -175,15 +181,12 @@ namespace antenna
 		const double u = (ey1 - y1) / (y2 - y1);
 
 		const auto calc_array_index = [](const double value, const unsigned size)
-		{
-			return std::min(static_cast<unsigned>(std::floor(value * size)), size - 1);
-		};
+		{ return std::min(static_cast<unsigned>(std::floor(value * size)), size - 1); };
 
 		const unsigned arr_x = calc_array_index(x1, size_azi);
 		const unsigned arr_y = calc_array_index(y1, size_elev);
 
-		const RealType interp =
-			(1.0 - t) * (1.0 - u) * _pattern[arr_x][arr_y] +
+		const RealType interp = (1.0 - t) * (1.0 - u) * _pattern[arr_x][arr_y] +
 			t * (1.0 - u) * _pattern[(arr_x + 1) % size_azi][arr_y] +
 			t * u * _pattern[(arr_x + 1) % size_azi][(arr_y + 1) % size_elev] +
 			(1.0 - t) * u * _pattern[arr_x][(arr_y + 1) % size_elev];

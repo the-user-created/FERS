@@ -5,12 +5,12 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file arg_parser.h
-* @brief Command-line argument parsing utilities for the application.
-*
-* This header file provides utilities for parsing command-line arguments,
-* displaying help, version information, and configuring the application via a configuration structure.
-*/
+ * @file arg_parser.h
+ * @brief Command-line argument parsing utilities for the application.
+ *
+ * This header file provides utilities for parsing command-line arguments,
+ * displaying help, version information, and configuring the application via a configuration structure.
+ */
 
 #pragma once
 

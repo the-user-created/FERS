@@ -9,7 +9,7 @@ As this project is in active development, there are no official versioned releas
 the most recent commit on the `main` branch only.
 
 | Branch | Supported          |
-|--------|--------------------|
+| ------ | ------------------ |
 | `main` | :white_check_mark: |
 | Other  | :x:                |
 

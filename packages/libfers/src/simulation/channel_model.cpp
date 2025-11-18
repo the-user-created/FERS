@@ -30,19 +30,19 @@
 #include "signal/radar_signal.h"
 #include "timing/timing.h"
 
-using radar::Transmitter;
-using radar::Receiver;
-using radar::Target;
-using math::SVec3;
 using fers_signal::RadarSignal;
 using logging::Level;
+using math::SVec3;
+using radar::Receiver;
+using radar::Target;
+using radar::Transmitter;
 
 
 namespace simulation
 {
 	void solveRe(const Transmitter* trans, const Receiver* recv, const Target* targ,
-	             const std::chrono::duration<RealType>& time, const std::chrono::duration<RealType>& length,
-	             const RadarSignal* wave, ReResults& results)
+				 const std::chrono::duration<RealType>& time, const std::chrono::duration<RealType>& length,
+				 const RadarSignal* wave, ReResults& results)
 	{
 		const auto transmitter_position = trans->getPosition(time.count());
 		const auto receiver_position = recv->getPosition(time.count());
@@ -68,19 +68,17 @@ namespace simulation
 		const auto rcs = targ->getRcs(transmitter_to_target_vector, receiver_to_target_vector, time.count());
 		const auto wavelength = params::c() / wave->getCarrier();
 
-		const auto transmitter_gain = trans->
-			getGain(transmitter_to_target_vector, trans->getRotation(time.count()), wavelength);
-		const auto receiver_gain = recv->getGain(receiver_to_target_vector,
-		                                         recv->getRotation(results.delay + time.count()),
-		                                         wavelength);
+		const auto transmitter_gain =
+			trans->getGain(transmitter_to_target_vector, trans->getRotation(time.count()), wavelength);
+		const auto receiver_gain =
+			recv->getGain(receiver_to_target_vector, recv->getRotation(results.delay + time.count()), wavelength);
 
 		results.power = transmitter_gain * receiver_gain * rcs / (4 * PI);
 
 		if (!recv->checkFlag(Receiver::RecvFlag::FLAG_NOPROPLOSS))
 		{
 			const RealType distance_product = transmitter_to_target_distance * receiver_to_target_distance;
-			results.power *= std::pow(wavelength, 2) / (std::pow(4 * PI, 2) * std::pow(
-				distance_product, 2));
+			results.power *= std::pow(wavelength, 2) / (std::pow(4 * PI, 2) * std::pow(distance_product, 2));
 		}
 
 		results.phase = -results.delay * 2 * PI * wave->getCarrier();
@@ -119,7 +117,7 @@ namespace simulation
 	}
 
 	void solveReDirect(const Transmitter* trans, const Receiver* recv, const std::chrono::duration<RealType>& time,
-	                   const std::chrono::duration<RealType>& length, const RadarSignal* wave, ReResults& results)
+					   const std::chrono::duration<RealType>& length, const RadarSignal* wave, ReResults& results)
 	{
 		const auto tpos = trans->getPosition(time.count());
 		const auto rpos = recv->getPosition(time.count());
@@ -137,13 +135,15 @@ namespace simulation
 
 		const RealType wavelength = params::c() / wave->getCarrier();
 		const RealType transmitter_gain = trans->getGain(transvec, trans->getRotation(time.count()), wavelength);
-		const RealType receiver_gain = recv->getGain(SVec3(rpos - tpos),
-		                                             recv->getRotation(time.count() + results.delay),
-		                                             wavelength);
+		const RealType receiver_gain =
+			recv->getGain(SVec3(rpos - tpos), recv->getRotation(time.count() + results.delay), wavelength);
 
 		results.power = transmitter_gain * receiver_gain * wavelength * wavelength / (4 * PI);
 
-		if (!recv->checkFlag(Receiver::RecvFlag::FLAG_NOPROPLOSS)) { results.power /= 4 * PI * distance * distance; }
+		if (!recv->checkFlag(Receiver::RecvFlag::FLAG_NOPROPLOSS))
+		{
+			results.power /= 4 * PI * distance * distance;
+		}
 
 		// Relativistic Doppler Calculation
 		const RealType dt = length.count();
@@ -184,7 +184,10 @@ namespace simulation
 		const auto tx_to_rx_vec = p_rx - p_tx;
 		const auto range = tx_to_rx_vec.length();
 
-		if (range <= EPSILON) { return {0.0, 0.0}; }
+		if (range <= EPSILON)
+		{
+			return {0.0, 0.0};
+		}
 
 		const auto u_ji = tx_to_rx_vec / range;
 		const RealType tau = range / params::c();
@@ -196,8 +199,8 @@ namespace simulation
 		const RealType tx_gain = trans->getGain(SVec3(u_ji), trans->getRotation(timeK), lambda);
 		const RealType rx_gain = recv->getGain(SVec3(-u_ji), recv->getRotation(timeK + tau), lambda);
 
-		RealType power_scaling = signal->getPower() * tx_gain * rx_gain * lambda * lambda / (std::pow(4 * PI, 2) *
-			range * range);
+		RealType power_scaling =
+			signal->getPower() * tx_gain * rx_gain * lambda * lambda / (std::pow(4 * PI, 2) * range * range);
 		if (recv->checkFlag(Receiver::RecvFlag::FLAG_NOPROPLOSS))
 		{
 			power_scaling = signal->getPower() * tx_gain * rx_gain * lambda * lambda / std::pow(4 * PI, 2);
@@ -220,7 +223,7 @@ namespace simulation
 	}
 
 	ComplexType calculateReflectedPathContribution(const Transmitter* trans, const Receiver* recv, const Target* targ,
-	                                               const RealType timeK)
+												   const RealType timeK)
 	{
 		const auto p_tx = trans->getPlatform()->getPosition(timeK);
 		const auto p_rx = recv->getPlatform()->getPosition(timeK);
@@ -231,7 +234,10 @@ namespace simulation
 		const RealType r_jm = tx_to_tgt_vec.length();
 		const RealType r_mi = tgt_to_rx_vec.length();
 
-		if (r_jm <= EPSILON || r_mi <= EPSILON) { return {0.0, 0.0}; }
+		if (r_jm <= EPSILON || r_mi <= EPSILON)
+		{
+			return {0.0, 0.0};
+		}
 
 		const auto u_jm = tx_to_tgt_vec / r_jm;
 		const auto u_mi = tgt_to_rx_vec / r_mi;
@@ -249,8 +255,8 @@ namespace simulation
 		// TODO: Is this meant to use timeK + tau?
 		const RealType rx_gain = recv->getGain(SVec3(-u_mi), recv->getRotation(timeK + tau), lambda);
 
-		RealType power_scaling = signal->getPower() * tx_gain * rx_gain * rcs * lambda * lambda / (std::pow(
-			4 * PI, 3) * r_jm * r_jm * r_mi * r_mi);
+		RealType power_scaling = signal->getPower() * tx_gain * rx_gain * rcs * lambda * lambda /
+			(std::pow(4 * PI, 3) * r_jm * r_jm * r_mi * r_mi);
 		if (recv->checkFlag(Receiver::RecvFlag::FLAG_NOPROPLOSS))
 		{
 			power_scaling = signal->getPower() * tx_gain * rx_gain * rcs * lambda * lambda / std::pow(4 * PI, 3);
@@ -274,10 +280,13 @@ namespace simulation
 	}
 
 	std::unique_ptr<serial::Response> calculateResponse(const Transmitter* trans, const Receiver* recv,
-	                                                    const RadarSignal* signal,
-	                                                    const RealType startTime, const Target* targ)
+														const RadarSignal* signal, const RealType startTime,
+														const Target* targ)
 	{
-		if (targ == nullptr && trans->getAttached() == recv) { return nullptr; }
+		if (targ == nullptr && trans->getAttached() == recv)
+		{
+			return nullptr;
+		}
 
 		const auto start_time_chrono = std::chrono::duration<RealType>(startTime);
 		const auto end_time_chrono = start_time_chrono + std::chrono::duration<RealType>(signal->getLength());
@@ -309,14 +318,12 @@ namespace simulation
 					solveReDirect(trans, recv, current_time, sample_time_chrono, signal, results);
 				}
 
-				interp::InterpPoint point{
-					.power = results.power,
-					.time = current_time.count() + results.delay,
-					.delay = results.delay,
-					.doppler_factor = results.doppler_factor,
-					.phase = results.phase,
-					.noise_temperature = results.noise_temperature
-				};
+				interp::InterpPoint point{.power = results.power,
+										  .time = current_time.count() + results.delay,
+										  .delay = results.delay,
+										  .doppler_factor = results.doppler_factor,
+										  .phase = results.phase,
+										  .noise_temperature = results.noise_temperature};
 				response->addInterpPoint(point);
 			}
 		}

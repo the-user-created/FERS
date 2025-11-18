@@ -6,28 +6,28 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file world.cpp
-* @brief Implementation of the World class for the radar simulation environment.
-*/
+ * @file world.cpp
+ * @brief Implementation of the World class for the radar simulation environment.
+ */
 
 #include <libfers/world.h>
 
 #include <iomanip>
-#include <sstream>
 #include <libfers/antenna_factory.h>
 #include <libfers/parameters.h>
 #include <libfers/radar_obj.h>
+#include <sstream>
 #include "core/sim_events.h"
 #include "signal/radar_signal.h"
 #include "timing/prototype_timing.h"
 
-using fers_signal::RadarSignal;
 using antenna::Antenna;
-using timing::PrototypeTiming;
+using fers_signal::RadarSignal;
 using radar::Platform;
 using radar::Receiver;
-using radar::Transmitter;
 using radar::Target;
+using radar::Transmitter;
+using timing::PrototypeTiming;
 
 namespace core
 {
@@ -115,8 +115,8 @@ namespace core
 			if (receiver->getMode() == radar::OperationMode::PULSED_MODE)
 			{
 				// Schedule the first receive window
-				if (const RealType first_window_start = receiver->getWindowStart(0); first_window_start <
-					params::endTime())
+				if (const RealType first_window_start = receiver->getWindowStart(0);
+					first_window_start < params::endTime())
 				{
 					_event_queue.push({first_window_start, EventType::RX_PULSED_WINDOW_START, receiver.get()});
 				}
@@ -143,12 +143,11 @@ namespace core
 		const std::string title = "| Event Queue Contents (" + std::to_string(_event_queue.size()) + " events)";
 
 		ss << separator << "\n"
-			<< std::left << std::setw(separator.length() - 1) << title << "|\n"
-			<< separator << "\n"
-			<< "| " << std::left << std::setw(12) << "Timestamp"
-			<< " | " << std::setw(21) << "Event Type"
-			<< " | " << std::setw(25) << "Source Object" << " |\n"
-			<< separator << "\n";
+		   << std::left << std::setw(separator.length() - 1) << title << "|\n"
+		   << separator << "\n"
+		   << "| " << std::left << std::setw(12) << "Timestamp" << " | " << std::setw(21) << "Event Type" << " | "
+		   << std::setw(25) << "Source Object" << " |\n"
+		   << separator << "\n";
 
 		auto queue_copy = _event_queue;
 
@@ -157,9 +156,8 @@ namespace core
 			const auto [timestamp, event_type, source_object] = queue_copy.top();
 			queue_copy.pop();
 
-			ss << "| " << std::right << std::setw(12) << timestamp
-				<< " | " << std::left << std::setw(21) << toString(event_type)
-				<< " | " << std::left << std::setw(25) << source_object->getName() << " |\n";
+			ss << "| " << std::right << std::setw(12) << timestamp << " | " << std::left << std::setw(21)
+			   << toString(event_type) << " | " << std::left << std::setw(25) << source_object->getName() << " |\n";
 		}
 		ss << separator << "\n";
 

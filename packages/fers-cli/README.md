@@ -35,7 +35,7 @@ Run the simulator from the command line, providing the path to a scenario XML fi
 ### Options
 
 | Flag                  | Description                                                                                                                          |
-|-----------------------|--------------------------------------------------------------------------------------------------------------------------------------|
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | `--help`, `-h`        | Show the help message and exit.                                                                                                      |
 | `--version`, `-v`     | Show version information and exit.                                                                                                   |
 | `--no-validate`       | Disable the validation of the scenario file before running.                                                                          |

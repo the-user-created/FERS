@@ -40,7 +40,7 @@ namespace processing
 	 * @param targets A pointer to the world's list of targets for interference calculation.
 	 */
 	void runPulsedFinalizer(radar::Receiver* receiver, pool::ThreadPool* pool,
-	                        const std::vector<std::unique_ptr<radar::Target>>* targets);
+							const std::vector<std::unique_ptr<radar::Target>>* targets);
 
 	/**
 	 * @brief The finalization task for a continuous-wave (CW) mode receiver.

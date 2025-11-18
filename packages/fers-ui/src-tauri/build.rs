@@ -44,19 +44,10 @@ fn main() {
     let geographiclib_lib_dir = build_dir.join("packages/libfers/third_party/geographiclib/src/");
 
     // Tell Cargo where to find our custom-built libraries.
-    println!(
-        "cargo:rustc-link-search=native={}",
-        libfers_lib_dir.display()
-    );
-    println!(
-        "cargo:rustc-link-search=native={}",
-        geographiclib_lib_dir.display()
-    );
+    println!("cargo:rustc-link-search=native={}", libfers_lib_dir.display());
+    println!("cargo:rustc-link-search=native={}", geographiclib_lib_dir.display());
 
-    println!(
-        "cargo:rustc-link-arg=-Wl,-rpath,{}",
-        geographiclib_lib_dir.display()
-    );
+    println!("cargo:rustc-link-arg=-Wl,-rpath,{}", geographiclib_lib_dir.display());
 
     // Link the `libfers` static library (compiled from C++).
     println!("cargo:rustc-link-lib=static=fers");
@@ -112,9 +103,7 @@ fn main() {
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
 
     // Write the generated bindings to a file that can be included at compile time.
-    bindings
-        .write_to_file(out_path.join("bindings.rs"))
-        .expect("Couldn't write bindings!");
+    bindings.write_to_file(out_path.join("bindings.rs")).expect("Couldn't write bindings!");
 
     // --- 3. Tauri build step ---
 

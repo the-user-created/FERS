@@ -6,12 +6,12 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file path_utils.h
-* @brief Utility functions for path interpolation and exception handling.
-*
-* The cubic interpolation functions are based on methods described in "Numerical Recipes
-* in C, Second Edition" by Press et al., but the code here is distinct from the original.
-*/
+ * @file path_utils.h
+ * @brief Utility functions for path interpolation and exception handling.
+ *
+ * The cubic interpolation functions are based on methods described in "Numerical Recipes
+ * in C, Second Edition" by Press et al., but the code here is distinct from the original.
+ */
 
 #pragma once
 
@@ -31,8 +31,10 @@ namespace math
 		 *
 		 * @param description A detailed description of the error.
 		 */
-		explicit PathException(const std::string& description)
-			: std::runtime_error("Error While Executing Path Code: " + description) {}
+		explicit PathException(const std::string& description) :
+			std::runtime_error("Error While Executing Path Code: " + description)
+		{
+		}
 	};
 }
 
@@ -45,10 +47,9 @@ namespace math
  * @param t The interpolation factor.
  */
 template <typename T>
-concept Interpolatable = requires(T a, T b, RealType t)
-{
+concept Interpolatable = requires(T a, T b, RealType t) {
 	{ a - b } -> std::same_as<T>;
-	{ a * t } -> std::same_as<T>;
+	{ a* t } -> std::same_as<T>;
 	{ a + b } -> std::same_as<T>;
 	{ a.t } -> std::convertible_to<RealType>;
 };
@@ -64,7 +65,10 @@ concept Interpolatable = requires(T a, T b, RealType t)
 template <Interpolatable T>
 void getPositionStatic(T& coord, const std::vector<T>& coords)
 {
-	if (coords.empty()) { throw math::PathException("coord list empty during GetPositionStatic"); }
+	if (coords.empty())
+	{
+		throw math::PathException("coord list empty during GetPositionStatic");
+	}
 	coord = coords[0];
 }
 
@@ -80,12 +84,21 @@ void getPositionStatic(T& coord, const std::vector<T>& coords)
 template <Interpolatable T>
 void getPositionLinear(RealType t, T& coord, const std::vector<T>& coords)
 {
-	if (coords.empty()) { throw math::PathException("coord list empty during GetPositionLinear"); }
+	if (coords.empty())
+	{
+		throw math::PathException("coord list empty during GetPositionLinear");
+	}
 
 	auto xrp = std::ranges::upper_bound(coords, t, {}, &T::t);
 
-	if (xrp == coords.begin()) { coord = *xrp; }
-	else if (xrp == coords.end()) { coord = *(xrp - 1); }
+	if (xrp == coords.begin())
+	{
+		coord = *xrp;
+	}
+	else if (xrp == coords.end())
+	{
+		coord = *(xrp - 1);
+	}
 	else
 	{
 		auto xri = std::distance(coords.begin(), xrp);
@@ -114,12 +127,21 @@ void getPositionLinear(RealType t, T& coord, const std::vector<T>& coords)
 template <Interpolatable T>
 void getPositionCubic(RealType t, T& coord, const std::vector<T>& coords, const std::vector<T>& dd)
 {
-	if (coords.empty()) { throw math::PathException("coord list empty during GetPositionCubic"); }
+	if (coords.empty())
+	{
+		throw math::PathException("coord list empty during GetPositionCubic");
+	}
 
 	auto xrp = std::ranges::upper_bound(coords, t, {}, &T::t);
 
-	if (xrp == coords.begin()) { coord = *xrp; }
-	else if (xrp == coords.end()) { coord = *(xrp - 1); }
+	if (xrp == coords.begin())
+	{
+		coord = *xrp;
+	}
+	else if (xrp == coords.end())
+	{
+		coord = *(xrp - 1);
+	}
 	else
 	{
 		auto xri = std::distance(coords.begin(), xrp);
@@ -151,7 +173,10 @@ template <Interpolatable T>
 void finalizeCubic(const std::vector<T>& coords, std::vector<T>& dd)
 {
 	const int size = static_cast<int>(coords.size());
-	if (size < 2) { throw math::PathException("Not enough points for cubic interpolation"); }
+	if (size < 2)
+	{
+		throw math::PathException("Not enough points for cubic interpolation");
+	}
 
 	std::vector<T> tmp(size);
 	dd.resize(size);
@@ -172,5 +197,8 @@ void finalizeCubic(const std::vector<T>& coords, std::vector<T>& dd)
 		tmp[i] = ((yrd / xrd - yld / xld) * 6.0 / iw - tmp[i - 1] * si) / p;
 	}
 
-	for (int i = size - 2; i >= 0; --i) { dd[i] = dd[i] * dd[i + 1] + tmp[i]; }
+	for (int i = size - 2; i >= 0; --i)
+	{
+		dd[i] = dd[i] * dd[i + 1] + tmp[i];
+	}
 }

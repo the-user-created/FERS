@@ -5,14 +5,14 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file logging.h
-* @brief Header file for the logging system.
-*
-* This file defines a logging system with multiple log levels, supporting thread-safe logging
-* to a file or standard output, and allowing formatted log messages with source location details.
-* The logging system is customizable with log levels and file output for effective debugging
-* and tracking of events in an application.
-*/
+ * @file logging.h
+ * @brief Header file for the logging system.
+ *
+ * This file defines a logging system with multiple log levels, supporting thread-safe logging
+ * to a file or standard output, and allowing formatted log messages with source location details.
+ * The logging system is customizable with log levels and file output for effective debugging
+ * and tracking of events in an application.
+ */
 
 #pragma once
 
@@ -64,7 +64,7 @@ namespace logging
 		 * @param location The source location of the log call.
 		 */
 		void log(Level level, const std::string& message,
-		         const std::source_location& location = std::source_location::current()) noexcept;
+				 const std::source_location& location = std::source_location::current()) noexcept;
 
 		/**
 		 * @brief Logs a formatted message with a specific log level and source location.
@@ -77,7 +77,7 @@ namespace logging
 		 */
 		template <typename... Args>
 		void log(const Level level, const std::source_location& location, const std::string& formatStr,
-		         Args&&... args) noexcept
+				 Args&&... args) noexcept
 		{
 			if (level >= _log_level)
 			{
@@ -122,13 +122,20 @@ namespace logging
 	{
 		switch (level)
 		{
-		case Level::TRACE: return "TRACE";
-		case Level::DEBUG: return "DEBUG";
-		case Level::INFO: return "INFO";
-		case Level::WARNING: return "WARNING";
-		case Level::ERROR: return "ERROR";
-		case Level::FATAL: return "FATAL";
-		default: return "UNKNOWN";
+		case Level::TRACE:
+			return "TRACE";
+		case Level::DEBUG:
+			return "DEBUG";
+		case Level::INFO:
+			return "INFO";
+		case Level::WARNING:
+			return "WARNING";
+		case Level::ERROR:
+			return "ERROR";
+		case Level::FATAL:
+			return "FATAL";
+		default:
+			return "UNKNOWN";
 		}
 	}
 

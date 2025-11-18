@@ -70,9 +70,8 @@ int main(const int argc, char* argv[])
 	LOG(Level::INFO, "FERS CLI started. Using libfers backend.");
 
 	LOG(Level::DEBUG,
-	    "Running FERS with arguments: script_file={}, log_level={}, num_threads={}, validate={}, log_file={}",
-	    script_file, logging::getLevelString(log_level), num_threads, validate,
-	    log_file.value_or("None"));
+		"Running FERS with arguments: script_file={}, log_level={}, num_threads={}, validate={}, log_file={}",
+		script_file, logging::getLevelString(log_level), num_threads, validate, log_file.value_or("None"));
 
 	// Create a simulation context using the C-API
 	fers_context_t* context = fers_context_create();

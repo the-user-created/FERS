@@ -245,15 +245,9 @@ extern "C" fn simulation_progress_callback(
     let app_handle = unsafe { &*(user_data as *const AppHandle) };
 
     // SAFETY: `message` is guaranteed by the C-API to be a valid, null-terminated string.
-    let message_str = unsafe { CStr::from_ptr(message) }
-        .to_string_lossy()
-        .into_owned();
+    let message_str = unsafe { CStr::from_ptr(message) }.to_string_lossy().into_owned();
 
-    let payload = ProgressPayload {
-        message: message_str,
-        current,
-        total,
-    };
+    let payload = ProgressPayload { message: message_str, current, total };
 
     // Emit the event to the frontend. If this fails, there's little we can do
     // from the callback, so we just let it panic in debug builds.
@@ -356,9 +350,7 @@ impl FersContext {
             return Err(get_last_error());
         }
         // FersOwnedString takes ownership and will free the memory on drop.
-        FersOwnedString(json_ptr)
-            .into_string()
-            .map_err(|e| e.to_string())
+        FersOwnedString(json_ptr).into_string().map_err(|e| e.to_string())
     }
 
     /// Retrieves the current in-memory scenario as a FERS XML string.
@@ -391,9 +383,7 @@ impl FersContext {
             return Err(get_last_error());
         }
         // FersOwnedString takes ownership and will free the memory on drop.
-        FersOwnedString(xml_ptr)
-            .into_string()
-            .map_err(|e| e.to_string())
+        FersOwnedString(xml_ptr).into_string().map_err(|e| e.to_string())
     }
 
     /// Updates the in-memory scenario from a JSON string.
@@ -512,12 +502,7 @@ pub fn get_interpolated_motion_path(
 
     let c_waypoints: Vec<ffi::fers_motion_waypoint_t> = waypoints
         .into_iter()
-        .map(|wp| ffi::fers_motion_waypoint_t {
-            time: wp.time,
-            x: wp.x,
-            y: wp.y,
-            z: wp.altitude,
-        })
+        .map(|wp| ffi::fers_motion_waypoint_t { time: wp.time, x: wp.x, y: wp.y, z: wp.altitude })
         .collect();
 
     let c_interp_type = match interp_type {
@@ -560,14 +545,8 @@ pub fn get_interpolated_motion_path(
     let result_slice =
         unsafe { std::slice::from_raw_parts((*owned_path.0).points, (*owned_path.0).count) };
 
-    let points: Vec<crate::InterpolatedPoint> = result_slice
-        .iter()
-        .map(|p| crate::InterpolatedPoint {
-            x: p.x,
-            y: p.y,
-            z: p.z,
-        })
-        .collect();
+    let points: Vec<crate::InterpolatedPoint> =
+        result_slice.iter().map(|p| crate::InterpolatedPoint { x: p.x, y: p.y, z: p.z }).collect();
 
     Ok(points)
 }

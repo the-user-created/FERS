@@ -6,9 +6,9 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file radar_signal.cpp
-* @brief Classes for handling radar waveforms and signals.
-*/
+ * @file radar_signal.cpp
+ * @brief Classes for handling radar waveforms and signals.
+ */
 
 #include "radar_signal.h"
 
@@ -27,21 +27,24 @@
 namespace fers_signal
 {
 	std::vector<ComplexType> CwSignal::render(const std::vector<interp::InterpPoint>& points, unsigned& size,
-	                                          const RealType /*fracWinDelay*/) const
+											  const RealType /*fracWinDelay*/) const
 	{
 		size = 0;
 		return {};
 	}
 
 	RadarSignal::RadarSignal(std::string name, const RealType power, const RealType carrierfreq, const RealType length,
-	                         std::unique_ptr<Signal> signal) :
+							 std::unique_ptr<Signal> signal) :
 		_name(std::move(name)), _power(power), _carrierfreq(carrierfreq), _length(length), _signal(std::move(signal))
 	{
-		if (!_signal) { throw std::runtime_error("Signal is empty"); }
+		if (!_signal)
+		{
+			throw std::runtime_error("Signal is empty");
+		}
 	}
 
 	std::vector<ComplexType> RadarSignal::render(const std::vector<interp::InterpPoint>& points, unsigned& size,
-	                                             const RealType fracWinDelay) const
+												 const RealType fracWinDelay) const
 	{
 		auto data = _signal->render(points, size, fracWinDelay);
 		const RealType scale = std::sqrt(_power);
@@ -65,12 +68,18 @@ namespace fers_signal
 		_size = samples * ratio;
 		_rate = sampleRate * ratio;
 
-		if (ratio == 1) { std::ranges::copy(inData, _data.begin()); }
-		else { upsample(inData, samples, _data); }
+		if (ratio == 1)
+		{
+			std::ranges::copy(inData, _data.begin());
+		}
+		else
+		{
+			upsample(inData, samples, _data);
+		}
 	}
 
 	std::vector<ComplexType> Signal::render(const std::vector<interp::InterpPoint>& points, unsigned& size,
-	                                        const double fracWinDelay) const
+											const double fracWinDelay) const
 	{
 		auto out = std::vector<ComplexType>(_size);
 		size = _size;
@@ -89,11 +98,14 @@ namespace fers_signal
 			if (sample_time > next->time && next != iter)
 			{
 				iter = next;
-				if (std::next(next) != points.end()) { ++next; }
+				if (std::next(next) != points.end())
+				{
+					++next;
+				}
 			}
 
-			auto [amplitude, phase, fdelay, i_sample_unwrap] = calculateWeightsAndDelays(
-				iter, next, sample_time, idelay, fracWinDelay);
+			auto [amplitude, phase, fdelay, i_sample_unwrap] =
+				calculateWeightsAndDelays(iter, next, sample_time, idelay, fracWinDelay);
 			const auto& filt = interp.getFilter(fdelay);
 			ComplexType accum = performConvolution(i, filt.data(), filt_length, amplitude, i_sample_unwrap);
 			out[i] = std::exp(ComplexType(0.0, 1.0) * phase) * accum;
@@ -104,10 +116,11 @@ namespace fers_signal
 		return out;
 	}
 
-	constexpr std::tuple<RealType, RealType, RealType, int> Signal::calculateWeightsAndDelays(
-		const std::vector<interp::InterpPoint>::const_iterator iter,
-		const std::vector<interp::InterpPoint>::const_iterator next, const RealType sampleTime, const RealType idelay,
-		const RealType fracWinDelay) const noexcept
+	constexpr std::tuple<RealType, RealType, RealType, int>
+	Signal::calculateWeightsAndDelays(const std::vector<interp::InterpPoint>::const_iterator iter,
+									  const std::vector<interp::InterpPoint>::const_iterator next,
+									  const RealType sampleTime, const RealType idelay,
+									  const RealType fracWinDelay) const noexcept
 	{
 		const RealType bw = iter < next ? (sampleTime - iter->time) / (next->time - iter->time) : 0.0;
 
@@ -122,7 +135,7 @@ namespace fers_signal
 	}
 
 	ComplexType Signal::performConvolution(const int i, const RealType* filt, const int filtLength,
-	                                       const RealType amplitude, const int iSampleUnwrap) const noexcept
+										   const RealType amplitude, const int iSampleUnwrap) const noexcept
 	{
 		const int start = std::max(-filtLength / 2, -i);
 		const int end = std::min(filtLength / 2, static_cast<int>(_size) - i);

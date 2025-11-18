@@ -6,9 +6,9 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file dsp_filters.h
-* @brief Header file for Digital Signal Processing (DSP) filters and upsampling/downsampling functionality.
-*/
+ * @file dsp_filters.h
+ * @brief Header file for Digital Signal Processing (DSP) filters and upsampling/downsampling functionality.
+ */
 
 #pragma once
 
@@ -21,27 +21,27 @@
 namespace fers_signal
 {
 	/**
-	* @brief Upsamples a signal by a given ratio.
-	*
-	* @param in Input span of complex samples.
-	* @param size Size of the input signal.
-	* @param out Output span for upsampled complex samples.
-	* @throws std::invalid_argument if the input or output spans are empty or the ratio is zero.
-	*/
+	 * @brief Upsamples a signal by a given ratio.
+	 *
+	 * @param in Input span of complex samples.
+	 * @param size Size of the input signal.
+	 * @param out Output span for upsampled complex samples.
+	 * @throws std::invalid_argument if the input or output spans are empty or the ratio is zero.
+	 */
 	void upsample(std::span<const ComplexType> in, unsigned size, std::span<ComplexType> out);
 
 	/**
-	* @brief Downsamples a signal by a given ratio.
-	*
-	* @param in Input span of complex samples.
-	* @throws std::invalid_argument if the input or output spans are empty or the ratio is zero.
-	*/
+	 * @brief Downsamples a signal by a given ratio.
+	 *
+	 * @param in Input span of complex samples.
+	 * @throws std::invalid_argument if the input or output spans are empty or the ratio is zero.
+	 */
 	std::vector<ComplexType> downsample(std::span<const ComplexType> in);
 
 	/**
-	* @class DspFilter
-	* @brief Abstract base class for digital filters.
-	*/
+	 * @class DspFilter
+	 * @brief Abstract base class for digital filters.
+	 */
 	class DspFilter
 	{
 	public:
@@ -50,18 +50,18 @@ namespace fers_signal
 		virtual ~DspFilter() = default;
 
 		/**
-		* @brief Filters a single sample.
-		*
-		* @param sample A single real-valued sample to be filtered.
-		* @return The filtered sample.
-		*/
+		 * @brief Filters a single sample.
+		 *
+		 * @param sample A single real-valued sample to be filtered.
+		 * @return The filtered sample.
+		 */
 		virtual RealType filter(RealType sample) = 0;
 
 		/**
-	    * @brief Filters a block of samples.
-	    *
-	    * @param samples Span of real-valued samples to be filtered.
-	    */
+		 * @brief Filters a block of samples.
+		 *
+		 * @param samples Span of real-valued samples to be filtered.
+		 */
 		virtual void filter(std::span<RealType> samples) = 0;
 
 		DspFilter(const DspFilter&) = delete;
@@ -74,19 +74,19 @@ namespace fers_signal
 	};
 
 	/**
-	* @class IirFilter
-	* @brief Implements an Infinite Impulse Response (IIR) filter.
-	*/
+	 * @class IirFilter
+	 * @brief Implements an Infinite Impulse Response (IIR) filter.
+	 */
 	class IirFilter final : public DspFilter
 	{
 	public:
 		/**
-		* @brief Constructs an IIR filter with given numerator and denominator coefficients and order.
-		*
-		* @param denCoeffs Pointer to the denominator coefficients array.
-		* @param numCoeffs Pointer to the numerator coefficients array.
-		* @param order The order of the filter.
-		*/
+		 * @brief Constructs an IIR filter with given numerator and denominator coefficients and order.
+		 *
+		 * @param denCoeffs Pointer to the denominator coefficients array.
+		 * @param numCoeffs Pointer to the numerator coefficients array.
+		 * @param order The order of the filter.
+		 */
 		IirFilter(const RealType* denCoeffs, const RealType* numCoeffs, unsigned order) noexcept;
 
 		~IirFilter() override = default;
@@ -114,19 +114,21 @@ namespace fers_signal
 	};
 
 	/**
-	* @class FirFilter
-	* @brief Implements a Finite Impulse Response (FIR) filter.
-	*/
+	 * @class FirFilter
+	 * @brief Implements a Finite Impulse Response (FIR) filter.
+	 */
 	class FirFilter final : public DspFilter
 	{
 	public:
 		/**
-		* @brief Constructs an FIR filter with the given coefficients.
-		*
-		* @param coeffs Span of filter coefficients.
-		*/
-		explicit FirFilter(std::span<const RealType> coeffs)
-			: _filter(coeffs.begin(), coeffs.end()), _w(coeffs.size()), _order(coeffs.size()) {}
+		 * @brief Constructs an FIR filter with the given coefficients.
+		 *
+		 * @param coeffs Span of filter coefficients.
+		 */
+		explicit FirFilter(std::span<const RealType> coeffs) :
+			_filter(coeffs.begin(), coeffs.end()), _w(coeffs.size()), _order(coeffs.size())
+		{
+		}
 
 		~FirFilter() override = default;
 

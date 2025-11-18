@@ -6,9 +6,9 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file rotation_path.h
-* @brief Defines the RotationPath class for handling rotational paths with different interpolation types.
-*/
+ * @file rotation_path.h
+ * @brief Defines the RotationPath class for handling rotational paths with different interpolation types.
+ */
 
 #pragma once
 
@@ -31,15 +31,20 @@ namespace math
 		 * @enum InterpType
 		 * @brief Enumeration for types of interpolation.
 		 */
-		enum class InterpType { INTERP_STATIC, INTERP_CONSTANT, INTERP_LINEAR, INTERP_CUBIC };
+		enum class InterpType
+		{
+			INTERP_STATIC,
+			INTERP_CONSTANT,
+			INTERP_LINEAR,
+			INTERP_CUBIC
+		};
 
 		/**
 		 * @brief Constructor for RotationPath.
 		 *
 		 * @param type The type of interpolation (default is static).
 		 */
-		explicit RotationPath(const InterpType type = InterpType::INTERP_STATIC) noexcept :
-			_type(type) {}
+		explicit RotationPath(const InterpType type = InterpType::INTERP_STATIC) noexcept : _type(type) {}
 
 		~RotationPath() = default;
 

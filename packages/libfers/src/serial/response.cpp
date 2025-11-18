@@ -6,9 +6,9 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file response.cpp
-* @brief Implementation of the Response class
-*/
+ * @file response.cpp
+ * @brief Implementation of the Response class
+ */
 
 #include <libfers/response.h>
 
@@ -49,10 +49,13 @@ namespace
 	 * @param scientific Whether to use scientific notation for the float value.
 	 */
 	void attachRsFloatNode(const XmlElement& root, const std::string& name, const RealType data,
-	                       const bool scientific = true) noexcept
+						   const bool scientific = true) noexcept
 	{
 		std::ostringstream oss;
-		if (scientific) { oss.setf(std::ios::scientific); }
+		if (scientific)
+		{
+			oss.setf(std::ios::scientific);
+		}
 		constexpr int precision = 10;
 		oss << std::setprecision(precision) << data;
 
@@ -73,10 +76,8 @@ namespace serial
 		attachRsFloatNode(element, "phase", point.phase, false);
 		attachRsFloatNode(element, "doppler", _wave->getCarrier() * (point.doppler_factor - 1.0), false);
 		attachRsFloatNode(element, "power", point.power * _wave->getPower());
-		attachRsFloatNode(element, "Iamplitude",
-		                  std::cos(point.phase) * std::sqrt(point.power * _wave->getPower()));
-		attachRsFloatNode(element, "Qamplitude",
-		                  std::sin(point.phase) * std::sqrt(point.power * _wave->getPower()));
+		attachRsFloatNode(element, "Iamplitude", std::cos(point.phase) * std::sqrt(point.power * _wave->getPower()));
+		attachRsFloatNode(element, "Qamplitude", std::sin(point.phase) * std::sqrt(point.power * _wave->getPower()));
 		attachRsFloatNode(element, "noise_temperature", point.noise_temperature);
 		attachRsFloatNode(element, "phasedeg", point.phase / PI * 180);
 	}
@@ -90,15 +91,18 @@ namespace serial
 		attachRsFloatNode(element, "start", startTime(), false);
 		attachTextNode(element, "name", _wave->getName());
 
-		for (const auto& point : _points) { renderResponseXml(element, point); }
+		for (const auto& point : _points)
+		{
+			renderResponseXml(element, point);
+		}
 	}
 
 	void Response::renderCsv(std::ofstream& of) const noexcept
 	{
 		for (const auto& point : _points)
 		{
-			of << point.time << ", " << point.power << ", " << point.phase << ", " << _wave->getCarrier() * (point.
-				doppler_factor - 1.0) << "\n";
+			of << point.time << ", " << point.power << ", " << point.phase << ", "
+			   << _wave->getCarrier() * (point.doppler_factor - 1.0) << "\n";
 		}
 	}
 

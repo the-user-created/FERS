@@ -6,9 +6,9 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file transmitter.cpp
-* @brief Contains the implementation of the Transmitter class.
-*/
+ * @file transmitter.cpp
+ * @brief Contains the implementation of the Transmitter class.
+ */
 
 #include <libfers/transmitter.h>
 

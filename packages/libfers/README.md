@@ -96,7 +96,7 @@ and the `fers-cli` executable is in `fers-cli/`. DLLs on Windows will be placed 
 You can customize the build using the following CMake options:
 
 | Option                        | Description                                     | Default |
-|-------------------------------|-------------------------------------------------|---------|
+| ----------------------------- | ----------------------------------------------- | ------- |
 | `-DCMAKE_BUILD_TYPE=Debug`    | Create a debug build with symbols.              | Release |
 | `-DFERS_BUILD_SHARED_LIBS=ON` | Build the shared library (`.so`/`.dll`).        | ON      |
 | `-DFERS_BUILD_STATIC_LIBS=ON` | Build the static library (`.a`).                | ON      |
@@ -123,14 +123,15 @@ sudo ldconfig # On Linux, to update the cache
 The source code documentation is automatically built and deployed to our [GitHub Pages site](https://the-user-created.github.io/FERS/). If you wish to build it locally, you will need **Doxygen** and **Graphviz** installed. They are included in the dependency installation commands above.
 
 1. **Configure with documentation enabled:**
-   ```bash
-   # From your build directory
-   cmake .. -DFERS_BUILD_DOCS=ON
-   ```
+
+    ```bash
+    # From your build directory
+    cmake .. -DFERS_BUILD_DOCS=ON
+    ```
 
 2. **Build the `doc` target:**
-   ```bash
-   make doc
-   ```
+    ```bash
+    make doc
+    ```
 
 The HTML output will be generated in the `build/docs/html/` directory. You can open `index.html` in your browser to view the documentation.

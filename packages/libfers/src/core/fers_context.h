@@ -41,8 +41,7 @@ public:
 	 * a random one is generated at load time.
 	 */
 	// NOLINTNEXTLINE(cert-msc51-cpp)
-	FersContext() :
-		_world(std::make_unique<core::World>()) {}
+	FersContext() : _world(std::make_unique<core::World>()) {}
 
 	/**
 	 * @brief Retrieves a pointer to the simulation world.
@@ -50,10 +49,7 @@ public:
 	 * scenario, allowing API functions to modify it.
 	 * @return A non-owning pointer to the `core::World` object.
 	 */
-	[[nodiscard]] core::World* getWorld() const noexcept
-	{
-		return _world.get();
-	}
+	[[nodiscard]] core::World* getWorld() const noexcept { return _world.get(); }
 
 	/**
 	 * @brief Retrieves a mutable reference to the master random number seeder.
@@ -65,10 +61,7 @@ public:
 	 * value at the top level.
 	 * @return A reference to the `std::mt19937` engine.
 	 */
-	[[nodiscard]] std::mt19937& getMasterSeeder() noexcept
-	{
-		return _master_seeder;
-	}
+	[[nodiscard]] std::mt19937& getMasterSeeder() noexcept { return _master_seeder; }
 
 private:
 	/// Owns the `core::World` object, which contains all simulation entities.

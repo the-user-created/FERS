@@ -6,9 +6,9 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file geometry_ops.cpp
-* @brief Implementation of geometry classes.
-*/
+ * @file geometry_ops.cpp
+ * @brief Implementation of geometry classes.
+ */
 
 #include <libfers/geometry_ops.h>
 
@@ -16,8 +16,9 @@ namespace math
 {
 	Vec3::Vec3(const SVec3& svec) noexcept :
 		x(svec.length * std::cos(svec.azimuth) * std::cos(svec.elevation)),
-		y(svec.length * std::sin(svec.azimuth) * std::cos(svec.elevation)),
-		z(svec.length * std::sin(svec.elevation)) {}
+		y(svec.length * std::sin(svec.azimuth) * std::cos(svec.elevation)), z(svec.length * std::sin(svec.elevation))
+	{
+	}
 
 	Vec3& Vec3::operator+=(const Vec3& b) noexcept
 	{
@@ -69,8 +70,7 @@ namespace math
 		return *this;
 	}
 
-	SVec3::SVec3(const Vec3& vec) noexcept :
-		length(vec.length())
+	SVec3::SVec3(const Vec3& vec) noexcept : length(vec.length())
 	{
 		elevation = std::asin(vec.z / length);
 		azimuth = std::atan2(vec.y, vec.x);
@@ -91,7 +91,10 @@ namespace math
 	SVec3 operator+(const SVec3& a, const SVec3& b) noexcept
 	{
 		RealType new_azimuth = fmod(a.azimuth + b.azimuth, 2 * PI);
-		if (new_azimuth < 0) { new_azimuth += 2 * PI; }
+		if (new_azimuth < 0)
+		{
+			new_azimuth += 2 * PI;
+		}
 		RealType new_elevation = fmod(a.elevation + b.elevation, PI);
 		return {a.length + b.length, new_azimuth, new_elevation};
 	}

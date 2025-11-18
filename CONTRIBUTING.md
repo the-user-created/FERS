@@ -81,11 +81,11 @@ The UI is a Tauri desktop application built with React and TypeScript.
 1. **Prerequisites**: Ensure you have Node.js, pnpm, and the Rust toolchain installed.
 2. **Setup Tauri**: Follow the [Tauri prerequisites guide](https://tauri.app/start/prerequisites/) for your OS.
 3. **Install & Run**:
-   ```bash
-   cd packages/fers-ui
-   pnpm install
-   pnpm tauri dev
-   ```
+    ```bash
+    cd packages/fers-ui
+    pnpm install
+    pnpm tauri dev
+    ```
 
 For more details, see the [`packages/fers-ui/README.md`](packages/fers-ui/README.md).
 

@@ -6,9 +6,9 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file receiver.h
-* @brief Radar Receiver class for managing signal reception and response handling.
-*/
+ * @file receiver.h
+ * @brief Radar Receiver class for managing signal reception and response handling.
+ */
 
 #pragma once
 
@@ -39,7 +39,11 @@ namespace radar
 		 * @enum RecvFlag
 		 * @brief Enumeration for receiver configuration flags.
 		 */
-		enum class RecvFlag { FLAG_NODIRECT = 1, FLAG_NOPROPLOSS = 2 };
+		enum class RecvFlag
+		{
+			FLAG_NODIRECT = 1,
+			FLAG_NOPROPLOSS = 2
+		};
 
 		/**
 		 * @brief Constructs a Receiver object.
@@ -134,9 +138,9 @@ namespace radar
 		[[nodiscard]] unsigned getWindowCount() const noexcept;
 
 		/**
-		* @brief Gets the receiver's internal random number generator engine.
-		* @return A mutable reference to the RNG engine.
-		*/
+		 * @brief Gets the receiver's internal random number generator engine.
+		 * @return A mutable reference to the RNG engine.
+		 */
 		[[nodiscard]] std::mt19937& getRngEngine() noexcept { return _rng; }
 
 		/**
@@ -250,14 +254,16 @@ namespace radar
 		RealType _window_length = 0; ///< The length of the radar window.
 		RealType _window_prf = 0; ///< The pulse repetition frequency (PRF) of the radar window.
 		RealType _window_skip = 0; ///< The skip time between radar windows.
-		std::vector<std::unique_ptr<serial::Response>> _inbox; /// Mailbox for incoming Response objects during a receive window.
+		std::vector<std::unique_ptr<serial::Response>>
+			_inbox; /// Mailbox for incoming Response objects during a receive window.
 		std::mutex _inbox_mutex;
 		std::queue<core::RenderingJob> _finalizer_queue; /// Queue of completed windows waiting for final processing.
 		std::mutex _finalizer_queue_mutex;
 		std::condition_variable _finalizer_queue_cv;
 
 		// --- CW Mode Members ---
-		std::vector<std::unique_ptr<serial::Response>> _pulsed_interference_log; /// Log of pulsed signals that interfere with CW reception.
+		std::vector<std::unique_ptr<serial::Response>>
+			_pulsed_interference_log; /// Log of pulsed signals that interfere with CW reception.
 		std::mutex _interference_log_mutex;
 		std::vector<ComplexType> _cw_iq_data; /// Buffer for raw, simulation-long I/Q data.
 		std::mutex _cw_mutex; ///< Mutex for handling CW data.

@@ -5,9 +5,9 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file kml_generator.h
-* @brief KML file generator for geographical visualization of FERS scenarios.
-*/
+ * @file kml_generator.h
+ * @brief KML file generator for geographical visualization of FERS scenarios.
+ */
 
 #pragma once
 

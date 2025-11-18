@@ -61,10 +61,7 @@ namespace core
 		 * @param b The second event.
 		 * @return True if event 'a' should occur after event 'b'.
 		 */
-		bool operator()(const Event& a, const Event& b) const noexcept
-		{
-			return a.timestamp > b.timestamp;
-		}
+		bool operator()(const Event& a, const Event& b) const noexcept { return a.timestamp > b.timestamp; }
 	};
 
 	/**

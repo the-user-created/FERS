@@ -6,9 +6,9 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file receiver.cpp
-* @brief Implementation of the Receiver class.
-*/
+ * @file receiver.cpp
+ * @brief Implementation of the Receiver class.
+ */
 
 #include <libfers/receiver.h>
 
@@ -21,9 +21,9 @@
 namespace radar
 {
 	Receiver::Receiver(Platform* platform, std::string name, const unsigned seed, const OperationMode mode) noexcept :
-		Radar(platform, std::move(name)),
-		_mode(mode),
-		_rng(seed) {}
+		Radar(platform, std::move(name)), _mode(mode), _rng(seed)
+	{
+	}
 
 	void Receiver::addResponseToInbox(std::unique_ptr<serial::Response> response) noexcept
 	{

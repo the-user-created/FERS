@@ -6,12 +6,13 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file xml_parser.cpp
-* @brief Implementation file for parsing XML configuration files for simulation.
-*/
+ * @file xml_parser.cpp
+ * @brief Implementation file for parsing XML configuration files for simulation.
+ */
 
 #include "xml_parser.h"
 
+#include <GeographicLib/UTMUPS.hpp>
 #include <cmath>
 #include <filesystem>
 #include <functional>
@@ -21,7 +22,6 @@
 #include <string_view>
 #include <utility>
 #include <vector>
-#include <GeographicLib/UTMUPS.hpp>
 
 // Generated headers
 #include "fers_xml_dtd.h"
@@ -45,25 +45,25 @@
 
 // Private libfers headers
 #include "libxml_wrapper.h"
-#include "waveform_factory.h"
 #include "timing/prototype_timing.h"
 #include "timing/timing.h"
+#include "waveform_factory.h"
 
 namespace fs = std::filesystem;
 
-using logging::Level;
-using core::World;
 using antenna::Antenna;
-using radar::Platform;
+using core::World;
+using fers_signal::RadarSignal;
+using logging::Level;
 using math::Path;
 using math::RotationPath;
-using radar::Target;
-using fers_signal::RadarSignal;
-using timing::Timing;
-using timing::PrototypeTiming;
-using radar::Transmitter;
-using radar::Receiver;
 using radar::OperationMode;
+using radar::Platform;
+using radar::Receiver;
+using radar::Target;
+using radar::Transmitter;
+using timing::PrototypeTiming;
+using timing::Timing;
 
 /**
  * @brief Parses elements with child iteration (e.g., waveforms, timings, antennas).
@@ -81,7 +81,10 @@ void parseElements(const XmlElement& root, const std::string& elementName, World
 	while (true)
 	{
 		XmlElement element = root.childElement(elementName, index++);
-		if (!element.isValid()) { break; }
+		if (!element.isValid())
+		{
+			break;
+		}
 		parseFunction(element, world);
 	}
 }
@@ -97,7 +100,10 @@ void parseElements(const XmlElement& root, const std::string& elementName, World
 auto get_child_real_type = [](const XmlElement& element, const std::string& elementName) -> RealType
 {
 	const std::string text = element.childElement(elementName, 0).getText();
-	if (text.empty()) { throw XmlException("Element " + elementName + " is empty!"); }
+	if (text.empty())
+	{
+		throw XmlException("Element " + elementName + " is empty!");
+	}
 	return std::stod(text);
 };
 
@@ -111,11 +117,14 @@ auto get_child_real_type = [](const XmlElement& element, const std::string& elem
  */
 auto get_attribute_bool = [](const XmlElement& element, const std::string& attributeName, const bool defaultVal) -> bool
 {
-	try { return XmlElement::getSafeAttribute(element, attributeName) == "true"; }
+	try
+	{
+		return XmlElement::getSafeAttribute(element, attributeName) == "true";
+	}
 	catch (const XmlException&)
 	{
 		LOG(Level::WARNING, "Failed to get boolean value for attribute '{}'. Defaulting to {}.", attributeName,
-		    defaultVal);
+			defaultVal);
 		return defaultVal;
 	}
 };
@@ -134,8 +143,8 @@ namespace
 		params::setRate(get_child_real_type(parameters, "rate"));
 
 		auto set_param_with_exception_handling = [](const XmlElement& element, const std::string& paramName,
-		                                            const RealType defaultValue,
-		                                            const std::function<void(RealType)>& setter)
+													const RealType defaultValue,
+													const std::function<void(RealType)>& setter)
 		{
 			try
 			{
@@ -143,7 +152,10 @@ namespace
 				{
 					setter(static_cast<unsigned>(std::floor(get_child_real_type(element, paramName))));
 				}
-				else { setter(get_child_real_type(element, paramName)); }
+				else
+				{
+					setter(get_child_real_type(element, paramName));
+				}
 			}
 			catch (const XmlException&)
 			{
@@ -153,7 +165,7 @@ namespace
 
 		set_param_with_exception_handling(parameters, "c", params::c(), params::setC);
 		set_param_with_exception_handling(parameters, "simSamplingRate", params::simSamplingRate(),
-		                                  params::setSimSamplingRate);
+										  params::setSimSamplingRate);
 
 		try
 		{
@@ -167,7 +179,7 @@ namespace
 
 		set_param_with_exception_handling(parameters, "adc_bits", params::adcBits(), params::setAdcBits);
 		set_param_with_exception_handling(parameters, "oversample", params::oversampleRatio(),
-		                                  params::setOversampleRatio);
+										  params::setOversampleRatio);
 
 		// Parse the origin element for the KML generator
 		bool origin_set = false;
@@ -207,8 +219,14 @@ namespace
 					{
 						throw XmlException("UTM zone " + std::to_string(zone) + " is invalid; must be in [1, 60].");
 					}
-					if (hem_str == "N" || hem_str == "n") { north = true; }
-					else if (hem_str == "S" || hem_str == "s") { north = false; }
+					if (hem_str == "N" || hem_str == "n")
+					{
+						north = true;
+					}
+					else if (hem_str == "S" || hem_str == "s")
+					{
+						north = false;
+					}
 					else
 					{
 						throw XmlException("UTM hemisphere '" + hem_str + "' is invalid; must be 'N' or 'S'.");
@@ -226,11 +244,14 @@ namespace
 					if (!origin_set)
 					{
 						LOG(Level::WARNING,
-						    "ENU frame specified but no <origin> tag found. Using default origin at UCT.");
+							"ENU frame specified but no <origin> tag found. Using default origin at UCT.");
 					}
 					LOG(Level::INFO, "Coordinate system set to ENU local tangent plane.");
 				}
-				else { throw XmlException("Unsupported coordinate frame: " + frame_str); }
+				else
+				{
+					throw XmlException("Unsupported coordinate frame: " + frame_str);
+				}
 				params::setCoordinateSystem(frame, zone, north);
 			}
 			catch (const std::exception& e)
@@ -278,7 +299,7 @@ namespace
 		{
 			auto cw_signal = std::make_unique<fers_signal::CwSignal>();
 			auto wave = std::make_unique<RadarSignal>(name, power, carrier, params::endTime() - params::startTime(),
-			                                          std::move(cw_signal));
+													  std::move(cw_signal));
 			world->add(std::move(wave));
 		}
 		else
@@ -306,30 +327,55 @@ namespace
 		while (true)
 		{
 			XmlElement noise_element = timing.childElement("noise_entry", noise_index++);
-			if (!noise_element.isValid()) { break; }
+			if (!noise_element.isValid())
+			{
+				break;
+			}
 
-			timing_obj->setAlpha(
-				get_child_real_type(noise_element, "alpha"),
-				get_child_real_type(noise_element, "weight")
-				);
+			timing_obj->setAlpha(get_child_real_type(noise_element, "alpha"),
+								 get_child_real_type(noise_element, "weight"));
 		}
 
-		try { timing_obj->setFreqOffset(get_child_real_type(timing, "freq_offset")); }
-		catch (XmlException&) { LOG(Level::WARNING, "Clock section '{}' does not specify frequency offset.", name); }
+		try
+		{
+			timing_obj->setFreqOffset(get_child_real_type(timing, "freq_offset"));
+		}
+		catch (XmlException&)
+		{
+			LOG(Level::WARNING, "Clock section '{}' does not specify frequency offset.", name);
+		}
 
-		try { timing_obj->setRandomFreqOffsetStdev(get_child_real_type(timing, "random_freq_offset_stdev")); }
+		try
+		{
+			timing_obj->setRandomFreqOffsetStdev(get_child_real_type(timing, "random_freq_offset_stdev"));
+		}
 		catch (XmlException&)
 		{
 			LOG(Level::WARNING, "Clock section '{}' does not specify random frequency offset.", name);
 		}
 
-		try { timing_obj->setPhaseOffset(get_child_real_type(timing, "phase_offset")); }
-		catch (XmlException&) { LOG(Level::WARNING, "Clock section '{}' does not specify phase offset.", name); }
+		try
+		{
+			timing_obj->setPhaseOffset(get_child_real_type(timing, "phase_offset"));
+		}
+		catch (XmlException&)
+		{
+			LOG(Level::WARNING, "Clock section '{}' does not specify phase offset.", name);
+		}
 
-		try { timing_obj->setRandomPhaseOffsetStdev(get_child_real_type(timing, "random_phase_offset_stdev")); }
-		catch (XmlException&) { LOG(Level::WARNING, "Clock section '{}' does not specify random phase offset.", name); }
+		try
+		{
+			timing_obj->setRandomPhaseOffsetStdev(get_child_real_type(timing, "random_phase_offset_stdev"));
+		}
+		catch (XmlException&)
+		{
+			LOG(Level::WARNING, "Clock section '{}' does not specify random phase offset.", name);
+		}
 
-		if (get_attribute_bool(timing, "synconpulse", false)) { timing_obj->setSyncOnPulse(); }
+		if (get_attribute_bool(timing, "synconpulse", false))
+		{
+			timing_obj->setSyncOnPulse();
+		}
 
 		world->add(std::move(timing_obj));
 	}
@@ -348,32 +394,28 @@ namespace
 		std::unique_ptr<Antenna> ant;
 
 		LOG(Level::DEBUG, "Adding antenna '{}' with pattern '{}'", name, pattern);
-		if (pattern == "isotropic") { ant = std::make_unique<antenna::Isotropic>(name); }
+		if (pattern == "isotropic")
+		{
+			ant = std::make_unique<antenna::Isotropic>(name);
+		}
 		else if (pattern == "sinc")
 		{
-			ant = std::make_unique<antenna::Sinc>(name,
-			                                      get_child_real_type(antenna, "alpha"),
-			                                      get_child_real_type(antenna, "beta"),
-			                                      get_child_real_type(antenna, "gamma")
-				);
+			ant = std::make_unique<antenna::Sinc>(name, get_child_real_type(antenna, "alpha"),
+												  get_child_real_type(antenna, "beta"),
+												  get_child_real_type(antenna, "gamma"));
 		}
 		else if (pattern == "gaussian")
 		{
-			ant = std::make_unique<antenna::Gaussian>(name,
-			                                          get_child_real_type(antenna, "azscale"),
-			                                          get_child_real_type(antenna, "elscale")
-				);
+			ant = std::make_unique<antenna::Gaussian>(name, get_child_real_type(antenna, "azscale"),
+													  get_child_real_type(antenna, "elscale"));
 		}
 		else if (pattern == "squarehorn")
 		{
-			ant = std::make_unique<antenna::SquareHorn>(name,
-			                                            get_child_real_type(antenna, "diameter")
-				);
+			ant = std::make_unique<antenna::SquareHorn>(name, get_child_real_type(antenna, "diameter"));
 		}
 		else if (pattern == "parabolic")
 		{
-			ant = std::make_unique<antenna::Parabolic>(name, get_child_real_type(antenna, "diameter")
-				);
+			ant = std::make_unique<antenna::Parabolic>(name, get_child_real_type(antenna, "diameter"));
 		}
 		else if (pattern == "xml")
 		{
@@ -389,7 +431,10 @@ namespace
 			throw XmlException("Unsupported antenna pattern: " + pattern);
 		}
 
-		try { ant->setEfficiencyFactor(get_child_real_type(antenna, "efficiency")); }
+		try
+		{
+			ant->setEfficiencyFactor(get_child_real_type(antenna, "efficiency"));
+		}
 		catch (XmlException&)
 		{
 			LOG(Level::WARNING, "Antenna '{}' does not specify efficiency, assuming unity.", name);
@@ -413,19 +458,25 @@ namespace
 			{
 				path->setInterp(Path::InterpType::INTERP_LINEAR);
 			}
-			else if (interp == "cubic") { path->setInterp(Path::InterpType::INTERP_CUBIC); }
-			else if (interp == "static") { path->setInterp(Path::InterpType::INTERP_STATIC); }
+			else if (interp == "cubic")
+			{
+				path->setInterp(Path::InterpType::INTERP_CUBIC);
+			}
+			else if (interp == "static")
+			{
+				path->setInterp(Path::InterpType::INTERP_STATIC);
+			}
 			else
 			{
 				LOG(Level::ERROR, "Unsupported interpolation type: {} for platform {}. Defaulting to static", interp,
-				    platform->getName());
+					platform->getName());
 				path->setInterp(Path::InterpType::INTERP_STATIC);
 			}
 		}
 		catch (XmlException&)
 		{
 			LOG(Level::ERROR, "Failed to set MotionPath interpolation type for platform {}. Defaulting to static",
-			    platform->getName());
+				platform->getName());
 			path->setInterp(Path::InterpType::INTERP_STATIC);
 		}
 
@@ -433,20 +484,20 @@ namespace
 		while (true)
 		{
 			XmlElement waypoint = motionPath.childElement("positionwaypoint", waypoint_index);
-			if (!waypoint.isValid()) { break; }
+			if (!waypoint.isValid())
+			{
+				break;
+			}
 
 			try
 			{
 				math::Coord coord;
 				coord.t = get_child_real_type(waypoint, "time");
-				coord.pos = math::Vec3(
-					get_child_real_type(waypoint, "x"),
-					get_child_real_type(waypoint, "y"),
-					get_child_real_type(waypoint, "altitude")
-					);
+				coord.pos = math::Vec3(get_child_real_type(waypoint, "x"), get_child_real_type(waypoint, "y"),
+									   get_child_real_type(waypoint, "altitude"));
 				path->addCoord(coord);
 				LOG(Level::TRACE, "Added waypoint {} to motion path for platform {}.", waypoint_index,
-				    platform->getName());
+					platform->getName());
 			}
 			catch (const XmlException& e)
 			{
@@ -475,14 +526,23 @@ namespace
 			{
 				path->setInterp(RotationPath::InterpType::INTERP_LINEAR);
 			}
-			else if (interp == "cubic") { path->setInterp(RotationPath::InterpType::INTERP_CUBIC); }
-			else if (interp == "static") { path->setInterp(RotationPath::InterpType::INTERP_STATIC); }
-			else { throw XmlException("Unsupported interpolation type: " + interp); }
+			else if (interp == "cubic")
+			{
+				path->setInterp(RotationPath::InterpType::INTERP_CUBIC);
+			}
+			else if (interp == "static")
+			{
+				path->setInterp(RotationPath::InterpType::INTERP_STATIC);
+			}
+			else
+			{
+				throw XmlException("Unsupported interpolation type: " + interp);
+			}
 		}
 		catch (XmlException&)
 		{
 			LOG(Level::ERROR, "Failed to set RotationPath interpolation type for platform {}. Defaulting to static",
-			    platform->getName());
+				platform->getName());
 			path->setInterp(RotationPath::InterpType::INTERP_STATIC);
 		}
 
@@ -490,18 +550,22 @@ namespace
 		while (true)
 		{
 			XmlElement waypoint = rotation.childElement("rotationwaypoint", waypoint_index);
-			if (!waypoint.isValid()) { break; }
+			if (!waypoint.isValid())
+			{
+				break;
+			}
 
 			try
 			{
 				LOG(Level::TRACE, "Adding waypoint {} to rotation path for platform {}.", waypoint_index,
-				    platform->getName());
+					platform->getName());
 
 				const RealType az_deg = get_child_real_type(waypoint, "azimuth");
 				const RealType el_deg = get_child_real_type(waypoint, "elevation");
 				const RealType time = get_child_real_type(waypoint, "time");
 
-				// Convert from compass heading (degrees, CW from North) to FERS mathematical angle (radians, CCW from East)
+				// Convert from compass heading (degrees, CW from North) to FERS mathematical angle (radians, CCW from
+				// East)
 				const RealType az_rad = (90.0 - az_deg) * (PI / 180.0);
 				// Convert elevation from degrees to radians
 				const RealType el_rad = el_deg * (PI / 180.0);
@@ -566,7 +630,7 @@ namespace
 	 * @return A pointer to the created Transmitter object.
 	 */
 	Transmitter* parseTransmitter(const XmlElement& transmitter, Platform* platform, World* world,
-	                              std::mt19937& masterSeeder)
+								  std::mt19937& masterSeeder)
 	{
 		const std::string name = XmlElement::getSafeAttribute(transmitter, "name");
 		const XmlElement pulsed_mode_element = transmitter.childElement("pulsed_mode", 0);
@@ -627,11 +691,13 @@ namespace
 		const Antenna* antenna = world->findAntenna(ant_name);
 		receiver_obj->setAntenna(antenna);
 
-		try { receiver_obj->setNoiseTemperature(get_child_real_type(receiver, "noise_temp")); }
+		try
+		{
+			receiver_obj->setNoiseTemperature(get_child_real_type(receiver, "noise_temp"));
+		}
 		catch (XmlException&)
 		{
-			LOG(Level::INFO, "Receiver '{}' does not specify noise temperature",
-			    receiver_obj->getName().c_str());
+			LOG(Level::INFO, "Receiver '{}' does not specify noise temperature", receiver_obj->getName().c_str());
 		}
 
 		if (is_pulsed)
@@ -670,15 +736,13 @@ namespace
 		if (get_attribute_bool(receiver, "nodirect", false))
 		{
 			receiver_obj->setFlag(Receiver::RecvFlag::FLAG_NODIRECT);
-			LOG(Level::DEBUG, "Ignoring direct signals for receiver '{}'",
-			    receiver_obj->getName().c_str());
+			LOG(Level::DEBUG, "Ignoring direct signals for receiver '{}'", receiver_obj->getName().c_str());
 		}
 
 		if (get_attribute_bool(receiver, "nopropagationloss", false))
 		{
 			receiver_obj->setFlag(Receiver::RecvFlag::FLAG_NOPROPLOSS);
-			LOG(Level::DEBUG, "Ignoring propagation losses for receiver '{}'",
-			    receiver_obj->getName().c_str());
+			LOG(Level::DEBUG, "Ignoring propagation losses for receiver '{}'", receiver_obj->getName().c_str());
 		}
 
 		world->add(std::move(receiver_obj));
@@ -715,7 +779,10 @@ namespace
 		const std::string name = XmlElement::getSafeAttribute(target, "name");
 
 		const XmlElement rcs_element = target.childElement("rcs", 0);
-		if (!rcs_element.isValid()) { throw XmlException("<rcs> element is required in <target>!"); }
+		if (!rcs_element.isValid())
+		{
+			throw XmlException("<rcs> element is required in <target>!");
+		}
 
 		const std::string rcs_type = XmlElement::getSafeAttribute(rcs_element, "type");
 
@@ -728,10 +795,12 @@ namespace
 		}
 		else if (rcs_type == "file")
 		{
-			target_obj = createFileTarget(platform, name, XmlElement::getSafeAttribute(rcs_element, "filename"),
-			                              seed);
+			target_obj = createFileTarget(platform, name, XmlElement::getSafeAttribute(rcs_element, "filename"), seed);
 		}
-		else { throw XmlException("Unsupported RCS type: " + rcs_type); }
+		else
+		{
+			throw XmlException("Unsupported RCS type: " + rcs_type);
+		}
 
 		if (const XmlElement model = target.childElement("model", 0); model.isValid())
 		{
@@ -741,12 +810,13 @@ namespace
 			}
 			else if (model_type == "chisquare" || model_type == "gamma")
 			{
-				target_obj->setFluctuationModel(std::make_unique<radar::RcsChiSquare>(
-					target_obj->getRngEngine(),
-					get_child_real_type(model, "k")
-					));
+				target_obj->setFluctuationModel(
+					std::make_unique<radar::RcsChiSquare>(target_obj->getRngEngine(), get_child_real_type(model, "k")));
 			}
-			else { throw XmlException("Unsupported model type: " + model_type); }
+			else
+			{
+				throw XmlException("Unsupported model type: " + model_type);
+			}
 		}
 
 		LOG(Level::DEBUG, "Added target {} with RCS type {} to platform {}", name, rcs_type, platform->getName());
@@ -754,8 +824,7 @@ namespace
 		world->add(std::move(target_obj));
 	}
 
-	void parsePlatformElements(const XmlElement& platform, World* world, Platform* plat,
-	                           std::mt19937& masterSeeder)
+	void parsePlatformElements(const XmlElement& platform, World* world, Platform* plat, std::mt19937& masterSeeder)
 	{
 		const XmlElement monostatic = platform.childElement("monostatic", 0);
 		const XmlElement transmitter = platform.childElement("transmitter", 0);
@@ -763,23 +832,47 @@ namespace
 		const XmlElement target = platform.childElement("target", 0);
 
 		int component_count = 0;
-		if (monostatic.isValid()) { component_count++; }
-		if (transmitter.isValid()) { component_count++; }
-		if (receiver.isValid()) { component_count++; }
-		if (target.isValid()) { component_count++; }
+		if (monostatic.isValid())
+		{
+			component_count++;
+		}
+		if (transmitter.isValid())
+		{
+			component_count++;
+		}
+		if (receiver.isValid())
+		{
+			component_count++;
+		}
+		if (target.isValid())
+		{
+			component_count++;
+		}
 
 		if (component_count != 1)
 		{
 			const std::string platform_name = XmlElement::getSafeAttribute(platform, "name");
-			throw XmlException("Platform '" + platform_name +
+			throw XmlException(
+				"Platform '" + platform_name +
 				"' must contain exactly one component: <monostatic>, <transmitter>, <receiver>, or <target>.");
 		}
 
-		if (monostatic.isValid()) { parseMonostatic(monostatic, plat, world, masterSeeder); }
-		else if (transmitter.isValid()) { parseTransmitter(transmitter, plat, world, masterSeeder); }
-		else if (receiver.isValid()) { parseReceiver(receiver, plat, world, masterSeeder); }
-		else
-			if (target.isValid()) { parseTarget(target, plat, world, masterSeeder); }
+		if (monostatic.isValid())
+		{
+			parseMonostatic(monostatic, plat, world, masterSeeder);
+		}
+		else if (transmitter.isValid())
+		{
+			parseTransmitter(transmitter, plat, world, masterSeeder);
+		}
+		else if (receiver.isValid())
+		{
+			parseReceiver(receiver, plat, world, masterSeeder);
+		}
+		else if (target.isValid())
+		{
+			parseTarget(target, plat, world, masterSeeder);
+		}
 	}
 
 	/**
@@ -804,17 +897,23 @@ namespace
 		// Parse either <rotationpath> or <fixedrotation>
 		const XmlElement rot_path = platform.childElement("rotationpath", 0);
 
-		if (const XmlElement fixed_rot = platform.childElement("fixedrotation", 0); rot_path.isValid() && fixed_rot.
-			isValid())
+		if (const XmlElement fixed_rot = platform.childElement("fixedrotation", 0);
+			rot_path.isValid() && fixed_rot.isValid())
 		{
 			LOG(Level::ERROR,
-			    "Both <rotationpath> and <fixedrotation> are declared for platform {}. Only <rotationpath> will be used.",
-			    plat->getName());
+				"Both <rotationpath> and <fixedrotation> are declared for platform {}. Only <rotationpath> will be "
+				"used.",
+				plat->getName());
 			parseRotationPath(rot_path, plat.get());
 		}
-		else if (rot_path.isValid()) { parseRotationPath(rot_path, plat.get()); }
-		else
-			if (fixed_rot.isValid()) { parseFixedRotation(fixed_rot, plat.get()); }
+		else if (rot_path.isValid())
+		{
+			parseRotationPath(rot_path, plat.get());
+		}
+		else if (fixed_rot.isValid())
+		{
+			parseFixedRotation(fixed_rot, plat.get());
+		}
 
 		world->add(std::move(plat));
 	}
@@ -832,7 +931,10 @@ namespace
 		while (true)
 		{
 			XmlElement include_element = doc.getRootElement().childElement("include", index++);
-			if (!include_element.isValid()) { break; }
+			if (!include_element.isValid())
+			{
+				break;
+			}
 
 			std::string include_filename = include_element.getText();
 			if (include_filename.empty())
@@ -915,7 +1017,7 @@ namespace
 	}
 
 	void processParsedDocument(const XmlDocument& doc, World* world, const fs::path& baseDir,
-	                           std::mt19937& masterSeeder)
+							   std::mt19937& masterSeeder)
 	{
 		const XmlElement root = doc.getRootElement();
 		if (root.name() != "simulation")
@@ -968,8 +1070,7 @@ namespace
 
 namespace serial
 {
-	void parseSimulation(const std::string& filename, World* world, const bool validate,
-	                     std::mt19937& masterSeeder)
+	void parseSimulation(const std::string& filename, World* world, const bool validate, std::mt19937& masterSeeder)
 	{
 		world->clear();
 		params::params.reset();
@@ -982,14 +1083,20 @@ namespace serial
 		const fs::path main_dir = fs::path(filename).parent_path();
 		const bool did_combine = addIncludeFilesToMainDocument(main_doc, main_dir);
 
-		if (validate) { validateXml(did_combine, main_doc); }
-		else { LOG(Level::DEBUG, "Skipping XML validation."); }
+		if (validate)
+		{
+			validateXml(did_combine, main_doc);
+		}
+		else
+		{
+			LOG(Level::DEBUG, "Skipping XML validation.");
+		}
 
 		processParsedDocument(main_doc, world, main_dir, masterSeeder);
 	}
 
 	void parseSimulationFromString(const std::string& xmlContent, World* world, const bool validate,
-	                               std::mt19937& masterSeeder)
+								   std::mt19937& masterSeeder)
 	{
 		world->clear();
 		params::params.reset();
@@ -1004,7 +1111,10 @@ namespace serial
 			// Note: <include> tags are not processed when loading from a string.
 			validateXml(false, doc);
 		}
-		else { LOG(Level::DEBUG, "Skipping XML validation."); }
+		else
+		{
+			LOG(Level::DEBUG, "Skipping XML validation.");
+		}
 
 		// When loading from a string, there's no base directory for relative asset paths.
 		// The UI/caller is responsible for ensuring any paths in the XML are absolute or resolvable.
