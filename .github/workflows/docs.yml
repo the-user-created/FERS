@@ -54,7 +54,7 @@ jobs:
               run: cmake --build build --target doc
 
             - name: Upload artifact
-              uses: actions/upload-pages-artifact@v3
+              uses: actions/upload-pages-artifact@v4
               with:
                   # This path must match the Doxygen OUTPUT_DIRECTORY relative to the build dir
                   path: './build/docs/html'
