@@ -242,6 +242,7 @@ namespace processing
 		if (params::oversampleRatio() > 1) { iq_buffer = std::move(fers_signal::downsample(iq_buffer)); }
 
 		// 5. Apply ADC quantization and scaling.
+		// TODO: Is there any point in normalizing the full buffer for CW receivers?
 		const RealType fullscale = quantizeAndScaleWindow(iq_buffer);
 
 		// 6. Write the entire processed buffer to an HDF5 file.
