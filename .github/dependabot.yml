@@ -10,7 +10,7 @@ updates:
       schedule:
           interval: 'weekly'
       commit-message:
-          prefix: 'chore(ci)'
+          prefix: 'chore'
           include: 'scope'
       labels:
           - 'dependencies'
@@ -22,7 +22,7 @@ updates:
       schedule:
           interval: 'weekly'
       commit-message:
-          prefix: 'chore(deps-rust)'
+          prefix: 'chore'
           include: 'scope'
       labels:
           - 'dependencies'
@@ -34,7 +34,7 @@ updates:
       schedule:
           interval: 'weekly'
       commit-message:
-          prefix: 'chore(deps-js)'
+          prefix: 'chore'
           include: 'scope'
       labels:
           - 'dependencies'
@@ -85,7 +85,7 @@ updates:
       schedule:
           interval: 'weekly'
       commit-message:
-          prefix: 'chore(submodules)'
+          prefix: 'chore'
           include: 'scope'
       labels:
           - 'dependencies'
