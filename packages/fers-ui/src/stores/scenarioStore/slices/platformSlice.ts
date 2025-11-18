@@ -114,10 +114,10 @@ export const createPlatformSlice: StateCreator<
                         name,
                         radarType: 'pulsed',
                         window_skip: 0,
-                        window_length: 0,
+                        window_length: 1e-5,
                         prf: 1000,
                         antennaId: null,
-                        pulseId: null,
+                        waveformId: null,
                         timingId: null,
                         noiseTemperature: 290,
                         noDirectPaths: false,
@@ -131,7 +131,7 @@ export const createPlatformSlice: StateCreator<
                         radarType: 'pulsed',
                         prf: 1000,
                         antennaId: null,
-                        pulseId: null,
+                        waveformId: null,
                         timingId: null,
                     };
                     break;
@@ -139,8 +139,9 @@ export const createPlatformSlice: StateCreator<
                     newComponent = {
                         type: 'receiver',
                         name,
+                        radarType: 'pulsed',
                         window_skip: 0,
-                        window_length: 0,
+                        window_length: 1e-5,
                         prf: 1000,
                         antennaId: null,
                         timingId: null,

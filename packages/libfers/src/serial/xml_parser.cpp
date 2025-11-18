@@ -45,7 +45,7 @@
 
 // Private libfers headers
 #include "libxml_wrapper.h"
-#include "pulse_factory.h"
+#include "waveform_factory.h"
 #include "timing/prototype_timing.h"
 #include "timing/timing.h"
 
@@ -63,9 +63,10 @@ using timing::Timing;
 using timing::PrototypeTiming;
 using radar::Transmitter;
 using radar::Receiver;
+using radar::OperationMode;
 
 /**
- * @brief Parses elements with child iteration (e.g., pulses, timings, antennas).
+ * @brief Parses elements with child iteration (e.g., waveforms, timings, antennas).
  *
  * @tparam T The type of the parsing function.
  * @param root The root XmlElement to parse.
@@ -121,10 +122,6 @@ auto get_attribute_bool = [](const XmlElement& element, const std::string& attri
 
 namespace
 {
-	enum class SimType { UNSET, PULSED, CW };
-
-	SimType simulation_type = SimType::UNSET;
-
 	/**
 	 * @brief Parses the <parameters> element of the XML document.
 	 *
@@ -171,15 +168,6 @@ namespace
 		set_param_with_exception_handling(parameters, "adc_bits", params::adcBits(), params::setAdcBits);
 		set_param_with_exception_handling(parameters, "oversample", params::oversampleRatio(),
 		                                  params::setOversampleRatio);
-
-		if (const XmlElement export_element = parameters.childElement("export", 0); export_element.isValid())
-		{
-			params::setExporters(
-				get_attribute_bool(export_element, "xml", params::exportXml()),
-				get_attribute_bool(export_element, "csv", params::exportCsv()),
-				get_attribute_bool(export_element, "binary", params::exportBinary())
-				);
-		}
 
 		// Parse the origin element for the KML generator
 		bool origin_set = false;
@@ -254,43 +242,22 @@ namespace
 	}
 
 	/**
-	 * @brief Parses the <pulse> element of the XML document.
+	 * @brief Parses the <waveform> element of the XML document.
 	 *
-	 * @param pulse The <pulse> XmlElement to parse.
+	 * @param waveform The <waveform> XmlElement to parse.
 	 * @param world A pointer to the World object where the RadarSignal object is added.
 	 * @param baseDir The base directory of the main scenario file to resolve relative paths.
 	 */
-	void parsePulse(const XmlElement& pulse, World* world, const fs::path& baseDir)
+	void parseWaveform(const XmlElement& waveform, World* world, const fs::path& baseDir)
 	{
-		const std::string name = XmlElement::getSafeAttribute(pulse, "name");
-		const std::string type = XmlElement::getSafeAttribute(pulse, "type");
+		const std::string name = XmlElement::getSafeAttribute(waveform, "name");
 
-		if (const XmlElement power_element = pulse.childElement("power", 0); !power_element.isValid())
+		const auto power = get_child_real_type(waveform, "power");
+		const auto carrier = get_child_real_type(waveform, "carrier_frequency");
+
+		if (const XmlElement pulsed_file = waveform.childElement("pulsed_from_file", 0); pulsed_file.isValid())
 		{
-			LOG(Level::FATAL, "<power> element is missing in <pulse>!");
-			throw XmlException("<power> element is missing in <pulse>!");
-		}
-
-		const auto power = get_child_real_type(pulse, "power");
-
-		if (const XmlElement carrier_element = pulse.childElement("carrier", 0); !carrier_element.isValid())
-		{
-			LOG(Level::FATAL, "<carrier> element is missing in <pulse>!");
-			throw XmlException("<carrier> element is missing in <pulse>!");
-		}
-
-		const auto carrier = get_child_real_type(pulse, "carrier");
-
-		if (type == "continuous" || type == "cw")
-		{
-			auto cw_signal = std::make_unique<fers_signal::CwSignal>();
-			auto wave = std::make_unique<RadarSignal>(name, power, carrier, params::endTime() - params::startTime(),
-			                                          std::move(cw_signal));
-			world->add(std::move(wave));
-		}
-		else if (type == "file")
-		{
-			const std::string filename_str = XmlElement::getSafeAttribute(pulse, "filename");
+			const std::string filename_str = XmlElement::getSafeAttribute(pulsed_file, "filename");
 			fs::path pulse_path(filename_str);
 
 			// Check if path exists as is, if not, try relative to the main XML directory
@@ -301,16 +268,23 @@ namespace
 
 			if (!fs::exists(pulse_path))
 			{
-				throw XmlException("Pulse file not found: " + filename_str);
+				throw XmlException("Waveform file not found: " + filename_str);
 			}
 
-			auto wave = serial::loadPulseFromFile(name, pulse_path.string(), power, carrier);
+			auto wave = serial::loadWaveformFromFile(name, pulse_path.string(), power, carrier);
+			world->add(std::move(wave));
+		}
+		else if (waveform.childElement("cw", 0).isValid())
+		{
+			auto cw_signal = std::make_unique<fers_signal::CwSignal>();
+			auto wave = std::make_unique<RadarSignal>(name, power, carrier, params::endTime() - params::startTime(),
+			                                          std::move(cw_signal));
 			world->add(std::move(wave));
 		}
 		else
 		{
-			LOG(Level::FATAL, "Unsupported pulse type: {}", type);
-			throw XmlException("Unsupported pulse type: " + type);
+			LOG(Level::FATAL, "Unsupported waveform type for '{}'", name);
+			throw XmlException("Unsupported waveform type for '" + name + "'");
 		}
 	}
 
@@ -595,29 +569,25 @@ namespace
 	                              std::mt19937& masterSeeder)
 	{
 		const std::string name = XmlElement::getSafeAttribute(transmitter, "name");
-		const std::string type = XmlElement::getSafeAttribute(transmitter, "type");
-		const bool is_pulsed = type == "pulsed";
+		const XmlElement pulsed_mode_element = transmitter.childElement("pulsed_mode", 0);
+		const bool is_pulsed = pulsed_mode_element.isValid();
+		const OperationMode mode = is_pulsed ? OperationMode::PULSED_MODE : OperationMode::CW_MODE;
 
-		if (simulation_type == SimType::UNSET)
+		if (!is_pulsed && !transmitter.childElement("cw_mode", 0).isValid())
 		{
-			simulation_type = is_pulsed ? SimType::PULSED : SimType::CW;
-			LOG(Level::INFO, "Simulation type set to: {}", is_pulsed ? "PULSED" : "CW");
-		}
-		else if ((is_pulsed && simulation_type == SimType::CW) ||
-			(!is_pulsed && simulation_type == SimType::PULSED))
-		{
-			throw XmlException("Cannot mix pulsed and CW transmitters in the same simulation!");
+			throw XmlException("Transmitter '" + name + "' must specify a radar mode (<pulsed_mode> or <cw_mode>).");
 		}
 
-		if (!is_pulsed) { params::params.is_cw_simulation = true; }
+		auto transmitter_obj = std::make_unique<Transmitter>(platform, name, mode);
 
-		auto transmitter_obj = std::make_unique<Transmitter>(platform, name, is_pulsed);
+		const std::string waveform_name = XmlElement::getSafeAttribute(transmitter, "waveform");
+		RadarSignal* wave = world->findWaveform(waveform_name);
+		transmitter_obj->setWave(wave);
 
-		const std::string pulse_name = XmlElement::getSafeAttribute(transmitter, "pulse");
-		RadarSignal* pulse = world->findSignal(pulse_name);
-		transmitter_obj->setWave(pulse);
-
-		transmitter_obj->setPrf(get_child_real_type(transmitter, "prf"));
+		if (is_pulsed)
+		{
+			transmitter_obj->setPrf(get_child_real_type(pulsed_mode_element, "prf"));
+		}
 
 		const std::string antenna_name = XmlElement::getSafeAttribute(transmitter, "antenna");
 		const Antenna* ant = world->findAntenna(antenna_name);
@@ -646,8 +616,11 @@ namespace
 	Receiver* parseReceiver(const XmlElement& receiver, Platform* platform, World* world, std::mt19937& masterSeeder)
 	{
 		const std::string name = XmlElement::getSafeAttribute(receiver, "name");
+		const XmlElement pulsed_mode_element = receiver.childElement("pulsed_mode", 0);
+		const bool is_pulsed = pulsed_mode_element.isValid();
+		const OperationMode mode = is_pulsed ? OperationMode::PULSED_MODE : OperationMode::CW_MODE;
 
-		auto receiver_obj = std::make_unique<Receiver>(platform, name, masterSeeder());
+		auto receiver_obj = std::make_unique<Receiver>(platform, name, masterSeeder(), mode);
 
 		const std::string ant_name = XmlElement::getSafeAttribute(receiver, "antenna");
 
@@ -661,25 +634,31 @@ namespace
 			    receiver_obj->getName().c_str());
 		}
 
-		// Enforce required receiver parameters.
-		const RealType window_length = get_child_real_type(receiver, "window_length");
-		if (window_length <= 0)
+		if (is_pulsed)
 		{
-			throw XmlException("<window_length> must be positive for receiver '" + name + "'");
-		}
+			const RealType window_length = get_child_real_type(pulsed_mode_element, "window_length");
+			if (window_length <= 0)
+			{
+				throw XmlException("<window_length> must be positive for receiver '" + name + "'");
+			}
 
-		const RealType prf = get_child_real_type(receiver, "prf");
-		if (prf <= 0)
-		{
-			throw XmlException("<prf> must be positive for receiver '" + name + "'");
-		}
+			const RealType prf = get_child_real_type(pulsed_mode_element, "prf");
+			if (prf <= 0)
+			{
+				throw XmlException("<prf> must be positive for receiver '" + name + "'");
+			}
 
-		const RealType window_skip = get_child_real_type(receiver, "window_skip");
-		if (window_skip < 0)
-		{
-			throw XmlException("<window_skip> must not be negative for receiver '" + name + "'");
+			const RealType window_skip = get_child_real_type(pulsed_mode_element, "window_skip");
+			if (window_skip < 0)
+			{
+				throw XmlException("<window_skip> must not be negative for receiver '" + name + "'");
+			}
+			receiver_obj->setWindowProperties(window_length, prf, window_skip);
 		}
-		receiver_obj->setWindowProperties(window_length, prf, window_skip);
+		else if (!receiver.childElement("cw_mode", 0).isValid())
+		{
+			throw XmlException("Receiver '" + name + "' must specify a radar mode (<pulsed_mode> or <cw_mode>).");
+		}
 
 		const std::string timing_name = XmlElement::getSafeAttribute(receiver, "timing");
 		const auto timing = std::make_shared<Timing>(timing_name, masterSeeder());
@@ -778,10 +757,10 @@ namespace
 	void parsePlatformElements(const XmlElement& platform, World* world, Platform* plat,
 	                           std::mt19937& masterSeeder)
 	{
-		XmlElement monostatic = platform.childElement("monostatic", 0);
-		XmlElement transmitter = platform.childElement("transmitter", 0);
-		XmlElement receiver = platform.childElement("receiver", 0);
-		XmlElement target = platform.childElement("target", 0);
+		const XmlElement monostatic = platform.childElement("monostatic", 0);
+		const XmlElement transmitter = platform.childElement("transmitter", 0);
+		const XmlElement receiver = platform.childElement("receiver", 0);
+		const XmlElement target = platform.childElement("target", 0);
 
 		int component_count = 0;
 		if (monostatic.isValid()) { component_count++; }
@@ -938,8 +917,6 @@ namespace
 	void processParsedDocument(const XmlDocument& doc, World* world, const fs::path& baseDir,
 	                           std::mt19937& masterSeeder)
 	{
-		simulation_type = SimType::UNSET;
-
 		const XmlElement root = doc.getRootElement();
 		if (root.name() != "simulation")
 		{
@@ -960,13 +937,32 @@ namespace
 		}
 
 		parseParameters(root.childElement("parameters", 0));
-		auto pulse_parser = [&](const XmlElement& p, World* w) { parsePulse(p, w, baseDir); };
-		parseElements(root, "pulse", world, pulse_parser);
+		auto waveform_parser = [&](const XmlElement& p, World* w) { parseWaveform(p, w, baseDir); };
+		parseElements(root, "waveform", world, waveform_parser);
 		parseElements(root, "timing", world, parseTiming);
 		parseElements(root, "antenna", world, parseAntenna);
 
 		auto platform_parser = [&](const XmlElement& p, World* w) { parsePlatform(p, w, masterSeeder); };
 		parseElements(root, "platform", world, platform_parser);
+
+		// Prepare CW receiver buffers before starting simulation
+		const RealType start_time = params::startTime();
+		const RealType end_time = params::endTime();
+		const RealType dt_sim = 1.0 / (params::rate() * params::oversampleRatio());
+		const auto num_samples = static_cast<size_t>(std::ceil((end_time - start_time) / dt_sim));
+
+		for (const auto& receiver : world->getReceivers())
+		{
+			if (receiver->getMode() == OperationMode::CW_MODE)
+			{
+				receiver->prepareCwData(num_samples);
+			}
+		}
+
+		// Schedule initial events after all objects are loaded
+		world->scheduleInitialEvents();
+
+		LOG(Level::DEBUG, "Initial Event Queue State:\n{}", world->dumpEventQueue());
 	}
 }
 
@@ -992,13 +988,13 @@ namespace serial
 		processParsedDocument(main_doc, world, main_dir, masterSeeder);
 	}
 
-	void parseSimulationFromString(const std::string& xml_content, World* world, const bool validate,
+	void parseSimulationFromString(const std::string& xmlContent, World* world, const bool validate,
 	                               std::mt19937& masterSeeder)
 	{
 		world->clear();
 		params::params.reset();
 		XmlDocument doc;
-		if (!doc.loadString(xml_content))
+		if (!doc.loadString(xmlContent))
 		{
 			throw XmlException("Failed to parse XML from memory string.");
 		}

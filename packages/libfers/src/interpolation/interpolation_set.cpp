@@ -13,12 +13,12 @@
 #include "interpolation_set.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstddef>
 #include <iterator>
 #include <ranges>
 #include <stdexcept>
 #include <utility>
-#include <cmath>
 
 namespace interp
 {

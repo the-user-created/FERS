@@ -13,15 +13,18 @@
 #pragma once
 
 #include <memory>
+#include <queue>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
-#include "antenna_factory.h"
-#include "platform.h"
 #include <libfers/receiver.h>
 #include <libfers/target.h>
 #include <libfers/transmitter.h>
+#include "antenna_factory.h"
+#include "platform.h"
+#include "core/sim_events.h"
+#include "core/simulation_state.h"
 #include "signal/radar_signal.h"
 #include "timing/prototype_timing.h"
 
@@ -75,12 +78,12 @@ namespace core
 		void add(std::unique_ptr<radar::Target> target) noexcept;
 
 		/**
-		* @brief Adds a radar signal (pulse) to the simulation world.
+		* @brief Adds a radar signal (waveform) to the simulation world.
 		*
-		* @param pulse A unique pointer to a RadarSignal object.
-		* @throws std::runtime_error if a pulse with the same name already exists.
+		* @param waveform A unique pointer to a RadarSignal object.
+		* @throws std::runtime_error if a waveform with the same name already exists.
 		*/
-		void add(std::unique_ptr<fers_signal::RadarSignal> pulse);
+		void add(std::unique_ptr<fers_signal::RadarSignal> waveform);
 
 		/**
 		* @brief Adds an antenna to the simulation world.
@@ -104,7 +107,7 @@ namespace core
 		* @param name The name of the radar signal to find.
 		* @return A pointer to the RadarSignal if found, or nullptr if not found.
 		*/
-		[[nodiscard]] fers_signal::RadarSignal* findSignal(const std::string& name);
+		[[nodiscard]] fers_signal::RadarSignal* findWaveform(const std::string& name);
 
 		/**
 		* @brief Finds an antenna by name.
@@ -163,13 +166,13 @@ namespace core
 		}
 
 		/**
-		 * @brief Retrieves the map of radar signals (pulses).
+		 * @brief Retrieves the map of radar signals (waveforms).
 		 * @return A const reference to the map of signal names to RadarSignal objects.
 		 */
-		[[nodiscard]] const std::unordered_map<std::string, std::unique_ptr<fers_signal::RadarSignal>>& getPulses()
+		[[nodiscard]] const std::unordered_map<std::string, std::unique_ptr<fers_signal::RadarSignal>>& getWaveforms()
 		const noexcept
 		{
-			return _pulses;
+			return _waveforms;
 		}
 
 		/**
@@ -197,6 +200,33 @@ namespace core
 		 */
 		void clear() noexcept;
 
+		/**
+		 * @brief Populates the event queue with the initial events for the simulation.
+		 * This method should be called after all simulation objects have been parsed and added to the world.
+		 */
+		void scheduleInitialEvents();
+
+		/**
+		 * @brief Dumps the current state of the event queue to a string for debugging.
+		 * @return A formatted string representing the contents of the event queue.
+		 */
+		[[nodiscard]] std::string dumpEventQueue() const;
+
+		/**
+		 * @brief Gets a mutable reference to the global event queue.
+		 * @return A reference to the priority queue of events.
+		 */
+		[[nodiscard]] std::priority_queue<Event, std::vector<Event>, EventComparator>& getEventQueue() noexcept
+		{
+			return _event_queue;
+		}
+
+		/**
+		 * @brief Gets a mutable reference to the global simulation state.
+		 * @return A reference to the SimulationState object.
+		 */
+		[[nodiscard]] SimulationState& getSimulationState() noexcept { return _simulation_state; }
+
 	private:
 		std::vector<std::unique_ptr<radar::Platform>> _platforms;
 
@@ -206,10 +236,14 @@ namespace core
 
 		std::vector<std::unique_ptr<radar::Target>> _targets;
 
-		std::unordered_map<std::string, std::unique_ptr<fers_signal::RadarSignal>> _pulses;
+		std::unordered_map<std::string, std::unique_ptr<fers_signal::RadarSignal>> _waveforms;
 
 		std::unordered_map<std::string, std::unique_ptr<antenna::Antenna>> _antennas;
 
 		std::unordered_map<std::string, std::unique_ptr<timing::PrototypeTiming>> _timings;
+
+		std::priority_queue<Event, std::vector<Event>, EventComparator> _event_queue;
+
+		SimulationState _simulation_state;
 	};
 }

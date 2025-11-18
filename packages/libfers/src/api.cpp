@@ -278,7 +278,7 @@ int fers_run_simulation(fers_context_t* context, fers_progress_callback_t callba
 	std::function<void(const std::string&, int, int)> progress_fn;
 	if (callback)
 	{
-		progress_fn = [callback, user_data](const std::string& msg, int current, int total)
+		progress_fn = [callback, user_data](const std::string& msg, const int current, const int total)
 		{
 			callback(msg.c_str(), current, total, user_data);
 		};
@@ -288,13 +288,9 @@ int fers_run_simulation(fers_context_t* context, fers_progress_callback_t callba
 	{
 		pool::ThreadPool pool(params::renderThreads());
 
-		// The simulation loop is chosen based on the scenario configuration.
-		// Continuous Wave (CW) and Pulsed simulations require fundamentally
-		// different processing models, so we dispatch to the appropriate one.
-		if (params::isCwSimulation()) { core::runThreadedCwSim(ctx->getWorld(), pool, progress_fn); }
-		else { core::runThreadedSim(ctx->getWorld(), pool, progress_fn); }
+		core::runEventDrivenSim(ctx->getWorld(), pool, progress_fn);
 
-		return 0; // Success
+		return 0;
 	}
 	catch (const std::exception& e)
 	{

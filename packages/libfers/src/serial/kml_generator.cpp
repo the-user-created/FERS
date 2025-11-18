@@ -19,6 +19,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -603,8 +604,8 @@ namespace
 		)
 	{
 		const auto path_type = platform->getMotionPath()->getType();
-		const bool is_dynamic = (path_type == math::Path::InterpType::INTERP_LINEAR || path_type ==
-			math::Path::InterpType::INTERP_CUBIC);
+		const bool is_dynamic = path_type == math::Path::InterpType::INTERP_LINEAR || path_type ==
+			math::Path::InterpType::INTERP_CUBIC;
 
 		if (is_dynamic)
 		{
@@ -704,7 +705,7 @@ namespace serial
 			if (params::coordinateFrame() != params::CoordinateFrame::ENU)
 			{
 				bool ref_set = false;
-				for (const auto& [platform, objects] : platform_to_objects)
+				for (const auto& platform : platform_to_objects | views::keys)
 				{
 					if (!platform->getMotionPath()->getCoords().empty())
 					{

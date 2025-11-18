@@ -29,6 +29,7 @@ namespace noise
 		const RealType ffrac = std::fmod(beta, 1.0);
 
 		createTree(ffrac, fint, branches);
+		// TODO: verify scale factor calculation (* 2.0 appears to be a bug)
 		_scale = 1.0 / std::pow(10.0, (-alpha + 2.0) * 2.0);
 	}
 

@@ -6,68 +6,42 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file sim_threading.h
-* @brief Header file for threaded simulation management.
-*
-* This file contains the definitions and classes necessary for running a threaded simulation.
-* It includes classes that handle simulations for transmitter-receiver pairs and rendering processes for each receiver.
-*/
+ * @file sim_threading.h
+ * @brief Header file for the main simulation runner.
+ *
+ * This file contains the declarations for the high-level function that
+ * orchestrates and manages the event-driven radar simulation.
+ */
 
 #pragma once
 
-#include <exception>
 #include <functional>
 #include <string>
-
-#include <libfers/config.h>
 
 namespace pool
 {
 	class ThreadPool;
 }
 
-namespace radar
+namespace core
 {
-	class Receiver;
-
-	class Transmitter;
+	class World;
 }
 
 namespace core
 {
-	class World;
-
 	/**
-	 * @struct ReResults
-	 * @brief Stores the results of a radar simulation.
+	 * @brief Runs the unified, event-driven radar simulation.
+	 *
+	 * This function is the core engine of the simulator. It advances time by
+	 * processing events from a global priority queue. It handles both pulsed
+	 * and continuous-wave (CW) physics, dispatching finalization tasks to
+	 * worker threads for asynchronous processing.
+	 *
+	 * @param world A pointer to the simulation world containing all entities and state.
+	 * @param pool A reference to the thread pool for executing tasks.
+	 * @param progress_callback An optional callback function for reporting progress.
 	 */
-	struct ReResults
-	{
-		RealType power; /**< Power of the radar signal. */
-		RealType delay; /**< Signal delay in time. */
-		RealType doppler_factor; /**< Doppler factor of the radar signal (f_recv/f_trans). */
-		RealType phase; /**< Phase of the radar signal. */
-		RealType noise_temperature; /**< Noise temperature affecting the radar signal. */
-	};
-
-	/**
-	 * @class RangeError
-	 * @brief Exception class for range calculation errors.
-	 */
-	class RangeError final : public std::exception
-	{
-	public:
-		/**
-		 * @brief Provides the error message for the exception.
-		 *
-		 * @return The error message string.
-		 */
-		[[nodiscard]] const char* what() const noexcept override { return "Range error in RE calculations"; }
-	};
-
-	void runThreadedSim(const World* world, pool::ThreadPool& pool,
-	                    const std::function<void(const std::string&, int, int)>& progress_callback);
-
-	void runThreadedCwSim(const World* world, pool::ThreadPool& pool,
-	                      const std::function<void(const std::string&, int, int)>& progress_callback);
+	void runEventDrivenSim(World* world, pool::ThreadPool& pool,
+	                       const std::function<void(const std::string&, int, int)>& progress_callback);
 }

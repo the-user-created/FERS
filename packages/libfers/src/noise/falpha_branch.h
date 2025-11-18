@@ -87,7 +87,7 @@ namespace noise
 
 		std::reference_wrapper<std::mt19937> _rng_engine_ref; ///< Reference to the RNG engine.
 
-		std::normal_distribution<RealType> _normal_dist; ///< Normal distribution for generating white Gaussian noise.
+		std::normal_distribution<> _normal_dist; ///< Normal distribution for generating white Gaussian noise.
 
 		std::unique_ptr<fers_signal::IirFilter> _shape_filter; ///< Filter used for shaping the noise signal.
 
@@ -111,7 +111,7 @@ namespace noise
 
 		RealType _ffrac; ///< Fractional part of the noise generation.
 
-		RealType _fint; ///< Integer part of the noise generation.
+		unsigned _fint; ///< Integer part of the noise generation.
 
 		RealType _offset_sample{}; ///< Offset applied to the final noise sample.
 

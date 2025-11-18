@@ -29,6 +29,16 @@ namespace radar
 	class Platform;
 
 	/**
+	 * @enum OperationMode
+	 * @brief Defines the operational mode of a radar component.
+	 */
+	enum class OperationMode
+	{
+		PULSED_MODE, ///< The component operates in a pulsed mode.
+		CW_MODE ///< The component operates in a continuous-wave mode.
+	};
+
+	/**
 	* @class Radar
 	* @brief Represents a radar system on a platform.
 	*/

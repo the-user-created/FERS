@@ -16,8 +16,8 @@
 #include <optional>
 #include <stdexcept>
 
-#include <libfers/logging.h>
 #include <libfers/geometry_ops.h>
+#include <libfers/logging.h>
 #include "serial/libxml_wrapper.h"
 
 using math::SVec3;

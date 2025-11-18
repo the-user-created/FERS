@@ -45,10 +45,10 @@ namespace radar
 		*
 		* @param platform Pointer to the platform object.
 		* @param name Name of the transmitter.
-		* @param pulsed Boolean indicating whether the transmitter uses pulsed signals.
+		* @param mode The operational mode (PULSED_MODE or CW_MODE).
 		*/
-		Transmitter(Platform* platform, std::string name, const bool pulsed) noexcept :
-			Radar(platform, std::move(name)), _pulsed(pulsed) {}
+		Transmitter(Platform* platform, std::string name, const OperationMode mode) noexcept :
+			Radar(platform, std::move(name)), _mode(mode) {}
 
 		~Transmitter() override = default;
 
@@ -75,18 +75,11 @@ namespace radar
 		[[nodiscard]] fers_signal::RadarSignal* getSignal() const noexcept { return _signal; }
 
 		/**
-		* @brief Checks if the transmitter is pulsed.
+		* @brief Gets the operational mode of the transmitter.
 		*
-		* @return True if the transmitter is pulsed, false for CW (Continuous Wave) systems.
+		* @return The operational mode (PULSED_MODE or CW_MODE).
 		*/
-		[[nodiscard]] bool getPulsed() const noexcept { return _pulsed; }
-
-		/**
-		* @brief Retrieves the pulse count over the transmission duration.
-		*
-		* @return Number of pulses transmitted.
-		*/
-		[[nodiscard]] int getPulseCount() const noexcept;
+		[[nodiscard]] OperationMode getMode() const noexcept { return _mode; }
 
 		/**
 		* @brief Sets the radar signal wave to be transmitted.
@@ -101,13 +94,6 @@ namespace radar
 		* @param signal Pointer to the RadarSignal object to be transmitted.
 		*/
 		void setSignal(fers_signal::RadarSignal* signal) noexcept { _signal = signal; }
-
-		/**
-		* @brief Sets whether the transmitter is pulsed or continuous wave.
-		*
-		* @param pulsed Boolean indicating whether the transmitter is pulsed.
-		*/
-		void setPulsed(const bool pulsed) noexcept { _pulsed = pulsed; }
 
 		/**
 		* @brief Assigns a pulse to be transmitted at a given time.
@@ -130,6 +116,6 @@ namespace radar
 
 		RealType _prf = {}; ///< The pulse repetition frequency (PRF) of the transmitter.
 
-		bool _pulsed; ///< Boolean indicating whether the transmitter uses pulsed signals.
+		OperationMode _mode; ///< The operational mode of the transmitter.
 	};
 }

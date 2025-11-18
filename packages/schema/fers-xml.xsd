@@ -16,7 +16,7 @@
                 <!-- After parameters, the following elements can appear in any order -->
                 <xs:choice maxOccurs="unbounded">
                     <!-- At least 1 pulse is required -->
-                    <xs:element ref="pulse"/>
+                    <xs:element ref="waveform"/>
                     <!-- At least 1 timing is required -->
                     <xs:element ref="timing"/>
                     <!-- At least 1 antenna is required -->
@@ -45,7 +45,6 @@
                 <xs:element minOccurs="0" name="oversample" type="xs:string"/>
                 <xs:element minOccurs="0" ref="origin"/>
                 <xs:element minOccurs="0" ref="coordinatesystem"/>
-                <xs:element minOccurs="0" ref="export"/>
             </xs:sequence>
         </xs:complexType>
     </xs:element>
@@ -83,53 +82,24 @@
         </xs:complexType>
     </xs:element>
 
-    <xs:element name="export">
-        <xs:complexType>
-            <xs:attribute name="xml" default="true">
-                <xs:simpleType>
-                    <xs:restriction base="xs:token">
-                        <xs:enumeration value="true"/>
-                        <xs:enumeration value="false"/>
-                    </xs:restriction>
-                </xs:simpleType>
-            </xs:attribute>
-            <xs:attribute name="csv" default="true">
-                <xs:simpleType>
-                    <xs:restriction base="xs:token">
-                        <xs:enumeration value="true"/>
-                        <xs:enumeration value="false"/>
-                    </xs:restriction>
-                </xs:simpleType>
-            </xs:attribute>
-            <xs:attribute name="binary" default="false">
-                <xs:simpleType>
-                    <xs:restriction base="xs:token">
-                        <xs:enumeration value="true"/>
-                        <xs:enumeration value="false"/>
-                    </xs:restriction>
-                </xs:simpleType>
-            </xs:attribute>
-        </xs:complexType>
-    </xs:element>
-
-    <!-- Pulsed Radar Pulse Element -->
-    <xs:element name="pulse">
+    <xs:element name="waveform">
         <xs:complexType>
             <xs:sequence>
-                <xs:element minOccurs="0" name="power" type="xs:string"/>
-                <xs:element minOccurs="0" name="carrier" type="xs:string"/>
+                <xs:element name="power" type="xs:string"/>
+                <xs:element name="carrier_frequency" type="xs:string"/>
+                <xs:choice>
+                    <xs:element name="pulsed_from_file">
+                        <xs:complexType>
+                            <xs:attribute name="filename" type="xs:string" use="required"/>
+                        </xs:complexType>
+                    </xs:element>
+                    <xs:element name="cw">
+                        <xs:complexType/>
+                    </xs:element>
+                    <!-- Additional waveform types (e.g., FMCW) can be added here -->
+                </xs:choice>
             </xs:sequence>
-            <xs:attribute name="name" use="required"/>
-            <xs:attribute name="type" use="required">
-                <xs:simpleType>
-                    <xs:restriction base="xs:token">
-                        <xs:enumeration value="file"/>
-                        <xs:enumeration value="continuous"/>
-                        <xs:enumeration value="cw"/>
-                    </xs:restriction>
-                </xs:simpleType>
-            </xs:attribute>
-            <xs:attribute name="filename"/> <!-- This is only required for type="file" -->
+            <xs:attribute name="name" type="xs:string" use="required"/>
         </xs:complexType>
     </xs:element>
 
@@ -145,7 +115,7 @@
                 <xs:element minOccurs="0" ref="noise_entry" maxOccurs="unbounded"/>
             </xs:sequence>
             <xs:attribute name="name" use="required"/>
-            <xs:attribute name="synconpulse" default="true">
+            <xs:attribute name="synconpulse" default="false">
                 <xs:simpleType>
                     <xs:restriction base="xs:token">
                         <xs:enumeration value="true"/>
@@ -278,23 +248,25 @@
     <xs:element name="monostatic">
         <xs:complexType>
             <xs:sequence>
-                <xs:element name="window_skip" type="xs:string"/>
-                <xs:element name="window_length" type="xs:string"/>
-                <xs:element name="prf" type="xs:string"/>
+                <xs:choice>
+                    <xs:element name="pulsed_mode">
+                        <xs:complexType>
+                            <xs:sequence>
+                                <xs:element name="prf" type="xs:string"/>
+                                <xs:element name="window_skip" type="xs:string"/>
+                                <xs:element name="window_length" type="xs:string"/>
+                            </xs:sequence>
+                        </xs:complexType>
+                    </xs:element>
+                    <xs:element name="cw_mode">
+                        <xs:complexType/>
+                    </xs:element>
+                </xs:choice>
                 <xs:element minOccurs="0" name="noise_temp" type="xs:string"/>
             </xs:sequence>
             <xs:attribute name="name" use="required"/>
-            <xs:attribute name="type" use="required">
-                <xs:simpleType>
-                    <xs:restriction base="xs:token">
-                        <xs:enumeration value="pulsed"/>
-                        <xs:enumeration value="continuous"/>
-                        <xs:enumeration value="cw"/>
-                    </xs:restriction>
-                </xs:simpleType>
-            </xs:attribute>
             <xs:attribute name="antenna" use="required"/>
-            <xs:attribute name="pulse" use="required"/>
+            <xs:attribute name="waveform" use="required"/>
             <xs:attribute name="timing" use="required"/>
             <xs:attribute name="nodirect" type="xs:boolean" default="false"/>
             <xs:attribute name="nopropagationloss" type="xs:boolean" default="false"/>
@@ -305,19 +277,21 @@
     <xs:element name="transmitter">
         <xs:complexType>
             <xs:sequence>
-                <xs:element name="prf" type="xs:string"/>
+                <xs:choice>
+                    <xs:element name="pulsed_mode">
+                        <xs:complexType>
+                            <xs:sequence>
+                                <xs:element name="prf" type="xs:string"/>
+                            </xs:sequence>
+                        </xs:complexType>
+                    </xs:element>
+                    <xs:element name="cw_mode">
+                        <xs:complexType/>
+                    </xs:element>
+                </xs:choice>
             </xs:sequence>
             <xs:attribute name="name" use="required"/>
-            <xs:attribute name="type" use="required">
-                <xs:simpleType>
-                    <xs:restriction base="xs:token">
-                        <xs:enumeration value="pulsed"/>
-                        <xs:enumeration value="continuous"/>
-                        <xs:enumeration value="cw"/>
-                    </xs:restriction>
-                </xs:simpleType>
-            </xs:attribute>
-            <xs:attribute name="pulse" use="required"/>
+            <xs:attribute name="waveform" use="required"/>
             <xs:attribute name="antenna" use="required"/>
             <xs:attribute name="timing" use="required"/>
         </xs:complexType>
@@ -327,9 +301,20 @@
     <xs:element name="receiver">
         <xs:complexType>
             <xs:sequence>
-                <xs:element name="window_skip" type="xs:string"/>
-                <xs:element name="window_length" type="xs:string"/>
-                <xs:element name="prf" type="xs:string"/>
+                <xs:choice>
+                    <xs:element name="pulsed_mode">
+                        <xs:complexType>
+                            <xs:sequence>
+                                <xs:element name="prf" type="xs:string"/>
+                                <xs:element name="window_skip" type="xs:string"/>
+                                <xs:element name="window_length" type="xs:string"/>
+                            </xs:sequence>
+                        </xs:complexType>
+                    </xs:element>
+                    <xs:element name="cw_mode">
+                        <xs:complexType/>
+                    </xs:element>
+                </xs:choice>
                 <xs:element minOccurs="0" name="noise_temp" type="xs:string"/>
             </xs:sequence>
             <xs:attribute name="name" use="required"/>

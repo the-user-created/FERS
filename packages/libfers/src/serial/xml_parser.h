@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include <string>
 #include <random>
+#include <string>
 
 namespace core
 {
@@ -39,6 +39,6 @@ namespace serial
 	void parseSimulation(const std::string& filename, core::World* world, bool validate,
 	                     std::mt19937& masterSeeder);
 
-	void parseSimulationFromString(const std::string& xml_content, core::World* world, bool validate,
-								 std::mt19937& masterSeeder);
+	void parseSimulationFromString(const std::string& xmlContent, core::World* world, bool validate,
+	                               std::mt19937& masterSeeder);
 }

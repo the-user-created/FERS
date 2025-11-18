@@ -7,7 +7,7 @@ import {
     ScenarioStore,
     ScenarioActions,
     GlobalParameters,
-    Pulse,
+    Waveform,
     Timing,
     Antenna,
     Platform,
@@ -27,18 +27,22 @@ interface BackendObjectWithName {
     [key: string]: unknown;
 }
 
+interface BackendPulsedMode {
+    prf?: number;
+    window_skip?: number;
+    window_length?: number;
+}
+
 interface BackendPlatformComponentData {
     name: string;
     antenna?: string;
     timing?: string;
-    pulse?: string;
+    waveform?: string;
     noise_temp?: number | null;
     nodirect?: boolean;
     nopropagationloss?: boolean;
-    type?: 'cw' | 'pulsed';
-    window_skip?: number;
-    window_length?: number;
-    prf?: number;
+    pulsed_mode?: BackendPulsedMode;
+    cw_mode?: object;
     rcs?: { type: 'isotropic' | 'file'; value?: number; filename?: string };
     model?: { type: 'constant' | 'chisquare' | 'gamma'; k?: number };
 }
@@ -76,6 +80,16 @@ interface BackendPlatform {
     component?: Record<string, BackendPlatformComponentData>;
 }
 
+interface BackendWaveform {
+    name: string;
+    power: number;
+    carrier_frequency: number;
+    cw?: object;
+    pulsed_from_file?: {
+        filename: string;
+    };
+}
+
 export const createScenarioSlice: StateCreator<
     ScenarioStore,
     [['zustand/immer', never]],
@@ -91,7 +105,7 @@ export const createScenarioSlice: StateCreator<
                 return;
             }
             const collections = [
-                'pulses',
+                'waveforms',
                 'timings',
                 'antennas',
                 'platforms',
@@ -111,7 +125,7 @@ export const createScenarioSlice: StateCreator<
         set((state) => {
             if (!itemId) return;
             const collections = [
-                'pulses',
+                'waveforms',
                 'timings',
                 'antennas',
                 'platforms',
@@ -133,7 +147,7 @@ export const createScenarioSlice: StateCreator<
     resetScenario: () =>
         set({
             globalParameters: defaultGlobalParameters,
-            pulses: [],
+            waveforms: [],
             timings: [],
             antennas: [],
             platforms: [],
@@ -198,34 +212,28 @@ export const createScenarioSlice: StateCreator<
                         params.coordinatesystem as Record<string, 'N' | 'S'>
                     )?.hemisphere,
                 },
-                export: {
-                    xml:
-                        ((params.export as Record<string, boolean>)
-                            ?.xml as boolean) ?? false,
-                    csv:
-                        ((params.export as Record<string, boolean>)
-                            ?.csv as boolean) ?? false,
-                    binary:
-                        ((params.export as Record<string, boolean>)
-                            ?.binary as boolean) ?? true,
-                },
             };
 
             // 2. Assets (and build name-to-id map)
-            const pulses: Pulse[] = (
-                (data.pulses as BackendObjectWithName[]) || []
-            ).map((p) => {
-                const pulse = {
-                    ...assignId(p),
-                    type: 'Pulse' as const,
-                    pulseType:
-                        p.type === 'continuous'
-                            ? ('cw' as const)
-                            : ('file' as const),
-                    filename: (p.filename as string) ?? '',
+            const waveforms: Waveform[] = (
+                (data.waveforms as BackendWaveform[]) || []
+            ).map((w) => {
+                const waveformType = w.cw
+                    ? ('cw' as const)
+                    : ('pulsed_from_file' as const);
+                const filename = w.pulsed_from_file?.filename ?? '';
+
+                const waveform: Waveform = {
+                    id: uuidv4(),
+                    type: 'Waveform',
+                    name: w.name,
+                    waveformType,
+                    power: w.power,
+                    carrier_frequency: w.carrier_frequency,
+                    filename,
                 };
-                nameToIdMap.set(pulse.name, pulse.id);
-                return pulse as Pulse;
+                nameToIdMap.set(waveform.name, waveform.id);
+                return waveform;
             });
 
             const timings: Timing[] = (
@@ -299,6 +307,14 @@ export const createScenarioSlice: StateCreator<
                 if (p.component && Object.keys(p.component).length > 0) {
                     const cType = Object.keys(p.component)[0];
                     const cData = p.component[cType];
+
+                    const radarType = cData.pulsed_mode
+                        ? 'pulsed'
+                        : cData.cw_mode
+                          ? 'cw'
+                          : 'pulsed'; // Default
+                    const pulsed = cData.pulsed_mode;
+
                     const commonRadar = {
                         antennaId: nameToIdMap.get(cData.antenna ?? '') ?? null,
                         timingId: nameToIdMap.get(cData.timing ?? '') ?? null,
@@ -314,13 +330,13 @@ export const createScenarioSlice: StateCreator<
                             component = {
                                 type: 'monostatic',
                                 name: cData.name,
-                                radarType:
-                                    cData.type === 'cw' ? 'cw' : 'pulsed',
-                                window_skip: cData.window_skip ?? 0,
-                                window_length: cData.window_length ?? 0,
-                                prf: cData.prf ?? 1000,
-                                pulseId:
-                                    nameToIdMap.get(cData.pulse ?? '') ?? null,
+                                radarType,
+                                window_skip: pulsed?.window_skip ?? null,
+                                window_length: pulsed?.window_length ?? null,
+                                prf: pulsed?.prf ?? null,
+                                waveformId:
+                                    nameToIdMap.get(cData.waveform ?? '') ??
+                                    null,
                                 ...commonRadar,
                                 ...commonReceiver,
                             };
@@ -329,11 +345,11 @@ export const createScenarioSlice: StateCreator<
                             component = {
                                 type: 'transmitter',
                                 name: cData.name,
-                                radarType:
-                                    cData.type === 'cw' ? 'cw' : 'pulsed',
-                                prf: cData.prf ?? 1000,
-                                pulseId:
-                                    nameToIdMap.get(cData.pulse ?? '') ?? null,
+                                radarType,
+                                prf: pulsed?.prf ?? null,
+                                waveformId:
+                                    nameToIdMap.get(cData.waveform ?? '') ??
+                                    null,
                                 ...commonRadar,
                             };
                             break;
@@ -341,9 +357,10 @@ export const createScenarioSlice: StateCreator<
                             component = {
                                 type: 'receiver',
                                 name: cData.name,
-                                window_skip: cData.window_skip ?? 0,
-                                window_length: cData.window_length ?? 0,
-                                prf: cData.prf ?? 1000,
+                                radarType,
+                                window_skip: pulsed?.window_skip ?? null,
+                                window_length: pulsed?.window_length ?? null,
+                                prf: pulsed?.prf ?? null,
                                 ...commonRadar,
                                 ...commonReceiver,
                             };
@@ -374,7 +391,7 @@ export const createScenarioSlice: StateCreator<
 
             const transformedScenario: ScenarioData = {
                 globalParameters,
-                pulses,
+                waveforms,
                 timings,
                 antennas,
                 platforms,

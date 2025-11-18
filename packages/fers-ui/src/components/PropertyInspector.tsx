@@ -5,7 +5,7 @@ import { Box, Typography, Divider } from '@mui/material';
 import { useScenarioStore, findItemInStore } from '@/stores/scenarioStore';
 import { assertNever } from '@/utils/typeUtils';
 import { GlobalParametersInspector } from './inspectors/GlobalParametersInspector';
-import { PulseInspector } from './inspectors/PulseInspector';
+import { WaveformInspector } from './inspectors/WaveformInspector';
 import { TimingInspector } from './inspectors/TimingInspector';
 import { AntennaInspector } from './inspectors/AntennaInspector';
 import { PlatformInspector } from './inspectors/PlatformInspector';
@@ -27,8 +27,8 @@ function InspectorContent() {
         switch (selectedItem.type) {
             case 'GlobalParameters':
                 return <GlobalParametersInspector item={selectedItem} />;
-            case 'Pulse':
-                return <PulseInspector item={selectedItem} />;
+            case 'Waveform':
+                return <WaveformInspector item={selectedItem} />;
             case 'Timing':
                 return <TimingInspector item={selectedItem} />;
             case 'Antenna':

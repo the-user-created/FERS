@@ -6,9 +6,21 @@
 // See the GNU GPLv2 LICENSE file in the FERS project root for more information.
 
 /**
-* @file sim_threading.cpp
-* @brief Thread management for the simulator.
-*/
+ * @file sim_threading.cpp
+ * @brief Implements the core event-driven simulation engine.
+ *
+ * This file contains the primary simulation loop, which orchestrates the entire
+ * simulation process. It operates on a unified, event-driven model capable of
+ * handling both pulsed and continuous-wave (CW) radar systems concurrently.
+ * The loop advances simulation time by processing events from a priority queue.
+ *
+ * A key feature is the time-stepped inner loop that calculates physics for
+ * active CW systems between discrete events. This hybrid approach allows for
+ * efficient simulation of both event-based (pulsed) and continuous (CW) phenomena.
+ * To maintain performance, expensive post-processing tasks are offloaded to
+ * worker threads, decoupling the main physics calculations from I/O and signal
+ * rendering.
+ */
 
 #include "sim_threading.h"
 
@@ -19,542 +31,238 @@
 #include <format>
 #include <functional>
 #include <memory>
-#include <stdexcept>
 #include <thread>
 #include <utility>
 #include <vector>
 
-#include <libfers/geometry_ops.h>
 #include <libfers/logging.h>
 #include <libfers/parameters.h>
-#include <libfers/radar_obj.h>
 #include <libfers/receiver.h>
-#include <libfers/response.h>
 #include <libfers/target.h>
 #include <libfers/transmitter.h>
 #include <libfers/world.h>
+#include "sim_events.h"
 #include "thread_pool.h"
-#include "interpolation/interpolation_point.h"
-#include "signal/radar_signal.h"
-#include "timing/timing.h"
+#include "processing/finalizer.h"
+#include "simulation/channel_model.h"
 
 using radar::Transmitter;
 using radar::Receiver;
 using radar::Target;
-using math::SVec3;
-using fers_signal::RadarSignal;
-using radar::TransmitterPulse;
-using serial::Response;
+using radar::OperationMode;
 using logging::Level;
-
-namespace
-{
-	/**
-	 * @brief Calculates the complex envelope contribution for a direct propagation path (Tx -> Rx) at a specific time.
-	 * @param trans The transmitter.
-	 * @param recv The receiver.
-	 * @param timeK The current simulation time.
-	 * @return The complex I/Q sample contribution for this path.
-	 */
-	ComplexType calculateDirectPathContribution(const Transmitter* trans, const Receiver* recv, const RealType timeK)
-	{
-		const auto p_tx = trans->getPlatform()->getPosition(timeK);
-		const auto p_rx = recv->getPlatform()->getPosition(timeK);
-
-		const auto tx_to_rx_vec = p_rx - p_tx;
-		const auto range = tx_to_rx_vec.length();
-
-		if (range <= EPSILON) { return {0.0, 0.0}; }
-
-		const auto u_ji = tx_to_rx_vec / range;
-		const RealType tau = range / params::c();
-		const auto signal = trans->getSignal();
-		const RealType carrier_freq = signal->getCarrier();
-		const RealType lambda = params::c() / carrier_freq;
-
-		// Amplitude Scaling (Friis Transmission Equation)
-		const RealType tx_gain = trans->getGain(SVec3(u_ji), trans->getRotation(timeK), lambda);
-		const RealType rx_gain = recv->getGain(SVec3(-u_ji), recv->getRotation(timeK + tau), lambda);
-
-		RealType power_scaling = signal->getPower() * tx_gain * rx_gain * lambda * lambda / (std::pow(4 * PI, 2) *
-			range * range);
-		if (recv->checkFlag(Receiver::RecvFlag::FLAG_NOPROPLOSS))
-		{
-			power_scaling = signal->getPower() * tx_gain * rx_gain * lambda * lambda / std::pow(4 * PI, 2);
-		}
-		const RealType amplitude = std::sqrt(power_scaling);
-
-		// Complex Envelope Contribution
-		const RealType phase = -2 * PI * carrier_freq * tau;
-		ComplexType contribution = std::polar(amplitude, phase);
-
-		// Non-coherent Local Oscillator Effects
-		const auto tx_timing = trans->getTiming();
-		const auto rx_timing = recv->getTiming();
-		const RealType delta_f = tx_timing->getFreqOffset() - rx_timing->getFreqOffset();
-		const RealType delta_phi = tx_timing->getPhaseOffset() - rx_timing->getPhaseOffset();
-		const RealType non_coherent_phase = 2 * PI * delta_f * timeK + delta_phi;
-		contribution *= std::polar(1.0, non_coherent_phase);
-
-		return contribution;
-	}
-
-	/**
-	 * @brief Calculates the complex envelope contribution for a reflected path (Tx -> Tgt -> Rx) at a specific time.
-	 * @param trans The transmitter.
-	 * @param recv The receiver.
-	 * @param targ The target.
-	 * @param timeK The current simulation time.
-	 * @return The complex I/Q sample contribution for this path.
-	 */
-	ComplexType calculateReflectedPathContribution(const Transmitter* trans, const Receiver* recv, const Target* targ,
-	                                               const RealType timeK)
-	{
-		const auto p_tx = trans->getPlatform()->getPosition(timeK);
-		const auto p_rx = recv->getPlatform()->getPosition(timeK);
-		const auto p_tgt = targ->getPlatform()->getPosition(timeK);
-
-		const auto tx_to_tgt_vec = p_tgt - p_tx;
-		const auto tgt_to_rx_vec = p_rx - p_tgt;
-		const RealType r_jm = tx_to_tgt_vec.length();
-		const RealType r_mi = tgt_to_rx_vec.length();
-
-		if (r_jm <= EPSILON || r_mi <= EPSILON) { return {0.0, 0.0}; }
-
-		const auto u_jm = tx_to_tgt_vec / r_jm;
-		const auto u_mi = tgt_to_rx_vec / r_mi;
-
-		const RealType tau = (r_jm + r_mi) / params::c();
-		const auto signal = trans->getSignal();
-		const RealType carrier_freq = signal->getCarrier();
-		const RealType lambda = params::c() / carrier_freq;
-
-		// Amplitude Scaling (Bistatic Radar Range Equation)
-		SVec3 in_angle_sv(u_jm);
-		SVec3 out_angle_sv(-u_mi);
-		const RealType rcs = targ->getRcs(in_angle_sv, out_angle_sv, timeK);
-		const RealType tx_gain = trans->getGain(SVec3(u_jm), trans->getRotation(timeK), lambda);
-		// TODO: Is this meant to use timeK + tau?
-		const RealType rx_gain = recv->getGain(SVec3(-u_mi), recv->getRotation(timeK + tau), lambda);
-
-		RealType power_scaling = signal->getPower() * tx_gain * rx_gain * rcs * lambda * lambda / (std::pow(
-			4 * PI, 3) * r_jm * r_jm * r_mi * r_mi);
-		if (recv->checkFlag(Receiver::RecvFlag::FLAG_NOPROPLOSS))
-		{
-			power_scaling = signal->getPower() * tx_gain * rx_gain * rcs * lambda * lambda / std::pow(4 * PI, 3);
-		}
-		const RealType amplitude = std::sqrt(power_scaling);
-
-		// Complex Envelope Contribution
-		// TODO: Use fmod?
-		const RealType phase = -2 * PI * carrier_freq * tau;
-		ComplexType contribution = std::polar(amplitude, phase);
-
-		// Non-coherent Local Oscillator Effects
-		const auto tx_timing = trans->getTiming();
-		const auto rx_timing = recv->getTiming();
-		const RealType delta_f = tx_timing->getFreqOffset() - rx_timing->getFreqOffset();
-		const RealType delta_phi = tx_timing->getPhaseOffset() - rx_timing->getPhaseOffset();
-		const RealType non_coherent_phase = 2 * PI * delta_f * timeK + delta_phi;
-		contribution *= std::polar(1.0, non_coherent_phase);
-
-		return contribution;
-	}
-
-	/**
-	 * @brief Performs radar simulation for a given transmitter, receiver, and target.
-	 *
-	 * @param trans Pointer to the radar transmitter.
-	 * @param recv Pointer to the radar receiver.
-	 * @param targ Pointer to the radar target.
-	 * @param time The time at which the simulation is being run.
-	 * @param length The duration of the radar pulse.
-	 * @param wave Pointer to the radar signal object.
-	 * @param results Struct to store the results of the simulation.
-	 * @throws core::RangeError If the transmitter or receiver is too close to the target for an accurate simulation.
-	 */
-	void solveRe(const Transmitter* trans, const Receiver* recv, const Target* targ,
-	             const std::chrono::duration<RealType>& time, const std::chrono::duration<RealType>& length,
-	             const RadarSignal* wave, core::ReResults& results)
-	{
-		const auto transmitter_position = trans->getPosition(time.count());
-		const auto receiver_position = recv->getPosition(time.count());
-		const auto target_position = targ->getPosition(time.count());
-
-		SVec3 transmitter_to_target_vector{target_position - transmitter_position};
-		SVec3 receiver_to_target_vector{target_position - receiver_position};
-
-		const auto transmitter_to_target_distance = transmitter_to_target_vector.length;
-		const auto receiver_to_target_distance = receiver_to_target_vector.length;
-
-		if (transmitter_to_target_distance <= EPSILON || receiver_to_target_distance <= EPSILON)
-		{
-			LOG(Level::FATAL, "Transmitter or Receiver too close to Target for accurate simulation");
-			throw core::RangeError();
-		}
-
-		transmitter_to_target_vector.length = 1;
-		receiver_to_target_vector.length = 1;
-
-		results.delay = (transmitter_to_target_distance + receiver_to_target_distance) / params::c();
-
-		const auto rcs = targ->getRcs(transmitter_to_target_vector, receiver_to_target_vector, time.count());
-		const auto wavelength = params::c() / wave->getCarrier();
-
-		const auto transmitter_gain = trans->
-			getGain(transmitter_to_target_vector, trans->getRotation(time.count()), wavelength);
-		const auto receiver_gain = recv->getGain(receiver_to_target_vector,
-		                                         recv->getRotation(results.delay + time.count()),
-		                                         wavelength);
-
-		results.power = transmitter_gain * receiver_gain * rcs / (4 * PI);
-
-		if (!recv->checkFlag(Receiver::RecvFlag::FLAG_NOPROPLOSS))
-		{
-			const RealType distance_product = transmitter_to_target_distance * receiver_to_target_distance;
-			results.power *= std::pow(wavelength, 2) / (std::pow(4 * PI, 2) * std::pow(
-				distance_product, 2));
-		}
-
-		results.phase = -results.delay * 2 * PI * wave->getCarrier();
-
-		// Relativistic Doppler Calculation
-		const RealType dt = length.count();
-		const auto c = params::c();
-
-		// Calculate velocities
-		const math::Vec3 trans_vel = (trans->getPosition(time.count() + dt) - transmitter_position) / dt;
-		const math::Vec3 recv_vel = (recv->getPosition(time.count() + dt) - receiver_position) / dt;
-		const math::Vec3 targ_vel = (targ->getPosition(time.count() + dt) - target_position) / dt;
-
-		// Propagation unit vectors
-		const math::Vec3 u_ttgt{transmitter_to_target_vector}; // T -> Tgt
-		const math::Vec3 u_tgtr = math::Vec3{receiver_to_target_vector} * -1.0; // Tgt -> R
-
-		// Beta vectors
-		const math::Vec3 beta_t = trans_vel / c;
-		const math::Vec3 beta_r = recv_vel / c;
-		const math::Vec3 beta_tgt = targ_vel / c;
-
-		// Lorentz factors (only need T and R, as Tgt cancels)
-		const RealType gamma_t = 1.0 / std::sqrt(1.0 - dotProduct(beta_t, beta_t));
-		const RealType gamma_r = 1.0 / std::sqrt(1.0 - dotProduct(beta_r, beta_r));
-
-		// Numerators and denominators for the Doppler factor formula
-		const RealType term1_num = 1.0 - dotProduct(beta_tgt, u_ttgt);
-		const RealType term1_den = 1.0 - dotProduct(beta_t, u_ttgt);
-		const RealType term2_num = 1.0 - dotProduct(beta_r, u_tgtr);
-		const RealType term2_den = 1.0 - dotProduct(beta_tgt, u_tgtr);
-
-		results.doppler_factor = (term1_num / term1_den) * (term2_num / term2_den) * (gamma_r / gamma_t);
-
-		results.noise_temperature = recv->getNoiseTemperature(recv->getRotation(time.count() + results.delay));
-	}
-
-	/**
-	 * @brief Performs direct radar simulation between a transmitter and receiver without a target.
-	 *
-	 * @param trans Pointer to the radar transmitter.
-	 * @param recv Pointer to the radar receiver.
-	 * @param time The time at which the simulation is being run.
-	 * @param length The duration of the radar pulse.
-	 * @param wave Pointer to the radar signal object.
-	 * @param results Struct to store the results of the simulation.
-	 * @throws core::RangeError If the transmitter or receiver is too close for accurate simulation.
-	 */
-	void solveReDirect(const Transmitter* trans, const Receiver* recv, const std::chrono::duration<RealType>& time,
-	                   const std::chrono::duration<RealType>& length, const RadarSignal* wave, core::ReResults& results)
-	{
-		const auto tpos = trans->getPosition(time.count());
-		const auto rpos = recv->getPosition(time.count());
-
-		const SVec3 transvec{tpos - rpos};
-		const RealType distance = transvec.length;
-
-		if (distance <= EPSILON)
-		{
-			LOG(Level::FATAL, "Transmitter or Receiver too close to Target for accurate simulation");
-			throw core::RangeError();
-		}
-
-		results.delay = distance / params::c();
-
-		const RealType wavelength = params::c() / wave->getCarrier();
-		const RealType transmitter_gain = trans->getGain(transvec, trans->getRotation(time.count()), wavelength);
-		const RealType receiver_gain = recv->getGain(SVec3(rpos - tpos),
-		                                             recv->getRotation(time.count() + results.delay),
-		                                             wavelength);
-
-		results.power = transmitter_gain * receiver_gain * wavelength * wavelength / (4 * PI);
-
-		if (!recv->checkFlag(Receiver::RecvFlag::FLAG_NOPROPLOSS)) { results.power /= 4 * PI * distance * distance; }
-
-		// Relativistic Doppler Calculation
-		const RealType dt = length.count();
-		const auto c = params::c();
-
-		// Calculate velocities
-		const math::Vec3 trans_vel = (trans->getPosition(time.count() + dt) - tpos) / dt;
-		const math::Vec3 recv_vel = (recv->getPosition(time.count() + dt) - rpos) / dt;
-
-		// Propagation unit vector (Transmitter to Receiver)
-		math::Vec3 u_tr = rpos - tpos;
-		u_tr /= distance;
-
-		// Beta vectors
-		const math::Vec3 beta_t = trans_vel / c;
-		const math::Vec3 beta_r = recv_vel / c;
-
-		// Lorentz factors
-		const RealType gamma_t = 1.0 / std::sqrt(1.0 - dotProduct(beta_t, beta_t));
-		const RealType gamma_r = 1.0 / std::sqrt(1.0 - dotProduct(beta_r, beta_r));
-
-		// Numerators and denominators for the Doppler factor formula
-		const RealType num = 1.0 - dotProduct(beta_r, u_tr);
-		const RealType den = 1.0 - dotProduct(beta_t, u_tr);
-
-		results.doppler_factor = (num / den) * (gamma_r / gamma_t);
-
-		results.phase = -results.delay * 2 * PI * wave->getCarrier();
-
-		results.noise_temperature = recv->getNoiseTemperature(recv->getRotation(time.count() + results.delay));
-	}
-
-	/**
-	 * @brief Simulates the radar signal interaction with a target or performs direct simulation.
-	 *
-	 * @param trans Pointer to the radar transmitter.
-	 * @param recv Pointer to the radar receiver.
-	 * @param signal Pointer to the radar signal pulse being simulated.
-	 * @param targ Pointer to the radar target.
-	 * @throws core::RangeError If the transmitter or receiver is too close to the target for accurate simulation.
-	 * @throws std::runtime_error If no time points are available for execution.
-	 */
-	void simulateResponse(const Transmitter* trans, Receiver* recv, const TransmitterPulse* signal,
-	                      const Target* targ = nullptr)
-	{
-		if (targ == nullptr && trans->getAttached() == recv) { return; }
-
-		const auto start_time = std::chrono::duration<RealType>(signal->time);
-		const auto end_time = start_time + std::chrono::duration<RealType>(signal->wave->getLength());
-		const auto sample_time = std::chrono::duration<RealType>(1.0 / params::simSamplingRate());
-		const int point_count = static_cast<int>(std::ceil(signal->wave->getLength() / sample_time.count()));
-
-		// Check for a valid point count in case of target simulation
-		if (targ && point_count == 0)
-		{
-			LOG(Level::FATAL, "No time points are available for execution!");
-			throw std::runtime_error("No time points are available for execution!");
-		}
-
-		auto response = std::make_unique<Response>(signal->wave, trans);
-
-		try
-		{
-			for (int i = 0; i <= point_count; ++i)
-			{
-				const auto current_time = i < point_count ? start_time + i * sample_time : end_time;
-
-				core::ReResults results{};
-				// If a target is provided, use target simulation; otherwise, direct simulation.
-				if (targ)
-				{
-					solveRe(trans, recv, targ, current_time, sample_time, signal->wave, results);
-				}
-				else
-				{
-					solveReDirect(trans, recv, current_time, sample_time, signal->wave, results);
-				}
-
-				interp::InterpPoint point{
-					.power = results.power,
-					.time = current_time.count() + results.delay,
-					.delay = results.delay,
-					.doppler_factor = results.doppler_factor,
-					.phase = results.phase,
-					.noise_temperature = results.noise_temperature
-				};
-				response->addInterpPoint(point);
-			}
-		}
-		catch (const core::RangeError&)
-		{
-			LOG(Level::FATAL, "Receiver or Transmitter too close for accurate simulation");
-			throw core::RangeError();
-		}
-
-		recv->addResponse(std::move(response));
-	}
-
-	/**
-	 * @brief Simulates the radar interaction between a transmitter-receiver pair.
-	 *
-	 * @param trans Pointer to the radar transmitter.
-	 * @param recv Pointer to the radar receiver.
-	 * @param world Pointer to the simulation environment.
-	 */
-	void simulatePair(const Transmitter* trans, Receiver* recv, const core::World* world)
-	{
-		constexpr auto flag_nodirect = Receiver::RecvFlag::FLAG_NODIRECT;
-
-		TransmitterPulse pulse{};
-
-		const int pulses = trans->getPulseCount();
-
-		for (int i = 0; i < pulses; ++i)
-		{
-			trans->setPulse(&pulse, i);
-
-			std::ranges::for_each(world->getTargets(), [&](const auto& target)
-			{
-				simulateResponse(trans, recv, &pulse, target.get());
-			});
-
-			if (!recv->checkFlag(flag_nodirect)) { simulateResponse(trans, recv, &pulse); }
-		}
-	}
-}
 
 namespace core
 {
-	void runThreadedSim(const World* world, pool::ThreadPool& pool,
-	                    const std::function<void(const std::string&, int, int)>& progress_callback)
+	void runEventDrivenSim(World* world, pool::ThreadPool& pool,
+	                       const std::function<void(const std::string&, int, int)>& progress_callback)
 	{
-		const auto& receivers = world->getReceivers();
-		const auto& transmitters = world->getTransmitters();
-		const unsigned total_pairs = receivers.size() * transmitters.size();
-		const unsigned total_renders = receivers.size();
-		const unsigned total_steps = total_pairs + total_renders;
+		auto& event_queue = world->getEventQueue();
+		auto& [t_current, active_cw_transmitters] = world->getSimulationState();
+		const RealType end_time = params::endTime();
+		const RealType dt_sim = 1.0 / (params::rate() * params::oversampleRatio());
 
-		if (progress_callback) { progress_callback("Initializing Pulsed simulation...", 0, total_steps); }
+		if (progress_callback) { progress_callback("Initializing event-driven simulation...", 0, 100); }
 
-		LOG(Level::INFO, "Running radar simulation for {} Tx/Rx pairs", total_pairs);
-
-		std::atomic<unsigned> pairs_completed = 0;
-		for (const auto& receiver : receivers)
+		// Start dedicated finalizer threads for each pulsed receiver. This creates a
+		// one-thread-per-receiver pipeline for asynchronous data processing.
+		std::vector<std::jthread> finalizer_threads;
+		for (const auto& receiver_ptr : world->getReceivers())
 		{
-			for (const auto& transmitter : transmitters)
+			if (receiver_ptr->getMode() == OperationMode::PULSED_MODE)
 			{
-				pool.enqueue([&]
-				{
-					simulatePair(transmitter.get(), receiver.get(), world);
-					unsigned completed = ++pairs_completed;
-					if (progress_callback)
-					{
-						progress_callback(std::format("Simulating Tx/Rx pairs ({}/{})", completed, total_pairs),
-						                  completed, total_steps);
-					}
-				});
+				finalizer_threads.emplace_back(processing::runPulsedFinalizer, receiver_ptr.get(), &pool,
+				                               &world->getTargets());
 			}
 		}
-		pool.wait();
 
-		for (const auto& receiver : receivers)
+		LOG(Level::INFO, "Starting unified event-driven simulation loop.");
+
+		// Main Simulation Loop
+		while (!event_queue.empty() && t_current <= end_time)
 		{
-			LOG(Level::DEBUG, "{} responses added to '{}'", receiver->getResponseCount(), receiver->getName());
-		}
+			// Advance Clock to the next scheduled event
+			const auto [timestamp, event_type, source_object] = event_queue.top();
+			event_queue.pop();
 
-		LOG(Level::INFO, "Rendering responses for {} receivers", total_renders);
+			const RealType t_event = timestamp;
 
-		std::atomic<unsigned> renders_completed = 0;
-		for (const auto& receiver : receivers)
-		{
-			pool.enqueue([&]
+			// Before processing the event, run a time-stepped inner loop to calculate
+			// physics for any active continuous-wave systems. This handles the "continuous"
+			// part of the simulation between discrete events.
+			if (t_event > t_current)
 			{
-				receiver->render(pool);
-				unsigned completed = ++renders_completed;
-				if (progress_callback)
+				const RealType t_next_event = t_event;
+
+				const auto start_index = static_cast<size_t>(std::ceil((t_current - params::startTime()) / dt_sim));
+				const auto end_index = static_cast<size_t>(std::ceil((t_next_event - params::startTime()) / dt_sim));
+
+				for (size_t sample_index = start_index; sample_index < end_index; ++sample_index)
 				{
-					progress_callback(std::format("Rendering receivers ({}/{})", completed, total_renders),
-					                  total_pairs + completed, total_steps);
-				}
-			});
-		}
-		pool.wait();
+					const RealType t_step = params::startTime() + static_cast<RealType>(sample_index) * dt_sim;
 
-		if (progress_callback) { progress_callback("Simulation complete", total_steps, total_steps); }
-	}
-
-	void runThreadedCwSim(const World* world, pool::ThreadPool& pool,
-	                      const std::function<void(const std::string&, int, int)>& progress_callback)
-	{
-		const auto& receivers = world->getReceivers();
-		const auto& transmitters = world->getTransmitters();
-		const auto& targets = world->getTargets();
-
-		const RealType start_time = params::startTime();
-		const RealType end_time = params::endTime();
-		const RealType dt = 1.0 / params::rate();
-		const auto num_samples = static_cast<size_t>(std::ceil((end_time - start_time) / dt));
-		const unsigned total_renders = receivers.size();
-		const unsigned total_steps = num_samples + total_renders;
-
-		if (progress_callback) { progress_callback("Initializing CW simulation...", 0, total_steps); }
-
-		LOG(Level::INFO, "Running CW simulation for {} receivers over {} samples", receivers.size(), num_samples);
-
-		for (const auto& receiver : receivers)
-		{
-			receiver->prepareCwData(num_samples);
-		}
-
-		std::atomic<size_t> samples_completed = 0;
-		for (size_t sample_index = 0; sample_index < num_samples; ++sample_index)
-		{
-			const RealType t_k = start_time + sample_index * dt;
-			pool.enqueue([&, t_k, sample_index]
-			{
-				for (const auto& receiver : receivers)
-				{
-					ComplexType total_sample{0.0, 0.0};
-					for (const auto& transmitter : transmitters)
+					for (const auto& receiver_ptr : world->getReceivers())
 					{
-						if (!receiver->checkFlag(Receiver::RecvFlag::FLAG_NODIRECT))
+						if (receiver_ptr->getMode() == OperationMode::CW_MODE && receiver_ptr->isActive())
 						{
-							total_sample += calculateDirectPathContribution(transmitter.get(), receiver.get(), t_k);
-						}
-						for (const auto& target : targets)
-						{
-							total_sample += calculateReflectedPathContribution(
-								transmitter.get(), receiver.get(), target.get(), t_k);
+							ComplexType total_sample{0.0, 0.0};
+							// Query active CW sources
+							for (const auto& cw_source : active_cw_transmitters)
+							{
+								// Calculate direct and reflected paths
+								if (!receiver_ptr->checkFlag(Receiver::RecvFlag::FLAG_NODIRECT))
+								{
+									total_sample += simulation::calculateDirectPathContribution(
+										cw_source, receiver_ptr.get(), t_step);
+								}
+								for (const auto& target_ptr : world->getTargets())
+								{
+									total_sample += simulation::calculateReflectedPathContribution(
+										cw_source, receiver_ptr.get(), target_ptr.get(), t_step);
+								}
+							}
+							// Store sample in the receiver's main buffer using the correct index
+							receiver_ptr->setCwSample(sample_index, total_sample);
 						}
 					}
-					receiver->setCwSample(sample_index, total_sample);
 				}
+			}
 
-				// After work is done, increment and report progress
-				size_t completed = ++samples_completed;
-				if (progress_callback)
+			t_current = t_event;
+
+			// Process the discrete event
+			switch (event_type)
+			{
+			case EventType::TX_PULSED_START:
+			{
+				// NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast): Type is guaranteed by event_type
+				auto* tx = static_cast<Transmitter*>(source_object);
+				// For each pulse, calculate its interaction with every receiver and target.
+				for (const auto& rx_ptr : world->getReceivers())
 				{
-					// Throttle updates to avoid flooding the UI thread
-					if (completed % (num_samples / 100 + 1) == 0 || completed == num_samples)
+					// Calculate unique Response objects for direct and reflected paths.
+					if (!rx_ptr->checkFlag(Receiver::RecvFlag::FLAG_NODIRECT))
 					{
-						progress_callback(std::format("Calculating samples ({}/{})", completed, num_samples),
-						                  completed, total_steps);
+						if (auto response = simulation::calculateResponse(tx, rx_ptr.get(), tx->getSignal(),
+						                                                  t_event))
+						{
+							if (rx_ptr->getMode() == OperationMode::PULSED_MODE)
+							{
+								rx_ptr->addResponseToInbox(std::move(response));
+							}
+							else { rx_ptr->addInterferenceToLog(std::move(response)); }
+						}
+					}
+					for (const auto& target_ptr : world->getTargets())
+					{
+						if (auto response = simulation::calculateResponse(tx, rx_ptr.get(), tx->getSignal(),
+						                                                  t_event, target_ptr.get()))
+						{
+							if (rx_ptr->getMode() == OperationMode::PULSED_MODE)
+							{
+								rx_ptr->addResponseToInbox(std::move(response));
+							}
+							else { rx_ptr->addInterferenceToLog(std::move(response)); }
+						}
 					}
 				}
-			});
-		}
-		pool.wait();
-
-		LOG(Level::INFO, "Rendering CW data for {} receivers", total_renders);
-
-		std::atomic<unsigned> renders_completed = 0;
-		for (const auto& receiver : receivers)
-		{
-			pool.enqueue([&]
-			{
-				receiver->render(pool);
-				unsigned completed = ++renders_completed;
-				if (progress_callback)
+				// Schedule the next pulse transmission for this transmitter.
+				if (const RealType next_pulse_time = t_event + 1.0 / tx->getPrf(); next_pulse_time <= end_time)
 				{
-					progress_callback(std::format("Rendering CW data ({}/{})", completed, total_renders),
-					                  num_samples + completed, total_steps);
+					event_queue.push({next_pulse_time, EventType::TX_PULSED_START, tx});
 				}
-			});
+				break;
+			}
+			case EventType::RX_PULSED_WINDOW_START:
+			{
+				// NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast): Type is guaranteed by event_type
+				auto* rx = static_cast<Receiver*>(source_object);
+				rx->setActive(true);
+				event_queue.push({t_event + rx->getWindowLength(), EventType::RX_PULSED_WINDOW_END, rx});
+				break;
+			}
+			case EventType::RX_PULSED_WINDOW_END:
+			{
+				// NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast): Type is guaranteed by event_type
+				auto* rx = static_cast<Receiver*>(source_object);
+				rx->setActive(false);
+				// The receive window is over. Package all received data into a RenderingJob.
+				RenderingJob job{
+					.ideal_start_time = t_event - rx->getWindowLength(),
+					.duration = rx->getWindowLength(),
+					.responses = rx->drainInbox(),
+					.active_cw_sources = active_cw_transmitters
+				};
+				// Offload the job to the dedicated finalizer thread for this receiver.
+				rx->enqueueFinalizerJob(std::move(job));
+				// Schedule the start of the next receive window.
+				if (const RealType next_window_start = t_event - rx->getWindowLength() + 1.0 / rx->getWindowPrf();
+					next_window_start <= end_time)
+				{
+					event_queue.push({next_window_start, EventType::RX_PULSED_WINDOW_START, rx});
+				}
+				break;
+			}
+			case EventType::TX_CW_START:
+			{
+				// NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast): Type is guaranteed by event_type
+				auto* tx = static_cast<Transmitter*>(source_object);
+				active_cw_transmitters.push_back(tx);
+				break;
+			}
+			case EventType::TX_CW_END:
+			{
+				// NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast): Type is guaranteed by event_type
+				auto* tx = static_cast<Transmitter*>(source_object);
+				std::erase(active_cw_transmitters, tx);
+				break;
+			}
+			case EventType::RX_CW_START:
+			{
+				// NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast): Type is guaranteed by event_type
+				auto* rx = static_cast<Receiver*>(source_object);
+				rx->setActive(true);
+				break;
+			}
+			case EventType::RX_CW_END:
+			{
+				// NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast): Type is guaranteed by event_type
+				auto* rx = static_cast<Receiver*>(source_object);
+				rx->setActive(false);
+				// The CW receiver is done. Enqueue a one-shot finalization task to the main pool.
+				pool.enqueue(processing::finalizeCwReceiver, rx, &pool);
+				break;
+			}
+			}
+
+			if (progress_callback)
+			{
+				const int progress = static_cast<int>(t_current / end_time * 100.0);
+				progress_callback(std::format("Simulating... {:.2f}s / {:.2f}s", t_current, end_time),
+				                  progress, 100);
+			}
 		}
+
+		// Shutdown Phase
+		LOG(Level::INFO, "Main simulation loop finished. Waiting for finalization tasks...");
+
+		// Signal pulsed finalizer threads to shut down by sending a "poison pill" job.
+		for (const auto& receiver_ptr : world->getReceivers())
+		{
+			if (receiver_ptr->getMode() == OperationMode::PULSED_MODE)
+			{
+				RenderingJob shutdown_job{.duration = -1.0};
+				receiver_ptr->enqueueFinalizerJob(std::move(shutdown_job));
+			}
+		}
+
+		// Wait for any remaining CW finalization tasks in the main pool to complete.
 		pool.wait();
 
-		if (progress_callback) { progress_callback("CW simulation complete", total_steps, total_steps); }
+		// The std::jthread finalizer threads are automatically joined here at the end of scope.
+		LOG(Level::INFO, "All finalization tasks complete.");
+
+		if (progress_callback) { progress_callback("Simulation complete", 100, 100); }
+		LOG(Level::INFO, "Event-driven simulation loop finished.");
 	}
 }

@@ -15,6 +15,9 @@ import {
     useScenarioStore,
     PlatformComponent,
     TargetComponent,
+    MonostaticComponent,
+    TransmitterComponent,
+    ReceiverComponent,
 } from '@/stores/scenarioStore';
 import { NumberField, FileInput } from './InspectorControls';
 
@@ -27,19 +30,14 @@ export function PlatformComponentInspector({
     component,
     platformId,
 }: PlatformComponentInspectorProps) {
-    const { updateItem, pulses, timings, antennas, setPlatformRcsModel } =
+    const { updateItem, waveforms, timings, antennas, setPlatformRcsModel } =
         useScenarioStore.getState();
     const handleChange = (path: string, value: unknown) =>
         updateItem(platformId, `component.${path}`, value);
 
-    const renderCommonFields = (c: {
-        name: string;
-        radarType: 'pulsed' | 'cw';
-        prf: number;
-        antennaId: string | null;
-        pulseId: string | null;
-        timingId: string | null;
-    }) => (
+    const renderCommonRadarFields = (
+        c: MonostaticComponent | TransmitterComponent | ReceiverComponent
+    ) => (
         <>
             <TextField
                 label="Component Name"
@@ -48,9 +46,9 @@ export function PlatformComponentInspector({
                 onChange={(e) => handleChange('name', e.target.value)}
             />
             <FormControl fullWidth size="small">
-                <InputLabel>Type</InputLabel>
+                <InputLabel>Radar Mode</InputLabel>
                 <Select
-                    label="Type"
+                    label="Radar Mode"
                     value={c.radarType}
                     onChange={(e) => handleChange('radarType', e.target.value)}
                 >
@@ -58,13 +56,26 @@ export function PlatformComponentInspector({
                     <MenuItem value="cw">CW</MenuItem>
                 </Select>
             </FormControl>
-            {c.radarType === 'pulsed' && (
-                <NumberField
-                    label="PRF (Hz)"
-                    value={c.prf}
-                    onChange={(v) => handleChange('prf', v)}
-                />
+
+            {'waveformId' in c && (
+                <FormControl fullWidth size="small">
+                    <InputLabel>Waveform</InputLabel>
+                    <Select
+                        label="Waveform"
+                        value={c.waveformId ?? ''}
+                        onChange={(e) =>
+                            handleChange('waveformId', e.target.value)
+                        }
+                    >
+                        {waveforms.map((w) => (
+                            <MenuItem key={w.id} value={w.id}>
+                                {w.name}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
             )}
+
             <FormControl fullWidth size="small">
                 <InputLabel>Antenna</InputLabel>
                 <Select
@@ -75,20 +86,6 @@ export function PlatformComponentInspector({
                     {antennas.map((a) => (
                         <MenuItem key={a.id} value={a.id}>
                             {a.name}
-                        </MenuItem>
-                    ))}
-                </Select>
-            </FormControl>
-            <FormControl fullWidth size="small">
-                <InputLabel>Pulse</InputLabel>
-                <Select
-                    label="Pulse"
-                    value={c.pulseId ?? ''}
-                    onChange={(e) => handleChange('pulseId', e.target.value)}
-                >
-                    {pulses.map((p) => (
-                        <MenuItem key={p.id} value={p.id}>
-                            {p.name}
                         </MenuItem>
                     ))}
                 </Select>
@@ -110,147 +107,94 @@ export function PlatformComponentInspector({
         </>
     );
 
+    const renderReceiverFields = (
+        c: MonostaticComponent | ReceiverComponent
+    ) => (
+        <>
+            {c.radarType === 'pulsed' && (
+                <>
+                    <NumberField
+                        label="Window Skip (s)"
+                        value={c.window_skip}
+                        onChange={(v) => handleChange('window_skip', v)}
+                    />
+                    <NumberField
+                        label="Window Length (s)"
+                        value={c.window_length}
+                        onChange={(v) => handleChange('window_length', v)}
+                    />
+                </>
+            )}
+            <NumberField
+                label="Noise Temperature (K)"
+                value={c.noiseTemperature}
+                onChange={(v) => handleChange('noiseTemperature', v)}
+            />
+            <FormControlLabel
+                control={
+                    <Checkbox
+                        checked={c.noDirectPaths}
+                        onChange={(e) =>
+                            handleChange('noDirectPaths', e.target.checked)
+                        }
+                    />
+                }
+                label="Ignore Direct Paths"
+            />
+            <FormControlLabel
+                control={
+                    <Checkbox
+                        checked={c.noPropagationLoss}
+                        onChange={(e) =>
+                            handleChange('noPropagationLoss', e.target.checked)
+                        }
+                    />
+                }
+                label="Ignore Propagation Loss"
+            />
+        </>
+    );
+
     switch (component.type) {
         case 'monostatic':
             return (
                 <>
-                    {renderCommonFields(component)}
-                    <NumberField
-                        label="Window Skip (s)"
-                        value={component.window_skip}
-                        onChange={(v) => handleChange('window_skip', v)}
-                    />
-                    <NumberField
-                        label="Window Length (s)"
-                        value={component.window_length}
-                        onChange={(v) => handleChange('window_length', v)}
-                    />
-                    <NumberField
-                        label="Noise Temperature (K)"
-                        value={component.noiseTemperature}
-                        onChange={(v) => handleChange('noiseTemperature', v)}
-                    />
-                    <FormControlLabel
-                        control={
-                            <Checkbox
-                                checked={component.noDirectPaths}
-                                onChange={(e) =>
-                                    handleChange(
-                                        'noDirectPaths',
-                                        e.target.checked
-                                    )
-                                }
-                            />
-                        }
-                        label="Ignore Direct Paths"
-                    />
-                    <FormControlLabel
-                        control={
-                            <Checkbox
-                                checked={component.noPropagationLoss}
-                                onChange={(e) =>
-                                    handleChange(
-                                        'noPropagationLoss',
-                                        e.target.checked
-                                    )
-                                }
-                            />
-                        }
-                        label="Ignore Propagation Loss"
-                    />
+                    {renderCommonRadarFields(component)}
+                    {component.radarType === 'pulsed' && (
+                        <NumberField
+                            label="PRF (Hz)"
+                            value={component.prf}
+                            onChange={(v) => handleChange('prf', v)}
+                        />
+                    )}
+                    {renderReceiverFields(component)}
                 </>
             );
         case 'transmitter':
-            return renderCommonFields(component);
+            return (
+                <>
+                    {renderCommonRadarFields(component)}
+                    {component.radarType === 'pulsed' && (
+                        <NumberField
+                            label="PRF (Hz)"
+                            value={component.prf}
+                            onChange={(v) => handleChange('prf', v)}
+                        />
+                    )}
+                </>
+            );
         case 'receiver':
             return (
                 <>
-                    <TextField
-                        label="Component Name"
-                        size="small"
-                        value={component.name}
-                        onChange={(e) => handleChange('name', e.target.value)}
-                    />
-                    <NumberField
-                        label="Window Skip (s)"
-                        value={component.window_skip}
-                        onChange={(v) => handleChange('window_skip', v)}
-                    />
-                    <NumberField
-                        label="Window Length (s)"
-                        value={component.window_length}
-                        onChange={(v) => handleChange('window_length', v)}
-                    />
-                    <NumberField
-                        label="PRF (Hz)"
-                        value={component.prf}
-                        onChange={(v) => handleChange('prf', v)}
-                    />
-                    <FormControl fullWidth size="small">
-                        <InputLabel>Antenna</InputLabel>
-                        <Select
-                            label="Antenna"
-                            value={component.antennaId ?? ''}
-                            onChange={(e) =>
-                                handleChange('antennaId', e.target.value)
-                            }
-                        >
-                            {antennas.map((a) => (
-                                <MenuItem key={a.id} value={a.id}>
-                                    {a.name}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                    <FormControl fullWidth size="small">
-                        <InputLabel>Timing Source</InputLabel>
-                        <Select
-                            label="Timing Source"
-                            value={component.timingId ?? ''}
-                            onChange={(e) =>
-                                handleChange('timingId', e.target.value)
-                            }
-                        >
-                            {timings.map((t) => (
-                                <MenuItem key={t.id} value={t.id}>
-                                    {t.name}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                    <NumberField
-                        label="Noise Temperature (K)"
-                        value={component.noiseTemperature}
-                        onChange={(v) => handleChange('noiseTemperature', v)}
-                    />
-                    <FormControlLabel
-                        control={
-                            <Checkbox
-                                checked={component.noDirectPaths}
-                                onChange={(e) =>
-                                    handleChange(
-                                        'noDirectPaths',
-                                        e.target.checked
-                                    )
-                                }
-                            />
-                        }
-                        label="Ignore Direct Paths"
-                    />
-                    <FormControlLabel
-                        control={
-                            <Checkbox
-                                checked={component.noPropagationLoss}
-                                onChange={(e) =>
-                                    handleChange(
-                                        'noPropagationLoss',
-                                        e.target.checked
-                                    )
-                                }
-                            />
-                        }
-                        label="Ignore Propagation Loss"
-                    />
+                    {renderCommonRadarFields(component)}
+                    {component.radarType === 'pulsed' && (
+                        <NumberField
+                            label="PRF (Hz)"
+                            value={component.prf}
+                            onChange={(v) => handleChange('prf', v)}
+                        />
+                    )}
+                    {renderReceiverFields(component)}
                 </>
             );
         case 'target':

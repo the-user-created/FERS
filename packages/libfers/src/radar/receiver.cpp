@@ -13,31 +13,66 @@
 #include <libfers/receiver.h>
 
 #include <algorithm>
+#include <utility>
 
 #include <libfers/parameters.h>
-#include "serial/receiver_export.h"
 #include <libfers/response.h>
 
 namespace radar
 {
-	Receiver::Receiver(Platform* platform, std::string name, const unsigned seed) noexcept :
+	Receiver::Receiver(Platform* platform, std::string name, const unsigned seed, const OperationMode mode) noexcept :
 		Radar(platform, std::move(name)),
+		_mode(mode),
 		_rng(seed) {}
 
-	void Receiver::addResponse(std::unique_ptr<serial::Response> response) noexcept
+	void Receiver::addResponseToInbox(std::unique_ptr<serial::Response> response) noexcept
 	{
-		std::lock_guard lock(_responses_mutex);
-		_responses.push_back(std::move(response));
+		std::lock_guard lock(_inbox_mutex);
+		_inbox.push_back(std::move(response));
+	}
+
+	void Receiver::addInterferenceToLog(std::unique_ptr<serial::Response> response) noexcept
+	{
+		std::lock_guard lock(_interference_log_mutex);
+		_pulsed_interference_log.push_back(std::move(response));
+	}
+
+	std::vector<std::unique_ptr<serial::Response>> Receiver::drainInbox() noexcept
+	{
+		std::lock_guard lock(_inbox_mutex);
+		std::vector<std::unique_ptr<serial::Response>> drained_responses;
+		drained_responses.swap(_inbox);
+		return drained_responses;
+	}
+
+	void Receiver::enqueueFinalizerJob(core::RenderingJob&& job)
+	{
+		{
+			std::lock_guard lock(_finalizer_queue_mutex);
+			_finalizer_queue.push(std::move(job));
+		}
+		_finalizer_queue_cv.notify_one();
+	}
+
+	bool Receiver::waitAndDequeueFinalizerJob(core::RenderingJob& job)
+	{
+		std::unique_lock lock(_finalizer_queue_mutex);
+		_finalizer_queue_cv.wait(lock, [this] { return !_finalizer_queue.empty(); });
+
+		job = std::move(_finalizer_queue.front());
+		_finalizer_queue.pop();
+
+		// Check for shutdown signal (negative duration)
+		if (job.duration < 0.0)
+		{
+			return false; // Shutdown signal
+		}
+		return true;
 	}
 
 	RealType Receiver::getNoiseTemperature(const math::SVec3& angle) const noexcept
 	{
 		return _noise_temperature + Radar::getNoiseTemperature(angle);
-	}
-
-	int Receiver::getResponseCount() const noexcept
-	{
-		return static_cast<int>(_responses.size());
 	}
 
 	void Receiver::setNoiseTemperature(const RealType temp)
@@ -48,32 +83,6 @@ namespace radar
 			throw std::runtime_error("Noise temperature must be positive");
 		}
 		_noise_temperature = temp;
-	}
-
-	void Receiver::render(pool::ThreadPool& pool)
-	{
-		if (params::isCwSimulation())
-		{
-			// CW simulation does not support XML or CSV response export
-			if (params::exportBinary() && !_cw_iq_data.empty())
-			{
-				serial::exportReceiverCwBinary(this, getName() + "_results");
-			}
-		}
-		else
-		{
-			// Prevent exporting empty files when there are no responses
-			if (_responses.empty())
-			{
-				LOG(logging::Level::INFO, "Receiver '{}' has no responses to render. Skipping export.", getName());
-				return;
-			}
-			std::ranges::sort(_responses, serial::compareTimes);
-
-			if (params::exportXml()) { exportReceiverXml(_responses, getName() + "_results"); }
-			if (params::exportCsv()) { exportReceiverCsv(_responses, getName() + "_results"); }
-			if (params::exportBinary()) { exportReceiverBinary(_responses, this, getName() + "_results", pool); }
-		}
 	}
 
 	void Receiver::setWindowProperties(const RealType length, const RealType prf, const RealType skip) noexcept
@@ -112,7 +121,7 @@ namespace radar
 	{
 		if (index < _cw_iq_data.size())
 		{
-			_cw_iq_data[index] = sample;
+			_cw_iq_data[index] += sample;
 		}
 	}
 }

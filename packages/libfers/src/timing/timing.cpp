@@ -12,15 +12,16 @@
 
 #include "timing.h"
 
-#include "prototype_timing.h"
+#include <stdexcept>
 #include <libfers/logging.h>
+#include "prototype_timing.h"
 
 using logging::Level;
 
 namespace timing
 {
 	Timing::Timing(std::string name, const unsigned seed) noexcept :
-		_name(std::move(name)), _rng(seed) {}
+		_name(std::move(name)), _rng(seed), _seed(seed) {}
 
 	// NOLINTNEXTLINE(readability-make-member-function-const)
 	void Timing::skipSamples(const long long samples) noexcept
@@ -36,6 +37,7 @@ namespace timing
 			return;
 		}
 
+		_prototype = timing;
 		_frequency = timing->getFrequency();
 
 		std::normal_distribution normal_dist{0.0, 1.0};
@@ -68,5 +70,17 @@ namespace timing
 
 		_sync_on_pulse = timing->getSyncOnPulse();
 		_enabled = true;
+	}
+
+	std::unique_ptr<Timing> Timing::clone() const
+	{
+		if (!_prototype)
+		{
+			LOG(Level::FATAL, "Cannot clone a Timing object that has not been initialized from a prototype.");
+			throw std::logic_error("Cannot clone a Timing object that has not been initialized from a prototype.");
+		}
+		auto new_timing = std::make_unique<Timing>(_name, _seed);
+		new_timing->initializeModel(_prototype);
+		return new_timing;
 	}
 }

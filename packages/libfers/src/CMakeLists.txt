@@ -4,8 +4,14 @@
 
 # --- Private Headers ---
 set(LIBFERS_PRIVATE_HEADERS
+	${CMAKE_CURRENT_LIST_DIR}/processing/finalizer.h
+	${CMAKE_CURRENT_LIST_DIR}/core/rendering_job.h
+	${CMAKE_CURRENT_LIST_DIR}/core/simulation_state.h
+	${CMAKE_CURRENT_LIST_DIR}/core/sim_events.h
 	${CMAKE_CURRENT_LIST_DIR}/core/fers_context.h
 	${CMAKE_CURRENT_LIST_DIR}/core/sim_threading.h
+	${CMAKE_CURRENT_LIST_DIR}/simulation/channel_model.h
+	${CMAKE_CURRENT_LIST_DIR}/processing/signal_processor.h
 	${CMAKE_CURRENT_LIST_DIR}/core/thread_pool.h
 	${CMAKE_CURRENT_LIST_DIR}/interpolation/interpolation_filter.h
 	${CMAKE_CURRENT_LIST_DIR}/interpolation/interpolation_point.h
@@ -18,8 +24,7 @@ set(LIBFERS_PRIVATE_HEADERS
 	${CMAKE_CURRENT_LIST_DIR}/serial/hdf5_handler.h
 	${CMAKE_CURRENT_LIST_DIR}/serial/kml_generator.h
 	${CMAKE_CURRENT_LIST_DIR}/serial/libxml_wrapper.h
-	${CMAKE_CURRENT_LIST_DIR}/serial/pulse_factory.h
-	${CMAKE_CURRENT_LIST_DIR}/serial/receiver_export.h
+	${CMAKE_CURRENT_LIST_DIR}/serial/waveform_factory.h
 	${CMAKE_CURRENT_LIST_DIR}/serial/xml_parser.h
 	${CMAKE_CURRENT_LIST_DIR}/signal/dsp_filters.h
 	${CMAKE_CURRENT_LIST_DIR}/signal/radar_signal.h
@@ -29,9 +34,12 @@ set(LIBFERS_PRIVATE_HEADERS
 
 # --- Source Files ---
 set(LIBFERS_SOURCES
+	${CMAKE_CURRENT_LIST_DIR}/processing/finalizer.cpp
 	${CMAKE_CURRENT_LIST_DIR}/api.cpp
 	${CMAKE_CURRENT_LIST_DIR}/core/logging.cpp
 	${CMAKE_CURRENT_LIST_DIR}/core/sim_threading.cpp
+	${CMAKE_CURRENT_LIST_DIR}/simulation/channel_model.cpp
+	${CMAKE_CURRENT_LIST_DIR}/processing/signal_processor.cpp
 	${CMAKE_CURRENT_LIST_DIR}/core/thread_pool.cpp
 	${CMAKE_CURRENT_LIST_DIR}/core/world.cpp
 	${CMAKE_CURRENT_LIST_DIR}/antenna/antenna_factory.cpp
@@ -51,8 +59,7 @@ set(LIBFERS_SOURCES
 	${CMAKE_CURRENT_LIST_DIR}/serial/hdf5_handler.cpp
 	${CMAKE_CURRENT_LIST_DIR}/serial/kml_generator.cpp
 	${CMAKE_CURRENT_LIST_DIR}/serial/libxml_wrapper.cpp
-	${CMAKE_CURRENT_LIST_DIR}/serial/pulse_factory.cpp
-	${CMAKE_CURRENT_LIST_DIR}/serial/receiver_export.cpp
+	${CMAKE_CURRENT_LIST_DIR}/serial/waveform_factory.cpp
 	${CMAKE_CURRENT_LIST_DIR}/serial/response.cpp
 	${CMAKE_CURRENT_LIST_DIR}/serial/xml_parser.cpp
 	${CMAKE_CURRENT_LIST_DIR}/signal/dsp_filters.cpp
