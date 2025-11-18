@@ -34,7 +34,7 @@ jobs:
                   xxd
 
             - name: Set up Python for test runner # Install Python 3.11 for the test script
-              uses: actions/setup-python@v5
+              uses: actions/setup-python@v6
               with:
                   python-version: 3.11
 
