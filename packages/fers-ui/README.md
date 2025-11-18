@@ -7,14 +7,19 @@
 
 **fers-ui** is the official graphical user interface for the **Flexible Extensible Radar Simulator (FERS)**. It provides a professional-grade, visual workbench designed to streamline the entire simulation pipeline—from asset creation and scenario construction to simulation execution and results analysis. By offering an intuitive and powerful toolset, fers-ui dramatically improves the usability and accessibility of the core FERS engine.
 
-## Planned Features
+## Key Features
 
 - **Multi-Panel Scenario Builder:** A fully resizable workspace featuring an interactive 3D viewport for object placement, a hierarchical scene tree for organization, and a context-sensitive property inspector for detailed configuration.
-- **Interactive Timeline:** A dedicated panel for visualizing and editing time-based events, such as platform motion paths and radar pulse schedules.
-- **Centralized Asset Library:** A dedicated view for creating, managing, and reusing simulation components like radar pulses, antenna patterns, and timing sources across different scenarios.
+- **Interactive Timeline:** A dedicated panel for visualizing and editing time-based events, such as platform motion paths and radar pulse schedules, with full playback controls.
 - **Hierarchical Scene Tree:** An intuitive tree view for all simulation elements, enabling easy selection, parenting, and organization of complex scenarios.
 - **Integrated Simulation Runner:** A focused workspace to configure global simulation parameters, trigger the FERS core engine, and monitor progress.
-- **FERS XML Exporter:** Generate a valid FERS XML configuration file directly from the visual scenario, ensuring compatibility and correctness.
+- **FERS XML Import/Export:** Generate a valid FERS XML configuration file directly from the visual scenario, or load an existing one to begin editing.
+
+## Future Roadmap
+
+The following major features are planned for future releases:
+
+- **Centralized Asset Library:** A dedicated view for creating, managing, and reusing simulation components like radar pulses, antenna patterns, and timing sources across different scenarios.
 - **Dynamic Results Analysis:** A post-simulation view for loading FERS output data to visualize target trajectories, platform movements, and analyze collected signals.
 
 ## Technology Stack
@@ -46,49 +51,9 @@ The application is architected as a multi-modal "Workbench" to provide a clean, 
 
 ## Getting Started
 
-### Prerequisites
+This application is part of a monorepo that includes the core C++ `libfers` library. To set up the complete development environment, please follow the unified **[Development Setup guide in the root README.md](https://github.com/the-user-created/FERS/blob/master/README.md)**.
 
-1. A C++23 compatible compiler and **CMake** (see [`packages/libfers/README.md`](https://github.com/the-user-created/FERS/blob/master/packages/libfers/README.md) for details).
-2. [**Node.js**](https://nodejs.org/) and [**pnpm**](https://pnpm.io/).
-3. The [**Rust toolchain**](https://www.rust-lang.org/tools/install).
-4. [**Tauri prerequisites**](https://tauri.app/start/prerequisites/) for your operating system.
-
-### Installation & Running
-
-The `fers-ui` application depends on the compiled `libfers` C++ library. You must build the C++ components before running the UI.
-
-1. **Clone the repository:** (If you haven't already)
-
-    ```bash
-    git clone --recursive https://github.com/the-user-created/FERS.git
-    cd FERS
-    ```
-
-2. **Build the C++ core libraries:**
-   From the root of the repository, run the following commands.
-
-    ```bash
-    mkdir build && cd build
-    cmake ..
-    make -j$(nproc) # or make -j$(sysctl -n hw.ncpu) on macOS
-    ```
-
-    For more detailed C++ build instructions, see [`packages/libfers/README.md`](https://github.com/the-user-created/FERS/blob/master/packages/libfers/README.md).
-
-3. **Navigate to the `fers-ui` package and install dependencies:**
-
-    ```bash
-    cd ../packages/fers-ui
-    pnpm install
-    ```
-
-4. **Run the application in development mode:**
-
-    ```bash
-    pnpm tauri dev
-    ```
-
-5. **Build the application for production (Optional):**
-    ```bash
-    pnpm tauri build
-    ```
+Once the environment is set up, you can run the UI from the **repository root** with:
+`bash
+    pnpm ui:dev
+    `

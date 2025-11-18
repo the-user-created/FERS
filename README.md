@@ -20,14 +20,15 @@ semi-independent packages.
 
 ## Key Features
 
-- **High-Performance Core:** A modernized C++23 engine capable of detailed signal-level simulation with optimized
-  multithreading.
+- **Unified Event-Driven Core:** A modernized C++23 engine featuring a unified event-driven architecture for efficient
+  simulation of both pulsed and continuous-wave scenarios, with optimized multithreading.
 - **Visual Scenario Builder:** An intuitive 3D interface to construct, configure, and visualize radar scenarios.
 - **Flexible System Modeling:** Simulate a wide range of radar systems, including monostatic, multistatic, pulsed, and
   continuous wave (CW).
 - **Advanced Data Export:** Output simulation data in HDF5, CSV, and XML formats for analysis.
 - **Geographic Visualization:** Generate KML files from scenarios for accurate visualization in tools like Google Earth.
-- **Modern Documentation:** A continuously updated and deployed [documentation site](https://the-user-created.github.io/FERS/)
+- **Modern Documentation:** A continuously updated and
+  deployed [documentation site](https://the-user-created.github.io/FERS/)
   with a searchable interface, generated directly from the source code.
 - **Unified Schema:** A central XML schema ensures consistency and serves as the single source of truth for scenarios
   across the simulator and the UI.
@@ -36,27 +37,100 @@ semi-independent packages.
 
 This monorepo contains the following packages:
 
-- `packages/libfers`: The core C++ radar simulation library. It contains all the core logic, physics, and file processing capabilities, exposed through a C-style API.
-- `packages/fers-cli`: A lightweight command-line interface that acts as a wrapper around `libfers`, providing backward compatibility with the original FERS executable.
+- `packages/libfers`: The core C++ radar simulation library. It contains all the core logic, physics, and file
+  processing capabilities, exposed through a C-style API.
+- `packages/fers-cli`: A lightweight command-line interface that acts as a wrapper around `libfers`, providing backward
+  compatibility with the original FERS executable.
 - `packages/fers-ui`: A modern desktop application built with Tauri and React. It provides a graphical interface for
   creating, editing, and visualizing FERS scenarios by linking against `libfers`.
 - `packages/schema`: The XML Schema Definition (XSD) and Document Type Definition (DTD) that define the structure of
   FERS scenario files. This schema is the contract between the UI and the core simulator.
 
-## Getting Started
+## Development Setup
 
-To get started with a specific package, please refer to its dedicated README file for detailed instructions on
-dependencies, building, and usage.
+Follow these steps to set up a development environment for building the C++ core and running the UI.
 
-- **For the core C++ library, see:** [`packages/libfers/README.md`](packages/libfers/README.md)
-- **For the command-line interface, see:** [`packages/fers-cli/README.md`](packages/fers-cli/README.md)
-- **For the graphical user interface, see:** [`packages/fers-ui/README.md`](packages/fers-ui/README.md)
+### 1. Prerequisites
+
+Ensure you have the following tools installed on your system:
+
+- A C++23 compatible compiler (e.g., GCC 11+, Clang 14+) and **CMake** (3.22+).
+- [**Node.js**](https://nodejs.org/) (v18+) and [**pnpm**](https://pnpm.io/).
+- The [**Rust toolchain**](https://www.rust-lang.org/tools/install).
+- [**Tauri prerequisites**](https://tauri.app/start/prerequisites/) for your operating system.
+- [**clang-format**](https://clang.llvm.org/docs/ClangFormat.html) (for code formatting).
+
+### 2. Clone the Repository
+
+Clone the repository and its submodules from the root of the monorepo.
+
+```bash
+git clone --recursive https://github.com/the-user-created/FERS.git
+cd FERS
+```
+
+### 3. Install System Dependencies (for C++ Core)
+
+**On Ubuntu/Debian:**
+
+```bash
+sudo apt-get update && sudo apt-get install build-essential cmake libhdf5-dev libxml2-dev xxd
+```
+
+**On macOS (using Homebrew):**
+
+```bash
+brew install cmake hdf5 libxml2 llvm
+```
+
+### 4. Install Node.js Dependencies
+
+From the **root of the repository**, install all JavaScript dependencies. This also sets up pre-commit hooks using
+Husky.
+
+```bash
+pnpm install
+```
+
+### 5. Build the C++ Core
+
+Create a build directory and compile the C++ libraries using CMake.
+
+**On Linux:**
+
+```bash
+# From the root FERS directory
+mkdir build && cd build
+cmake ..
+make -j$(nproc)
+```
+
+**On macOS:**
+You must point CMake to the Homebrew LLVM toolchain.
+
+```bash
+# From the FERS/ directory
+mkdir build && cd build
+CC=/usr/local/opt/llvm/bin/clang CXX=/usr/local/opt/llvm/bin/clang++ cmake ..
+make -j$(sysctl -n hw.ncpu)
+```
+
+### 6. Run the UI
+
+Navigate back to the root of the repository and start the development server.
+
+```bash
+# From the root FERS directory
+pnpm ui:dev
+```
 
 ## Contributing
 
-We welcome contributions to the FERS project! Whether you're interested in improving the C++ core, enhancing the UI, or
-refining the documentation, your help is appreciated. Please read our [CONTRIBUTING.md](CONTRIBUTING.md)
-guide to get started.
+We welcome contributions to the FERS project! Please read our [CONTRIBUTING.md](CONTRIBUTING.md) guide to get started.
+
+Note that this repository uses **Husky** to enforce code quality with pre-commit hooks. When you commit, your staged
+files will be automatically formatted and linted. Ensure you have `clang-format`, `prettier`, and the Rust toolchain
+installed.
 
 ## License
 
@@ -64,13 +138,17 @@ guide to get started.
 - Copyright (C) 2008-present FERS contributors (see [AUTHORS.md](AUTHORS.md)).
 
 This program is free software; you can redistribute it and/or modify it under the terms of the
-[GNU General Public License](https://github.com/the-user-created/FERS/blob/master/LICENSE) as published by the Free Software Foundation; version 2 of the License.
+[GNU General Public License](https://github.com/the-user-created/FERS/blob/master/LICENSE) as published by the Free
+Software Foundation; version 2 of the License.
 
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
-warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the [GNU General Public License](https://github.com/the-user-created/FERS/blob/master/LICENSE) for
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See
+the [GNU General Public License](https://github.com/the-user-created/FERS/blob/master/LICENSE) for
 more details.
 
-You should have received a copy of the [GNU General Public License](https://github.com/the-user-created/FERS/blob/master/LICENSE) along with this program; if not, write to
+You should have received a copy of
+the [GNU General Public License](https://github.com/the-user-created/FERS/blob/master/LICENSE) along with this program;
+if not, write to
 the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 ### User-Generated Files

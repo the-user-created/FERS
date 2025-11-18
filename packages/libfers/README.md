@@ -18,7 +18,7 @@ including the official `fers-cli` and `fers-ui` applications.
 - **System Simulation:** Support for Monostatic, Multistatic, Continuous Wave (CW), and Pulsed radar systems.
 - **Data Export:** Advanced data export in HDF5, CSV, and XML formats.
 - **Geographic Visualization:** Generate KML files from scenarios.
-- **Performance:** Efficient multithreading with a global thread pool.
+- **Performance:** A unified event-driven architecture for efficient simulation of both pulsed and continuous-wave scenarios, with a global thread pool for parallelizing tasks.
 
 ## Dependencies
 
@@ -32,25 +32,9 @@ including the official `fers-cli` and `fers-ui` applications.
 
 ## Building the Library and CLI
 
-The build process can create shared libraries (`.so`/`.dll`), static libraries (`.a`), and the `fers-cli` executable.
+The C++ components are built using CMake from the repository root. For a complete development setup guide, please refer to the **[root `README.md`](../../README.md)**.
 
-### 1. Clone the Repository
-
-Clone the repository and its submodules. All commands should be run from the root of the monorepo.
-
-```bash
-git clone --recursive https://github.com/the-user-created/FERS.git
-cd FERS
-```
-
-If you've already cloned, ensure submodules are up to date:
-
-```bash
-git pull
-git submodule update --init --recursive
-```
-
-### 2. Install System Dependencies
+### 1. Install System Dependencies
 
 **On Ubuntu/Debian:**
 
@@ -65,9 +49,9 @@ A modern LLVM toolchain is required, as the default system Clang may be outdated
 brew install cmake hdf5 libxml2 llvm doxygen graphviz
 ```
 
-### 3. Configure and Build
+### 2. Configure and Build
 
-It is recommended to create a single build directory at the repository's root level.
+From the root of the repository, create a build directory and run CMake/make.
 
 **On Linux:**
 
@@ -108,7 +92,7 @@ Example of a debug build that only creates a static library:
 cmake .. -DCMAKE_BUILD_TYPE=Debug -DFERS_BUILD_SHARED_LIBS=OFF
 ```
 
-### 4. Install (Optional)
+### 3. Install (Optional)
 
 You can install the libraries, headers, and CLI executable to your system.
 
