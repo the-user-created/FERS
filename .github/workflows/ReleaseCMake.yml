@@ -68,7 +68,7 @@ jobs:
                   Filename: FERS.zip # The name of the archive file
 
             - name: Upload to Release
-              uses: softprops/action-gh-release@v1 # Use the action-gh-release action to upload the zip file to the release
+              uses: softprops/action-gh-release@v2 # Use the action-gh-release action to upload the zip file to the release
               with:
                   files: |
                       ./toZip/FERS.zip
