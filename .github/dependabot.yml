@@ -1,0 +1,92 @@
+---
+# For more information, see:
+# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+    # Maintain dependencies for GitHub Actions
+    - package-ecosystem: 'github-actions'
+      directory: '/'
+      schedule:
+          interval: 'weekly'
+      commit-message:
+          prefix: 'chore(ci)'
+          include: 'scope'
+      labels:
+          - 'dependencies'
+          - 'scope: build-ci'
+
+    # Maintain dependencies for Cargo (Rust)
+    - package-ecosystem: 'cargo'
+      directory: '/'
+      schedule:
+          interval: 'weekly'
+      commit-message:
+          prefix: 'chore(deps-rust)'
+          include: 'scope'
+      labels:
+          - 'dependencies'
+          - 'scope: ui'
+
+    # Maintain dependencies for npm (pnpm) across the monorepo
+    - package-ecosystem: 'npm'
+      directory: '/'
+      schedule:
+          interval: 'weekly'
+      commit-message:
+          prefix: 'chore(deps-js)'
+          include: 'scope'
+      labels:
+          - 'dependencies'
+          - 'scope: ui'
+      groups:
+          # UI Framework and tooling
+          react-stack:
+              patterns:
+                  - 'react'
+                  - 'react-dom'
+                  - '@types/react'
+                  - '@types/react-dom'
+                  - '@vitejs/plugin-react'
+                  - 'vite'
+          # UI Component Library
+          mui-stack:
+              patterns:
+                  - '@mui/*'
+                  - '@emotion/*'
+          # 3D Rendering
+          three-stack:
+              patterns:
+                  - 'three'
+                  - '@react-three/*'
+                  - 'three-stdlib'
+          # Tauri plugins and API
+          tauri-stack:
+              patterns:
+                  - '@tauri-apps/*'
+          # Linting and formatting toolchain
+          dev-tooling:
+              patterns:
+                  - 'eslint'
+                  - 'prettier'
+                  - 'typescript-eslint'
+                  - 'husky'
+                  - 'lint-staged'
+      # Ignore major version updates for ESLint/TS-ESLint,
+      ignore:
+          - dependency-name: 'eslint'
+            update-types: ['version-update:semver-major']
+          - dependency-name: 'typescript-eslint'
+            update-types: ['version-update:semver-major']
+
+    # Maintain dependencies for Git submodules
+    - package-ecosystem: 'gitsubmodule'
+      directory: '/'
+      schedule:
+          interval: 'weekly'
+      commit-message:
+          prefix: 'chore(submodules)'
+          include: 'scope'
+      labels:
+          - 'dependencies'
+          - 'scope: core-simulator'
