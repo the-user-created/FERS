@@ -3,8 +3,8 @@
     "private": true,
     "scripts": {
         "prepare": "husky",
-        "ui:dev": "pnpm --filter fers-ui dev",
-        "ui:build": "pnpm --filter fers-ui build",
+        "ui:dev": "pnpm --filter fers-ui tauri dev",
+        "ui:build": "pnpm --filter fers-ui tauri build",
         "tauri": "pnpm --filter fers-ui tauri",
         "format": "pnpm format:cpp && pnpm format:js && pnpm format:rust",
         "format:cpp": "git ls-files 'packages/**/*.cpp' 'packages/**/*.h' | xargs clang-format -i",
