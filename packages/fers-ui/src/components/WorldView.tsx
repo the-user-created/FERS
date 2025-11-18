@@ -4,7 +4,6 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { MapControls, Environment, Html } from '@react-three/drei';
 import { Vector3, Color, ShaderMaterial, Matrix4 } from 'three';
-import { invoke } from '@tauri-apps/api/core';
 import {
     useScenarioStore,
     Platform,
@@ -15,7 +14,6 @@ import CameraManager from './CameraManager';
 import { type MapControls as MapControlsImpl } from 'three-stdlib';
 import { useFrame, useThree } from '@react-three/fiber';
 import { smoothstep } from 'three/src/math/MathUtils.js';
-
 
 const gridVertexShader = /* glsl */ `
     varying vec3 vWorldDirection;
@@ -339,7 +337,7 @@ export default function WorldView() {
                 shadow-camera-bottom={-200}
             />
             {/* Environment for realistic reflections and ambient light */}
-            <Environment preset="city" />
+            <Environment files="/potsdamer_platz_1k.hdr" />
 
             {/* Scenery */}
             <InfiniteGrid />
