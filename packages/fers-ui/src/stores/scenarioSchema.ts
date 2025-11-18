@@ -175,13 +175,14 @@ export const RotationPathSchema = z.object({
 });
 
 const NoComponentSchema = z.object({ type: z.literal('none') });
+
 const MonostaticComponentSchema = z.object({
     type: z.literal('monostatic'),
     name: z.string().min(1),
     radarType: z.enum(['pulsed', 'cw']),
-    window_skip: z.number().min(0),
-    window_length: z.number().min(0),
-    prf: z.number().positive(),
+    window_skip: nullableNumber,
+    window_length: nullableNumber,
+    prf: nullableNumber,
     antennaId: z.string().uuid().nullable(),
     waveformId: z.string().uuid().nullable(),
     timingId: z.string().uuid().nullable(),
@@ -189,27 +190,31 @@ const MonostaticComponentSchema = z.object({
     noDirectPaths: z.boolean(),
     noPropagationLoss: z.boolean(),
 });
+
 const TransmitterComponentSchema = z.object({
     type: z.literal('transmitter'),
     name: z.string().min(1),
     radarType: z.enum(['pulsed', 'cw']),
-    prf: z.number().positive(),
+    prf: nullableNumber,
     antennaId: z.string().uuid().nullable(),
     waveformId: z.string().uuid().nullable(),
     timingId: z.string().uuid().nullable(),
 });
+
 const ReceiverComponentSchema = z.object({
     type: z.literal('receiver'),
     name: z.string().min(1),
-    window_skip: z.number().min(0),
-    window_length: z.number().min(0),
-    prf: z.number().positive(),
+    radarType: z.enum(['pulsed', 'cw']),
+    window_skip: nullableNumber,
+    window_length: nullableNumber,
+    prf: nullableNumber,
     antennaId: z.string().uuid().nullable(),
     timingId: z.string().uuid().nullable(),
     noiseTemperature: nullableNumber.pipe(z.number().min(0).nullable()),
     noDirectPaths: z.boolean(),
     noPropagationLoss: z.boolean(),
 });
+
 const TargetComponentSchema = z.object({
     type: z.literal('target'),
     name: z.string().min(1),
