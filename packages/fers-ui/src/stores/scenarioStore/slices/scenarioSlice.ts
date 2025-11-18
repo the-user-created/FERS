@@ -27,6 +27,12 @@ interface BackendObjectWithName {
     [key: string]: unknown;
 }
 
+interface BackendPulsedMode {
+    prf?: number;
+    window_skip?: number;
+    window_length?: number;
+}
+
 interface BackendPlatformComponentData {
     name: string;
     antenna?: string;
@@ -35,10 +41,8 @@ interface BackendPlatformComponentData {
     noise_temp?: number | null;
     nodirect?: boolean;
     nopropagationloss?: boolean;
-    type?: 'cw' | 'pulsed';
-    window_skip?: number;
-    window_length?: number;
-    prf?: number;
+    pulsed_mode?: BackendPulsedMode;
+    cw_mode?: object;
     rcs?: { type: 'isotropic' | 'file'; value?: number; filename?: string };
     model?: { type: 'constant' | 'chisquare' | 'gamma'; k?: number };
 }
@@ -207,7 +211,7 @@ export const createScenarioSlice: StateCreator<
                     hemisphere: (
                         params.coordinatesystem as Record<string, 'N' | 'S'>
                     )?.hemisphere,
-                }
+                },
             };
 
             // 2. Assets (and build name-to-id map)
@@ -303,6 +307,14 @@ export const createScenarioSlice: StateCreator<
                 if (p.component && Object.keys(p.component).length > 0) {
                     const cType = Object.keys(p.component)[0];
                     const cData = p.component[cType];
+
+                    const radarType = cData.pulsed_mode
+                        ? 'pulsed'
+                        : cData.cw_mode
+                          ? 'cw'
+                          : 'pulsed'; // Default
+                    const pulsed = cData.pulsed_mode;
+
                     const commonRadar = {
                         antennaId: nameToIdMap.get(cData.antenna ?? '') ?? null,
                         timingId: nameToIdMap.get(cData.timing ?? '') ?? null,
@@ -318,11 +330,10 @@ export const createScenarioSlice: StateCreator<
                             component = {
                                 type: 'monostatic',
                                 name: cData.name,
-                                radarType:
-                                    cData.type === 'cw' ? 'cw' : 'pulsed',
-                                window_skip: cData.window_skip ?? 0,
-                                window_length: cData.window_length ?? 0,
-                                prf: cData.prf ?? 1000,
+                                radarType,
+                                window_skip: pulsed?.window_skip ?? null,
+                                window_length: pulsed?.window_length ?? null,
+                                prf: pulsed?.prf ?? null,
                                 waveformId:
                                     nameToIdMap.get(cData.waveform ?? '') ??
                                     null,
@@ -334,9 +345,8 @@ export const createScenarioSlice: StateCreator<
                             component = {
                                 type: 'transmitter',
                                 name: cData.name,
-                                radarType:
-                                    cData.type === 'cw' ? 'cw' : 'pulsed',
-                                prf: cData.prf ?? 1000,
+                                radarType,
+                                prf: pulsed?.prf ?? null,
                                 waveformId:
                                     nameToIdMap.get(cData.waveform ?? '') ??
                                     null,
@@ -347,9 +357,10 @@ export const createScenarioSlice: StateCreator<
                             component = {
                                 type: 'receiver',
                                 name: cData.name,
-                                window_skip: cData.window_skip ?? 0,
-                                window_length: cData.window_length ?? 0,
-                                prf: cData.prf ?? 1000,
+                                radarType,
+                                window_skip: pulsed?.window_skip ?? null,
+                                window_length: pulsed?.window_length ?? null,
+                                prf: pulsed?.prf ?? null,
                                 ...commonRadar,
                                 ...commonReceiver,
                             };

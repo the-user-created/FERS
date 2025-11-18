@@ -34,6 +34,20 @@ export type PlatformComponent = z.infer<typeof PlatformComponentSchema>;
 export type Platform = z.infer<typeof PlatformSchema> & {
     pathPoints?: Vector3[];
 };
+
+// --- Corrected Component Type Definitions ---
+export type MonostaticComponent = Extract<
+    PlatformComponent,
+    { type: 'monostatic' }
+>;
+export type TransmitterComponent = Extract<
+    PlatformComponent,
+    { type: 'transmitter' }
+>;
+export type ReceiverComponent = Extract<
+    PlatformComponent,
+    { type: 'receiver' }
+>;
 export type TargetComponent = Extract<PlatformComponent, { type: 'target' }>;
 
 export type ScenarioData = Omit<

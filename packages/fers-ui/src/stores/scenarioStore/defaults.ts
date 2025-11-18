@@ -24,7 +24,7 @@ export const defaultGlobalParameters: GlobalParameters = {
     },
     coordinateSystem: {
         frame: 'ENU',
-    }
+    },
 };
 
 export const defaultWaveform: Omit<Waveform, 'id' | 'name'> = {
@@ -72,7 +72,7 @@ export const createDefaultPlatform = (): Omit<Platform, 'id' | 'name'> => ({
         name: 'Monostatic Radar',
         radarType: 'pulsed',
         window_skip: 0,
-        window_length: 0,
+        window_length: 1e-5,
         prf: 1000,
         antennaId: null,
         waveformId: null,

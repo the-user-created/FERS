@@ -65,15 +65,28 @@ export const createBackendSlice: StateCreator<
 
             let backendComponent = {};
             if (component.type !== 'none') {
+                const mode =
+                    'radarType' in component && component.radarType === 'pulsed'
+                        ? {
+                              pulsed_mode: {
+                                  prf: component.prf,
+                                  ...(component.type !== 'transmitter' && {
+                                      window_skip: component.window_skip,
+                                      window_length: component.window_length,
+                                  }),
+                              },
+                          }
+                        : 'radarType' in component &&
+                            component.radarType === 'cw'
+                          ? { cw_mode: {} }
+                          : {};
+
                 switch (component.type) {
                     case 'monostatic':
                         backendComponent = {
                             monostatic: {
                                 name: component.name,
-                                type: component.radarType,
-                                window_skip: component.window_skip,
-                                window_length: component.window_length,
-                                prf: component.prf,
+                                ...mode,
                                 antenna: findAntennaName(component.antennaId),
                                 waveform: findWaveformName(
                                     component.waveformId
@@ -89,8 +102,7 @@ export const createBackendSlice: StateCreator<
                         backendComponent = {
                             transmitter: {
                                 name: component.name,
-                                type: component.radarType,
-                                prf: component.prf,
+                                ...mode,
                                 antenna: findAntennaName(component.antennaId),
                                 waveform: findWaveformName(
                                     component.waveformId
@@ -103,9 +115,7 @@ export const createBackendSlice: StateCreator<
                         backendComponent = {
                             receiver: {
                                 name: component.name,
-                                window_skip: component.window_skip,
-                                window_length: component.window_length,
-                                prf: component.prf,
+                                ...mode,
                                 antenna: findAntennaName(component.antennaId),
                                 timing: findTimingName(component.timingId),
                                 noise_temp: component.noiseTemperature,
