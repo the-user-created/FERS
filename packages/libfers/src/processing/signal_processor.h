@@ -49,10 +49,9 @@ namespace processing
 	 * @param start The start time of the window in seconds.
 	 * @param fracDelay A fractional sample delay to apply for fine-grained timing.
 	 * @param responses A span of unique pointers to the `Response` objects to be rendered.
-	 * @param pool A reference to the thread pool for parallel processing.
 	 */
 	void renderWindow(std::vector<ComplexType>& window, RealType length, RealType start, RealType fracDelay,
-					  std::span<const std::unique_ptr<serial::Response>> responses, pool::ThreadPool& pool);
+					  std::span<const std::unique_ptr<serial::Response>> responses);
 
 	/**
 	 * @brief Applies thermal (Johnson-Nyquist) noise to a window of I/Q samples.

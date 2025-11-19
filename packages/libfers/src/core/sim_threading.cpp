@@ -74,7 +74,7 @@ namespace core
 		{
 			if (receiver_ptr->getMode() == OperationMode::PULSED_MODE)
 			{
-				finalizer_threads.emplace_back(processing::runPulsedFinalizer, receiver_ptr.get(), &pool,
+				finalizer_threads.emplace_back(processing::runPulsedFinalizer, receiver_ptr.get(),
 											   &world->getTargets());
 			}
 		}

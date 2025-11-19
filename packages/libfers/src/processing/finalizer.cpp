@@ -65,8 +65,7 @@ namespace
 
 namespace processing
 {
-	void runPulsedFinalizer(radar::Receiver* receiver, pool::ThreadPool* pool,
-							const std::vector<std::unique_ptr<radar::Target>>* targets)
+	void runPulsedFinalizer(radar::Receiver* receiver, const std::vector<std::unique_ptr<radar::Target>>* targets)
 	{
 		// Each finalizer thread gets a private, stateful clone of the timing model
 		// to ensure thread safety and independent state progression.
@@ -168,7 +167,7 @@ namespace processing
 			}
 
 			// 3. Render the primary pulsed responses.
-			renderWindow(window_buffer, job.duration, actual_start, frac_delay, job.responses, *pool);
+			renderWindow(window_buffer, job.duration, actual_start, frac_delay, job.responses);
 
 			// 4. Apply phase noise (jitter).
 			if (timing_model->isEnabled())
