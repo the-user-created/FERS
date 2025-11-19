@@ -36,11 +36,9 @@ namespace processing
 	 * and I/O for that receiver's data.
 	 *
 	 * @param receiver A pointer to the pulsed-mode receiver to process.
-	 * @param pool A pointer to the main thread pool for parallelizing sub-tasks.
 	 * @param targets A pointer to the world's list of targets for interference calculation.
 	 */
-	void runPulsedFinalizer(radar::Receiver* receiver, pool::ThreadPool* pool,
-							const std::vector<std::unique_ptr<radar::Target>>* targets);
+	void runPulsedFinalizer(radar::Receiver* receiver, const std::vector<std::unique_ptr<radar::Target>>* targets);
 
 	/**
 	 * @brief The finalization task for a continuous-wave (CW) mode receiver.
