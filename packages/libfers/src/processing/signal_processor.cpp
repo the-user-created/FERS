@@ -95,8 +95,6 @@ namespace processing
 		const RealType rate = params::rate() * params::oversampleRatio();
 		const auto local_window_size = static_cast<unsigned>(std::ceil(length * rate));
 
-		// sequentialProcessing(work_list, window, rate, start, fracDelay, local_window_size);
-
 		std::vector local_window(local_window_size, ComplexType{});
 
 		while (!work_list.empty())
