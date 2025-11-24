@@ -9,7 +9,7 @@
  * @brief Implementation of the logging system.
  */
 
-#include <libfers/logging.h>
+#include "logging.h"
 
 #include <chrono>
 #include <ctime>

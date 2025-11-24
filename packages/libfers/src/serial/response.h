@@ -16,7 +16,7 @@
 #include <string>
 #include <vector>
 
-#include <libfers/config.h>
+#include "core/config.h"
 #include "interpolation/interpolation_point.h"
 
 class XmlElement;

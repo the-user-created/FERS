@@ -23,7 +23,7 @@
 #include <string>
 #include <string_view>
 
-#include <libfers/logging.h>
+#include "core/logging.h"
 #include "libxml/globals.h"
 #include "libxml/xmlstring.h"
 

@@ -12,8 +12,9 @@
 
 #include "timing.h"
 
-#include <libfers/logging.h>
 #include <stdexcept>
+
+#include "core/logging.h"
 #include "prototype_timing.h"
 
 using logging::Level;

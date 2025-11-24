@@ -17,7 +17,7 @@
 #include <string>
 #include <utility>
 
-#include <libfers/config.h>
+#include "core/config.h"
 #include "interpolation/interpolation_set.h"
 #include "noise/noise_generators.h"
 #include "object.h"

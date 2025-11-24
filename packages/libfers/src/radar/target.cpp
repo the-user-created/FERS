@@ -10,14 +10,14 @@
  * @brief Defines classes for radar targets and their Radar Cross-Section (RCS) models.
  */
 
-#include <libfers/target.h>
+#include "target.h"
 
 #include <cmath>
 #include <optional>
 #include <stdexcept>
 
-#include <libfers/geometry_ops.h>
-#include <libfers/logging.h>
+#include "core/logging.h"
+#include "math/geometry_ops.h"
 #include "serial/libxml_wrapper.h"
 
 using math::SVec3;

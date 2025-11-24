@@ -10,9 +10,9 @@
  * @brief Contains the implementation of the Transmitter class.
  */
 
-#include <libfers/transmitter.h>
+#include "transmitter.h"
 
-#include <libfers/parameters.h>
+#include "core/parameters.h"
 
 namespace radar
 {

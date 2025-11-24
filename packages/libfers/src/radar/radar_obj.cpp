@@ -11,13 +11,13 @@
  * @brief Implementation of classes defined in radar_obj.h
  */
 
-#include <libfers/radar_obj.h>
+#include "radar_obj.h"
 
 #include <stack>
 
-#include <libfers/antenna_factory.h>
-#include <libfers/logging.h>
-#include <libfers/receiver.h>
+#include "antenna/antenna_factory.h"
+#include "core/logging.h"
+#include "receiver.h"
 
 using logging::Level;
 

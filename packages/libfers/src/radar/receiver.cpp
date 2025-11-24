@@ -10,13 +10,13 @@
  * @brief Implementation of the Receiver class.
  */
 
-#include <libfers/receiver.h>
+#include "receiver.h"
 
 #include <algorithm>
 #include <utility>
 
-#include <libfers/parameters.h>
-#include <libfers/response.h>
+#include "core/parameters.h"
+#include "serial/response.h"
 
 namespace radar
 {

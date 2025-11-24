@@ -28,20 +28,20 @@
 #include "fers_xml_xsd.h"
 
 // Public libfers headers
-#include <libfers/antenna_factory.h>
-#include <libfers/config.h>
-#include <libfers/coord.h>
-#include <libfers/geometry_ops.h>
-#include <libfers/logging.h>
-#include <libfers/parameters.h>
-#include <libfers/path.h>
-#include <libfers/platform.h>
-#include <libfers/radar_obj.h>
-#include <libfers/receiver.h>
-#include <libfers/rotation_path.h>
-#include <libfers/target.h>
-#include <libfers/transmitter.h>
-#include <libfers/world.h>
+#include "antenna/antenna_factory.h"
+#include "core/config.h"
+#include "core/logging.h"
+#include "core/parameters.h"
+#include "core/world.h"
+#include "math/coord.h"
+#include "math/geometry_ops.h"
+#include "math/path.h"
+#include "math/rotation_path.h"
+#include "radar/platform.h"
+#include "radar/radar_obj.h"
+#include "radar/receiver.h"
+#include "radar/target.h"
+#include "radar/transmitter.h"
 
 // Private libfers headers
 #include "libxml_wrapper.h"

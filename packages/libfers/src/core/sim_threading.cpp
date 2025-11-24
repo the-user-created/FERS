@@ -35,16 +35,16 @@
 #include <utility>
 #include <vector>
 
-#include <libfers/logging.h>
-#include <libfers/parameters.h>
-#include <libfers/receiver.h>
-#include <libfers/target.h>
-#include <libfers/transmitter.h>
-#include <libfers/world.h>
+#include "logging.h"
+#include "parameters.h"
 #include "processing/finalizer.h"
+#include "radar/receiver.h"
+#include "radar/target.h"
+#include "radar/transmitter.h"
 #include "sim_events.h"
 #include "simulation/channel_model.h"
 #include "thread_pool.h"
+#include "world.h"
 
 using logging::Level;
 using radar::OperationMode;

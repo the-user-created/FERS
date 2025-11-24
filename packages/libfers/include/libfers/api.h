@@ -69,6 +69,39 @@ fers_context_t* fers_context_create();
  */
 void fers_context_destroy(fers_context_t* context);
 
+/**
+ * @brief Log levels for the FERS library.
+ */
+typedef enum
+{
+	FERS_LOG_TRACE,
+	FERS_LOG_DEBUG,
+	FERS_LOG_INFO,
+	FERS_LOG_WARNING,
+	FERS_LOG_ERROR,
+	FERS_LOG_FATAL
+} fers_log_level_t;
+
+/**
+ * @brief Configures the internal logger.
+ * @param level The minimum severity level to log.
+ * @param log_file_path Optional path to a log file. Pass NULL to disable file logging.
+ * @return 0 on success, non-zero on error.
+ */
+int fers_configure_logging(fers_log_level_t level, const char* log_file_path);
+
+/**
+ * @brief Submits a log message to the library's unified logging system.
+ * This ensures CLI messages match the format (timestamps, alignment) of library messages.
+ */
+void fers_log(fers_log_level_t level, const char* message);
+
+/**
+ * @brief Sets the number of worker threads for the simulation.
+ * @param num_threads The number of threads to use.
+ * @return 0 on success, non-zero on error.
+ */
+int fers_set_thread_count(unsigned num_threads);
 
 // --- Scenario Loading & Serialization ---
 

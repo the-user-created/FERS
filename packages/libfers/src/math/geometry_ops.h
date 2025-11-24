@@ -15,7 +15,7 @@
 #include <array>
 #include <cmath>
 
-#include <libfers/config.h>
+#include "core/config.h"
 
 namespace math
 {

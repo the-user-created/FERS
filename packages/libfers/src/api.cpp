@@ -10,16 +10,16 @@
  * creation/destruction, exception catching, error reporting, and type casting.
  */
 
+#include <core/logging.h>
+#include <core/parameters.h>
 #include <cstring>
 #include <functional>
 #include <libfers/api.h>
-#include <libfers/logging.h>
-#include <libfers/parameters.h>
-#include <libfers/path.h>
-#include <libfers/rotation_path.h>
+#include <math/path.h>
+#include <math/rotation_path.h>
+#include <nlohmann/json.hpp>
 #include <string>
 
-#include <nlohmann/json.hpp>
 #include "core/fers_context.h"
 #include "core/sim_threading.h"
 #include "core/thread_pool.h"
@@ -82,6 +82,78 @@ void fers_context_destroy(fers_context_t* context)
 		return;
 	}
 	delete context;
+}
+
+// Helper to map C enum to internal C++ enum
+static logging::Level map_level(fers_log_level_t level)
+{
+	switch (level)
+	{
+	case FERS_LOG_TRACE:
+		return logging::Level::TRACE;
+	case FERS_LOG_DEBUG:
+		return logging::Level::DEBUG;
+	case FERS_LOG_INFO:
+		return logging::Level::INFO;
+	case FERS_LOG_WARNING:
+		return logging::Level::WARNING;
+	case FERS_LOG_ERROR:
+		return logging::Level::ERROR;
+	case FERS_LOG_FATAL:
+		return logging::Level::FATAL;
+	default:
+		return logging::Level::INFO;
+	}
+}
+
+int fers_configure_logging(fers_log_level_t level, const char* log_file_path)
+{
+	last_error_message.clear();
+	try
+	{
+		logging::logger.setLevel(map_level(level));
+		if (log_file_path && *log_file_path)
+		{
+			auto result = logging::logger.logToFile(log_file_path);
+			if (!result)
+			{
+				last_error_message = result.error();
+				return 1;
+			}
+		}
+		return 0;
+	}
+	catch (const std::exception& e)
+	{
+		handle_api_exception(e, "fers_configure_logging");
+		return 1;
+	}
+}
+
+void fers_log(fers_log_level_t level, const char* message)
+{
+	if (!message)
+		return;
+	// We pass a default source_location because C-API calls don't provide C++ source info
+	logging::logger.log(map_level(level), message, std::source_location::current());
+}
+
+int fers_set_thread_count(unsigned num_threads)
+{
+	try
+	{
+		if (auto res = params::setThreads(num_threads); !res)
+		{
+			last_error_message = res.error();
+			return 1;
+		}
+		return 0;
+	}
+	catch (const std::exception& e)
+	{
+		handle_api_exception(e, "fers_set_thread_count");
+		return 1;
+	}
 }
 
 int fers_load_scenario_from_xml_file(fers_context_t* context, const char* xml_filepath, const int validate)

@@ -16,7 +16,7 @@
 #include <optional>
 #include <string>
 
-#include <libfers/config.h>
+#include "config.h"
 #include "logging.h"
 
 namespace params

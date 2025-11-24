@@ -12,15 +12,16 @@
 
 #pragma once
 
-#include <libfers/config.h>
-#include <libfers/geometry_ops.h>
 #include <memory>
 #include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
+
+#include "core/config.h"
+#include "core/logging.h"
 #include "interpolation/interpolation_set.h"
-#include "logging.h"
+#include "math/geometry_ops.h"
 
 namespace serial
 {

@@ -18,7 +18,7 @@
 #include <stdexcept>
 #include <utility>
 
-#include <libfers/logging.h>
+#include "core/logging.h"
 #include "signal/dsp_filters.h"
 
 using fers_signal::DecadeUpsampler;

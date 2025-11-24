@@ -19,7 +19,7 @@
 #include <numeric>
 #include <stdexcept>
 
-#include <libfers/parameters.h>
+#include "core/parameters.h"
 
 constexpr RealType BLACKMAN_A0 = 0.42;
 constexpr RealType BLACKMAN_A1 = 0.5;

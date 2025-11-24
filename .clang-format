@@ -38,6 +38,8 @@ IncludeCategories:
     - Regex: '.*'
       Priority: 3
 IncludeIsMainRegex: '([-_](test|unittest))?$'
+SortIncludes: CaseSensitive
+IncludeBlocks: Regroup
 IndentCaseBlocks: true
 IndentWidth: 4
 InsertNewlineAtEOF: true

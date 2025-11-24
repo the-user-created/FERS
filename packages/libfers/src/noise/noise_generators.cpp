@@ -16,7 +16,7 @@
 #include <ranges>
 #include <utility>
 
-#include <libfers/parameters.h>
+#include "core/parameters.h"
 #include "noise/falpha_branch.h"
 
 namespace noise

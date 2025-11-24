@@ -16,7 +16,7 @@
 #include <span>
 #include <vector>
 
-#include <libfers/config.h>
+#include "core/config.h"
 
 namespace fers_signal
 {

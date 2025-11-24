@@ -18,15 +18,15 @@
 
 #include <cmath>
 
-#include <libfers/geometry_ops.h>
-#include <libfers/logging.h>
-#include <libfers/parameters.h>
-#include <libfers/radar_obj.h>
-#include <libfers/receiver.h>
-#include <libfers/response.h>
-#include <libfers/target.h>
-#include <libfers/transmitter.h>
+#include "core/logging.h"
+#include "core/parameters.h"
 #include "interpolation/interpolation_point.h"
+#include "math/geometry_ops.h"
+#include "radar/radar_obj.h"
+#include "radar/receiver.h"
+#include "radar/target.h"
+#include "radar/transmitter.h"
+#include "serial/response.h"
 #include "signal/radar_signal.h"
 #include "timing/timing.h"
 

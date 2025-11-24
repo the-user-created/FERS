@@ -22,7 +22,7 @@
 #include <exception>
 #include <memory>
 
-#include <libfers/config.h>
+#include "core/config.h"
 
 namespace radar
 {

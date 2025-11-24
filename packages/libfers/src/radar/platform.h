@@ -16,10 +16,10 @@
 #include <string>
 #include <utility>
 
-#include <libfers/config.h>
-#include <libfers/geometry_ops.h>
-#include <libfers/path.h>
-#include <libfers/rotation_path.h>
+#include "core/config.h"
+#include "math/geometry_ops.h"
+#include "math/path.h"
+#include "math/rotation_path.h"
 
 namespace radar
 {

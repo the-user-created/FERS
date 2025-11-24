@@ -10,7 +10,7 @@
  * @brief Implementation of geometry classes.
  */
 
-#include <libfers/geometry_ops.h>
+#include "geometry_ops.h"
 
 namespace math
 {
