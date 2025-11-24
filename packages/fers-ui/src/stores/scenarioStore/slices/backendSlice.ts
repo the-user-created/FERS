@@ -61,10 +61,11 @@ export const createBackendSlice: StateCreator<
             timings.find((t) => t.id === id)?.name;
 
         const backendPlatforms = platforms.map((p) => {
-            const { component, motionPath, rotation, ...rest } = p;
+            const { components, motionPath, rotation, ...rest } = p;
 
-            let backendComponent = {};
-            if (component.type !== 'none') {
+            // Map the list of components to backend objects
+            const backendComponents = components.map((component) => {
+                let compObj = {};
                 const mode =
                     'radarType' in component && component.radarType === 'pulsed'
                         ? {
@@ -83,7 +84,7 @@ export const createBackendSlice: StateCreator<
 
                 switch (component.type) {
                     case 'monostatic':
-                        backendComponent = {
+                        compObj = {
                             monostatic: {
                                 name: component.name,
                                 ...mode,
@@ -99,7 +100,7 @@ export const createBackendSlice: StateCreator<
                         };
                         break;
                     case 'transmitter':
-                        backendComponent = {
+                        compObj = {
                             transmitter: {
                                 name: component.name,
                                 ...mode,
@@ -112,7 +113,7 @@ export const createBackendSlice: StateCreator<
                         };
                         break;
                     case 'receiver':
-                        backendComponent = {
+                        compObj = {
                             receiver: {
                                 name: component.name,
                                 ...mode,
@@ -140,11 +141,12 @@ export const createBackendSlice: StateCreator<
                                     k: component.rcs_k,
                                 };
                             }
-                            backendComponent = { target: targetObj };
+                            compObj = { target: targetObj };
                         }
                         break;
                 }
-            }
+                return cleanObject(compObj);
+            });
 
             const backendRotation: Record<string, unknown> = {};
             if (rotation.type === 'fixed') {
@@ -173,7 +175,7 @@ export const createBackendSlice: StateCreator<
                     ),
                 },
                 ...backendRotation,
-                component: backendComponent,
+                components: backendComponents,
             });
         });
 

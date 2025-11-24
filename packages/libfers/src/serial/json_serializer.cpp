@@ -549,10 +549,10 @@ namespace serial
 		{
 			nlohmann::json plat_json = *p;
 
-			bool component_set = false;
-			// Find the component for this platform. This logic must handle the special
-			// case of a monostatic radar. In the C++ model, this is a transmitter with
-			// an attached receiver.
+			// Initialize components array to ensure it exists even if empty
+			plat_json["components"] = nlohmann::json::array();
+
+			// Add Transmitters and Monostatic Radars
 			for (const auto& t : world.getTransmitters())
 			{
 				if (t->getPlatform() == p.get())
@@ -583,44 +583,34 @@ namespace serial
 								monostatic_comp["cw_mode"] = nlohmann::json::object();
 							}
 						}
-						plat_json["component"] = {{"monostatic", monostatic_comp}};
+						plat_json["components"].push_back({{"monostatic", monostatic_comp}});
 					}
 					else
 					{
-						plat_json["component"] = {{"transmitter", *t}};
-					}
-					component_set = true;
-					break; // A platform can only have one component.
-				}
-			}
-
-			if (!component_set)
-			{
-				for (const auto& r : world.getReceivers())
-				{
-					if (r->getPlatform() == p.get())
-					{
-						// This must be a standalone receiver, as monostatic cases were handled above.
-						if (r->getAttached() == nullptr)
-						{
-							plat_json["component"] = {{"receiver", *r}};
-							component_set = true;
-						}
-						break;
+						plat_json["components"].push_back({{"transmitter", *t}});
 					}
 				}
 			}
 
-			if (!component_set)
+			// Add Standalone Receivers
+			for (const auto& r : world.getReceivers())
 			{
-				for (const auto& target : world.getTargets())
+				if (r->getPlatform() == p.get())
 				{
-					if (target->getPlatform() == p.get())
+					// This must be a standalone receiver, as monostatic cases were handled above.
+					if (r->getAttached() == nullptr)
 					{
-						plat_json["component"] = {{"target", *target}};
-						component_set = true;
-						break;
+						plat_json["components"].push_back({{"receiver", *r}});
 					}
+				}
+			}
+
+			// Add Targets
+			for (const auto& target : world.getTargets())
+			{
+				if (target->getPlatform() == p.get())
+				{
+					plat_json["components"].push_back({{"target", *target}});
 				}
 			}
 
@@ -732,191 +722,195 @@ namespace serial
 					plat->setRotationPath(std::move(rot_path));
 				}
 
-				// Component
-				if (plat_json.contains("component"))
+				// Components - Strict array format
+				if (plat_json.contains("components"))
 				{
-					if (const auto& comp_json_outer = plat_json.at("component");
-						comp_json_outer.contains("transmitter"))
+					for (const auto& comp_json_outer : plat_json.at("components"))
 					{
-						const auto& comp_json = comp_json_outer.at("transmitter");
-						radar::OperationMode mode;
-						if (comp_json.contains("pulsed_mode"))
+						if (comp_json_outer.contains("transmitter"))
 						{
-							mode = radar::OperationMode::PULSED_MODE;
-						}
-						else if (comp_json.contains("cw_mode"))
-						{
-							mode = radar::OperationMode::CW_MODE;
-						}
-						else
-						{
-							throw std::runtime_error("Transmitter component '" +
-													 comp_json.at("name").get<std::string>() +
-													 "' must have a 'pulsed_mode' or 'cw_mode' block.");
-						}
-
-						auto trans = std::make_unique<radar::Transmitter>(
-							plat.get(), comp_json.at("name").get<std::string>(), mode);
-						if (mode == radar::OperationMode::PULSED_MODE)
-						{
-							trans->setPrf(comp_json.at("pulsed_mode").at("prf").get<RealType>());
-						}
-						trans->setWave(world.findWaveform(comp_json.at("waveform").get<std::string>()));
-						trans->setAntenna(world.findAntenna(comp_json.at("antenna").get<std::string>()));
-						const auto timing_name = comp_json.at("timing").get<std::string>();
-						const auto timing = std::make_shared<timing::Timing>(timing_name, masterSeeder());
-						timing->initializeModel(world.findTiming(timing_name));
-						trans->setTiming(timing);
-						world.add(std::move(trans));
-					}
-					else if (comp_json_outer.contains("receiver"))
-					{
-						const auto& comp_json = comp_json_outer.at("receiver");
-						radar::OperationMode mode;
-						if (comp_json.contains("pulsed_mode"))
-						{
-							mode = radar::OperationMode::PULSED_MODE;
-						}
-						else if (comp_json.contains("cw_mode"))
-						{
-							mode = radar::OperationMode::CW_MODE;
-						}
-						else
-						{
-							throw std::runtime_error("Receiver component '" + comp_json.at("name").get<std::string>() +
-													 "' must have a 'pulsed_mode' or 'cw_mode' block.");
-						}
-						auto recv = std::make_unique<radar::Receiver>(
-							plat.get(), comp_json.at("name").get<std::string>(), masterSeeder(), mode);
-						if (mode == radar::OperationMode::PULSED_MODE)
-						{
-							const auto& mode_json = comp_json.at("pulsed_mode");
-							recv->setWindowProperties(mode_json.at("window_length").get<RealType>(),
-													  mode_json.at("prf").get<RealType>(),
-													  mode_json.at("window_skip").get<RealType>());
-						}
-						recv->setNoiseTemperature(comp_json.value("noise_temp", 0.0));
-						recv->setAntenna(world.findAntenna(comp_json.at("antenna").get<std::string>()));
-						if (comp_json.value("nodirect", false))
-						{
-							recv->setFlag(radar::Receiver::RecvFlag::FLAG_NODIRECT);
-						}
-						if (comp_json.value("nopropagationloss", false))
-						{
-							recv->setFlag(radar::Receiver::RecvFlag::FLAG_NOPROPLOSS);
-						}
-						const auto timing_name = comp_json.at("timing").get<std::string>();
-						const auto timing = std::make_shared<timing::Timing>(timing_name, masterSeeder());
-						timing->initializeModel(world.findTiming(timing_name));
-						recv->setTiming(timing);
-						world.add(std::move(recv));
-					}
-					else if (comp_json_outer.contains("target"))
-					{
-						const auto& comp_json = comp_json_outer.at("target");
-						const auto& rcs_json = comp_json.at("rcs");
-						const auto rcs_type = rcs_json.at("type").get<std::string>();
-						std::unique_ptr<radar::Target> target_obj;
-						if (rcs_type == "isotropic")
-						{
-							target_obj = radar::createIsoTarget(plat.get(), comp_json.at("name").get<std::string>(),
-																rcs_json.at("value").get<RealType>(), masterSeeder());
-						}
-						else if (rcs_type == "file")
-						{
-							if (!rcs_json.contains("filename"))
+							const auto& comp_json = comp_json_outer.at("transmitter");
+							radar::OperationMode mode;
+							if (comp_json.contains("pulsed_mode"))
 							{
-								throw std::runtime_error("File target requires an RCS filename.");
+								mode = radar::OperationMode::PULSED_MODE;
 							}
-							target_obj =
-								radar::createFileTarget(plat.get(), comp_json.at("name").get<std::string>(),
-														rcs_json.at("filename").get<std::string>(), masterSeeder());
-						}
-						else
-						{
-							throw std::runtime_error("Unsupported target RCS type: " + rcs_type);
-						}
-						world.add(std::move(target_obj));
-
-						// After creating the target, check for and apply the fluctuation model.
-						if (comp_json.contains("model"))
-						{
-							const auto& model_json = comp_json.at("model");
-							if (const auto model_type = model_json.at("type").get<std::string>();
-								model_type == "chisquare" || model_type == "gamma")
+							else if (comp_json.contains("cw_mode"))
 							{
-								auto model = std::make_unique<radar::RcsChiSquare>(
-									world.getTargets().back()->getRngEngine(), model_json.at("k").get<RealType>());
-								world.getTargets().back()->setFluctuationModel(std::move(model));
+								mode = radar::OperationMode::CW_MODE;
 							}
-							// "constant" is the default, so no action is needed if that's the type.
-						}
-					}
-					else if (comp_json_outer.contains("monostatic"))
-					{
-						// This block reconstructs the internal C++ representation of a
-						// monostatic radar (a linked Transmitter and Receiver) from the
-						// single 'monostatic' component in the JSON.
-						const auto& comp_json = comp_json_outer.at("monostatic");
-						radar::OperationMode mode;
-						if (comp_json.contains("pulsed_mode"))
-						{
-							mode = radar::OperationMode::PULSED_MODE;
-						}
-						else if (comp_json.contains("cw_mode"))
-						{
-							mode = radar::OperationMode::CW_MODE;
-						}
-						else
-						{
-							throw std::runtime_error("Monostatic component '" +
-													 comp_json.at("name").get<std::string>() +
-													 "' must have a 'pulsed_mode' or 'cw_mode' block.");
-						}
+							else
+							{
+								throw std::runtime_error("Transmitter component '" +
+														 comp_json.at("name").get<std::string>() +
+														 "' must have a 'pulsed_mode' or 'cw_mode' block.");
+							}
 
-						// Transmitter part
-						auto trans = std::make_unique<radar::Transmitter>(
-							plat.get(), comp_json.at("name").get<std::string>(), mode);
-						if (mode == radar::OperationMode::PULSED_MODE)
-						{
-							trans->setPrf(comp_json.at("pulsed_mode").at("prf").get<RealType>());
+							auto trans = std::make_unique<radar::Transmitter>(
+								plat.get(), comp_json.at("name").get<std::string>(), mode);
+							if (mode == radar::OperationMode::PULSED_MODE)
+							{
+								trans->setPrf(comp_json.at("pulsed_mode").at("prf").get<RealType>());
+							}
+							trans->setWave(world.findWaveform(comp_json.at("waveform").get<std::string>()));
+							trans->setAntenna(world.findAntenna(comp_json.at("antenna").get<std::string>()));
+							const auto timing_name = comp_json.at("timing").get<std::string>();
+							const auto timing = std::make_shared<timing::Timing>(timing_name, masterSeeder());
+							timing->initializeModel(world.findTiming(timing_name));
+							trans->setTiming(timing);
+							world.add(std::move(trans));
 						}
-						trans->setWave(world.findWaveform(comp_json.at("waveform").get<std::string>()));
-						trans->setAntenna(world.findAntenna(comp_json.at("antenna").get<std::string>()));
-						const auto timing_name = comp_json.at("timing").get<std::string>();
-						const auto tx_timing = std::make_shared<timing::Timing>(timing_name, masterSeeder());
-						tx_timing->initializeModel(world.findTiming(timing_name));
-						trans->setTiming(tx_timing);
+						else if (comp_json_outer.contains("receiver"))
+						{
+							const auto& comp_json = comp_json_outer.at("receiver");
+							radar::OperationMode mode;
+							if (comp_json.contains("pulsed_mode"))
+							{
+								mode = radar::OperationMode::PULSED_MODE;
+							}
+							else if (comp_json.contains("cw_mode"))
+							{
+								mode = radar::OperationMode::CW_MODE;
+							}
+							else
+							{
+								throw std::runtime_error("Receiver component '" +
+														 comp_json.at("name").get<std::string>() +
+														 "' must have a 'pulsed_mode' or 'cw_mode' block.");
+							}
+							auto recv = std::make_unique<radar::Receiver>(
+								plat.get(), comp_json.at("name").get<std::string>(), masterSeeder(), mode);
+							if (mode == radar::OperationMode::PULSED_MODE)
+							{
+								const auto& mode_json = comp_json.at("pulsed_mode");
+								recv->setWindowProperties(mode_json.at("window_length").get<RealType>(),
+														  mode_json.at("prf").get<RealType>(),
+														  mode_json.at("window_skip").get<RealType>());
+							}
+							recv->setNoiseTemperature(comp_json.value("noise_temp", 0.0));
+							recv->setAntenna(world.findAntenna(comp_json.at("antenna").get<std::string>()));
+							if (comp_json.value("nodirect", false))
+							{
+								recv->setFlag(radar::Receiver::RecvFlag::FLAG_NODIRECT);
+							}
+							if (comp_json.value("nopropagationloss", false))
+							{
+								recv->setFlag(radar::Receiver::RecvFlag::FLAG_NOPROPLOSS);
+							}
+							const auto timing_name = comp_json.at("timing").get<std::string>();
+							const auto timing = std::make_shared<timing::Timing>(timing_name, masterSeeder());
+							timing->initializeModel(world.findTiming(timing_name));
+							recv->setTiming(timing);
+							world.add(std::move(recv));
+						}
+						else if (comp_json_outer.contains("target"))
+						{
+							const auto& comp_json = comp_json_outer.at("target");
+							const auto& rcs_json = comp_json.at("rcs");
+							const auto rcs_type = rcs_json.at("type").get<std::string>();
+							std::unique_ptr<radar::Target> target_obj;
+							if (rcs_type == "isotropic")
+							{
+								target_obj =
+									radar::createIsoTarget(plat.get(), comp_json.at("name").get<std::string>(),
+														   rcs_json.at("value").get<RealType>(), masterSeeder());
+							}
+							else if (rcs_type == "file")
+							{
+								if (!rcs_json.contains("filename"))
+								{
+									throw std::runtime_error("File target requires an RCS filename.");
+								}
+								target_obj =
+									radar::createFileTarget(plat.get(), comp_json.at("name").get<std::string>(),
+															rcs_json.at("filename").get<std::string>(), masterSeeder());
+							}
+							else
+							{
+								throw std::runtime_error("Unsupported target RCS type: " + rcs_type);
+							}
+							world.add(std::move(target_obj));
 
-						// Receiver part
-						auto recv = std::make_unique<radar::Receiver>(
-							plat.get(), comp_json.at("name").get<std::string>(), masterSeeder(), mode);
-						if (mode == radar::OperationMode::PULSED_MODE)
-						{
-							const auto& mode_json = comp_json.at("pulsed_mode");
-							recv->setWindowProperties(mode_json.at("window_length").get<RealType>(),
-													  trans->getPrf(), // Use transmitter's PRF
-													  mode_json.at("window_skip").get<RealType>());
+							// After creating the target, check for and apply the fluctuation model.
+							if (comp_json.contains("model"))
+							{
+								const auto& model_json = comp_json.at("model");
+								if (const auto model_type = model_json.at("type").get<std::string>();
+									model_type == "chisquare" || model_type == "gamma")
+								{
+									auto model = std::make_unique<radar::RcsChiSquare>(
+										world.getTargets().back()->getRngEngine(), model_json.at("k").get<RealType>());
+									world.getTargets().back()->setFluctuationModel(std::move(model));
+								}
+								// "constant" is the default, so no action is needed if that's the type.
+							}
 						}
-						recv->setNoiseTemperature(comp_json.value("noise_temp", 0.0));
-						recv->setAntenna(world.findAntenna(comp_json.at("antenna").get<std::string>()));
-						if (comp_json.value("nodirect", false))
+						else if (comp_json_outer.contains("monostatic"))
 						{
-							recv->setFlag(radar::Receiver::RecvFlag::FLAG_NODIRECT);
-						}
-						if (comp_json.value("nopropagationloss", false))
-						{
-							recv->setFlag(radar::Receiver::RecvFlag::FLAG_NOPROPLOSS);
-						}
-						const auto rx_timing = std::make_shared<timing::Timing>(timing_name, masterSeeder());
-						rx_timing->initializeModel(world.findTiming(timing_name));
-						recv->setTiming(rx_timing);
+							// This block reconstructs the internal C++ representation of a
+							// monostatic radar (a linked Transmitter and Receiver) from the
+							// single 'monostatic' component in the JSON.
+							const auto& comp_json = comp_json_outer.at("monostatic");
+							radar::OperationMode mode;
+							if (comp_json.contains("pulsed_mode"))
+							{
+								mode = radar::OperationMode::PULSED_MODE;
+							}
+							else if (comp_json.contains("cw_mode"))
+							{
+								mode = radar::OperationMode::CW_MODE;
+							}
+							else
+							{
+								throw std::runtime_error("Monostatic component '" +
+														 comp_json.at("name").get<std::string>() +
+														 "' must have a 'pulsed_mode' or 'cw_mode' block.");
+							}
 
-						// Link them and add to world
-						trans->setAttached(recv.get());
-						recv->setAttached(trans.get());
-						world.add(std::move(trans));
-						world.add(std::move(recv));
+							// Transmitter part
+							auto trans = std::make_unique<radar::Transmitter>(
+								plat.get(), comp_json.at("name").get<std::string>(), mode);
+							if (mode == radar::OperationMode::PULSED_MODE)
+							{
+								trans->setPrf(comp_json.at("pulsed_mode").at("prf").get<RealType>());
+							}
+							trans->setWave(world.findWaveform(comp_json.at("waveform").get<std::string>()));
+							trans->setAntenna(world.findAntenna(comp_json.at("antenna").get<std::string>()));
+							const auto timing_name = comp_json.at("timing").get<std::string>();
+							const auto tx_timing = std::make_shared<timing::Timing>(timing_name, masterSeeder());
+							tx_timing->initializeModel(world.findTiming(timing_name));
+							trans->setTiming(tx_timing);
+
+							// Receiver part
+							auto recv = std::make_unique<radar::Receiver>(
+								plat.get(), comp_json.at("name").get<std::string>(), masterSeeder(), mode);
+							if (mode == radar::OperationMode::PULSED_MODE)
+							{
+								const auto& mode_json = comp_json.at("pulsed_mode");
+								recv->setWindowProperties(mode_json.at("window_length").get<RealType>(),
+														  trans->getPrf(), // Use transmitter's PRF
+														  mode_json.at("window_skip").get<RealType>());
+							}
+							recv->setNoiseTemperature(comp_json.value("noise_temp", 0.0));
+							recv->setAntenna(world.findAntenna(comp_json.at("antenna").get<std::string>()));
+							if (comp_json.value("nodirect", false))
+							{
+								recv->setFlag(radar::Receiver::RecvFlag::FLAG_NODIRECT);
+							}
+							if (comp_json.value("nopropagationloss", false))
+							{
+								recv->setFlag(radar::Receiver::RecvFlag::FLAG_NOPROPLOSS);
+							}
+							const auto rx_timing = std::make_shared<timing::Timing>(timing_name, masterSeeder());
+							rx_timing->initializeModel(world.findTiming(timing_name));
+							recv->setTiming(rx_timing);
+
+							// Link them and add to world
+							trans->setAttached(recv.get());
+							recv->setAttached(trans.get());
+							world.add(std::move(trans));
+							world.add(std::move(recv));
+						}
 					}
 				}
 

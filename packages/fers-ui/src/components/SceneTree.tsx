@@ -65,18 +65,21 @@ const SectionHeader = ({
 );
 
 const getPlatformIcon = (platform: Platform) => {
-    switch (platform.component.type) {
-        case 'monostatic':
-            return <SensorsIcon sx={{ mr: 1 }} fontSize="small" />;
-        case 'transmitter':
-            return <PodcastsIcon sx={{ mr: 1 }} fontSize="small" />;
-        case 'receiver':
-            return <RssFeedIcon sx={{ mr: 1 }} fontSize="small" />;
-        case 'target':
-            return <AdjustIcon sx={{ mr: 1 }} fontSize="small" />;
-        default:
-            return <FlightIcon sx={{ mr: 1 }} fontSize="small" />;
+    const types = platform.components.map((c) => c.type);
+
+    if (types.includes('monostatic')) {
+        return <SensorsIcon sx={{ mr: 1 }} fontSize="small" />;
     }
+    if (types.includes('transmitter')) {
+        return <PodcastsIcon sx={{ mr: 1 }} fontSize="small" />;
+    }
+    if (types.includes('receiver')) {
+        return <RssFeedIcon sx={{ mr: 1 }} fontSize="small" />;
+    }
+    if (types.includes('target')) {
+        return <AdjustIcon sx={{ mr: 1 }} fontSize="small" />;
+    }
+    return <FlightIcon sx={{ mr: 1 }} fontSize="small" />;
 };
 
 export default function SceneTree() {

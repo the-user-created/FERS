@@ -77,7 +77,7 @@ interface BackendPlatform {
         interpolation: 'static' | 'linear' | 'cubic';
         rotationwaypoints?: BackendRotationWaypoint[];
     };
-    component?: Record<string, BackendPlatformComponentData>;
+    components?: Record<string, BackendPlatformComponentData>[];
 }
 
 interface BackendWaveform {
@@ -303,80 +303,98 @@ export const createScenarioSlice: StateCreator<
                         | RotationPath;
                 }
 
-                let component: PlatformComponent = { type: 'none' };
-                if (p.component && Object.keys(p.component).length > 0) {
-                    const cType = Object.keys(p.component)[0];
-                    const cData = p.component[cType];
+                const components: PlatformComponent[] = [];
 
-                    const radarType = cData.pulsed_mode
-                        ? 'pulsed'
-                        : cData.cw_mode
-                          ? 'cw'
-                          : 'pulsed'; // Default
-                    const pulsed = cData.pulsed_mode;
+                if (p.components && Array.isArray(p.components)) {
+                    p.components.forEach((compWrapper) => {
+                        const cType = Object.keys(compWrapper)[0];
+                        const cData = compWrapper[cType];
+                        const id = uuidv4();
 
-                    const commonRadar = {
-                        antennaId: nameToIdMap.get(cData.antenna ?? '') ?? null,
-                        timingId: nameToIdMap.get(cData.timing ?? '') ?? null,
-                    };
-                    const commonReceiver = {
-                        noiseTemperature: cData.noise_temp ?? null,
-                        noDirectPaths: cData.nodirect ?? false,
-                        noPropagationLoss: cData.nopropagationloss ?? false,
-                    };
+                        const radarType = cData.pulsed_mode
+                            ? 'pulsed'
+                            : cData.cw_mode
+                              ? 'cw'
+                              : 'pulsed';
+                        const pulsed = cData.pulsed_mode;
 
-                    switch (cType) {
-                        case 'monostatic':
-                            component = {
-                                type: 'monostatic',
-                                name: cData.name,
-                                radarType,
-                                window_skip: pulsed?.window_skip ?? null,
-                                window_length: pulsed?.window_length ?? null,
-                                prf: pulsed?.prf ?? null,
-                                waveformId:
-                                    nameToIdMap.get(cData.waveform ?? '') ??
-                                    null,
-                                ...commonRadar,
-                                ...commonReceiver,
-                            };
-                            break;
-                        case 'transmitter':
-                            component = {
-                                type: 'transmitter',
-                                name: cData.name,
-                                radarType,
-                                prf: pulsed?.prf ?? null,
-                                waveformId:
-                                    nameToIdMap.get(cData.waveform ?? '') ??
-                                    null,
-                                ...commonRadar,
-                            };
-                            break;
-                        case 'receiver':
-                            component = {
-                                type: 'receiver',
-                                name: cData.name,
-                                radarType,
-                                window_skip: pulsed?.window_skip ?? null,
-                                window_length: pulsed?.window_length ?? null,
-                                prf: pulsed?.prf ?? null,
-                                ...commonRadar,
-                                ...commonReceiver,
-                            };
-                            break;
-                        case 'target':
-                            component = {
-                                type: 'target',
-                                name: cData.name,
-                                rcs_type: cData.rcs?.type ?? 'isotropic',
-                                rcs_value: cData.rcs?.value,
-                                rcs_filename: cData.rcs?.filename,
-                                rcs_model: cData.model?.type ?? 'constant',
-                                rcs_k: cData.model?.k,
-                            };
-                            break;
-                    }
+                        const commonRadar = {
+                            antennaId:
+                                nameToIdMap.get(cData.antenna ?? '') ?? null,
+                            timingId:
+                                nameToIdMap.get(cData.timing ?? '') ?? null,
+                        };
+                        const commonReceiver = {
+                            noiseTemperature: cData.noise_temp ?? null,
+                            noDirectPaths: cData.nodirect ?? false,
+                            noPropagationLoss: cData.nopropagationloss ?? false,
+                        };
+
+                        let newComp: PlatformComponent | null = null;
+
+                        switch (cType) {
+                            case 'monostatic':
+                                newComp = {
+                                    id,
+                                    type: 'monostatic',
+                                    name: cData.name,
+                                    radarType,
+                                    window_skip: pulsed?.window_skip ?? null,
+                                    window_length:
+                                        pulsed?.window_length ?? null,
+                                    prf: pulsed?.prf ?? null,
+                                    waveformId:
+                                        nameToIdMap.get(cData.waveform ?? '') ??
+                                        null,
+                                    ...commonRadar,
+                                    ...commonReceiver,
+                                };
+                                break;
+                            case 'transmitter':
+                                newComp = {
+                                    id,
+                                    type: 'transmitter',
+                                    name: cData.name,
+                                    radarType,
+                                    prf: pulsed?.prf ?? null,
+                                    waveformId:
+                                        nameToIdMap.get(cData.waveform ?? '') ??
+                                        null,
+                                    ...commonRadar,
+                                };
+                                break;
+                            case 'receiver':
+                                newComp = {
+                                    id,
+                                    type: 'receiver',
+                                    name: cData.name,
+                                    radarType,
+                                    window_skip: pulsed?.window_skip ?? null,
+                                    window_length:
+                                        pulsed?.window_length ?? null,
+                                    prf: pulsed?.prf ?? null,
+                                    ...commonRadar,
+                                    ...commonReceiver,
+                                };
+                                break;
+                            case 'target':
+                                newComp = {
+                                    id,
+                                    type: 'target',
+                                    name: cData.name,
+                                    rcs_type: cData.rcs?.type ?? 'isotropic',
+                                    rcs_value: cData.rcs?.value,
+                                    rcs_filename: cData.rcs?.filename,
+                                    rcs_model: cData.model?.type ?? 'constant',
+                                    rcs_k: cData.model?.k,
+                                };
+                                break;
+                        }
+
+                        if (newComp) {
+                            components.push(newComp);
+                        }
+                    });
                 }
 
                 return {
@@ -385,7 +403,7 @@ export const createScenarioSlice: StateCreator<
                     name: p.name,
                     motionPath,
                     rotation,
-                    component,
+                    components,
                 };
             });
 

@@ -418,51 +418,41 @@ namespace
 
 		serializeRotation(*platform.getRotationPath(), parent);
 
-		// A platform must have exactly one component. We iterate through the world's
-		// component lists to find which one is associated with this platform.
-		// Monostatic transmitters are checked first to ensure they are serialized
-		// as a single `<monostatic>` element, as per the schema, rather than as
-		// separate transmitter/receiver components.
-		bool component_found = false;
+		// Transmitters (including Monostatic pairs)
 		for (const auto& tx : world.getTransmitters())
 		{
 			if (tx->getPlatform() == &platform)
 			{
 				if (tx->getAttached())
 				{
+					// Serialize as <monostatic> if it is part of a pair
 					serializeMonostatic(*tx, *dynamic_cast<const radar::Receiver*>(tx->getAttached()), parent);
 				}
 				else
 				{
+					// Serialize as <transmitter>
 					serializeTransmitter(*tx, parent);
 				}
-				component_found = true;
-				break;
 			}
 		}
-		if (!component_found)
+
+		// Standalone Receivers
+		for (const auto& rx : world.getReceivers())
 		{
-			for (const auto& rx : world.getReceivers())
+			// Only serialize receivers that are NOT attached to a transmitter,
+			// as those were handled in the loop above.
+			if (rx->getPlatform() == &platform && !rx->getAttached())
 			{
-				// This check ensures we only serialize standalone receivers, as monostatic
-				// ones were handled in the transmitter loop.
-				if (rx->getPlatform() == &platform && !rx->getAttached())
-				{
-					serializeReceiver(*rx, parent);
-					component_found = true;
-					break;
-				}
+				serializeReceiver(*rx, parent);
 			}
 		}
-		if (!component_found)
+
+		// Targets
+		for (const auto& target : world.getTargets())
 		{
-			for (const auto& target : world.getTargets())
+			if (target->getPlatform() == &platform)
 			{
-				if (target->getPlatform() == &platform)
-				{
-					serializeTarget(*target, parent);
-					break;
-				}
+				serializeTarget(*target, parent);
 			}
 		}
 	}

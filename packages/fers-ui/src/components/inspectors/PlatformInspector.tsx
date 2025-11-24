@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
     Box,
     Button,
@@ -27,6 +27,7 @@ import {
 import { Section, NumberField } from './InspectorControls';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
+import AddIcon from '@mui/icons-material/Add';
 import { v4 as uuidv4 } from 'uuid';
 import { PlatformComponentInspector } from './PlatformComponentInspector';
 
@@ -50,12 +51,6 @@ function WaypointEditDialog({
     waypointType,
 }: WaypointEditDialogProps) {
     const [editedWaypoint, setEditedWaypoint] = useState(waypoint);
-
-    useEffect(() => {
-        if (open) {
-            setEditedWaypoint(waypoint);
-        }
-    }, [waypoint, open]);
 
     const handleFieldChange = (field: string, value: number | null) => {
         setEditedWaypoint((prev) => {
@@ -163,10 +158,13 @@ export function PlatformInspector({ item }: PlatformInspectorProps) {
         removePositionWaypoint,
         addRotationWaypoint,
         removeRotationWaypoint,
-        setPlatformComponentType,
+        addPlatformComponent,
+        removePlatformComponent,
     } = useScenarioStore.getState();
+
     const handleChange = (path: string, value: unknown) =>
         updateItem(item.id, path, value);
+
     const allowMultiplePosWaypoints =
         item.motionPath.interpolation !== 'static';
 
@@ -174,6 +172,9 @@ export function PlatformInspector({ item }: PlatformInspectorProps) {
         type: 'position' | 'rotation';
         index: number;
     } | null>(null);
+
+    const [newComponentType, setNewComponentType] =
+        useState<PlatformComponent['type']>('monostatic');
 
     const handleDialogClose = (
         finalWaypoint: PositionWaypoint | RotationWaypoint | null
@@ -477,35 +478,93 @@ export function PlatformInspector({ item }: PlatformInspectorProps) {
                     })()}
             </Section>
 
-            <Section title="Component">
-                <FormControl fullWidth size="small">
-                    <InputLabel>Component Type</InputLabel>
-                    <Select
-                        label="Component Type"
-                        value={
-                            item.component.type === 'none'
-                                ? ''
-                                : item.component.type
-                        }
-                        onChange={(e) =>
-                            setPlatformComponentType(
-                                item.id,
-                                e.target.value as PlatformComponent['type']
-                            )
-                        }
+            <Section title="Components">
+                {item.components.map((comp, index) => (
+                    <Box
+                        key={comp.id}
+                        sx={{
+                            border: 1,
+                            borderColor: 'divider',
+                            borderRadius: 1,
+                            p: 2,
+                            mb: 2,
+                            backgroundColor: 'background.default',
+                        }}
                     >
-                        <MenuItem value="monostatic">Monostatic Radar</MenuItem>
-                        <MenuItem value="transmitter">Transmitter</MenuItem>
-                        <MenuItem value="receiver">Receiver</MenuItem>
-                        <MenuItem value="target">Target</MenuItem>
-                    </Select>
-                </FormControl>
-                <PlatformComponentInspector
-                    component={item.component}
-                    platformId={item.id}
-                />
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                mb: 2,
+                            }}
+                        >
+                            <Typography variant="subtitle2" color="primary">
+                                {comp.type.toUpperCase()}
+                            </Typography>
+                            <IconButton
+                                size="small"
+                                color="error"
+                                onClick={() =>
+                                    removePlatformComponent(item.id, comp.id)
+                                }
+                            >
+                                <DeleteIcon fontSize="small" />
+                            </IconButton>
+                        </Box>
+                        <PlatformComponentInspector
+                            component={comp}
+                            platformId={item.id}
+                            index={index}
+                        />
+                    </Box>
+                ))}
+
+                <Box
+                    sx={{
+                        display: 'flex',
+                        gap: 1,
+                        alignItems: 'center',
+                        mt: 1,
+                    }}
+                >
+                    <FormControl size="small" sx={{ flexGrow: 1 }}>
+                        <InputLabel>New Component</InputLabel>
+                        <Select
+                            label="New Component"
+                            value={newComponentType}
+                            onChange={(e) =>
+                                setNewComponentType(
+                                    e.target.value as PlatformComponent['type']
+                                )
+                            }
+                        >
+                            <MenuItem value="monostatic">
+                                Monostatic Radar
+                            </MenuItem>
+                            <MenuItem value="transmitter">Transmitter</MenuItem>
+                            <MenuItem value="receiver">Receiver</MenuItem>
+                            <MenuItem value="target">Target</MenuItem>
+                        </Select>
+                    </FormControl>
+                    <Button
+                        variant="outlined"
+                        onClick={() =>
+                            addPlatformComponent(item.id, newComponentType)
+                        }
+                        startIcon={<AddIcon />}
+                    >
+                        Add
+                    </Button>
+                </Box>
             </Section>
+
             <WaypointEditDialog
+                key={
+                    editingWaypointInfo
+                        ? `${editingWaypointInfo.type}-${editingWaypointInfo.index}`
+                        : 'none'
+                }
                 open={!!editingWaypointInfo}
                 onClose={handleDialogClose}
                 waypoint={currentEditingWaypoint}

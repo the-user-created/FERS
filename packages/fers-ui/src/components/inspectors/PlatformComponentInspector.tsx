@@ -24,16 +24,20 @@ import { NumberField, FileInput } from './InspectorControls';
 interface PlatformComponentInspectorProps {
     component: PlatformComponent;
     platformId: string;
+    index: number;
 }
 
 export function PlatformComponentInspector({
     component,
     platformId,
+    index,
 }: PlatformComponentInspectorProps) {
     const { updateItem, waveforms, timings, antennas, setPlatformRcsModel } =
         useScenarioStore.getState();
+
+    // Updates are targeted using the array index in the path string
     const handleChange = (path: string, value: unknown) =>
-        updateItem(platformId, `component.${path}`, value);
+        updateItem(platformId, `components.${index}.${path}`, value);
 
     const renderCommonRadarFields = (
         c: MonostaticComponent | TransmitterComponent | ReceiverComponent
@@ -42,10 +46,12 @@ export function PlatformComponentInspector({
             <TextField
                 label="Component Name"
                 size="small"
+                fullWidth
                 value={c.name}
                 onChange={(e) => handleChange('name', e.target.value)}
+                sx={{ mb: 2 }}
             />
-            <FormControl fullWidth size="small">
+            <FormControl fullWidth size="small" sx={{ mb: 2 }}>
                 <InputLabel>Radar Mode</InputLabel>
                 <Select
                     label="Radar Mode"
@@ -58,7 +64,7 @@ export function PlatformComponentInspector({
             </FormControl>
 
             {'waveformId' in c && (
-                <FormControl fullWidth size="small">
+                <FormControl fullWidth size="small" sx={{ mb: 2 }}>
                     <InputLabel>Waveform</InputLabel>
                     <Select
                         label="Waveform"
@@ -67,6 +73,9 @@ export function PlatformComponentInspector({
                             handleChange('waveformId', e.target.value)
                         }
                     >
+                        <MenuItem value="">
+                            <em>None</em>
+                        </MenuItem>
                         {waveforms.map((w) => (
                             <MenuItem key={w.id} value={w.id}>
                                 {w.name}
@@ -76,13 +85,16 @@ export function PlatformComponentInspector({
                 </FormControl>
             )}
 
-            <FormControl fullWidth size="small">
+            <FormControl fullWidth size="small" sx={{ mb: 2 }}>
                 <InputLabel>Antenna</InputLabel>
                 <Select
                     label="Antenna"
                     value={c.antennaId ?? ''}
                     onChange={(e) => handleChange('antennaId', e.target.value)}
                 >
+                    <MenuItem value="">
+                        <em>None</em>
+                    </MenuItem>
                     {antennas.map((a) => (
                         <MenuItem key={a.id} value={a.id}>
                             {a.name}
@@ -90,13 +102,16 @@ export function PlatformComponentInspector({
                     ))}
                 </Select>
             </FormControl>
-            <FormControl fullWidth size="small">
+            <FormControl fullWidth size="small" sx={{ mb: 2 }}>
                 <InputLabel>Timing Source</InputLabel>
                 <Select
                     label="Timing Source"
                     value={c.timingId ?? ''}
                     onChange={(e) => handleChange('timingId', e.target.value)}
                 >
+                    <MenuItem value="">
+                        <em>None</em>
+                    </MenuItem>
                     {timings.map((t) => (
                         <MenuItem key={t.id} value={t.id}>
                             {t.name}
@@ -158,7 +173,13 @@ export function PlatformComponentInspector({
     switch (component.type) {
         case 'monostatic':
             return (
-                <>
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '8px',
+                    }}
+                >
                     {renderCommonRadarFields(component)}
                     {component.radarType === 'pulsed' && (
                         <NumberField
@@ -168,11 +189,17 @@ export function PlatformComponentInspector({
                         />
                     )}
                     {renderReceiverFields(component)}
-                </>
+                </div>
             );
         case 'transmitter':
             return (
-                <>
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '8px',
+                    }}
+                >
                     {renderCommonRadarFields(component)}
                     {component.radarType === 'pulsed' && (
                         <NumberField
@@ -181,11 +208,17 @@ export function PlatformComponentInspector({
                             onChange={(v) => handleChange('prf', v)}
                         />
                     )}
-                </>
+                </div>
             );
         case 'receiver':
             return (
-                <>
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '8px',
+                    }}
+                >
                     {renderCommonRadarFields(component)}
                     {component.radarType === 'pulsed' && (
                         <NumberField
@@ -195,14 +228,21 @@ export function PlatformComponentInspector({
                         />
                     )}
                     {renderReceiverFields(component)}
-                </>
+                </div>
             );
         case 'target':
             return (
-                <>
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '16px',
+                    }}
+                >
                     <TextField
                         label="Component Name"
                         size="small"
+                        fullWidth
                         value={component.name}
                         onChange={(e) => handleChange('name', e.target.value)}
                     />
@@ -243,6 +283,7 @@ export function PlatformComponentInspector({
                             onChange={(e) =>
                                 setPlatformRcsModel(
                                     platformId,
+                                    component.id,
                                     e.target
                                         .value as TargetComponent['rcs_model']
                                 )
@@ -261,12 +302,12 @@ export function PlatformComponentInspector({
                             onChange={(v) => handleChange('rcs_k', v)}
                         />
                     )}
-                </>
+                </div>
             );
         default:
             return (
                 <Typography color="text.secondary">
-                    No component assigned.
+                    Unknown component type.
                 </Typography>
             );
     }
