@@ -178,6 +178,14 @@ namespace simulation
 
 	ComplexType calculateDirectPathContribution(const Transmitter* trans, const Receiver* recv, const RealType timeK)
 	{
+		// Check for co-location to prevent singularities.
+		// If they share the same platform, we assume they are isolated (no leakage) or explicit
+		// monostatic handling is required (which is not modeled via the far-field path).
+		if (trans->getPlatform() == recv->getPlatform())
+		{
+			return {0.0, 0.0};
+		}
+
 		const auto p_tx = trans->getPlatform()->getPosition(timeK);
 		const auto p_rx = recv->getPlatform()->getPosition(timeK);
 
@@ -225,6 +233,13 @@ namespace simulation
 	ComplexType calculateReflectedPathContribution(const Transmitter* trans, const Receiver* recv, const Target* targ,
 												   const RealType timeK)
 	{
+		// Check for co-location involving the target.
+		// We do not model a platform tracking itself (R=0) or illuminating itself (R=0).
+		if (trans->getPlatform() == targ->getPlatform() || recv->getPlatform() == targ->getPlatform())
+		{
+			return {0.0, 0.0};
+		}
+
 		const auto p_tx = trans->getPlatform()->getPosition(timeK);
 		const auto p_rx = recv->getPlatform()->getPosition(timeK);
 		const auto p_tgt = targ->getPlatform()->getPosition(timeK);
@@ -283,8 +298,27 @@ namespace simulation
 														const RadarSignal* signal, const RealType startTime,
 														const Target* targ)
 	{
-		if (targ == nullptr && trans->getAttached() == recv)
+		// If calculating direct path (no target) and components are co-located:
+		// 1. If explicitly attached (monostatic), skip (internal leakage handled elsewhere).
+		// 2. If independent but on the same platform, distance is 0. Far-field logic (1/R^2)
+		//    diverges. We skip calculation to avoid RangeError crashes, assuming
+		//    no direct coupling/interference for co-located far-field antennas.
+		if (targ == nullptr && (trans->getAttached() == recv || trans->getPlatform() == recv->getPlatform()))
 		{
+			LOG(Level::TRACE, "Skipping direct path calculation for co-located Transmitter {} and Receiver {}",
+				trans->getName(), recv->getName());
+			return nullptr;
+		}
+
+		// If calculating reflected path and target is co-located with either Tx or Rx:
+		// Skip to avoid singularity. Simulating a radar tracking its own platform
+		// requires near-field clutter models, not point-target RCS models.
+		if (targ != nullptr &&
+			(targ->getPlatform() == trans->getPlatform() || targ->getPlatform() == recv->getPlatform()))
+		{
+			LOG(Level::TRACE,
+				"Skipping reflected path calculation for Target {} co-located with Transmitter {} or Receiver {}",
+				targ->getName(), trans->getName(), recv->getName());
 			return nullptr;
 		}
 
