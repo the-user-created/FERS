@@ -62,9 +62,12 @@ namespace core
 		const RealType end_time = params::endTime();
 		const RealType dt_sim = 1.0 / (params::rate() * params::oversampleRatio());
 
+		// Create shared thread-safe reporter
+		auto reporter = std::make_shared<ProgressReporter>(progress_callback);
+
 		if (progress_callback)
 		{
-			progress_callback("Initializing event-driven simulation...", 0, 100);
+			reporter->report("Initializing event-driven simulation...", 0, 100);
 		}
 
 		// Start dedicated finalizer threads for each pulsed receiver. This creates a
@@ -74,12 +77,17 @@ namespace core
 		{
 			if (receiver_ptr->getMode() == OperationMode::PULSED_MODE)
 			{
-				finalizer_threads.emplace_back(processing::runPulsedFinalizer, receiver_ptr.get(),
-											   &world->getTargets());
+				finalizer_threads.emplace_back(processing::runPulsedFinalizer, receiver_ptr.get(), &world->getTargets(),
+											   reporter);
 			}
 		}
 
 		LOG(Level::INFO, "Starting unified event-driven simulation loop.");
+
+		// Throttling state for the main loop
+		auto last_report_time = std::chrono::steady_clock::now();
+		int last_reported_percent = -1;
+		const auto report_interval = std::chrono::milliseconds(100); // Max 10 updates/sec
 
 		// Main Simulation Loop
 		while (!event_queue.empty() && t_current <= end_time)
@@ -237,20 +245,31 @@ namespace core
 					auto* rx = static_cast<Receiver*>(source_object);
 					rx->setActive(false);
 					// The CW receiver is done. Enqueue a one-shot finalization task to the main pool.
-					pool.enqueue(processing::finalizeCwReceiver, rx, &pool);
+					pool.enqueue(processing::finalizeCwReceiver, rx, &pool, reporter);
 					break;
 				}
 			}
 
+			// Throttled Progress Reporting
 			if (progress_callback)
 			{
 				const int progress = static_cast<int>(t_current / end_time * 100.0);
-				progress_callback(std::format("Simulating... {:.2f}s / {:.2f}s", t_current, end_time), progress, 100);
+
+				// Only report if percentage changed significantly OR enough time elapsed
+				if (const auto now = std::chrono::steady_clock::now();
+					progress != last_reported_percent || now - last_report_time >= report_interval)
+				{
+					reporter->report(std::format("Simulating... {:.2f}s / {:.2f}s", t_current, end_time), progress,
+									 100);
+					last_reported_percent = progress;
+					last_report_time = now;
+				}
 			}
 		}
 
 		// Shutdown Phase
 		LOG(Level::INFO, "Main simulation loop finished. Waiting for finalization tasks...");
+		reporter->report("Main simulation finished. Waiting for data export...", 100, 100);
 
 		// Signal pulsed finalizer threads to shut down by sending a "poison pill" job.
 		for (const auto& receiver_ptr : world->getReceivers())
@@ -270,7 +289,7 @@ namespace core
 
 		if (progress_callback)
 		{
-			progress_callback("Simulation complete", 100, 100);
+			reporter->report("Simulation complete", 100, 100);
 		}
 		LOG(Level::INFO, "Event-driven simulation loop finished.");
 	}

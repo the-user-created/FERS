@@ -16,6 +16,7 @@
 #pragma once
 
 #include <functional>
+#include <mutex>
 #include <string>
 
 namespace pool
@@ -26,10 +27,34 @@ namespace pool
 namespace core
 {
 	class World;
-}
 
-namespace core
-{
+	/**
+	 * @class ProgressReporter
+	 * @brief A thread-safe wrapper for the simulation progress callback.
+	 *
+	 * Allows multiple worker threads to report progress concurrently without race conditions.
+	 */
+	class ProgressReporter
+	{
+	public:
+		using Callback = std::function<void(const std::string&, int, int)>;
+
+		explicit ProgressReporter(Callback cb) : _callback(std::move(cb)) {}
+
+		void report(const std::string& msg, int current, int total)
+		{
+			if (_callback)
+			{
+				std::lock_guard<std::mutex> lock(_mutex);
+				_callback(msg, current, total);
+			}
+		}
+
+	private:
+		std::mutex _mutex;
+		Callback _callback;
+	};
+
 	/**
 	 * @brief Runs the unified, event-driven radar simulation.
 	 *

@@ -29,6 +29,7 @@
 #include "finalizer.h"
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <format>
 #include <highfive/highfive.hpp>
@@ -41,6 +42,7 @@
 #include <libfers/target.h>
 #include <libfers/transmitter.h>
 #include "core/rendering_job.h"
+#include "core/sim_threading.h"
 #include "processing/signal_processor.h"
 #include "serial/hdf5_handler.h"
 #include "signal/dsp_filters.h"
@@ -65,7 +67,8 @@ namespace
 
 namespace processing
 {
-	void runPulsedFinalizer(radar::Receiver* receiver, const std::vector<std::unique_ptr<radar::Target>>* targets)
+	void runPulsedFinalizer(radar::Receiver* receiver, const std::vector<std::unique_ptr<radar::Target>>* targets,
+							std::shared_ptr<core::ProgressReporter> reporter)
 	{
 		// Each finalizer thread gets a private, stateful clone of the timing model
 		// to ensure thread safety and independent state progression.
@@ -82,7 +85,10 @@ namespace processing
 		LOG(logging::Level::INFO, "Finalizer thread started for receiver '{}'. Outputting to '{}'.",
 			receiver->getName(), hdf5_filename);
 
-		// Main processing loop for this receiver's dedicated thread.
+		// Throttling state
+		auto last_report_time = std::chrono::steady_clock::now();
+		const auto report_interval = std::chrono::milliseconds(100); // 10 updates/sec max
+
 		while (true)
 		{
 			core::RenderingJob job;
@@ -187,14 +193,38 @@ namespace processing
 
 			// 7. Write the processed chunk to the HDF5 file.
 			serial::addChunkToFile(h5_file, window_buffer, actual_start, fullscale, chunk_index++);
+
+			// Throttled Reporting: Only acquire mutex and callback if enough time has passed
+			if (reporter)
+			{
+				const auto now = std::chrono::steady_clock::now();
+				if ((now - last_report_time) >= report_interval)
+				{
+					reporter->report(std::format("Exporting {}: Chunk {}", receiver->getName(), chunk_index),
+									 static_cast<int>(chunk_index), 0);
+					last_report_time = now;
+				}
+			}
 		}
 
+		if (reporter)
+		{
+			// Always report final status
+			reporter->report(std::format("Finished Exporting {}", receiver->getName()), 100, 100);
+		}
 		LOG(logging::Level::INFO, "Finalizer thread for receiver '{}' finished.", receiver->getName());
 	}
 
-	void finalizeCwReceiver(radar::Receiver* receiver, pool::ThreadPool* pool)
+	void finalizeCwReceiver(radar::Receiver* receiver, pool::ThreadPool* pool,
+							std::shared_ptr<core::ProgressReporter> reporter)
 	{
+		// CW Finalization only has ~4 major steps, so throttling isn't strictly necessary,
+		// but reporting is added for visibility.
 		LOG(logging::Level::INFO, "Finalization task started for CW receiver '{}'.", receiver->getName());
+		if (reporter)
+		{
+			reporter->report(std::format("Finalizing CW Receiver {}", receiver->getName()), 0, 100);
+		}
 
 		// Process the entire collected I/Q buffer for the CW receiver.
 		auto& iq_buffer = receiver->getMutableCwData();
@@ -204,6 +234,11 @@ namespace processing
 		{
 			LOG(logging::Level::INFO, "No CW data to finalize for receiver '{}'.", receiver->getName());
 			return;
+		}
+
+		if (reporter)
+		{
+			reporter->report(std::format("Rendering Interference for {}", receiver->getName()), 25, 100);
 		}
 
 		// --- Signal Rendering and Processing Pipeline ---
@@ -234,6 +269,10 @@ namespace processing
 			return;
 		}
 
+		if (reporter)
+		{
+			reporter->report(std::format("Applying Noise for {}", receiver->getName()), 50, 100);
+		}
 		// 2. Apply thermal noise.
 		applyThermalNoise(iq_buffer, receiver->getNoiseTemperature(), receiver->getRngEngine());
 
@@ -255,6 +294,11 @@ namespace processing
 		// 5. Apply ADC quantization and scaling.
 		// TODO: Is there any point in normalizing the full buffer for CW receivers?
 		const RealType fullscale = quantizeAndScaleWindow(iq_buffer);
+
+		if (reporter)
+		{
+			reporter->report(std::format("Writing HDF5 for {}", receiver->getName()), 75, 100);
+		}
 
 		// 6. Write the entire processed buffer to an HDF5 file.
 		const auto hdf5_filename = std::format("{}_results.h5", receiver->getName());
@@ -283,6 +327,11 @@ namespace processing
 		catch (const HighFive::Exception& err)
 		{
 			LOG(logging::Level::FATAL, "Error writing CW data to HDF5 file '{}': {}", hdf5_filename, err.what());
+		}
+
+		if (reporter)
+		{
+			reporter->report(std::format("Finalized {}", receiver->getName()), 100, 100);
 		}
 	}
 }
