@@ -36,14 +36,14 @@
 #include <ranges>
 #include <tuple>
 
-#include <libfers/logging.h>
-#include <libfers/parameters.h>
-#include <libfers/receiver.h>
-#include <libfers/target.h>
-#include <libfers/transmitter.h>
+#include "core/logging.h"
+#include "core/parameters.h"
 #include "core/rendering_job.h"
 #include "core/sim_threading.h"
 #include "processing/signal_processor.h"
+#include "radar/receiver.h"
+#include "radar/target.h"
+#include "radar/transmitter.h"
 #include "serial/hdf5_handler.h"
 #include "signal/dsp_filters.h"
 #include "simulation/channel_model.h"

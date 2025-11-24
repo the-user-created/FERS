@@ -19,7 +19,7 @@
 #include <tuple>
 #include <vector>
 
-#include <libfers/config.h>
+#include "core/config.h"
 
 namespace interp
 {

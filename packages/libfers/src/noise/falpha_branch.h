@@ -17,7 +17,7 @@
 #include <random>
 #include <vector>
 
-#include <libfers/config.h>
+#include "core/config.h"
 #include "signal/dsp_filters.h"
 
 namespace noise

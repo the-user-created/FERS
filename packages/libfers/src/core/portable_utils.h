@@ -15,7 +15,7 @@
 #include <cmath>
 #include <thread>
 
-#include <libfers/config.h>
+#include "config.h"
 
 namespace core
 {

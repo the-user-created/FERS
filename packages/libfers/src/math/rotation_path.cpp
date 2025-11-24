@@ -10,13 +10,13 @@
  * @brief Implementation of the RotationPath class.
  */
 
-#include <libfers/rotation_path.h>
+#include "rotation_path.h"
 
 #include <algorithm>
 #include <cmath>
 
-#include <libfers/coord.h>
-#include <libfers/geometry_ops.h>
+#include "coord.h"
+#include "geometry_ops.h"
 #include "path_utils.h"
 
 namespace math

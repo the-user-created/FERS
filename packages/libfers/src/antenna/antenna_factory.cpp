@@ -10,7 +10,7 @@
  * @brief Implementation of the Antenna class and its derived classes.
  */
 
-#include <libfers/antenna_factory.h>
+#include "antenna/antenna_factory.h"
 
 #include <algorithm>
 #include <cmath>
@@ -18,9 +18,10 @@
 #include <optional>
 #include <stdexcept>
 
-#include <libfers/geometry_ops.h>
-#include <libfers/logging.h>
-#include <libfers/portable_utils.h>
+#include "core/config.h"
+#include "core/logging.h"
+#include "core/portable_utils.h"
+#include "math/geometry_ops.h"
 #include "serial/libxml_wrapper.h"
 
 using logging::Level;

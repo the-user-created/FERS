@@ -15,8 +15,8 @@
 
 #include <vector>
 
-#include <libfers/config.h>
-#include <libfers/coord.h>
+#include "coord.h"
+#include "core/config.h"
 
 namespace math
 {

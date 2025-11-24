@@ -19,11 +19,6 @@
 #include <utility>
 #include <vector>
 
-#include <libfers/logging.h>
-#include <libfers/portable_utils.h>
-
-using logging::Level;
-
 namespace
 {
 	/**
@@ -46,11 +41,11 @@ namespace
 	 * @param level The string representation of the logging level.
 	 * @return std::optional<Level> The corresponding logging level, or `std::nullopt` if invalid.
 	 */
-	std::optional<Level> parseLogLevel(const std::string& level) noexcept
+	std::optional<fers_log_level_t> parseLogLevel(const std::string& level) noexcept
 	{
-		static const std::unordered_map<std::string, Level> LEVEL_MAP = {
-			{"TRACE", Level::TRACE},	 {"DEBUG", Level::DEBUG}, {"INFO", Level::INFO},
-			{"WARNING", Level::WARNING}, {"ERROR", Level::ERROR}, {"FATAL", Level::FATAL}};
+		static const std::unordered_map<std::string, fers_log_level_t> LEVEL_MAP = {
+			{"TRACE", FERS_LOG_TRACE},	   {"DEBUG", FERS_LOG_DEBUG}, {"INFO", FERS_LOG_INFO},
+			{"WARNING", FERS_LOG_WARNING}, {"ERROR", FERS_LOG_ERROR}, {"FATAL", FERS_LOG_FATAL}};
 
 		if (const auto it = LEVEL_MAP.find(level); it != LEVEL_MAP.end())
 		{
@@ -75,7 +70,7 @@ namespace
 			return {};
 		}
 
-		LOG(Level::ERROR, "Invalid log level '" + level_str + "'");
+		std::cerr << "[ERROR] Invalid log level '" << level_str << "'\n";
 		return std::unexpected("Invalid log level: " + level_str);
 	}
 
@@ -96,7 +91,7 @@ namespace
 		}
 		else
 		{
-			LOG(Level::ERROR, "Invalid log file extension. Log file must have .log or .txt extension.");
+			std::cerr << "[ERROR] Invalid log file extension. Must be .log or .txt\n";
 			return std::unexpected("Invalid log file extension: " + log_file_path);
 		}
 	}
@@ -119,9 +114,10 @@ namespace
 				return std::unexpected("Number of threads must be greater than 0");
 			}
 
-			if (const unsigned max_threads = core::countProcessors(); config.num_threads > max_threads)
+			if (const unsigned max_threads = std::thread::hardware_concurrency();
+				max_threads > 0 && config.num_threads > max_threads)
 			{
-				LOG(Level::WARNING, "Number of threads exceeds available processors. Defaulting to max processors.");
+				std::cerr << "[WARNING] Thread count exceeds available processors. Clamping.\n";
 				config.num_threads = max_threads;
 			}
 			return {};
@@ -183,7 +179,7 @@ namespace
 			return {};
 		}
 
-		LOG(Level::ERROR, "Unrecognized option or argument: '" + arg + "'");
+		std::cerr << "[ERROR] Unrecognized option: '" << arg << "'\n";
 		return std::unexpected("Unrecognized argument: " + arg);
 	}
 }

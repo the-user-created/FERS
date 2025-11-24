@@ -10,13 +10,13 @@
  * @brief Implementation of the Path class.
  */
 
-#include <libfers/path.h>
+#include "path.h"
 
 #include <algorithm>
 
-#include <libfers/coord.h>
-#include <libfers/geometry_ops.h>
-#include <libfers/logging.h>
+#include "coord.h"
+#include "core/logging.h"
+#include "geometry_ops.h"
 #include "path_utils.h"
 
 using logging::Level;

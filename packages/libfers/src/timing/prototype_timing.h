@@ -17,7 +17,7 @@
 #include <utility>
 #include <vector>
 
-#include <libfers/config.h>
+#include "core/config.h"
 
 namespace timing
 {

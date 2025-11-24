@@ -14,9 +14,9 @@
 #include <memory>
 #include <vector>
 
-#include <libfers/config.h>
-#include <libfers/response.h>
-#include <libfers/transmitter.h>
+#include "config.h"
+#include "radar/transmitter.h"
+#include "serial/response.h"
 
 namespace core
 {

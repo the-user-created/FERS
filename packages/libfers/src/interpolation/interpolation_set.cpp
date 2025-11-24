@@ -18,7 +18,6 @@
 #include <iterator>
 #include <ranges>
 #include <stdexcept>
-#include <utility>
 
 namespace interp
 {

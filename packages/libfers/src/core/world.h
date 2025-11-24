@@ -18,13 +18,13 @@
 #include <unordered_map>
 #include <vector>
 
-#include <libfers/receiver.h>
-#include <libfers/target.h>
-#include <libfers/transmitter.h>
-#include "antenna_factory.h"
+#include "antenna/antenna_factory.h"
 #include "core/sim_events.h"
 #include "core/simulation_state.h"
-#include "platform.h"
+#include "radar/platform.h"
+#include "radar/receiver.h"
+#include "radar/target.h"
+#include "radar/transmitter.h"
 #include "signal/radar_signal.h"
 #include "timing/prototype_timing.h"
 

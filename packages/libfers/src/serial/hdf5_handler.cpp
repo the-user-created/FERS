@@ -19,8 +19,8 @@
 #include <highfive/highfive.hpp>
 #include <stdexcept>
 
-#include <libfers/logging.h>
-#include <libfers/parameters.h>
+#include "core/logging.h"
+#include "core/parameters.h"
 
 using logging::Level;
 

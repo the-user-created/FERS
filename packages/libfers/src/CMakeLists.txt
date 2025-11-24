@@ -4,6 +4,23 @@
 
 # --- Private Headers ---
 set(LIBFERS_PRIVATE_HEADERS
+	${CMAKE_CURRENT_LIST_DIR}/antenna/antenna_factory.h
+	${CMAKE_CURRENT_LIST_DIR}/core/config.h
+	${CMAKE_CURRENT_LIST_DIR}/math/coord.h
+	${CMAKE_CURRENT_LIST_DIR}/math/geometry_ops.h
+	${CMAKE_CURRENT_LIST_DIR}/core/logging.h
+	${CMAKE_CURRENT_LIST_DIR}/radar/object.h
+	${CMAKE_CURRENT_LIST_DIR}/core/parameters.h
+	${CMAKE_CURRENT_LIST_DIR}/math/path.h
+	${CMAKE_CURRENT_LIST_DIR}/radar/platform.h
+	${CMAKE_CURRENT_LIST_DIR}/core/portable_utils.h
+	${CMAKE_CURRENT_LIST_DIR}/radar/radar_obj.h
+	${CMAKE_CURRENT_LIST_DIR}/radar/receiver.h
+	${CMAKE_CURRENT_LIST_DIR}/serial/response.h
+	${CMAKE_CURRENT_LIST_DIR}/math/rotation_path.h
+	${CMAKE_CURRENT_LIST_DIR}/radar/target.h
+	${CMAKE_CURRENT_LIST_DIR}/radar/transmitter.h
+	${CMAKE_CURRENT_LIST_DIR}/core/world.h
 	${CMAKE_CURRENT_LIST_DIR}/processing/finalizer.h
 	${CMAKE_CURRENT_LIST_DIR}/core/rendering_job.h
 	${CMAKE_CURRENT_LIST_DIR}/core/simulation_state.h

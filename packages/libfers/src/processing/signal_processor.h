@@ -21,9 +21,8 @@
 #include <span>
 #include <vector>
 
-#include <libfers/config.h>
+#include "core/config.h"
 
-// Forward declarations
 namespace serial
 {
 	class Response;

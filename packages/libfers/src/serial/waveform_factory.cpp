@@ -22,8 +22,8 @@
 #include <utility>
 #include <vector>
 
-#include <libfers/config.h>
-#include <libfers/parameters.h>
+#include "core/config.h"
+#include "core/parameters.h"
 #include "hdf5_handler.h"
 #include "signal/radar_signal.h"
 

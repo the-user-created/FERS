@@ -10,14 +10,15 @@
  * @brief Implementation of the World class for the radar simulation environment.
  */
 
-#include <libfers/world.h>
+#include "world.h"
 
 #include <iomanip>
-#include <libfers/antenna_factory.h>
-#include <libfers/parameters.h>
-#include <libfers/radar_obj.h>
 #include <sstream>
+
+#include "antenna/antenna_factory.h"
 #include "core/sim_events.h"
+#include "parameters.h"
+#include "radar/radar_obj.h"
 #include "signal/radar_signal.h"
 #include "timing/prototype_timing.h"
 

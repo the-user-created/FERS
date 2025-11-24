@@ -11,6 +11,10 @@
 
 #include "serial/kml_generator.h"
 
+#include <GeographicLib/Geocentric.hpp>
+#include <GeographicLib/Geodesic.hpp>
+#include <GeographicLib/LocalCartesian.hpp>
+#include <GeographicLib/UTMUPS.hpp>
 #include <algorithm>
 #include <cmath>
 #include <fstream>
@@ -24,23 +28,18 @@
 #include <string>
 #include <vector>
 
-#include <GeographicLib/Geocentric.hpp>
-#include <GeographicLib/Geodesic.hpp>
-#include <GeographicLib/LocalCartesian.hpp>
-#include <GeographicLib/UTMUPS.hpp>
-
-#include <libfers/antenna_factory.h>
-#include <libfers/config.h>
-#include <libfers/coord.h>
-#include <libfers/logging.h>
-#include <libfers/parameters.h>
-#include <libfers/path.h>
-#include <libfers/platform.h>
-#include <libfers/radar_obj.h>
-#include <libfers/receiver.h>
-#include <libfers/target.h>
-#include <libfers/transmitter.h>
-#include <libfers/world.h>
+#include "antenna/antenna_factory.h"
+#include "core/config.h"
+#include "core/logging.h"
+#include "core/parameters.h"
+#include "core/world.h"
+#include "math/coord.h"
+#include "math/path.h"
+#include "radar/platform.h"
+#include "radar/radar_obj.h"
+#include "radar/receiver.h"
+#include "radar/target.h"
+#include "radar/transmitter.h"
 #include "signal/radar_signal.h"
 
 

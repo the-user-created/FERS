@@ -15,7 +15,7 @@
 #include <memory>
 #include <string>
 
-#include <libfers/config.h>
+#include "core/config.h"
 
 namespace fers_signal
 {

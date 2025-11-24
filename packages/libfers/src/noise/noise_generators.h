@@ -17,7 +17,7 @@
 #include <random>
 #include <vector>
 
-#include <libfers/config.h>
+#include "core/config.h"
 #include "falpha_branch.h"
 
 namespace noise

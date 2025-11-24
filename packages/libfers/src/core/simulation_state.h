@@ -13,8 +13,8 @@
 
 #include <vector>
 
-#include <libfers/config.h>
-#include <libfers/transmitter.h>
+#include "config.h"
+#include "radar/transmitter.h"
 
 namespace core
 {

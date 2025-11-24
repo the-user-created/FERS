@@ -14,9 +14,9 @@
 
 #include <vector>
 
-#include <libfers/config.h>
-#include <libfers/coord.h>
-#include <libfers/geometry_ops.h>
+#include "coord.h"
+#include "core/config.h"
+#include "geometry_ops.h"
 
 namespace math
 {

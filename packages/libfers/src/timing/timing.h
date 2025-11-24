@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 
-#include <libfers/config.h>
+#include "core/config.h"
 #include "noise/noise_generators.h"
 
 namespace timing

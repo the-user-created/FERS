@@ -11,7 +11,7 @@
 
 #include "thread_pool.h"
 
-#include <libfers/logging.h>
+#include "logging.h"
 
 namespace pool
 {

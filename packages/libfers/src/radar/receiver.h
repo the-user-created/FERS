@@ -17,9 +17,9 @@
 #include <queue>
 #include <random>
 
-#include <libfers/radar_obj.h>
-#include <libfers/response.h>
 #include "core/rendering_job.h"
+#include "radar_obj.h"
+#include "serial/response.h"
 
 namespace pool
 {

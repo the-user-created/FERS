@@ -15,11 +15,10 @@
 #pragma once
 
 #include <expected>
+#include <libfers/api.h>
 #include <optional>
 #include <string>
-
-#include <libfers/logging.h>
-#include <libfers/portable_utils.h>
+#include <thread>
 
 namespace core
 {
@@ -30,8 +29,8 @@ namespace core
 	struct Config
 	{
 		std::string script_file; ///< Path to the script file.
-		logging::Level log_level = logging::Level::INFO; ///< Logging level.
-		unsigned num_threads = countProcessors(); ///< Number of threads to use, defaults to the number of processors.
+		fers_log_level_t log_level = FERS_LOG_INFO; ///< Logging level.
+		unsigned num_threads = std::thread::hardware_concurrency(); ///< Number of threads to use.
 		bool validate = true; ///< Validate the input .fersxml file by default.
 		std::optional<std::string> log_file; ///< Optional log file path for logging output.
 		bool generate_kml = false; ///< Optional flag to generate KML visualization output.

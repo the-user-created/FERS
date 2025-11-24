@@ -22,10 +22,10 @@
 #include <tuple>
 #include <vector>
 
-#include <libfers/parameters.h>
-#include <libfers/response.h>
+#include "core/parameters.h"
 #include "core/thread_pool.h"
 #include "noise/noise_generators.h"
+#include "serial/response.h"
 
 namespace
 {

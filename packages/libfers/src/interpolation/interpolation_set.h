@@ -16,7 +16,7 @@
 #include <memory>
 #include <optional>
 
-#include <libfers/config.h>
+#include "core/config.h"
 
 namespace interp
 {

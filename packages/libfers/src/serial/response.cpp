@@ -10,16 +10,16 @@
  * @brief Implementation of the Response class
  */
 
-#include <libfers/response.h>
+#include "response.h"
 
 #include <cmath>
 #include <fstream>
 #include <iomanip>
 #include <sstream>
 
-#include <libfers/radar_obj.h>
-#include <libfers/transmitter.h>
 #include "libxml_wrapper.h"
+#include "radar/radar_obj.h"
+#include "radar/transmitter.h"
 #include "signal/radar_signal.h"
 
 using interp::InterpPoint;

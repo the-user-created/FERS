@@ -19,7 +19,7 @@
 #include <stdexcept>
 #include <utility>
 
-#include <libfers/parameters.h>
+#include "core/parameters.h"
 #include "dsp_filters.h"
 #include "interpolation/interpolation_filter.h"
 #include "interpolation/interpolation_point.h"
