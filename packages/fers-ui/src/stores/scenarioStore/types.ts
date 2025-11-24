@@ -104,12 +104,14 @@ export type PlatformActions = {
     removePositionWaypoint: (platformId: string, waypointId: string) => void;
     addRotationWaypoint: (platformId: string) => void;
     removeRotationWaypoint: (platformId: string, waypointId: string) => void;
-    setPlatformComponentType: (
+    addPlatformComponent: (
         platformId: string,
         componentType: PlatformComponent['type']
     ) => void;
+    removePlatformComponent: (platformId: string, componentId: string) => void;
     setPlatformRcsModel: (
         platformId: string,
+        componentId: string,
         newModel: TargetComponent['rcs_model']
     ) => void;
     fetchPlatformPath: (platformId: string) => Promise<void>;

@@ -36,10 +36,7 @@ export const createPlatformSlice: StateCreator<
                 id,
                 name: newName,
             };
-
-            if (newPlatform.component.type === 'monostatic') {
-                newPlatform.component.name = `${newName} Monostatic`;
-            }
+            // Defaults to empty components list
             state.platforms.push(newPlatform);
             state.isDirty = true;
         }),
@@ -99,17 +96,21 @@ export const createPlatformSlice: StateCreator<
                 }
             }
         }),
-    setPlatformComponentType: (platformId, componentType) =>
+    addPlatformComponent: (platformId, componentType) =>
         set((state) => {
             const platform = state.platforms.find((p) => p.id === platformId);
             if (!platform) return;
 
-            const name = `${platform.name} ${componentType}`;
+            const id = uuidv4();
+            const name = `${platform.name} ${
+                componentType.charAt(0).toUpperCase() + componentType.slice(1)
+            }`;
             let newComponent: PlatformComponent;
 
             switch (componentType) {
                 case 'monostatic':
                     newComponent = {
+                        id,
                         type: 'monostatic',
                         name,
                         radarType: 'pulsed',
@@ -126,6 +127,7 @@ export const createPlatformSlice: StateCreator<
                     break;
                 case 'transmitter':
                     newComponent = {
+                        id,
                         type: 'transmitter',
                         name,
                         radarType: 'pulsed',
@@ -137,6 +139,7 @@ export const createPlatformSlice: StateCreator<
                     break;
                 case 'receiver':
                     newComponent = {
+                        id,
                         type: 'receiver',
                         name,
                         radarType: 'pulsed',
@@ -152,6 +155,7 @@ export const createPlatformSlice: StateCreator<
                     break;
                 case 'target':
                     newComponent = {
+                        id,
                         type: 'target',
                         name,
                         rcs_type: 'isotropic',
@@ -159,24 +163,39 @@ export const createPlatformSlice: StateCreator<
                         rcs_model: 'constant',
                     };
                     break;
-                case 'none':
-                    newComponent = { type: 'none' };
-                    break;
+                default:
+                    return;
             }
-            platform.component = newComponent;
+            platform.components.push(newComponent);
             state.isDirty = true;
         }),
-    setPlatformRcsModel: (platformId, newModel) =>
+    removePlatformComponent: (platformId, componentId) =>
         set((state) => {
             const platform = state.platforms.find((p) => p.id === platformId);
-            if (platform?.component.type === 'target') {
-                platform.component.rcs_model = newModel;
+            if (platform) {
+                const index = platform.components.findIndex(
+                    (c) => c.id === componentId
+                );
+                if (index > -1) {
+                    platform.components.splice(index, 1);
+                    state.isDirty = true;
+                }
+            }
+        }),
+    setPlatformRcsModel: (platformId, componentId, newModel) =>
+        set((state) => {
+            const platform = state.platforms.find((p) => p.id === platformId);
+            const component = platform?.components.find(
+                (c) => c.id === componentId
+            );
+            if (component?.type === 'target') {
+                component.rcs_model = newModel;
                 if (newModel === 'chisquare' || newModel === 'gamma') {
-                    if (typeof platform.component.rcs_k !== 'number') {
-                        platform.component.rcs_k = 1.0;
+                    if (typeof component.rcs_k !== 'number') {
+                        component.rcs_k = 1.0;
                     }
                 } else {
-                    delete platform.component.rcs_k;
+                    delete component.rcs_k;
                 }
                 state.isDirty = true;
             }

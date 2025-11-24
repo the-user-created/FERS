@@ -174,9 +174,8 @@ export const RotationPathSchema = z.object({
         .min(1, 'At least one waypoint is required.'),
 });
 
-const NoComponentSchema = z.object({ type: z.literal('none') });
-
 const MonostaticComponentSchema = z.object({
+    id: z.string().uuid(),
     type: z.literal('monostatic'),
     name: z.string().min(1),
     radarType: z.enum(['pulsed', 'cw']),
@@ -192,6 +191,7 @@ const MonostaticComponentSchema = z.object({
 });
 
 const TransmitterComponentSchema = z.object({
+    id: z.string().uuid(),
     type: z.literal('transmitter'),
     name: z.string().min(1),
     radarType: z.enum(['pulsed', 'cw']),
@@ -202,6 +202,7 @@ const TransmitterComponentSchema = z.object({
 });
 
 const ReceiverComponentSchema = z.object({
+    id: z.string().uuid(),
     type: z.literal('receiver'),
     name: z.string().min(1),
     radarType: z.enum(['pulsed', 'cw']),
@@ -216,6 +217,7 @@ const ReceiverComponentSchema = z.object({
 });
 
 const TargetComponentSchema = z.object({
+    id: z.string().uuid(),
     type: z.literal('target'),
     name: z.string().min(1),
     rcs_type: z.enum(['isotropic', 'file']),
@@ -226,7 +228,6 @@ const TargetComponentSchema = z.object({
 });
 
 export const PlatformComponentSchema = z.discriminatedUnion('type', [
-    NoComponentSchema,
     MonostaticComponentSchema,
     TransmitterComponentSchema,
     ReceiverComponentSchema,
@@ -239,7 +240,7 @@ export const PlatformSchema = z.object({
     name: z.string().min(1, 'Platform name cannot be empty.'),
     motionPath: MotionPathSchema,
     rotation: z.union([FixedRotationSchema, RotationPathSchema]),
-    component: PlatformComponentSchema,
+    components: z.array(PlatformComponentSchema),
 });
 
 export const ScenarioDataSchema = z.object({

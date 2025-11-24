@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     Box,
     Typography,
@@ -13,6 +13,9 @@ import {
     CircularProgress,
     Fade,
     LinearProgress,
+    List,
+    ListItem,
+    ListItemText,
 } from '@mui/material';
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 import MapIcon from '@mui/icons-material/Map';
@@ -32,13 +35,31 @@ export const SimulationView = React.memo(function SimulationView() {
     const setIsSimulating = useScenarioStore((state) => state.setIsSimulating);
     const showError = useScenarioStore((state) => state.showError);
     const [isGeneratingKml, setIsGeneratingKml] = useState(false);
-    const [progress, setProgress] = useState<ProgressState | null>(null);
+
+    // Use a Ref to store incoming data to avoid triggering re-renders on every event
+    const progressRef = useRef<Record<string, ProgressState>>({});
+    // Local state to trigger actual re-renders throttled by rAF
+    const [displayProgress, setDisplayProgress] = useState<
+        Record<string, ProgressState>
+    >({});
 
     useEffect(() => {
+        let animationFrameId: number;
+
+        // The update loop synchronizes the Ref data to the State at screen refresh rate
+        const updateLoop = () => {
+            if (useScenarioStore.getState().isSimulating) {
+                setDisplayProgress({ ...progressRef.current });
+                animationFrameId = requestAnimationFrame(updateLoop);
+            }
+        };
+
         const unlistenSimComplete = listen<void>('simulation-complete', () => {
             console.log('Simulation completed successfully.');
             setIsSimulating(false);
-            setProgress(null);
+            progressRef.current = {};
+            setDisplayProgress({});
+            cancelAnimationFrame(animationFrameId);
         });
 
         const unlistenSimError = listen<string>('simulation-error', (event) => {
@@ -46,13 +67,41 @@ export const SimulationView = React.memo(function SimulationView() {
             console.error(errorMessage);
             showError(errorMessage);
             setIsSimulating(false);
-            setProgress(null);
+            progressRef.current = {};
+            setDisplayProgress({});
+            cancelAnimationFrame(animationFrameId);
         });
 
         const unlistenSimProgress = listen<ProgressState>(
             'simulation-progress',
             (event) => {
-                setProgress(event.payload);
+                const { message } = event.payload;
+                let key = message;
+
+                // Grouping logic to keep the list clean
+                if (
+                    message.startsWith('Simulating') ||
+                    message.startsWith('Initializing')
+                ) {
+                    key = 'main';
+                } else if (
+                    message.startsWith('Finalizing') ||
+                    message.startsWith('Exporting') ||
+                    message.startsWith('Rendering') ||
+                    message.startsWith('Applying') ||
+                    message.startsWith('Writing') ||
+                    message.startsWith('Finished')
+                ) {
+                    // Extract component name from format "Action {Name}: ..." or "Action {Name}"
+                    // e.g. "Exporting Receiver1: Chunk 50" -> key "Receiver1"
+                    const parts = message.split(/[:\s]+/);
+                    // Simple heuristic: 2nd word is often the name in our C++ format
+                    if (parts.length >= 2) {
+                        key = parts[1];
+                    }
+                }
+
+                progressRef.current[key] = event.payload;
             }
         );
 
@@ -74,8 +123,13 @@ export const SimulationView = React.memo(function SimulationView() {
             }
         );
 
-        // Cleanup function to remove listeners when the component unmounts
+        // Start the UI update loop if we are simulating
+        if (isSimulating) {
+            updateLoop();
+        }
+
         return () => {
+            cancelAnimationFrame(animationFrameId);
             Promise.all([
                 unlistenSimComplete,
                 unlistenSimError,
@@ -86,10 +140,11 @@ export const SimulationView = React.memo(function SimulationView() {
                 unlisteners.forEach((unlisten) => unlisten());
             });
         };
-    }, [setIsSimulating, showError]);
+    }, [isSimulating, setIsSimulating, showError]);
 
     const handleRunSimulation = async () => {
-        setProgress(null);
+        progressRef.current = {};
+        setDisplayProgress({});
         setIsSimulating(true);
         try {
             // Ensure the C++ backend has the latest scenario from the UI
@@ -125,6 +180,11 @@ export const SimulationView = React.memo(function SimulationView() {
             setIsGeneratingKml(false); // Stop on invocation failure
         }
     };
+
+    const mainProgress = displayProgress['main'];
+    const otherProgresses = Object.entries(displayProgress)
+        .filter(([key]) => key !== 'main')
+        .sort((a, b) => a[0].localeCompare(b[0]));
 
     return (
         <Box sx={{ p: 4, height: '100%', overflowY: 'auto' }}>
@@ -222,27 +282,30 @@ export const SimulationView = React.memo(function SimulationView() {
                         borderRadius: 1,
                     }}
                 >
+                    {/* Main Simulation Progress */}
                     <Typography
                         variant="h6"
                         sx={{ mb: 1, textAlign: 'center' }}
                     >
-                        {progress
-                            ? progress.message
+                        {mainProgress
+                            ? mainProgress.message
                             : 'Preparing simulation...'}
                     </Typography>
-                    {progress && progress.total > 0 && (
+                    {mainProgress && mainProgress.total > 0 && (
                         <Box
                             sx={{
                                 display: 'flex',
                                 alignItems: 'center',
                                 mt: 2,
+                                mb: 2,
                             }}
                         >
                             <Box sx={{ width: '100%', mr: 1 }}>
                                 <LinearProgress
                                     variant="determinate"
                                     value={
-                                        (progress.current / progress.total) *
+                                        (mainProgress.current /
+                                            mainProgress.total) *
                                         100
                                     }
                                 />
@@ -252,19 +315,71 @@ export const SimulationView = React.memo(function SimulationView() {
                                     variant="body2"
                                     color="text.secondary"
                                 >{`${Math.round(
-                                    (progress.current / progress.total) * 100
+                                    (mainProgress.current /
+                                        mainProgress.total) *
+                                        100
                                 )}%`}</Typography>
                             </Box>
                         </Box>
                     )}
-                    <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{ mt: 1, textAlign: 'center' }}
-                    >
-                        This may take several minutes depending on scenario
-                        complexity.
-                    </Typography>
+
+                    {/* Finalizer Threads List */}
+                    {otherProgresses.length > 0 && (
+                        <Box
+                            sx={{
+                                mt: 2,
+                                borderTop: 1,
+                                borderColor: 'divider',
+                                pt: 2,
+                            }}
+                        >
+                            <Typography
+                                variant="subtitle2"
+                                color="text.secondary"
+                            >
+                                Exporting Data:
+                            </Typography>
+                            <List dense>
+                                {otherProgresses.map(([key, prog]) => (
+                                    <ListItem key={key}>
+                                        <ListItemText
+                                            primary={prog.message}
+                                            secondary={
+                                                prog.total > 0 &&
+                                                prog.total !== 100
+                                                    ? 'Processing...'
+                                                    : ''
+                                            }
+                                        />
+                                        {prog.total > 0 &&
+                                            prog.total !== 100 && (
+                                                /* For chunks, we often don't know the exact total ahead of time,
+                                               so a determinate bar might jump, but passing a large number
+                                               or indeterminate looks better than flickering 100% */
+                                                <Box
+                                                    sx={{ width: '20%', ml: 2 }}
+                                                >
+                                                    <Typography
+                                                        variant="caption"
+                                                        color="text.secondary"
+                                                    >
+                                                        Chunk {prog.current}
+                                                    </Typography>
+                                                </Box>
+                                            )}
+                                        {prog.total === 100 && (
+                                            <Box sx={{ width: '30%', ml: 2 }}>
+                                                <LinearProgress
+                                                    variant="determinate"
+                                                    value={prog.current}
+                                                />
+                                            </Box>
+                                        )}
+                                    </ListItem>
+                                ))}
+                            </List>
+                        </Box>
+                    )}
                 </Box>
             </Fade>
         </Box>

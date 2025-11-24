@@ -646,6 +646,10 @@ namespace
 
 		const std::string waveform_name = XmlElement::getSafeAttribute(transmitter, "waveform");
 		RadarSignal* wave = world->findWaveform(waveform_name);
+		if (!wave)
+		{
+			throw XmlException("Waveform '" + waveform_name + "' not found for transmitter '" + name + "'");
+		}
 		transmitter_obj->setWave(wave);
 
 		if (is_pulsed)
@@ -655,11 +659,19 @@ namespace
 
 		const std::string antenna_name = XmlElement::getSafeAttribute(transmitter, "antenna");
 		const Antenna* ant = world->findAntenna(antenna_name);
+		if (!ant)
+		{
+			throw XmlException("Antenna '" + antenna_name + "' not found for transmitter '" + name + "'");
+		}
 		transmitter_obj->setAntenna(ant);
 
 		const std::string timing_name = XmlElement::getSafeAttribute(transmitter, "timing");
 		const auto timing = std::make_shared<Timing>(timing_name, masterSeeder());
 		const PrototypeTiming* proto = world->findTiming(timing_name);
+		if (!proto)
+		{
+			throw XmlException("Timing '" + timing_name + "' not found for transmitter '" + name + "'");
+		}
 		timing->initializeModel(proto);
 		transmitter_obj->setTiming(timing);
 
@@ -689,6 +701,10 @@ namespace
 		const std::string ant_name = XmlElement::getSafeAttribute(receiver, "antenna");
 
 		const Antenna* antenna = world->findAntenna(ant_name);
+		if (!antenna)
+		{
+			throw XmlException("Antenna '" + ant_name + "' not found for receiver '" + name + "'");
+		}
 		receiver_obj->setAntenna(antenna);
 
 		try
@@ -730,6 +746,10 @@ namespace
 		const auto timing = std::make_shared<Timing>(timing_name, masterSeeder());
 
 		const PrototypeTiming* proto = world->findTiming(timing_name);
+		if (!proto)
+		{
+			throw XmlException("Timing '" + timing_name + "' not found for receiver '" + name + "'");
+		}
 		timing->initializeModel(proto);
 		receiver_obj->setTiming(timing);
 
@@ -826,53 +846,24 @@ namespace
 
 	void parsePlatformElements(const XmlElement& platform, World* world, Platform* plat, std::mt19937& masterSeeder)
 	{
-		const XmlElement monostatic = platform.childElement("monostatic", 0);
-		const XmlElement transmitter = platform.childElement("transmitter", 0);
-		const XmlElement receiver = platform.childElement("receiver", 0);
-		const XmlElement target = platform.childElement("target", 0);
+		auto parseChildren = [&](const std::string& elementName, auto parseFunc)
+		{
+			unsigned index = 0;
+			while (true)
+			{
+				const XmlElement element = platform.childElement(elementName, index++);
+				if (!element.isValid())
+				{
+					break;
+				}
+				parseFunc(element, plat, world, masterSeeder);
+			}
+		};
 
-		int component_count = 0;
-		if (monostatic.isValid())
-		{
-			component_count++;
-		}
-		if (transmitter.isValid())
-		{
-			component_count++;
-		}
-		if (receiver.isValid())
-		{
-			component_count++;
-		}
-		if (target.isValid())
-		{
-			component_count++;
-		}
-
-		if (component_count != 1)
-		{
-			const std::string platform_name = XmlElement::getSafeAttribute(platform, "name");
-			throw XmlException(
-				"Platform '" + platform_name +
-				"' must contain exactly one component: <monostatic>, <transmitter>, <receiver>, or <target>.");
-		}
-
-		if (monostatic.isValid())
-		{
-			parseMonostatic(monostatic, plat, world, masterSeeder);
-		}
-		else if (transmitter.isValid())
-		{
-			parseTransmitter(transmitter, plat, world, masterSeeder);
-		}
-		else if (receiver.isValid())
-		{
-			parseReceiver(receiver, plat, world, masterSeeder);
-		}
-		else if (target.isValid())
-		{
-			parseTarget(target, plat, world, masterSeeder);
-		}
+		parseChildren("monostatic", parseMonostatic);
+		parseChildren("transmitter", parseTransmitter);
+		parseChildren("receiver", parseReceiver);
+		parseChildren("target", parseTarget);
 	}
 
 	/**
