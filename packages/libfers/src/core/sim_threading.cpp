@@ -183,10 +183,14 @@ namespace core
 							}
 						}
 					}
-					// Schedule the next pulse transmission for this transmitter.
-					if (const RealType next_pulse_time = t_event + 1.0 / tx->getPrf(); next_pulse_time <= end_time)
+					// Schedule next pulse
+					const RealType next_theoretical_time = t_event + 1.0 / tx->getPrf();
+
+					// Use schedule to determine actual next time (handles gaps in schedule)
+					if (const auto next_pulse_opt = tx->getNextPulseTime(next_theoretical_time);
+						next_pulse_opt && *next_pulse_opt <= end_time)
 					{
-						event_queue.push({next_pulse_time, EventType::TX_PULSED_START, tx});
+						event_queue.push({*next_pulse_opt, EventType::TX_PULSED_START, tx});
 					}
 					break;
 				}

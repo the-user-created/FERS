@@ -24,15 +24,14 @@
 #include <vector>
 
 // Generated headers
-#include "fers_xml_dtd.h"
-#include "fers_xml_xsd.h"
-
-// Public libfers headers
 #include "antenna/antenna_factory.h"
 #include "core/config.h"
 #include "core/logging.h"
 #include "core/parameters.h"
 #include "core/world.h"
+#include "fers_xml_dtd.h"
+#include "fers_xml_xsd.h"
+#include "libxml_wrapper.h"
 #include "math/coord.h"
 #include "math/geometry_ops.h"
 #include "math/path.h"
@@ -42,9 +41,6 @@
 #include "radar/receiver.h"
 #include "radar/target.h"
 #include "radar/transmitter.h"
-
-// Private libfers headers
-#include "libxml_wrapper.h"
 #include "timing/prototype_timing.h"
 #include "timing/timing.h"
 #include "waveform_factory.h"
@@ -675,8 +671,30 @@ namespace
 		timing->initializeModel(proto);
 		transmitter_obj->setTiming(timing);
 
-		world->add(std::move(transmitter_obj));
+		if (const XmlElement schedule = transmitter.childElement("schedule", 0); schedule.isValid())
+		{
+			unsigned p_idx = 0;
+			while (true)
+			{
+				XmlElement period = schedule.childElement("period", p_idx++);
+				if (!period.isValid())
+				{
+					break;
+				}
+				try
+				{
+					const RealType start = std::stod(XmlElement::getSafeAttribute(period, "start"));
+					const RealType end = std::stod(XmlElement::getSafeAttribute(period, "end"));
+					transmitter_obj->addSchedulePeriod(start, end);
+				}
+				catch (const XmlException& e)
+				{
+					LOG(Level::WARNING, "Failed to parse schedule period for transmitter '{}': {}", name, e.what());
+				}
+			}
+		}
 
+		world->add(std::move(transmitter_obj));
 		return world->getTransmitters().back().get();
 	}
 

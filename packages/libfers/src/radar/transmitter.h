@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include <optional>
+
 #include "radar_obj.h"
 
 namespace fers_signal
@@ -32,6 +34,17 @@ namespace radar
 
 		RealType time; ///< Time at which the pulse is emitted.
 	};
+
+	/**
+	 * @struct SchedulePeriod
+	 * @brief Represents a time period during which the transmitter is active.
+	 */
+	struct SchedulePeriod
+	{
+		RealType start;
+		RealType end;
+	};
+
 
 	/**
 	 * @class Transmitter
@@ -113,11 +126,38 @@ namespace radar
 		 */
 		void setPrf(RealType mprf) noexcept;
 
+		/**
+		 * @brief Adds an active period to the transmitter's schedule.
+		 * @param start Start time of the active period.
+		 * @param end End time of the active period.
+		 */
+		void addSchedulePeriod(RealType start, RealType end);
+
+		/**
+		 * @brief Retrieves the list of active transmission periods.
+		 * @return A const reference to the schedule vector.
+		 */
+		[[nodiscard]] const std::vector<SchedulePeriod>& getSchedule() const noexcept { return _schedule; }
+
+		/**
+		 * @brief Determines the valid simulation time for a pulse at or after the given time.
+		 *
+		 * If the requested time falls within an active period, it is returned.
+		 * If it falls in a gap between periods, the start of the next period is returned.
+		 * If it falls after all periods, std::nullopt is returned.
+		 * If no schedule is defined, the transmitter is considered "always on".
+		 *
+		 * @param time The proposed pulse time.
+		 * @return The actual pulse time, or nullopt if no valid time exists.
+		 */
+		[[nodiscard]] std::optional<RealType> getNextPulseTime(RealType time) const;
+
 	private:
 		fers_signal::RadarSignal* _signal = nullptr; ///< Pointer to the radar signal being transmitted.
 
 		RealType _prf = {}; ///< The pulse repetition frequency (PRF) of the transmitter.
 
 		OperationMode _mode; ///< The operational mode of the transmitter.
+		std::vector<SchedulePeriod> _schedule; ///< The schedule of active periods.
 	};
 }

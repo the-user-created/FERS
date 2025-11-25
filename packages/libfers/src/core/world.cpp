@@ -97,17 +97,46 @@ namespace core
 
 	void World::scheduleInitialEvents()
 	{
+		const RealType sim_start = params::startTime();
+		const RealType sim_end = params::endTime();
+
 		for (const auto& transmitter : _transmitters)
 		{
 			if (transmitter->getMode() == radar::OperationMode::PULSED_MODE)
 			{
-				// Schedule the first pulse at t=0
-				_event_queue.push({0.0, EventType::TX_PULSED_START, transmitter.get()});
+				// Find the first valid pulse time starting from the simulation start time.
+				if (auto start_time = transmitter->getNextPulseTime(sim_start); start_time)
+				{
+					if (*start_time <= sim_end)
+					{
+						_event_queue.push({*start_time, EventType::TX_PULSED_START, transmitter.get()});
+					}
+				}
 			}
 			else // CW_MODE
 			{
-				_event_queue.push({params::startTime(), EventType::TX_CW_START, transmitter.get()});
-				_event_queue.push({params::endTime(), EventType::TX_CW_END, transmitter.get()});
+				const auto& schedule = transmitter->getSchedule();
+				if (schedule.empty())
+				{
+					// Legacy behavior: Always on for simulation duration
+					_event_queue.push({sim_start, EventType::TX_CW_START, transmitter.get()});
+					_event_queue.push({sim_end, EventType::TX_CW_END, transmitter.get()});
+				}
+				else
+				{
+					for (const auto& period : schedule)
+					{
+						// Clip periods to simulation bounds
+						const RealType start = std::max(sim_start, period.start);
+						const RealType end = std::min(sim_end, period.end);
+
+						if (start < end)
+						{
+							_event_queue.push({start, EventType::TX_CW_START, transmitter.get()});
+							_event_queue.push({end, EventType::TX_CW_END, transmitter.get()});
+						}
+					}
+				}
 			}
 		}
 
