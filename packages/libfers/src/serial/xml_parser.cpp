@@ -671,26 +671,89 @@ namespace
 		timing->initializeModel(proto);
 		transmitter_obj->setTiming(timing);
 
-		if (const XmlElement schedule = transmitter.childElement("schedule", 0); schedule.isValid())
+		if (const XmlElement schedule_element = transmitter.childElement("schedule", 0); schedule_element.isValid())
 		{
+			std::vector<radar::SchedulePeriod> periods;
 			unsigned p_idx = 0;
 			while (true)
 			{
-				XmlElement period = schedule.childElement("period", p_idx++);
-				if (!period.isValid())
+				XmlElement period_element = schedule_element.childElement("period", p_idx++);
+				if (!period_element.isValid())
 				{
 					break;
 				}
 				try
 				{
-					const RealType start = std::stod(XmlElement::getSafeAttribute(period, "start"));
-					const RealType end = std::stod(XmlElement::getSafeAttribute(period, "end"));
-					transmitter_obj->addSchedulePeriod(start, end);
+					const RealType start = std::stod(XmlElement::getSafeAttribute(period_element, "start"));
+					const RealType end = std::stod(XmlElement::getSafeAttribute(period_element, "end"));
+
+					// Validation 1: Check for inverted or zero-duration periods.
+					if (start >= end)
+					{
+						LOG(Level::WARNING,
+							"Transmitter '{}' has a schedule period with start ({}) >= end ({}). Ignoring period.",
+							name, start, end);
+						continue;
+					}
+
+					// Validation 2: Check if period is completely outside simulation time.
+					if (end <= params::startTime() || start >= params::endTime())
+					{
+						LOG(Level::WARNING,
+							"Transmitter '{}' has a schedule period [{}, {}] completely outside simulation time "
+							"[{}, {}]. Ignoring period.",
+							name, start, end, params::startTime(), params::endTime());
+						continue;
+					}
+
+					periods.push_back({start, end});
 				}
-				catch (const XmlException& e)
+				catch (const std::exception& e)
 				{
 					LOG(Level::WARNING, "Failed to parse schedule period for transmitter '{}': {}", name, e.what());
 				}
+			}
+
+			if (!periods.empty())
+			{
+				// Sort periods to enable merging.
+				std::sort(periods.begin(), periods.end(),
+						  [](const auto& a, const auto& b) { return a.start < b.start; });
+
+				// Merge overlapping or contiguous periods.
+				std::vector<radar::SchedulePeriod> merged_periods;
+				merged_periods.push_back(periods.front());
+
+				for (size_t i = 1; i < periods.size(); ++i)
+				{
+					if (periods[i].start <= merged_periods.back().end)
+					{
+						// Overlap or contiguous, extend the previous period.
+						merged_periods.back().end = std::max(merged_periods.back().end, periods[i].end);
+					}
+					else
+					{
+						// No overlap, add as a new period.
+						merged_periods.push_back(periods[i]);
+					}
+				}
+
+				// Validation 3: For pulsed mode, check if merged periods are long enough.
+				if (is_pulsed)
+				{
+					const RealType pri = 1.0 / transmitter_obj->getPrf();
+					for (const auto& period : merged_periods)
+					{
+						if (period.end - period.start < pri)
+						{
+							LOG(Level::WARNING,
+								"Transmitter '{}' has a schedule period [{}, {}] with duration shorter than its "
+								"pulse repetition interval ({}s). No pulses can be generated in this period.",
+								name, period.start, period.end, pri);
+						}
+					}
+				}
+				transmitter_obj->setSchedule(std::move(merged_periods));
 			}
 		}
 

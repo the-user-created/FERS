@@ -127,11 +127,12 @@ namespace radar
 		void setPrf(RealType mprf) noexcept;
 
 		/**
-		 * @brief Adds an active period to the transmitter's schedule.
-		 * @param start Start time of the active period.
-		 * @param end End time of the active period.
+		 * @brief Sets the active schedule for the transmitter.
+		 *
+		 * The provided schedule should be pre-validated and sorted.
+		 * @param schedule A vector of active periods.
 		 */
-		void addSchedulePeriod(RealType start, RealType end);
+		void setSchedule(std::vector<SchedulePeriod> schedule);
 
 		/**
 		 * @brief Retrieves the list of active transmission periods.

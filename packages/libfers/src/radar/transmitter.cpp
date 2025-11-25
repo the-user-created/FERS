@@ -33,12 +33,10 @@ namespace radar
 		_prf = 1 / (std::floor(rate / mprf) / rate);
 	}
 
-	void Transmitter::addSchedulePeriod(RealType start, RealType end)
+	void Transmitter::setSchedule(std::vector<SchedulePeriod> schedule)
 	{
-		_schedule.push_back({start, end});
-		// Ensure schedule is sorted for efficient lookup
-		std::sort(_schedule.begin(), _schedule.end(),
-				  [](const SchedulePeriod& a, const SchedulePeriod& b) { return a.start < b.start; });
+		// The schedule is assumed to be sorted and merged by the parser.
+		_schedule = std::move(schedule);
 	}
 
 	std::optional<RealType> Transmitter::getNextPulseTime(RealType time) const
