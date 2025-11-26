@@ -81,6 +81,21 @@ namespace
 
 	// --- Component Serialization Functions ---
 
+	void serializeSchedule(const std::vector<radar::SchedulePeriod>& schedule, const XmlElement& parent)
+	{
+		if (schedule.empty())
+		{
+			return;
+		}
+		const XmlElement sched_elem = parent.addChild("schedule");
+		for (const auto& period : schedule)
+		{
+			XmlElement p_elem = sched_elem.addChild("period");
+			p_elem.setAttribute("start", std::to_string(period.start));
+			p_elem.setAttribute("end", std::to_string(period.end));
+		}
+	}
+
 	void serializeParameters(const XmlElement& parent)
 	{
 		addChildWithNumber(parent, "starttime", params::startTime());
@@ -334,6 +349,8 @@ namespace
 		{
 			(void)tx_elem.addChild("cw_mode");
 		}
+
+		serializeSchedule(tx.getSchedule(), tx_elem);
 	}
 
 	void serializeReceiver(const radar::Receiver& rx, const XmlElement& parent)
@@ -361,6 +378,8 @@ namespace
 		{
 			addChildWithNumber(rx_elem, "noise_temp", rx.getNoiseTemperature());
 		}
+
+		serializeSchedule(rx.getSchedule(), rx_elem);
 	}
 
 	void serializeMonostatic(const radar::Transmitter& tx, const radar::Receiver& rx, const XmlElement& parent)
@@ -389,6 +408,8 @@ namespace
 		{
 			addChildWithNumber(mono_elem, "noise_temp", rx.getNoiseTemperature());
 		}
+
+		serializeSchedule(tx.getSchedule(), mono_elem);
 	}
 
 	void serializeTarget(const radar::Target& target, const XmlElement& parent)

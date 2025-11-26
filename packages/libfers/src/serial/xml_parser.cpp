@@ -130,7 +130,7 @@ namespace
 	std::vector<radar::SchedulePeriod> parseSchedule(const XmlElement& parent, const std::string& parentName,
 													 const bool isPulsed, const RealType pri = 0.0)
 	{
-		std::vector<radar::SchedulePeriod> periods;
+		std::vector<radar::SchedulePeriod> raw_periods;
 		if (const XmlElement schedule_element = parent.childElement("schedule", 0); schedule_element.isValid())
 		{
 			unsigned p_idx = 0;
@@ -145,63 +145,17 @@ namespace
 				{
 					const RealType start = std::stod(XmlElement::getSafeAttribute(period_element, "start"));
 					const RealType end = std::stod(XmlElement::getSafeAttribute(period_element, "end"));
-
-					if (start >= end)
-					{
-						LOG(Level::WARNING,
-							"Object '{}' has a schedule period with start ({}) >= end ({}). Ignoring period.",
-							parentName, start, end);
-						continue;
-					}
-					if (end <= params::startTime() || start >= params::endTime())
-					{
-						LOG(Level::WARNING,
-							"Object '{}' has a schedule period [{}, {}] completely outside simulation time. Ignoring.",
-							parentName, start, end);
-						continue;
-					}
-					periods.push_back({start, end});
+					raw_periods.push_back({start, end});
 				}
 				catch (const std::exception& e)
 				{
 					LOG(Level::WARNING, "Failed to parse schedule period for '{}': {}", parentName, e.what());
 				}
 			}
-
-			if (!periods.empty())
-			{
-				std::sort(periods.begin(), periods.end(),
-						  [](const auto& a, const auto& b) { return a.start < b.start; });
-
-				std::vector<radar::SchedulePeriod> merged;
-				merged.push_back(periods.front());
-				for (size_t i = 1; i < periods.size(); ++i)
-				{
-					if (periods[i].start <= merged.back().end)
-					{
-						merged.back().end = std::max(merged.back().end, periods[i].end);
-					}
-					else
-					{
-						merged.push_back(periods[i]);
-					}
-				}
-
-				if (isPulsed)
-				{
-					for (const auto& period : merged)
-					{
-						if (period.end - period.start < pri)
-						{
-							LOG(Level::WARNING, "Object '{}' has a schedule period [{}, {}] shorter than PRI ({}s).",
-								parentName, period.start, period.end, pri);
-						}
-					}
-				}
-				return merged;
-			}
 		}
-		return {};
+
+		// Delegate processing (sorting, merging, validation) to the shared utility
+		return radar::processRawSchedule(std::move(raw_periods), parentName, isPulsed, pri);
 	}
 
 	/**

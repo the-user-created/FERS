@@ -96,6 +96,7 @@ export const createBackendSlice: StateCreator<
                                 noise_temp: component.noiseTemperature,
                                 nodirect: component.noDirectPaths,
                                 nopropagationloss: component.noPropagationLoss,
+                                schedule: component.schedule,
                             },
                         };
                         break;
@@ -109,6 +110,7 @@ export const createBackendSlice: StateCreator<
                                     component.waveformId
                                 ),
                                 timing: findTimingName(component.timingId),
+                                schedule: component.schedule,
                             },
                         };
                         break;
@@ -122,6 +124,7 @@ export const createBackendSlice: StateCreator<
                                 noise_temp: component.noiseTemperature,
                                 nodirect: component.noDirectPaths,
                                 nopropagationloss: component.noPropagationLoss,
+                                schedule: component.schedule,
                             },
                         };
                         break;

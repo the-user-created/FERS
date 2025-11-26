@@ -33,6 +33,11 @@ interface BackendPulsedMode {
     window_length?: number;
 }
 
+interface BackendSchedulePeriod {
+    start: number;
+    end: number;
+}
+
 interface BackendPlatformComponentData {
     name: string;
     antenna?: string;
@@ -43,6 +48,7 @@ interface BackendPlatformComponentData {
     nopropagationloss?: boolean;
     pulsed_mode?: BackendPulsedMode;
     cw_mode?: object;
+    schedule?: BackendSchedulePeriod[];
     rcs?: { type: 'isotropic' | 'file'; value?: number; filename?: string };
     model?: { type: 'constant' | 'chisquare' | 'gamma'; k?: number };
 }
@@ -323,6 +329,7 @@ export const createScenarioSlice: StateCreator<
                                 nameToIdMap.get(cData.antenna ?? '') ?? null,
                             timingId:
                                 nameToIdMap.get(cData.timing ?? '') ?? null,
+                            schedule: cData.schedule ?? [],
                         };
                         const commonReceiver = {
                             noiseTemperature: cData.noise_temp ?? null,

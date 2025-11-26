@@ -3,7 +3,7 @@
     "private": true,
     "scripts": {
         "prepare": "husky",
-        "ui:dev": "pnpm --filter fers-ui tauri dev",
+        "ui:dev": "pnpm --filter fers-ui tauri dev --no-watch",
         "ui:build": "pnpm --filter fers-ui tauri build",
         "tauri": "pnpm --filter fers-ui tauri",
         "format": "pnpm format:cpp && pnpm format:js && pnpm format:rust",

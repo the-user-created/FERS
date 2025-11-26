@@ -20,7 +20,7 @@ export default function Timeline() {
     } = useScenarioStore();
 
     const animationFrameRef = useRef(0);
-    const lastTimeRef = useRef(performance.now());
+    const lastTimeRef = useRef(0);
 
     // Calculate dynamic values based on simulation duration and user settings.
     const { simulationDuration, speedFactor, sliderStep, timeStep } =

@@ -17,6 +17,7 @@ import {
     FixedRotationSchema,
     RotationPathSchema,
     MotionPathSchema,
+    SchedulePeriodSchema,
 } from '../scenarioSchema';
 
 // --- Zod Inferred Types ---
@@ -31,6 +32,7 @@ export type FixedRotation = z.infer<typeof FixedRotationSchema>;
 export type RotationWaypoint = z.infer<typeof RotationWaypointSchema>;
 export type RotationPath = z.infer<typeof RotationPathSchema>;
 export type PlatformComponent = z.infer<typeof PlatformComponentSchema>;
+export type SchedulePeriod = z.infer<typeof SchedulePeriodSchema>;
 export type Platform = z.infer<typeof PlatformSchema> & {
     pathPoints?: Vector3[];
 };

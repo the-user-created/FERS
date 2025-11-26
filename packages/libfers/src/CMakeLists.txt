@@ -52,6 +52,7 @@ set(LIBFERS_PRIVATE_HEADERS
 
 # --- Source Files ---
 set(LIBFERS_SOURCES
+	${CMAKE_CURRENT_LIST_DIR}/radar/schedule_period.cpp
 	${CMAKE_CURRENT_LIST_DIR}/processing/finalizer.cpp
 	${CMAKE_CURRENT_LIST_DIR}/api.cpp
 	${CMAKE_CURRENT_LIST_DIR}/core/logging.cpp

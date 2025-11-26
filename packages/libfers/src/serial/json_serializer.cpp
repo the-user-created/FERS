@@ -371,6 +371,14 @@ namespace antenna
 
 namespace radar
 {
+	void to_json(nlohmann::json& j, const SchedulePeriod& p) { j = {{"start", p.start}, {"end", p.end}}; }
+
+	void from_json(const nlohmann::json& j, SchedulePeriod& p)
+	{
+		j.at("start").get_to(p.start);
+		j.at("end").get_to(p.end);
+	}
+
 	void to_json(nlohmann::json& j, const Transmitter& t)
 	{
 		j = nlohmann::json{{"name", t.getName()},
@@ -385,6 +393,10 @@ namespace radar
 		else
 		{
 			j["cw_mode"] = nlohmann::json::object();
+		}
+		if (!t.getSchedule().empty())
+		{
+			j["schedule"] = t.getSchedule();
 		}
 	}
 
@@ -405,6 +417,10 @@ namespace radar
 		else
 		{
 			j["cw_mode"] = nlohmann::json::object();
+		}
+		if (!r.getSchedule().empty())
+		{
+			j["schedule"] = r.getSchedule();
 		}
 	}
 
@@ -570,6 +586,11 @@ namespace serial
 							monostatic_comp["nodirect"] = recv->checkFlag(radar::Receiver::RecvFlag::FLAG_NODIRECT);
 							monostatic_comp["nopropagationloss"] =
 								recv->checkFlag(radar::Receiver::RecvFlag::FLAG_NOPROPLOSS);
+
+							if (!t->getSchedule().empty())
+							{
+								monostatic_comp["schedule"] = t->getSchedule();
+							}
 
 							if (t->getMode() == radar::OperationMode::PULSED_MODE)
 							{
@@ -757,6 +778,19 @@ namespace serial
 							const auto timing = std::make_shared<timing::Timing>(timing_name, masterSeeder());
 							timing->initializeModel(world.findTiming(timing_name));
 							trans->setTiming(timing);
+
+							if (comp_json.contains("schedule"))
+							{
+								auto raw = comp_json.at("schedule").get<std::vector<radar::SchedulePeriod>>();
+								RealType pri = 0.0;
+								if (mode == radar::OperationMode::PULSED_MODE)
+								{
+									pri = 1.0 / trans->getPrf();
+								}
+								trans->setSchedule(radar::processRawSchedule(
+									std::move(raw), trans->getName(), mode == radar::OperationMode::PULSED_MODE, pri));
+							}
+
 							world.add(std::move(trans));
 						}
 						else if (comp_json_outer.contains("receiver"))
@@ -800,6 +834,19 @@ namespace serial
 							const auto timing = std::make_shared<timing::Timing>(timing_name, masterSeeder());
 							timing->initializeModel(world.findTiming(timing_name));
 							recv->setTiming(timing);
+
+							if (comp_json.contains("schedule"))
+							{
+								auto raw = comp_json.at("schedule").get<std::vector<radar::SchedulePeriod>>();
+								RealType pri = 0.0;
+								if (mode == radar::OperationMode::PULSED_MODE)
+								{
+									pri = 1.0 / recv->getWindowPrf();
+								}
+								recv->setSchedule(radar::processRawSchedule(
+									std::move(raw), recv->getName(), mode == radar::OperationMode::PULSED_MODE, pri));
+							}
+
 							world.add(std::move(recv));
 						}
 						else if (comp_json_outer.contains("target"))
@@ -903,6 +950,23 @@ namespace serial
 							const auto rx_timing = std::make_shared<timing::Timing>(timing_name, masterSeeder());
 							rx_timing->initializeModel(world.findTiming(timing_name));
 							recv->setTiming(rx_timing);
+
+							if (comp_json.contains("schedule"))
+							{
+								auto raw = comp_json.at("schedule").get<std::vector<radar::SchedulePeriod>>();
+								RealType pri = 0.0;
+								if (mode == radar::OperationMode::PULSED_MODE)
+								{
+									pri = 1.0 / trans->getPrf();
+								}
+
+								// Process once, apply to both
+								auto processed_schedule = radar::processRawSchedule(
+									std::move(raw), trans->getName(), mode == radar::OperationMode::PULSED_MODE, pri);
+
+								trans->setSchedule(processed_schedule);
+								recv->setSchedule(processed_schedule);
+							}
 
 							// Link them and add to world
 							trans->setAttached(recv.get());
