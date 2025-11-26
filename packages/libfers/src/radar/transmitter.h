@@ -15,6 +15,7 @@
 #include <optional>
 
 #include "radar_obj.h"
+#include "schedule_period.h"
 
 namespace fers_signal
 {
@@ -23,29 +24,6 @@ namespace fers_signal
 
 namespace radar
 {
-	/**
-	 * @struct TransmitterPulse
-	 * @brief Struct representing a radar pulse emitted by the transmitter.
-	 *
-	 */
-	struct TransmitterPulse
-	{
-		fers_signal::RadarSignal* wave; ///< Pointer to the radar signal wave.
-
-		RealType time; ///< Time at which the pulse is emitted.
-	};
-
-	/**
-	 * @struct SchedulePeriod
-	 * @brief Represents a time period during which the transmitter is active.
-	 */
-	struct SchedulePeriod
-	{
-		RealType start;
-		RealType end;
-	};
-
-
 	/**
 	 * @class Transmitter
 	 * @brief Represents a radar transmitter system.
@@ -109,15 +87,6 @@ namespace radar
 		 * @param signal Pointer to the RadarSignal object to be transmitted.
 		 */
 		void setSignal(fers_signal::RadarSignal* signal) noexcept { _signal = signal; }
-
-		/**
-		 * @brief Assigns a pulse to be transmitted at a given time.
-		 *
-		 * @param pulse Pointer to the TransmitterPulse structure to hold the pulse data.
-		 * @param number Pulse number for which to set the time and waveform.
-		 * @throws std::logic_error If the transmitter is not associated with a timing source.
-		 */
-		void setPulse(TransmitterPulse* pulse, int number) const;
 
 		/**
 		 * @brief Sets the pulse repetition frequency (PRF) of the transmitter.

@@ -4,6 +4,7 @@
 
 # --- Private Headers ---
 set(LIBFERS_PRIVATE_HEADERS
+	${CMAKE_CURRENT_LIST_DIR}/radar/schedule_period.h
 	${CMAKE_CURRENT_LIST_DIR}/antenna/antenna_factory.h
 	${CMAKE_CURRENT_LIST_DIR}/core/config.h
 	${CMAKE_CURRENT_LIST_DIR}/math/coord.h

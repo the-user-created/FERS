@@ -16,17 +16,6 @@
 
 namespace radar
 {
-	void Transmitter::setPulse(TransmitterPulse* pulse, const int number) const
-	{
-		pulse->wave = _signal;
-		pulse->time = _mode == OperationMode::PULSED_MODE ? static_cast<RealType>(number) / _prf : 0;
-		if (!_timing)
-		{
-			LOG(logging::Level::FATAL, "Transmitter {} must be associated with timing source", getName());
-			throw std::logic_error("Transmitter " + getName() + " must be associated with timing source");
-		}
-	}
-
 	void Transmitter::setPrf(const RealType mprf) noexcept
 	{
 		const RealType rate = params::rate() * params::oversampleRatio();
