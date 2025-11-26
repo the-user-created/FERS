@@ -8,6 +8,7 @@ import {
     useScenarioStore,
     Platform,
     calculateInterpolatedPosition,
+    calculateInterpolatedRotation,
 } from '@/stores/scenarioStore';
 import { MotionPathLine } from './MotionPathLine';
 import CameraManager from './CameraManager';
@@ -31,6 +32,16 @@ function useInterpolatedPosition(
 }
 
 /**
+ * Custom hook to calculate a platform's rotation at a given simulation time.
+ */
+function useInterpolatedRotation(platform: Platform, currentTime: number) {
+    return useMemo(
+        () => calculateInterpolatedRotation(platform, currentTime),
+        [platform, currentTime]
+    );
+}
+
+/**
  * Represents a single platform in the 3D world as a sphere with an identifying label.
  * @param {object} props - The component props.
  * @param {Platform} props.platform - The platform data from the store.
@@ -42,6 +53,7 @@ function PlatformSphere({ platform }: { platform: Platform }) {
     const isSelected = platform.id === selectedItemId;
 
     const position = useInterpolatedPosition(platform, currentTime);
+    const rotation = useInterpolatedRotation(platform, currentTime);
 
     const labelData = useMemo(
         () => ({
@@ -53,23 +65,28 @@ function PlatformSphere({ platform }: { platform: Platform }) {
     );
 
     return (
-        <mesh
-            position={position}
-            castShadow
-            onPointerOver={(e) => {
-                e.stopPropagation();
-                setIsHovered(true);
-            }}
-            onPointerOut={() => setIsHovered(false)}
-        >
-            <sphereGeometry args={[0.5, 32, 32]} />
-            <meshStandardMaterial
-                color={isHovered || isSelected ? '#f48fb1' : '#90caf9'}
-                roughness={0.3}
-                metalness={0.5}
-                emissive={isSelected ? '#f48fb1' : '#000000'}
-                emissiveIntensity={isSelected ? 0.25 : 0}
-            />
+        <group position={position} rotation={rotation}>
+            <mesh
+                castShadow
+                onPointerOver={(e) => {
+                    e.stopPropagation();
+                    setIsHovered(true);
+                }}
+                onPointerOut={() => setIsHovered(false)}
+            >
+                <sphereGeometry args={[0.5, 32, 32]} />
+                <meshStandardMaterial
+                    color={isHovered || isSelected ? '#f48fb1' : '#90caf9'}
+                    roughness={0.3}
+                    metalness={0.5}
+                    emissive={isSelected ? '#f48fb1' : '#000000'}
+                    emissiveIntensity={isSelected ? 0.25 : 0}
+                />
+                {/* Render Body Axes: Red=X (Right), Green=Y (Up), Blue=Z (Forward/North depending on frame)
+                TODO: the axes should scale with zoom level for better visibility (with maybe a toggle to turn off individual platform axes)
+                */}
+                <axesHelper args={[2]} />
+            </mesh>
             <Html
                 position={[0, 1.2, 0]} // Position label above the sphere
                 center // Center the label on its anchor point
@@ -92,7 +109,7 @@ function PlatformSphere({ platform }: { platform: Platform }) {
                 <div>{`Y: ${(labelData?.y ?? 0).toFixed(2)}`}</div>
                 <div>{`Alt: ${(labelData?.altitude ?? 0).toFixed(2)}`}</div>
             </Html>
-        </mesh>
+        </group>
     );
 }
 
@@ -107,30 +124,44 @@ export default function WorldView() {
     );
     const controlsRef = useRef<MapControlsImpl>(null);
 
-    // Memoize platform dependencies to avoid re-triggering the effect unnecessarily.
+    // Keep a reference to platforms to access in the effect without adding it to dependencies.
+    // We update this ref in a separate effect to avoid "mutation during render" errors.
+    const platformsRef = useRef(platforms);
+
+    useEffect(() => {
+        platformsRef.current = platforms;
+    }, [platforms]);
+
+    // Memoize platform dependencies.
     const platformDeps = useMemo(
         () =>
             platforms
-                .map((p) =>
-                    [
+                .map((p) => {
+                    const rotKey =
+                        p.rotation.type === 'path'
+                            ? `${p.rotation.interpolation}-${JSON.stringify(
+                                  p.rotation.waypoints
+                              )}`
+                            : `fixed-${p.rotation.startAzimuth}-${p.rotation.startElevation}-${p.rotation.azimuthRate}-${p.rotation.elevationRate}`;
+
+                    return [
                         p.id,
                         p.motionPath.interpolation,
-                        p.motionPath.waypoints.length,
-                    ].join()
-                )
+                        JSON.stringify(p.motionPath.waypoints),
+                        rotKey,
+                    ].join('|');
+                })
                 .join(';'),
         [platforms]
     );
 
     useEffect(() => {
-        platforms.forEach((platform) => {
-            // Fetch path data for any platform that doesn't have it yet.
-            // This effect re-runs if waypoints or interpolation type changes.
-            if (!platform.pathPoints) {
-                void fetchPlatformPath(platform.id);
-            }
+        // Access the platforms via ref. The dependency array is strictly controlled
+        // by platformDeps, which prevents the infinite loop caused by store updates.
+        platformsRef.current.forEach((platform) => {
+            void fetchPlatformPath(platform.id);
         });
-    }, [platformDeps, fetchPlatformPath, platforms]);
+    }, [platformDeps, fetchPlatformPath]);
 
     return (
         <>

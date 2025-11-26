@@ -576,8 +576,8 @@ fers_interpolated_rotation_path_t* fers_get_interpolated_rotation_path(const fer
 		if (waypoint_count < 2 || duration <= 0)
 		{
 			const math::SVec3 rot = path.getPosition(start_time);
-			// Convert back to compass degrees for output
-			const RealType az_deg = std::fmod(90.0 - rot.azimuth * 180.0 / PI + 360.0, 360.0);
+			// Convert back to compass degrees for output without normalization
+			const RealType az_deg = 90.0 - rot.azimuth * 180.0 / PI;
 			const RealType el_deg = rot.elevation * 180.0 / PI;
 			for (size_t i = 0; i < num_points; ++i)
 			{
@@ -594,7 +594,8 @@ fers_interpolated_rotation_path_t* fers_get_interpolated_rotation_path(const fer
 			const math::SVec3 rot = path.getPosition(t);
 
 			// Convert from internal mathematical radians back to compass degrees for C-API output
-			const RealType az_deg = std::fmod(90.0 - rot.azimuth * 180.0 / PI + 360.0, 360.0);
+			// We do NOT normalize to [0, 360) to preserve winding/negative angles for the UI.
+			const RealType az_deg = 90.0 - rot.azimuth * 180.0 / PI;
 			const RealType el_deg = rot.elevation * 180.0 / PI;
 
 			result_path->points[i] = {az_deg, el_deg};

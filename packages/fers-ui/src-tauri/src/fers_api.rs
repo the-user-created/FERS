@@ -495,7 +495,7 @@ pub fn get_interpolated_motion_path(
     waypoints: Vec<crate::MotionWaypoint>,
     interp_type: crate::InterpolationType,
     num_points: usize,
-) -> Result<Vec<crate::InterpolatedPoint>, String> {
+) -> Result<Vec<crate::InterpolatedMotionPoint>, String> {
     if waypoints.is_empty() || num_points == 0 {
         return Ok(Vec::new());
     }
@@ -527,9 +527,9 @@ pub fn get_interpolated_motion_path(
     }
 
     // RAII wrapper to ensure the C-allocated path is freed.
-    struct FersInterpolatedPath(*mut ffi::fers_interpolated_path_t);
+    struct FersInterpolatedMotionPath(*mut ffi::fers_interpolated_path_t);
 
-    impl Drop for FersInterpolatedPath {
+    impl Drop for FersInterpolatedMotionPath {
         fn drop(&mut self) {
             if !self.0.is_null() {
                 // SAFETY: The pointer is valid and owned by this struct.
@@ -538,15 +538,95 @@ pub fn get_interpolated_motion_path(
         }
     }
 
-    let owned_path = FersInterpolatedPath(result_ptr);
+    let owned_path = FersInterpolatedMotionPath(result_ptr);
 
     // SAFETY: We are accessing the fields of a non-null pointer returned by the FFI.
     // The `count` and `points` fields are guaranteed to be valid for the lifetime of `owned_path`.
     let result_slice =
         unsafe { std::slice::from_raw_parts((*owned_path.0).points, (*owned_path.0).count) };
 
-    let points: Vec<crate::InterpolatedPoint> =
-        result_slice.iter().map(|p| crate::InterpolatedPoint { x: p.x, y: p.y, z: p.z }).collect();
+    let points: Vec<crate::InterpolatedMotionPoint> = result_slice
+        .iter()
+        .map(|p| crate::InterpolatedMotionPoint { x: p.x, y: p.y, z: p.z })
+        .collect();
+
+    Ok(points)
+}
+
+/// A safe wrapper for the stateless `fers_get_interpolated_rotation_path` C-API function.
+///
+/// This function converts Rust-native rotation waypoints into C-compatible types,
+/// calls the FFI function, and converts the result back into a `Vec` of points.
+/// It handles the mapping between Rust enums and C enums for interpolation types
+/// and ensures that the C-allocated array is properly freed.
+///
+/// # Parameters
+/// * `waypoints` - A vector of `RotationWaypoint`s.
+/// * `interp_type` - The interpolation algorithm to use.
+/// * `num_points` - The desired number of points in the output path.
+///
+/// # Returns
+/// * `Ok(Vec<InterpolatedRotationPoint>)` - A vector of interpolated points.
+/// * `Err(String)` - An error message if the FFI call failed.
+pub fn get_interpolated_rotation_path(
+    waypoints: Vec<crate::RotationWaypoint>,
+    interp_type: crate::InterpolationType,
+    num_points: usize,
+) -> Result<Vec<crate::InterpolatedRotationPoint>, String> {
+    if waypoints.is_empty() || num_points == 0 {
+        return Ok(Vec::new());
+    }
+
+    let c_waypoints: Vec<ffi::fers_rotation_waypoint_t> = waypoints
+        .into_iter()
+        .map(|wp| ffi::fers_rotation_waypoint_t {
+            time: wp.time,
+            azimuth_deg: wp.azimuth,
+            elevation_deg: wp.elevation,
+        })
+        .collect();
+
+    let c_interp_type = match interp_type {
+        crate::InterpolationType::Static => ffi::fers_interp_type_t_FERS_INTERP_STATIC,
+        crate::InterpolationType::Linear => ffi::fers_interp_type_t_FERS_INTERP_LINEAR,
+        crate::InterpolationType::Cubic => ffi::fers_interp_type_t_FERS_INTERP_CUBIC,
+    };
+
+    let result_ptr = unsafe {
+        ffi::fers_get_interpolated_rotation_path(
+            c_waypoints.as_ptr(),
+            c_waypoints.len(),
+            c_interp_type,
+            num_points,
+        )
+    };
+
+    if result_ptr.is_null() {
+        return Err(get_last_error());
+    }
+
+    struct FersInterpolatedRotationPath(*mut ffi::fers_interpolated_rotation_path_t);
+
+    impl Drop for FersInterpolatedRotationPath {
+        fn drop(&mut self) {
+            if !self.0.is_null() {
+                unsafe { ffi::fers_free_interpolated_rotation_path(self.0) };
+            }
+        }
+    }
+
+    let owned_path = FersInterpolatedRotationPath(result_ptr);
+
+    let result_slice =
+        unsafe { std::slice::from_raw_parts((*owned_path.0).points, (*owned_path.0).count) };
+
+    let points: Vec<crate::InterpolatedRotationPoint> = result_slice
+        .iter()
+        .map(|p| crate::InterpolatedRotationPoint {
+            azimuth_deg: p.azimuth_deg,
+            elevation_deg: p.elevation_deg,
+        })
+        .collect();
 
     Ok(points)
 }

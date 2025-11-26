@@ -54,10 +54,25 @@ pub enum InterpolationType {
 
 /// Data structure for a single interpolated point sent back to the UI.
 #[derive(serde::Serialize, serde::Deserialize)]
-pub struct InterpolatedPoint {
+pub struct InterpolatedMotionPoint {
     x: f64,
     y: f64,
     z: f64,
+}
+
+/// Data structure for a single rotation waypoint received from the UI.
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct RotationWaypoint {
+    time: f64,
+    azimuth: f64,
+    elevation: f64,
+}
+
+/// Data structure for a single interpolated rotation point sent back to the UI.
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct InterpolatedRotationPoint {
+    azimuth_deg: f64,
+    elevation_deg: f64,
 }
 
 /// Type alias for the managed Tauri state that holds the simulation context.
@@ -293,8 +308,31 @@ fn get_interpolated_motion_path(
     waypoints: Vec<MotionWaypoint>,
     interp_type: InterpolationType,
     num_points: usize,
-) -> Result<Vec<InterpolatedPoint>, String> {
+) -> Result<Vec<InterpolatedMotionPoint>, String> {
     fers_api::get_interpolated_motion_path(waypoints, interp_type, num_points)
+}
+
+/// A stateless command to calculate an interpolated rotation path.
+///
+/// This command delegates to the `libfers` core to calculate a rotation path from a given
+/// set of waypoints. It is used by the UI to preview how the simulation will interpolate
+/// orientation changes over time.
+///
+/// # Parameters
+/// * `waypoints` - A vector of rotation waypoints (azimuth/elevation in compass degrees).
+/// * `interp_type` - The interpolation algorithm to use ('static', 'linear', 'cubic').
+/// * `num_points` - The desired number of points for the final path.
+///
+/// # Returns
+/// * `Ok(Vec<InterpolatedRotationPoint>)` - The calculated rotation points.
+/// * `Err(String)` - An error message if the calculation failed.
+#[tauri::command]
+fn get_interpolated_rotation_path(
+    waypoints: Vec<RotationWaypoint>,
+    interp_type: InterpolationType,
+    num_points: usize,
+) -> Result<Vec<InterpolatedRotationPoint>, String> {
+    fers_api::get_interpolated_rotation_path(waypoints, interp_type, num_points)
 }
 
 /// Initializes and runs the Tauri application.
@@ -343,7 +381,8 @@ pub fn run() {
             update_scenario_from_json,
             run_simulation,
             generate_kml,
-            get_interpolated_motion_path
+            get_interpolated_motion_path,
+            get_interpolated_rotation_path
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -21,6 +21,11 @@ interface InterpolatedPoint {
     z: number;
 }
 
+interface InterpolatedRotationPoint {
+    azimuth_deg: number;
+    elevation_deg: number;
+}
+
 export const createPlatformSlice: StateCreator<
     ScenarioStore,
     [['zustand/immer', never]],
@@ -209,44 +214,86 @@ export const createPlatformSlice: StateCreator<
 
         if (!platform) return;
 
+        // 1. Fetch/Calculate Motion Path
         const { waypoints, interpolation } = platform.motionPath;
-
-        if (waypoints.length < 2 || interpolation === 'static') {
-            const staticPoints = waypoints.map(
-                (wp) => new Vector3(wp.x, wp.altitude, -wp.y)
-            );
-            set((state) => {
-                const p = state.platforms.find((p) => p.id === platformId);
-                if (p) p.pathPoints = staticPoints;
-            });
-            return;
-        }
+        let newPathPoints: Vector3[] = [];
 
         try {
-            const points = await invoke<InterpolatedPoint[]>(
-                'get_interpolated_motion_path',
-                {
-                    waypoints,
-                    interpType: interpolation as InterpolationType,
-                    numPoints: NUM_PATH_POINTS,
-                }
-            );
-            const vectors = points.map((p) => new Vector3(p.x, p.z, -p.y));
-            set((state) => {
-                const p = state.platforms.find((p) => p.id === platformId);
-                if (p) p.pathPoints = vectors;
-            });
+            if (waypoints.length < 2 || interpolation === 'static') {
+                // Static or single point: Calculate directly on frontend
+                newPathPoints = waypoints.map(
+                    (wp) => new Vector3(wp.x, wp.altitude, -wp.y)
+                );
+            } else {
+                // Dynamic: Fetch interpolated points from Backend
+                const points = await invoke<InterpolatedPoint[]>(
+                    'get_interpolated_motion_path',
+                    {
+                        waypoints,
+                        interpType: interpolation as InterpolationType,
+                        numPoints: NUM_PATH_POINTS,
+                    }
+                );
+                // Convert ENU (Backend) to Three.js coordinates
+                newPathPoints = points.map((p) => new Vector3(p.x, p.z, -p.y));
+            }
         } catch (error) {
             const msg = error instanceof Error ? error.message : String(error);
             console.error(
                 `Failed to fetch motion path for ${platform.name}:`,
                 msg
             );
-            showError(`Failed to get path for ${platform.name}: ${msg}`);
-            set((state) => {
-                const p = state.platforms.find((p) => p.id === platformId);
-                if (p) p.pathPoints = [];
-            });
+            showError(`Failed to get motion path for ${platform.name}: ${msg}`);
+            // Fallback to empty to prevent stale data
+            newPathPoints = [];
         }
+
+        // 2. Fetch/Calculate Rotation Path
+        const { rotation } = platform;
+        let newRotationPoints:
+            | { azimuth: number; elevation: number }[]
+            | undefined = undefined;
+
+        if (rotation.type === 'path') {
+            const rotWaypoints = rotation.waypoints;
+            // Only fetch from backend if dynamic. Static/Single points are handled by the real-time calculator.
+            if (
+                rotWaypoints.length >= 2 &&
+                rotation.interpolation !== 'static'
+            ) {
+                try {
+                    const points = await invoke<InterpolatedRotationPoint[]>(
+                        'get_interpolated_rotation_path',
+                        {
+                            waypoints: rotWaypoints,
+                            interpType:
+                                rotation.interpolation as InterpolationType,
+                            numPoints: NUM_PATH_POINTS,
+                        }
+                    );
+                    newRotationPoints = points.map((p) => ({
+                        azimuth: p.azimuth_deg,
+                        elevation: p.elevation_deg,
+                    }));
+                } catch (error) {
+                    const msg =
+                        error instanceof Error ? error.message : String(error);
+                    console.error(
+                        `Failed to fetch rotation path for ${platform.name}:`,
+                        msg
+                    );
+                    // Log error but don't break the whole update; standard calc will fallback to first waypoint
+                }
+            }
+        }
+
+        // 3. Update Store
+        set((state) => {
+            const p = state.platforms.find((p) => p.id === platformId);
+            if (p) {
+                p.pathPoints = newPathPoints;
+                p.rotationPathPoints = newRotationPoints;
+            }
+        });
     },
 });

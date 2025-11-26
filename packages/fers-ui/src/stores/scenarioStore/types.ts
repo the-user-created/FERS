@@ -35,6 +35,7 @@ export type PlatformComponent = z.infer<typeof PlatformComponentSchema>;
 export type SchedulePeriod = z.infer<typeof SchedulePeriodSchema>;
 export type Platform = z.infer<typeof PlatformSchema> & {
     pathPoints?: Vector3[];
+    rotationPathPoints?: { azimuth: number; elevation: number }[];
 };
 
 // --- Corrected Component Type Definitions ---

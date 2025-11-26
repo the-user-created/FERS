@@ -63,10 +63,10 @@ namespace math
 	void to_json(nlohmann::json& j, const RotationCoord& rc)
 	{
 		// The internal engine uses mathematical angles (radians, CCW from East),
-		// but the UI and XML format use compass degrees (CW from North). This
-		// conversion is performed at the serialization boundary to provide a
-		// consistent, user-friendly format to the frontend.
-		const RealType az_deg = std::fmod(90.0 - rc.azimuth * 180.0 / PI + 360.0, 360.0);
+		// but the UI and XML format use compass degrees (CW from North).
+		// We intentionally DO NOT normalize the output (no fmod) to preserve
+		// negative angles or multi-turn rotations (winding) defined by the user.
+		const RealType az_deg = 90.0 - rc.azimuth * 180.0 / PI;
 		const RealType el_deg = rc.elevation * 180.0 / PI;
 		j = {{"time", rc.t}, {"azimuth", az_deg}, {"elevation", el_deg}};
 	}
@@ -120,8 +120,9 @@ namespace math
 		if (p.getType() == RotationPath::InterpType::INTERP_CONSTANT)
 		{
 			// A constant-rate rotation path corresponds to the <fixedrotation> XML element.
-			// The start and rate values are converted to compass degrees per second for UI consistency.
-			const RealType start_az_deg = std::fmod(90.0 - p.getStart().azimuth * 180.0 / PI + 360.0, 360.0);
+			// The start and rate values are converted to compass degrees per second.
+			// No normalization is applied to preserve negative start angles.
+			const RealType start_az_deg = 90.0 - p.getStart().azimuth * 180.0 / PI;
 			const RealType start_el_deg = p.getStart().elevation * 180.0 / PI;
 			const RealType rate_az_deg_s = -p.getRate().azimuth * 180.0 / PI; // Invert for CW rate
 			const RealType rate_el_deg_s = p.getRate().elevation * 180.0 / PI;
