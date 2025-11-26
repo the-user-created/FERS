@@ -172,7 +172,7 @@
                 timing CDATA #REQUIRED>
 
         <!-- Standalone Receiver -->
-        <!ELEMENT receiver ((pulsed_mode | cw_mode), noise_temp?)>
+        <!ELEMENT receiver ((pulsed_mode | cw_mode), noise_temp?, schedule?)>
         <!ATTLIST receiver
                 name CDATA #REQUIRED
                 antenna CDATA #REQUIRED

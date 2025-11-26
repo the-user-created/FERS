@@ -124,4 +124,31 @@ namespace radar
 			_cw_iq_data[index] += sample;
 		}
 	}
+
+	void Receiver::setSchedule(std::vector<SchedulePeriod> schedule) { _schedule = std::move(schedule); }
+
+	std::optional<RealType> Receiver::getNextWindowTime(RealType time) const
+	{
+		// If no schedule is defined, assume always on.
+		if (_schedule.empty())
+		{
+			return time;
+		}
+		for (const auto& period : _schedule)
+		{
+			// If time is within this period, it's valid.
+			if (time >= period.start && time <= period.end)
+			{
+				return time;
+			}
+			// If time is before this period, skip to the start of this period.
+			if (time < period.start)
+			{
+				return period.start;
+			}
+			// If time is after this period, continue to next period.
+		}
+		// Time is after the last scheduled period.
+		return std::nullopt;
+	}
 }

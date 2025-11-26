@@ -144,17 +144,35 @@ namespace core
 		{
 			if (receiver->getMode() == radar::OperationMode::PULSED_MODE)
 			{
-				// Schedule the first receive window
-				if (const RealType first_window_start = receiver->getWindowStart(0);
-					first_window_start < params::endTime())
+				// Schedule the first receive window checking against schedule
+				const RealType nominal_start = receiver->getWindowStart(0);
+				if (auto start = receiver->getNextWindowTime(nominal_start); start && *start < params::endTime())
 				{
-					_event_queue.push({first_window_start, EventType::RX_PULSED_WINDOW_START, receiver.get()});
+					_event_queue.push({*start, EventType::RX_PULSED_WINDOW_START, receiver.get()});
 				}
 			}
 			else // CW_MODE
 			{
-				_event_queue.push({params::startTime(), EventType::RX_CW_START, receiver.get()});
-				_event_queue.push({params::endTime(), EventType::RX_CW_END, receiver.get()});
+				const auto& schedule = receiver->getSchedule();
+				if (schedule.empty())
+				{
+					// Legacy behavior: Always on for simulation duration
+					_event_queue.push({params::startTime(), EventType::RX_CW_START, receiver.get()});
+					_event_queue.push({params::endTime(), EventType::RX_CW_END, receiver.get()});
+				}
+				else
+				{
+					for (const auto& period : schedule)
+					{
+						const RealType start = std::max(params::startTime(), period.start);
+						const RealType end = std::min(params::endTime(), period.end);
+						if (start < end)
+						{
+							_event_queue.push({start, EventType::RX_CW_START, receiver.get()});
+							_event_queue.push({end, EventType::RX_CW_END, receiver.get()});
+						}
+					}
+				}
 			}
 		}
 	}
