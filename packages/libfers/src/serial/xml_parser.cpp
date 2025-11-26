@@ -24,15 +24,14 @@
 #include <vector>
 
 // Generated headers
-#include "fers_xml_dtd.h"
-#include "fers_xml_xsd.h"
-
-// Public libfers headers
 #include "antenna/antenna_factory.h"
 #include "core/config.h"
 #include "core/logging.h"
 #include "core/parameters.h"
 #include "core/world.h"
+#include "fers_xml_dtd.h"
+#include "fers_xml_xsd.h"
+#include "libxml_wrapper.h"
 #include "math/coord.h"
 #include "math/geometry_ops.h"
 #include "math/path.h"
@@ -42,9 +41,6 @@
 #include "radar/receiver.h"
 #include "radar/target.h"
 #include "radar/transmitter.h"
-
-// Private libfers headers
-#include "libxml_wrapper.h"
 #include "timing/prototype_timing.h"
 #include "timing/timing.h"
 #include "waveform_factory.h"
@@ -131,6 +127,37 @@ auto get_attribute_bool = [](const XmlElement& element, const std::string& attri
 
 namespace
 {
+	std::vector<radar::SchedulePeriod> parseSchedule(const XmlElement& parent, const std::string& parentName,
+													 const bool isPulsed, const RealType pri = 0.0)
+	{
+		std::vector<radar::SchedulePeriod> raw_periods;
+		if (const XmlElement schedule_element = parent.childElement("schedule", 0); schedule_element.isValid())
+		{
+			unsigned p_idx = 0;
+			while (true)
+			{
+				XmlElement period_element = schedule_element.childElement("period", p_idx++);
+				if (!period_element.isValid())
+				{
+					break;
+				}
+				try
+				{
+					const RealType start = std::stod(XmlElement::getSafeAttribute(period_element, "start"));
+					const RealType end = std::stod(XmlElement::getSafeAttribute(period_element, "end"));
+					raw_periods.push_back({start, end});
+				}
+				catch (const std::exception& e)
+				{
+					LOG(Level::WARNING, "Failed to parse schedule period for '{}': {}", parentName, e.what());
+				}
+			}
+		}
+
+		// Delegate processing (sorting, merging, validation) to the shared utility
+		return radar::processRawSchedule(std::move(raw_periods), parentName, isPulsed, pri);
+	}
+
 	/**
 	 * @brief Parses the <parameters> element of the XML document.
 	 *
@@ -675,8 +702,15 @@ namespace
 		timing->initializeModel(proto);
 		transmitter_obj->setTiming(timing);
 
-		world->add(std::move(transmitter_obj));
+		// Use shared logic for schedule parsing
+		RealType pri = is_pulsed ? (1.0 / transmitter_obj->getPrf()) : 0.0;
+		auto schedule = parseSchedule(transmitter, name, is_pulsed, pri);
+		if (!schedule.empty())
+		{
+			transmitter_obj->setSchedule(std::move(schedule));
+		}
 
+		world->add(std::move(transmitter_obj));
 		return world->getTransmitters().back().get();
 	}
 
@@ -763,6 +797,14 @@ namespace
 		{
 			receiver_obj->setFlag(Receiver::RecvFlag::FLAG_NOPROPLOSS);
 			LOG(Level::DEBUG, "Ignoring propagation losses for receiver '{}'", receiver_obj->getName().c_str());
+		}
+
+		// Parse schedule for receiver
+		RealType pri = is_pulsed ? (1.0 / receiver_obj->getWindowPrf()) : 0.0;
+		auto schedule = parseSchedule(receiver, name, is_pulsed, pri);
+		if (!schedule.empty())
+		{
+			receiver_obj->setSchedule(std::move(schedule));
 		}
 
 		world->add(std::move(receiver_obj));

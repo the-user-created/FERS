@@ -2,15 +2,19 @@
 // Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
 
 import {
+    Box,
+    Button,
     Checkbox,
     FormControl,
     FormControlLabel,
+    IconButton,
     InputLabel,
     MenuItem,
     Select,
     TextField,
     Typography,
 } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
 import {
     useScenarioStore,
     PlatformComponent,
@@ -18,8 +22,9 @@ import {
     MonostaticComponent,
     TransmitterComponent,
     ReceiverComponent,
+    SchedulePeriod,
 } from '@/stores/scenarioStore';
-import { NumberField, FileInput } from './InspectorControls';
+import { NumberField, FileInput, Section } from './InspectorControls';
 
 interface PlatformComponentInspectorProps {
     component: PlatformComponent;
@@ -38,6 +43,82 @@ export function PlatformComponentInspector({
     // Updates are targeted using the array index in the path string
     const handleChange = (path: string, value: unknown) =>
         updateItem(platformId, `components.${index}.${path}`, value);
+
+    const renderSchedule = (
+        c: MonostaticComponent | TransmitterComponent | ReceiverComponent
+    ) => {
+        const schedule = c.schedule || [];
+
+        const handleAddPeriod = () => {
+            handleChange('schedule', [...schedule, { start: 0, end: 0 }]);
+        };
+
+        const handleRemovePeriod = (idx: number) => {
+            const newSchedule = [...schedule];
+            newSchedule.splice(idx, 1);
+            handleChange('schedule', newSchedule);
+        };
+
+        const handlePeriodChange = (
+            idx: number,
+            field: keyof SchedulePeriod,
+            val: number | null
+        ) => {
+            const newSchedule = [...schedule];
+            newSchedule[idx] = { ...newSchedule[idx], [field]: val ?? 0 };
+            handleChange('schedule', newSchedule);
+        };
+
+        return (
+            <Section title="Operating Schedule">
+                {schedule.length === 0 && (
+                    <Typography variant="body2" color="text.secondary">
+                        No specific schedule defined (always active).
+                    </Typography>
+                )}
+                {schedule.map((period, i) => (
+                    <Box
+                        key={i}
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                            p: 1,
+                            border: 1,
+                            borderColor: 'divider',
+                            borderRadius: 1,
+                        }}
+                    >
+                        <NumberField
+                            label="Start (s)"
+                            value={period.start}
+                            onChange={(v) => handlePeriodChange(i, 'start', v)}
+                        />
+                        <NumberField
+                            label="End (s)"
+                            value={period.end}
+                            onChange={(v) => handlePeriodChange(i, 'end', v)}
+                        />
+                        <IconButton
+                            size="small"
+                            onClick={() => handleRemovePeriod(i)}
+                            color="error"
+                        >
+                            <DeleteIcon fontSize="small" />
+                        </IconButton>
+                    </Box>
+                ))}
+                <Button
+                    onClick={handleAddPeriod}
+                    size="small"
+                    variant="outlined"
+                    sx={{ mt: 1 }}
+                >
+                    Add Schedule Period
+                </Button>
+            </Section>
+        );
+    };
 
     const renderCommonRadarFields = (
         c: MonostaticComponent | TransmitterComponent | ReceiverComponent
@@ -189,6 +270,7 @@ export function PlatformComponentInspector({
                         />
                     )}
                     {renderReceiverFields(component)}
+                    {renderSchedule(component)}
                 </div>
             );
         case 'transmitter':
@@ -208,6 +290,7 @@ export function PlatformComponentInspector({
                             onChange={(v) => handleChange('prf', v)}
                         />
                     )}
+                    {renderSchedule(component)}
                 </div>
             );
         case 'receiver':
@@ -228,6 +311,7 @@ export function PlatformComponentInspector({
                         />
                     )}
                     {renderReceiverFields(component)}
+                    {renderSchedule(component)}
                 </div>
             );
         case 'target':

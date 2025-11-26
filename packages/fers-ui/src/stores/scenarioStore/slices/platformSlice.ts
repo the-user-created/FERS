@@ -123,6 +123,7 @@ export const createPlatformSlice: StateCreator<
                         noiseTemperature: 290,
                         noDirectPaths: false,
                         noPropagationLoss: false,
+                        schedule: [],
                     };
                     break;
                 case 'transmitter':
@@ -135,6 +136,7 @@ export const createPlatformSlice: StateCreator<
                         antennaId: null,
                         waveformId: null,
                         timingId: null,
+                        schedule: [],
                     };
                     break;
                 case 'receiver':
@@ -151,6 +153,7 @@ export const createPlatformSlice: StateCreator<
                         noiseTemperature: 290,
                         noDirectPaths: false,
                         noPropagationLoss: false,
+                        schedule: [],
                     };
                     break;
                 case 'target':

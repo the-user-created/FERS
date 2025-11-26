@@ -183,10 +183,14 @@ namespace core
 							}
 						}
 					}
-					// Schedule the next pulse transmission for this transmitter.
-					if (const RealType next_pulse_time = t_event + 1.0 / tx->getPrf(); next_pulse_time <= end_time)
+					// Schedule next pulse
+					const RealType next_theoretical_time = t_event + 1.0 / tx->getPrf();
+
+					// Use schedule to determine actual next time (handles gaps in schedule)
+					if (const auto next_pulse_opt = tx->getNextPulseTime(next_theoretical_time);
+						next_pulse_opt && *next_pulse_opt <= end_time)
 					{
-						event_queue.push({next_pulse_time, EventType::TX_PULSED_START, tx});
+						event_queue.push({*next_pulse_opt, EventType::TX_PULSED_START, tx});
 					}
 					break;
 				}
@@ -210,11 +214,14 @@ namespace core
 									 .active_cw_sources = active_cw_transmitters};
 					// Offload the job to the dedicated finalizer thread for this receiver.
 					rx->enqueueFinalizerJob(std::move(job));
-					// Schedule the start of the next receive window.
-					if (const RealType next_window_start = t_event - rx->getWindowLength() + 1.0 / rx->getWindowPrf();
-						next_window_start <= end_time)
+
+					// Schedule the start of the next receive window based on schedule
+					const RealType next_theoretical = t_event - rx->getWindowLength() + 1.0 / rx->getWindowPrf();
+
+					if (const auto next_start = rx->getNextWindowTime(next_theoretical);
+						next_start && *next_start <= end_time)
 					{
-						event_queue.push({next_window_start, EventType::RX_PULSED_WINDOW_START, rx});
+						event_queue.push({*next_start, EventType::RX_PULSED_WINDOW_START, rx});
 					}
 					break;
 				}
@@ -244,8 +251,8 @@ namespace core
 					// NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast): Type is guaranteed by event_type
 					auto* rx = static_cast<Receiver*>(source_object);
 					rx->setActive(false);
-					// The CW receiver is done. Enqueue a one-shot finalization task to the main pool.
-					pool.enqueue(processing::finalizeCwReceiver, rx, &pool, reporter);
+					// Do NOT finalize here. CW data is a continuous buffer; 'Ending' a schedule period
+					// just means we stop recording active signal (leaving zeros/silence in the buffer).
 					break;
 				}
 			}
@@ -271,7 +278,17 @@ namespace core
 		LOG(Level::INFO, "Main simulation loop finished. Waiting for finalization tasks...");
 		reporter->report("Main simulation finished. Waiting for data export...", 100, 100);
 
-		// Signal pulsed finalizer threads to shut down by sending a "poison pill" job.
+		// 1. Queue CW Finalization Tasks
+		// We finalize CW receivers here to ensure the full timeline (including all schedule periods) is exported once.
+		for (const auto& receiver_ptr : world->getReceivers())
+		{
+			if (receiver_ptr->getMode() == OperationMode::CW_MODE)
+			{
+				pool.enqueue(processing::finalizeCwReceiver, receiver_ptr.get(), &pool, reporter);
+			}
+		}
+
+		// 2. Signal pulsed finalizer threads to shut down
 		for (const auto& receiver_ptr : world->getReceivers())
 		{
 			if (receiver_ptr->getMode() == OperationMode::PULSED_MODE)

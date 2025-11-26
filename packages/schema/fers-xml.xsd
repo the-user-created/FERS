@@ -244,6 +244,23 @@
         </xs:complexType>
     </xs:element>
 
+    <!-- Schedule Element -->
+    <xs:element name="schedule">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element maxOccurs="unbounded" ref="period"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- Period Element -->
+    <xs:element name="period">
+        <xs:complexType>
+            <xs:attribute name="start" type="xs:string" use="required"/>
+            <xs:attribute name="end" type="xs:string" use="required"/>
+        </xs:complexType>
+    </xs:element>
+
     <!-- Monostatic radar installations -->
     <xs:element name="monostatic">
         <xs:complexType>
@@ -263,6 +280,7 @@
                     </xs:element>
                 </xs:choice>
                 <xs:element minOccurs="0" name="noise_temp" type="xs:string"/>
+                <xs:element minOccurs="0" ref="schedule"/>
             </xs:sequence>
             <xs:attribute name="name" use="required"/>
             <xs:attribute name="antenna" use="required"/>
@@ -289,6 +307,7 @@
                         <xs:complexType/>
                     </xs:element>
                 </xs:choice>
+                <xs:element minOccurs="0" ref="schedule"/>
             </xs:sequence>
             <xs:attribute name="name" use="required"/>
             <xs:attribute name="waveform" use="required"/>
@@ -316,6 +335,7 @@
                     </xs:element>
                 </xs:choice>
                 <xs:element minOccurs="0" name="noise_temp" type="xs:string"/>
+                <xs:element minOccurs="0" ref="schedule"/>
             </xs:sequence>
             <xs:attribute name="name" use="required"/>
             <xs:attribute name="antenna" use="required"/>

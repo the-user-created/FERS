@@ -242,6 +242,26 @@ namespace radar
 			return _pulsed_interference_log;
 		}
 
+		/**
+		 * @brief Sets the active schedule for the receiver.
+		 * @param schedule A vector of active periods.
+		 */
+		void setSchedule(std::vector<SchedulePeriod> schedule);
+
+		/**
+		 * @brief Retrieves the list of active reception periods.
+		 * @return A const reference to the schedule vector.
+		 */
+		[[nodiscard]] const std::vector<SchedulePeriod>& getSchedule() const noexcept { return _schedule; }
+
+		/**
+		 * @brief Determines the next valid window start time at or after the given time.
+		 *
+		 * @param time The proposed window start time.
+		 * @return The actual start time, or nullopt if no valid time exists in the schedule.
+		 */
+		[[nodiscard]] std::optional<RealType> getNextWindowTime(RealType time) const;
+
 	private:
 		// --- Common Members ---
 		bool _is_active = false;
@@ -249,6 +269,7 @@ namespace radar
 		int _flags = 0; ///< Flags for receiver configuration.
 		OperationMode _mode; ///< The operational mode of the receiver.
 		std::mt19937 _rng; ///< Per-object random number generator for statistical independence.
+		std::vector<SchedulePeriod> _schedule; ///< The schedule of active periods.
 
 		// --- Pulsed Mode Members ---
 		RealType _window_length = 0; ///< The length of the radar window.

@@ -174,6 +174,11 @@ export const RotationPathSchema = z.object({
         .min(1, 'At least one waypoint is required.'),
 });
 
+export const SchedulePeriodSchema = z.object({
+    start: z.number().min(0, 'Start time cannot be negative.'),
+    end: z.number().min(0, 'End time cannot be negative.'),
+});
+
 const MonostaticComponentSchema = z.object({
     id: z.string().uuid(),
     type: z.literal('monostatic'),
@@ -188,6 +193,7 @@ const MonostaticComponentSchema = z.object({
     noiseTemperature: nullableNumber.pipe(z.number().min(0).nullable()),
     noDirectPaths: z.boolean(),
     noPropagationLoss: z.boolean(),
+    schedule: z.array(SchedulePeriodSchema).default([]),
 });
 
 const TransmitterComponentSchema = z.object({
@@ -199,6 +205,7 @@ const TransmitterComponentSchema = z.object({
     antennaId: z.string().uuid().nullable(),
     waveformId: z.string().uuid().nullable(),
     timingId: z.string().uuid().nullable(),
+    schedule: z.array(SchedulePeriodSchema).default([]),
 });
 
 const ReceiverComponentSchema = z.object({
@@ -214,6 +221,7 @@ const ReceiverComponentSchema = z.object({
     noiseTemperature: nullableNumber.pipe(z.number().min(0).nullable()),
     noDirectPaths: z.boolean(),
     noPropagationLoss: z.boolean(),
+    schedule: z.array(SchedulePeriodSchema).default([]),
 });
 
 const TargetComponentSchema = z.object({

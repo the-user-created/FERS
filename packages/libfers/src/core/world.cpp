@@ -97,17 +97,46 @@ namespace core
 
 	void World::scheduleInitialEvents()
 	{
+		const RealType sim_start = params::startTime();
+		const RealType sim_end = params::endTime();
+
 		for (const auto& transmitter : _transmitters)
 		{
 			if (transmitter->getMode() == radar::OperationMode::PULSED_MODE)
 			{
-				// Schedule the first pulse at t=0
-				_event_queue.push({0.0, EventType::TX_PULSED_START, transmitter.get()});
+				// Find the first valid pulse time starting from the simulation start time.
+				if (auto start_time = transmitter->getNextPulseTime(sim_start); start_time)
+				{
+					if (*start_time <= sim_end)
+					{
+						_event_queue.push({*start_time, EventType::TX_PULSED_START, transmitter.get()});
+					}
+				}
 			}
 			else // CW_MODE
 			{
-				_event_queue.push({params::startTime(), EventType::TX_CW_START, transmitter.get()});
-				_event_queue.push({params::endTime(), EventType::TX_CW_END, transmitter.get()});
+				const auto& schedule = transmitter->getSchedule();
+				if (schedule.empty())
+				{
+					// Legacy behavior: Always on for simulation duration
+					_event_queue.push({sim_start, EventType::TX_CW_START, transmitter.get()});
+					_event_queue.push({sim_end, EventType::TX_CW_END, transmitter.get()});
+				}
+				else
+				{
+					for (const auto& period : schedule)
+					{
+						// Clip periods to simulation bounds
+						const RealType start = std::max(sim_start, period.start);
+						const RealType end = std::min(sim_end, period.end);
+
+						if (start < end)
+						{
+							_event_queue.push({start, EventType::TX_CW_START, transmitter.get()});
+							_event_queue.push({end, EventType::TX_CW_END, transmitter.get()});
+						}
+					}
+				}
 			}
 		}
 
@@ -115,17 +144,35 @@ namespace core
 		{
 			if (receiver->getMode() == radar::OperationMode::PULSED_MODE)
 			{
-				// Schedule the first receive window
-				if (const RealType first_window_start = receiver->getWindowStart(0);
-					first_window_start < params::endTime())
+				// Schedule the first receive window checking against schedule
+				const RealType nominal_start = receiver->getWindowStart(0);
+				if (auto start = receiver->getNextWindowTime(nominal_start); start && *start < params::endTime())
 				{
-					_event_queue.push({first_window_start, EventType::RX_PULSED_WINDOW_START, receiver.get()});
+					_event_queue.push({*start, EventType::RX_PULSED_WINDOW_START, receiver.get()});
 				}
 			}
 			else // CW_MODE
 			{
-				_event_queue.push({params::startTime(), EventType::RX_CW_START, receiver.get()});
-				_event_queue.push({params::endTime(), EventType::RX_CW_END, receiver.get()});
+				const auto& schedule = receiver->getSchedule();
+				if (schedule.empty())
+				{
+					// Legacy behavior: Always on for simulation duration
+					_event_queue.push({params::startTime(), EventType::RX_CW_START, receiver.get()});
+					_event_queue.push({params::endTime(), EventType::RX_CW_END, receiver.get()});
+				}
+				else
+				{
+					for (const auto& period : schedule)
+					{
+						const RealType start = std::max(params::startTime(), period.start);
+						const RealType end = std::min(params::endTime(), period.end);
+						if (start < end)
+						{
+							_event_queue.push({start, EventType::RX_CW_START, receiver.get()});
+							_event_queue.push({end, EventType::RX_CW_END, receiver.get()});
+						}
+					}
+				}
 			}
 		}
 	}
