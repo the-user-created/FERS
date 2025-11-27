@@ -13,6 +13,7 @@ import {
 import { MotionPathLine } from './MotionPathLine';
 import CameraManager from './CameraManager';
 import { type MapControls as MapControlsImpl } from 'three-stdlib';
+import { BoresightArrow } from './BoresightArrow';
 
 /**
  * Custom hook to calculate a platform's position at a given simulation time.
@@ -55,6 +56,16 @@ function PlatformSphere({ platform }: { platform: Platform }) {
     const position = useInterpolatedPosition(platform, currentTime);
     const rotation = useInterpolatedRotation(platform, currentTime);
 
+    // Determine if the platform has any components with an antenna.
+    const hasAntenna = useMemo(() => {
+        return platform.components.some(
+            (c) =>
+                c.type === 'monostatic' ||
+                c.type === 'transmitter' ||
+                c.type === 'receiver'
+        );
+    }, [platform.components]);
+
     const labelData = useMemo(
         () => ({
             x: position?.x,
@@ -82,11 +93,14 @@ function PlatformSphere({ platform }: { platform: Platform }) {
                     emissive={isSelected ? '#f48fb1' : '#000000'}
                     emissiveIntensity={isSelected ? 0.25 : 0}
                 />
-                {/* Render Body Axes: Red=X (Right), Green=Y (Up), Blue=Z (Forward/North depending on frame)
-                TODO: the axes should scale with zoom level for better visibility (with maybe a toggle to turn off individual platform axes)
-                */}
+                {/* Render Body Axes: Red=X (Right), Green=Y (Up), Blue=Z (Rear). The boresight/forward direction is -Z. */}
+                {/* TODO: the axes should scale with zoom level for better visibility (with maybe a toggle to turn off individual platform axes) */}
                 <axesHelper args={[2]} />
             </mesh>
+
+            {/* Conditionally render the boresight arrow if the platform has an antenna. */}
+            {hasAntenna && <BoresightArrow />}
+
             <Html
                 position={[0, 1.2, 0]} // Position label above the sphere
                 center // Center the label on its anchor point
