@@ -74,6 +74,14 @@ function PlatformSphere({ platform }: { platform: Platform }) {
         );
     }, [platform.components]);
 
+    // Find all target components to visualize their RCS
+    const targetComponents = useMemo(() => {
+        return platform.components.filter(
+            (c): c is Extract<typeof c, { type: 'target' }> =>
+                c.type === 'target'
+        );
+    }, [platform.components]);
+
     const labelData = useMemo(
         () => ({
             x: position?.x,
@@ -106,6 +114,30 @@ function PlatformSphere({ platform }: { platform: Platform }) {
                     {/* TODO: the axes should scale with zoom level for better visibility (with maybe a toggle to turn off individual platform axes) */}
                     <axesHelper args={[2]} />
                 </mesh>
+
+                {/* Visualize Isotropic Static Sphere RCS: r = sqrt(sigma / pi) */}
+                {/* TODO: currently only rendering constant isotropic RCS */}
+                {targetComponents.map((target) => {
+                    if (
+                        target.rcs_type === 'isotropic' &&
+                        target.rcs_value &&
+                        target.rcs_value > 0
+                    ) {
+                        const radius = Math.sqrt(target.rcs_value / Math.PI);
+                        return (
+                            <mesh key={target.id}>
+                                <sphereGeometry args={[radius, 24, 24]} />
+                                <meshBasicMaterial
+                                    color="#ff9800"
+                                    wireframe
+                                    transparent
+                                    opacity={0.3}
+                                />
+                            </mesh>
+                        );
+                    }
+                    return null;
+                })}
 
                 {/* Conditionally render boresight and patterns for each antenna */}
                 {antennaComponents.length > 0 && <BoresightArrow />}
