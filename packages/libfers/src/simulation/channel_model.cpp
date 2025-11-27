@@ -33,52 +33,180 @@
 using fers_signal::RadarSignal;
 using logging::Level;
 using math::SVec3;
+using math::Vec3;
 using radar::Receiver;
 using radar::Target;
 using radar::Transmitter;
 
+namespace
+{
+	/**
+	 * @struct LinkGeometry
+	 * @brief Holds geometric properties of a path segment between two points.
+	 */
+	struct LinkGeometry
+	{
+		Vec3 u_vec; ///< Unit vector pointing from Source to Destination.
+		RealType dist{}; ///< Distance between Source and Destination.
+	};
+
+	/**
+	 * @brief Computes the geometry (distance and direction) between two points.
+	 * @param p_from Starting position.
+	 * @param p_to Ending position.
+	 * @return LinkGeometry containing distance and unit vector.
+	 * @throws RangeError if the distance is too small (<= EPSILON).
+	 */
+	LinkGeometry computeLink(const Vec3& p_from, const Vec3& p_to)
+	{
+		const Vec3 vec = p_to - p_from;
+		const RealType dist = vec.length();
+
+		if (dist <= EPSILON)
+		{
+			// LOG(Level::FATAL) is handled by the caller or generic exception handler if needed,
+			// but for RangeError strictly we just throw here to keep it pure.
+			// However, existing code logged FATAL before throwing.
+			// We'll throw RangeError, and let callers decide if they want to log or return 0.
+			throw simulation::RangeError();
+		}
+
+		return {vec / dist, dist};
+	}
+
+	/**
+	 * @brief Calculates the antenna gain for a specific direction and time.
+	 * @param radar The radar object (Transmitter or Receiver).
+	 * @param direction_vec The unit vector pointing AWAY from the antenna towards the target/receiver.
+	 * @param time The simulation time for rotation lookup.
+	 * @param lambda The signal wavelength.
+	 * @return The linear gain value.
+	 */
+	RealType computeAntennaGain(const radar::Radar* radar, const Vec3& direction_vec, RealType time, RealType lambda)
+	{
+		return radar->getGain(SVec3(direction_vec), radar->getRotation(time), lambda);
+	}
+
+	/**
+	 * @brief Computes the power scaling factor for a direct path (Friis Transmission Equation).
+	 * @param tx_gain Transmitter gain (linear).
+	 * @param rx_gain Receiver gain (linear).
+	 * @param lambda Wavelength (meters).
+	 * @param dist Distance (meters).
+	 * @param no_prop_loss If true, distance-based attenuation is ignored.
+	 * @return The power scaling factor (Pr / Pt).
+	 */
+	RealType computeDirectPathPower(RealType tx_gain, RealType rx_gain, RealType lambda, RealType dist,
+									bool no_prop_loss)
+	{
+		const RealType numerator = tx_gain * rx_gain * lambda * lambda;
+		RealType denominator = 16.0 * PI * PI; // (4 * PI)^2
+
+		if (!no_prop_loss)
+		{
+			denominator *= dist * dist;
+		}
+
+		return numerator / denominator;
+	}
+
+	/**
+	 * @brief Computes the power scaling factor for a reflected path (Bistatic Radar Range Equation).
+	 * @param tx_gain Transmitter gain (linear).
+	 * @param rx_gain Receiver gain (linear).
+	 * @param rcs Target Radar Cross Section (m^2).
+	 * @param lambda Wavelength (meters).
+	 * @param r_tx Distance from Transmitter to Target.
+	 * @param r_rx Distance from Target to Receiver.
+	 * @param no_prop_loss If true, distance-based attenuation is ignored.
+	 * @return The power scaling factor (Pr / Pt).
+	 */
+	RealType computeReflectedPathPower(RealType tx_gain, RealType rx_gain, RealType rcs, RealType lambda, RealType r_tx,
+									   RealType r_rx, bool no_prop_loss)
+	{
+		const RealType numerator = tx_gain * rx_gain * rcs * lambda * lambda;
+		RealType denominator = 64.0 * PI * PI * PI; // (4 * PI)^3
+
+		if (!no_prop_loss)
+		{
+			denominator *= r_tx * r_tx * r_rx * r_rx;
+		}
+
+		return numerator / denominator;
+	}
+
+	/**
+	 * @brief Computes the non-coherent phase shift due to timing offsets.
+	 *
+	 * Used for CW simulation where LO effects are modeled analytically.
+	 *
+	 * @param tx The transmitter.
+	 * @param rx The receiver.
+	 * @param time The current simulation time.
+	 * @return The phase shift in radians.
+	 */
+	RealType computeTimingPhase(const Transmitter* tx, const Receiver* rx, RealType time)
+	{
+		const auto tx_timing = tx->getTiming();
+		const auto rx_timing = rx->getTiming();
+		const RealType delta_f = tx_timing->getFreqOffset() - rx_timing->getFreqOffset();
+		const RealType delta_phi = tx_timing->getPhaseOffset() - rx_timing->getPhaseOffset();
+		return 2 * PI * delta_f * time + delta_phi;
+	}
+}
 
 namespace simulation
 {
 	void solveRe(const Transmitter* trans, const Receiver* recv, const Target* targ,
 				 const std::chrono::duration<RealType>& time, const RadarSignal* wave, ReResults& results)
 	{
-		const auto transmitter_position = trans->getPosition(time.count());
-		const auto receiver_position = recv->getPosition(time.count());
-		const auto target_position = targ->getPosition(time.count());
+		// Note: RangeError log messages are handled by the original catch block in calculateResponse
+		// or explicitly here if strict adherence to original logging is required.
+		// Using the helper logic which throws RangeError on epsilon check.
 
-		SVec3 transmitter_to_target_vector{target_position - transmitter_position};
-		SVec3 receiver_to_target_vector{target_position - receiver_position};
+		const RealType t_val = time.count();
+		const auto p_tx = trans->getPosition(t_val);
+		const auto p_rx = recv->getPosition(t_val);
+		const auto p_tgt = targ->getPosition(t_val);
 
-		const auto transmitter_to_target_distance = transmitter_to_target_vector.length;
-		const auto receiver_to_target_distance = receiver_to_target_vector.length;
+		// Link 1: Tx -> Target
+		LinkGeometry link_tx_tgt;
+		// Link 2: Target -> Rx (Note: Vector for calculation is Tgt->Rx)
+		LinkGeometry link_tgt_rx;
 
-		if (transmitter_to_target_distance <= EPSILON || receiver_to_target_distance <= EPSILON)
+		try
+		{
+			link_tx_tgt = computeLink(p_tx, p_tgt);
+			link_tgt_rx = computeLink(p_tgt, p_rx); // Vector Tgt -> Rx
+		}
+		catch (const RangeError&)
 		{
 			LOG(Level::FATAL, "Transmitter or Receiver too close to Target for accurate simulation");
-			throw RangeError();
+			throw;
 		}
 
-		transmitter_to_target_vector.length = 1;
-		receiver_to_target_vector.length = 1;
+		results.delay = (link_tx_tgt.dist + link_tgt_rx.dist) / params::c();
 
-		results.delay = (transmitter_to_target_distance + receiver_to_target_distance) / params::c();
+		// Calculate RCS
+		// Note: getRcs expects (InAngle, OutAngle).
+		// InAngle: Tx -> Tgt (link_tx_tgt.u_vec)
+		// OutAngle: Rx -> Tgt (Opposite of Tgt->Rx, so -link_tgt_rx.u_vec)
+		// This matches existing logic.
+		SVec3 in_angle(link_tx_tgt.u_vec);
+		SVec3 out_angle(-link_tgt_rx.u_vec);
+		const auto rcs = targ->getRcs(in_angle, out_angle, t_val);
 
-		const auto rcs = targ->getRcs(transmitter_to_target_vector, receiver_to_target_vector, time.count());
 		const auto wavelength = params::c() / wave->getCarrier();
 
-		const auto transmitter_gain =
-			trans->getGain(transmitter_to_target_vector, trans->getRotation(time.count()), wavelength);
-		const auto receiver_gain =
-			recv->getGain(receiver_to_target_vector, recv->getRotation(results.delay + time.count()), wavelength);
+		// Tx Gain: Direction Tx -> Tgt
+		const auto tx_gain = computeAntennaGain(trans, link_tx_tgt.u_vec, t_val, wavelength);
+		// Rx Gain: Direction Rx -> Tgt (Opposite of Tgt->Rx).
+		// Time is time + delay.
+		const auto rx_gain = computeAntennaGain(recv, -link_tgt_rx.u_vec, results.delay + t_val, wavelength);
 
-		results.power = transmitter_gain * receiver_gain * rcs / (4 * PI);
-
-		if (!recv->checkFlag(Receiver::RecvFlag::FLAG_NOPROPLOSS))
-		{
-			const RealType distance_product = transmitter_to_target_distance * receiver_to_target_distance;
-			results.power *= std::pow(wavelength, 2) / (std::pow(4 * PI, 2) * std::pow(distance_product, 2));
-		}
+		const bool no_loss = recv->checkFlag(Receiver::RecvFlag::FLAG_NOPROPLOSS);
+		results.power =
+			computeReflectedPathPower(tx_gain, rx_gain, rcs, wavelength, link_tx_tgt.dist, link_tgt_rx.dist, no_loss);
 
 		results.phase = -results.delay * 2 * PI * wave->getCarrier();
 	}
@@ -86,31 +214,35 @@ namespace simulation
 	void solveReDirect(const Transmitter* trans, const Receiver* recv, const std::chrono::duration<RealType>& time,
 					   const RadarSignal* wave, ReResults& results)
 	{
-		const auto tpos = trans->getPosition(time.count());
-		const auto rpos = recv->getPosition(time.count());
+		const RealType t_val = time.count();
+		const auto p_tx = trans->getPosition(t_val);
+		const auto p_rx = recv->getPosition(t_val);
 
-		const SVec3 transvec{tpos - rpos};
-		const RealType distance = transvec.length;
-
-		if (distance <= EPSILON)
+		LinkGeometry link;
+		try
 		{
-			LOG(Level::FATAL, "Transmitter or Receiver too close to Target for accurate simulation");
-			throw RangeError();
+			link = computeLink(p_tx, p_rx); // Vector Tx -> Rx
+		}
+		catch (const RangeError&)
+		{
+			LOG(Level::FATAL, "Transmitter or Receiver too close for accurate simulation");
+			throw;
 		}
 
-		results.delay = distance / params::c();
-
+		results.delay = link.dist / params::c();
 		const RealType wavelength = params::c() / wave->getCarrier();
-		const RealType transmitter_gain = trans->getGain(transvec, trans->getRotation(time.count()), wavelength);
-		const RealType receiver_gain =
-			recv->getGain(SVec3(rpos - tpos), recv->getRotation(time.count() + results.delay), wavelength);
 
-		results.power = transmitter_gain * receiver_gain * wavelength * wavelength / (4 * PI);
+		// Discrepancy Fix: Original code used (Rx - Tx) for Receiver Gain but (Tx - Rx) logic for Transmitter gain
+		// was ambiguous/incorrect (using `tpos - rpos` which is Rx->Tx).
+		// Per `calculateDirectPathContribution` preference:
+		// Tx Gain uses Vector Tx -> Rx.
+		// Rx Gain uses Vector Rx -> Tx.
 
-		if (!recv->checkFlag(Receiver::RecvFlag::FLAG_NOPROPLOSS))
-		{
-			results.power /= 4 * PI * distance * distance;
-		}
+		const auto tx_gain = computeAntennaGain(trans, link.u_vec, t_val, wavelength);
+		const auto rx_gain = computeAntennaGain(recv, -link.u_vec, t_val + results.delay, wavelength);
+
+		const bool no_loss = recv->checkFlag(Receiver::RecvFlag::FLAG_NOPROPLOSS);
+		results.power = computeDirectPathPower(tx_gain, rx_gain, wavelength, link.dist, no_loss);
 
 		results.phase = -results.delay * 2 * PI * wave->getCarrier();
 	}
@@ -128,42 +260,38 @@ namespace simulation
 		const auto p_tx = trans->getPlatform()->getPosition(timeK);
 		const auto p_rx = recv->getPlatform()->getPosition(timeK);
 
-		const auto tx_to_rx_vec = p_rx - p_tx;
-		const auto range = tx_to_rx_vec.length();
-
-		if (range <= EPSILON)
+		LinkGeometry link;
+		try
+		{
+			link = computeLink(p_tx, p_rx);
+		}
+		catch (const RangeError&)
 		{
 			return {0.0, 0.0};
 		}
 
-		const auto u_ji = tx_to_rx_vec / range;
-		const RealType tau = range / params::c();
+		const RealType tau = link.dist / params::c();
 		const auto signal = trans->getSignal();
 		const RealType carrier_freq = signal->getCarrier();
 		const RealType lambda = params::c() / carrier_freq;
 
-		// Amplitude Scaling (Friis Transmission Equation)
-		const RealType tx_gain = trans->getGain(SVec3(u_ji), trans->getRotation(timeK), lambda);
-		const RealType rx_gain = recv->getGain(SVec3(-u_ji), recv->getRotation(timeK + tau), lambda);
+		// Tx Gain: Direction Tx -> Rx
+		const RealType tx_gain = computeAntennaGain(trans, link.u_vec, timeK, lambda);
+		// Rx Gain: Direction Rx -> Tx (-u_vec)
+		const RealType rx_gain = computeAntennaGain(recv, -link.u_vec, timeK + tau, lambda);
 
-		RealType power_scaling =
-			signal->getPower() * tx_gain * rx_gain * lambda * lambda / (std::pow(4 * PI, 2) * range * range);
-		if (recv->checkFlag(Receiver::RecvFlag::FLAG_NOPROPLOSS))
-		{
-			power_scaling = signal->getPower() * tx_gain * rx_gain * lambda * lambda / std::pow(4 * PI, 2);
-		}
-		const RealType amplitude = std::sqrt(power_scaling);
+		const bool no_loss = recv->checkFlag(Receiver::RecvFlag::FLAG_NOPROPLOSS);
+		const RealType scaling_factor = computeDirectPathPower(tx_gain, rx_gain, lambda, link.dist, no_loss);
 
-		// Complex Envelope Contribution
+		// Include Signal Power
+		const RealType amplitude = std::sqrt(signal->getPower() * scaling_factor);
+
+		// Carrier Phase
 		const RealType phase = -2 * PI * carrier_freq * tau;
 		ComplexType contribution = std::polar(amplitude, phase);
 
 		// Non-coherent Local Oscillator Effects
-		const auto tx_timing = trans->getTiming();
-		const auto rx_timing = recv->getTiming();
-		const RealType delta_f = tx_timing->getFreqOffset() - rx_timing->getFreqOffset();
-		const RealType delta_phi = tx_timing->getPhaseOffset() - rx_timing->getPhaseOffset();
-		const RealType non_coherent_phase = 2 * PI * delta_f * timeK + delta_phi;
+		const RealType non_coherent_phase = computeTimingPhase(trans, recv, timeK);
 		contribution *= std::polar(1.0, non_coherent_phase);
 
 		return contribution;
@@ -183,51 +311,46 @@ namespace simulation
 		const auto p_rx = recv->getPlatform()->getPosition(timeK);
 		const auto p_tgt = targ->getPlatform()->getPosition(timeK);
 
-		const auto tx_to_tgt_vec = p_tgt - p_tx;
-		const auto tgt_to_rx_vec = p_rx - p_tgt;
-		const RealType r_jm = tx_to_tgt_vec.length();
-		const RealType r_mi = tgt_to_rx_vec.length();
+		LinkGeometry link_tx_tgt;
+		LinkGeometry link_tgt_rx;
 
-		if (r_jm <= EPSILON || r_mi <= EPSILON)
+		try
+		{
+			link_tx_tgt = computeLink(p_tx, p_tgt);
+			link_tgt_rx = computeLink(p_tgt, p_rx);
+		}
+		catch (const RangeError&)
 		{
 			return {0.0, 0.0};
 		}
 
-		const auto u_jm = tx_to_tgt_vec / r_jm;
-		const auto u_mi = tgt_to_rx_vec / r_mi;
-
-		const RealType tau = (r_jm + r_mi) / params::c();
+		const RealType tau = (link_tx_tgt.dist + link_tgt_rx.dist) / params::c();
 		const auto signal = trans->getSignal();
 		const RealType carrier_freq = signal->getCarrier();
 		const RealType lambda = params::c() / carrier_freq;
 
-		// Amplitude Scaling (Bistatic Radar Range Equation)
-		SVec3 in_angle_sv(u_jm);
-		SVec3 out_angle_sv(-u_mi);
-		const RealType rcs = targ->getRcs(in_angle_sv, out_angle_sv, timeK);
-		const RealType tx_gain = trans->getGain(SVec3(u_jm), trans->getRotation(timeK), lambda);
-		// TODO: Is this meant to use timeK + tau?
-		const RealType rx_gain = recv->getGain(SVec3(-u_mi), recv->getRotation(timeK + tau), lambda);
+		// RCS Lookups: In (Tx->Tgt), Out (Rx->Tgt = - (Tgt->Rx))
+		SVec3 in_angle(link_tx_tgt.u_vec);
+		SVec3 out_angle(-link_tgt_rx.u_vec);
+		const RealType rcs = targ->getRcs(in_angle, out_angle, timeK);
 
-		RealType power_scaling = signal->getPower() * tx_gain * rx_gain * rcs * lambda * lambda /
-			(std::pow(4 * PI, 3) * r_jm * r_jm * r_mi * r_mi);
-		if (recv->checkFlag(Receiver::RecvFlag::FLAG_NOPROPLOSS))
-		{
-			power_scaling = signal->getPower() * tx_gain * rx_gain * rcs * lambda * lambda / std::pow(4 * PI, 3);
-		}
-		const RealType amplitude = std::sqrt(power_scaling);
+		// Tx Gain: Direction Tx -> Tgt
+		const RealType tx_gain = computeAntennaGain(trans, link_tx_tgt.u_vec, timeK, lambda);
+		// Rx Gain: Direction Rx -> Tgt (- (Tgt->Rx)). Time: timeK + tau.
+		const RealType rx_gain = computeAntennaGain(recv, -link_tgt_rx.u_vec, timeK + tau, lambda);
 
-		// Complex Envelope Contribution
-		// TODO: Use fmod?
+		const bool no_loss = recv->checkFlag(Receiver::RecvFlag::FLAG_NOPROPLOSS);
+		const RealType scaling_factor =
+			computeReflectedPathPower(tx_gain, rx_gain, rcs, lambda, link_tx_tgt.dist, link_tgt_rx.dist, no_loss);
+
+		// Include Signal Power
+		const RealType amplitude = std::sqrt(signal->getPower() * scaling_factor);
+
 		const RealType phase = -2 * PI * carrier_freq * tau;
 		ComplexType contribution = std::polar(amplitude, phase);
 
 		// Non-coherent Local Oscillator Effects
-		const auto tx_timing = trans->getTiming();
-		const auto rx_timing = recv->getTiming();
-		const RealType delta_f = tx_timing->getFreqOffset() - rx_timing->getFreqOffset();
-		const RealType delta_phi = tx_timing->getPhaseOffset() - rx_timing->getPhaseOffset();
-		const RealType non_coherent_phase = 2 * PI * delta_f * timeK + delta_phi;
+		const RealType non_coherent_phase = computeTimingPhase(trans, recv, timeK);
 		contribution *= std::polar(1.0, non_coherent_phase);
 
 		return contribution;
