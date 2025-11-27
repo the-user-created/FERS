@@ -256,6 +256,26 @@ extern "C" fn simulation_progress_callback(
         .expect("Failed to emit simulation-progress event");
 }
 
+/// A safe RAII wrapper for the antenna pattern data returned by the C-API.
+struct FersAntennaPatternData(*mut ffi::fers_antenna_pattern_data_t);
+impl Drop for FersAntennaPatternData {
+    fn drop(&mut self) {
+        if !self.0.is_null() {
+            // SAFETY: The pointer is valid and owned by this struct.
+            unsafe { ffi::fers_free_antenna_pattern_data(self.0) };
+        }
+    }
+}
+
+/// Data structure for antenna pattern data sent to the frontend.
+#[derive(serde::Serialize)]
+pub struct AntennaPatternData {
+    gains: Vec<f64>,
+    az_count: usize,
+    el_count: usize,
+    max_gain: f64,
+}
+
 impl FersContext {
     /// Creates a new `FersContext` by calling the C-API constructor.
     ///
@@ -474,6 +494,54 @@ impl FersContext {
         } else {
             Err(get_last_error())
         }
+    }
+
+    /// Retrieves a sampled gain pattern for a specified antenna.
+    ///
+    /// # Parameters
+    ///
+    /// * `antenna_name` - The name of the antenna asset to sample.
+    /// * `az_samples` - The resolution along the azimuth axis.
+    /// * `el_samples` - The resolution along the elevation axis.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(AntennaPatternData)` - If the pattern was successfully sampled.
+    /// * `Err(String)` - If the antenna was not found or an error occurred.
+    pub fn get_antenna_pattern(
+        &self,
+        antenna_name: &str,
+        az_samples: usize,
+        el_samples: usize,
+    ) -> Result<AntennaPatternData, String> {
+        let c_antenna_name = CString::new(antenna_name).map_err(|e| e.to_string())?;
+        // SAFETY: We pass a valid context pointer and valid arguments.
+        let result_ptr = unsafe {
+            ffi::fers_get_antenna_pattern(self.ptr, c_antenna_name.as_ptr(), az_samples, el_samples)
+        };
+
+        if result_ptr.is_null() {
+            return Err(get_last_error());
+        }
+
+        let owned_data = FersAntennaPatternData(result_ptr);
+
+        // SAFETY: Dereferencing the non-null pointer returned by the FFI.
+        // The data is valid for the lifetime of `owned_data`.
+        let (gains_ptr, az_count, el_count, max_gain) = unsafe {
+            (
+                (*owned_data.0).gains,
+                (*owned_data.0).az_count,
+                (*owned_data.0).el_count,
+                (*owned_data.0).max_gain,
+            )
+        };
+        let total_samples = az_count * el_count;
+
+        // SAFETY: The gains_ptr is valid for `total_samples` elements.
+        let gains_slice = unsafe { std::slice::from_raw_parts(gains_ptr, total_samples) };
+
+        Ok(AntennaPatternData { gains: gains_slice.to_vec(), az_count, el_count, max_gain })
     }
 }
 

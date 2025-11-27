@@ -15,6 +15,7 @@ import CameraManager from './CameraManager';
 import { type MapControls as MapControlsImpl } from 'three-stdlib';
 import { BoresightArrow } from './BoresightArrow';
 import { VelocityArrow } from './VelocityArrow';
+import { AntennaPatternMesh } from './AntennaPatternMesh';
 
 /**
  * Custom hook to calculate a platform's position at a given simulation time.
@@ -57,13 +58,19 @@ function PlatformSphere({ platform }: { platform: Platform }) {
     const position = useInterpolatedPosition(platform, currentTime);
     const rotation = useInterpolatedRotation(platform, currentTime);
 
-    // Determine if the platform has any components with an antenna.
-    const hasAntenna = useMemo(() => {
-        return platform.components.some(
-            (c) =>
-                c.type === 'monostatic' ||
-                c.type === 'transmitter' ||
-                c.type === 'receiver'
+    // Find all components on this platform that have an antenna
+    const antennaComponents = useMemo(() => {
+        return platform.components.filter(
+            (
+                c
+            ): c is Extract<
+                typeof c,
+                { type: 'monostatic' | 'transmitter' | 'receiver' }
+            > =>
+                (c.type === 'monostatic' ||
+                    c.type === 'transmitter' ||
+                    c.type === 'receiver') &&
+                c.antennaId !== null
         );
     }, [platform.components]);
 
@@ -81,7 +88,6 @@ function PlatformSphere({ platform }: { platform: Platform }) {
             {/* Rotation Group: Handles Body Orientation */}
             <group rotation={rotation}>
                 <mesh
-                    castShadow
                     onPointerOver={(e) => {
                         e.stopPropagation();
                         setIsHovered(true);
@@ -101,8 +107,18 @@ function PlatformSphere({ platform }: { platform: Platform }) {
                     <axesHelper args={[2]} />
                 </mesh>
 
-                {/* Conditionally render the boresight arrow if the platform has an antenna. */}
-                {hasAntenna && <BoresightArrow />}
+                {/* Conditionally render boresight and patterns for each antenna */}
+                {antennaComponents.length > 0 && <BoresightArrow />}
+                {/* Only show the detailed pattern mesh when the platform is selected */}
+                {isSelected &&
+                    antennaComponents.map((comp) =>
+                        comp.antennaId ? (
+                            <AntennaPatternMesh
+                                key={comp.id}
+                                antennaId={comp.antennaId}
+                            />
+                        ) : null
+                    )}
             </group>
 
             {/* Velocity Arrow: Rendered in world-aligned space (relative to position), not body-rotated space */}
@@ -193,31 +209,10 @@ export default function WorldView() {
 
             {/* Lighting */}
             <ambientLight intensity={0.5} />
-            <directionalLight
-                castShadow
-                position={[50, 50, 25]}
-                intensity={2.5}
-                shadow-mapSize-width={2048}
-                shadow-mapSize-height={2048}
-                shadow-camera-near={0.5}
-                shadow-camera-far={500}
-                shadow-camera-left={-200}
-                shadow-camera-right={200}
-                shadow-camera-top={200}
-                shadow-camera-bottom={-200}
-            />
+            <directionalLight position={[50, 50, 25]} intensity={2.5} />
+
             {/* Environment for realistic reflections and ambient light */}
             <Environment files="/potsdamer_platz_1k.hdr" />
-
-            {/* Scenery */}
-            <mesh
-                rotation={[-Math.PI / 2, 0, 0]}
-                position={[0, -0.01, 0]}
-                receiveShadow
-            >
-                <planeGeometry args={[1000, 1000]} />
-                <shadowMaterial opacity={0.3} />
-            </mesh>
 
             {/* Objects */}
             {platforms.map((platform) => (

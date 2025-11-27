@@ -259,6 +259,49 @@ int fers_run_simulation(fers_context_t* context, fers_progress_callback_t callba
  */
 int fers_generate_kml(const fers_context_t* context, const char* output_kml_filepath);
 
+// --- Antenna Pattern Utilities ---
+
+/**
+ * @brief Represents a sampled 2D antenna gain pattern.
+ * Gains are in linear scale (not dB), normalized to the antenna's peak gain.
+ * The data is structured as a flat array in row-major order (elevation rows, then azimuth columns).
+ * @note The `gains` array must be freed using `fers_free_antenna_pattern_data`.
+ */
+typedef struct
+{
+	double* gains; // Flat array of gain values [el_count * az_count]
+	size_t az_count; // Number of samples along azimuth (-180 to +180 deg)
+	size_t el_count; // Number of samples along elevation (-90 to +90 deg)
+	double max_gain; // The peak gain found in the pattern (linear scale)
+} fers_antenna_pattern_data_t;
+
+
+/**
+ * @brief Samples the gain pattern of a specified antenna and provides the data.
+ *
+ * This function calculates the antenna's far-field gain at a specified resolution
+ * over the full sphere of directions (azimuth and elevation). The resulting gain
+ * values are linear (not in dB) and normalized relative to the pattern's peak gain.
+ * This is a stateless utility useful for UI previews and analysis.
+ *
+ * @param context A valid `fers_context_t` handle containing a loaded scenario with the antenna.
+ * @param antenna_name The name of the antenna asset to sample.
+ * @param az_samples The desired number of sample points along the azimuth axis.
+ * @param el_samples The desired number of sample points along the elevation axis.
+ * @return A pointer to a `fers_antenna_pattern_data_t` struct containing the results.
+ *         Returns NULL on failure (e.g., antenna not found). The caller owns the
+ *         returned struct and must free it with `fers_free_antenna_pattern_data`.
+ */
+fers_antenna_pattern_data_t* fers_get_antenna_pattern(const fers_context_t* context, const char* antenna_name,
+													  size_t az_samples, size_t el_samples);
+
+/**
+ * @brief Frees the memory allocated for an antenna pattern data structure.
+ * @param data A pointer to the `fers_antenna_pattern_data_t` struct to free.
+ */
+void fers_free_antenna_pattern_data(fers_antenna_pattern_data_t* data);
+
+
 // --- Path Interpolation Utilities ---
 
 /**

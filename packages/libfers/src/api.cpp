@@ -619,4 +619,97 @@ void fers_free_interpolated_rotation_path(fers_interpolated_rotation_path_t* pat
 		delete path;
 	}
 }
+
+// --- Antenna Pattern Implementation ---
+
+fers_antenna_pattern_data_t* fers_get_antenna_pattern(const fers_context_t* context, const char* antenna_name,
+													  const size_t az_samples, const size_t el_samples)
+{
+	last_error_message.clear();
+	if (!context || !antenna_name || az_samples == 0 || el_samples == 0)
+	{
+		last_error_message = "Invalid arguments: context, antenna_name, or sample counts are invalid.";
+		LOG(logging::Level::ERROR, last_error_message);
+		return nullptr;
+	}
+
+	try
+	{
+		const auto* ctx = reinterpret_cast<const FersContext*>(context);
+		antenna::Antenna* ant = ctx->getWorld()->findAntenna(antenna_name);
+
+		if (!ant)
+		{
+			last_error_message = "Antenna '" + std::string(antenna_name) + "' not found in the world.";
+			LOG(logging::Level::ERROR, last_error_message);
+			return nullptr;
+		}
+
+		// TODO: Currently only using the first-found waveform, it should find the correct waveform based on the
+		// component (receiver/transmitter/monostatic) Use a representative wavelength. Some patterns depend on it.
+		// Default to 1 GHz (0.3m) if no waveforms exist.
+		RealType wavelength = 0.3;
+		if (!ctx->getWorld()->getWaveforms().empty())
+		{
+			const auto& first_waveform = ctx->getWorld()->getWaveforms().begin()->second;
+			wavelength = params::c() / first_waveform->getCarrier();
+		}
+
+		auto* data = new fers_antenna_pattern_data_t();
+		data->az_count = az_samples;
+		data->el_count = el_samples;
+		const size_t total_samples = az_samples * el_samples;
+		data->gains = new double[total_samples];
+
+		// The reference angle (boresight) is implicitly the local X-axis in the FERS engine.
+		// We pass a zero rotation to get the gain relative to this boresight.
+		const math::SVec3 ref_angle(1.0, 0.0, 0.0);
+		double max_gain = 0.0;
+
+		for (size_t i = 0; i < el_samples; ++i)
+		{
+			// Elevation from -PI/2 to PI/2
+			const RealType elevation = (static_cast<RealType>(i) / (el_samples - 1)) * PI - (PI / 2.0);
+			for (size_t j = 0; j < az_samples; ++j)
+			{
+				// Azimuth from -PI to PI
+				const RealType azimuth = (static_cast<RealType>(j) / (az_samples - 1)) * 2.0 * PI - PI;
+				const math::SVec3 sample_angle(1.0, azimuth, elevation);
+				const RealType gain = ant->getGain(sample_angle, ref_angle, wavelength);
+				data->gains[i * az_samples + j] = gain;
+				if (gain > max_gain)
+				{
+					max_gain = gain;
+				}
+			}
+		}
+
+		data->max_gain = max_gain;
+
+		// Normalize the gains
+		if (max_gain > 0)
+		{
+			for (size_t i = 0; i < total_samples; ++i)
+			{
+				data->gains[i] /= max_gain;
+			}
+		}
+
+		return data;
+	}
+	catch (const std::exception& e)
+	{
+		handle_api_exception(e, "fers_get_antenna_pattern");
+		return nullptr;
+	}
+}
+
+void fers_free_antenna_pattern_data(fers_antenna_pattern_data_t* data)
+{
+	if (data)
+	{
+		delete[] data->gains;
+		delete data;
+	}
+}
 }

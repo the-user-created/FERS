@@ -97,7 +97,7 @@ export const ScenarioView = React.memo(function ScenarioView() {
                                 camera={{
                                     position: [100, 100, 100],
                                     fov: 25,
-                                    near: 1,
+                                    near: 0.1,
                                     far: 100000,
                                 }}
                                 gl={{

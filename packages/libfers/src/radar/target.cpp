@@ -74,6 +74,7 @@ namespace radar
 
 	RealType FileTarget::getRcs(SVec3& inAngle, SVec3& outAngle, const RealType time) const
 	{
+		// TODO: the handling of arbitrary rcs models needs to be validated and expanded to cover edge cases.
 		// 1. Calculate the bistatic angle bisector in the GLOBAL frame.
 		const SVec3 global_bisector_angle = inAngle + outAngle;
 

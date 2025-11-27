@@ -338,6 +338,20 @@ fn get_interpolated_rotation_path(
     fers_api::get_interpolated_rotation_path(waypoints, interp_type, num_points)
 }
 
+#[tauri::command]
+fn get_antenna_pattern(
+    antenna_name: String,
+    az_samples: usize,
+    el_samples: usize,
+    state: State<'_, FersState>,
+) -> Result<fers_api::AntennaPatternData, String> {
+    state.lock().map_err(|e| e.to_string())?.get_antenna_pattern(
+        &antenna_name,
+        az_samples,
+        el_samples,
+    )
+}
+
 /// Initializes and runs the Tauri application.
 ///
 /// This function is the main entry point for the desktop application. It performs
@@ -385,7 +399,8 @@ pub fn run() {
             run_simulation,
             generate_kml,
             get_interpolated_motion_path,
-            get_interpolated_rotation_path
+            get_interpolated_rotation_path,
+            get_antenna_pattern
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

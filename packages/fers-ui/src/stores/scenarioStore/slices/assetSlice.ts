@@ -95,7 +95,7 @@ export const createAssetSlice: StateCreator<
                         pattern: 'sinc',
                         alpha: 1.0,
                         beta: 1.0,
-                        gamma: 0.0,
+                        gamma: 2.0,
                     };
                     break;
                 case 'gaussian':
