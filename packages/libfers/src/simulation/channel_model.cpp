@@ -41,8 +41,7 @@ using radar::Transmitter;
 namespace simulation
 {
 	void solveRe(const Transmitter* trans, const Receiver* recv, const Target* targ,
-				 const std::chrono::duration<RealType>& time, const std::chrono::duration<RealType>& length,
-				 const RadarSignal* wave, ReResults& results)
+				 const std::chrono::duration<RealType>& time, const RadarSignal* wave, ReResults& results)
 	{
 		const auto transmitter_position = trans->getPosition(time.count());
 		const auto receiver_position = recv->getPosition(time.count());
@@ -82,42 +81,10 @@ namespace simulation
 		}
 
 		results.phase = -results.delay * 2 * PI * wave->getCarrier();
-
-		// Relativistic Doppler Calculation
-		const RealType dt = length.count();
-		const auto c = params::c();
-
-		// Calculate velocities
-		const math::Vec3 trans_vel = (trans->getPosition(time.count() + dt) - transmitter_position) / dt;
-		const math::Vec3 recv_vel = (recv->getPosition(time.count() + dt) - receiver_position) / dt;
-		const math::Vec3 targ_vel = (targ->getPosition(time.count() + dt) - target_position) / dt;
-
-		// Propagation unit vectors
-		const math::Vec3 u_ttgt{transmitter_to_target_vector}; // T -> Tgt
-		const math::Vec3 u_tgtr = math::Vec3{receiver_to_target_vector} * -1.0; // Tgt -> R
-
-		// Beta vectors
-		const math::Vec3 beta_t = trans_vel / c;
-		const math::Vec3 beta_r = recv_vel / c;
-		const math::Vec3 beta_tgt = targ_vel / c;
-
-		// Lorentz factors (only need T and R, as Tgt cancels)
-		const RealType gamma_t = 1.0 / std::sqrt(1.0 - dotProduct(beta_t, beta_t));
-		const RealType gamma_r = 1.0 / std::sqrt(1.0 - dotProduct(beta_r, beta_r));
-
-		// Numerators and denominators for the Doppler factor formula
-		const RealType term1_num = 1.0 - dotProduct(beta_tgt, u_ttgt);
-		const RealType term1_den = 1.0 - dotProduct(beta_t, u_ttgt);
-		const RealType term2_num = 1.0 - dotProduct(beta_r, u_tgtr);
-		const RealType term2_den = 1.0 - dotProduct(beta_tgt, u_tgtr);
-
-		results.doppler_factor = term1_num / term1_den * (term2_num / term2_den) * (gamma_r / gamma_t);
-
-		results.noise_temperature = recv->getNoiseTemperature(recv->getRotation(time.count() + results.delay));
 	}
 
 	void solveReDirect(const Transmitter* trans, const Receiver* recv, const std::chrono::duration<RealType>& time,
-					   const std::chrono::duration<RealType>& length, const RadarSignal* wave, ReResults& results)
+					   const RadarSignal* wave, ReResults& results)
 	{
 		const auto tpos = trans->getPosition(time.count());
 		const auto rpos = recv->getPosition(time.count());
@@ -145,35 +112,7 @@ namespace simulation
 			results.power /= 4 * PI * distance * distance;
 		}
 
-		// Relativistic Doppler Calculation
-		const RealType dt = length.count();
-		const auto c = params::c();
-
-		// Calculate velocities
-		const math::Vec3 trans_vel = (trans->getPosition(time.count() + dt) - tpos) / dt;
-		const math::Vec3 recv_vel = (recv->getPosition(time.count() + dt) - rpos) / dt;
-
-		// Propagation unit vector (Transmitter to Receiver)
-		math::Vec3 u_tr = rpos - tpos;
-		u_tr /= distance;
-
-		// Beta vectors
-		const math::Vec3 beta_t = trans_vel / c;
-		const math::Vec3 beta_r = recv_vel / c;
-
-		// Lorentz factors
-		const RealType gamma_t = 1.0 / std::sqrt(1.0 - dotProduct(beta_t, beta_t));
-		const RealType gamma_r = 1.0 / std::sqrt(1.0 - dotProduct(beta_r, beta_r));
-
-		// Numerators and denominators for the Doppler factor formula
-		const RealType num = 1.0 - dotProduct(beta_r, u_tr);
-		const RealType den = 1.0 - dotProduct(beta_t, u_tr);
-
-		results.doppler_factor = num / den * (gamma_r / gamma_t);
-
 		results.phase = -results.delay * 2 * PI * wave->getCarrier();
-
-		results.noise_temperature = recv->getNoiseTemperature(recv->getRotation(time.count() + results.delay));
 	}
 
 	ComplexType calculateDirectPathContribution(const Transmitter* trans, const Receiver* recv, const RealType timeK)
@@ -345,19 +284,17 @@ namespace simulation
 				ReResults results{};
 				if (targ)
 				{
-					solveRe(trans, recv, targ, current_time, sample_time_chrono, signal, results);
+					solveRe(trans, recv, targ, current_time, signal, results);
 				}
 				else
 				{
-					solveReDirect(trans, recv, current_time, sample_time_chrono, signal, results);
+					solveReDirect(trans, recv, current_time, signal, results);
 				}
 
 				interp::InterpPoint point{.power = results.power,
 										  .time = current_time.count() + results.delay,
 										  .delay = results.delay,
-										  .doppler_factor = results.doppler_factor,
-										  .phase = results.phase,
-										  .noise_temperature = results.noise_temperature};
+										  .phase = results.phase};
 				response->addInterpPoint(point);
 			}
 		}

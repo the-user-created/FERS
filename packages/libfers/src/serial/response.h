@@ -12,7 +12,6 @@
 
 #pragma once
 
-#include <memory>
 #include <string>
 #include <vector>
 
@@ -80,20 +79,6 @@ namespace serial
 		void addInterpPoint(const interp::InterpPoint& point);
 
 		/**
-		 * @brief Renders the response as XML.
-		 *
-		 * @param root XML element that will contain the response data.
-		 */
-		void renderXml(const XmlElement& root) const noexcept;
-
-		/**
-		 * @brief Renders the response as a CSV.
-		 *
-		 * @param of Output stream to write the CSV data to.
-		 */
-		void renderCsv(std::ofstream& of) const noexcept;
-
-		/**
 		 * @brief Renders the response in binary format.
 		 *
 		 * @param rate Output parameter for the signal rate.
@@ -121,25 +106,5 @@ namespace serial
 		const radar::Transmitter* _transmitter; ///< Pointer to the transmitter object.
 		const fers_signal::RadarSignal* _wave; ///< Pointer to the radar signal object.
 		std::vector<interp::InterpPoint> _points; ///< Vector of interpolation points.
-
-		/**
-		 * @brief Helper function to render a single interpolation point as XML.
-		 *
-		 * @param root XML element that will contain the point data.
-		 * @param point Interpolation point to be rendered.
-		 */
-		void renderResponseXml(const XmlElement& root, const interp::InterpPoint& point) const noexcept;
 	};
-
-	/**
-	 * @brief Compares the start times of two `Response` objects.
-	 *
-	 * @param a First response object to compare.
-	 * @param b Second response object to compare.
-	 * @return `true` if the start time of `a` is earlier than `b`, `false` otherwise.
-	 */
-	inline bool compareTimes(const std::unique_ptr<Response>& a, const std::unique_ptr<Response>& b)
-	{
-		return a->startTime() < b->startTime();
-	}
 }

@@ -10,7 +10,7 @@
  * @brief Header for radar channel propagation and interaction models.
  *
  * This file contains the declarations for functions that model the radar channel,
- * including direct and reflected signal path calculations, Doppler effects, and
+ * including direct and reflected signal path calculations,  and
  * power scaling according to the radar range equation. These functions form the
  * core physics engine for determining the properties of a received signal based
  * on the positions and velocities of transmitters, receivers, and targets.
@@ -53,9 +53,7 @@ namespace simulation
 	{
 		RealType power; /**< Power scaling factor (dimensionless, relative to transmitted power). */
 		RealType delay; /**< Signal propagation delay in seconds. */
-		RealType doppler_factor; /**< Relativistic Doppler factor of the radar signal (f_recv / f_trans). */
 		RealType phase; /**< Phase shift in radians due to propagation delay. */
-		RealType noise_temperature; /**< Noise temperature contribution from the receiver's perspective. */
 	};
 
 	/**
@@ -78,22 +76,20 @@ namespace simulation
 	/**
 	 * @brief Solves the bistatic radar equation for a reflected path (Tx -> Tgt -> Rx).
 	 *
-	 * This function calculates the signal properties (power, delay, Doppler, phase, noise)
+	 * This function calculates the signal properties (power, delay, phase)
 	 * for a signal traveling from a transmitter, reflecting off a target, and arriving at a receiver.
-	 * It accounts for antenna gains, target RCS, propagation loss, and relativistic Doppler effects.
+	 * It accounts for antenna gains, target RCS, and propagation loss.
 	 *
 	 * @param trans Pointer to the transmitter.
 	 * @param recv Pointer to the receiver.
 	 * @param targ Pointer to the target.
 	 * @param time The time at which the pulse is transmitted.
-	 * @param length The duration of the pulse segment, used for velocity calculation.
 	 * @param wave Pointer to the transmitted radar signal.
 	 * @param results Output struct to store the calculation results.
 	 * @throws RangeError If the target is too close to the transmitter or receiver.
 	 */
 	void solveRe(const radar::Transmitter* trans, const radar::Receiver* recv, const radar::Target* targ,
-				 const std::chrono::duration<RealType>& time, const std::chrono::duration<RealType>& length,
-				 const fers_signal::RadarSignal* wave, ReResults& results);
+				 const std::chrono::duration<RealType>& time, const fers_signal::RadarSignal* wave, ReResults& results);
 
 	/**
 	 * @brief Solves the radar equation for a direct path (Tx -> Rx).
@@ -104,14 +100,13 @@ namespace simulation
 	 * @param trans Pointer to the transmitter.
 	 * @param recv Pointer to the receiver.
 	 * @param time The time at which the pulse is transmitted.
-	 * @param length The duration of the pulse segment, used for velocity calculation.
 	 * @param wave Pointer to the transmitted radar signal.
 	 * @param results Output struct to store the calculation results.
 	 * @throws RangeError If the transmitter and receiver are too close.
 	 */
 	void solveReDirect(const radar::Transmitter* trans, const radar::Receiver* recv,
-					   const std::chrono::duration<RealType>& time, const std::chrono::duration<RealType>& length,
-					   const fers_signal::RadarSignal* wave, ReResults& results);
+					   const std::chrono::duration<RealType>& time, const fers_signal::RadarSignal* wave,
+					   ReResults& results);
 
 	/**
 	 * @brief Calculates the complex envelope contribution for a direct propagation path (Tx -> Rx) at a specific time.
