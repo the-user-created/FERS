@@ -58,6 +58,9 @@ pub struct InterpolatedMotionPoint {
     x: f64,
     y: f64,
     z: f64,
+    vx: f64,
+    vy: f64,
+    vz: f64,
 }
 
 /// Data structure for a single rotation waypoint received from the UI.

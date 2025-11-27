@@ -98,10 +98,61 @@ export function calculateInterpolatedPosition(
     const point2 = pathPoints[index2];
 
     if (!point1 || !point2) return staticPosition;
-    if (index1 === index2) return point1.clone();
+
+    const v1 = new Vector3(point1.x, point1.y, point1.z);
+    if (index1 === index2) return v1;
+
+    const v2 = new Vector3(point2.x, point2.y, point2.z);
+    const interPointRatio = floatIndex - index1;
+    return v1.clone().lerp(v2, interPointRatio);
+}
+
+/**
+ * Calculates a platform's interpolated velocity vector at a specific time.
+ * @param {Platform} platform The platform data.
+ * @param {number} currentTime The global simulation time.
+ * @returns {Vector3} The interpolated velocity in Three.js coordinates.
+ */
+export function calculateInterpolatedVelocity(
+    platform: Platform,
+    currentTime: number
+): Vector3 {
+    const { waypoints, interpolation } = platform.motionPath;
+    const pathPoints = platform.pathPoints ?? [];
+    const firstWaypoint = waypoints[0];
+
+    if (
+        !firstWaypoint ||
+        interpolation === 'static' ||
+        waypoints.length < 2 ||
+        pathPoints.length < 2
+    ) {
+        return new Vector3(0, 0, 0);
+    }
+
+    const lastWaypoint = waypoints[waypoints.length - 1];
+    const pathStartTime = firstWaypoint.time;
+    const pathEndTime = lastWaypoint.time;
+    const pathDuration = pathEndTime - pathStartTime;
+
+    if (pathDuration <= 0) return new Vector3(0, 0, 0);
+
+    const timeRatio = (currentTime - pathStartTime) / pathDuration;
+    const clampedRatio = Math.max(0, Math.min(1, timeRatio));
+    const floatIndex = clampedRatio * (pathPoints.length - 1);
+    const index1 = Math.floor(floatIndex);
+    const index2 = Math.min(pathPoints.length - 1, Math.ceil(floatIndex));
+
+    const p1 = pathPoints[index1];
+    const p2 = pathPoints[index2];
+
+    if (!p1 || !p2) return new Vector3(0, 0, 0);
+    if (index1 === index2) return new Vector3(p1.vx, p1.vy, p1.vz);
 
     const interPointRatio = floatIndex - index1;
-    return point1.clone().lerp(point2, interPointRatio);
+    const v1 = new Vector3(p1.vx, p1.vy, p1.vz);
+    const v2 = new Vector3(p2.vx, p2.vy, p2.vz);
+    return v1.lerp(v2, interPointRatio);
 }
 
 /**

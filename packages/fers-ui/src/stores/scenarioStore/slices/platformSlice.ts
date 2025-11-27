@@ -4,7 +4,6 @@
 import { StateCreator } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 import { invoke } from '@tauri-apps/api/core';
-import { Vector3 } from 'three';
 import {
     ScenarioStore,
     PlatformActions,
@@ -19,6 +18,9 @@ interface InterpolatedPoint {
     x: number;
     y: number;
     z: number;
+    vx: number;
+    vy: number;
+    vz: number;
 }
 
 interface InterpolatedRotationPoint {
@@ -216,14 +218,26 @@ export const createPlatformSlice: StateCreator<
 
         // 1. Fetch/Calculate Motion Path
         const { waypoints, interpolation } = platform.motionPath;
-        let newPathPoints: Vector3[] = [];
+        let newPathPoints: {
+            x: number;
+            y: number;
+            z: number;
+            vx: number;
+            vy: number;
+            vz: number;
+        }[] = [];
 
         try {
             if (waypoints.length < 2 || interpolation === 'static') {
-                // Static or single point: Calculate directly on frontend
-                newPathPoints = waypoints.map(
-                    (wp) => new Vector3(wp.x, wp.altitude, -wp.y)
-                );
+                // Static or single point: Calculate directly on frontend (velocity 0)
+                newPathPoints = waypoints.map((wp) => ({
+                    x: wp.x,
+                    y: wp.altitude,
+                    z: -wp.y, // ENU Y -> Three JS -Z
+                    vx: 0,
+                    vy: 0,
+                    vz: 0,
+                }));
             } else {
                 // Dynamic: Fetch interpolated points from Backend
                 const points = await invoke<InterpolatedPoint[]>(
@@ -235,7 +249,16 @@ export const createPlatformSlice: StateCreator<
                     }
                 );
                 // Convert ENU (Backend) to Three.js coordinates
-                newPathPoints = points.map((p) => new Vector3(p.x, p.z, -p.y));
+                // Pos: X->X, Alt->Y, Y->-Z
+                // Vel: Vx->Vx, Vz->Vy, Vy->-Vz
+                newPathPoints = points.map((p) => ({
+                    x: p.x,
+                    y: p.z,
+                    z: -p.y,
+                    vx: p.vx,
+                    vy: p.vz,
+                    vz: -p.vy,
+                }));
             }
         } catch (error) {
             const msg = error instanceof Error ? error.message : String(error);

@@ -14,6 +14,7 @@ import { MotionPathLine } from './MotionPathLine';
 import CameraManager from './CameraManager';
 import { type MapControls as MapControlsImpl } from 'three-stdlib';
 import { BoresightArrow } from './BoresightArrow';
+import { VelocityArrow } from './VelocityArrow';
 
 /**
  * Custom hook to calculate a platform's position at a given simulation time.
@@ -76,30 +77,36 @@ function PlatformSphere({ platform }: { platform: Platform }) {
     );
 
     return (
-        <group position={position} rotation={rotation}>
-            <mesh
-                castShadow
-                onPointerOver={(e) => {
-                    e.stopPropagation();
-                    setIsHovered(true);
-                }}
-                onPointerOut={() => setIsHovered(false)}
-            >
-                <sphereGeometry args={[0.5, 32, 32]} />
-                <meshStandardMaterial
-                    color={isHovered || isSelected ? '#f48fb1' : '#90caf9'}
-                    roughness={0.3}
-                    metalness={0.5}
-                    emissive={isSelected ? '#f48fb1' : '#000000'}
-                    emissiveIntensity={isSelected ? 0.25 : 0}
-                />
-                {/* Render Body Axes: Red=X (Right), Green=Y (Up), Blue=Z (Rear). The boresight/forward direction is -Z. */}
-                {/* TODO: the axes should scale with zoom level for better visibility (with maybe a toggle to turn off individual platform axes) */}
-                <axesHelper args={[2]} />
-            </mesh>
+        <group position={position}>
+            {/* Rotation Group: Handles Body Orientation */}
+            <group rotation={rotation}>
+                <mesh
+                    castShadow
+                    onPointerOver={(e) => {
+                        e.stopPropagation();
+                        setIsHovered(true);
+                    }}
+                    onPointerOut={() => setIsHovered(false)}
+                >
+                    <sphereGeometry args={[0.5, 32, 32]} />
+                    <meshStandardMaterial
+                        color={isHovered || isSelected ? '#f48fb1' : '#90caf9'}
+                        roughness={0.3}
+                        metalness={0.5}
+                        emissive={isSelected ? '#f48fb1' : '#000000'}
+                        emissiveIntensity={isSelected ? 0.25 : 0}
+                    />
+                    {/* Render Body Axes: Red=X (Right), Green=Y (Up), Blue=Z (Rear). The boresight/forward direction is -Z. */}
+                    {/* TODO: the axes should scale with zoom level for better visibility (with maybe a toggle to turn off individual platform axes) */}
+                    <axesHelper args={[2]} />
+                </mesh>
 
-            {/* Conditionally render the boresight arrow if the platform has an antenna. */}
-            {hasAntenna && <BoresightArrow />}
+                {/* Conditionally render the boresight arrow if the platform has an antenna. */}
+                {hasAntenna && <BoresightArrow />}
+            </group>
+
+            {/* Velocity Arrow: Rendered in world-aligned space (relative to position), not body-rotated space */}
+            <VelocityArrow platform={platform} currentTime={currentTime} />
 
             <Html
                 position={[0, 1.2, 0]} // Position label above the sphere

@@ -547,7 +547,14 @@ pub fn get_interpolated_motion_path(
 
     let points: Vec<crate::InterpolatedMotionPoint> = result_slice
         .iter()
-        .map(|p| crate::InterpolatedMotionPoint { x: p.x, y: p.y, z: p.z })
+        .map(|p| crate::InterpolatedMotionPoint {
+            x: p.x,
+            y: p.y,
+            z: p.z,
+            vx: p.vx,
+            vy: p.vy,
+            vz: p.vz,
+        })
         .collect();
 
     Ok(points)

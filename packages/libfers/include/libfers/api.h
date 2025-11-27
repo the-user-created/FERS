@@ -280,11 +280,8 @@ typedef enum
 typedef struct
 {
 	double time;
-
 	double x;
-
 	double y;
-
 	double z;
 } fers_motion_waypoint_t;
 
@@ -295,9 +292,7 @@ typedef struct
 typedef struct
 {
 	double time;
-
 	double azimuth_deg;
-
 	double elevation_deg;
 } fers_rotation_waypoint_t;
 
@@ -307,10 +302,11 @@ typedef struct
 typedef struct
 {
 	double x;
-
 	double y;
-
 	double z;
+	double vx;
+	double vy;
+	double vz;
 } fers_interpolated_point_t;
 
 /**
@@ -320,7 +316,6 @@ typedef struct
 typedef struct
 {
 	double azimuth_deg;
-
 	double elevation_deg;
 } fers_interpolated_rotation_point_t;
 
@@ -332,7 +327,6 @@ typedef struct
 typedef struct
 {
 	fers_interpolated_point_t* points;
-
 	size_t count;
 } fers_interpolated_path_t;
 
@@ -343,7 +337,6 @@ typedef struct
 typedef struct
 {
 	fers_interpolated_rotation_point_t* points;
-
 	size_t count;
 } fers_interpolated_rotation_path_t;
 
