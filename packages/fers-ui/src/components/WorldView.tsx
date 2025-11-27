@@ -16,6 +16,7 @@ import { type MapControls as MapControlsImpl } from 'three-stdlib';
 import { BoresightArrow } from './BoresightArrow';
 import { VelocityArrow } from './VelocityArrow';
 import { AntennaPatternMesh } from './AntennaPatternMesh';
+import LinkVisualizer from './LinkVisualizer';
 
 /**
  * Custom hook to calculate a platform's position at a given simulation time.
@@ -245,6 +246,9 @@ export default function WorldView() {
 
             {/* Environment for realistic reflections and ambient light */}
             <Environment files="/potsdamer_platz_1k.hdr" />
+
+            {/* Physics Link Visualization */}
+            <LinkVisualizer />
 
             {/* Objects */}
             {platforms.map((platform) => (

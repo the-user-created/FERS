@@ -23,7 +23,12 @@
 #include <memory>
 
 #include "core/config.h"
+#include "math/geometry_ops.h"
 
+namespace core
+{
+	class World;
+}
 namespace radar
 {
 	class Receiver;
@@ -153,4 +158,52 @@ namespace simulation
 	std::unique_ptr<serial::Response> calculateResponse(const radar::Transmitter* trans, const radar::Receiver* recv,
 														const fers_signal::RadarSignal* signal, RealType startTime,
 														const radar::Target* targ = nullptr);
+
+	/**
+	 * @enum LinkType
+	 * @brief Categorizes the visual link for rendering.
+	 */
+	enum class LinkType
+	{
+		Monostatic, ///< Combined Tx/Rx path
+		BistaticTxTgt, ///< Illuminator path
+		BistaticTgtRx, ///< Scattered path
+		DirectTxRx ///< Interference path
+	};
+
+	/**
+	 * @enum LinkQuality
+	 * @brief Describes the radiometric quality of the link.
+	 */
+	enum class LinkQuality
+	{
+		Strong, ///< SNR > 0 dB
+		Weak ///< SNR < 0 dB (Geometric line of sight, but below noise floor)
+	};
+
+	/**
+	 * @struct PreviewLink
+	 * @brief A calculated link segment for 3D visualization.
+	 */
+	struct PreviewLink
+	{
+		LinkType type;
+		LinkQuality quality;
+		math::Vec3 start;
+		math::Vec3 end;
+		std::string label;
+	};
+
+	/**
+	 * @brief Calculates all visual links for the current world state at a specific time.
+	 *
+	 * This function utilizes the core radar equation helpers to determine visibility,
+	 * power levels, and SNR for all Tx/Rx/Target combinations. It is lightweight
+	 * and does not update simulation state.
+	 *
+	 * @param world The simulation world containing radar components.
+	 * @param time The time at which to calculate geometry.
+	 * @return A vector of renderable links.
+	 */
+	std::vector<PreviewLink> calculatePreviewLinks(const core::World& world, RealType time);
 }

@@ -27,6 +27,7 @@
 #include "serial/kml_generator.h"
 #include "serial/xml_parser.h"
 #include "serial/xml_serializer.h"
+#include "simulation/channel_model.h"
 
 // The fers_context struct is defined here as an alias for our C++ class.
 // This allows the C-API to return an opaque pointer, hiding the C++ implementation.
@@ -79,6 +80,8 @@ void fers_context_destroy(fers_context_t* context)
 {
 	if (!context)
 	{
+		last_error_message = "Invalid context provided to fers_context_destroy.";
+		LOG(logging::Level::WARNING, last_error_message);
 		return;
 	}
 	delete context;
@@ -710,6 +713,89 @@ void fers_free_antenna_pattern_data(fers_antenna_pattern_data_t* data)
 	{
 		delete[] data->gains;
 		delete data;
+	}
+}
+
+// --- Preview Link Calculation Implementation ---
+
+fers_visual_link_list_t* fers_calculate_preview_links(const fers_context_t* context, const double time)
+{
+	last_error_message.clear();
+	if (!context)
+	{
+		last_error_message = "Invalid context passed to fers_calculate_preview_links";
+		LOG(logging::Level::ERROR, last_error_message);
+		return nullptr;
+	}
+
+	try
+	{
+		const auto* ctx = reinterpret_cast<const FersContext*>(context);
+		// Call the core physics logic in channel_model.cpp
+		const auto cpp_links = simulation::calculatePreviewLinks(*ctx->getWorld(), time);
+
+		// Convert C++ vector to C-API struct
+		auto* result = new fers_visual_link_list_t();
+		result->count = cpp_links.size();
+
+		if (!cpp_links.empty())
+		{
+			result->links = new fers_visual_link_t[result->count];
+			for (size_t i = 0; i < result->count; ++i)
+			{
+				const auto& src = cpp_links[i];
+				auto& dst = result->links[i];
+
+				// Map enums
+				switch (src.type)
+				{
+				case simulation::LinkType::Monostatic:
+					dst.type = FERS_LINK_MONOSTATIC;
+					break;
+				case simulation::LinkType::BistaticTxTgt:
+					dst.type = FERS_LINK_BISTATIC_TX_TGT;
+					break;
+				case simulation::LinkType::BistaticTgtRx:
+					dst.type = FERS_LINK_BISTATIC_TGT_RX;
+					break;
+				case simulation::LinkType::DirectTxRx:
+					dst.type = FERS_LINK_DIRECT_TX_RX;
+					break;
+				}
+
+				dst.quality = (src.quality == simulation::LinkQuality::Strong) ? FERS_LINK_STRONG : FERS_LINK_WEAK;
+
+				dst.start_x = src.start.x;
+				dst.start_y = src.start.y;
+				dst.start_z = src.start.z;
+				dst.end_x = src.end.x;
+				dst.end_y = src.end.y;
+				dst.end_z = src.end.z;
+
+				// Safe string copy
+				std::strncpy(dst.label, src.label.c_str(), sizeof(dst.label) - 1);
+				dst.label[sizeof(dst.label) - 1] = '\0';
+			}
+		}
+		else
+		{
+			result->links = nullptr;
+		}
+		return result;
+	}
+	catch (const std::exception& e)
+	{
+		handle_api_exception(e, "fers_calculate_preview_links");
+		return nullptr;
+	}
+}
+
+void fers_free_preview_links(fers_visual_link_list_t* list)
+{
+	if (list)
+	{
+		delete[] list->links;
+		delete list;
 	}
 }
 }

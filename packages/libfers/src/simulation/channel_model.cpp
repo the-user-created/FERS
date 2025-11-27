@@ -20,6 +20,7 @@
 
 #include "core/logging.h"
 #include "core/parameters.h"
+#include "core/world.h"
 #include "interpolation/interpolation_point.h"
 #include "math/geometry_ops.h"
 #include "radar/radar_obj.h"
@@ -152,6 +153,69 @@ namespace
 		const RealType delta_f = tx_timing->getFreqOffset() - rx_timing->getFreqOffset();
 		const RealType delta_phi = tx_timing->getPhaseOffset() - rx_timing->getPhaseOffset();
 		return 2 * PI * delta_f * time + delta_phi;
+	}
+
+	// Helper to check noise floor threshold (Signal > kTB)
+	bool isSignalStrong(RealType power_watts, RealType temp_kelvin)
+	{
+		// Use configured rate or default to 1Hz if unconfigured to prevent divide-by-zero or silly values
+		const RealType bw = params::rate() > 0 ? params::rate() : 1.0;
+		const RealType noise_floor = params::boltzmannK() * (temp_kelvin > 0 ? temp_kelvin : 290.0) * bw;
+		return power_watts > noise_floor;
+	}
+
+	/**
+	 * @brief Converts power in watts to decibels milliwatts (dBm).
+	 *
+	 * @param watts Power in watts.
+	 * @return Power in dBm. Returns -999.0 dBm for non-positive input.
+	 */
+	RealType wattsToDbm(RealType watts)
+	{
+		if (watts <= 0)
+		{
+			return -999.0;
+		}
+		return 10.0 * std::log10(watts * 1000.0);
+	}
+
+	/**
+	 * @brief Converts power in watts to decibels (dB).
+	 *
+	 * @param watts Power in watts.
+	 * @return Power in decibels (dB). Returns -999.0 dB for non-positive input.
+	 */
+	RealType wattsToDb(RealType watts)
+	{
+		if (watts <= 0)
+		{
+			return -999.0;
+		}
+		return 10.0 * std::log10(watts);
+	}
+
+	/**
+	 * @brief Checks if a component is active at the given time based on its schedule.
+	 *
+	 * @param schedule The component's operating schedule.
+	 * @param time The current simulation time.
+	 * @return true If the schedule is empty (implied always on) or if time is within a period.
+	 * @return false If the schedule is populated but the time is outside all periods.
+	 */
+	bool isComponentActive(const std::vector<radar::SchedulePeriod>& schedule, RealType time)
+	{
+		if (schedule.empty())
+		{
+			return true;
+		}
+		for (const auto& period : schedule)
+		{
+			if (time >= period.start && time <= period.end)
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 }
 
@@ -428,5 +492,163 @@ namespace simulation
 		}
 
 		return response;
+	}
+
+	std::vector<PreviewLink> calculatePreviewLinks(const core::World& world, const RealType time)
+	{
+		std::vector<PreviewLink> links;
+
+		// Default wavelength (1GHz) if no waveform is attached, to allow geometric visualization
+		const RealType lambda_default = 0.3;
+
+		for (const auto& tx : world.getTransmitters())
+		{
+			// 1. Check Transmitter Schedule
+			if (!isComponentActive(tx->getSchedule(), time))
+			{
+				continue;
+			}
+
+			const auto p_tx = tx->getPosition(time);
+			const auto* waveform = tx->getSignal();
+			const RealType pt = waveform ? waveform->getPower() : 0.0;
+			const RealType lambda = waveform ? (params::c() / waveform->getCarrier()) : lambda_default;
+
+			for (const auto& rx : world.getReceivers())
+			{
+				// 2. Check Receiver Schedule
+				if (!isComponentActive(rx->getSchedule(), time))
+				{
+					continue;
+				}
+
+				const auto p_rx = rx->getPosition(time);
+				const bool is_monostatic = (tx->getAttached() == rx.get());
+				const bool no_loss = rx->checkFlag(Receiver::RecvFlag::FLAG_NOPROPLOSS);
+
+				if (is_monostatic)
+				{
+					// --- Monostatic Case ---
+					for (const auto& tgt : world.getTargets())
+					{
+						const auto p_tgt = tgt->getPosition(time);
+
+						// Use computeLink helper logic, but catch exception manually by checking dist
+						// to avoid try/catch overhead in render loop
+						const Vec3 vec_tx_tgt = p_tgt - p_tx;
+						const RealType dist = vec_tx_tgt.length();
+
+						if (dist <= EPSILON)
+							continue;
+
+						const Vec3 u_tx_tgt = vec_tx_tgt / dist; // Unit vec Tx -> Tgt
+
+						// Reusing internal helpers
+						// Tx Gain: Direction Tx -> Tgt
+						const RealType gt = computeAntennaGain(tx.get(), u_tx_tgt, time, lambda);
+						// Rx Gain: Direction Rx -> Tgt (which is -u_tx_tgt because Rx is at Tx)
+						const RealType gr = computeAntennaGain(rx.get(), u_tx_tgt, time, lambda);
+
+						// RCS: In = Tx->Tgt, Out = Tgt->Rx (which is -(Tx->Tgt))
+						SVec3 in_angle(u_tx_tgt);
+						SVec3 out_angle(-u_tx_tgt);
+						const RealType rcs = tgt->getRcs(in_angle, out_angle, time);
+
+						// Reusing Reflected Path Helper
+						// r_tx = dist, r_rx = dist
+						const RealType power_ratio =
+							computeReflectedPathPower(gt, gr, rcs, lambda, dist, dist, no_loss);
+						const RealType pr_watts = pt * power_ratio;
+
+						links.push_back(
+							{.type = LinkType::Monostatic,
+							 .quality = isSignalStrong(pr_watts, rx->getNoiseTemperature()) ? LinkQuality::Strong
+																							: LinkQuality::Weak,
+							 .start = p_tx,
+							 .end = p_tgt,
+							 .label = std::format("{:.1f} dBm (RCS: {:.1f}m\u00B2)", wattsToDbm(pr_watts), rcs)});
+					}
+				}
+				else
+				{
+					// --- Bistatic Case ---
+
+					// 1. Direct Path (Interference)
+					if (!rx->checkFlag(Receiver::RecvFlag::FLAG_NODIRECT))
+					{
+						const Vec3 vec_direct = p_rx - p_tx;
+						const RealType dist = vec_direct.length();
+
+						if (dist > EPSILON)
+						{
+							const Vec3 u_tx_rx = vec_direct / dist;
+							// Tx Gain: Tx -> Rx
+							const RealType gt = computeAntennaGain(tx.get(), u_tx_rx, time, lambda);
+							// Rx Gain: Rx -> Tx (which is -u_tx_rx)
+							const RealType gr = computeAntennaGain(rx.get(), -u_tx_rx, time, lambda);
+
+							const RealType power_ratio = computeDirectPathPower(gt, gr, lambda, dist, no_loss);
+							const RealType pr_watts = pt * power_ratio;
+
+							links.push_back({.type = LinkType::DirectTxRx,
+											 .quality = LinkQuality::Strong, // Direct path usually strong unless OOS
+											 .start = p_tx,
+											 .end = p_rx,
+											 .label = std::format("Direct: {:.1f} dBm", wattsToDbm(pr_watts))});
+						}
+					}
+
+					// 2. Reflected Path
+					for (const auto& tgt : world.getTargets())
+					{
+						const auto p_tgt = tgt->getPosition(time);
+						const Vec3 vec_tx_tgt = p_tgt - p_tx;
+						const Vec3 vec_tgt_rx = p_rx - p_tgt; // Vector Tgt -> Rx
+						const RealType r1 = vec_tx_tgt.length();
+						const RealType r2 = vec_tgt_rx.length();
+
+						if (r1 <= EPSILON || r2 <= EPSILON)
+							continue;
+
+						const Vec3 u_tx_tgt = vec_tx_tgt / r1;
+						const Vec3 u_tgt_rx = vec_tgt_rx / r2;
+
+						// Tx Gain: Tx -> Tgt
+						const RealType gt = computeAntennaGain(tx.get(), u_tx_tgt, time, lambda);
+						// Rx Gain: Rx -> Tgt (Vector is Tgt->Rx, so look vector is -u_tgt_rx)
+						const RealType gr = computeAntennaGain(rx.get(), -u_tgt_rx, time, lambda);
+
+						// RCS
+						SVec3 in_angle(u_tx_tgt);
+						SVec3 out_angle(-u_tgt_rx); // Out angle is usually defined from Target OUTWARDS
+						const RealType rcs = tgt->getRcs(in_angle, out_angle, time);
+
+						const RealType power_ratio = computeReflectedPathPower(gt, gr, rcs, lambda, r1, r2, no_loss);
+						const RealType pr_watts = pt * power_ratio;
+
+						// Power Density at Target (Leg 1)
+						// S = (Pt * Gt) / (4 * pi * R1^2)
+						const RealType p_density = (pt * gt) / (4.0 * PI * r1 * r1);
+
+						// Leg 1: Illuminator
+						links.push_back({.type = LinkType::BistaticTxTgt,
+										 .quality = LinkQuality::Strong,
+										 .start = p_tx,
+										 .end = p_tgt,
+										 .label = std::format("{:.1f} dBW/m\u00B2", wattsToDb(p_density))});
+
+						// Leg 2: Scattered
+						links.push_back({.type = LinkType::BistaticTgtRx,
+										 .quality = isSignalStrong(pr_watts, rx->getNoiseTemperature())
+											 ? LinkQuality::Strong
+											 : LinkQuality::Weak,
+										 .start = p_tgt,
+										 .end = p_rx,
+										 .label = std::format("{:.1f} dBm", wattsToDbm(pr_watts))});
+					}
+				}
+			}
+		}
+		return links;
 	}
 }

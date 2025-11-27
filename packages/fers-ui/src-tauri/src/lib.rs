@@ -352,6 +352,14 @@ fn get_antenna_pattern(
     )
 }
 
+#[tauri::command]
+fn get_preview_links(
+    time: f64,
+    state: State<'_, FersState>,
+) -> Result<Vec<fers_api::VisualLink>, String> {
+    state.lock().map_err(|e| e.to_string())?.calculate_preview_links(time)
+}
+
 /// Initializes and runs the Tauri application.
 ///
 /// This function is the main entry point for the desktop application. It performs
@@ -400,7 +408,8 @@ pub fn run() {
             generate_kml,
             get_interpolated_motion_path,
             get_interpolated_rotation_path,
-            get_antenna_pattern
+            get_antenna_pattern,
+            get_preview_links,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

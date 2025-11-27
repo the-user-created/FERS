@@ -430,6 +430,66 @@ fers_interpolated_rotation_path_t* fers_get_interpolated_rotation_path(const fer
  */
 void fers_free_interpolated_rotation_path(fers_interpolated_rotation_path_t* path);
 
+// --- Preview Link Calculation ---
+
+/**
+ * @brief Quality of the radio link based on SNR.
+ */
+typedef enum
+{
+	FERS_LINK_STRONG, // SNR > 0 dB
+	FERS_LINK_WEAK // SNR < 0 dB (Geometric possibility but sub-noise)
+} fers_link_quality_t;
+
+/**
+ * @brief Type of visual link to render.
+ */
+typedef enum
+{
+	FERS_LINK_MONOSTATIC, // Combined Tx/Rx path
+	FERS_LINK_BISTATIC_TX_TGT, // Illuminator path
+	FERS_LINK_BISTATIC_TGT_RX, // Scattered path
+	FERS_LINK_DIRECT_TX_RX // Interference path
+} fers_link_type_t;
+
+/**
+ * @brief Represents a single renderable line segment in the 3D view.
+ */
+typedef struct
+{
+	fers_link_type_t type;
+	fers_link_quality_t quality;
+	double start_x;
+	double start_y;
+	double start_z;
+	double end_x;
+	double end_y;
+	double end_z;
+	char label[128]; // Pre-formatted label (e.g., "-95 dBm")
+} fers_visual_link_t;
+
+/**
+ * @brief A container for a list of visual links.
+ */
+typedef struct
+{
+	fers_visual_link_t* links;
+	size_t count;
+} fers_visual_link_list_t;
+
+/**
+ * @brief Calculates visual links for a specific simulation time.
+ * @param context The simulation context.
+ * @param time The simulation time in seconds.
+ * @return A pointer to a link list. Caller must free with fers_free_preview_links.
+ */
+fers_visual_link_list_t* fers_calculate_preview_links(const fers_context_t* context, double time);
+
+/**
+ * @brief Frees the memory allocated for a preview link list.
+ * @param list The list to free.
+ */
+void fers_free_preview_links(fers_visual_link_list_t* list);
 
 #ifdef __cplusplus
 }

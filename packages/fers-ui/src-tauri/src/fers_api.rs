@@ -276,6 +276,26 @@ pub struct AntennaPatternData {
     max_gain: f64,
 }
 
+// Helper wrapper for the visual link list
+struct FersVisualLinkList(*mut ffi::fers_visual_link_list_t);
+
+impl Drop for FersVisualLinkList {
+    fn drop(&mut self) {
+        if !self.0.is_null() {
+            unsafe { ffi::fers_free_preview_links(self.0) };
+        }
+    }
+}
+
+#[derive(serde::Serialize)]
+pub struct VisualLink {
+    pub link_type: String, // "monostatic", "illuminator", "scattered", "direct"
+    pub quality: String,   // "strong", "weak"
+    pub start: [f64; 3],
+    pub end: [f64; 3],
+    pub label: String,
+}
+
 impl FersContext {
     /// Creates a new `FersContext` by calling the C-API constructor.
     ///
@@ -542,6 +562,50 @@ impl FersContext {
         let gains_slice = unsafe { std::slice::from_raw_parts(gains_ptr, total_samples) };
 
         Ok(AntennaPatternData { gains: gains_slice.to_vec(), az_count, el_count, max_gain })
+    }
+
+    pub fn calculate_preview_links(&self, time: f64) -> Result<Vec<VisualLink>, String> {
+        let list_ptr = unsafe { ffi::fers_calculate_preview_links(self.ptr, time) };
+        if list_ptr.is_null() {
+            let err_msg = get_last_error();
+            // If we receive a NULL ptr but no error message, it might be a logic error
+            // or an unhandled edge case in C++. We default to the retrieved message.
+            return Err(err_msg);
+        }
+
+        let owned_list = FersVisualLinkList(list_ptr);
+        let count = unsafe { (*owned_list.0).count };
+        let links_ptr = unsafe { (*owned_list.0).links };
+
+        let mut result = Vec::with_capacity(count);
+        if count > 0 && !links_ptr.is_null() {
+            let slice = unsafe { std::slice::from_raw_parts(links_ptr, count) };
+            for l in slice {
+                let link_type = match l.type_ {
+                    ffi::fers_link_type_t_FERS_LINK_MONOSTATIC => "monostatic",
+                    ffi::fers_link_type_t_FERS_LINK_BISTATIC_TX_TGT => "illuminator",
+                    ffi::fers_link_type_t_FERS_LINK_BISTATIC_TGT_RX => "scattered",
+                    ffi::fers_link_type_t_FERS_LINK_DIRECT_TX_RX => "direct",
+                    _ => "unknown",
+                };
+                let quality = match l.quality {
+                    ffi::fers_link_quality_t_FERS_LINK_STRONG => "strong",
+                    _ => "weak",
+                };
+
+                let label =
+                    unsafe { CStr::from_ptr(l.label.as_ptr()) }.to_string_lossy().into_owned();
+
+                result.push(VisualLink {
+                    link_type: link_type.to_string(),
+                    quality: quality.to_string(),
+                    start: [l.start_x, l.start_y, l.start_z],
+                    end: [l.end_x, l.end_y, l.end_z],
+                    label,
+                });
+            }
+        }
+        Ok(result)
     }
 }
 
