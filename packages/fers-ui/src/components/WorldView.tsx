@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
 
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { MapControls, Environment, Html } from '@react-three/drei';
 import { Vector3 } from 'three';
 import {
@@ -51,7 +51,6 @@ function useInterpolatedRotation(platform: Platform, currentTime: number) {
  * @param {Platform} props.platform - The platform data from the store.
  */
 function PlatformSphere({ platform }: { platform: Platform }) {
-    const [isHovered, setIsHovered] = useState(false);
     const selectedItemId = useScenarioStore((state) => state.selectedItemId);
     const currentTime = useScenarioStore((state) => state.currentTime);
     const isSelected = platform.id === selectedItemId;
@@ -96,16 +95,10 @@ function PlatformSphere({ platform }: { platform: Platform }) {
         <group position={position}>
             {/* Rotation Group: Handles Body Orientation */}
             <group rotation={rotation}>
-                <mesh
-                    onPointerOver={(e) => {
-                        e.stopPropagation();
-                        setIsHovered(true);
-                    }}
-                    onPointerOut={() => setIsHovered(false)}
-                >
+                <mesh>
                     <sphereGeometry args={[0.5, 32, 32]} />
                     <meshStandardMaterial
-                        color={isHovered || isSelected ? '#f48fb1' : '#90caf9'}
+                        color={isSelected ? '#f48fb1' : '#90caf9'}
                         roughness={0.3}
                         metalness={0.5}
                         emissive={isSelected ? '#f48fb1' : '#000000'}
@@ -167,11 +160,11 @@ function PlatformSphere({ platform }: { platform: Platform }) {
                     borderRadius: '6px',
                     fontSize: '12px',
                     whiteSpace: 'nowrap',
-                    pointerEvents: 'none', // Allow clicking/dragging "through" the label
+                    pointerEvents: 'none', // Allows camera clicks to pass through
+                    userSelect: 'none', // Prevents text selection
                     transition: 'opacity 0.2s, border 0.2s',
-                    opacity: isHovered || isSelected ? 1 : 0.75,
+                    opacity: isSelected ? 1 : 0.75,
                     border: isSelected ? '2px solid #f48fb1' : 'none',
-                    userSelect: 'none',
                 }}
             >
                 <div style={{ fontWeight: 'bold' }}>{platform.name}</div>

@@ -514,6 +514,36 @@ namespace simulation
 			const RealType pt = waveform ? waveform->getPower() : 0.0;
 			const RealType lambda = waveform ? (params::c() / waveform->getCarrier()) : lambda_default;
 
+			// --- PRE-CALCULATE ILLUMINATOR PATHS (Tx -> Tgt) ---
+			// These depend only on the Transmitter and Targets. We calculate them once per Tx
+			// to avoid duplication when multiple receivers are present.
+			// We do NOT filter out Monostatic transmitters here. Even in a monostatic setup,
+			// the "Illuminator" link provides distinct info (Power Density at Target) compared
+			// to the "Monostatic" link (Received Power at Rx). By being outside the Rx loop,
+			// it is guaranteed to be unique per Target.
+			for (const auto& tgt : world.getTargets())
+			{
+				const auto p_tgt = tgt->getPosition(time);
+				const Vec3 vec_tx_tgt = p_tgt - p_tx;
+				const RealType r1 = vec_tx_tgt.length();
+
+				if (r1 <= EPSILON)
+					continue;
+
+				const Vec3 u_tx_tgt = vec_tx_tgt / r1;
+				// Tx Gain: Tx -> Tgt
+				const RealType gt = computeAntennaGain(tx.get(), u_tx_tgt, time, lambda);
+
+				// Power Density at Target: S = (Pt * Gt) / (4 * pi * R1^2)
+				const RealType p_density = (pt * gt) / (4.0 * PI * r1 * r1);
+
+				links.push_back({.type = LinkType::BistaticTxTgt,
+								 .quality = LinkQuality::Strong,
+								 .start = p_tx,
+								 .end = p_tgt,
+								 .label = std::format("{:.1f} dBW/m\u00B2", wattsToDb(p_density))});
+			}
+
 			for (const auto& rx : world.getReceivers())
 			{
 				// 2. Check Receiver Schedule
@@ -529,6 +559,7 @@ namespace simulation
 				if (is_monostatic)
 				{
 					// --- Monostatic Case ---
+					// Calculates the round-trip Received Power (dBm)
 					for (const auto& tgt : world.getTargets())
 					{
 						const auto p_tgt = tgt->getPosition(time);
@@ -598,12 +629,13 @@ namespace simulation
 						}
 					}
 
-					// 2. Reflected Path
+					// 2. Reflected Path (Scattered Leg: Tgt -> Rx)
 					for (const auto& tgt : world.getTargets())
 					{
 						const auto p_tgt = tgt->getPosition(time);
 						const Vec3 vec_tx_tgt = p_tgt - p_tx;
 						const Vec3 vec_tgt_rx = p_rx - p_tgt; // Vector Tgt -> Rx
+
 						const RealType r1 = vec_tx_tgt.length();
 						const RealType r2 = vec_tgt_rx.length();
 
@@ -626,16 +658,7 @@ namespace simulation
 						const RealType power_ratio = computeReflectedPathPower(gt, gr, rcs, lambda, r1, r2, no_loss);
 						const RealType pr_watts = pt * power_ratio;
 
-						// Power Density at Target (Leg 1)
-						// S = (Pt * Gt) / (4 * pi * R1^2)
-						const RealType p_density = (pt * gt) / (4.0 * PI * r1 * r1);
-
-						// Leg 1: Illuminator
-						links.push_back({.type = LinkType::BistaticTxTgt,
-										 .quality = LinkQuality::Strong,
-										 .start = p_tx,
-										 .end = p_tgt,
-										 .label = std::format("{:.1f} dBW/m\u00B2", wattsToDb(p_density))});
+						// Note: Illuminator leg (Tx->Tgt) was handled in the outer loop.
 
 						// Leg 2: Scattered
 						links.push_back({.type = LinkType::BistaticTgtRx,

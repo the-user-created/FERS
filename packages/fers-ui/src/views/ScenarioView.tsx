@@ -65,6 +65,8 @@ export const ScenarioView = React.memo(function ScenarioView() {
                 pointerEvents: isSimulating ? 'none' : 'auto',
                 opacity: isSimulating ? 0.5 : 1,
                 transition: 'opacity 0.3s ease-in-out',
+                userSelect: 'none',
+                WebkitUserSelect: 'none',
             }}
         >
             <PanelGroup direction="horizontal" ref={panelGroupRef}>
@@ -90,6 +92,7 @@ export const ScenarioView = React.memo(function ScenarioView() {
                                 position: 'relative',
                                 minHeight: 0, // Allow flex item to shrink
                                 overflow: 'hidden',
+                                userSelect: 'none',
                             }}
                         >
                             <Canvas
