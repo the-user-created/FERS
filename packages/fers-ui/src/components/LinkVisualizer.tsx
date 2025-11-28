@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { Line, Html } from '@react-three/drei';
 import * as THREE from 'three';
@@ -21,20 +21,26 @@ const COLORS = {
     direct: '#9c27b0',
 };
 
-interface VisualLink {
+// Metadata only - no Vector3 positions here.
+// Positions are derived at 60FPS during render.
+interface LinkMetadata {
     link_type: 'monostatic' | 'illuminator' | 'scattered' | 'direct';
     quality: 'strong' | 'weak';
-    start: THREE.Vector3;
-    end: THREE.Vector3;
     label: string;
     source_name: string;
     dest_name: string;
     origin_name: string;
+}
+
+// Derived object used for actual rendering
+interface RenderableLink extends LinkMetadata {
+    start: THREE.Vector3;
+    end: THREE.Vector3;
     distance: number;
 }
 
 // Helper to determine color based on link type and quality
-const getLinkColor = (link: VisualLink) => {
+const getLinkColor = (link: LinkMetadata) => {
     if (link.link_type === 'monostatic') {
         return link.quality === 'strong'
             ? COLORS.monostatic.strong
@@ -49,12 +55,14 @@ const getLinkColor = (link: VisualLink) => {
     return '#ffffff';
 };
 
-function LinkLine({ link }: { link: VisualLink }) {
+function LinkLine({ link }: { link: RenderableLink }) {
     const points = useMemo(
         () => [link.start, link.end] as [THREE.Vector3, THREE.Vector3],
         [link.start, link.end]
     );
+
     const color = getLinkColor(link);
+
     let dashed = false;
 
     if (
@@ -70,6 +78,7 @@ function LinkLine({ link }: { link: VisualLink }) {
     const isGhost =
         (link.link_type === 'monostatic' || link.link_type === 'scattered') &&
         link.quality === 'weak';
+
     const opacity = isGhost ? 0.25 : 1.0;
 
     return (
@@ -86,7 +95,7 @@ function LinkLine({ link }: { link: VisualLink }) {
     );
 }
 
-function LabelItem({ link, color }: { link: VisualLink; color: string }) {
+function LabelItem({ link, color }: { link: RenderableLink; color: string }) {
     return (
         <Tooltip
             arrow
@@ -100,7 +109,6 @@ function LabelItem({ link, color }: { link: VisualLink; color: string }) {
                         <b>Path Segment:</b> {link.source_name} →{' '}
                         {link.dest_name}
                     </Typography>
-                    {/* Only show Origin if it's a scattered link, otherwise it's redundant */}
                     {link.link_type === 'scattered' && (
                         <Typography variant="caption" display="block">
                             <b>Illuminator:</b> {link.origin_name}
@@ -144,7 +152,7 @@ function LabelCluster({
     links,
 }: {
     position: THREE.Vector3;
-    links: VisualLink[];
+    links: RenderableLink[];
 }) {
     return (
         <Html position={position} center zIndexRange={[100, 0]}>
@@ -167,15 +175,29 @@ function LabelCluster({
 }
 
 /**
- * Renders radio frequency links between platforms based on physics calculations.
- * Handles grouping of overlapping labels to ensure readability.
+ * Renders radio frequency links between platforms.
+ *
+ * Performance Design:
+ * 1. Metadata Fetching: Throttled to ~10 FPS. Fetches connectivity status and text labels.
+ * 2. Geometry Rendering: Runs at 60 FPS (driven by store.currentTime).
+ *
+ * This ensures the lines "stick" to platforms smoothly while avoiding FFI/Text updates
+ * overload on every frame.
  */
 export default function LinkVisualizer() {
     const currentTime = useScenarioStore((state) => state.currentTime);
     const platforms = useScenarioStore((state) => state.platforms);
-    const [links, setLinks] = useState<VisualLink[]>([]);
+
+    // Store only the metadata (connectivity/labels), not positions
+    const [linkMetadata, setLinkMetadata] = useState<LinkMetadata[]>([]);
+
+    // Throttle control
+    const lastFetchTimeRef = useRef<number>(0);
+    const FETCH_INTERVAL_MS = 100; // 100ms = 10 FPS for physics/text updates
 
     // Build a lookup map: Component Name -> Parent Platform
+    // Memoized to avoid rebuilding on every frame, only when scene structure changes.
+    // This is also our primary signal that the scenario structure has changed.
     const componentToPlatform = useMemo(() => {
         const map = new Map<string, Platform>();
         platforms.forEach((p) => {
@@ -185,21 +207,39 @@ export default function LinkVisualizer() {
         return map;
     }, [platforms]);
 
+    // Effect: Reset throttle when the scenario structure changes.
+    // This forces an immediate update when a new file is loaded, ensuring
+    // visualizations appear even if the time is paused at 0.
+    useEffect(() => {
+        lastFetchTimeRef.current = 0;
+    }, [componentToPlatform]);
+
+    // 1. Throttled Data Fetching Loop
     useEffect(() => {
         let active = true;
+        const now = Date.now();
+
+        // Throttle check: Only fetch if enough wall-clock time has passed.
+        // However, if lastFetchTimeRef is 0 (just reset by load), we pass through immediately.
+        if (
+            lastFetchTimeRef.current > 0 &&
+            now - lastFetchTimeRef.current < FETCH_INTERVAL_MS
+        ) {
+            return;
+        }
 
         const fetchLinks = async () => {
             try {
-                // Fetch SoA (Structure of Arrays)
+                lastFetchTimeRef.current = Date.now();
+
+                // Fetch SoA (Structure of Arrays) from Rust/C++
                 const [numericData, stringData] = await invoke<
                     [number[], string[]]
-                >('get_preview_links', {
-                    time: currentTime,
-                });
+                >('get_preview_links', { time: currentTime });
 
                 if (!active) return;
 
-                const reconstructedLinks: VisualLink[] = [];
+                const reconstructedLinks: LinkMetadata[] = [];
                 const count = numericData.length / 2;
 
                 for (let i = 0; i < count; i++) {
@@ -210,35 +250,16 @@ export default function LinkVisualizer() {
                     const originName = stringData[i * 4 + 2];
                     const label = stringData[i * 4 + 3];
 
-                    const sourcePlat = componentToPlatform.get(sourceName);
-                    const destPlat = componentToPlatform.get(destName);
-
-                    if (sourcePlat && destPlat) {
-                        // Client-side interpolation reuse
-                        const startPos = calculateInterpolatedPosition(
-                            sourcePlat,
-                            currentTime
-                        );
-                        const endPos = calculateInterpolatedPosition(
-                            destPlat,
-                            currentTime
-                        );
-                        const dist = startPos.distanceTo(endPos); // Distance in 3D units (meters in FERS/ThreeJS mapping)
-
-                        reconstructedLinks.push({
-                            link_type: TYPE_MAP[typeIdx],
-                            quality: QUALITY_MAP[qualIdx],
-                            start: startPos,
-                            end: endPos,
-                            distance: dist,
-                            label,
-                            source_name: sourceName,
-                            dest_name: destName,
-                            origin_name: originName,
-                        });
-                    }
+                    reconstructedLinks.push({
+                        link_type: TYPE_MAP[typeIdx],
+                        quality: QUALITY_MAP[qualIdx],
+                        label,
+                        source_name: sourceName,
+                        dest_name: destName,
+                        origin_name: originName,
+                    });
                 }
-                setLinks(reconstructedLinks);
+                setLinkMetadata(reconstructedLinks);
             } catch (e) {
                 console.error('Link preview error:', e);
             }
@@ -249,24 +270,62 @@ export default function LinkVisualizer() {
         return () => {
             active = false;
         };
+        // DEPENDENCY UPDATE: Added `componentToPlatform` here.
+        // This ensures that when a new scenario is loaded (changing the platforms map),
+        // the fetch triggers immediately, even if `currentTime` hasn't changed.
     }, [currentTime, componentToPlatform]);
 
-    // Group links based on their 3D midpoint to prevent label overlap
+    // 2. High-Frequency Geometry Calculation (Runs every render/frame)
+    // We map the potentially "stale" (100ms old) metadata to "fresh" (0ms old) positions.
     const { clusters, flatLinks } = useMemo(() => {
-        const map = new Map<
+        const calculatedLinks: RenderableLink[] = [];
+        const clusterMap = new Map<
             string,
-            { position: THREE.Vector3; links: VisualLink[] }
+            { position: THREE.Vector3; links: RenderableLink[] }
         >();
 
-        links.forEach((link) => {
-            const mid = link.start.clone().lerp(link.end, 0.5);
-            const key = `${mid.x.toFixed(1)}_${mid.y.toFixed(1)}_${mid.z.toFixed(1)}`;
-            if (!map.has(key)) map.set(key, { position: mid, links: [] });
-            map.get(key)!.links.push(link);
+        linkMetadata.forEach((meta) => {
+            const sourcePlat = componentToPlatform.get(meta.source_name);
+            const destPlat = componentToPlatform.get(meta.dest_name);
+
+            if (sourcePlat && destPlat) {
+                // Calculate positions strictly client-side for maximum smoothness
+                const startPos = calculateInterpolatedPosition(
+                    sourcePlat,
+                    currentTime
+                );
+                const endPos = calculateInterpolatedPosition(
+                    destPlat,
+                    currentTime
+                );
+                const dist = startPos.distanceTo(endPos);
+
+                const renderLink: RenderableLink = {
+                    ...meta,
+                    start: startPos,
+                    end: endPos,
+                    distance: dist,
+                };
+
+                calculatedLinks.push(renderLink);
+
+                // Clustering logic for labels
+                const mid = startPos.clone().lerp(endPos, 0.5);
+                // Round keys to cluster nearby labels
+                const key = `${mid.x.toFixed(1)}_${mid.y.toFixed(1)}_${mid.z.toFixed(1)}`;
+
+                if (!clusterMap.has(key)) {
+                    clusterMap.set(key, { position: mid, links: [] });
+                }
+                clusterMap.get(key)!.links.push(renderLink);
+            }
         });
 
-        return { clusters: Array.from(map.values()), flatLinks: links };
-    }, [links]);
+        return {
+            clusters: Array.from(clusterMap.values()),
+            flatLinks: calculatedLinks,
+        };
+    }, [linkMetadata, currentTime, componentToPlatform]);
 
     return (
         <group>
