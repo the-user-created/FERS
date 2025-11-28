@@ -775,6 +775,17 @@ fers_visual_link_list_t* fers_calculate_preview_links(const fers_context_t* cont
 				// Safe string copy
 				std::strncpy(dst.label, src.label.c_str(), sizeof(dst.label) - 1);
 				dst.label[sizeof(dst.label) - 1] = '\0';
+
+				std::strncpy(dst.source_name, src.source_name.c_str(), sizeof(dst.source_name) - 1);
+				dst.source_name[sizeof(dst.source_name) - 1] = '\0';
+
+				std::strncpy(dst.dest_name, src.dest_name.c_str(), sizeof(dst.dest_name) - 1);
+				dst.dest_name[sizeof(dst.dest_name) - 1] = '\0';
+
+				std::strncpy(dst.origin_name, src.origin_name.c_str(), sizeof(dst.origin_name) - 1);
+				dst.origin_name[sizeof(dst.origin_name) - 1] = '\0';
+
+				dst.distance = src.distance;
 			}
 		}
 		else

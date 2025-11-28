@@ -541,7 +541,11 @@ namespace simulation
 								 .quality = LinkQuality::Strong,
 								 .start = p_tx,
 								 .end = p_tgt,
-								 .label = std::format("{:.1f} dBW/m\u00B2", wattsToDb(p_density))});
+								 .label = std::format("{:.1f} dBW/m\u00B2", wattsToDb(p_density)),
+								 .source_name = tx->getName(),
+								 .dest_name = tgt->getName(),
+								 .origin_name = tx->getName(),
+								 .distance = r1});
 			}
 
 			for (const auto& rx : world.getReceivers())
@@ -597,7 +601,11 @@ namespace simulation
 																							: LinkQuality::Weak,
 							 .start = p_tx,
 							 .end = p_tgt,
-							 .label = std::format("{:.1f} dBm (RCS: {:.1f}m\u00B2)", wattsToDbm(pr_watts), rcs)});
+							 .label = std::format("{:.1f} dBm (RCS: {:.1f}m\u00B2)", wattsToDbm(pr_watts), rcs),
+							 .source_name = tx->getName(), // Monostatic implies Tx/Rx is same platform/system
+							 .dest_name = tgt->getName(),
+							 .origin_name = tx->getName(),
+							 .distance = dist});
 					}
 				}
 				else
@@ -622,10 +630,14 @@ namespace simulation
 							const RealType pr_watts = pt * power_ratio;
 
 							links.push_back({.type = LinkType::DirectTxRx,
-											 .quality = LinkQuality::Strong, // Direct path usually strong unless OOS
+											 .quality = LinkQuality::Strong,
 											 .start = p_tx,
 											 .end = p_rx,
-											 .label = std::format("Direct: {:.1f} dBm", wattsToDbm(pr_watts))});
+											 .label = std::format("Direct: {:.1f} dBm", wattsToDbm(pr_watts)),
+											 .source_name = tx->getName(),
+											 .dest_name = rx->getName(),
+											 .origin_name = tx->getName(),
+											 .distance = dist});
 						}
 					}
 
@@ -667,7 +679,11 @@ namespace simulation
 											 : LinkQuality::Weak,
 										 .start = p_tgt,
 										 .end = p_rx,
-										 .label = std::format("{:.1f} dBm", wattsToDbm(pr_watts))});
+										 .label = std::format("{:.1f} dBm", wattsToDbm(pr_watts)),
+										 .source_name = tgt->getName(),
+										 .dest_name = rx->getName(),
+										 .origin_name = tx->getName(),
+										 .distance = r2});
 					}
 				}
 			}

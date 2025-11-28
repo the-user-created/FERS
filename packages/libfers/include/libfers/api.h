@@ -466,6 +466,10 @@ typedef struct
 	double end_y;
 	double end_z;
 	char label[128]; // Pre-formatted label (e.g., "-95 dBm")
+	char source_name[64];
+	char dest_name[64];
+	char origin_name[64];
+	double distance;
 } fers_visual_link_t;
 
 /**

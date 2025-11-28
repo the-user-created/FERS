@@ -294,6 +294,10 @@ pub struct VisualLink {
     pub start: [f64; 3],
     pub end: [f64; 3],
     pub label: String,
+    pub source_name: String,
+    pub dest_name: String,
+    pub origin_name: String,
+    pub distance: f64,
 }
 
 impl FersContext {
@@ -595,6 +599,14 @@ impl FersContext {
 
                 let label =
                     unsafe { CStr::from_ptr(l.label.as_ptr()) }.to_string_lossy().into_owned();
+                let source_name = unsafe { CStr::from_ptr(l.source_name.as_ptr()) }
+                    .to_string_lossy()
+                    .into_owned();
+                let dest_name =
+                    unsafe { CStr::from_ptr(l.dest_name.as_ptr()) }.to_string_lossy().into_owned();
+                let origin_name = unsafe { CStr::from_ptr(l.origin_name.as_ptr()) }
+                    .to_string_lossy()
+                    .into_owned();
 
                 result.push(VisualLink {
                     link_type: link_type.to_string(),
@@ -602,6 +614,10 @@ impl FersContext {
                     start: [l.start_x, l.start_y, l.start_z],
                     end: [l.end_x, l.end_y, l.end_z],
                     label,
+                    source_name,
+                    dest_name,
+                    origin_name,
+                    distance: l.distance,
                 });
             }
         }

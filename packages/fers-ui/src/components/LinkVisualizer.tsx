@@ -6,6 +6,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { Line, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { useScenarioStore } from '@/stores/scenarioStore';
+import { Tooltip, Box, Typography } from '@mui/material';
 
 interface VisualLink {
     link_type: 'monostatic' | 'illuminator' | 'scattered' | 'direct';
@@ -13,6 +14,10 @@ interface VisualLink {
     start: [number, number, number];
     end: [number, number, number];
     label: string;
+    source_name: string;
+    dest_name: string;
+    origin_name: string;
+    distance: number;
 }
 
 const COLORS = {
@@ -83,6 +88,59 @@ function LinkLine({ link }: { link: VisualLink }) {
     );
 }
 
+// Component rendering a label with hover tooltip
+function LabelItem({ link, color }: { link: VisualLink; color: string }) {
+    return (
+        <Tooltip
+            arrow
+            placement="top"
+            title={
+                <Box sx={{ p: 0.5 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+                        Link Details
+                    </Typography>
+                    <Typography variant="caption" display="block">
+                        <b>Path Segment:</b> {link.source_name} →{' '}
+                        {link.dest_name}
+                    </Typography>
+                    {/* Only show Origin if it's a scattered link, otherwise it's redundant */}
+                    {link.link_type === 'scattered' && (
+                        <Typography variant="caption" display="block">
+                            <b>Illuminator:</b> {link.origin_name}
+                        </Typography>
+                    )}
+                    <Typography variant="caption" display="block">
+                        <b>Type:</b> {link.link_type}
+                    </Typography>
+                    <Typography variant="caption" display="block">
+                        <b>Distance:</b> {(link.distance / 1000).toFixed(2)} km
+                    </Typography>
+                    <Typography variant="caption" display="block">
+                        <b>Value:</b> {link.label}
+                    </Typography>
+                </Box>
+            }
+        >
+            <div
+                style={{
+                    background: 'rgba(0,0,0,0.7)',
+                    color: color,
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    fontSize: '10px',
+                    whiteSpace: 'nowrap',
+                    border: `1px solid ${color}`,
+                    userSelect: 'none',
+                    cursor: 'help',
+                    pointerEvents: 'auto',
+                }}
+            >
+                {link.label}
+            </div>
+        </Tooltip>
+    );
+}
+
 // Component responsible for rendering a stack of labels at a specific 3D position
 function LabelCluster({
     position,
@@ -99,29 +157,12 @@ function LabelCluster({
                     flexDirection: 'column',
                     gap: '2px',
                     alignItems: 'center',
-                    pointerEvents: 'none', // Ensure clicks pass through to camera controls
-                    userSelect: 'none', // Ensure text cannot be dragged/selected
+                    pointerEvents: 'none', // Allow clicks to pass through container
                 }}
             >
                 {links.map((link, i) => {
                     const color = getLinkColor(link);
-                    return (
-                        <div
-                            key={i}
-                            style={{
-                                background: 'rgba(0,0,0,0.7)',
-                                color: color,
-                                padding: '2px 6px',
-                                borderRadius: '4px',
-                                fontSize: '10px',
-                                whiteSpace: 'nowrap',
-                                border: `1px solid ${color}`,
-                                userSelect: 'none',
-                            }}
-                        >
-                            {link.label}
-                        </div>
-                    );
+                    return <LabelItem key={i} link={link} color={color} />;
                 })}
             </div>
         </Html>
