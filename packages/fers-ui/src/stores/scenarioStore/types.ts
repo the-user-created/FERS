@@ -98,6 +98,8 @@ export type ScenarioState = ScenarioData & {
     currentTime: number;
     targetPlaybackDuration: number | null;
     isSimulating: boolean;
+    isBackendSyncing: boolean;
+    backendVersion: number;
     errorSnackbar: {
         open: boolean;
         message: string;

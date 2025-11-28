@@ -63,15 +63,6 @@ function LinkLine({ link }: { link: RenderableLink }) {
 
     const color = getLinkColor(link);
 
-    let dashed = false;
-
-    if (
-        (link.link_type === 'scattered' && link.quality === 'weak') ||
-        link.link_type === 'direct'
-    ) {
-        dashed = true;
-    }
-
     // Ghost Line Logic:
     // If the link is geometrically valid but radiometrically weak (Sub-Noise),
     // render it transparently to indicate "possibility" without "detection".
@@ -86,7 +77,6 @@ function LinkLine({ link }: { link: RenderableLink }) {
             points={points}
             color={color}
             lineWidth={1.5}
-            dashed={dashed}
             dashScale={20}
             gapSize={10}
             transparent
@@ -187,6 +177,10 @@ function LabelCluster({
 export default function LinkVisualizer() {
     const currentTime = useScenarioStore((state) => state.currentTime);
     const platforms = useScenarioStore((state) => state.platforms);
+    const isBackendSyncing = useScenarioStore(
+        (state) => state.isBackendSyncing
+    );
+    const backendVersion = useScenarioStore((state) => state.backendVersion);
 
     // Store only the metadata (connectivity/labels), not positions
     const [linkMetadata, setLinkMetadata] = useState<LinkMetadata[]>([]);
@@ -218,6 +212,11 @@ export default function LinkVisualizer() {
     useEffect(() => {
         let active = true;
         const now = Date.now();
+
+        // Pause fetching while backend is syncing to avoid race conditions
+        if (isBackendSyncing) {
+            return;
+        }
 
         // Throttle check: Only fetch if enough wall-clock time has passed.
         // However, if lastFetchTimeRef is 0 (just reset by load), we pass through immediately.
@@ -270,10 +269,7 @@ export default function LinkVisualizer() {
         return () => {
             active = false;
         };
-        // DEPENDENCY UPDATE: Added `componentToPlatform` here.
-        // This ensures that when a new scenario is loaded (changing the platforms map),
-        // the fetch triggers immediately, even if `currentTime` hasn't changed.
-    }, [currentTime, componentToPlatform]);
+    }, [currentTime, componentToPlatform, backendVersion, isBackendSyncing]);
 
     // 2. High-Frequency Geometry Calculation (Runs every render/frame)
     // We map the potentially "stale" (100ms old) metadata to "fresh" (0ms old) positions.

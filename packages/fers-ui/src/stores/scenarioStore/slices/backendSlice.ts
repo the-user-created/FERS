@@ -49,6 +49,7 @@ export const createBackendSlice: StateCreator<
     BackendActions
 > = (set, get) => ({
     syncBackend: async () => {
+        set({ isBackendSyncing: true });
         const { globalParameters, waveforms, timings, antennas, platforms } =
             get();
 
@@ -251,8 +252,14 @@ export const createBackendSlice: StateCreator<
                 json: jsonPayload,
             });
             console.log('Successfully synced state to backend.');
+
+            set((state) => {
+                state.isBackendSyncing = false;
+                state.backendVersion += 1;
+            });
         } catch (error) {
             console.error('Failed to sync state to backend:', error);
+            set({ isBackendSyncing: false });
             throw error;
         }
     },
