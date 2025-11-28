@@ -289,15 +289,12 @@ impl Drop for FersVisualLinkList {
 
 #[derive(serde::Serialize)]
 pub struct VisualLink {
-    pub link_type: String, // "monostatic", "illuminator", "scattered", "direct"
-    pub quality: String,   // "strong", "weak"
-    pub start: [f64; 3],
-    pub end: [f64; 3],
+    pub link_type: u8, // 0=Mono, 1=Illum, 2=Scattered, 3=Direct
+    pub quality: u8,   // 0=Strong, 1=Weak
     pub label: String,
     pub source_name: String,
     pub dest_name: String,
     pub origin_name: String,
-    pub distance: f64,
 }
 
 impl FersContext {
@@ -585,16 +582,17 @@ impl FersContext {
         if count > 0 && !links_ptr.is_null() {
             let slice = unsafe { std::slice::from_raw_parts(links_ptr, count) };
             for l in slice {
-                let link_type = match l.type_ {
-                    ffi::fers_link_type_t_FERS_LINK_MONOSTATIC => "monostatic",
-                    ffi::fers_link_type_t_FERS_LINK_BISTATIC_TX_TGT => "illuminator",
-                    ffi::fers_link_type_t_FERS_LINK_BISTATIC_TGT_RX => "scattered",
-                    ffi::fers_link_type_t_FERS_LINK_DIRECT_TX_RX => "direct",
-                    _ => "unknown",
+                let link_type_val = match l.type_ {
+                    ffi::fers_link_type_t_FERS_LINK_MONOSTATIC => 0,
+                    ffi::fers_link_type_t_FERS_LINK_BISTATIC_TX_TGT => 1,
+                    ffi::fers_link_type_t_FERS_LINK_BISTATIC_TGT_RX => 2,
+                    ffi::fers_link_type_t_FERS_LINK_DIRECT_TX_RX => 3,
+                    _ => 0,
                 };
-                let quality = match l.quality {
-                    ffi::fers_link_quality_t_FERS_LINK_STRONG => "strong",
-                    _ => "weak",
+
+                let quality_val = match l.quality {
+                    ffi::fers_link_quality_t_FERS_LINK_STRONG => 0,
+                    _ => 1,
                 };
 
                 let label =
@@ -609,15 +607,12 @@ impl FersContext {
                     .into_owned();
 
                 result.push(VisualLink {
-                    link_type: link_type.to_string(),
-                    quality: quality.to_string(),
-                    start: [l.start_x, l.start_y, l.start_z],
-                    end: [l.end_x, l.end_y, l.end_z],
+                    link_type: link_type_val,
+                    quality: quality_val,
                     label,
                     source_name,
                     dest_name,
                     origin_name,
-                    distance: l.distance,
                 });
             }
         }

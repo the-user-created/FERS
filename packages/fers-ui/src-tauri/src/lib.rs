@@ -356,8 +356,29 @@ fn get_antenna_pattern(
 fn get_preview_links(
     time: f64,
     state: State<'_, FersState>,
-) -> Result<Vec<fers_api::VisualLink>, String> {
-    state.lock().map_err(|e| e.to_string())?.calculate_preview_links(time)
+) -> Result<(Vec<f32>, Vec<String>), String> {
+    let links = state.lock().map_err(|e| e.to_string())?.calculate_preview_links(time)?;
+
+    let count = links.len();
+
+    // SoA Layout:
+    // Floats: [Type, Quality] per link
+    // Strings: [Source, Dest, Origin, Label] per link
+
+    let mut numeric_data = Vec::with_capacity(count * 2);
+    let mut string_data = Vec::with_capacity(count * 4);
+
+    for link in links {
+        numeric_data.push(link.link_type as f32);
+        numeric_data.push(link.quality as f32);
+
+        string_data.push(link.source_name);
+        string_data.push(link.dest_name);
+        string_data.push(link.origin_name);
+        string_data.push(link.label);
+    }
+
+    Ok((numeric_data, string_data))
 }
 
 /// Initializes and runs the Tauri application.

@@ -765,13 +765,6 @@ fers_visual_link_list_t* fers_calculate_preview_links(const fers_context_t* cont
 
 				dst.quality = (src.quality == simulation::LinkQuality::Strong) ? FERS_LINK_STRONG : FERS_LINK_WEAK;
 
-				dst.start_x = src.start.x;
-				dst.start_y = src.start.y;
-				dst.start_z = src.start.z;
-				dst.end_x = src.end.x;
-				dst.end_y = src.end.y;
-				dst.end_z = src.end.z;
-
 				// Safe string copy
 				std::strncpy(dst.label, src.label.c_str(), sizeof(dst.label) - 1);
 				dst.label[sizeof(dst.label) - 1] = '\0';
@@ -784,8 +777,6 @@ fers_visual_link_list_t* fers_calculate_preview_links(const fers_context_t* cont
 
 				std::strncpy(dst.origin_name, src.origin_name.c_str(), sizeof(dst.origin_name) - 1);
 				dst.origin_name[sizeof(dst.origin_name) - 1] = '\0';
-
-				dst.distance = src.distance;
 			}
 		}
 		else

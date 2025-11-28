@@ -453,23 +453,17 @@ typedef enum
 } fers_link_type_t;
 
 /**
- * @brief Represents a single renderable line segment in the 3D view.
+ * @brief Represents a single renderable line segment metadata.
+ * Geometry is resolved client-side.
  */
 typedef struct
 {
 	fers_link_type_t type;
 	fers_link_quality_t quality;
-	double start_x;
-	double start_y;
-	double start_z;
-	double end_x;
-	double end_y;
-	double end_z;
 	char label[128]; // Pre-formatted label (e.g., "-95 dBm")
 	char source_name[64];
 	char dest_name[64];
 	char origin_name[64];
-	double distance;
 } fers_visual_link_t;
 
 /**

@@ -539,13 +539,10 @@ namespace simulation
 
 				links.push_back({.type = LinkType::BistaticTxTgt,
 								 .quality = LinkQuality::Strong,
-								 .start = p_tx,
-								 .end = p_tgt,
 								 .label = std::format("{:.1f} dBW/m\u00B2", wattsToDb(p_density)),
 								 .source_name = tx->getName(),
 								 .dest_name = tgt->getName(),
-								 .origin_name = tx->getName(),
-								 .distance = r1});
+								 .origin_name = tx->getName()});
 			}
 
 			for (const auto& rx : world.getReceivers())
@@ -593,19 +590,17 @@ namespace simulation
 						// r_tx = dist, r_rx = dist
 						const RealType power_ratio =
 							computeReflectedPathPower(gt, gr, rcs, lambda, dist, dist, no_loss);
+
 						const RealType pr_watts = pt * power_ratio;
 
 						links.push_back(
 							{.type = LinkType::Monostatic,
 							 .quality = isSignalStrong(pr_watts, rx->getNoiseTemperature()) ? LinkQuality::Strong
 																							: LinkQuality::Weak,
-							 .start = p_tx,
-							 .end = p_tgt,
 							 .label = std::format("{:.1f} dBm (RCS: {:.1f}m\u00B2)", wattsToDbm(pr_watts), rcs),
 							 .source_name = tx->getName(), // Monostatic implies Tx/Rx is same platform/system
 							 .dest_name = tgt->getName(),
-							 .origin_name = tx->getName(),
-							 .distance = dist});
+							 .origin_name = tx->getName()});
 					}
 				}
 				else
@@ -621,6 +616,7 @@ namespace simulation
 						if (dist > EPSILON)
 						{
 							const Vec3 u_tx_rx = vec_direct / dist;
+
 							// Tx Gain: Tx -> Rx
 							const RealType gt = computeAntennaGain(tx.get(), u_tx_rx, time, lambda);
 							// Rx Gain: Rx -> Tx (which is -u_tx_rx)
@@ -631,13 +627,10 @@ namespace simulation
 
 							links.push_back({.type = LinkType::DirectTxRx,
 											 .quality = LinkQuality::Strong,
-											 .start = p_tx,
-											 .end = p_rx,
 											 .label = std::format("Direct: {:.1f} dBm", wattsToDbm(pr_watts)),
 											 .source_name = tx->getName(),
 											 .dest_name = rx->getName(),
-											 .origin_name = tx->getName(),
-											 .distance = dist});
+											 .origin_name = tx->getName()});
 						}
 					}
 
@@ -677,13 +670,10 @@ namespace simulation
 										 .quality = isSignalStrong(pr_watts, rx->getNoiseTemperature())
 											 ? LinkQuality::Strong
 											 : LinkQuality::Weak,
-										 .start = p_tgt,
-										 .end = p_rx,
 										 .label = std::format("{:.1f} dBm", wattsToDbm(pr_watts)),
 										 .source_name = tgt->getName(),
 										 .dest_name = rx->getName(),
-										 .origin_name = tx->getName(),
-										 .distance = r2});
+										 .origin_name = tx->getName()});
 					}
 				}
 			}

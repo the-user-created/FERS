@@ -189,13 +189,10 @@ namespace simulation
 	{
 		LinkType type;
 		LinkQuality quality;
-		math::Vec3 start;
-		math::Vec3 end;
 		std::string label;
 		std::string source_name; // The start of this specific link segment
 		std::string dest_name; // The end of this specific link segment
 		std::string origin_name; // The original source of energy (Transmitter)
-		RealType distance;
 	};
 
 	/**
