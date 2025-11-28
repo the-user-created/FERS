@@ -109,7 +109,6 @@ const PlatformSphere = memo(function PlatformSphere({
 
     return (
         <group position={position}>
-            {/* Rotation Group: Handles Body Orientation */}
             <group rotation={rotation}>
                 <mesh visible={showPlatforms}>
                     <sphereGeometry args={[0.5, 32, 32]} />
@@ -119,14 +118,14 @@ const PlatformSphere = memo(function PlatformSphere({
                                 ? fersColors.platform.selected
                                 : fersColors.platform.default
                         }
-                        roughness={0.3}
-                        metalness={0.5}
+                        roughness={0.2}
+                        metalness={0.8}
                         emissive={
                             isSelected
                                 ? fersColors.platform.emission
                                 : '#000000'
                         }
-                        emissiveIntensity={isSelected ? 0.25 : 0}
+                        emissiveIntensity={isSelected ? 0.4 : 0}
                     />
                     {/* Render Body Axes: Red=X (Right), Green=Y (Up), Blue=Z (Rear). */}
                     {/* TODO: the axes should scale with zoom level for better visibility (with maybe a toggle to turn off individual platform axes) */}
@@ -151,7 +150,7 @@ const PlatformSphere = memo(function PlatformSphere({
                                     color={fersColors.physics.rcs}
                                     wireframe
                                     transparent
-                                    opacity={0.3}
+                                    opacity={0.15}
                                 />
                             </mesh>
                         );
@@ -191,15 +190,21 @@ const PlatformSphere = memo(function PlatformSphere({
                         backgroundColor: fersColors.background.overlay,
                         color: fersColors.text.primary,
                         padding: '4px 8px',
-                        borderRadius: '6px',
+                        borderRadius: '4px',
                         fontSize: '12px',
+                        fontFamily: 'monospace',
                         whiteSpace: 'nowrap',
                         pointerEvents: 'none', // Allows camera clicks to pass through
                         userSelect: 'none', // Prevents text selection
                         transition: 'opacity 0.2s, border 0.2s',
-                        opacity: isSelected ? 1 : 0.75,
-                        border: isSelected
-                            ? `2px solid ${fersColors.platform.selected}`
+                        opacity: isSelected ? 1 : 0.6,
+                        border: `1px solid ${
+                            isSelected
+                                ? fersColors.platform.selected
+                                : fersColors.text.secondary
+                        }`,
+                        boxShadow: isSelected
+                            ? `0 0 8px ${fersColors.platform.selected}40`
                             : 'none',
                     }}
                 >

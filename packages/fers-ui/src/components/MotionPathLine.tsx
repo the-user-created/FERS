@@ -96,7 +96,7 @@ export function MotionPathLine({ platform }: { platform: Platform }) {
         <Line
             points={linePoints}
             color={fersColors.physics.motionPath}
-            lineWidth={2}
+            lineWidth={1.5}
             dashed={false}
         />
     );
