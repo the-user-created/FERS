@@ -4,6 +4,7 @@
 import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
 import { useScenarioStore, Platform } from '@/stores/scenarioStore';
 import { Box, Typography, IconButton, Tooltip, Divider } from '@mui/material';
+import { useShallow } from 'zustand/react/shallow';
 
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -96,7 +97,22 @@ export default function SceneTree() {
         addAntenna,
         addPlatform,
         removeItem,
-    } = useScenarioStore();
+    } = useScenarioStore(
+        useShallow((state) => ({
+            globalParameters: state.globalParameters,
+            waveforms: state.waveforms,
+            timings: state.timings,
+            antennas: state.antennas,
+            platforms: state.platforms,
+            selectedItemId: state.selectedItemId,
+            selectItem: state.selectItem,
+            addWaveform: state.addWaveform,
+            addTiming: state.addTiming,
+            addAntenna: state.addAntenna,
+            addPlatform: state.addPlatform,
+            removeItem: state.removeItem,
+        }))
+    );
 
     const handleSelect = (
         _event: React.SyntheticEvent | null,

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, memo } from 'react';
 import { MapControls, Environment, Html } from '@react-three/drei';
 import { Vector3 } from 'three';
 import {
@@ -50,10 +50,15 @@ function useInterpolatedRotation(platform: Platform, currentTime: number) {
  * @param {object} props - The component props.
  * @param {Platform} props.platform - The platform data from the store.
  */
-function PlatformSphere({ platform }: { platform: Platform }) {
-    const selectedItemId = useScenarioStore((state) => state.selectedItemId);
+const PlatformSphere = memo(function PlatformSphere({
+    platform,
+}: {
+    platform: Platform;
+}) {
     const currentTime = useScenarioStore((state) => state.currentTime);
-    const isSelected = platform.id === selectedItemId;
+    const isSelected = useScenarioStore(
+        (state) => state.selectedItemId === platform.id
+    );
 
     // Visibility Toggles
     const {
@@ -105,57 +110,50 @@ function PlatformSphere({ platform }: { platform: Platform }) {
         <group position={position}>
             {/* Rotation Group: Handles Body Orientation */}
             <group rotation={rotation}>
-                {/* Render Platform Geometry and Axes */}
-                {showPlatforms && (
-                    <mesh>
-                        <sphereGeometry args={[0.5, 32, 32]} />
-                        <meshStandardMaterial
-                            color={isSelected ? '#f48fb1' : '#90caf9'}
-                            roughness={0.3}
-                            metalness={0.5}
-                            emissive={isSelected ? '#f48fb1' : '#000000'}
-                            emissiveIntensity={isSelected ? 0.25 : 0}
-                        />
-                        {/* Render Body Axes: Red=X (Right), Green=Y (Up), Blue=Z (Rear). */}
-                        {/* TODO: the axes should scale with zoom level for better visibility (with maybe a toggle to turn off individual platform axes) */}
-                        {showAxes && <axesHelper args={[2]} />}
-                    </mesh>
-                )}
+                <mesh visible={showPlatforms}>
+                    <sphereGeometry args={[0.5, 32, 32]} />
+                    <meshStandardMaterial
+                        color={isSelected ? '#f48fb1' : '#90caf9'}
+                        roughness={0.3}
+                        metalness={0.5}
+                        emissive={isSelected ? '#f48fb1' : '#000000'}
+                        emissiveIntensity={isSelected ? 0.25 : 0}
+                    />
+                    {/* Render Body Axes: Red=X (Right), Green=Y (Up), Blue=Z (Rear). */}
+                    {/* TODO: the axes should scale with zoom level for better visibility (with maybe a toggle to turn off individual platform axes) */}
+                    <axesHelper args={[2]} visible={showAxes} />
+                </mesh>
 
-                {/* Visualize Isotropic Static Sphere RCS: r = sqrt(sigma / pi) */}
-                {/* Only visible if platform geometry is enabled */}
-                {showPlatforms &&
-                    targetComponents.map((target) => {
-                        {
-                            /* TODO: currently only rendering constant isotropic RCS */
-                        }
-                        if (
-                            target.rcs_type === 'isotropic' &&
-                            target.rcs_value &&
-                            target.rcs_value > 0
-                        ) {
-                            const radius = Math.sqrt(
-                                target.rcs_value / Math.PI
-                            );
-                            return (
-                                <mesh key={target.id}>
-                                    <sphereGeometry args={[radius, 24, 24]} />
-                                    <meshBasicMaterial
-                                        color="#ff9800"
-                                        wireframe
-                                        transparent
-                                        opacity={0.3}
-                                    />
-                                </mesh>
-                            );
-                        }
-                        return null;
-                    })}
+                {/* Visualize Isotropic Static Sphere RCS */}
+                {targetComponents.map((target) => {
+                    {
+                        /* TODO: currently only rendering constant isotropic RCS */
+                    }
+                    if (
+                        target.rcs_type === 'isotropic' &&
+                        target.rcs_value &&
+                        target.rcs_value > 0
+                    ) {
+                        const radius = Math.sqrt(target.rcs_value / Math.PI);
+                        return (
+                            <mesh key={target.id} visible={showPlatforms}>
+                                <sphereGeometry args={[radius, 24, 24]} />
+                                <meshBasicMaterial
+                                    color="#ff9800"
+                                    wireframe
+                                    transparent
+                                    opacity={0.3}
+                                />
+                            </mesh>
+                        );
+                    }
+                    return null;
+                })}
 
-                {/* Conditionally render boresight and patterns for each antenna */}
-                {showBoresights && antennaComponents.length > 0 && (
+                {/* Boresight is lightweight, conditional is fine, but visible is smoother */}
+                <group visible={showBoresights && antennaComponents.length > 0}>
                     <BoresightArrow />
-                )}
+                </group>
 
                 {/* Show patterns only if global toggle ON AND platform selected */}
                 {showPatterns &&
@@ -170,12 +168,12 @@ function PlatformSphere({ platform }: { platform: Platform }) {
                     )}
             </group>
 
-            {/* Velocity Arrow: Rendered in world-aligned space (relative to position) */}
-            {showVelocities && (
+            {/* Velocity Arrow */}
+            <group visible={showVelocities}>
                 <VelocityArrow platform={platform} currentTime={currentTime} />
-            )}
+            </group>
 
-            {/* Label: Only show if platforms are visible */}
+            {/* Label */}
             {showPlatforms && (
                 <Html
                     position={[0, 1.2, 0]} // Position label above the sphere
@@ -202,7 +200,7 @@ function PlatformSphere({ platform }: { platform: Platform }) {
             )}
         </group>
     );
-}
+});
 
 /**
  * WorldView represents the 3D scene where simulation elements are visualized.
