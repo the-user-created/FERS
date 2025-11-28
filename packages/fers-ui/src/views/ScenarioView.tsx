@@ -114,12 +114,14 @@ export const ScenarioView = React.memo(function ScenarioView() {
                                 />
                                 <WorldView />
                             </Canvas>
+
+                            {/* View Controls */}
                             <Box
                                 sx={{
                                     position: 'absolute',
                                     top: 16,
                                     left: 16,
-                                    zIndex: 1,
+                                    zIndex: 1000,
                                 }}
                             >
                                 <ViewControls />

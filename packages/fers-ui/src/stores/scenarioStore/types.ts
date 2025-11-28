@@ -44,7 +44,18 @@ export type Platform = z.infer<typeof PlatformSchema> & {
     rotationPathPoints?: { azimuth: number; elevation: number }[];
 };
 
-// --- Corrected Component Type Definitions ---
+// --- Visibility Type Definitions ---
+export type VisualizationLayers = {
+    showAxes: boolean;
+    showPatterns: boolean;
+    showBoresights: boolean;
+    showLinks: boolean;
+    showVelocities: boolean;
+    showPlatforms: boolean;
+    showMotionPaths: boolean;
+};
+
+// --- Component Type Definitions ---
 export type MonostaticComponent = Extract<
     PlatformComponent,
     { type: 'monostatic' }
@@ -92,6 +103,7 @@ export type ScenarioState = ScenarioData & {
         message: string;
     };
     viewControlAction: ViewControlAction;
+    visibility: VisualizationLayers;
 };
 
 // --- Action Slice Types ---
@@ -156,6 +168,7 @@ export type ViewControlActions = {
     focusOnItem: (itemId: string) => void;
     toggleFollowItem: (itemId: string) => void;
     clearViewControlAction: () => void;
+    toggleLayer: (layer: keyof VisualizationLayers) => void;
 };
 
 // --- Full Store Type ---

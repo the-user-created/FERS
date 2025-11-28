@@ -31,6 +31,15 @@ export const useScenarioStore = create<ScenarioStore>()(
             message: '',
         },
         viewControlAction: { type: null, timestamp: 0 },
+        visibility: {
+            showAxes: true,
+            showPatterns: true,
+            showBoresights: true,
+            showLinks: true,
+            showVelocities: true,
+            showPlatforms: true,
+            showMotionPaths: true,
+        },
 
         // Slices
         ...createAssetSlice(set, get, store),
@@ -89,7 +98,6 @@ export const useScenarioStore = create<ScenarioStore>()(
         },
         clearViewControlAction: () =>
             set((state) => {
-                // Don't clear a 'follow' action, as it's persistent until toggled off.
                 if (state.viewControlAction.type !== 'follow') {
                     return {
                         viewControlAction: {
@@ -99,6 +107,10 @@ export const useScenarioStore = create<ScenarioStore>()(
                     };
                 }
                 return {};
+            }),
+        toggleLayer: (layer) =>
+            set((state) => {
+                state.visibility[layer] = !state.visibility[layer];
             }),
 
         // Error Actions

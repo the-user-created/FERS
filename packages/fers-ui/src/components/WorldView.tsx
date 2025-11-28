@@ -55,6 +55,16 @@ function PlatformSphere({ platform }: { platform: Platform }) {
     const currentTime = useScenarioStore((state) => state.currentTime);
     const isSelected = platform.id === selectedItemId;
 
+    // Visibility Toggles
+    const {
+        showPlatforms,
+        showAxes,
+        showBoresights,
+        showPatterns,
+        showVelocities,
+    } = useScenarioStore((state) => state.visibility);
+
+    // Hooks must run unconditionally
     const position = useInterpolatedPosition(platform, currentTime);
     const rotation = useInterpolatedRotation(platform, currentTime);
 
@@ -95,48 +105,61 @@ function PlatformSphere({ platform }: { platform: Platform }) {
         <group position={position}>
             {/* Rotation Group: Handles Body Orientation */}
             <group rotation={rotation}>
-                <mesh>
-                    <sphereGeometry args={[0.5, 32, 32]} />
-                    <meshStandardMaterial
-                        color={isSelected ? '#f48fb1' : '#90caf9'}
-                        roughness={0.3}
-                        metalness={0.5}
-                        emissive={isSelected ? '#f48fb1' : '#000000'}
-                        emissiveIntensity={isSelected ? 0.25 : 0}
-                    />
-                    {/* Render Body Axes: Red=X (Right), Green=Y (Up), Blue=Z (Rear). The boresight/forward direction is -Z. */}
-                    {/* TODO: the axes should scale with zoom level for better visibility (with maybe a toggle to turn off individual platform axes) */}
-                    <axesHelper args={[2]} />
-                </mesh>
+                {/* Render Platform Geometry and Axes */}
+                {showPlatforms && (
+                    <mesh>
+                        <sphereGeometry args={[0.5, 32, 32]} />
+                        <meshStandardMaterial
+                            color={isSelected ? '#f48fb1' : '#90caf9'}
+                            roughness={0.3}
+                            metalness={0.5}
+                            emissive={isSelected ? '#f48fb1' : '#000000'}
+                            emissiveIntensity={isSelected ? 0.25 : 0}
+                        />
+                        {/* Render Body Axes: Red=X (Right), Green=Y (Up), Blue=Z (Rear). */}
+                        {/* TODO: the axes should scale with zoom level for better visibility (with maybe a toggle to turn off individual platform axes) */}
+                        {showAxes && <axesHelper args={[2]} />}
+                    </mesh>
+                )}
 
                 {/* Visualize Isotropic Static Sphere RCS: r = sqrt(sigma / pi) */}
-                {/* TODO: currently only rendering constant isotropic RCS */}
-                {targetComponents.map((target) => {
-                    if (
-                        target.rcs_type === 'isotropic' &&
-                        target.rcs_value &&
-                        target.rcs_value > 0
-                    ) {
-                        const radius = Math.sqrt(target.rcs_value / Math.PI);
-                        return (
-                            <mesh key={target.id}>
-                                <sphereGeometry args={[radius, 24, 24]} />
-                                <meshBasicMaterial
-                                    color="#ff9800"
-                                    wireframe
-                                    transparent
-                                    opacity={0.3}
-                                />
-                            </mesh>
-                        );
-                    }
-                    return null;
-                })}
+                {/* Only visible if platform geometry is enabled */}
+                {showPlatforms &&
+                    targetComponents.map((target) => {
+                        {
+                            /* TODO: currently only rendering constant isotropic RCS */
+                        }
+                        if (
+                            target.rcs_type === 'isotropic' &&
+                            target.rcs_value &&
+                            target.rcs_value > 0
+                        ) {
+                            const radius = Math.sqrt(
+                                target.rcs_value / Math.PI
+                            );
+                            return (
+                                <mesh key={target.id}>
+                                    <sphereGeometry args={[radius, 24, 24]} />
+                                    <meshBasicMaterial
+                                        color="#ff9800"
+                                        wireframe
+                                        transparent
+                                        opacity={0.3}
+                                    />
+                                </mesh>
+                            );
+                        }
+                        return null;
+                    })}
 
                 {/* Conditionally render boresight and patterns for each antenna */}
-                {antennaComponents.length > 0 && <BoresightArrow />}
-                {/* Only show the detailed pattern mesh when the platform is selected */}
-                {isSelected &&
+                {showBoresights && antennaComponents.length > 0 && (
+                    <BoresightArrow />
+                )}
+
+                {/* Show patterns only if global toggle ON AND platform selected */}
+                {showPatterns &&
+                    isSelected &&
                     antennaComponents.map((comp) =>
                         comp.antennaId ? (
                             <AntennaPatternMesh
@@ -147,31 +170,36 @@ function PlatformSphere({ platform }: { platform: Platform }) {
                     )}
             </group>
 
-            {/* Velocity Arrow: Rendered in world-aligned space (relative to position), not body-rotated space */}
-            <VelocityArrow platform={platform} currentTime={currentTime} />
+            {/* Velocity Arrow: Rendered in world-aligned space (relative to position) */}
+            {showVelocities && (
+                <VelocityArrow platform={platform} currentTime={currentTime} />
+            )}
 
-            <Html
-                position={[0, 1.2, 0]} // Position label above the sphere
-                center // Center the label on its anchor point
-                style={{
-                    backgroundColor: 'rgba(20, 20, 20, 0.8)',
-                    color: 'white',
-                    padding: '4px 8px',
-                    borderRadius: '6px',
-                    fontSize: '12px',
-                    whiteSpace: 'nowrap',
-                    pointerEvents: 'none', // Allows camera clicks to pass through
-                    userSelect: 'none', // Prevents text selection
-                    transition: 'opacity 0.2s, border 0.2s',
-                    opacity: isSelected ? 1 : 0.75,
-                    border: isSelected ? '2px solid #f48fb1' : 'none',
-                }}
-            >
-                <div style={{ fontWeight: 'bold' }}>{platform.name}</div>
-                <div>{`X: ${(labelData?.x ?? 0).toFixed(2)}`}</div>
-                <div>{`Y: ${(labelData?.y ?? 0).toFixed(2)}`}</div>
-                <div>{`Alt: ${(labelData?.altitude ?? 0).toFixed(2)}`}</div>
-            </Html>
+            {/* Label: Only show if platforms are visible */}
+            {showPlatforms && (
+                <Html
+                    position={[0, 1.2, 0]} // Position label above the sphere
+                    center // Center the label on its anchor point
+                    style={{
+                        backgroundColor: 'rgba(20, 20, 20, 0.8)',
+                        color: 'white',
+                        padding: '4px 8px',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        whiteSpace: 'nowrap',
+                        pointerEvents: 'none', // Allows camera clicks to pass through
+                        userSelect: 'none', // Prevents text selection
+                        transition: 'opacity 0.2s, border 0.2s',
+                        opacity: isSelected ? 1 : 0.75,
+                        border: isSelected ? '2px solid #f48fb1' : 'none',
+                    }}
+                >
+                    <div style={{ fontWeight: 'bold' }}>{platform.name}</div>
+                    <div>{`X: ${(labelData?.x ?? 0).toFixed(2)}`}</div>
+                    <div>{`Y: ${(labelData?.y ?? 0).toFixed(2)}`}</div>
+                    <div>{`Alt: ${(labelData?.altitude ?? 0).toFixed(2)}`}</div>
+                </Html>
+            )}
         </group>
     );
 }
@@ -185,6 +213,12 @@ export default function WorldView() {
     const fetchPlatformPath = useScenarioStore(
         (state) => state.fetchPlatformPath
     );
+
+    // Root Level Visibility Toggles
+    const { showLinks, showMotionPaths } = useScenarioStore(
+        (state) => state.visibility
+    );
+
     const controlsRef = useRef<MapControlsImpl>(null);
 
     // Keep a reference to platforms to access in the effect without adding it to dependencies.
@@ -240,14 +274,15 @@ export default function WorldView() {
             {/* Environment for realistic reflections and ambient light */}
             <Environment files="/potsdamer_platz_1k.hdr" />
 
-            {/* Physics Link Visualization */}
-            <LinkVisualizer />
+            {/* Physics Link Visualization - Conditional Render */}
+            {showLinks && <LinkVisualizer />}
 
             {/* Objects */}
             {platforms.map((platform) => (
                 <group key={platform.id}>
                     <PlatformSphere platform={platform} />
-                    <MotionPathLine platform={platform} />
+                    {/* Motion Path Lines - Conditional Render */}
+                    {showMotionPaths && <MotionPathLine platform={platform} />}
                 </group>
             ))}
         </>
