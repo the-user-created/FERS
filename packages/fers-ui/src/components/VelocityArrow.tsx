@@ -7,8 +7,7 @@ import {
     Platform,
     calculateInterpolatedVelocity,
 } from '@/stores/scenarioStore';
-
-const VELOCITY_COLOR = '#00e676'; // Bright green for velocity vectors
+import { fersColors } from '@/theme';
 
 interface VelocityArrowProps {
     platform: Platform;
@@ -35,7 +34,12 @@ export function VelocityArrow({ platform, currentTime }: VelocityArrowProps) {
 
         // We use the raw speed as length, but verify visibility for very small/large speeds
         // Ideally, we might want to log-scale or clamp for UI, but raw is physically accurate.
-        return new THREE.ArrowHelper(dir, origin, speed, VELOCITY_COLOR);
+        return new THREE.ArrowHelper(
+            dir,
+            origin,
+            speed,
+            fersColors.physics.velocity
+        );
     }, [velocity]);
 
     if (!arrowHelper) return null;

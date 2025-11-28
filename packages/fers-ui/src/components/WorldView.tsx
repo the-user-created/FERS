@@ -17,6 +17,7 @@ import { BoresightArrow } from './BoresightArrow';
 import { VelocityArrow } from './VelocityArrow';
 import { AntennaPatternMesh } from './AntennaPatternMesh';
 import LinkVisualizer from './LinkVisualizer';
+import { fersColors } from '@/theme';
 
 /**
  * Custom hook to calculate a platform's position at a given simulation time.
@@ -113,10 +114,18 @@ const PlatformSphere = memo(function PlatformSphere({
                 <mesh visible={showPlatforms}>
                     <sphereGeometry args={[0.5, 32, 32]} />
                     <meshStandardMaterial
-                        color={isSelected ? '#f48fb1' : '#90caf9'}
+                        color={
+                            isSelected
+                                ? fersColors.platform.selected
+                                : fersColors.platform.default
+                        }
                         roughness={0.3}
                         metalness={0.5}
-                        emissive={isSelected ? '#f48fb1' : '#000000'}
+                        emissive={
+                            isSelected
+                                ? fersColors.platform.emission
+                                : '#000000'
+                        }
                         emissiveIntensity={isSelected ? 0.25 : 0}
                     />
                     {/* Render Body Axes: Red=X (Right), Green=Y (Up), Blue=Z (Rear). */}
@@ -139,7 +148,7 @@ const PlatformSphere = memo(function PlatformSphere({
                             <mesh key={target.id} visible={showPlatforms}>
                                 <sphereGeometry args={[radius, 24, 24]} />
                                 <meshBasicMaterial
-                                    color="#ff9800"
+                                    color={fersColors.physics.rcs}
                                     wireframe
                                     transparent
                                     opacity={0.3}
@@ -179,8 +188,8 @@ const PlatformSphere = memo(function PlatformSphere({
                     position={[0, 1.2, 0]} // Position label above the sphere
                     center // Center the label on its anchor point
                     style={{
-                        backgroundColor: 'rgba(20, 20, 20, 0.8)',
-                        color: 'white',
+                        backgroundColor: fersColors.background.overlay,
+                        color: fersColors.text.primary,
                         padding: '4px 8px',
                         borderRadius: '6px',
                         fontSize: '12px',
@@ -189,7 +198,9 @@ const PlatformSphere = memo(function PlatformSphere({
                         userSelect: 'none', // Prevents text selection
                         transition: 'opacity 0.2s, border 0.2s',
                         opacity: isSelected ? 1 : 0.75,
-                        border: isSelected ? '2px solid #f48fb1' : 'none',
+                        border: isSelected
+                            ? `2px solid ${fersColors.platform.selected}`
+                            : 'none',
                     }}
                 >
                     <div style={{ fontWeight: 'bold' }}>{platform.name}</div>

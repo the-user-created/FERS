@@ -3,8 +3,10 @@
 
 import { useMemo } from 'react';
 import * as THREE from 'three';
+import { fersColors } from '@/theme';
+
 const BORESIGHT_LENGTH = 7; // Length of the arrow in world units.
-const BORESIGHT_COLOR = '#ffeb3b'; // A bright yellow for visibility.
+
 /**
  * Renders a boresight arrow indicating the forward direction of an object.
  * This component should be placed inside a <group> that has its rotation set
@@ -18,7 +20,7 @@ export function BoresightArrow() {
             dir,
             origin,
             BORESIGHT_LENGTH,
-            BORESIGHT_COLOR
+            fersColors.physics.boresight
         );
     }, []);
 

@@ -11,14 +11,23 @@ import {
     calculateInterpolatedPosition,
 } from '@/stores/scenarioStore';
 import { Tooltip, Box, Typography } from '@mui/material';
+import { fersColors } from '@/theme';
 
 const TYPE_MAP = ['monostatic', 'illuminator', 'scattered', 'direct'] as const;
 const QUALITY_MAP = ['strong', 'weak'] as const;
 const COLORS = {
-    monostatic: { strong: '#00e676', weak: '#f44336' },
-    illuminator: '#ffeb3b',
-    scattered: '#00bcd4',
-    direct: '#9c27b0',
+    monostatic: {
+        // Strong monostatic return (received power above noise floor)
+        strong: fersColors.link.monostatic.strong,
+        // Weak monostatic return (received power below noise floor - rendered as transparent "ghost" line)
+        weak: fersColors.link.monostatic.weak,
+    },
+    // Shows power density at the target in dBW/m²
+    illuminator: fersColors.link.illuminator,
+    // Shows received power in dBm (Rendered as transparent "ghost" line if signal is below noise floor)
+    scattered: fersColors.link.scattered,
+    // Shows direct interference/leakage power in dBm
+    direct: fersColors.link.direct,
 };
 
 // Metadata only - no Vector3 positions here.
@@ -70,15 +79,13 @@ function LinkLine({ link }: { link: RenderableLink }) {
         (link.link_type === 'monostatic' || link.link_type === 'scattered') &&
         link.quality === 'weak';
 
-    const opacity = isGhost ? 0.25 : 1.0;
+    const opacity = isGhost ? 0.1 : 1.0;
 
     return (
         <Line
             points={points}
             color={color}
             lineWidth={1.5}
-            dashScale={20}
-            gapSize={10}
             transparent
             opacity={opacity}
         />
@@ -118,7 +125,7 @@ function LabelItem({ link, color }: { link: RenderableLink; color: string }) {
         >
             <div
                 style={{
-                    background: 'rgba(0,0,0,0.7)',
+                    background: fersColors.background.overlay,
                     color: color,
                     padding: '2px 6px',
                     borderRadius: '4px',

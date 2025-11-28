@@ -17,6 +17,7 @@ import PropertyInspector from '@/components/PropertyInspector';
 import Timeline from '@/components/Timeline';
 import ViewControls from '@/components/ViewControls';
 import { useScenarioStore } from '@/stores/scenarioStore';
+import { fersColors } from '@/theme';
 
 /**
  * A styled resize handle for the resizable panels.
@@ -107,10 +108,17 @@ export const ScenarioView = React.memo(function ScenarioView() {
                                     logarithmicDepthBuffer: true,
                                 }}
                             >
-                                <color attach="background" args={['#202025']} />
+                                <color
+                                    attach="background"
+                                    args={[fersColors.background.canvas]}
+                                />
                                 <fog
                                     attach="fog"
-                                    args={['#202025', 2000, 20000]}
+                                    args={[
+                                        fersColors.background.canvas,
+                                        2000,
+                                        20000,
+                                    ]}
                                 />
                                 <WorldView />
                             </Canvas>
