@@ -102,7 +102,7 @@ export const ScenarioView = React.memo(function ScenarioView() {
                                     position: [100, 100, 100],
                                     fov: 25,
                                     near: 0.1,
-                                    far: 100000,
+                                    far: 1e8,
                                 }}
                                 gl={{
                                     logarithmicDepthBuffer: true,
@@ -111,14 +111,6 @@ export const ScenarioView = React.memo(function ScenarioView() {
                                 <color
                                     attach="background"
                                     args={[fersColors.background.canvas]}
-                                />
-                                <fog
-                                    attach="fog"
-                                    args={[
-                                        fersColors.background.canvas,
-                                        2000,
-                                        20000,
-                                    ]}
                                 />
                                 <WorldView />
                             </Canvas>
