@@ -159,17 +159,11 @@ namespace
 		else
 		{
 			const XmlElement pulsed_file = parent.addChild("pulsed_from_file");
-			if (const auto& filename = waveform.getFilename())
-			{
-				pulsed_file.setAttribute("filename", *filename);
-			}
-			else
-			{
-				// If we reach this point, the in-memory state is invalid for XML serialization.
-				// We throw an exception to prevent generating an invalid XML file, which would fail to parse later.
-				throw std::logic_error("Attempted to serialize a file-based waveform named '" + waveform.getName() +
-									   "' without a source filename.");
-			}
+			// Gracefully handle missing filename to prevent export crashes.
+			// While the schema requires a filename, it is better to export an empty string
+			// for work-in-progress scenarios than to crash the application.
+			const auto& filename = waveform.getFilename();
+			pulsed_file.setAttribute("filename", filename.value_or(""));
 		}
 	}
 
@@ -427,6 +421,17 @@ namespace
 		{
 			rcs_elem.setAttribute("type", "file");
 			rcs_elem.setAttribute("filename", file_target->getFilename());
+		}
+
+		// Serialize fluctuation model if present (e.g. Swerling/Chi-Square)
+		if (const auto* model = target.getFluctuationModel())
+		{
+			if (const auto* chi = dynamic_cast<const radar::RcsChiSquare*>(model))
+			{
+				XmlElement model_elem = target_elem.addChild("model");
+				model_elem.setAttribute("type", "chisquare");
+				addChildWithNumber(model_elem, "k", chi->getK());
+			}
 		}
 	}
 

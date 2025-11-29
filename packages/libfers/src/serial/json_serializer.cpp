@@ -261,11 +261,12 @@ namespace fers_signal
 		else if (j.contains("pulsed_from_file"))
 		{
 			const auto& pulsed_file = j.at("pulsed_from_file");
-			if (!pulsed_file.contains("filename"))
+			const auto filename = pulsed_file.value("filename", "");
+			if (filename.empty())
 			{
-				throw std::runtime_error("File-based waveform requires a filename.");
+				LOG(logging::Level::WARNING, "Skipping load of file-based waveform '{}': filename is empty.", name);
+				return; // rs remains nullptr
 			}
-			const auto filename = pulsed_file.at("filename").get<std::string>();
 			rs = serial::loadWaveformFromFile(name, filename, power, carrier);
 		}
 		else
@@ -323,8 +324,9 @@ namespace antenna
 	void from_json(const nlohmann::json& j, std::unique_ptr<Antenna>& ant)
 	{
 		const auto name = j.at("name").get<std::string>();
+		const auto pattern = j.value("pattern", "isotropic");
 
-		if (const auto pattern = j.at("pattern").get<std::string>(); pattern == "isotropic")
+		if (pattern == "isotropic")
 		{
 			ant = std::make_unique<Isotropic>(name);
 		}
@@ -347,19 +349,23 @@ namespace antenna
 		}
 		else if (pattern == "xml")
 		{
-			if (!j.contains("filename"))
+			const auto filename = j.value("filename", "");
+			if (filename.empty())
 			{
-				throw std::runtime_error("XML antenna pattern requires a 'filename'.");
+				LOG(logging::Level::WARNING, "Skipping load of XML antenna '{}': filename is empty.", name);
+				return; // ant remains nullptr
 			}
-			ant = std::make_unique<XmlAntenna>(name, j.at("filename").get<std::string>());
+			ant = std::make_unique<XmlAntenna>(name, filename);
 		}
 		else if (pattern == "file")
 		{
-			if (!j.contains("filename"))
+			const auto filename = j.value("filename", "");
+			if (filename.empty())
 			{
-				throw std::runtime_error("H5 file antenna pattern requires a 'filename'.");
+				LOG(logging::Level::WARNING, "Skipping load of H5 antenna '{}': filename is empty.", name);
+				return; // ant remains nullptr
 			}
-			ant = std::make_unique<H5Antenna>(name, j.at("filename").get<std::string>());
+			ant = std::make_unique<H5Antenna>(name, filename);
 		}
 		else
 		{
@@ -677,7 +683,11 @@ namespace serial
 			for (auto waveforms = sim.at("waveforms").get<std::vector<std::unique_ptr<fers_signal::RadarSignal>>>();
 				 auto& waveform : waveforms)
 			{
-				world.add(std::move(waveform));
+				// Only add valid waveforms. If filename was empty, waveform is nullptr.
+				if (waveform)
+				{
+					world.add(std::move(waveform));
+				}
 			}
 		}
 
@@ -686,7 +696,11 @@ namespace serial
 			for (auto antennas = sim.at("antennas").get<std::vector<std::unique_ptr<antenna::Antenna>>>();
 				 auto& antenna : antennas)
 			{
-				world.add(std::move(antenna));
+				// Only add valid antennas.
+				if (antenna)
+				{
+					world.add(std::move(antenna));
+				}
 			}
 		}
 
@@ -751,6 +765,35 @@ namespace serial
 						if (comp_json_outer.contains("transmitter"))
 						{
 							const auto& comp_json = comp_json_outer.at("transmitter");
+
+							// --- Dependency Check ---
+							// Validate Waveform and Timing existence before creation to prevent core crashes.
+							const auto wave_name = comp_json.value("waveform", "");
+							const auto timing_name = comp_json.value("timing", "");
+							const auto antenna_name = comp_json.value("antenna", "");
+
+							if (wave_name.empty() || !world.findWaveform(wave_name))
+							{
+								LOG(logging::Level::WARNING,
+									"Skipping Transmitter '{}': Missing or invalid waveform '{}'.",
+									comp_json.value("name", "Unnamed"), wave_name);
+								continue;
+							}
+							if (timing_name.empty() || !world.findTiming(timing_name))
+							{
+								LOG(logging::Level::WARNING,
+									"Skipping Transmitter '{}': Missing or invalid timing source '{}'.",
+									comp_json.value("name", "Unnamed"), timing_name);
+								continue;
+							}
+							if (antenna_name.empty() || !world.findAntenna(antenna_name))
+							{
+								LOG(logging::Level::WARNING,
+									"Skipping Transmitter '{}': Missing or invalid antenna '{}'.",
+									comp_json.value("name", "Unnamed"), antenna_name);
+								continue;
+							}
+
 							radar::OperationMode mode;
 							if (comp_json.contains("pulsed_mode"))
 							{
@@ -763,22 +806,26 @@ namespace serial
 							else
 							{
 								throw std::runtime_error("Transmitter component '" +
-														 comp_json.at("name").get<std::string>() +
+														 comp_json.value("name", "Unnamed") +
 														 "' must have a 'pulsed_mode' or 'cw_mode' block.");
 							}
 
-							auto trans = std::make_unique<radar::Transmitter>(
-								plat.get(), comp_json.at("name").get<std::string>(), mode);
-							if (mode == radar::OperationMode::PULSED_MODE)
+							auto trans = std::make_unique<radar::Transmitter>(plat.get(),
+																			  comp_json.value("name", "Unnamed"), mode);
+							if (mode == radar::OperationMode::PULSED_MODE && comp_json.contains("pulsed_mode"))
 							{
-								trans->setPrf(comp_json.at("pulsed_mode").at("prf").get<RealType>());
+								trans->setPrf(comp_json.at("pulsed_mode").value("prf", 0.0));
 							}
-							trans->setWave(world.findWaveform(comp_json.at("waveform").get<std::string>()));
-							trans->setAntenna(world.findAntenna(comp_json.at("antenna").get<std::string>()));
-							const auto timing_name = comp_json.at("timing").get<std::string>();
-							const auto timing = std::make_shared<timing::Timing>(timing_name, masterSeeder());
-							timing->initializeModel(world.findTiming(timing_name));
-							trans->setTiming(timing);
+
+							trans->setWave(world.findWaveform(wave_name));
+							trans->setAntenna(world.findAntenna(antenna_name));
+
+							if (const auto timing_proto = world.findTiming(timing_name))
+							{
+								const auto timing = std::make_shared<timing::Timing>(timing_name, masterSeeder());
+								timing->initializeModel(timing_proto);
+								trans->setTiming(timing);
+							}
 
 							if (comp_json.contains("schedule"))
 							{
@@ -797,6 +844,27 @@ namespace serial
 						else if (comp_json_outer.contains("receiver"))
 						{
 							const auto& comp_json = comp_json_outer.at("receiver");
+
+							// --- Dependency Check ---
+							// Receiver strictly requires a Timing source.
+							const auto timing_name = comp_json.value("timing", "");
+							const auto antenna_name = comp_json.value("antenna", "");
+
+							if (timing_name.empty() || !world.findTiming(timing_name))
+							{
+								LOG(logging::Level::WARNING,
+									"Skipping Receiver '{}': Missing or invalid timing source '{}'.",
+									comp_json.value("name", "Unnamed"), timing_name);
+								continue;
+							}
+
+							if (!antenna_name.empty() && !world.findAntenna(antenna_name))
+							{
+								LOG(logging::Level::WARNING, "Skipping Receiver '{}': Missing or invalid antenna '{}'.",
+									comp_json.value("name", "Unnamed"), antenna_name);
+								continue;
+							}
+
 							radar::OperationMode mode;
 							if (comp_json.contains("pulsed_mode"))
 							{
@@ -808,21 +876,31 @@ namespace serial
 							}
 							else
 							{
-								throw std::runtime_error("Receiver component '" +
-														 comp_json.at("name").get<std::string>() +
+								throw std::runtime_error("Receiver component '" + comp_json.value("name", "Unnamed") +
 														 "' must have a 'pulsed_mode' or 'cw_mode' block.");
 							}
+
 							auto recv = std::make_unique<radar::Receiver>(
-								plat.get(), comp_json.at("name").get<std::string>(), masterSeeder(), mode);
-							if (mode == radar::OperationMode::PULSED_MODE)
+								plat.get(), comp_json.value("name", "Unnamed"), masterSeeder(), mode);
+							if (mode == radar::OperationMode::PULSED_MODE && comp_json.contains("pulsed_mode"))
 							{
 								const auto& mode_json = comp_json.at("pulsed_mode");
-								recv->setWindowProperties(mode_json.at("window_length").get<RealType>(),
-														  mode_json.at("prf").get<RealType>(),
-														  mode_json.at("window_skip").get<RealType>());
+								recv->setWindowProperties(mode_json.value("window_length", 0.0),
+														  mode_json.value("prf", 0.0),
+														  mode_json.value("window_skip", 0.0));
 							}
+
 							recv->setNoiseTemperature(comp_json.value("noise_temp", 0.0));
-							recv->setAntenna(world.findAntenna(comp_json.at("antenna").get<std::string>()));
+
+							recv->setAntenna(world.findAntenna(antenna_name));
+
+							if (const auto timing_proto = world.findTiming(timing_name))
+							{
+								const auto timing = std::make_shared<timing::Timing>(timing_name, masterSeeder());
+								timing->initializeModel(timing_proto);
+								recv->setTiming(timing);
+							}
+
 							if (comp_json.value("nodirect", false))
 							{
 								recv->setFlag(radar::Receiver::RecvFlag::FLAG_NODIRECT);
@@ -831,10 +909,6 @@ namespace serial
 							{
 								recv->setFlag(radar::Receiver::RecvFlag::FLAG_NOPROPLOSS);
 							}
-							const auto timing_name = comp_json.at("timing").get<std::string>();
-							const auto timing = std::make_shared<timing::Timing>(timing_name, masterSeeder());
-							timing->initializeModel(world.findTiming(timing_name));
-							recv->setTiming(timing);
 
 							if (comp_json.contains("schedule"))
 							{
@@ -850,12 +924,13 @@ namespace serial
 
 							world.add(std::move(recv));
 						}
-						else if (comp_json_outer.contains("target"))
+						if (comp_json_outer.contains("target"))
 						{
 							const auto& comp_json = comp_json_outer.at("target");
 							const auto& rcs_json = comp_json.at("rcs");
 							const auto rcs_type = rcs_json.at("type").get<std::string>();
 							std::unique_ptr<radar::Target> target_obj;
+
 							if (rcs_type == "isotropic")
 							{
 								target_obj =
@@ -864,13 +939,16 @@ namespace serial
 							}
 							else if (rcs_type == "file")
 							{
-								if (!rcs_json.contains("filename"))
+								const auto filename = rcs_json.value("filename", "");
+								if (filename.empty())
 								{
-									throw std::runtime_error("File target requires an RCS filename.");
+									LOG(logging::Level::WARNING,
+										"Skipping load of file target '{}': RCS filename is empty.",
+										comp_json.value("name", "Unknown"));
+									continue;
 								}
-								target_obj =
-									radar::createFileTarget(plat.get(), comp_json.at("name").get<std::string>(),
-															rcs_json.at("filename").get<std::string>(), masterSeeder());
+								target_obj = radar::createFileTarget(
+									plat.get(), comp_json.at("name").get<std::string>(), filename, masterSeeder());
 							}
 							else
 							{
@@ -898,6 +976,34 @@ namespace serial
 							// monostatic radar (a linked Transmitter and Receiver) from the
 							// single 'monostatic' component in the JSON.
 							const auto& comp_json = comp_json_outer.at("monostatic");
+
+							// --- Dependency Check ---
+							const auto wave_name = comp_json.value("waveform", "");
+							const auto timing_name = comp_json.value("timing", "");
+							const auto antenna_name = comp_json.value("antenna", "");
+
+							if (wave_name.empty() || !world.findWaveform(wave_name))
+							{
+								LOG(logging::Level::WARNING,
+									"Skipping Monostatic '{}': Missing or invalid waveform '{}'.",
+									comp_json.value("name", "Unnamed"), wave_name);
+								continue;
+							}
+							if (timing_name.empty() || !world.findTiming(timing_name))
+							{
+								LOG(logging::Level::WARNING,
+									"Skipping Monostatic '{}': Missing or invalid timing source '{}'.",
+									comp_json.value("name", "Unnamed"), timing_name);
+								continue;
+							}
+							if (antenna_name.empty() || !world.findAntenna(antenna_name))
+							{
+								LOG(logging::Level::WARNING,
+									"Skipping Monostatic '{}': Missing or invalid antenna '{}'.",
+									comp_json.value("name", "Unnamed"), antenna_name);
+								continue;
+							}
+
 							radar::OperationMode mode;
 							if (comp_json.contains("pulsed_mode"))
 							{
@@ -909,37 +1015,49 @@ namespace serial
 							}
 							else
 							{
-								throw std::runtime_error("Monostatic component '" +
-														 comp_json.at("name").get<std::string>() +
+								throw std::runtime_error("Monostatic component '" + comp_json.value("name", "Unnamed") +
 														 "' must have a 'pulsed_mode' or 'cw_mode' block.");
 							}
 
 							// Transmitter part
-							auto trans = std::make_unique<radar::Transmitter>(
-								plat.get(), comp_json.at("name").get<std::string>(), mode);
-							if (mode == radar::OperationMode::PULSED_MODE)
+							auto trans = std::make_unique<radar::Transmitter>(plat.get(),
+																			  comp_json.value("name", "Unnamed"), mode);
+							if (mode == radar::OperationMode::PULSED_MODE && comp_json.contains("pulsed_mode"))
 							{
-								trans->setPrf(comp_json.at("pulsed_mode").at("prf").get<RealType>());
+								trans->setPrf(comp_json.at("pulsed_mode").value("prf", 0.0));
 							}
-							trans->setWave(world.findWaveform(comp_json.at("waveform").get<std::string>()));
-							trans->setAntenna(world.findAntenna(comp_json.at("antenna").get<std::string>()));
-							const auto timing_name = comp_json.at("timing").get<std::string>();
-							const auto tx_timing = std::make_shared<timing::Timing>(timing_name, masterSeeder());
-							tx_timing->initializeModel(world.findTiming(timing_name));
-							trans->setTiming(tx_timing);
+
+							trans->setWave(world.findWaveform(wave_name));
+							trans->setAntenna(world.findAntenna(antenna_name));
+							const auto tx_timing_proto = world.findTiming(timing_name);
+							if (tx_timing_proto)
+							{
+								const auto tx_timing = std::make_shared<timing::Timing>(timing_name, masterSeeder());
+								tx_timing->initializeModel(tx_timing_proto);
+								trans->setTiming(tx_timing);
+							}
 
 							// Receiver part
 							auto recv = std::make_unique<radar::Receiver>(
-								plat.get(), comp_json.at("name").get<std::string>(), masterSeeder(), mode);
-							if (mode == radar::OperationMode::PULSED_MODE)
+								plat.get(), comp_json.value("name", "Unnamed"), masterSeeder(), mode);
+							if (mode == radar::OperationMode::PULSED_MODE && comp_json.contains("pulsed_mode"))
 							{
 								const auto& mode_json = comp_json.at("pulsed_mode");
-								recv->setWindowProperties(mode_json.at("window_length").get<RealType>(),
+								recv->setWindowProperties(mode_json.value("window_length", 0.0),
 														  trans->getPrf(), // Use transmitter's PRF
-														  mode_json.at("window_skip").get<RealType>());
+														  mode_json.value("window_skip", 0.0));
 							}
 							recv->setNoiseTemperature(comp_json.value("noise_temp", 0.0));
-							recv->setAntenna(world.findAntenna(comp_json.at("antenna").get<std::string>()));
+
+							recv->setAntenna(world.findAntenna(antenna_name));
+							const auto rx_timing_proto = world.findTiming(timing_name);
+							if (rx_timing_proto)
+							{
+								const auto rx_timing = std::make_shared<timing::Timing>(timing_name, masterSeeder());
+								rx_timing->initializeModel(rx_timing_proto);
+								recv->setTiming(rx_timing);
+							}
+
 							if (comp_json.value("nodirect", false))
 							{
 								recv->setFlag(radar::Receiver::RecvFlag::FLAG_NODIRECT);
@@ -948,10 +1066,6 @@ namespace serial
 							{
 								recv->setFlag(radar::Receiver::RecvFlag::FLAG_NOPROPLOSS);
 							}
-							const auto rx_timing = std::make_shared<timing::Timing>(timing_name, masterSeeder());
-							rx_timing->initializeModel(world.findTiming(timing_name));
-							recv->setTiming(rx_timing);
-
 							if (comp_json.contains("schedule"))
 							{
 								auto raw = comp_json.at("schedule").get<std::vector<radar::SchedulePeriod>>();
