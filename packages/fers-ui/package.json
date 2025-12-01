@@ -27,7 +27,7 @@
         "@mui/x-tree-view": "^8.19.0",
         "@react-three/drei": "^10.7.7",
         "@react-three/fiber": "^9.4.0",
-        "@tauri-apps/api": "^2.9.0",
+        "@tauri-apps/api": "^2.9.1",
         "@tauri-apps/plugin-dialog": "~2.4.2",
         "@tauri-apps/plugin-fs": "~2.4.4",
         "@tauri-apps/plugin-opener": "^2.5.2",
@@ -43,7 +43,7 @@
     },
     "devDependencies": {
         "@eslint/js": "^9.39.1",
-        "@tauri-apps/cli": "^2.9.4",
+        "@tauri-apps/cli": "^2.9.5",
         "@types/react": "^19.2.7",
         "@types/react-dom": "^19.2.3",
         "@types/three": "^0.181.0",
