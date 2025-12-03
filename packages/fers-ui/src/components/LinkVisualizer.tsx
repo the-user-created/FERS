@@ -48,6 +48,16 @@ interface RenderableLink extends LinkMetadata {
     distance: number;
 }
 
+// Define the shape coming from Rust
+interface RustVisualLink {
+    link_type: number;
+    quality: number;
+    label: string;
+    source_name: string;
+    dest_name: string;
+    origin_name: string;
+}
+
 // Helper to determine color based on link type and quality
 const getLinkColor = (link: LinkMetadata) => {
     if (link.link_type === 'monostatic') {
@@ -249,33 +259,25 @@ export default function LinkVisualizer() {
             try {
                 lastFetchTimeRef.current = Date.now();
 
-                // Fetch SoA (Structure of Arrays) from Rust/C++
-                const [numericData, stringData] = await invoke<
-                    [number[], string[]]
-                >('get_preview_links', { time: currentTime });
+                // Fetch Array of Structs directly from Rust
+                const links = await invoke<RustVisualLink[]>(
+                    'get_preview_links',
+                    {
+                        time: currentTime,
+                    }
+                );
 
                 if (!active) return;
 
-                const reconstructedLinks: LinkMetadata[] = [];
-                const count = numericData.length / 2;
+                const reconstructedLinks: LinkMetadata[] = links.map((l) => ({
+                    link_type: TYPE_MAP[l.link_type],
+                    quality: QUALITY_MAP[l.quality],
+                    label: l.label,
+                    source_name: l.source_name,
+                    dest_name: l.dest_name,
+                    origin_name: l.origin_name,
+                }));
 
-                for (let i = 0; i < count; i++) {
-                    const typeIdx = numericData[i * 2];
-                    const qualIdx = numericData[i * 2 + 1];
-                    const sourceName = stringData[i * 4];
-                    const destName = stringData[i * 4 + 1];
-                    const originName = stringData[i * 4 + 2];
-                    const label = stringData[i * 4 + 3];
-
-                    reconstructedLinks.push({
-                        link_type: TYPE_MAP[typeIdx],
-                        quality: QUALITY_MAP[qualIdx],
-                        label,
-                        source_name: sourceName,
-                        dest_name: destName,
-                        origin_name: originName,
-                    });
-                }
                 setLinkMetadata(reconstructedLinks);
             } catch (e) {
                 console.error('Link preview error:', e);
