@@ -179,7 +179,7 @@ const PlatformSphere = memo(function PlatformSphere({
             </group>
 
             {/* Velocity Arrow */}
-            <group visible={showVelocities}>
+            <group visible={showPlatforms && showVelocities}>
                 <VelocityArrow platform={platform} currentTime={currentTime} />
             </group>
 
