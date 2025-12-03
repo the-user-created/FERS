@@ -648,8 +648,10 @@ fers_antenna_pattern_data_t* fers_get_antenna_pattern(const fers_context_t* cont
 			return nullptr;
 		}
 
-		// TODO: Currently only using the first-found waveform, it should find the correct waveform based on the
-		// component (receiver/transmitter/monostatic) Use a representative wavelength. Some patterns depend on it.
+		// TODO: Currently only using the first-found waveform. This is incorrect but also difficult to represent
+		// correctly in scenarios with multiple waveforms as the gain for squarehorn and parabolic antennas depends on
+		// the wavelength. Hence a decision needs to be made about whether to return multiple patterns per waveform or
+		// have the user specify a representative wavelength in the UI per antenna.
 		// Default to 1 GHz (0.3m) if no waveforms exist.
 		RealType wavelength = 0.3;
 		if (!ctx->getWorld()->getWaveforms().empty())

@@ -163,9 +163,8 @@ const PlatformSphere = memo(function PlatformSphere({
                     <BoresightArrow />
                 </group>
 
-                {/* Show patterns only if global toggle ON AND platform selected */}
+                {/* Show antenna pattern meshes if the global toggle is enabled */}
                 {showPatterns &&
-                    isSelected &&
                     antennaComponents.map((comp) =>
                         comp.antennaId ? (
                             <AntennaPatternMesh

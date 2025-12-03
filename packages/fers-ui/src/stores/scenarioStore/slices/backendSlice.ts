@@ -215,7 +215,9 @@ export const createBackendSlice: StateCreator<
             return timingObj;
         });
 
-        const backendAntennas = antennas.map((a) => omit(a, 'id', 'type'));
+        const backendAntennas = antennas.map((a) =>
+            omit(a, 'id', 'type', 'meshScale')
+        );
 
         const {
             start,

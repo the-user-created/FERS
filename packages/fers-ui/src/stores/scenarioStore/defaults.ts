@@ -52,6 +52,7 @@ export const defaultAntenna: Omit<
     type: 'Antenna',
     pattern: 'isotropic',
     efficiency: 1.0,
+    meshScale: 1.0,
 };
 
 export const createDefaultPlatform = (): Omit<Platform, 'id' | 'name'> => ({
