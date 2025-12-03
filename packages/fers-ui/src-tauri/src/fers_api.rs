@@ -524,6 +524,7 @@ impl FersContext {
     /// * `antenna_name` - The name of the antenna asset to sample.
     /// * `az_samples` - The resolution along the azimuth axis.
     /// * `el_samples` - The resolution along the elevation axis.
+    /// * `frequency` - The frequency in Hz to use for calculation.
     ///
     /// # Returns
     ///
@@ -534,11 +535,18 @@ impl FersContext {
         antenna_name: &str,
         az_samples: usize,
         el_samples: usize,
+        frequency: f64,
     ) -> Result<AntennaPatternData, String> {
         let c_antenna_name = CString::new(antenna_name).map_err(|e| e.to_string())?;
         // SAFETY: We pass a valid context pointer and valid arguments.
         let result_ptr = unsafe {
-            ffi::fers_get_antenna_pattern(self.ptr, c_antenna_name.as_ptr(), az_samples, el_samples)
+            ffi::fers_get_antenna_pattern(
+                self.ptr,
+                c_antenna_name.as_ptr(),
+                az_samples,
+                el_samples,
+                frequency,
+            )
         };
 
         if result_ptr.is_null() {

@@ -626,7 +626,8 @@ void fers_free_interpolated_rotation_path(fers_interpolated_rotation_path_t* pat
 // --- Antenna Pattern Implementation ---
 
 fers_antenna_pattern_data_t* fers_get_antenna_pattern(const fers_context_t* context, const char* antenna_name,
-													  const size_t az_samples, const size_t el_samples)
+													  const size_t az_samples, const size_t el_samples,
+													  const double frequency_hz)
 {
 	last_error_message.clear();
 	if (!context || !antenna_name || az_samples == 0 || el_samples == 0)
@@ -649,15 +650,16 @@ fers_antenna_pattern_data_t* fers_get_antenna_pattern(const fers_context_t* cont
 		}
 
 		// TODO: Currently only using the first-found waveform. This is incorrect but also difficult to represent
-		// correctly in scenarios with multiple waveforms as the gain for squarehorn and parabolic antennas depends on
-		// the wavelength. Hence a decision needs to be made about whether to return multiple patterns per waveform or
-		// have the user specify a representative wavelength in the UI per antenna.
-		// Default to 1 GHz (0.3m) if no waveforms exist.
+		//		 correctly in scenarios with multiple waveforms as the gain for squarehorn and parabolic antennas
+		// depends on 		 the wavelength. Hence a decision needs to be made about whether to return multiple patterns
+		// per waveform or 		 have the user specify a representative wavelength in the UI per antenna.
+		// Calculate wavelength from the provided frequency.
+		// Default to 1GHz (0.3m) if frequency is invalid/zero, though the UI should prevent this
+		// for antennas that strictly require it (Horn/Parabolic).
 		RealType wavelength = 0.3;
-		if (!ctx->getWorld()->getWaveforms().empty())
+		if (frequency_hz > 0.0)
 		{
-			const auto& first_waveform = ctx->getWorld()->getWaveforms().begin()->second;
-			wavelength = params::c() / first_waveform->getCarrier();
+			wavelength = params::c() / frequency_hz;
 		}
 
 		auto* data = new fers_antenna_pattern_data_t();

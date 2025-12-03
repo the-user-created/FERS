@@ -288,12 +288,13 @@ typedef struct
  * @param antenna_name The name of the antenna asset to sample.
  * @param az_samples The desired number of sample points along the azimuth axis.
  * @param el_samples The desired number of sample points along the elevation axis.
+ * @param frequency_hz The frequency in Hz to use for gain calculation (affects aperture antennas).
  * @return A pointer to a `fers_antenna_pattern_data_t` struct containing the results.
  *         Returns NULL on failure (e.g., antenna not found). The caller owns the
  *         returned struct and must free it with `fers_free_antenna_pattern_data`.
  */
 fers_antenna_pattern_data_t* fers_get_antenna_pattern(const fers_context_t* context, const char* antenna_name,
-													  size_t az_samples, size_t el_samples);
+													  size_t az_samples, size_t el_samples, double frequency_hz);
 
 /**
  * @brief Frees the memory allocated for an antenna pattern data structure.

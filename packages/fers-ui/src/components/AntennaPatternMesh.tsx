@@ -5,7 +5,7 @@ import { useMemo, useState, useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { invoke } from '@tauri-apps/api/core';
 import { useThree, useFrame } from '@react-three/fiber';
-import { useScenarioStore } from '@/stores/scenarioStore';
+import { useScenarioStore, PlatformComponent } from '@/stores/scenarioStore';
 import { useShallow } from 'zustand/react/shallow';
 
 const AZIMUTH_SEGMENTS = 64; // Resolution for azimuth sampling
@@ -23,6 +23,7 @@ interface AntennaPatternData {
 
 interface AntennaPatternMeshProps {
     antennaId: string;
+    component: PlatformComponent;
 }
 
 /**
@@ -31,36 +32,76 @@ interface AntennaPatternMeshProps {
  *
  * @returns A Three.js mesh component representing the antenna gain pattern.
  */
-export function AntennaPatternMesh({ antennaId }: AntennaPatternMeshProps) {
+export function AntennaPatternMesh({
+    antennaId,
+    component,
+}: AntennaPatternMeshProps) {
     const [patternData, setPatternData] = useState<AntennaPatternData | null>(
         null
     );
 
-    // Select both the antenna object and the backend version to react to updates.
-    // useShallow ensures the component only re-renders when these specific values change.
-    const { antenna, backendVersion } = useScenarioStore(
-        useShallow((state) => ({
-            antenna: state.antennas.find((a) => a.id === antennaId),
-            backendVersion: state.backendVersion,
-        }))
+    // Select antenna, potential waveform, and backend version
+    const { antenna, waveform, backendVersion } = useScenarioStore(
+        useShallow((state) => {
+            const ant = state.antennas.find((a) => a.id === antennaId);
+            const wf =
+                'waveformId' in component && component.waveformId
+                    ? state.waveforms.find((w) => w.id === component.waveformId)
+                    : undefined;
+            return {
+                antenna: ant,
+                waveform: wf,
+                backendVersion: state.backendVersion,
+            };
+        })
     );
 
     const antennaName = antenna?.name;
     const userScale = antenna?.meshScale ?? 1.0;
-
     const groupRef = useRef<THREE.Group>(null!);
     const { camera } = useThree();
+
+    // Determine the frequency to use for pattern calculation
+    const frequency = useMemo(() => {
+        if (!antenna) return null;
+
+        // 1. If the antenna is frequency-independent, we can render it regardless of waveform.
+        const independentTypes = [
+            'isotropic',
+            'sinc',
+            'gaussian',
+            'xml',
+            'file',
+        ];
+        if (independentTypes.includes(antenna.pattern)) {
+            // Use a dummy frequency (1GHz) if the backend requires non-zero,
+            // effectively ignored by these pattern types.
+            return 1e9;
+        }
+
+        // 2. If the antenna is frequency-dependent (Horn/Parabolic):
+        // Priority A: Use the active Waveform frequency if attached.
+        if (waveform?.carrier_frequency) {
+            return waveform.carrier_frequency;
+        }
+
+        // Priority B: Use the 'Design Frequency' from the Antenna Inspector.
+        if (antenna.design_frequency) {
+            return antenna.design_frequency;
+        }
+
+        // 3. If prerequisites are not met, return null to suppress rendering.
+        return null;
+    }, [antenna, waveform]);
 
     useEffect(() => {
         let isCancelled = false;
 
         const fetchPattern = async () => {
-            // If there is no valid antenna or name when this async function runs,
-            // clear any existing pattern data and exit.
-            if (!antenna || !antennaName) {
-                if (!isCancelled) {
-                    setPatternData(null);
-                }
+            // If we don't have a valid frequency or name, we simply exit.
+            // The cleanup function from the previous run will have already cleared the data,
+            // so the component will render nothing (which is correct).
+            if (!antennaName || frequency === null) {
                 return;
             }
 
@@ -71,8 +112,10 @@ export function AntennaPatternMesh({ antennaId }: AntennaPatternMeshProps) {
                         antennaName: antennaName,
                         azSamples: AZIMUTH_SEGMENTS + 1,
                         elSamples: ELEVATION_SEGMENTS + 1,
+                        frequency: frequency,
                     }
                 );
+
                 if (!isCancelled) {
                     setPatternData(data);
                 }
@@ -81,7 +124,6 @@ export function AntennaPatternMesh({ antennaId }: AntennaPatternMeshProps) {
                     `Failed to fetch pattern for antenna ${antennaName}:`,
                     error
                 );
-                // On error, also clear the data to avoid showing a stale pattern.
                 if (!isCancelled) {
                     setPatternData(null);
                 }
@@ -92,11 +134,10 @@ export function AntennaPatternMesh({ antennaId }: AntennaPatternMeshProps) {
 
         return () => {
             isCancelled = true;
+            // Clear data on cleanup to prevent "stale" patterns flashing when switching configurations
+            setPatternData(null);
         };
-        // Re-fetch when the antenna object's properties change, its name changes,
-        // or after the backend has confirmed it has been updated (via backendVersion).
-        // This ensures that changes made in the inspector trigger a pattern refresh.
-    }, [antenna, backendVersion, antennaName]);
+    }, [antennaName, frequency, backendVersion]);
 
     useFrame(() => {
         if (!groupRef.current) return;
@@ -113,6 +154,7 @@ export function AntennaPatternMesh({ antennaId }: AntennaPatternMeshProps) {
 
         // Combine zoom scaling with the user-defined multiplier
         const finalScale = zoomScale * userScale;
+
         groupRef.current.scale.set(finalScale, finalScale, finalScale);
     });
 
@@ -139,6 +181,7 @@ export function AntennaPatternMesh({ antennaId }: AntennaPatternMeshProps) {
                 const x = radius * Math.cos(elevation) * Math.sin(azimuth);
                 const y = radius * Math.sin(elevation);
                 const z = -radius * Math.cos(elevation) * Math.cos(azimuth);
+
                 vertices.push(x, y, z);
 
                 // Assign color based on gain (heatmap: blue -> green -> red)

@@ -98,6 +98,9 @@ const BaseAntennaSchema = z.object({
     name: z.string().min(1, 'Antenna name cannot be empty.'),
     efficiency: nullableNumber.pipe(z.number().min(0).max(1).nullable()),
     meshScale: nullableNumber.pipe(z.number().positive().nullable()).optional(),
+    design_frequency: nullableNumber
+        .pipe(z.number().positive().nullable())
+        .optional(),
 });
 
 export const AntennaSchema = z.discriminatedUnion('pattern', [

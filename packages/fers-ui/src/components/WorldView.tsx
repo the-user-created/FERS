@@ -170,6 +170,7 @@ const PlatformSphere = memo(function PlatformSphere({
                             <AntennaPatternMesh
                                 key={comp.id}
                                 antennaId={comp.antennaId}
+                                component={comp}
                             />
                         ) : null
                     )}

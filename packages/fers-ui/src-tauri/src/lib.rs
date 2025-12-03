@@ -343,12 +343,14 @@ fn get_antenna_pattern(
     antenna_name: String,
     az_samples: usize,
     el_samples: usize,
+    frequency: f64,
     state: State<'_, FersState>,
 ) -> Result<fers_api::AntennaPatternData, String> {
     state.lock().map_err(|e| e.to_string())?.get_antenna_pattern(
         &antenna_name,
         az_samples,
         el_samples,
+        frequency,
     )
 }
 

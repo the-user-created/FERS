@@ -79,6 +79,7 @@ export const createAssetSlice: StateCreator<
                 name: oldAntenna.name,
                 efficiency: oldAntenna.efficiency,
                 meshScale: oldAntenna.meshScale,
+                design_frequency: oldAntenna.design_frequency,
             };
 
             let newAntennaState: Antenna;
