@@ -177,15 +177,14 @@ char* fers_get_scenario_as_xml(fers_context_t* context);
  * @brief Updates the simulation scenario from a JSON string.
  *
  * This is the primary method for the UI to push its state back to the C++
- * core. It performs a full replacement of the existing scenario. This "replace"
- * strategy was chosen over a more complex "patch" or "diff" approach to simplify
- * state management and ensure the C++ core is always perfectly synchronized with
- * the UI's state representation.
+ * core. It performs a full replacement of the existing scenario.
  *
  * @param context A valid `fers_context_t` handle.
  * @param scenario_json A null-terminated UTF-8 string containing the FERS scenario in JSON format.
- * @return 0 on success, a non-zero error code on failure. Use
- *         `fers_get_last_error_message()` to retrieve error details.
+ * @return 0 on success.
+ *         1 on generic logic error.
+ *         2 on JSON parsing/schema validation error.
+ *         Use `fers_get_last_error_message()` to retrieve error details.
  */
 int fers_update_scenario_from_json(fers_context_t* context, const char* scenario_json);
 
@@ -323,10 +322,10 @@ typedef enum
  */
 typedef struct
 {
-	double time;
-	double x;
-	double y;
-	double z;
+	double time; /**< Time in seconds. */
+	double x; /**< X coordinate in meters (East in ENU). */
+	double y; /**< Y coordinate in meters (North in ENU). */
+	double z; /**< Z coordinate in meters (Up/Altitude in ENU). */
 } fers_motion_waypoint_t;
 
 /**
@@ -335,22 +334,23 @@ typedef struct
  */
 typedef struct
 {
-	double time;
-	double azimuth_deg;
-	double elevation_deg;
+	double time; /**< Time in seconds. */
+	double azimuth_deg; /**< Azimuth angle in compass degrees (0=North, 90=East). */
+	double elevation_deg; /**< Elevation angle in degrees (positive up). */
 } fers_rotation_waypoint_t;
 
 /**
  * @brief Represents a single interpolated point on a motion path.
+ * Includes position and velocity in the scenario's coordinate frame.
  */
 typedef struct
 {
-	double x;
-	double y;
-	double z;
-	double vx;
-	double vy;
-	double vz;
+	double x; /**< X position in meters. */
+	double y; /**< Y position in meters. */
+	double z; /**< Z position in meters. */
+	double vx; /**< X velocity in m/s. */
+	double vy; /**< Y velocity in m/s. */
+	double vz; /**< Z velocity in m/s. */
 } fers_interpolated_point_t;
 
 /**
@@ -359,8 +359,8 @@ typedef struct
  */
 typedef struct
 {
-	double azimuth_deg;
-	double elevation_deg;
+	double azimuth_deg; /**< Azimuth angle in compass degrees. */
+	double elevation_deg; /**< Elevation angle in degrees. */
 } fers_interpolated_rotation_point_t;
 
 
@@ -459,16 +459,17 @@ typedef enum
  */
 typedef struct
 {
-	fers_link_type_t type;
-	fers_link_quality_t quality;
-	char label[128]; // Pre-formatted label (e.g., "-95 dBm")
-	char source_name[64];
-	char dest_name[64];
-	char origin_name[64];
+	fers_link_type_t type; /**< Type of the link (Monostatic, Bistatic, etc.). */
+	fers_link_quality_t quality; /**< Signal quality (Strong/Weak). */
+	char label[128]; /**< Pre-formatted label (e.g., "-95 dBm"). */
+	char source_name[64]; /**< Name of the source component (e.g. Transmitter). */
+	char dest_name[64]; /**< Name of the destination component (e.g. Receiver/Target). */
+	char origin_name[64]; /**< Name of the originating Transmitter (for scattered paths). */
 } fers_visual_link_t;
 
 /**
  * @brief A container for a list of visual links.
+ * @note The `links` array is owned by this struct and must be freed using `fers_free_preview_links`.
  */
 typedef struct
 {

@@ -268,11 +268,18 @@ impl Drop for FersAntennaPatternData {
 }
 
 /// Data structure for antenna pattern data sent to the frontend.
+///
+/// This struct flattens the 2D gain data into a 1D vector for easy serialization.
 #[derive(serde::Serialize)]
 pub struct AntennaPatternData {
+    /// Flattened array of linear gain values (normalized 0.0 to 1.0).
+    /// Ordered row-major: Elevation rows, then Azimuth columns.
     gains: Vec<f64>,
+    /// Number of samples along the azimuth axis (360 degrees).
     az_count: usize,
+    /// Number of samples along the elevation axis (180 degrees).
     el_count: usize,
+    /// The peak linear gain found in the pattern, used for normalization.
     max_gain: f64,
 }
 
@@ -287,13 +294,28 @@ impl Drop for FersVisualLinkList {
     }
 }
 
+/// Represents a visual link segment for 3D rendering.
+///
+/// This struct maps C-style enums to integers for consumption by the TypeScript frontend.
 #[derive(serde::Serialize)]
 pub struct VisualLink {
-    pub link_type: u8, // 0=Mono, 1=Illum, 2=Scattered, 3=Direct
-    pub quality: u8,   // 0=Strong, 1=Weak
+    /// The type of radio link.
+    /// * `0`: Monostatic (Tx -> Tgt -> Rx, where Tx==Rx)
+    /// * `1`: Bistatic Illuminator (Tx -> Tgt)
+    /// * `2`: Bistatic Scattered (Tgt -> Rx)
+    /// * `3`: Direct Interference (Tx -> Rx)
+    pub link_type: u8,
+    /// The radiometric quality of the link.
+    /// * `0`: Strong (SNR > 0 dB)
+    /// * `1`: Weak (SNR < 0 dB, visible but sub-noise)
+    pub quality: u8,
+    /// A pre-formatted label string (e.g., "-95 dBm").
     pub label: String,
+    /// The name of the start component for this segment.
     pub source_name: String,
+    /// The name of the end component for this segment.
     pub dest_name: String,
+    /// The name of the original transmitter (useful for scattered paths).
     pub origin_name: String,
 }
 
