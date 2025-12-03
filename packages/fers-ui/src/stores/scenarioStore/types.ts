@@ -50,8 +50,14 @@ export type VisualizationLayers = {
     showPatterns: boolean;
     showBoresights: boolean;
     showLinks: boolean;
+    showLinkLabels: boolean;
+    showLinkMonostatic: boolean;
+    showLinkIlluminator: boolean;
+    showLinkScattered: boolean;
+    showLinkDirect: boolean;
     showVelocities: boolean;
     showPlatforms: boolean;
+    showPlatformLabels: boolean;
     showMotionPaths: boolean;
 };
 

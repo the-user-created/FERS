@@ -57,6 +57,7 @@ const PlatformSphere = memo(function PlatformSphere({
     platform: Platform;
 }) {
     const currentTime = useScenarioStore((state) => state.currentTime);
+
     const isSelected = useScenarioStore(
         (state) => state.selectedItemId === platform.id
     );
@@ -64,6 +65,7 @@ const PlatformSphere = memo(function PlatformSphere({
     // Visibility Toggles
     const {
         showPlatforms,
+        showPlatformLabels,
         showAxes,
         showBoresights,
         showPatterns,
@@ -182,7 +184,7 @@ const PlatformSphere = memo(function PlatformSphere({
             </group>
 
             {/* Label */}
-            {showPlatforms && (
+            {showPlatforms && showPlatformLabels && (
                 <Html
                     position={[0, 1.2, 0]} // Position label above the sphere
                     center // Center the label on its anchor point
@@ -224,6 +226,7 @@ const PlatformSphere = memo(function PlatformSphere({
  */
 export default function WorldView() {
     const platforms = useScenarioStore((state) => state.platforms);
+
     const fetchPlatformPath = useScenarioStore(
         (state) => state.fetchPlatformPath
     );
@@ -295,7 +298,7 @@ export default function WorldView() {
             {platforms.map((platform) => (
                 <group key={platform.id}>
                     <PlatformSphere platform={platform} />
-                    {/* Motion Path Lines - Conditional Render */}
+                    {/* Motion Path Lines */}
                     {showMotionPaths && <MotionPathLine platform={platform} />}
                 </group>
             ))}

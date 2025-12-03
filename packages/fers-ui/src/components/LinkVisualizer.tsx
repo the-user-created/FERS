@@ -186,6 +186,15 @@ function LabelCluster({
 export default function LinkVisualizer() {
     const currentTime = useScenarioStore((state) => state.currentTime);
     const platforms = useScenarioStore((state) => state.platforms);
+    const visibility = useScenarioStore((state) => state.visibility);
+    const {
+        showLinkLabels,
+        showLinkMonostatic,
+        showLinkIlluminator,
+        showLinkScattered,
+        showLinkDirect,
+    } = visibility;
+
     const isBackendSyncing = useScenarioStore(
         (state) => state.isBackendSyncing
     );
@@ -290,11 +299,17 @@ export default function LinkVisualizer() {
         >();
 
         linkMetadata.forEach((meta) => {
+            // Filter by type
+            if (meta.link_type === 'monostatic' && !showLinkMonostatic) return;
+            if (meta.link_type === 'illuminator' && !showLinkIlluminator)
+                return;
+            if (meta.link_type === 'scattered' && !showLinkScattered) return;
+            if (meta.link_type === 'direct' && !showLinkDirect) return;
+
             const sourcePlat = componentToPlatform.get(meta.source_name);
             const destPlat = componentToPlatform.get(meta.dest_name);
 
             if (sourcePlat && destPlat) {
-                // Calculate positions strictly client-side for maximum smoothness
                 const startPos = calculateInterpolatedPosition(
                     sourcePlat,
                     currentTime
@@ -314,15 +329,17 @@ export default function LinkVisualizer() {
 
                 calculatedLinks.push(renderLink);
 
-                // Clustering logic for labels
-                const mid = startPos.clone().lerp(endPos, 0.5);
-                // Round keys to cluster nearby labels
-                const key = `${mid.x.toFixed(1)}_${mid.y.toFixed(1)}_${mid.z.toFixed(1)}`;
+                // Clustering logic for labels - only if labels are enabled
+                if (showLinkLabels) {
+                    const mid = startPos.clone().lerp(endPos, 0.5);
+                    // Round keys to cluster nearby labels
+                    const key = `${mid.x.toFixed(1)}_${mid.y.toFixed(1)}_${mid.z.toFixed(1)}`;
 
-                if (!clusterMap.has(key)) {
-                    clusterMap.set(key, { position: mid, links: [] });
+                    if (!clusterMap.has(key)) {
+                        clusterMap.set(key, { position: mid, links: [] });
+                    }
+                    clusterMap.get(key)!.links.push(renderLink);
                 }
-                clusterMap.get(key)!.links.push(renderLink);
             }
         });
 
@@ -330,7 +347,16 @@ export default function LinkVisualizer() {
             clusters: Array.from(clusterMap.values()),
             flatLinks: calculatedLinks,
         };
-    }, [linkMetadata, currentTime, componentToPlatform]);
+    }, [
+        linkMetadata,
+        currentTime,
+        componentToPlatform,
+        showLinkLabels,
+        showLinkMonostatic,
+        showLinkIlluminator,
+        showLinkScattered,
+        showLinkDirect,
+    ]);
 
     return (
         <group>

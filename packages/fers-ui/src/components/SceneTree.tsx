@@ -404,46 +404,48 @@ export default function SceneTree() {
                             </Box>
                         }
                     >
-                        {platforms.map((platform) => (
-                            <TreeItem
-                                key={platform.id}
-                                itemId={platform.id}
-                                label={
-                                    <Box
-                                        sx={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            width: '100%',
-                                        }}
-                                    >
-                                        {getPlatformIcon(platform)}
-                                        <Typography
-                                            variant="body2"
+                        {platforms.map((platform) => {
+                            return (
+                                <TreeItem
+                                    key={platform.id}
+                                    itemId={platform.id}
+                                    label={
+                                        <Box
                                             sx={{
-                                                flexGrow: 1,
-                                                whiteSpace: 'nowrap',
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                minWidth: 0,
-                                                pr: 1,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                width: '100%',
                                             }}
                                         >
-                                            {platform.name}
-                                        </Typography>
-                                        <IconButton
-                                            size="small"
-                                            className="remove-button"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                removeItem(platform.id);
-                                            }}
-                                        >
-                                            <RemoveIcon fontSize="inherit" />
-                                        </IconButton>
-                                    </Box>
-                                }
-                            />
-                        ))}
+                                            {getPlatformIcon(platform)}
+                                            <Typography
+                                                variant="body2"
+                                                sx={{
+                                                    flexGrow: 1,
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    minWidth: 0,
+                                                    pr: 1,
+                                                }}
+                                            >
+                                                {platform.name}
+                                            </Typography>
+                                            <IconButton
+                                                size="small"
+                                                className="remove-button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    removeItem(platform.id);
+                                                }}
+                                            >
+                                                <RemoveIcon fontSize="inherit" />
+                                            </IconButton>
+                                        </Box>
+                                    }
+                                />
+                            );
+                        })}
                     </TreeItem>
                 </SimpleTreeView>
             </Box>
