@@ -40,44 +40,10 @@ updates:
           - 'dependencies'
           - 'scope: ui'
       groups:
-          # UI Framework and tooling
-          react-stack:
+          # Group all npm dependencies into a single PR
+          all-npm-dependencies:
               patterns:
-                  - 'react'
-                  - 'react-dom'
-                  - '@types/react'
-                  - '@types/react-dom'
-                  - '@vitejs/plugin-react'
-                  - 'vite'
-          # UI Component Library
-          mui-stack:
-              patterns:
-                  - '@mui/*'
-                  - '@emotion/*'
-          # 3D Rendering
-          three-stack:
-              patterns:
-                  - 'three'
-                  - '@react-three/*'
-                  - 'three-stdlib'
-          # Tauri plugins and API
-          tauri-stack:
-              patterns:
-                  - '@tauri-apps/*'
-          # Linting and formatting toolchain
-          dev-tooling:
-              patterns:
-                  - 'eslint'
-                  - 'prettier'
-                  - 'typescript-eslint'
-                  - 'husky'
-                  - 'lint-staged'
-      # Ignore major version updates for ESLint/TS-ESLint,
-      ignore:
-          - dependency-name: 'eslint'
-            update-types: ['version-update:semver-major']
-          - dependency-name: 'typescript-eslint'
-            update-types: ['version-update:semver-major']
+                  - '*'
 
     # Maintain dependencies for Git submodules
     - package-ecosystem: 'gitsubmodule'
@@ -90,3 +56,8 @@ updates:
       labels:
           - 'dependencies'
           - 'scope: core-simulator'
+      groups:
+          # Group all submodules into a single PR
+          all-submodules:
+              patterns:
+                  - '*'
