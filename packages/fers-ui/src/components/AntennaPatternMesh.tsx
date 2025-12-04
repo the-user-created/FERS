@@ -4,9 +4,9 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { invoke } from '@tauri-apps/api/core';
-import { useThree, useFrame } from '@react-three/fiber';
 import { useScenarioStore, PlatformComponent } from '@/stores/scenarioStore';
 import { useShallow } from 'zustand/react/shallow';
+import { useDynamicScale } from '@/hooks/useDynamicScale';
 
 const AZIMUTH_SEGMENTS = 64; // Resolution for azimuth sampling
 const ELEVATION_SEGMENTS = 32; // Resolution for elevation sampling
@@ -59,7 +59,9 @@ export function AntennaPatternMesh({
     const antennaName = antenna?.name;
     const userScale = antenna?.meshScale ?? 1.0;
     const groupRef = useRef<THREE.Group>(null!);
-    const { camera } = useThree();
+
+    // Apply dynamic scaling hook
+    useDynamicScale(groupRef, { baseScale: userScale });
 
     // Determine the frequency to use for pattern calculation
     const frequency = useMemo(() => {
@@ -138,25 +140,6 @@ export function AntennaPatternMesh({
             setPatternData(null);
         };
     }, [antennaName, frequency, backendVersion]);
-
-    useFrame(() => {
-        if (!groupRef.current) return;
-        // Calculate distance from camera to the mesh's world position
-        const worldPosition = new THREE.Vector3();
-        groupRef.current.getWorldPosition(worldPosition);
-        const distance = camera.position.distanceTo(worldPosition);
-
-        // This factor makes the mesh larger as it gets farther away,
-        // creating the illusion of a constant size on screen.
-        // The divisor (e.g., 50) is a reference distance that can be
-        // tuned to adjust the default apparent size.
-        const zoomScale = distance / 50;
-
-        // Combine zoom scaling with the user-defined multiplier
-        const finalScale = zoomScale * userScale;
-
-        groupRef.current.scale.set(finalScale, finalScale, finalScale);
-    });
 
     const geometry = useMemo(() => {
         if (!patternData) return new THREE.BufferGeometry();

@@ -1,13 +1,16 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
 
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import {
     Platform,
     calculateInterpolatedVelocity,
 } from '@/stores/scenarioStore';
 import { fersColors } from '@/theme';
+import { useDynamicScale } from '@/hooks/useDynamicScale';
+
+const VELOCITY_ARROW_LENGTH = 7; // Fixed base length (matches Boresight)
 
 interface VelocityArrowProps {
     platform: Platform;
@@ -16,9 +19,15 @@ interface VelocityArrowProps {
 
 /**
  * Renders an arrow indicating the velocity vector of the platform.
- * The direction indicates movement direction, and length indicates speed.
+ * The direction indicates movement direction.
+ * Note: Length is fixed for visualization; actual speed is in properties.
  */
 export function VelocityArrow({ platform, currentTime }: VelocityArrowProps) {
+    const groupRef = useRef<THREE.Group>(null);
+
+    // Apply dynamic scaling
+    useDynamicScale(groupRef);
+
     const velocity = useMemo(
         () => calculateInterpolatedVelocity(platform, currentTime),
         [platform, currentTime]
@@ -32,17 +41,19 @@ export function VelocityArrow({ platform, currentTime }: VelocityArrowProps) {
         const dir = velocity.clone().normalize();
         const origin = new THREE.Vector3(0, 0, 0); // Local origin of the container
 
-        // We use the raw speed as length, but verify visibility for very small/large speeds
-        // Ideally, we might want to log-scale or clamp for UI, but raw is physically accurate.
         return new THREE.ArrowHelper(
             dir,
             origin,
-            speed,
+            VELOCITY_ARROW_LENGTH,
             fersColors.physics.velocity
         );
     }, [velocity]);
 
     if (!arrowHelper) return null;
 
-    return <primitive object={arrowHelper} />;
+    return (
+        <group ref={groupRef}>
+            <primitive object={arrowHelper} />
+        </group>
+    );
 }

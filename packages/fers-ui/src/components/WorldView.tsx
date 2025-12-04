@@ -4,6 +4,7 @@
 import React, { useEffect, useMemo, useRef, memo } from 'react';
 import { MapControls, Environment, Html } from '@react-three/drei';
 import { Vector3 } from 'three';
+import * as THREE from 'three';
 import {
     useScenarioStore,
     Platform,
@@ -18,6 +19,29 @@ import { VelocityArrow } from './VelocityArrow';
 import { AntennaPatternMesh } from './AntennaPatternMesh';
 import LinkVisualizer from './LinkVisualizer';
 import { fersColors } from '@/theme';
+import { useDynamicScale } from '@/hooks/useDynamicScale';
+
+/**
+ * A wrapper for axesHelper that scales based on camera distance to maintain visibility.
+ */
+function ScaledAxesHelper({
+    visible,
+    size = 2,
+}: {
+    visible: boolean;
+    size?: number;
+}) {
+    const ref = useRef<THREE.Group>(null);
+
+    // Apply dynamic scaling hook
+    useDynamicScale(ref);
+
+    return (
+        <group ref={ref}>
+            <axesHelper args={[size]} visible={visible} />
+        </group>
+    );
+}
 
 /**
  * Custom hook to calculate a platform's position at a given simulation time.
@@ -130,8 +154,7 @@ const PlatformSphere = memo(function PlatformSphere({
                         emissiveIntensity={isSelected ? 0.4 : 0}
                     />
                     {/* Render Body Axes: Red=X (Right), Green=Y (Up), Blue=Z (Rear). */}
-                    {/* TODO: the axes should scale with zoom level for better visibility (with maybe a toggle to turn off individual platform axes) */}
-                    <axesHelper args={[2]} visible={showAxes} />
+                    <ScaledAxesHelper visible={showAxes} size={2} />
                 </mesh>
 
                 {/* Visualize Isotropic Static Sphere RCS */}
