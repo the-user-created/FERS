@@ -70,7 +70,7 @@ export default function PropertyInspector() {
                     flexGrow: 1,
                     overflowY: 'auto',
                     minHeight: 0,
-                    p: 2,
+                    p: 1.5,
                 }}
             >
                 <InspectorContent />

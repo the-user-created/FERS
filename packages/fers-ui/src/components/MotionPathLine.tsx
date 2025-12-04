@@ -6,6 +6,7 @@ import { Line } from '@react-three/drei';
 import { Vector3 } from 'three';
 import { invoke } from '@tauri-apps/api/core';
 import { useScenarioStore, Platform } from '@/stores/scenarioStore';
+import { fersColors } from '@/theme';
 
 const NUM_PATH_POINTS = 100; // The resolution of the rendered path line.
 
@@ -94,8 +95,8 @@ export function MotionPathLine({ platform }: { platform: Platform }) {
     return (
         <Line
             points={linePoints}
-            color="#f48fb1"
-            lineWidth={2}
+            color={fersColors.physics.motionPath}
+            lineWidth={1.5}
             dashed={false}
         />
     );

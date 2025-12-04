@@ -26,11 +26,28 @@ export const useScenarioStore = create<ScenarioStore>()(
         currentTime: 0,
         targetPlaybackDuration: null,
         isSimulating: false,
+        isBackendSyncing: false,
+        backendVersion: 0,
         errorSnackbar: {
             open: false,
             message: '',
         },
         viewControlAction: { type: null, timestamp: 0 },
+        visibility: {
+            showAxes: true,
+            showPatterns: true,
+            showBoresights: true,
+            showLinks: true,
+            showLinkLabels: true,
+            showLinkMonostatic: true,
+            showLinkIlluminator: true,
+            showLinkScattered: true,
+            showLinkDirect: true,
+            showVelocities: true,
+            showPlatforms: true,
+            showPlatformLabels: true,
+            showMotionPaths: true,
+        },
 
         // Slices
         ...createAssetSlice(set, get, store),
@@ -89,7 +106,6 @@ export const useScenarioStore = create<ScenarioStore>()(
         },
         clearViewControlAction: () =>
             set((state) => {
-                // Don't clear a 'follow' action, as it's persistent until toggled off.
                 if (state.viewControlAction.type !== 'follow') {
                     return {
                         viewControlAction: {
@@ -100,6 +116,10 @@ export const useScenarioStore = create<ScenarioStore>()(
                 }
                 return {};
             }),
+        toggleLayer: (layer) =>
+            set((state) => {
+                state.visibility[layer] = !state.visibility[layer];
+            }),
 
         // Error Actions
         showError: (message) => set({ errorSnackbar: { open: true, message } }),
@@ -109,3 +129,27 @@ export const useScenarioStore = create<ScenarioStore>()(
             })),
     }))
 );
+
+let debounceTimer: ReturnType<typeof setTimeout>;
+
+useScenarioStore.subscribe((state, prevState) => {
+    // Check for structural changes in the scenario data using reference equality.
+    // Immer ensures that if data changes, the array/object reference changes.
+    const hasStructuralChanges =
+        state.platforms !== prevState.platforms ||
+        state.antennas !== prevState.antennas ||
+        state.waveforms !== prevState.waveforms ||
+        state.timings !== prevState.timings ||
+        state.globalParameters !== prevState.globalParameters;
+
+    // We only trigger sync if data changed AND we aren't currently simulating/playing
+    // (though simulation usually locks UI, checking prevents edge cases).
+    if (hasStructuralChanges && !state.isSimulating) {
+        if (debounceTimer) clearTimeout(debounceTimer);
+
+        debounceTimer = setTimeout(() => {
+            // Trigger the sync action defined in backendSlice
+            void state.syncBackend();
+        }, 500);
+    }
+});

@@ -10,7 +10,7 @@
  * @brief Header for radar channel propagation and interaction models.
  *
  * This file contains the declarations for functions that model the radar channel,
- * including direct and reflected signal path calculations, Doppler effects, and
+ * including direct and reflected signal path calculations,  and
  * power scaling according to the radar range equation. These functions form the
  * core physics engine for determining the properties of a received signal based
  * on the positions and velocities of transmitters, receivers, and targets.
@@ -23,7 +23,12 @@
 #include <memory>
 
 #include "core/config.h"
+#include "math/geometry_ops.h"
 
+namespace core
+{
+	class World;
+}
 namespace radar
 {
 	class Receiver;
@@ -53,9 +58,7 @@ namespace simulation
 	{
 		RealType power; /**< Power scaling factor (dimensionless, relative to transmitted power). */
 		RealType delay; /**< Signal propagation delay in seconds. */
-		RealType doppler_factor; /**< Relativistic Doppler factor of the radar signal (f_recv / f_trans). */
 		RealType phase; /**< Phase shift in radians due to propagation delay. */
-		RealType noise_temperature; /**< Noise temperature contribution from the receiver's perspective. */
 	};
 
 	/**
@@ -78,22 +81,20 @@ namespace simulation
 	/**
 	 * @brief Solves the bistatic radar equation for a reflected path (Tx -> Tgt -> Rx).
 	 *
-	 * This function calculates the signal properties (power, delay, Doppler, phase, noise)
+	 * This function calculates the signal properties (power, delay, phase)
 	 * for a signal traveling from a transmitter, reflecting off a target, and arriving at a receiver.
-	 * It accounts for antenna gains, target RCS, propagation loss, and relativistic Doppler effects.
+	 * It accounts for antenna gains, target RCS, and propagation loss.
 	 *
 	 * @param trans Pointer to the transmitter.
 	 * @param recv Pointer to the receiver.
 	 * @param targ Pointer to the target.
 	 * @param time The time at which the pulse is transmitted.
-	 * @param length The duration of the pulse segment, used for velocity calculation.
 	 * @param wave Pointer to the transmitted radar signal.
 	 * @param results Output struct to store the calculation results.
 	 * @throws RangeError If the target is too close to the transmitter or receiver.
 	 */
 	void solveRe(const radar::Transmitter* trans, const radar::Receiver* recv, const radar::Target* targ,
-				 const std::chrono::duration<RealType>& time, const std::chrono::duration<RealType>& length,
-				 const fers_signal::RadarSignal* wave, ReResults& results);
+				 const std::chrono::duration<RealType>& time, const fers_signal::RadarSignal* wave, ReResults& results);
 
 	/**
 	 * @brief Solves the radar equation for a direct path (Tx -> Rx).
@@ -104,14 +105,13 @@ namespace simulation
 	 * @param trans Pointer to the transmitter.
 	 * @param recv Pointer to the receiver.
 	 * @param time The time at which the pulse is transmitted.
-	 * @param length The duration of the pulse segment, used for velocity calculation.
 	 * @param wave Pointer to the transmitted radar signal.
 	 * @param results Output struct to store the calculation results.
 	 * @throws RangeError If the transmitter and receiver are too close.
 	 */
 	void solveReDirect(const radar::Transmitter* trans, const radar::Receiver* recv,
-					   const std::chrono::duration<RealType>& time, const std::chrono::duration<RealType>& length,
-					   const fers_signal::RadarSignal* wave, ReResults& results);
+					   const std::chrono::duration<RealType>& time, const fers_signal::RadarSignal* wave,
+					   ReResults& results);
 
 	/**
 	 * @brief Calculates the complex envelope contribution for a direct propagation path (Tx -> Rx) at a specific time.
@@ -158,4 +158,53 @@ namespace simulation
 	std::unique_ptr<serial::Response> calculateResponse(const radar::Transmitter* trans, const radar::Receiver* recv,
 														const fers_signal::RadarSignal* signal, RealType startTime,
 														const radar::Target* targ = nullptr);
+
+	/**
+	 * @enum LinkType
+	 * @brief Categorizes the visual link for rendering.
+	 */
+	enum class LinkType
+	{
+		Monostatic, ///< Combined Tx/Rx path
+		BistaticTxTgt, ///< Illuminator path
+		BistaticTgtRx, ///< Scattered path
+		DirectTxRx ///< Interference path
+	};
+
+	/**
+	 * @enum LinkQuality
+	 * @brief Describes the radiometric quality of the link.
+	 */
+	enum class LinkQuality
+	{
+		Strong, ///< SNR > 0 dB
+		Weak ///< SNR < 0 dB (Geometric line of sight, but below noise floor)
+	};
+
+	/**
+	 * @struct PreviewLink
+	 * @brief A calculated link segment for 3D visualization.
+	 */
+	struct PreviewLink
+	{
+		LinkType type;
+		LinkQuality quality;
+		std::string label;
+		std::string source_name; // The start of this specific link segment
+		std::string dest_name; // The end of this specific link segment
+		std::string origin_name; // The original source of energy (Transmitter)
+	};
+
+	/**
+	 * @brief Calculates all visual links for the current world state at a specific time.
+	 *
+	 * This function utilizes the core radar equation helpers to determine visibility,
+	 * power levels, and SNR for all Tx/Rx/Target combinations. It is lightweight
+	 * and does not update simulation state.
+	 *
+	 * @param world The simulation world containing radar components.
+	 * @param time The time at which to calculate geometry.
+	 * @return A vector of renderable links.
+	 */
+	std::vector<PreviewLink> calculatePreviewLinks(const core::World& world, RealType time);
 }

@@ -78,6 +78,8 @@ export const createAssetSlice: StateCreator<
                 type: oldAntenna.type,
                 name: oldAntenna.name,
                 efficiency: oldAntenna.efficiency,
+                meshScale: oldAntenna.meshScale,
+                design_frequency: oldAntenna.design_frequency,
             };
 
             let newAntennaState: Antenna;
@@ -95,7 +97,7 @@ export const createAssetSlice: StateCreator<
                         pattern: 'sinc',
                         alpha: 1.0,
                         beta: 1.0,
-                        gamma: 0.0,
+                        gamma: 2.0,
                     };
                     break;
                 case 'gaussian':

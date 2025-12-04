@@ -22,13 +22,45 @@ export const Section = ({
 }) => (
     <Accordion
         defaultExpanded
-        sx={{ backgroundImage: 'none', boxShadow: 'none' }}
+        disableGutters
+        elevation={0}
+        sx={{
+            border: 1,
+            borderColor: 'divider',
+            borderRadius: 1,
+            '&:before': {
+                display: 'none',
+            },
+            overflow: 'hidden',
+        }}
     >
-        <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ p: 0 }}>
-            <Typography variant="subtitle2">{title}</Typography>
+        <AccordionSummary
+            expandIcon={<ExpandMoreIcon />}
+            sx={{
+                bgcolor: 'action.hover',
+                px: 2,
+                minHeight: 48,
+                '& .MuiAccordionSummary-content': {
+                    my: 0,
+                },
+                '& .MuiAccordionSummary-expandIconWrapper': {
+                    color: 'text.secondary',
+                },
+            }}
+        >
+            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                {title}
+            </Typography>
         </AccordionSummary>
         <AccordionDetails
-            sx={{ p: 0, display: 'flex', flexDirection: 'column', gap: 2 }}
+            sx={{
+                p: 2,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+                borderTop: 1,
+                borderColor: 'divider',
+            }}
         >
             {children}
         </AccordionDetails>

@@ -92,6 +92,15 @@ namespace math
 		[[nodiscard]] Vec3 getPosition(RealType t) const;
 
 		/**
+		 * @brief Retrieves the velocity at a given time along the path.
+		 *
+		 * @param t The time parameter at which to get the velocity.
+		 * @return The interpolated velocity as a Vec3 object.
+		 * @throws PathException If finalize() has not been called before this method.
+		 */
+		[[nodiscard]] Vec3 getVelocity(RealType t) const;
+
+		/**
 		 * @brief Changes the interpolation type.
 		 *
 		 * @param settype The new interpolation type to be used.

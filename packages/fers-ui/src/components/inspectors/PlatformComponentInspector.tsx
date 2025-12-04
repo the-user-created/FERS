@@ -254,13 +254,7 @@ export function PlatformComponentInspector({
     switch (component.type) {
         case 'monostatic':
             return (
-                <div
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '8px',
-                    }}
-                >
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     {renderCommonRadarFields(component)}
                     {component.radarType === 'pulsed' && (
                         <NumberField
@@ -271,17 +265,11 @@ export function PlatformComponentInspector({
                     )}
                     {renderReceiverFields(component)}
                     {renderSchedule(component)}
-                </div>
+                </Box>
             );
         case 'transmitter':
             return (
-                <div
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '8px',
-                    }}
-                >
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     {renderCommonRadarFields(component)}
                     {component.radarType === 'pulsed' && (
                         <NumberField
@@ -291,17 +279,11 @@ export function PlatformComponentInspector({
                         />
                     )}
                     {renderSchedule(component)}
-                </div>
+                </Box>
             );
         case 'receiver':
             return (
-                <div
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '8px',
-                    }}
-                >
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     {renderCommonRadarFields(component)}
                     {component.radarType === 'pulsed' && (
                         <NumberField
@@ -312,17 +294,18 @@ export function PlatformComponentInspector({
                     )}
                     {renderReceiverFields(component)}
                     {renderSchedule(component)}
-                </div>
+                </Box>
             );
         case 'target':
             return (
-                <div
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '16px',
-                    }}
-                >
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <TextField
+                        label="Component Name"
+                        size="small"
+                        fullWidth
+                        value={component.name}
+                        onChange={(e) => handleChange('name', e.target.value)}
+                    />
                     <TextField
                         label="Component Name"
                         size="small"
@@ -386,7 +369,7 @@ export function PlatformComponentInspector({
                             onChange={(v) => handleChange('rcs_k', v)}
                         />
                     )}
-                </div>
+                </Box>
             );
         default:
             return (

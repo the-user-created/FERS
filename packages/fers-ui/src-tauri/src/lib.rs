@@ -35,11 +35,17 @@ use std::sync::Mutex;
 use tauri::{AppHandle, Emitter, Manager, State};
 
 /// Data structure for a single motion waypoint received from the UI.
+///
+/// Coordinates should be in the scenario's define frame (e.g. ENU).
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct MotionWaypoint {
+    /// Time in seconds.
     time: f64,
+    /// Easting/X coordinate in meters.
     x: f64,
+    /// Northing/Y coordinate in meters.
     y: f64,
+    /// Altitude/Z coordinate in meters (MSL).
     altitude: f64,
 }
 
@@ -53,11 +59,42 @@ pub enum InterpolationType {
 }
 
 /// Data structure for a single interpolated point sent back to the UI.
+///
+/// Represents the physical state of a platform at a specific time step.
 #[derive(serde::Serialize, serde::Deserialize)]
-pub struct InterpolatedPoint {
+pub struct InterpolatedMotionPoint {
+    /// X position in meters.
     x: f64,
+    /// Y position in meters.
     y: f64,
+    /// Z position in meters.
     z: f64,
+    /// X velocity in m/s.
+    vx: f64,
+    /// Y velocity in m/s.
+    vy: f64,
+    /// Z velocity in m/s.
+    vz: f64,
+}
+
+/// Data structure for a single rotation waypoint received from the UI.
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct RotationWaypoint {
+    /// Time in seconds.
+    time: f64,
+    /// Azimuth in compass degrees (0=North, 90=East).
+    azimuth: f64,
+    /// Elevation in degrees (positive up).
+    elevation: f64,
+}
+
+/// Data structure for a single interpolated rotation point sent back to the UI.
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct InterpolatedRotationPoint {
+    /// Azimuth in compass degrees.
+    azimuth_deg: f64,
+    /// Elevation in degrees.
+    elevation_deg: f64,
 }
 
 /// Type alias for the managed Tauri state that holds the simulation context.
@@ -293,8 +330,83 @@ fn get_interpolated_motion_path(
     waypoints: Vec<MotionWaypoint>,
     interp_type: InterpolationType,
     num_points: usize,
-) -> Result<Vec<InterpolatedPoint>, String> {
+) -> Result<Vec<InterpolatedMotionPoint>, String> {
     fers_api::get_interpolated_motion_path(waypoints, interp_type, num_points)
+}
+
+/// A stateless command to calculate an interpolated rotation path.
+///
+/// This command delegates to the `libfers` core to calculate a rotation path from a given
+/// set of waypoints. It is used by the UI to preview how the simulation will interpolate
+/// orientation changes over time.
+///
+/// # Parameters
+/// * `waypoints` - A vector of rotation waypoints (azimuth/elevation in compass degrees).
+/// * `interp_type` - The interpolation algorithm to use ('static', 'linear', 'cubic').
+/// * `num_points` - The desired number of points for the final path.
+///
+/// # Returns
+/// * `Ok(Vec<InterpolatedRotationPoint>)` - The calculated rotation points.
+/// * `Err(String)` - An error message if the calculation failed.
+#[tauri::command]
+fn get_interpolated_rotation_path(
+    waypoints: Vec<RotationWaypoint>,
+    interp_type: InterpolationType,
+    num_points: usize,
+) -> Result<Vec<InterpolatedRotationPoint>, String> {
+    fers_api::get_interpolated_rotation_path(waypoints, interp_type, num_points)
+}
+
+/// Retrieves a 2D antenna gain pattern for visualization.
+///
+/// This command samples the antenna model loaded in the current simulation context.
+/// It is stateful because it relies on the antenna assets defined in the loaded scenario.
+///
+/// # Parameters
+/// * `antenna_name` - The unique name of the antenna asset to sample.
+/// * `az_samples` - Resolution along the azimuth axis (e.g., 360).
+/// * `el_samples` - Resolution along the elevation axis (e.g., 180).
+/// * `frequency` - The frequency in Hz at which to calculate gain (relevant for frequency-dependent antennas).
+/// * `state` - The shared simulation state.
+///
+/// # Returns
+/// * `Ok(AntennaPatternData)` - Struct containing flattened gain array and dimensions.
+/// * `Err(String)` - Error if antenna not found or context locked.
+#[tauri::command]
+fn get_antenna_pattern(
+    antenna_name: String,
+    az_samples: usize,
+    el_samples: usize,
+    frequency: f64,
+    state: State<'_, FersState>,
+) -> Result<fers_api::AntennaPatternData, String> {
+    state.lock().map_err(|e| e.to_string())?.get_antenna_pattern(
+        &antenna_name,
+        az_samples,
+        el_samples,
+        frequency,
+    )
+}
+
+/// Calculates visual radio links between platforms at a specific time.
+///
+/// This command performs a lightweight geometric and physics check to determine
+/// which platforms can "see" each other. It distinguishes between monostatic,
+/// bistatic, and interference paths based on signal-to-noise ratios.
+///
+/// # Parameters
+/// * `time` - The simulation time in seconds to evaluate.
+/// * `state` - The shared simulation state containing platforms and physics models.
+///
+/// # Returns
+/// * `Ok(Vec<VisualLink>)` - A list of renderable link segments with metadata (type, quality, label).
+/// * `Err(String)` - Error if context access fails.
+#[tauri::command]
+fn get_preview_links(
+    time: f64,
+    state: State<'_, FersState>,
+) -> Result<Vec<fers_api::VisualLink>, String> {
+    state.lock().map_err(|e| e.to_string())?.calculate_preview_links(time)
 }
 
 /// Initializes and runs the Tauri application.
@@ -343,7 +455,10 @@ pub fn run() {
             update_scenario_from_json,
             run_simulation,
             generate_kml,
-            get_interpolated_motion_path
+            get_interpolated_motion_path,
+            get_interpolated_rotation_path,
+            get_antenna_pattern,
+            get_preview_links,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

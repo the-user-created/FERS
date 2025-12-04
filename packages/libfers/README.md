@@ -72,7 +72,7 @@ CC=/usr/local/opt/llvm/bin/clang CXX=/usr/local/opt/llvm/bin/clang++ cmake ..
 make -j$(sysctl -n hw.ncpu)
 ```
 
-The compiled artifacts will be located in the `packages/build/` directory. Libraries (`.a`, `.so`) are in `libfers/`,
+The compiled artifacts will be located in the `build/` directory. Libraries (`.a`, `.so`) are in `libfers/`,
 and the `fers-cli` executable is in `fers-cli/`. DLLs on Windows will be placed in `bin/`.
 
 ### Build Options

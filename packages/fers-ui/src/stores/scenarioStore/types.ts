@@ -2,7 +2,6 @@
 // Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
 
 import { z } from 'zod';
-import { Vector3 } from 'three';
 import {
     GlobalParametersSchema,
     WaveformSchema,
@@ -34,10 +33,35 @@ export type RotationPath = z.infer<typeof RotationPathSchema>;
 export type PlatformComponent = z.infer<typeof PlatformComponentSchema>;
 export type SchedulePeriod = z.infer<typeof SchedulePeriodSchema>;
 export type Platform = z.infer<typeof PlatformSchema> & {
-    pathPoints?: Vector3[];
+    pathPoints?: {
+        x: number;
+        y: number;
+        z: number;
+        vx: number;
+        vy: number;
+        vz: number;
+    }[];
+    rotationPathPoints?: { azimuth: number; elevation: number }[];
 };
 
-// --- Corrected Component Type Definitions ---
+// --- Visibility Type Definitions ---
+export type VisualizationLayers = {
+    showAxes: boolean;
+    showPatterns: boolean;
+    showBoresights: boolean;
+    showLinks: boolean;
+    showLinkLabels: boolean;
+    showLinkMonostatic: boolean;
+    showLinkIlluminator: boolean;
+    showLinkScattered: boolean;
+    showLinkDirect: boolean;
+    showVelocities: boolean;
+    showPlatforms: boolean;
+    showPlatformLabels: boolean;
+    showMotionPaths: boolean;
+};
+
+// --- Component Type Definitions ---
 export type MonostaticComponent = Extract<
     PlatformComponent,
     { type: 'monostatic' }
@@ -80,11 +104,14 @@ export type ScenarioState = ScenarioData & {
     currentTime: number;
     targetPlaybackDuration: number | null;
     isSimulating: boolean;
+    isBackendSyncing: boolean;
+    backendVersion: number;
     errorSnackbar: {
         open: boolean;
         message: string;
     };
     viewControlAction: ViewControlAction;
+    visibility: VisualizationLayers;
 };
 
 // --- Action Slice Types ---
@@ -149,6 +176,7 @@ export type ViewControlActions = {
     focusOnItem: (itemId: string) => void;
     toggleFollowItem: (itemId: string) => void;
     clearViewControlAction: () => void;
+    toggleLayer: (layer: keyof VisualizationLayers) => void;
 };
 
 // --- Full Store Type ---

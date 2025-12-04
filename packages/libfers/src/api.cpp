@@ -27,6 +27,7 @@
 #include "serial/kml_generator.h"
 #include "serial/xml_parser.h"
 #include "serial/xml_serializer.h"
+#include "simulation/channel_model.h"
 
 // The fers_context struct is defined here as an alias for our C++ class.
 // This allows the C-API to return an opaque pointer, hiding the C++ implementation.
@@ -79,6 +80,8 @@ void fers_context_destroy(fers_context_t* context)
 {
 	if (!context)
 	{
+		last_error_message = "Invalid context provided to fers_context_destroy.";
+		LOG(logging::Level::WARNING, last_error_message);
 		return;
 	}
 	delete context;
@@ -505,7 +508,8 @@ fers_interpolated_path_t* fers_get_interpolated_motion_path(const fers_motion_wa
 		{
 			const double t = start_time + i * time_step;
 			const math::Vec3 pos = path.getPosition(t);
-			result_path->points[i] = {pos.x, pos.y, pos.z};
+			const math::Vec3 vel = path.getVelocity(t);
+			result_path->points[i] = {pos.x, pos.y, pos.z, vel.x, vel.y, vel.z};
 		}
 
 		return result_path;
@@ -576,8 +580,8 @@ fers_interpolated_rotation_path_t* fers_get_interpolated_rotation_path(const fer
 		if (waypoint_count < 2 || duration <= 0)
 		{
 			const math::SVec3 rot = path.getPosition(start_time);
-			// Convert back to compass degrees for output
-			const RealType az_deg = std::fmod(90.0 - rot.azimuth * 180.0 / PI + 360.0, 360.0);
+			// Convert back to compass degrees for output without normalization
+			const RealType az_deg = 90.0 - rot.azimuth * 180.0 / PI;
 			const RealType el_deg = rot.elevation * 180.0 / PI;
 			for (size_t i = 0; i < num_points; ++i)
 			{
@@ -594,7 +598,8 @@ fers_interpolated_rotation_path_t* fers_get_interpolated_rotation_path(const fer
 			const math::SVec3 rot = path.getPosition(t);
 
 			// Convert from internal mathematical radians back to compass degrees for C-API output
-			const RealType az_deg = std::fmod(90.0 - rot.azimuth * 180.0 / PI + 360.0, 360.0);
+			// We do NOT normalize to [0, 360) to preserve winding/negative angles for the UI.
+			const RealType az_deg = 90.0 - rot.azimuth * 180.0 / PI;
 			const RealType el_deg = rot.elevation * 180.0 / PI;
 
 			result_path->points[i] = {az_deg, el_deg};
@@ -615,6 +620,188 @@ void fers_free_interpolated_rotation_path(fers_interpolated_rotation_path_t* pat
 	{
 		delete[] path->points;
 		delete path;
+	}
+}
+
+// --- Antenna Pattern Implementation ---
+
+fers_antenna_pattern_data_t* fers_get_antenna_pattern(const fers_context_t* context, const char* antenna_name,
+													  const size_t az_samples, const size_t el_samples,
+													  const double frequency_hz)
+{
+	last_error_message.clear();
+	if (!context || !antenna_name || az_samples == 0 || el_samples == 0)
+	{
+		last_error_message = "Invalid arguments: context, antenna_name, or sample counts are invalid.";
+		LOG(logging::Level::ERROR, last_error_message);
+		return nullptr;
+	}
+
+	try
+	{
+		const auto* ctx = reinterpret_cast<const FersContext*>(context);
+		antenna::Antenna* ant = ctx->getWorld()->findAntenna(antenna_name);
+
+		if (!ant)
+		{
+			last_error_message = "Antenna '" + std::string(antenna_name) + "' not found in the world.";
+			LOG(logging::Level::ERROR, last_error_message);
+			return nullptr;
+		}
+
+		// TODO: Currently only using the first-found waveform. This is incorrect but also difficult to represent
+		//		 correctly in scenarios with multiple waveforms as the gain for squarehorn and parabolic antennas
+		// depends on 		 the wavelength. Hence a decision needs to be made about whether to return multiple patterns
+		// per waveform or 		 have the user specify a representative wavelength in the UI per antenna.
+		// Calculate wavelength from the provided frequency.
+		// Default to 1GHz (0.3m) if frequency is invalid/zero, though the UI should prevent this
+		// for antennas that strictly require it (Horn/Parabolic).
+		RealType wavelength = 0.3;
+		if (frequency_hz > 0.0)
+		{
+			wavelength = params::c() / frequency_hz;
+		}
+
+		auto* data = new fers_antenna_pattern_data_t();
+		data->az_count = az_samples;
+		data->el_count = el_samples;
+		const size_t total_samples = az_samples * el_samples;
+		data->gains = new double[total_samples];
+
+		// The reference angle (boresight) is implicitly the local X-axis in the FERS engine.
+		// We pass a zero rotation to get the gain relative to this boresight.
+		const math::SVec3 ref_angle(1.0, 0.0, 0.0);
+		double max_gain = 0.0;
+
+		for (size_t i = 0; i < el_samples; ++i)
+		{
+			// Elevation from -PI/2 to PI/2
+			const RealType elevation = (static_cast<RealType>(i) / (el_samples - 1)) * PI - (PI / 2.0);
+			for (size_t j = 0; j < az_samples; ++j)
+			{
+				// Azimuth from -PI to PI
+				const RealType azimuth = (static_cast<RealType>(j) / (az_samples - 1)) * 2.0 * PI - PI;
+				const math::SVec3 sample_angle(1.0, azimuth, elevation);
+				const RealType gain = ant->getGain(sample_angle, ref_angle, wavelength);
+				data->gains[i * az_samples + j] = gain;
+				if (gain > max_gain)
+				{
+					max_gain = gain;
+				}
+			}
+		}
+
+		data->max_gain = max_gain;
+
+		// Normalize the gains
+		if (max_gain > 0)
+		{
+			for (size_t i = 0; i < total_samples; ++i)
+			{
+				data->gains[i] /= max_gain;
+			}
+		}
+
+		return data;
+	}
+	catch (const std::exception& e)
+	{
+		handle_api_exception(e, "fers_get_antenna_pattern");
+		return nullptr;
+	}
+}
+
+void fers_free_antenna_pattern_data(fers_antenna_pattern_data_t* data)
+{
+	if (data)
+	{
+		delete[] data->gains;
+		delete data;
+	}
+}
+
+// --- Preview Link Calculation Implementation ---
+
+fers_visual_link_list_t* fers_calculate_preview_links(const fers_context_t* context, const double time)
+{
+	last_error_message.clear();
+	if (!context)
+	{
+		last_error_message = "Invalid context passed to fers_calculate_preview_links";
+		LOG(logging::Level::ERROR, last_error_message);
+		return nullptr;
+	}
+
+	try
+	{
+		const auto* ctx = reinterpret_cast<const FersContext*>(context);
+		// Call the core physics logic in channel_model.cpp
+		const auto cpp_links = simulation::calculatePreviewLinks(*ctx->getWorld(), time);
+
+		// Convert C++ vector to C-API struct
+		auto* result = new fers_visual_link_list_t();
+		result->count = cpp_links.size();
+
+		if (!cpp_links.empty())
+		{
+			result->links = new fers_visual_link_t[result->count];
+			for (size_t i = 0; i < result->count; ++i)
+			{
+				const auto& src = cpp_links[i];
+				auto& dst = result->links[i];
+
+				// Map enums
+				switch (src.type)
+				{
+				case simulation::LinkType::Monostatic:
+					dst.type = FERS_LINK_MONOSTATIC;
+					break;
+				case simulation::LinkType::BistaticTxTgt:
+					dst.type = FERS_LINK_BISTATIC_TX_TGT;
+					break;
+				case simulation::LinkType::BistaticTgtRx:
+					dst.type = FERS_LINK_BISTATIC_TGT_RX;
+					break;
+				case simulation::LinkType::DirectTxRx:
+					dst.type = FERS_LINK_DIRECT_TX_RX;
+					break;
+				}
+
+				dst.quality = (src.quality == simulation::LinkQuality::Strong) ? FERS_LINK_STRONG : FERS_LINK_WEAK;
+
+				// Safe string copy
+				std::strncpy(dst.label, src.label.c_str(), sizeof(dst.label) - 1);
+				dst.label[sizeof(dst.label) - 1] = '\0';
+
+				std::strncpy(dst.source_name, src.source_name.c_str(), sizeof(dst.source_name) - 1);
+				dst.source_name[sizeof(dst.source_name) - 1] = '\0';
+
+				std::strncpy(dst.dest_name, src.dest_name.c_str(), sizeof(dst.dest_name) - 1);
+				dst.dest_name[sizeof(dst.dest_name) - 1] = '\0';
+
+				std::strncpy(dst.origin_name, src.origin_name.c_str(), sizeof(dst.origin_name) - 1);
+				dst.origin_name[sizeof(dst.origin_name) - 1] = '\0';
+			}
+		}
+		else
+		{
+			result->links = nullptr;
+		}
+		return result;
+	}
+	catch (const std::exception& e)
+	{
+		handle_api_exception(e, "fers_calculate_preview_links");
+		return nullptr;
+	}
+}
+
+void fers_free_preview_links(fers_visual_link_list_t* list)
+{
+	if (list)
+	{
+		delete[] list->links;
+		delete list;
 	}
 }
 }

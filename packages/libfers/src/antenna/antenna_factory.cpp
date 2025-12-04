@@ -36,7 +36,14 @@ namespace
 	 * @param theta The angle for which to compute the sinc function.
 	 * @return The value of the sinc function at the given angle theta.
 	 */
-	RealType sinc(const RealType theta) noexcept { return std::sin(theta) / (theta + EPSILON); }
+	RealType sinc(const RealType theta) noexcept
+	{
+		if (std::abs(theta) < EPSILON)
+		{
+			return 1.0;
+		}
+		return std::sin(theta) / theta;
+	}
 
 	/**
 	 * @brief Compute the Bessel function of the first kind.
@@ -99,10 +106,9 @@ namespace antenna
 	RealType Sinc::getGain(const SVec3& angle, const SVec3& refangle, RealType /*wavelength*/) const noexcept
 	{
 		const RealType theta = getAngle(angle, refangle);
-		const ComplexType complex_sinc(sinc(_beta * theta), 0.0);
-		const ComplexType complex_gain =
-			_alpha * std::pow(complex_sinc, ComplexType(_gamma, 0.0)) * getEfficiencyFactor();
-		return std::abs(complex_gain);
+		const RealType sinc_val = sinc(_beta * theta);
+		const RealType gain_pattern = std::pow(std::abs(sinc_val), _gamma);
+		return _alpha * gain_pattern * getEfficiencyFactor();
 	}
 
 	RealType SquareHorn::getGain(const SVec3& angle, const SVec3& refangle, const RealType wavelength) const noexcept

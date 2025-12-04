@@ -57,6 +57,12 @@ export function AntennaInspector({ item }: AntennaInspectorProps) {
                 value={item.efficiency}
                 onChange={(v) => handleChange('efficiency', v)}
             />
+            <NumberField
+                label="Mesh Scale Multiplier"
+                value={item.meshScale ?? null}
+                onChange={(v) => handleChange('meshScale', v)}
+            />
+
             {item.pattern === 'sinc' && (
                 <>
                     <NumberField
@@ -92,12 +98,20 @@ export function AntennaInspector({ item }: AntennaInspectorProps) {
             )}
             {(item.pattern === 'squarehorn' ||
                 item.pattern === 'parabolic') && (
-                <NumberField
-                    label="Diameter (m)"
-                    value={item.diameter ?? null}
-                    onChange={(v) => handleChange('diameter', v)}
-                />
+                <>
+                    <NumberField
+                        label="Diameter (m)"
+                        value={item.diameter ?? null}
+                        onChange={(v) => handleChange('diameter', v)}
+                    />
+                    <NumberField
+                        label="Design Frequency (Hz)"
+                        value={item.design_frequency ?? null}
+                        onChange={(v) => handleChange('design_frequency', v)}
+                    />
+                </>
             )}
+
             {(item.pattern === 'xml' || item.pattern === 'file') && (
                 <FileInput
                     label="Pattern File"

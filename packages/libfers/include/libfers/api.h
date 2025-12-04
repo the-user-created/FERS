@@ -177,15 +177,14 @@ char* fers_get_scenario_as_xml(fers_context_t* context);
  * @brief Updates the simulation scenario from a JSON string.
  *
  * This is the primary method for the UI to push its state back to the C++
- * core. It performs a full replacement of the existing scenario. This "replace"
- * strategy was chosen over a more complex "patch" or "diff" approach to simplify
- * state management and ensure the C++ core is always perfectly synchronized with
- * the UI's state representation.
+ * core. It performs a full replacement of the existing scenario.
  *
  * @param context A valid `fers_context_t` handle.
  * @param scenario_json A null-terminated UTF-8 string containing the FERS scenario in JSON format.
- * @return 0 on success, a non-zero error code on failure. Use
- *         `fers_get_last_error_message()` to retrieve error details.
+ * @return 0 on success.
+ *         1 on generic logic error.
+ *         2 on JSON parsing/schema validation error.
+ *         Use `fers_get_last_error_message()` to retrieve error details.
  */
 int fers_update_scenario_from_json(fers_context_t* context, const char* scenario_json);
 
@@ -259,6 +258,50 @@ int fers_run_simulation(fers_context_t* context, fers_progress_callback_t callba
  */
 int fers_generate_kml(const fers_context_t* context, const char* output_kml_filepath);
 
+// --- Antenna Pattern Utilities ---
+
+/**
+ * @brief Represents a sampled 2D antenna gain pattern.
+ * Gains are in linear scale (not dB), normalized to the antenna's peak gain.
+ * The data is structured as a flat array in row-major order (elevation rows, then azimuth columns).
+ * @note The `gains` array must be freed using `fers_free_antenna_pattern_data`.
+ */
+typedef struct
+{
+	double* gains; // Flat array of gain values [el_count * az_count]
+	size_t az_count; // Number of samples along azimuth (-180 to +180 deg)
+	size_t el_count; // Number of samples along elevation (-90 to +90 deg)
+	double max_gain; // The peak gain found in the pattern (linear scale)
+} fers_antenna_pattern_data_t;
+
+
+/**
+ * @brief Samples the gain pattern of a specified antenna and provides the data.
+ *
+ * This function calculates the antenna's far-field gain at a specified resolution
+ * over the full sphere of directions (azimuth and elevation). The resulting gain
+ * values are linear (not in dB) and normalized relative to the pattern's peak gain.
+ * This is a stateless utility useful for UI previews and analysis.
+ *
+ * @param context A valid `fers_context_t` handle containing a loaded scenario with the antenna.
+ * @param antenna_name The name of the antenna asset to sample.
+ * @param az_samples The desired number of sample points along the azimuth axis.
+ * @param el_samples The desired number of sample points along the elevation axis.
+ * @param frequency_hz The frequency in Hz to use for gain calculation (affects aperture antennas).
+ * @return A pointer to a `fers_antenna_pattern_data_t` struct containing the results.
+ *         Returns NULL on failure (e.g., antenna not found). The caller owns the
+ *         returned struct and must free it with `fers_free_antenna_pattern_data`.
+ */
+fers_antenna_pattern_data_t* fers_get_antenna_pattern(const fers_context_t* context, const char* antenna_name,
+													  size_t az_samples, size_t el_samples, double frequency_hz);
+
+/**
+ * @brief Frees the memory allocated for an antenna pattern data structure.
+ * @param data A pointer to the `fers_antenna_pattern_data_t` struct to free.
+ */
+void fers_free_antenna_pattern_data(fers_antenna_pattern_data_t* data);
+
+
 // --- Path Interpolation Utilities ---
 
 /**
@@ -279,13 +322,10 @@ typedef enum
  */
 typedef struct
 {
-	double time;
-
-	double x;
-
-	double y;
-
-	double z;
+	double time; /**< Time in seconds. */
+	double x; /**< X coordinate in meters (East in ENU). */
+	double y; /**< Y coordinate in meters (North in ENU). */
+	double z; /**< Z coordinate in meters (Up/Altitude in ENU). */
 } fers_motion_waypoint_t;
 
 /**
@@ -294,23 +334,23 @@ typedef struct
  */
 typedef struct
 {
-	double time;
-
-	double azimuth_deg;
-
-	double elevation_deg;
+	double time; /**< Time in seconds. */
+	double azimuth_deg; /**< Azimuth angle in compass degrees (0=North, 90=East). */
+	double elevation_deg; /**< Elevation angle in degrees (positive up). */
 } fers_rotation_waypoint_t;
 
 /**
  * @brief Represents a single interpolated point on a motion path.
+ * Includes position and velocity in the scenario's coordinate frame.
  */
 typedef struct
 {
-	double x;
-
-	double y;
-
-	double z;
+	double x; /**< X position in meters. */
+	double y; /**< Y position in meters. */
+	double z; /**< Z position in meters. */
+	double vx; /**< X velocity in m/s. */
+	double vy; /**< Y velocity in m/s. */
+	double vz; /**< Z velocity in m/s. */
 } fers_interpolated_point_t;
 
 /**
@@ -319,9 +359,8 @@ typedef struct
  */
 typedef struct
 {
-	double azimuth_deg;
-
-	double elevation_deg;
+	double azimuth_deg; /**< Azimuth angle in compass degrees. */
+	double elevation_deg; /**< Elevation angle in degrees. */
 } fers_interpolated_rotation_point_t;
 
 
@@ -332,7 +371,6 @@ typedef struct
 typedef struct
 {
 	fers_interpolated_point_t* points;
-
 	size_t count;
 } fers_interpolated_path_t;
 
@@ -343,7 +381,6 @@ typedef struct
 typedef struct
 {
 	fers_interpolated_rotation_point_t* points;
-
 	size_t count;
 } fers_interpolated_rotation_path_t;
 
@@ -394,6 +431,65 @@ fers_interpolated_rotation_path_t* fers_get_interpolated_rotation_path(const fer
  */
 void fers_free_interpolated_rotation_path(fers_interpolated_rotation_path_t* path);
 
+// --- Preview Link Calculation ---
+
+/**
+ * @brief Quality of the radio link based on SNR.
+ */
+typedef enum
+{
+	FERS_LINK_STRONG, // SNR > 0 dB
+	FERS_LINK_WEAK // SNR < 0 dB (Geometric possibility but sub-noise)
+} fers_link_quality_t;
+
+/**
+ * @brief Type of visual link to render.
+ */
+typedef enum
+{
+	FERS_LINK_MONOSTATIC, // Combined Tx/Rx path
+	FERS_LINK_BISTATIC_TX_TGT, // Illuminator path
+	FERS_LINK_BISTATIC_TGT_RX, // Scattered path
+	FERS_LINK_DIRECT_TX_RX // Interference path
+} fers_link_type_t;
+
+/**
+ * @brief Represents a single renderable line segment metadata.
+ * Geometry is resolved client-side.
+ */
+typedef struct
+{
+	fers_link_type_t type; /**< Type of the link (Monostatic, Bistatic, etc.). */
+	fers_link_quality_t quality; /**< Signal quality (Strong/Weak). */
+	char label[128]; /**< Pre-formatted label (e.g., "-95 dBm"). */
+	char source_name[64]; /**< Name of the source component (e.g. Transmitter). */
+	char dest_name[64]; /**< Name of the destination component (e.g. Receiver/Target). */
+	char origin_name[64]; /**< Name of the originating Transmitter (for scattered paths). */
+} fers_visual_link_t;
+
+/**
+ * @brief A container for a list of visual links.
+ * @note The `links` array is owned by this struct and must be freed using `fers_free_preview_links`.
+ */
+typedef struct
+{
+	fers_visual_link_t* links;
+	size_t count;
+} fers_visual_link_list_t;
+
+/**
+ * @brief Calculates visual links for a specific simulation time.
+ * @param context The simulation context.
+ * @param time The simulation time in seconds.
+ * @return A pointer to a link list. Caller must free with fers_free_preview_links.
+ */
+fers_visual_link_list_t* fers_calculate_preview_links(const fers_context_t* context, double time);
+
+/**
+ * @brief Frees the memory allocated for a preview link list.
+ * @param list The list to free.
+ */
+void fers_free_preview_links(fers_visual_link_list_t* list);
 
 #ifdef __cplusplus
 }

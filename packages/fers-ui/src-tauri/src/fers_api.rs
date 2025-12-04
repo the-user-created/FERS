@@ -256,6 +256,69 @@ extern "C" fn simulation_progress_callback(
         .expect("Failed to emit simulation-progress event");
 }
 
+/// A safe RAII wrapper for the antenna pattern data returned by the C-API.
+struct FersAntennaPatternData(*mut ffi::fers_antenna_pattern_data_t);
+impl Drop for FersAntennaPatternData {
+    fn drop(&mut self) {
+        if !self.0.is_null() {
+            // SAFETY: The pointer is valid and owned by this struct.
+            unsafe { ffi::fers_free_antenna_pattern_data(self.0) };
+        }
+    }
+}
+
+/// Data structure for antenna pattern data sent to the frontend.
+///
+/// This struct flattens the 2D gain data into a 1D vector for easy serialization.
+#[derive(serde::Serialize)]
+pub struct AntennaPatternData {
+    /// Flattened array of linear gain values (normalized 0.0 to 1.0).
+    /// Ordered row-major: Elevation rows, then Azimuth columns.
+    gains: Vec<f64>,
+    /// Number of samples along the azimuth axis (360 degrees).
+    az_count: usize,
+    /// Number of samples along the elevation axis (180 degrees).
+    el_count: usize,
+    /// The peak linear gain found in the pattern, used for normalization.
+    max_gain: f64,
+}
+
+// Helper wrapper for the visual link list
+struct FersVisualLinkList(*mut ffi::fers_visual_link_list_t);
+
+impl Drop for FersVisualLinkList {
+    fn drop(&mut self) {
+        if !self.0.is_null() {
+            unsafe { ffi::fers_free_preview_links(self.0) };
+        }
+    }
+}
+
+/// Represents a visual link segment for 3D rendering.
+///
+/// This struct maps C-style enums to integers for consumption by the TypeScript frontend.
+#[derive(serde::Serialize)]
+pub struct VisualLink {
+    /// The type of radio link.
+    /// * `0`: Monostatic (Tx -> Tgt -> Rx, where Tx==Rx)
+    /// * `1`: Bistatic Illuminator (Tx -> Tgt)
+    /// * `2`: Bistatic Scattered (Tgt -> Rx)
+    /// * `3`: Direct Interference (Tx -> Rx)
+    pub link_type: u8,
+    /// The radiometric quality of the link.
+    /// * `0`: Strong (SNR > 0 dB)
+    /// * `1`: Weak (SNR < 0 dB, visible but sub-noise)
+    pub quality: u8,
+    /// A pre-formatted label string (e.g., "-95 dBm").
+    pub label: String,
+    /// The name of the start component for this segment.
+    pub source_name: String,
+    /// The name of the end component for this segment.
+    pub dest_name: String,
+    /// The name of the original transmitter (useful for scattered paths).
+    pub origin_name: String,
+}
+
 impl FersContext {
     /// Creates a new `FersContext` by calling the C-API constructor.
     ///
@@ -475,6 +538,116 @@ impl FersContext {
             Err(get_last_error())
         }
     }
+
+    /// Retrieves a sampled gain pattern for a specified antenna.
+    ///
+    /// # Parameters
+    ///
+    /// * `antenna_name` - The name of the antenna asset to sample.
+    /// * `az_samples` - The resolution along the azimuth axis.
+    /// * `el_samples` - The resolution along the elevation axis.
+    /// * `frequency` - The frequency in Hz to use for calculation.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(AntennaPatternData)` - If the pattern was successfully sampled.
+    /// * `Err(String)` - If the antenna was not found or an error occurred.
+    pub fn get_antenna_pattern(
+        &self,
+        antenna_name: &str,
+        az_samples: usize,
+        el_samples: usize,
+        frequency: f64,
+    ) -> Result<AntennaPatternData, String> {
+        let c_antenna_name = CString::new(antenna_name).map_err(|e| e.to_string())?;
+        // SAFETY: We pass a valid context pointer and valid arguments.
+        let result_ptr = unsafe {
+            ffi::fers_get_antenna_pattern(
+                self.ptr,
+                c_antenna_name.as_ptr(),
+                az_samples,
+                el_samples,
+                frequency,
+            )
+        };
+
+        if result_ptr.is_null() {
+            return Err(get_last_error());
+        }
+
+        let owned_data = FersAntennaPatternData(result_ptr);
+
+        // SAFETY: Dereferencing the non-null pointer returned by the FFI.
+        // The data is valid for the lifetime of `owned_data`.
+        let (gains_ptr, az_count, el_count, max_gain) = unsafe {
+            (
+                (*owned_data.0).gains,
+                (*owned_data.0).az_count,
+                (*owned_data.0).el_count,
+                (*owned_data.0).max_gain,
+            )
+        };
+        let total_samples = az_count * el_count;
+
+        // SAFETY: The gains_ptr is valid for `total_samples` elements.
+        let gains_slice = unsafe { std::slice::from_raw_parts(gains_ptr, total_samples) };
+
+        Ok(AntennaPatternData { gains: gains_slice.to_vec(), az_count, el_count, max_gain })
+    }
+
+    pub fn calculate_preview_links(&self, time: f64) -> Result<Vec<VisualLink>, String> {
+        let list_ptr = unsafe { ffi::fers_calculate_preview_links(self.ptr, time) };
+        if list_ptr.is_null() {
+            let err_msg = get_last_error();
+            // If we receive a NULL ptr but no error message, it might be a logic error
+            // or an unhandled edge case in C++. We default to the retrieved message.
+            return Err(err_msg);
+        }
+
+        let owned_list = FersVisualLinkList(list_ptr);
+        let count = unsafe { (*owned_list.0).count };
+        let links_ptr = unsafe { (*owned_list.0).links };
+
+        let mut result = Vec::with_capacity(count);
+        if count > 0 && !links_ptr.is_null() {
+            let slice = unsafe { std::slice::from_raw_parts(links_ptr, count) };
+            for l in slice {
+                let link_type_val = match l.type_ {
+                    ffi::fers_link_type_t_FERS_LINK_MONOSTATIC => 0,
+                    ffi::fers_link_type_t_FERS_LINK_BISTATIC_TX_TGT => 1,
+                    ffi::fers_link_type_t_FERS_LINK_BISTATIC_TGT_RX => 2,
+                    ffi::fers_link_type_t_FERS_LINK_DIRECT_TX_RX => 3,
+                    _ => 0,
+                };
+
+                let quality_val = match l.quality {
+                    ffi::fers_link_quality_t_FERS_LINK_STRONG => 0,
+                    _ => 1,
+                };
+
+                let label =
+                    unsafe { CStr::from_ptr(l.label.as_ptr()) }.to_string_lossy().into_owned();
+                let source_name = unsafe { CStr::from_ptr(l.source_name.as_ptr()) }
+                    .to_string_lossy()
+                    .into_owned();
+                let dest_name =
+                    unsafe { CStr::from_ptr(l.dest_name.as_ptr()) }.to_string_lossy().into_owned();
+                let origin_name = unsafe { CStr::from_ptr(l.origin_name.as_ptr()) }
+                    .to_string_lossy()
+                    .into_owned();
+
+                result.push(VisualLink {
+                    link_type: link_type_val,
+                    quality: quality_val,
+                    label,
+                    source_name,
+                    dest_name,
+                    origin_name,
+                });
+            }
+        }
+        Ok(result)
+    }
 }
 
 /// A safe wrapper for the stateless `fers_get_interpolated_motion_path` C-API function.
@@ -495,7 +668,7 @@ pub fn get_interpolated_motion_path(
     waypoints: Vec<crate::MotionWaypoint>,
     interp_type: crate::InterpolationType,
     num_points: usize,
-) -> Result<Vec<crate::InterpolatedPoint>, String> {
+) -> Result<Vec<crate::InterpolatedMotionPoint>, String> {
     if waypoints.is_empty() || num_points == 0 {
         return Ok(Vec::new());
     }
@@ -527,9 +700,9 @@ pub fn get_interpolated_motion_path(
     }
 
     // RAII wrapper to ensure the C-allocated path is freed.
-    struct FersInterpolatedPath(*mut ffi::fers_interpolated_path_t);
+    struct FersInterpolatedMotionPath(*mut ffi::fers_interpolated_path_t);
 
-    impl Drop for FersInterpolatedPath {
+    impl Drop for FersInterpolatedMotionPath {
         fn drop(&mut self) {
             if !self.0.is_null() {
                 // SAFETY: The pointer is valid and owned by this struct.
@@ -538,15 +711,102 @@ pub fn get_interpolated_motion_path(
         }
     }
 
-    let owned_path = FersInterpolatedPath(result_ptr);
+    let owned_path = FersInterpolatedMotionPath(result_ptr);
 
     // SAFETY: We are accessing the fields of a non-null pointer returned by the FFI.
     // The `count` and `points` fields are guaranteed to be valid for the lifetime of `owned_path`.
     let result_slice =
         unsafe { std::slice::from_raw_parts((*owned_path.0).points, (*owned_path.0).count) };
 
-    let points: Vec<crate::InterpolatedPoint> =
-        result_slice.iter().map(|p| crate::InterpolatedPoint { x: p.x, y: p.y, z: p.z }).collect();
+    let points: Vec<crate::InterpolatedMotionPoint> = result_slice
+        .iter()
+        .map(|p| crate::InterpolatedMotionPoint {
+            x: p.x,
+            y: p.y,
+            z: p.z,
+            vx: p.vx,
+            vy: p.vy,
+            vz: p.vz,
+        })
+        .collect();
+
+    Ok(points)
+}
+
+/// A safe wrapper for the stateless `fers_get_interpolated_rotation_path` C-API function.
+///
+/// This function converts Rust-native rotation waypoints into C-compatible types,
+/// calls the FFI function, and converts the result back into a `Vec` of points.
+/// It handles the mapping between Rust enums and C enums for interpolation types
+/// and ensures that the C-allocated array is properly freed.
+///
+/// # Parameters
+/// * `waypoints` - A vector of `RotationWaypoint`s.
+/// * `interp_type` - The interpolation algorithm to use.
+/// * `num_points` - The desired number of points in the output path.
+///
+/// # Returns
+/// * `Ok(Vec<InterpolatedRotationPoint>)` - A vector of interpolated points.
+/// * `Err(String)` - An error message if the FFI call failed.
+pub fn get_interpolated_rotation_path(
+    waypoints: Vec<crate::RotationWaypoint>,
+    interp_type: crate::InterpolationType,
+    num_points: usize,
+) -> Result<Vec<crate::InterpolatedRotationPoint>, String> {
+    if waypoints.is_empty() || num_points == 0 {
+        return Ok(Vec::new());
+    }
+
+    let c_waypoints: Vec<ffi::fers_rotation_waypoint_t> = waypoints
+        .into_iter()
+        .map(|wp| ffi::fers_rotation_waypoint_t {
+            time: wp.time,
+            azimuth_deg: wp.azimuth,
+            elevation_deg: wp.elevation,
+        })
+        .collect();
+
+    let c_interp_type = match interp_type {
+        crate::InterpolationType::Static => ffi::fers_interp_type_t_FERS_INTERP_STATIC,
+        crate::InterpolationType::Linear => ffi::fers_interp_type_t_FERS_INTERP_LINEAR,
+        crate::InterpolationType::Cubic => ffi::fers_interp_type_t_FERS_INTERP_CUBIC,
+    };
+
+    let result_ptr = unsafe {
+        ffi::fers_get_interpolated_rotation_path(
+            c_waypoints.as_ptr(),
+            c_waypoints.len(),
+            c_interp_type,
+            num_points,
+        )
+    };
+
+    if result_ptr.is_null() {
+        return Err(get_last_error());
+    }
+
+    struct FersInterpolatedRotationPath(*mut ffi::fers_interpolated_rotation_path_t);
+
+    impl Drop for FersInterpolatedRotationPath {
+        fn drop(&mut self) {
+            if !self.0.is_null() {
+                unsafe { ffi::fers_free_interpolated_rotation_path(self.0) };
+            }
+        }
+    }
+
+    let owned_path = FersInterpolatedRotationPath(result_ptr);
+
+    let result_slice =
+        unsafe { std::slice::from_raw_parts((*owned_path.0).points, (*owned_path.0).count) };
+
+    let points: Vec<crate::InterpolatedRotationPoint> = result_slice
+        .iter()
+        .map(|p| crate::InterpolatedRotationPoint {
+            azimuth_deg: p.azimuth_deg,
+            elevation_deg: p.elevation_deg,
+        })
+        .collect();
 
     Ok(points)
 }

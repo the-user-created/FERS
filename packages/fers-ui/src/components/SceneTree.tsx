@@ -4,6 +4,7 @@
 import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
 import { useScenarioStore, Platform } from '@/stores/scenarioStore';
 import { Box, Typography, IconButton, Tooltip, Divider } from '@mui/material';
+import { useShallow } from 'zustand/react/shallow';
 
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -96,7 +97,22 @@ export default function SceneTree() {
         addAntenna,
         addPlatform,
         removeItem,
-    } = useScenarioStore();
+    } = useScenarioStore(
+        useShallow((state) => ({
+            globalParameters: state.globalParameters,
+            waveforms: state.waveforms,
+            timings: state.timings,
+            antennas: state.antennas,
+            platforms: state.platforms,
+            selectedItemId: state.selectedItemId,
+            selectItem: state.selectItem,
+            addWaveform: state.addWaveform,
+            addTiming: state.addTiming,
+            addAntenna: state.addAntenna,
+            addPlatform: state.addPlatform,
+            removeItem: state.removeItem,
+        }))
+    );
 
     const handleSelect = (
         _event: React.SyntheticEvent | null,
@@ -388,46 +404,48 @@ export default function SceneTree() {
                             </Box>
                         }
                     >
-                        {platforms.map((platform) => (
-                            <TreeItem
-                                key={platform.id}
-                                itemId={platform.id}
-                                label={
-                                    <Box
-                                        sx={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            width: '100%',
-                                        }}
-                                    >
-                                        {getPlatformIcon(platform)}
-                                        <Typography
-                                            variant="body2"
+                        {platforms.map((platform) => {
+                            return (
+                                <TreeItem
+                                    key={platform.id}
+                                    itemId={platform.id}
+                                    label={
+                                        <Box
                                             sx={{
-                                                flexGrow: 1,
-                                                whiteSpace: 'nowrap',
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                minWidth: 0,
-                                                pr: 1,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                width: '100%',
                                             }}
                                         >
-                                            {platform.name}
-                                        </Typography>
-                                        <IconButton
-                                            size="small"
-                                            className="remove-button"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                removeItem(platform.id);
-                                            }}
-                                        >
-                                            <RemoveIcon fontSize="inherit" />
-                                        </IconButton>
-                                    </Box>
-                                }
-                            />
-                        ))}
+                                            {getPlatformIcon(platform)}
+                                            <Typography
+                                                variant="body2"
+                                                sx={{
+                                                    flexGrow: 1,
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    minWidth: 0,
+                                                    pr: 1,
+                                                }}
+                                            >
+                                                {platform.name}
+                                            </Typography>
+                                            <IconButton
+                                                size="small"
+                                                className="remove-button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    removeItem(platform.id);
+                                                }}
+                                            >
+                                                <RemoveIcon fontSize="inherit" />
+                                            </IconButton>
+                                        </Box>
+                                    }
+                                />
+                            );
+                        })}
                     </TreeItem>
                 </SimpleTreeView>
             </Box>

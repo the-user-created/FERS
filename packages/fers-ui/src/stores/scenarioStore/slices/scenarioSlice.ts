@@ -107,6 +107,17 @@ export const createScenarioSlice: StateCreator<
         set((state) => {
             if (itemId === 'global-parameters') {
                 setPropertyByPath(state.globalParameters, propertyPath, value);
+
+                // Ensure currentTime remains within valid bounds if start/end parameters are updated
+                if (propertyPath === 'start' && typeof value === 'number') {
+                    state.currentTime = Math.max(state.currentTime, value);
+                } else if (
+                    propertyPath === 'end' &&
+                    typeof value === 'number'
+                ) {
+                    state.currentTime = Math.min(state.currentTime, value);
+                }
+
                 state.isDirty = true;
                 return;
             }
@@ -159,6 +170,7 @@ export const createScenarioSlice: StateCreator<
             platforms: [],
             selectedItemId: null,
             isDirty: false,
+            currentTime: defaultGlobalParameters.start,
         }),
     loadScenario: (backendData: unknown) => {
         try {
@@ -438,6 +450,7 @@ export const createScenarioSlice: StateCreator<
                 ...result.data,
                 selectedItemId: null,
                 isDirty: true,
+                currentTime: result.data.globalParameters.start,
             });
         } catch (error) {
             console.error(
