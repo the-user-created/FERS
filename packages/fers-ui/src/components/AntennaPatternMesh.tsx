@@ -12,8 +12,6 @@ const AZIMUTH_SEGMENTS = 64; // Resolution for azimuth sampling
 const ELEVATION_SEGMENTS = 32; // Resolution for elevation sampling
 const BASE_MESH_RADIUS = 3; // Base visual scaling factor for the main lobe.
 
-// TODO: when multiple meshes are present on a single platform, some z-fighting occurs
-
 interface AntennaPatternData {
     gains: number[];
     az_count: number;
@@ -211,6 +209,10 @@ export function AntennaPatternMesh({
                     side={THREE.DoubleSide}
                     roughness={0.7}
                     metalness={0.1}
+                    depthWrite={false}
+                    polygonOffset
+                    polygonOffsetFactor={1}
+                    polygonOffsetUnits={1}
                 />
             </mesh>
         </group>

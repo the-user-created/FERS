@@ -28,7 +28,7 @@ import TuneIcon from '@mui/icons-material/Tune';
 import CloseIcon from '@mui/icons-material/Close';
 import { useScenarioStore, VisualizationLayers } from '@/stores/scenarioStore';
 
-// TODO: users should be able to drag the view controls button or pane to relocate it in the preview area. It should dynamically determine whether to expand upwards or downwards depending on whether it is opening from the buttom of the preview area or the top of the preview area.
+// TODO: users should be able to drag the view controls button or pane to relocate it in the preview area. It should dynamically determine whether to expand upwards or downwards depending on whether it is opening from the bottom of the preview area or the top of the preview area.
 
 export default function ViewControls() {
     const {
