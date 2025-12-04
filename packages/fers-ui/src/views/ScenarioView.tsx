@@ -16,6 +16,8 @@ import SceneTree from '@/components/SceneTree';
 import PropertyInspector from '@/components/PropertyInspector';
 import Timeline from '@/components/Timeline';
 import ViewControls from '@/components/ViewControls';
+import { type MapControls as MapControlsImpl } from 'three-stdlib';
+import { ScaleManager } from '@/components/ScaleManager';
 import { useScenarioStore } from '@/stores/scenarioStore';
 import { fersColors } from '@/theme';
 
@@ -50,6 +52,11 @@ export const ScenarioView = React.memo(function ScenarioView() {
     const isSimulating = useScenarioStore((state) => state.isSimulating);
     const [isInspectorCollapsed, setIsInspectorCollapsed] = useState(false);
     const panelGroupRef = useRef<ImperativePanelGroupHandle>(null);
+
+    // 1. Lift refs to this level to bridge Logic (Canvas) and UI (DOM)
+    const controlsRef = useRef<MapControlsImpl>(null);
+    const scaleLabelRef = useRef<HTMLDivElement>(null);
+    const scaleBarRef = useRef<HTMLDivElement>(null);
 
     const handleExpandInspector = () => {
         // Restore panels to their default sizes: [SceneTree, Main, Inspector]
@@ -112,10 +119,18 @@ export const ScenarioView = React.memo(function ScenarioView() {
                                     attach="background"
                                     args={[fersColors.background.canvas]}
                                 />
-                                <WorldView />
+                                {/* Pass controlsRef down to WorldView */}
+                                <WorldView controlsRef={controlsRef} />
+
+                                {/* Logic-only component for Scale Bar calculations */}
+                                <ScaleManager
+                                    controlsRef={controlsRef}
+                                    labelRef={scaleLabelRef}
+                                    barRef={scaleBarRef}
+                                />
                             </Canvas>
 
-                            {/* View Controls */}
+                            {/* View Controls (Top-Left) */}
                             <Box
                                 sx={{
                                     position: 'absolute',
@@ -125,6 +140,43 @@ export const ScenarioView = React.memo(function ScenarioView() {
                                 }}
                             >
                                 <ViewControls />
+                            </Box>
+
+                            {/* Scale Bar Overlay (Bottom-Left) */}
+                            <Box
+                                sx={{
+                                    position: 'absolute',
+                                    bottom: 16,
+                                    left: 16,
+                                    zIndex: 1000,
+                                    pointerEvents: 'none',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    textShadow: '0px 1px 2px rgba(0,0,0,0.8)',
+                                }}
+                            >
+                                <div
+                                    ref={scaleLabelRef}
+                                    style={{
+                                        color: fersColors.text.primary,
+                                        fontSize: '11px',
+                                        fontWeight: 500,
+                                        marginBottom: '4px',
+                                        fontFamily: 'Roboto, sans-serif',
+                                    }}
+                                >
+                                    -- m
+                                </div>
+                                <div
+                                    ref={scaleBarRef}
+                                    style={{
+                                        height: '6px',
+                                        border: `1px solid ${fersColors.text.primary}`,
+                                        borderTop: 'none',
+                                        width: '100px',
+                                    }}
+                                />
                             </Box>
                         </Box>
                         <Box

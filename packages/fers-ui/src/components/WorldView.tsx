@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2025-present FERS Contributors (see AUTHORS.md).
 
-import { useEffect, useMemo, useRef, memo } from 'react';
+import React, { useEffect, useMemo, useRef, memo } from 'react';
 import { MapControls, Environment, Html } from '@react-three/drei';
 import { Vector3 } from 'three';
 import {
@@ -224,7 +224,15 @@ const PlatformSphere = memo(function PlatformSphere({
  * WorldView represents the 3D scene where simulation elements are visualized.
  * It provides an interactive camera and renders platforms from the current scenario.
  */
-export default function WorldView() {
+interface WorldViewProps {
+    controlsRef: React.RefObject<MapControlsImpl | null>;
+}
+
+/**
+ * WorldView represents the 3D scene where simulation elements are visualized.
+ * It provides an interactive camera and renders platforms from the current scenario.
+ */
+export default function WorldView({ controlsRef }: WorldViewProps) {
     const platforms = useScenarioStore((state) => state.platforms);
 
     const fetchPlatformPath = useScenarioStore(
@@ -235,8 +243,6 @@ export default function WorldView() {
     const { showLinks, showMotionPaths } = useScenarioStore(
         (state) => state.visibility
     );
-
-    const controlsRef = useRef<MapControlsImpl>(null);
 
     // Keep a reference to platforms to access in the effect without adding it to dependencies.
     // We update this ref in a separate effect to avoid "mutation during render" errors.
