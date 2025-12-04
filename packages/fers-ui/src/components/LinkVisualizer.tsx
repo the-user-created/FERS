@@ -4,6 +4,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { Line, Html } from '@react-three/drei';
+import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import {
     useScenarioStore,
@@ -205,21 +206,25 @@ export default function LinkVisualizer() {
         showLinkDirect,
     } = visibility;
 
-    const isBackendSyncing = useScenarioStore(
-        (state) => state.isBackendSyncing
-    );
-    const backendVersion = useScenarioStore((state) => state.backendVersion);
-
     // Store only the metadata (connectivity/labels), not positions
     const [linkMetadata, setLinkMetadata] = useState<LinkMetadata[]>([]);
 
     // Throttle control
     const lastFetchTimeRef = useRef<number>(0);
-    const FETCH_INTERVAL_MS = 100; // 100ms = 10 FPS for physics/text updates
+    const isFetchingRef = useRef<boolean>(false);
+    const isMountedRef = useRef<boolean>(true);
+    // Updated to 16ms to target 60FPS updates during playback
+    const FETCH_INTERVAL_MS = 16;
+
+    // Track component mount status to prevent setting state on unmounted component
+    useEffect(() => {
+        isMountedRef.current = true;
+        return () => {
+            isMountedRef.current = false;
+        };
+    }, []);
 
     // Build a lookup map: Component Name -> Parent Platform
-    // Memoized to avoid rebuilding on every frame, only when scene structure changes.
-    // This is also our primary signal that the scenario structure has changed.
     const componentToPlatform = useMemo(() => {
         const map = new Map<string, Platform>();
         platforms.forEach((p) => {
@@ -229,25 +234,26 @@ export default function LinkVisualizer() {
         return map;
     }, [platforms]);
 
-    // Effect: Reset throttle when the scenario structure changes.
-    // This forces an immediate update when a new file is loaded, ensuring
-    // visualizations appear even if the time is paused at 0.
+    // Reset throttle when the scenario structure changes
     useEffect(() => {
         lastFetchTimeRef.current = 0;
     }, [componentToPlatform]);
 
-    // 1. Throttled Data Fetching Loop
-    useEffect(() => {
-        let active = true;
-        const now = Date.now();
+    // REPLACED: useFrame loop handles fetching instead of useEffect.
+    // This prevents the cleanup-cancellation race condition where rapid
+    // timeline updates would cancel the fetch request before it returned.
+    useFrame(() => {
+        // Access store state imperatively to avoid dependency staleness
+        const state = useScenarioStore.getState();
 
-        // Pause fetching while backend is syncing to avoid race conditions
-        if (isBackendSyncing) {
+        // 1. Concurrency & Sync Checks
+        if (state.isBackendSyncing || isFetchingRef.current) {
             return;
         }
 
-        // Throttle check: Only fetch if enough wall-clock time has passed.
-        // However, if lastFetchTimeRef is 0 (just reset by load), we pass through immediately.
+        const now = Date.now();
+
+        // 2. Throttle Check
         if (
             lastFetchTimeRef.current > 0 &&
             now - lastFetchTimeRef.current < FETCH_INTERVAL_MS
@@ -255,44 +261,48 @@ export default function LinkVisualizer() {
             return;
         }
 
+        // 3. Perform Fetch
         const fetchLinks = async () => {
             try {
+                isFetchingRef.current = true;
                 lastFetchTimeRef.current = Date.now();
 
-                // Fetch Array of Structs directly from Rust
+                // Use the imperative time from the store for the most recent value
                 const links = await invoke<RustVisualLink[]>(
                     'get_preview_links',
                     {
-                        time: currentTime,
+                        time: state.currentTime,
                     }
                 );
 
-                if (!active) return;
-
-                const reconstructedLinks: LinkMetadata[] = links.map((l) => ({
-                    link_type: TYPE_MAP[l.link_type],
-                    quality: QUALITY_MAP[l.quality],
-                    label: l.label,
-                    source_name: l.source_name,
-                    dest_name: l.dest_name,
-                    origin_name: l.origin_name,
-                }));
-
-                setLinkMetadata(reconstructedLinks);
+                // Only update state if component is still mounted
+                if (isMountedRef.current) {
+                    const reconstructedLinks: LinkMetadata[] = links.map(
+                        (l) => ({
+                            link_type: TYPE_MAP[l.link_type],
+                            quality: QUALITY_MAP[l.quality],
+                            label: l.label,
+                            source_name: l.source_name,
+                            dest_name: l.dest_name,
+                            origin_name: l.origin_name,
+                        })
+                    );
+                    setLinkMetadata(reconstructedLinks);
+                }
             } catch (e) {
                 console.error('Link preview error:', e);
+            } finally {
+                // Release lock
+                if (isMountedRef.current) {
+                    isFetchingRef.current = false;
+                }
             }
         };
 
         void fetchLinks();
-
-        return () => {
-            active = false;
-        };
-    }, [currentTime, componentToPlatform, backendVersion, isBackendSyncing]);
+    });
 
     // 2. High-Frequency Geometry Calculation (Runs every render/frame)
-    // We map the potentially "stale" (100ms old) metadata to "fresh" (0ms old) positions.
     const { clusters, flatLinks } = useMemo(() => {
         const calculatedLinks: RenderableLink[] = [];
         const clusterMap = new Map<
