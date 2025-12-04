@@ -161,12 +161,19 @@ const PlatformSphere = memo(function PlatformSphere({
                 })}
 
                 {/* Boresight is lightweight, conditional is fine, but visible is smoother */}
-                <group visible={showBoresights && antennaComponents.length > 0}>
+                <group
+                    visible={
+                        showPlatforms &&
+                        showBoresights &&
+                        antennaComponents.length > 0
+                    }
+                >
                     <BoresightArrow />
                 </group>
 
                 {/* Show antenna pattern meshes if the global toggle is enabled */}
-                {showPatterns &&
+                {showPlatforms &&
+                    showPatterns &&
                     antennaComponents.map((comp) =>
                         comp.antennaId ? (
                             <AntennaPatternMesh
@@ -188,6 +195,7 @@ const PlatformSphere = memo(function PlatformSphere({
                 <Html
                     position={[0, 1.2, 0]} // Position label above the sphere
                     center // Center the label on its anchor point
+                    zIndexRange={[100, 0]} // Ensure labels render below UI overlays (zIndex 1000)
                     style={{
                         backgroundColor: fersColors.background.overlay,
                         color: fersColors.text.primary,

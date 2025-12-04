@@ -252,6 +252,44 @@ export default function ViewControls() {
                                             </Typography>
                                         }
                                     />
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                size="small"
+                                                checked={
+                                                    visibility.showPatterns
+                                                }
+                                                onChange={() =>
+                                                    handleToggle('showPatterns')
+                                                }
+                                            />
+                                        }
+                                        label={
+                                            <Typography variant="caption">
+                                                Antenna Patterns
+                                            </Typography>
+                                        }
+                                    />
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                size="small"
+                                                checked={
+                                                    visibility.showBoresights
+                                                }
+                                                onChange={() =>
+                                                    handleToggle(
+                                                        'showBoresights'
+                                                    )
+                                                }
+                                            />
+                                        }
+                                        label={
+                                            <Typography variant="caption">
+                                                Boresight Arrows
+                                            </Typography>
+                                        }
+                                    />
                                 </Box>
                             </Collapse>
 
@@ -270,39 +308,6 @@ export default function ViewControls() {
                                 label={
                                     <Typography variant="body2">
                                         Motion Paths
-                                    </Typography>
-                                }
-                            />
-
-                            <FormControlLabel
-                                control={
-                                    <Switch
-                                        size="small"
-                                        checked={visibility.showPatterns}
-                                        onChange={() =>
-                                            handleToggle('showPatterns')
-                                        }
-                                    />
-                                }
-                                label={
-                                    <Typography variant="body2">
-                                        Antenna Patterns
-                                    </Typography>
-                                }
-                            />
-                            <FormControlLabel
-                                control={
-                                    <Switch
-                                        size="small"
-                                        checked={visibility.showBoresights}
-                                        onChange={() =>
-                                            handleToggle('showBoresights')
-                                        }
-                                    />
-                                }
-                                label={
-                                    <Typography variant="body2">
-                                        Boresight Arrows
                                     </Typography>
                                 }
                             />
