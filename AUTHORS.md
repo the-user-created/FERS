@@ -5,13 +5,13 @@ design, and ideas to the project.
 
 For a detailed, line-by-line history of contributions and copyright ownership, please refer to the Git commit history.
 
-GitHub usernames are indicated in parentheses.
+GitHub usernames are indicated in parentheses where available.
 
 ## Original Authors
 
 The foundational work on FERS was done as part of a PhD dissertation at the University of Cape Town.
 
-- Marc Brooker
+- Dr Marc Brooker
 - Professor Michael Inggs
 
 ## Lead Maintainer
@@ -22,7 +22,8 @@ The project was significantly modernized, refactored, and expanded from 2024 onw
 
 ## Project Supervision
 
-- Stephen Paine (stpaine)
+- Dr Stephen Paine (stpaine)
+- Dr Yaaseen Martin (ymartin101)
 
 ## Major Contributors
 
@@ -39,7 +40,6 @@ The following individuals have also contributed to the FERS codebase through com
 
 - Abhishek Bhatta (bhattaomatic)
 - coopmtu
-- Graham Inggs
+- Graham Inggs (ginggs)
 - Jean Swart (swartjean)
 - Shishir S Tambe (SHISKEBAB)
-- Yaaseen Martin (ymartin101)
