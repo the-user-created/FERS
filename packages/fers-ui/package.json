@@ -47,7 +47,7 @@
         "@types/react": "^19.2.7",
         "@types/react-dom": "^19.2.3",
         "@types/three": "^0.181.0",
-        "@vitejs/plugin-react": "^5.1.1",
+        "@vitejs/plugin-react": "^5.1.2",
         "eslint": "^9.39.1",
         "eslint-config-prettier": "^10.1.8",
         "eslint-plugin-react": "^7.37.5",
@@ -57,7 +57,7 @@
         "prettier": "^3.7.4",
         "typescript": "~5.9.3",
         "typescript-eslint": "^8.48.1",
-        "vite": "^7.2.6",
+        "vite": "^7.2.7",
         "vite-tsconfig-paths": "^5.1.4"
     },
     "packageManager": "pnpm@10.19.0+sha512.c9fc7236e92adf5c8af42fd5bf1612df99c2ceb62f27047032f4720b33f8eacdde311865e91c411f2774f618d82f320808ecb51718bfa82c060c4ba7c76a32b8"
